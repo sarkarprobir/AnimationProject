@@ -1,0 +1,98 @@
+
+/*font-family: 'Anton';*/
+
+@font-face {
+    font-family: 'Anton';
+    src: url('../Font/Anton-Regular.eot');
+    src: url('../Font/Anton-Regular.eot?#iefix') format('embedded-opentype'),
+        url('../Font/Anton-Regular.woff2') format('woff2'),
+        url('../Font/Anton-Regular.woff') format('woff'),
+        url('../Font/Anton-Regular.ttf') format('truetype'),
+        url('../Font/Anton-Regular.svg#Anton-Regular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+/*font-family: 'bebes';*/
+
+@font-face {
+    font-family: 'Bebas Neue';
+    src: url('../Font/BebasNeue-Regular.eot');
+    src: url('../Font/BebasNeue-Regular.eot?#iefix') format('embedded-opentype'),
+        url('../Font/BebasNeue-Regular.woff2') format('woff2'),
+        url('../Font/BebasNeue-Regular.woff') format('woff'),
+        url('../Font/BebasNeue-Regular.ttf') format('truetype'),
+        url('../Font/BebasNeue-Regular.svg#BebasNeue-Regular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+/*font-family: 'Monstro';*/
+@font-face{
+    font-family: "Monstro";
+    src: url("../Font/b89af63f1d0fa3bbb52eb95ab3fcc2fa.eot");
+    src: url("../Font/b89af63f1d0fa3bbb52eb95ab3fcc2fa.eot?#iefix")format("embedded-opentype"),
+        url("../Font/b89af63f1d0fa3bbb52eb95ab3fcc2fa.woff")format("woff"),
+        url("../Font/b89af63f1d0fa3bbb52eb95ab3fcc2fa.woff2")format("woff2"),
+        url("../Font/b89af63f1d0fa3bbb52eb95ab3fcc2fa.ttf")format("truetype"),
+        url("../Font/b89af63f1d0fa3bbb52eb95ab3fcc2fa.svg#Monstro")format("svg");
+    font-weight:normal;
+    font-style:normal;
+    font-display:swap;
+}
+
+/*font-family: 'neto';*/
+
+@font-face {
+    font-family: 'Noto Sans';
+    src: url('../Font/NotoSans-Medium.eot');
+    src: url('../Font/NotoSans-Medium.eot?#iefix') format('embedded-opentype'),
+        url('../Font/NotoSans-Medium.woff2') format('woff2'),
+        url('../Font/NotoSans-Medium.woff') format('woff'),
+        url('../Font/NotoSans-Medium.ttf') format('truetype'),
+        url('../Font/NotoSans-Medium.svg#NotoSans-Medium') format('svg');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+/*font-family: 'Montserrat';*/
+
+@font-face {
+    font-family: 'Montserrat';
+    src: url('../Font/Montserrat-Regular.eot');
+    src: url('../Font/Montserrat-Regular.eot?#iefix') format('embedded-opentype'),
+        url('../Font/Montserrat-Regular.woff2') format('woff2'),
+        url('../Font/Montserrat-Regular.woff') format('woff'),
+        url('../Font/Montserrat-Regular.ttf') format('truetype'),
+        url('../Font/Montserrat-Regular.svg#Montserrat-Regular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+/*font-family: 'Pacifico';*/
+
+@font-face {
+    font-family: 'Pacifico';
+    src: url('../Font/Pacifico-Regular.eot');
+    src: url('../Font/Pacifico-Regular.eot?#iefix') format('embedded-opentype'),
+        url('../Font/Pacifico-Regular.woff2') format('woff2'),
+        url('../Font/Pacifico-Regular.woff') format('woff'),
+        url('../Font/Pacifico-Regular.ttf') format('truetype'),
+        url('../Font/Pacifico-Regular.svg#Pacifico-Regular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+/*font-family: 'Roboto';*/
+@font-face {
+    font-family: 'Roboto';
+    src: url('../Font/Roboto-Bold.eot');
+    src: url('../Font/Roboto-Bold.eot?#iefix') format('embedded-opentype'),
+        url('../Font/Roboto-Bold.woff2') format('woff2'),
+        url('../Font/Roboto-Bold.woff') format('woff'),
+        url('../Font/Roboto-Bold.ttf') format('truetype'),
+        url('../Font/Roboto-Bold.svg#Roboto-Bold') format('svg');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}

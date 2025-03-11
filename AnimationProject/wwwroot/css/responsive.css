@@ -1,0 +1,14 @@
+  body {
+  }
+
+ @media screen and (min-width: 1366px) and (max-width: 1512px) {
+	 
+.moog-sally img {width: 272px;}
+.menu-design-right img{width:100%; margin-bottom: -5px;} 
+.our-product {  padding: 38px 250px 38px 100px;}
+.our-product .col-lg-6{WIDTH:40%; max-width: 40%;}
+.tabset > label { width: 61px;}
+  
+ }
+ 
+  

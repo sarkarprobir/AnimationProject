@@ -1,0 +1,834 @@
+﻿@section scripts {
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="~/js/animations.js"></script>
+    <script src="~/js/animation_min.js"></script>
+    <style>
+        #canvasContainer {
+            position: relative;
+            display: inline-block;
+            height: auto;
+        }
+        /* Canvas styling */
+        #myCanvas {
+            background-color: #fff;
+            cursor: pointer;
+        }
+        /* Hidden input for text editing */
+        #textEditor {
+            position: absolute;
+            display: none;
+            outline: none;
+            background: linear-gradient(135deg, #ffffff, #f9f9f9);
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 16px;
+            color: #333;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+        }
+
+            #textEditor:focus {
+                box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+                transform: scale(1.02);
+            }
+    </style>
+
+    <style>
+        /* .color-palette { */
+        /*     display: flex; */
+        /*     flex-wrap: wrap; */
+        /*     gap: 10px; */
+        /*     padding: 15px; */
+        /*     justify-content: center; */
+        /*     background-color: #fff; */
+        /*     border: 1px solid #ddd; */
+        /*     border-radius: 8px; */
+        /*     max-width: 600px; */
+        /*     margin: 20px auto; */
+        /*     box-shadow: 0 2px 4px rgba(0,0,0,0.1); */
+        /* } */
+
+        input[type="color" i]{
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            border: none;
+            border-radius: 7px;
+        }
+        .color-swatch {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+            .color-swatch:hover {
+                transform: scale(1.1);
+                border-color: #666;
+            }
+
+            .color-swatch.selected {
+                border-color: #000;
+                box-shadow: 0 0 5px rgba(0,0,0,0.3);
+            }
+        /* Custom context menu styling */
+        #contextMenu {
+            position: absolute;
+            display: none;
+            z-index: 1000;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+            #contextMenu ul {
+                list-style: none;
+                margin: 0;
+                padding: 0;
+            }
+
+            #contextMenu li {
+                padding: 5px 10px;
+                cursor: pointer;
+            }
+
+           #contextMenu li:hover {
+             background-color: #eee;
+           }
+
+    </style>
+
+    <script>
+        // Function to handle swatch click.
+        function selectColor(color, element) {
+          // Remove 'selected' class from all swatches.
+          document.querySelectorAll('.color-swatch').forEach(swatch => {
+            swatch.classList.remove('selected');
+          });
+          // Add 'selected' class to the clicked swatch.
+          element.classList.add('selected');
+
+          $("#hdnTextColor").val(color);
+           ChangeStyle();
+          // For example, set a hidden input or apply the color style directly:
+          console.log("Selected color:", color);
+          // Example: update an input's value if needed
+          // document.getElementById("textColor").value = color;
+          // And then call your ChangeStyle function if necessary:
+          // ChangeStyle();
+        }
+    </script>
+
+
+
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
+          rel="stylesheet">
+    <link href="~/css/animate/animate.min.css" rel="stylesheet">
+    <link href="~/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="~/css/style.css" rel="stylesheet">
+    <link href="~/css/canvas.css" rel="stylesheet">
+    <link href="~/css/responsive.css" rel="stylesheet">
+    <script src='https://code.jquery.com/jquery-3.2.1.slim.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js'></script>
+    <script src="~/js/wow.min.js"></script>
+    
+    <script>
+        function opengl()
+         {
+          $("#opengl_popup").toggle();
+          if(document.getElementById("fontstyle_popup").style.display == "block"){
+                $("#fontstyle_popup").hide();
+                $(".right-sec-two").toggle();
+                $(".right-sec-one").toggle();
+            }
+         }
+    </script>
+
+    <script>
+        function opentl()
+         {
+            if(document.getElementById("opengl_popup").style.display == "block"){
+                $("#opengl_popup").hide();
+            }
+          $("#fontstyle_popup").toggle();
+          $(".right-sec-two").toggle();
+          $(".right-sec-one").toggle();
+         }
+    </script>
+
+}
+
+
+<div class="text-center" style="position:relative">
+    <nav class="navbar bg-dark-topnav navbar-expand-lg fixed-top">
+        <div class="container-fluid p-r-0" style="justify-content: center !important;">
+            <div class="row">
+                <div class="col-md-3">
+                    <a class="logo" href="javascript:void(0)"> <img src="~/images/icons/icon-left-arrow.png" alt="Logo" alt="Logo" width="35"></a>
+                    <ul class="top-left-icon">
+                        <li>
+                            <a href="javascript:void(0)"> <img src="~/images/icons/ico-pattren.svg" title="Pattren" alt="pattren" width="25"></a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)"> <img onclick="addDefaultText();opentl();" src="~/images/icons/icon-text.png" title="Text" alt="text" width="20"></a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)"> <img src="~/images/icons/icon_circle.svg" title="Circle" alt="circle" width="20"></a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)"> <img src="~/images/icons/ico-shapes-masking.svg" title="Masking" alt="Masking" width="20"></a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)">
+                                <img onclick="opengl()" src="~/images/icons/icon_gallery.svg" title="Gallery" alt="Gallery" width="25">
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="col-md-6 nav-middle">
+                    <button class="D-icon-save" type="submit">My Design Board<img src="~/images/icons/ico-save.svg"> </button>
+                </div>
+                <div class="col-md-3 nav-right">
+                    <ul>
+                        <li class="play-btn">
+                            <button class="btn" title="Play"><img src="~/images/icons/Icon-01.svg" width="25"> </button>
+                        </li>
+                        <li>
+                            <button class="btn" type="submit" title="download"><img src="~/images/icons/ico-download.svg"> </button>
+                        </li>
+                        <li class="nav-item dropdown">
+                            @* <button class="login" type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#myModal">A</button> *@
+                        
+                            <a class="nav-link dropdown-toggle"
+                               href="#"
+                               role="button"
+                               data-bs-toggle="dropdown"
+                               aria-expanded="false">Men</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Spots</a></li>
+                                <li><a class="dropdown-item" href="#">Casual</a></li>
+                                <li>
+                                    <a class="dropdown-item" href="#">Formal</a>
+                                </li>
+                            </ul>
+                        </li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+  
+   
+
+    <div class="d-flex align-items-stretch  main-canvas-content">
+           
+        <div class="panel-left ">
+            <div class="mb-3">
+                <span class="mt-2 d-inline-block fw-bolder">Slides</span>
+                     <a class="H-link" href="@Url.Action("Index", "Canvas")">H</a> 
+                     <a class="V-link active" href="@Url.Action("VerticalIndex", "Canvas")">V</a>
+                <div class="clear"></div>
+            </div>
+            <div class="panel-left-scroll panel-vertical-scroll">
+                <ul>
+                    <li>
+                        <img src="~/images/Vertical-Menuboard.png" class="menuboard-vertical-thum" alt="Banner">
+                        <p>
+                            <span>Slide 1</span>
+                            <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
+                            <div class="clear"></div>
+                        </p>
+                    </li>
+                    <li>
+                        <img src="~/images/Vertical-Menuboard.png" class="menuboard-vertical-thum" alt="Banner">
+                        <p>
+                            <span>Slide 2</span>
+                            <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
+                            <div class="clear"></div>
+                        </p>
+                    </li>
+                    <li>
+                        <img src="~/images/Vertical-Menuboard.png" class="menuboard-vertical-thum" alt="Banner">
+                        <p>
+                            <span>Slide 3</span>
+                            <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
+                            <div class="clear"></div>
+                        </p>
+                    </li>
+                    <li>
+                        <img src="~/images/Vertical-Menuboard.png" class="menuboard-vertical-thum" alt="Banner">
+                        <p>
+                            <span>Slide 4</span>
+                            <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
+                            <div class="clear"></div>
+                        </p>
+                    </li>
+                    <li>
+                        <img src="~/images/Vertical-Menuboard.png" class="menuboard-vertical-thum" alt="Banner">
+                        <p>
+                            <span>Slide 5</span>
+                            <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
+                            <div class="clear"></div>
+                        </p>
+                    </li>
+                </ul>
+            </div>
+        </div>
+           
+        <div class="panel-middle">
+            <div class="container-1">
+                <div class="container-inner">
+                    <div class="canvas-top-btn">
+               
+                        <button class="Graphic-More active">Animation Mode</button>
+                    </div>
+                    <div style="float: left; display: flex; flex-direction: column; align-items: center; width: 100%">
+                        <div id="canvasContainer">
+                            <canvas id="myCanvas" width="595" height="1058"></canvas>
+                            <!-- Custom context menu for deletion -->
+                            <div id="contextMenu">
+                                <ul>
+                                    <li id="deleteOption">Delete</li>
+                                </ul>
+                            </div>
+
+                       
+                        </div>
+                        <p class="middle-resulation">1080x1920</p>
+                    </div>
+                    <input type="text" id="textEditor">
+                </div>
+            </div>
+        </div>
+           
+        <div class="panel-right content">
+            <div class="right-sec-one">
+                <div class="headtext">Board Animation</div>
+                <div class="tabset">
+                    <!-- Tab 1 -->
+                    <input type="radio" name="tabset" id="tab1" aria-controls="marzen" checked>
+                    <label style="margin-left:0px;" for="tab1">In</label>
+                    <!-- Tab 2 -->
+                    <input type="radio" name="tabset" id="tab2" aria-controls="rauchbier">
+                    <label for="tab2">Stay</label>
+                    <!-- Tab 3 -->
+                    <input type="radio" name="tabset" id="tab3" aria-controls="dunkles">
+                    <label style="margin-right:0px;" for="tab3">Out</label>
+
+                    <div class="tab-panels">
+
+                        <section id="marzen" class="tab-panel">
+
+                            <div class="accordion" style=" position: relative;   left: 0px; top: 0; margin-bottom: 26px; width: 100%; ">
+
+                                <div class="answer-group">
+                                    <p class="collapsed" data-toggle="collapse" data-target="#collapse-4" aria-expanded="true" aria-controls="collapse-1">
+                                        Speed<i class="fa arrow-expand" aria-hidden="true"></i>
+                                    </p>
+                                    <div id="collapse-4" class="collapse">
+                                        <div class="card-body">
+                                            <ul class="speed-list">
+                                                <li>2 Sec</li>
+                                                <li>4 Sec</li>
+                                                <li>6 Sec</li>
+                                                <li>8 Sec</li>
+                                                <li>10 Sec</li>
+                                                <div class="clear"></div>
+                                            </ul>
+                                            <div class="clear"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <h2>Effects</h2>
+                            <ul class="right-listone">
+                                <li>
+                                    <a href="javascript:void(0)" onclick="textAnimationClick('linear')"> <img src="~/images/icons/icon-effict.png" alt="pattren"></a>
+                                    <div class="clear"></div>
+                                </li>
+                              
+                                <li>
+                                    <a href="javascript:void(0)" onclick="textAnimationClick('bounce')"> <img src="~/images/icons/icon-effict.png" alt="pattren"></a>
+                                    <div class="clear"></div>
+                                </li>
+                            </ul>
+                            <input type="hidden" id="hdnTextAnimationType" />
+
+                            <h2>In</h2>
+                            <ul class="right-listone">
+                                <li>
+                                    <a onclick="setCoordinate('left',100,20,50,50)"> <img src="~/images/icons/icon-lr.png" alt="pattren"></a>
+                                    
+                                    <div class="clear"></div>
+                                </li>
+                                <li>
+                                    <a onclick="setCoordinate('right',400,0,50,50)"> <img src="~/images/icons/icon-rl.png" alt="text"></a>
+                                    
+                                </li>
+                                @*  <li>
+                                    <a onclick="setCoordinate('bottom',800,500,50,50)"> <img src="~/images/icons/icon-bu.png" alt="circle" width="35"></a>
+                                    <p>LR</p>
+                                </li> *@
+                                <li>
+                                    <a onclick="setCoordinate('bottom',800,0,50,50)"> <img src="~/images/icons/icon-bt.png" alt="Masking"></a>
+                                    
+                                </li>
+                                <li>
+                                    <a onclick="setCoordinate('top',400,0,50,50)"> <img src="~/images/icons/icon-tb.png" alt="image"></a>
+                                    
+                                </li>
+
+                                @*   <li>
+                                    <a onclick="setCoordinate(100,100,400,300,100,20,50,50)"> <img src="~/images/icons/icon-ud.png" alt="image" width="35"></a>
+                                    <p>LR</p>
+                                </li> *@
+
+                            </ul>
+
+                        </section>
+                        <div class="controls" style="display:none;">
+                            <input type="text" id="textInput" placeholder="Enter text" />
+                            <label for="textAnimation">Text Animation:</label>
+                            <select id="textAnimation">
+                                <option value="linear">Linear</option>
+                                <option value="elastic">Elastic</option>
+                                <option value="bounce">Bounce</option>
+                                <option value="morphText">Morphing</option>
+                                <option value="spin">Spin</option>
+                                <option value="zoomInOut">Zoom In-Out</option>
+                                <option value="fadeText">Fade In/Out</option>
+                                <option value="typeText">Typing Effect</option>
+                            </select>
+                     
+                            <label for="imageUpload">Upload Image:</label>
+                            <input type="file" id="imageUpload" accept="image/*" />
+                           
+                            <label for="imageAnimation">Image Animation:</label>
+                            <select id="imageAnimation">
+                                <option value="linear">Linear Move</option>
+                                <option value="elastic">Elastic Bounce</option>
+                                <option value="fade-in">Fade-In</option>
+                                <option value="bounce">Bounce</option>
+                                <option value="zoomImage">Zoom In/Out</option>
+                                <option value="flip">Flip</option>
+                                <option value="blur">Blur</option>
+                            </select>
+                            </div>
+
+                        <section id="rauchbier" class="tab-panel">
+                            <div class="accordion" style=" position: relative;   left: 0px; top: 0; margin-bottom: 26px; width: 100%;">
+
+                                <div class="answer-group">
+                                    <p class="collapsed" data-toggle="collapse" data-target="#collapse-3" aria-expanded="true" aria-controls="collapse-1">
+                                        Seconds <i class="fa arrow-expand" aria-hidden="true"></i>
+                                    </p>
+                                    <div id="collapse-3" class="collapse">
+                                        <div class="card-body">
+                                            <ul class="speed-list">
+                                                <li>2 Sec</li>
+                                                <li>4 Sec</li>
+                                                <li>6 Sec</li>
+                                                <li>8 Sec</li>
+                                                <li>10 Sec</li>
+                                                <div class="clear"></div>
+                                            </ul>
+                                            <div class="clear"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </section>
+
+
+
+
+
+                        <section id="dunkles" class="tab-panel">
+
+                            <div class="accordion" style=" position: relative;
+                                left: 0px;
+                                top: 0;
+                                margin-bottom: 26px;
+                                width: 100%;">
+
+                                <div class="answer-group">
+                                    <p class="collapsed" data-toggle="collapse" data-target="#collapse-6" aria-expanded="true" aria-controls="collapse-1">
+                                        Speed<i class="fa arrow-expand" aria-hidden="true"></i>
+                                    </p>
+                                    <div id="collapse-6" class="collapse">
+                                        <div class="card-body">
+                                            <ul class="speed-list">
+                                                <li>2 Sec</li>
+                                                <li>4 Sec</li>
+                                                <li>6 Sec</li>
+                                                <li>8 Sec</li>
+                                                <li>10 Sec</li>
+
+                                            </ul>
+                                            <div class="clear"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <h2>Effects</h2>
+                            <ul class="right-listone">
+                                <li>
+                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-effict.png" alt="pattren" width="35"></a>
+
+                                    <div class="clear"></div>
+                                </li>
+
+
+                            </ul>
+
+                            <h2>Out</h2>
+
+                            <ul class="right-listone">
+                                <li>
+                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-lr.png" alt="pattren"></a>
+                                    <p>LR</p>
+                                    <div class="clear"></div>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-rl.png" alt="text"></a>
+                                    <p>LR</p>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-bu.png" alt="circle"></a>
+                                    <p>LR</p>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-bt.png" alt="Masking"></a>
+                                    <p>LR</p>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-tb.png" alt="image"></a>
+                                    <p>LR</p>
+                                </li>
+
+                                <li>
+                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-ud.png" alt="image"></a>
+                                    <p>LR</p>
+                                </li>
+
+                            </ul>
+                        </section>
+                        <div id="imageCoordination" style="display:none;">
+                            <label for="imageStartX">Start X:</label>
+                            <input type="number" id="imageStartX" value="200" />
+                            <label for="imageStartY">Start Y:</label>
+                            <input type="number" id="imageStartY" value="200" />
+                            <label for="imageEndX">End X:</label>
+                            <input type="number" id="imageEndX" value="600" />
+                            <label for="imageEndY">End Y:</label>
+                            <input type="number" id="imageEndY" value="400" />
+                        </div>
+                        <div id="textCoordination" style="display:none;">
+                            <label for="textStartX">Start X:</label>
+                            <input type="number" id="textStartX" value="100" />
+                            <label for="textStartY">Start Y:</label>
+                            <input type="number" id="textStartY" value="100" />
+                            <label for="textEndX">End X:</label>
+                            <input type="number" id="textEndX" value="400" />
+                            <label for="textEndY">End Y:</label>
+                            <input type="number" id="textEndY" value="300" />
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="right-sec-two" style="display:none;">
+                <div class="headtext">Text</div>
+
+                <div class="col-md-12 mb-3">
+                    <div class="row alignment-img">
+                        <ul>
+                            <li>
+                                <a onclick="ChangeAlignStyle('right')"> <img src="~/images/icons/icon-align-left.png" title="Alignleft" alt="Icon-alignleft"></a>
+                            </li>
+                            <li>
+                                <a onclick="ChangeAlignStyle('center')"> <img src="~/images/icons/icon-align-center.png" title="Aligncenter" alt="Icon-alignleft"></a>
+                            </li>
+                            <li>
+                                <a onclick="ChangeAlignStyle('left')"> <img src="~/images/icons/icon-align-right.png" title="Alignright" alt="Icon-alignleft"></a>
+                            </li>
+                            <li>
+                            </li>
+                            <li>
+                            </li>
+                        </ul>
+                        <input type="hidden" id="textAlign" />
+                    </div>
+                </div>
+
+                <div class="col-md-12 mb-3">
+                    <div class="row FontSize">
+                        <div class="col-md-6 p-l-0">
+                            <label>Size</label>
+                        </div>
+                        <div class="col-md-6 p-r-0 text-end">
+                            <select id="fontSize" onchange="ChangeStyle()">
+                              
+                                <option value="18">18</option>
+                                <option value="20">20</option>
+                                <option value="25">25</option>
+                                <option value="30">30</option>
+                                <option value="35" selected>35</option>
+                                <option value="40">40</option>
+                                <option value="45">45</option>
+                                <option value="50">50</option>
+                                <option value="60">60</option>
+                            </select>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="col-md-12 mb-3">
+                    <div class="row FontSize">
+                        <div class="col-md-6 p-l-0">
+                            <label>Text Color</label>
+                        </div>
+                        <div class="col-md-6 p-r-0 text-end">
+                            <div class="color-palette">
+                                <input type="hidden" id="hdnTextColor" />
+                                <form action="/action_page.php">
+                                    <input type="color" id="favcolor" name="favcolor" value="#000">
+                                </form>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="col-md-12 mb-4">
+                    <div class="row fillcolor">
+                        <div class="col-md-6 p-l-0">
+                            <label>Fill</label>
+                        </div>
+                        <div class="col-md-6 p-r-0 text-end">
+                            <div class="checkboxes__item">
+                                <label class="checkbox style-c">
+                                    <input type="checkbox" checked="checked" />
+                                    <div class="checkbox__checkmark"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="row fillcolor mt-2">
+                        <div class="col-md-6 p-l-0">
+                            <label>00000</label>
+                        </div>
+                        <div class="col-md-6 p-r-0 text-end">
+                            <span class="fill-solid"> </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12 mb-4">
+                    <div class="row Strock">
+                        <div class="col-md-6 p-l-0">
+                            <label>Strock</label>
+                        </div>
+                        <div class="col-md-6 p-r-0 text-end">
+                            <div class="checkboxes__item">
+                                <label class="checkbox style-c">
+                                    <input type="checkbox" checked="checked" />
+                                    <div class="checkbox__checkmark"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="row Strock mt-2">
+                        <div class="col-md-6 p-l-0">
+                            <label>00000</label>
+                        </div>
+                        <div class="col-md-6 p-r-0 text-end">
+                            <span class="fill-solid">
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-12 mb-2">
+                    <div class="row Strock-Line">
+                        <div class="col-md-6 p-l-0">
+                            <label>Strock Line</label>
+                        </div>
+                        <div class="col-md-6 p-r-0 text-end">
+                            <select>
+                                <option> 1</option>
+                                <option> 2</option>
+                                <option> 3</option>
+                                <option> 4</option>
+                                <option> 5</option>
+                            </select>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="col-md-12 mb-3">
+                    <div class="row opasity">
+                        <div class="col-md-6 p-l-0">
+                            <label>Opacity</label>
+                        </div>
+                        <div class="col-md-6 p-r-0 text-end">
+                            <label>100%</label>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div id="opengl_popup" class="collapse show-gallery">
+
+                <div class="card-body">
+                    <div class="panel-left-gallery">
+                        
+                        <input class="form-control mb-4" type="file" id="formFileMultiple" multiple />
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h2 class = "fs-4 mb-0">Gallery</h2>
+                            <button class="btn-cross b-radius-6" type="button" onclick="opengl()">  ✕  </button>
+                        </div>
+                        <div class="gl-box">
+                            <div class="col-md-12">
+                                <div class="row my-4 align-items-center" >
+                                    <div class="col-md-6 ps-0">
+                                        <div class="accordion">
+                                            <div class="answer-group">
+                                                <p class="collapsed fs-6 mb-0" data-toggle="collapse" data-target="#collapse-1" aria-expanded="true" aria-controls="collapse-1">
+                                                    Shapes<i class="fa arrow-expand" aria-hidden="true"></i>
+                                                </p>
+                                                <div id="collapse-1" class="collapse">
+                                                    <div class="card-body">
+                                                        <ul class="Shapes">
+                                                            <li>Shapes 1 </li>
+                                                            <li>Shapes 1 </li>
+                                                            <li>Shapes 1 </li>
+                                                            <li>Shapes 1 </li>
+                                                            <li>Shapes 1 </li>
+                                                            <li>Shapes 1 </li>
+                                                            <li>Shapes 1 </li>
+                                                            <li>Shapes 1 </li>
+                                                            <li>Shapes 1 </li>
+                                                            <li>Shapes 1 </li>
+                                                        </ul>
+                                                        <div class="clear"></div>
+                                                    </div>
+                                                    <div class="clear"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 gallery-search-right" style="padding-right:0px;">
+                                        <input type="text" class="form-search b-radius-6">
+                                        <button class="btn-search" type="button">
+                                            <img src="~/images/icons/ico-search.svg" width="18">
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="row gallery-image">
+                                    <ul>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl001.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl002.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl003.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl004.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl005.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl006.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl007.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl008.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl009.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl0010.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl0011.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl0012.png" alt="">
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div class="row pagination">
+                                    <ul>
+                                        <li style="border:0px;"> < </li>
+                                        <li>2</li>
+                                        <li>3</li>
+                                        <li>4</li>
+                                        <li>5</li>
+                                        <li>5</li>
+                                        <li>6</li>
+                                        <li>7</li>
+                                        <li style="border:0px;">></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="fontstyle_popup" class="collapse show-texteditor">
+                <div class="card-body">
+                    <div class="panel-left-gallery">
+                        <h2>Font Family <button class="btn-cross b-radius-6" type="button" onclick="opentl();">✕</button></h2>
+                        <div class="gl-box">
+                            <div class="col-md-12">
+                                <div class="row" style=" margin-left:-30px;">
+                                    <ul class="TextStyle">
+                                        <li><a class="arial" onclick="OnChangefontFamily('Arial')">Arial</a></li>
+                                        <li><a class="anton" onclick="OnChangefontFamily('Anton')">Anton</a></li>
+                                        <li><a class="bebes" onclick="OnChangefontFamily('BEBES')">BEBES</a></li>
+                                        <li><a class="monstro" onclick="OnChangefontFamily('monstro')">MONSTRO</a></li>
+                                        <li><a class="Montserrat" onclick="OnChangefontFamily('Montserrat')">Montserrat</a></li>
+                                        <li><a class="neto" onclick="OnChangefontFamily('neto')">Neto</a></li>
+                                        <li><a class="pacifico" onclick="OnChangefontFamily('Pacifico')">Pacifico</a></li>
+                                        <li><a class="Roboto" onclick="OnChangefontFamily('Roboto')">Roboto</a></li>
+                                    </ul>
+                                    <input type="hidden" id="fontFamily" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+   
+</div>
