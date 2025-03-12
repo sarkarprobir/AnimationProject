@@ -1326,7 +1326,7 @@ const colorPicker = document.getElementById("favcolor");
 //        Obj.textAlign = textAlign || 'left';
 //    }
 //      drawCanvas('ChangeStyle');
-//});
+//});ggg
 
 function ChangeColor() {
     $("#hdnTextColor").val(colorPicker.value);
