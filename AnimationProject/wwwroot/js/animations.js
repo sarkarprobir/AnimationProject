@@ -160,21 +160,23 @@ function drawCanvas(condition) {
 
     ctx.save(); // Save canvas state for text
     ctx.globalAlpha = textPosition.opacity || 1; // Apply text opacity
-    const fontSize = document.getElementById("fontSize").value; // Font size from dropdown
-    const fontFamily = document.getElementById("fontFamily").value; // Font family from dropdown
-    const textColor = document.getElementById("hdnTextColor").value; // Text color from dropdown 
-    const textAlign = document.getElementById("textAlign").value; // Text alignment from dropdown
 
-    const selectedObj = textObjects.find(obj => obj.selected);
-    if (selectedObj) {
-        selectedObj.fontSize = fontSize;
-        selectedObj.fontFamily = fontFamily || 'Arial';
-        selectedObj.textColor = textColor || 'black';
-        selectedObj.textAlign = textAlign || 'left';
-    }
+    //const fontSize = document.getElementById("fontSize").value; // Font size from dropdown
+    //const fontFamily = document.getElementById("fontFamily").value; // Font family from dropdown
+    //const textColor = document.getElementById("hdnTextColor").value; // Text color from dropdown 
+    //const textAlign = document.getElementById("textAlign").value; // Text alignment from dropdown
+
+    //const selectedObj = textObjects.find(obj => obj.selected);
+    //if (selectedObj) {
+    //    selectedObj.fontSize = fontSize;
+    //    selectedObj.fontFamily = fontFamily || 'Arial';
+    //    selectedObj.textColor = textColor || 'black';
+    //    selectedObj.textAlign = textAlign || 'left';
+    //}
 
     if (condition === 'Common' || condition === 'ChangeStyle') {
         textObjects.forEach(obj => {
+            debugger;
             ctx.save(); 
             // If the object is selected, draw the red bounding box on top of the text.
             if (obj.selected) {
@@ -296,14 +298,31 @@ document.getElementById("textInput").addEventListener("input", (e) => {
     drawCanvas();
 });
 function ChangeStyle() {
+    const fontSize = document.getElementById("fontSize").value; // Font size from dropdown
+    const Obj = textObjects.find(obj => obj.selected);
+    if (Obj) {
+        Obj.fontSize = fontSize;
+    }
     drawCanvas('ChangeStyle');
 }
 function ChangeAlignStyle(value) {
     $("#textAlign").val(value);
+    const textAlign = document.getElementById("textAlign").value; // Text alignment from dropdown
+
+    const Obj = textObjects.find(obj => obj.selected);
+    if (Obj) {
+        Obj.textAlign = textAlign || 'left';
+    }
     drawCanvas('ChangeStyle');
 }
 function OnChangefontFamily(value) {
     $("#fontFamily").val(value);
+    const fontFamily = document.getElementById("fontFamily").value; // Font family from dropdown
+    const Obj = textObjects.find(obj => obj.selected);
+    if (Obj) {
+        Obj.fontFamily = fontFamily || 'Arial';
+    }
+
     drawCanvas('ChangeStyle');
 }
 function animateTextold(condition) {
@@ -1133,7 +1152,7 @@ function getTextObjectAt(x, y) {
 
 // Mouse events for dragging and selection
 canvas.addEventListener("mousedown", function (e) {
-   
+
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
@@ -1288,13 +1307,33 @@ textEditor.addEventListener("keydown", function (e) {
 });
 
 const colorPicker = document.getElementById("favcolor");
-const colorValue = document.getElementById("colorValue");
+
 
 
 // Event listener for color picker change
-colorPicker.addEventListener("change", function () {
-    selectedColor = colorPicker.value; // Update selected color
-    console.log("Selected Color:", selectedColor); // Log selected color
+//colorPicker.addEventListener("change", function () {
+//    $("#hdnTextColor").val(colorPicker.value);
+//    const fontSize = document.getElementById("fontSize").value; // Font size from dropdown
+//    const fontFamily = document.getElementById("fontFamily").value; // Font family from dropdown
+//    const textColor = document.getElementById("hdnTextColor").value; // Text color from dropdown 
+//    const textAlign = document.getElementById("textAlign").value; // Text alignment from dropdown
+
+//    const Obj = textObjects.find(obj => obj.selected);
+//    if (Obj) {
+//        Obj.fontSize = fontSize;
+//        Obj.fontFamily = fontFamily || 'Arial';
+//        Obj.textColor = textColor || 'black';
+//        Obj.textAlign = textAlign || 'left';
+//    }
+//      drawCanvas('ChangeStyle');
+//});
+
+function ChangeColor() {
     $("#hdnTextColor").val(colorPicker.value);
-      drawCanvas('ChangeStyle');
-});
+    const textColor = document.getElementById("hdnTextColor").value; // Text color from dropdown 
+    const Obj = textObjects.find(obj => obj.selected);
+    if (Obj) {
+        Obj.textColor = textColor || 'black';
+    }
+    drawCanvas('ChangeStyle');
+}
