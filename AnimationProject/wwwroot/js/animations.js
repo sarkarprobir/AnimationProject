@@ -1337,3 +1337,22 @@ function ChangeColor() {
     }
     drawCanvas('ChangeStyle');
 }
+
+
+function TabShowHide(type) {
+    if (type === 'In') {
+        $("#marzen").css("display", "block");
+        $("#rauchbier").css("display", "none");
+        $("#dunkles").css("display", "none");
+    }
+    else if (type === 'Stay') {
+        $("#marzen").css("display", "none");
+        $("#rauchbier").css("display", "block");
+        $("#dunkles").css("display", "none");
+    }
+    else if (type === 'Out') {
+        $("#marzen").css("display", "none");
+        $("#rauchbier").css("display", "none");
+        $("#dunkles").css("display", "block");
+    }
+}

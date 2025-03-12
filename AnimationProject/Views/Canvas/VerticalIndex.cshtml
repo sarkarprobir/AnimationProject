@@ -37,20 +37,7 @@
     </style>
 
     <style>
-        /* .color-palette { */
-        /*     display: flex; */
-        /*     flex-wrap: wrap; */
-        /*     gap: 10px; */
-        /*     padding: 15px; */
-        /*     justify-content: center; */
-        /*     background-color: #fff; */
-        /*     border: 1px solid #ddd; */
-        /*     border-radius: 8px; */
-        /*     max-width: 600px; */
-        /*     margin: 20px auto; */
-        /*     box-shadow: 0 2px 4px rgba(0,0,0,0.1); */
-        /* } */
-
+       
         input[type="color" i]{
             width: 30px;
             height: 30px;
@@ -103,6 +90,44 @@
              background-color: #eee;
            }
 
+        .dropdown-toggle{
+            text-decoration: none;
+            color: #777b7c;
+        }
+
+        .dropdown-menu.show {
+            background: #fff;
+            border-radius: 1rem;
+            border: 0px;
+            height: auto !important;
+            width: 240px;
+            -webkit-box-shadow: 0px 0px 7px #c1bbbb;
+            box-shadow: 0px 0px 7px #c1bbbb;
+            overflow: hidden !important;
+        }
+        .dropdown{
+            color: #000000 !important;
+        }
+
+        .dropdown:hover{
+            color: #212529 !important;
+        }
+
+        .dropdown-item {
+            color: #212529 !important;
+        }
+        .dropdown-item:hover{
+            color: #fff !important;
+            background-color: #4e43e1 !important;
+            
+        }
+        .profile{
+            color: #fff!important;
+            background-color: #4e43e1 !important;
+            width: 55px;
+            height: 50px;
+            font-size: 35px !important;
+        }
     </style>
 
     <script>
@@ -207,16 +232,29 @@
                         <li>
                             <button class="btn" type="submit" title="download"><img src="~/images/icons/ico-download.svg"> </button>
                         </li>
+                        
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <!-- You can use an icon from Bootstrap Icons or FontAwesome -->
-                                <i class="bi bi-person-circle"></i> <!-- Example with Bootstrap Icons -->
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                <li><a class="dropdown-item" href="/profile">Profile</a></li>
-                                <li><a class="dropdown-item" href="/change-password">Change Password</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                            <a class="profile nav-link text-light d-flex justify-content-center align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <!-- Profile Image -->
+                   
+                                <img src="~/images/profile_image.png" alt="Profile" class="rounded-circle" width="40" height="40"> 
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown" style="background-color: #2c2c2c; border: none; min-width: 200px;">
+                                <li class="w-100">
+                                    <a class="dropdown-item d-flex align-items-center text-white" href="/profile">
+                                        <i class="bi bi-person me-2"></i> My Account
+                                    </a>
+                                </li>
+                                <li class="w-100">
+                                    <a class="dropdown-item d-flex align-items-center text-white" href="/change-password">
+                                        <i class="bi bi-key me-2"></i> Change Password
+                                    </a>
+                                </li>
+                               
+                                <li class="w-100">
+                                    <a class="dropdown-item d-flex align-items-center text-white" href="/logout">
+                                        <i class="bi bi-box-arrow-right me-2"></i> Logout
+                                    </a>
+                                </li>
                             </ul>
                         </li>
 
@@ -315,13 +353,13 @@
                 <div class="headtext">Board Animation</div>
                 <div class="tabset">
                     <!-- Tab 1 -->
-                    <input type="radio" name="tabset" id="tab1" aria-controls="marzen" checked>
+                    <input type="radio" name="tabset" id="tab1" onclick="TabShowHide('In')" aria-controls="marzen" checked>
                     <label style="margin-left:0px;" for="tab1">In</label>
                     <!-- Tab 2 -->
-                    <input type="radio" name="tabset" id="tab2" aria-controls="rauchbier">
+                    <input type="radio" name="tabset" id="tab2" onclick="TabShowHide('Stay')" aria-controls="rauchbier">
                     <label for="tab2">Stay</label>
                     <!-- Tab 3 -->
-                    <input type="radio" name="tabset" id="tab3" aria-controls="dunkles">
+                    <input type="radio" name="tabset" id="tab3" onclick="TabShowHide('Out')" aria-controls="dunkles">
                     <label style="margin-right:0px;" for="tab3">Out</label>
 
                     <div class="tab-panels">
@@ -329,26 +367,18 @@
                         <section id="marzen" class="tab-panel">
 
                             <div class="accordion" style=" position: relative;   left: 0px; top: 0; margin-bottom: 26px; width: 100%; ">
-
-                                <div class="answer-group">
-                                    <p class="collapsed" data-toggle="collapse" data-target="#collapse-4" aria-expanded="true" aria-controls="collapse-1">
-                                        Speed<i class="fa arrow-expand" aria-hidden="true"></i>
-                                    </p>
-                                    <div id="collapse-4" class="collapse">
-                                        <div class="card-body">
-                                            <ul class="speed-list">
-                                                <li>2 Sec</li>
-                                                <li>4 Sec</li>
-                                                <li>6 Sec</li>
-                                                <li>8 Sec</li>
-                                                <li>10 Sec</li>
-                                                <div class="clear"></div>
-                                            </ul>
-                                            <div class="clear"></div>
-                                        </div>
-                                    </div>
+                                <div class="dropdown mb-3">
+                                    <a class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Speed
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#">2 Sec</a></li>
+                                        <li><a class="dropdown-item" href="#">4 Sec</a></li>
+                                        <li><a class="dropdown-item" href="#">6 Sec</a></li>
+                                        <li><a class="dropdown-item" href="#">8 Sec</a></li>
+                                        <li><a class="dropdown-item" href="#">10 Sec</a></li>
+                                    </ul>
                                 </div>
-                            </div>
                             <h2>Effects</h2>
                             <ul class="right-listone">
                                 <li>
@@ -427,24 +457,38 @@
                         <section id="rauchbier" class="tab-panel">
                             <div class="accordion" style=" position: relative;   left: 0px; top: 0; margin-bottom: 26px; width: 100%;">
 
-                                <div class="answer-group">
-                                    <p class="collapsed" data-toggle="collapse" data-target="#collapse-3" aria-expanded="true" aria-controls="collapse-1">
-                                        Seconds <i class="fa arrow-expand" aria-hidden="true"></i>
-                                    </p>
-                                    <div id="collapse-3" class="collapse">
-                                        <div class="card-body">
-                                            <ul class="speed-list">
-                                                <li>2 Sec</li>
-                                                <li>4 Sec</li>
-                                                <li>6 Sec</li>
-                                                <li>8 Sec</li>
-                                                <li>10 Sec</li>
-                                                <div class="clear"></div>
-                                            </ul>
-                                            <div class="clear"></div>
-                                        </div>
-                                    </div>
+                                @* <div class="answer-group"> *@
+                                @*     <p class="collapsed" data-toggle="collapse" data-target="#collapse-3" aria-expanded="true" aria-controls="collapse-1"> *@
+                                @*         Seconds <i class="fa arrow-expand" aria-hidden="true"></i> *@
+                                @*     </p> *@
+                                @*     <div id="collapse-3" class="collapse"> *@
+                                @*         <div class="card-body"> *@
+                                @*             <ul class="speed-list"> *@
+                                @*                 <li>2 Sec</li> *@
+                                @*                 <li>4 Sec</li> *@
+                                @*                 <li>6 Sec</li> *@
+                                @*                 <li>8 Sec</li> *@
+                                @*                 <li>10 Sec</li> *@
+                                @*                 <div class="clear"></div> *@
+                                @*             </ul> *@
+                                @*             <div class="clear"></div> *@
+                                @*         </div> *@
+                                @*     </div> *@
+                                @* </div> *@
+
+                                <div class="dropdown mb-3">
+                                    <a class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Seconds
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#">2 Sec</a></li>
+                                        <li><a class="dropdown-item" href="#">4 Sec</a></li>
+                                        <li><a class="dropdown-item" href="#">6 Sec</a></li>
+                                        <li><a class="dropdown-item" href="#">8 Sec</a></li>
+                                        <li><a class="dropdown-item" href="#">10 Sec</a></li>
+                                    </ul>
                                 </div>
+
                             </div>
 
                         </section>
@@ -461,23 +505,17 @@
                                 margin-bottom: 26px;
                                 width: 100%;">
 
-                                <div class="answer-group">
-                                    <p class="collapsed" data-toggle="collapse" data-target="#collapse-6" aria-expanded="true" aria-controls="collapse-1">
-                                        Speed<i class="fa arrow-expand" aria-hidden="true"></i>
-                                    </p>
-                                    <div id="collapse-6" class="collapse">
-                                        <div class="card-body">
-                                            <ul class="speed-list">
-                                                <li>2 Sec</li>
-                                                <li>4 Sec</li>
-                                                <li>6 Sec</li>
-                                                <li>8 Sec</li>
-                                                <li>10 Sec</li>
-
-                                            </ul>
-                                            <div class="clear"></div>
-                                        </div>
-                                    </div>
+                                <div class="dropdown mb-3">
+                                    <a class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Speed
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#">2 Sec</a></li>
+                                        <li><a class="dropdown-item" href="#">4 Sec</a></li>
+                                        <li><a class="dropdown-item" href="#">6 Sec</a></li>
+                                        <li><a class="dropdown-item" href="#">8 Sec</a></li>
+                                        <li><a class="dropdown-item" href="#">10 Sec</a></li>
+                                    </ul>
                                 </div>
                             </div>
                             <h2>Effects</h2>
