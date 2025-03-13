@@ -1,5 +1,6 @@
 ﻿@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @section scripts {
+        
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <script src="~/js/animations.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
     <script src="~/js/animation_min.js"></script>
@@ -144,11 +145,10 @@
            ChangeStyle();
           // For example, set a hidden input or apply the color style directly:
           console.log("Selected color:", color);
-          // Example: update an input's value if needed
-          // document.getElementById("textColor").value = color;
-          // And then call your ChangeStyle function if necessary:
-          // ChangeStyle();
         }
+            $(document).ready(function(){
+               document.getElementById('lblSpeed').textContent = "2 Sec";
+        });
     </script>
 
 
@@ -369,14 +369,14 @@
                             <div class="accordion" style=" position: relative;   left: 0px; top: 0; margin-bottom: 26px; width: 100%; ">
                                 <div class="dropdown mb-3">
                                     <a class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Speed
-                                    </a>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="#">2 Sec</a></li>
-                                        <li><a class="dropdown-item" href="#">4 Sec</a></li>
-                                        <li><a class="dropdown-item" href="#">6 Sec</a></li>
-                                        <li><a class="dropdown-item" href="#">8 Sec</a></li>
-                                        <li><a class="dropdown-item" href="#">10 Sec</a></li>
+                                        Speed  
+                                    </a> <label id="lblSpeed"></label>
+                                    <ul class="dropdown-menu" id="ddlSpeedControl">
+                                        <li><a class="dropdown-item" value="2">2 Sec</a></li>
+                                        <li><a class="dropdown-item" value="4">4 Sec</a></li>
+                                        <li><a class="dropdown-item" value="6">6 Sec</a></li>
+                                        <li><a class="dropdown-item" value="8">8 Sec</a></li>
+                                        <li><a class="dropdown-item" value="10">10 Sec</a></li>
                                     </ul>
                                 </div>
                             <h2>Effects</h2>

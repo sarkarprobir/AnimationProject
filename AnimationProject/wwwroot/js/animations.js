@@ -1,7 +1,7 @@
 ﻿const canvas = document.getElementById("myCanvas");
 const ctx = canvas.getContext("2d");
 const contextMenu = document.getElementById("contextMenu");
-
+let selectedSpeed = null;
 
 // Global variables
 let image = null;
@@ -519,15 +519,15 @@ function animateText(direction,condition ) {
             gsap.to(obj, {
                 x: endX,
                 y: endY,
-                duration: 2,
+                duration: parseFloat(selectedSpeed) || 2,
                 ease: "power1.inOut",
-                onUpdate: drawCanvas(condition),
+                onUpdate: () => drawCanvas(condition),
             });
         } else if (animationType === "elastic") {
             gsap.to(obj, {
                 x: endX,
                 y: endY,
-                duration: 2.5,
+                duration: parseFloat(selectedSpeed) || 2.5,
                 ease: "elastic.out(1, 0.3)",
                 onUpdate: drawCanvas,
             });
@@ -582,9 +582,9 @@ function animateText(direction,condition ) {
             gsap.to(obj, {
                 x: endX,
                 y: endY,
-                duration: 2,
+                duration: parseFloat(selectedSpeed) || 2,
                 ease: "bounce.out",
-                onUpdate: drawCanvas,
+                onUpdate: () => drawCanvas(condition),
             });
         } else if (animationType === "spiral") {
             gsap.to(obj, {
@@ -1356,3 +1356,11 @@ function TabShowHide(type) {
         $("#dunkles").css("display", "block");
     }
 }
+// Listen for clicks on the dropdown menu.
+document.getElementById('ddlSpeedControl').addEventListener('click', function (event) {
+    if (event.target.matches('a.dropdown-item')) {
+        // Retrieve the 'value' attribute from the clicked dropdown item.
+        selectedSpeed = event.target.getAttribute('value');
+        document.getElementById('lblSpeed').textContent = event.target.textContent;
+    }
+});
