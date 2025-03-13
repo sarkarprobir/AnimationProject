@@ -123,11 +123,16 @@
             
         }
         .profile{
-            color: #fff!important;
+            color: #fff !important;
             background-color: #4e43e1 !important;
             width: 55px;
             height: 50px;
-            font-size: 35px !important;
+            font-size: 17px !important;
+            font-weight: 600 !important;
+        }
+
+        .acc_list:hover {
+            background-color: #2f2893 !important;
         }
     </style>
 
@@ -235,24 +240,24 @@
                         
                         <li class="nav-item dropdown">
                             <a class="profile nav-link text-light d-flex justify-content-center align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <!-- Profile Image -->
+                                
                    
-                                <img src="~/images/profile_image.png" alt="Profile" class="rounded-circle" width="40" height="40"> </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown" style="background-color: #2c2c2c; border: none; min-width: 200px;">
-                                <li class="w-100">
+                                A </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown" style="background-color: #4E43E1; border: none; border-radius:0; max-width: 106px; box-shadow: none;">
+                                <li class="w-100 acc_list">
                                     <a class="dropdown-item d-flex align-items-center text-white" href="/profile">
-                                        <i class="bi bi-person me-2"></i> My Account
+                                         Account
                                     </a>
                                 </li>
-                                <li class="w-100">
+                                <li class="w-100 acc_list">
                                     <a class="dropdown-item d-flex align-items-center text-white" href="/change-password">
-                                        <i class="bi bi-key me-2"></i> Change Password
+                                        Boards
                                     </a>
                                 </li>
                                
-                                <li class="w-100">
+                                <li class="w-100 acc_list">
                                     <a class="dropdown-item d-flex align-items-center text-white" href="/logout">
-                                        <i class="bi bi-box-arrow-right me-2"></i> Logout
+                                        Sign Out
                                     </a>
                                 </li>
                             </ul>
@@ -423,7 +428,7 @@
                                 </li> *@
 
                             </ul>
-
+                            </div>
                         </section>
                         <div class="controls" style="display:none;">
                             <input type="text" id="textInput" placeholder="Enter text" />
@@ -457,35 +462,31 @@
                         <section id="rauchbier" class="tab-panel">
                             <div class="accordion" style=" position: relative;   left: 0px; top: 0; margin-bottom: 26px; width: 100%;">
 
-                                @* <div class="answer-group"> *@
-                                @*     <p class="collapsed" data-toggle="collapse" data-target="#collapse-3" aria-expanded="true" aria-controls="collapse-1"> *@
-                                @*         Seconds <i class="fa arrow-expand" aria-hidden="true"></i> *@
-                                @*     </p> *@
-                                @*     <div id="collapse-3" class="collapse"> *@
-                                @*         <div class="card-body"> *@
-                                @*             <ul class="speed-list"> *@
-                                @*                 <li>2 Sec</li> *@
-                                @*                 <li>4 Sec</li> *@
-                                @*                 <li>6 Sec</li> *@
-                                @*                 <li>8 Sec</li> *@
-                                @*                 <li>10 Sec</li> *@
-                                @*                 <div class="clear"></div> *@
-                                @*             </ul> *@
-                                @*             <div class="clear"></div> *@
-                                @*         </div> *@
-                                @*     </div> *@
+                                
+
+                                @* <div class="dropdown mb-3"> *@
+                                @*     <a class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"> *@
+                                @*         Seconds *@
+                                @*     </a> <label id="lblSpeed"></label> *@
+                                @*     <ul class="dropdown-menu"> *@
+                                @*         <li><a class="dropdown-item" href="#">2 Sec</a></li> *@
+                                @*         <li><a class="dropdown-item" href="#">4 Sec</a></li> *@
+                                @*         <li><a class="dropdown-item" href="#">6 Sec</a></li> *@
+                                @*         <li><a class="dropdown-item" href="#">8 Sec</a></li> *@
+                                @*         <li><a class="dropdown-item" href="#">10 Sec</a></li> *@
+                                @*     </ul> *@
                                 @* </div> *@
 
                                 <div class="dropdown mb-3">
                                     <a class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Seconds
-                                    </a>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="#">2 Sec</a></li>
-                                        <li><a class="dropdown-item" href="#">4 Sec</a></li>
-                                        <li><a class="dropdown-item" href="#">6 Sec</a></li>
-                                        <li><a class="dropdown-item" href="#">8 Sec</a></li>
-                                        <li><a class="dropdown-item" href="#">10 Sec</a></li>
+                                        Speed
+                                    </a> <label id="lblSpeed"></label>
+                                    <ul class="dropdown-menu" id="ddlSpeedControl">
+                                        <li><a class="dropdown-item" value="2">2 Sec</a></li>
+                                        <li><a class="dropdown-item" value="4">4 Sec</a></li>
+                                        <li><a class="dropdown-item" value="6">6 Sec</a></li>
+                                        <li><a class="dropdown-item" value="8">8 Sec</a></li>
+                                        <li><a class="dropdown-item" value="10">10 Sec</a></li>
                                     </ul>
                                 </div>
 
