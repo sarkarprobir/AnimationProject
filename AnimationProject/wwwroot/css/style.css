@@ -472,13 +472,17 @@ svg:hover {
     align-items: center;
     gap: 10px;
     padding: 12px;
+    padding-left: 24px;
 }
 
-    .dropdown-item:hover {
-        background-color: #444;
-    }
+.dropdown-item:hover {
+   background-color: #444;
+}
 
 .icon {
     width: 18px;
     height: 18px;
+}
+.dropdown-menu[data-bs-popper] {
+    top: 97%;
 }
