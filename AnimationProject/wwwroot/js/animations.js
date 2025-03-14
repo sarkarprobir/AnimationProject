@@ -2,7 +2,7 @@
 const ctx = canvas.getContext("2d");
 const contextMenu = document.getElementById("contextMenu");
 let selectedSpeed = null;
-
+let scrollTop = 0;
 // Global variables
 let image = null;
 let recordedChunks = [];
@@ -176,7 +176,6 @@ function drawCanvas(condition) {
 
     if (condition === 'Common' || condition === 'ChangeStyle') {
         textObjects.forEach(obj => {
-            debugger;
             ctx.save(); 
             // If the object is selected, draw the red bounding box on top of the text.
             if (obj.selected) {
@@ -1216,7 +1215,9 @@ canvas.addEventListener("mouseleave", function () {
 //        textEditor.focus();
 //    }
 //});
-canvas.addEventListener("dblclick", function (e) {
+const canvasContainer = document.getElementById("canvasContainer");
+
+canvasContainer.addEventListener("dblclick", function (e) {
     const rect = canvas.getBoundingClientRect();
     const mouseX =e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
@@ -1247,7 +1248,7 @@ canvas.addEventListener("dblclick", function (e) {
 
         // Position the text editor exactly over the original text
         textEditor.style.left = `${rect.left + editorX - offsetX}px`;
-        textEditor.style.top = `${rect.top + obj.y - ascent - offsetY}px`;
+        textEditor.style.top = `${rect.top + obj.y + scrollTop - ascent - offsetY}px`;
         textEditor.style.width = `${textWidth + 10}px`; // Slight padding for better visibility
         textEditor.style.height = `${textHeight}px`;
 
@@ -1307,27 +1308,6 @@ textEditor.addEventListener("keydown", function (e) {
 });
 
 const colorPicker = document.getElementById("favcolor");
-
-
-
-// Event listener for color picker change
-//colorPicker.addEventListener("change", function () {
-//    $("#hdnTextColor").val(colorPicker.value);
-//    const fontSize = document.getElementById("fontSize").value; // Font size from dropdown
-//    const fontFamily = document.getElementById("fontFamily").value; // Font family from dropdown
-//    const textColor = document.getElementById("hdnTextColor").value; // Text color from dropdown 
-//    const textAlign = document.getElementById("textAlign").value; // Text alignment from dropdown
-
-//    const Obj = textObjects.find(obj => obj.selected);
-//    if (Obj) {
-//        Obj.fontSize = fontSize;
-//        Obj.fontFamily = fontFamily || 'Arial';
-//        Obj.textColor = textColor || 'black';
-//        Obj.textAlign = textAlign || 'left';
-//    }
-//      drawCanvas('ChangeStyle');
-//});ggg
-
 function ChangeColor() {
     $("#hdnTextColor").val(colorPicker.value);
     const textColor = document.getElementById("hdnTextColor").value; // Text color from dropdown 
@@ -1363,4 +1343,9 @@ document.getElementById('ddlSpeedControl').addEventListener('click', function (e
         selectedSpeed = event.target.getAttribute('value');
         document.getElementById('lblSpeed').textContent = event.target.textContent;
     }
+});
+
+//Calculate scroll height that travell
+canvasContainer.addEventListener("scroll", function () {
+    scrollTop = canvasContainer.scrollTop;
 });
