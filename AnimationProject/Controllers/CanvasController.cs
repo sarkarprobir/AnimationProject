@@ -12,5 +12,9 @@ namespace AnimationProject.Controllers
         {
             return View();
         }
+        public IActionResult Account()
+        {
+            return View();
+        }
     }
 }
