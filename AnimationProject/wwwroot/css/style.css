@@ -106,9 +106,9 @@ ul .right-listone li a img {
     ul.right-listone li a:hover {
         border: 2px solid #4e43e1;
     }
-    ul.right-listone li a:focus {
-        border: 2px solid #4e43e1;
-    }
+.active_effect {
+    border: 2px solid #4e43e1 !important;
+}
 
 ul.right-listone li:nth-child(3){margin-right:0px;}
 ul.right-listone li:nth-child(6){margin-right:0px;}
