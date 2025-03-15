@@ -99,73 +99,25 @@ canvas.addEventListener("contextmenu", function (e) {
 
     // Get mouse coordinates relative to the canvas container.
     const rect = canvas.getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
+    const offsetX = e.clientX  - rect.left;
     const offsetY = e.clientY - rect.top;
-
+    const adjustX = 155;
+    const adjustY = 64;
     const found = getObjectAt(offsetX, offsetY);
     if (found) {
         selectedForContextMenu = found.obj;
         selectedType = found.type;
+
         // Position the context menu dynamically within the canvas container.
-        contextMenu.style.left = offsetX + "px";
-        contextMenu.style.top = offsetY + "px";
+        contextMenu.style.left = offsetX + adjustX + "px";
+        contextMenu.style.top = offsetY + adjustY + "px";
+        //contextMenu.style.left = `${rect.left + editorX - offsetX}px`;
+        //contextMenu.style.top = `${rect.top + found.obj.y + scrollTop - ascent - offsetY}px`;
         contextMenu.style.display = "block";
     } else {
         contextMenu.style.display = "none";
     }
 });
-
-// Show dynamic context menu on right-click.
- //canvas.addEventListener("contextmenu", function (e) {
- //  e.preventDefault();
- //  const rect = canvasContainer.getBoundingClientRect();
- //  const offsetX = e.clientX - rect.left;
- //  const offsetY = e.clientY - rect.top;
- //  console.log("Canvas context menu at:", offsetX, offsetY);
-
- //  // Show the context menu for debugging
- //  contextMenu.style.left = offsetX + "px";
- //  contextMenu.style.top = offsetY + "px";
- //  contextMenu.style.display = "block";
- //});
-//canvasContainer.addEventListener("contextmenu", function (e) {
-   
-//    e.preventDefault(); // Prevent default browser context menu
-//    // Get coordinates relative to canvasContainer
-//    const rect = canvasContainer.getBoundingClientRect();
-//    const offsetX = e.clientX - rect.left;
-//    const offsetY = e.clientY - rect.top;
-//    console.log("Context menu event at:", offsetX, offsetY);
-
-//    // For debugging, show the context menu regardless of getObjectAt
-//    contextMenu.style.left = offsetX + "px";
-//    contextMenu.style.top = offsetY + "px";
-//    contextMenu.style.display = "block";
-
-
-
-//    ////// Get mouse coordinates relative to the canvas container.
-//    ////const rect = canvas.getBoundingClientRect();
-//    ////const offsetX = e.clientX - rect.left;
-//    ////const offsetY = e.clientY - rect.top;
-
-//    ////const found = getObjectAt(offsetX, offsetY);
-//    //const rect = canvas.getBoundingClientRect();
-//    //const mouseX = e.clientX - rect.left;
-//    //const mouseY = e.clientY - rect.top;
-//    //const found = getTextObjectAt(mouseX, mouseY);
-
-//    //if (found) {
-//    //    selectedForContextMenu = found.obj;
-//    //    selectedType = found.type;
-//    //    // Position the context menu dynamically within the canvas container.
-//    //    contextMenu.style.left = offsetX + "px";
-//    //    contextMenu.style.top = offsetY + "px";
-//    //    contextMenu.style.display = "block";
-//    //} else {
-//    //    contextMenu.style.display = "none";
-//    //}
-//});
 
 // Hide the context menu when clicking elsewhere.
 document.addEventListener("click", function (e) {
