@@ -360,49 +360,58 @@ function animateText(direction,condition ) {
         obj.y = startY;
 
         //This section is for in out and stay
-        const inTime = 2;   // How fast the object comes onto the canvas.
+        const inTime = 10;   // How fast the object comes onto the canvas.
         const stayTime = 5; // How long the object stays on screen.
-        const outTime = 10;  // How fast the object leaves the canvas.
+        const outTime = 2;  // How fast the object leaves the canvas.
         const exitX = window.innerWidth; // Example: exit to the right of the screen.
         const exitY = endY;              // Maintain the same vertical position.
         ////end///////////
         if (animationType === "linear") {
-            gsap.to(obj, {
-                x: endX,
-                y: endY,
-                duration: parseFloat(selectedSpeed) || 2,
-                ease: "power1.inOut",
-                onUpdate: () => drawCanvas(condition),
-            });
-           ////This section is for in out and stay
-            //let tl = gsap.timeline({
-            //    onUpdate: function () {
-            //        drawCanvas(condition);
-            //    }
-            //});
-
-            //// "In" phase: Animate the object onto the canvas.
-            //tl.to(obj, {
+            //gsap.to(obj, {
             //    x: endX,
             //    y: endY,
-            //    duration: inTime,
-            //    ease: "power1.in"
+            //    duration: parseFloat(selectedSpeed) || 2,
+            //    ease: "power1.inOut",
+            //    onUpdate: () => drawCanvas(condition),
             //});
+           ////This section is for in out and stay
+            let tl = gsap.timeline({
+                onUpdate: function () {
+                    drawCanvas(condition);
+                }
+            });
 
-            //// "Stay" phase: Hold the object in place for the stay duration.
-            //// This tween doesn't change any properties; it just acts as a pause.
-            //tl.to(obj, {
-            //    duration: stayTime,
-            //    ease: "none"
-            //});
+            // "In" phase: Animate the object onto the canvas.
+            tl.to(obj, {
+                x: endX,
+                y: endY,
+                duration: inTime,
+                ease: "power1.in"
+            });
 
-            //// "Out" phase: Animate the object off the canvas.
-            //tl.to(obj, {
-            //    x: exitX,
-            //    y: exitY,
-            //    duration: outTime,
-            //    ease: "power1.out"
-            //});
+            // "Stay" phase: Hold the object in place for the stay duration.
+            // This tween doesn't change any properties; it just acts as a pause.
+            tl.to(obj, {
+                duration: stayTime,
+                ease: "none"
+            });
+
+            // "Out" phase: Animate the object off the canvas.
+            tl.to(obj, {
+                x: exitX,
+                y: exitY,
+                duration: outTime,
+                ease: "power1.out"
+            });
+            // Final phase: Reset the object to the final position with text.
+            // This sets the object’s position to (endX, endY) after the out tween completes.
+            tl.set(obj, {
+                    x: endX,
+                    y: endY,
+                    duration: parseFloat(selectedSpeed) || 2,
+                    ease: "power1.inOut",
+                    onUpdate: () => drawCanvas(condition),
+            });
             ////end///////////
 
         } else if (animationType === "elastic") {
