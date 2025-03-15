@@ -2,7 +2,11 @@
 const canvas = document.getElementById("myCanvas");
 const ctx = canvas.getContext("2d");
 const contextMenu = document.getElementById("contextMenu");
-let selectedSpeed = null;
+const canvasContainer = document.getElementById("canvasContainer");
+let selectedInSpeed = null;
+let selectedStaySpeed = null;
+let selectedOutSpeed = null;
+
 let scrollTop = 0;
 let image = null;
 let recordedChunks = [];
@@ -55,6 +59,40 @@ function getObjectAt(x, y) {
 let selectedForContextMenu = null;
 let selectedType = null; // "text" or "image"
 
+//////canvasContainer.addEventListener("contextmenu", function (e) {
+//////    e.preventDefault();
+//////    const rect = canvas.getBoundingClientRect();
+//////    const mouseX = e.clientX - rect.left;
+//////    const mouseY = e.clientY - rect.top;
+//////    const obj = getObjectAt(mouseX, mouseY);
+    
+
+//////    if (obj) {
+//////        const offsetX = 210;  // adjust if needed
+//////        const offsetY = 43;  // adjust if needed
+//////        selectedForContextMenu = obj;
+//////        selectedType = obj.type;
+//////        const metrics = ctx.measureText(obj.text);
+//////        const textWidth = metrics.width;
+//////        let editorX;
+       
+//////        if (obj.textAlign === "center") {
+//////            editorX = obj.x - textWidth / 2;
+//////        } else if (obj.textAlign === "right") {
+//////            editorX = obj.x - textWidth;
+//////        } else {
+//////            editorX = obj.x;
+//////        }
+//////        // Position the text editor exactly over the original text
+//////        contextMenu.style.left = `${rect.left + editorX - offsetX}px`;
+//////        contextMenu.style.top = `${rect.top + obj.y + scrollTop -  offsetY}px`;
+//////        contextMenu.style.display = "block";
+//////    }
+//////    else {
+//////                contextMenu.style.display = "none";
+//////            }
+//////});
+
 // Show dynamic context menu on right-click.
 canvas.addEventListener("contextmenu", function (e) {
     e.preventDefault(); // Prevent default browser context menu
@@ -76,6 +114,58 @@ canvas.addEventListener("contextmenu", function (e) {
         contextMenu.style.display = "none";
     }
 });
+
+// Show dynamic context menu on right-click.
+ //canvas.addEventListener("contextmenu", function (e) {
+ //  e.preventDefault();
+ //  const rect = canvasContainer.getBoundingClientRect();
+ //  const offsetX = e.clientX - rect.left;
+ //  const offsetY = e.clientY - rect.top;
+ //  console.log("Canvas context menu at:", offsetX, offsetY);
+
+ //  // Show the context menu for debugging
+ //  contextMenu.style.left = offsetX + "px";
+ //  contextMenu.style.top = offsetY + "px";
+ //  contextMenu.style.display = "block";
+ //});
+//canvasContainer.addEventListener("contextmenu", function (e) {
+   
+//    e.preventDefault(); // Prevent default browser context menu
+//    // Get coordinates relative to canvasContainer
+//    const rect = canvasContainer.getBoundingClientRect();
+//    const offsetX = e.clientX - rect.left;
+//    const offsetY = e.clientY - rect.top;
+//    console.log("Context menu event at:", offsetX, offsetY);
+
+//    // For debugging, show the context menu regardless of getObjectAt
+//    contextMenu.style.left = offsetX + "px";
+//    contextMenu.style.top = offsetY + "px";
+//    contextMenu.style.display = "block";
+
+
+
+//    ////// Get mouse coordinates relative to the canvas container.
+//    ////const rect = canvas.getBoundingClientRect();
+//    ////const offsetX = e.clientX - rect.left;
+//    ////const offsetY = e.clientY - rect.top;
+
+//    ////const found = getObjectAt(offsetX, offsetY);
+//    //const rect = canvas.getBoundingClientRect();
+//    //const mouseX = e.clientX - rect.left;
+//    //const mouseY = e.clientY - rect.top;
+//    //const found = getTextObjectAt(mouseX, mouseY);
+
+//    //if (found) {
+//    //    selectedForContextMenu = found.obj;
+//    //    selectedType = found.type;
+//    //    // Position the context menu dynamically within the canvas container.
+//    //    contextMenu.style.left = offsetX + "px";
+//    //    contextMenu.style.top = offsetY + "px";
+//    //    contextMenu.style.display = "block";
+//    //} else {
+//    //    contextMenu.style.display = "none";
+//    //}
+//});
 
 // Hide the context menu when clicking elsewhere.
 document.addEventListener("click", function (e) {
@@ -360,20 +450,14 @@ function animateText(direction,condition ) {
         obj.y = startY;
 
         //This section is for in out and stay
-        const inTime = 10;   // How fast the object comes onto the canvas.
-        const stayTime = 5; // How long the object stays on screen.
-        const outTime = 2;  // How fast the object leaves the canvas.
+        const inTime = parseFloat(selectedInSpeed) || 3;   // How fast the object comes onto the canvas.
+        const stayTime = parseFloat(selectedStaySpeed) || 6; // How long the object stays on screen.
+        const outTime = parseFloat(selectedOutSpeed) || 2;  // How fast the object leaves the canvas.
         const exitX = window.innerWidth; // Example: exit to the right of the screen.
         const exitY = endY;              // Maintain the same vertical position.
         ////end///////////
         if (animationType === "linear") {
-            //gsap.to(obj, {
-            //    x: endX,
-            //    y: endY,
-            //    duration: parseFloat(selectedSpeed) || 2,
-            //    ease: "power1.inOut",
-            //    onUpdate: () => drawCanvas(condition),
-            //});
+          
            ////This section is for in out and stay
             let tl = gsap.timeline({
                 onUpdate: function () {
@@ -408,17 +492,26 @@ function animateText(direction,condition ) {
             tl.set(obj, {
                     x: endX,
                     y: endY,
-                    duration: parseFloat(selectedSpeed) || 2,
+                duration: parseFloat(selectedInSpeed) || 2,
                     ease: "power1.inOut",
                     onUpdate: () => drawCanvas(condition),
             });
             ////end///////////
+            ////This is default animation of linear
+            //gsap.to(obj, {
+            //    x: endX,
+            //    y: endY,
+            //    duration: parseFloat(selectedSpeed) || 2,
+            //    ease: "power1.inOut",
+            //    onUpdate: () => drawCanvas(condition),
+            //});
+
 
         } else if (animationType === "elastic") {
             gsap.to(obj, {
                 x: endX,
                 y: endY,
-                duration: parseFloat(selectedSpeed) || 2.5,
+                duration: parseFloat(selectedInSpeed) || 2.5,
                 ease: "elastic.out(1, 0.3)",
                 onUpdate: drawCanvas,
             });
@@ -470,13 +563,55 @@ function animateText(direction,condition ) {
                 }
             );
         } else if (animationType === "bounce") {
-            gsap.to(obj, {
+
+            ////This section is for in out and stay
+            let tl = gsap.timeline({
+                onUpdate: function () {
+                    drawCanvas(condition);
+                }
+            });
+
+            // "In" phase: Animate the object onto the canvas.
+            tl.to(obj, {
                 x: endX,
                 y: endY,
-                duration: parseFloat(selectedSpeed) || 2,
+                duration: inTime,
+                ease: "bounce.out"
+            });
+
+            // "Stay" phase: Hold the object in place for the stay duration.
+            // This tween doesn't change any properties; it just acts as a pause.
+            tl.to(obj, {
+                duration: stayTime,
+                ease: "none"
+            });
+
+            // "Out" phase: Animate the object off the canvas.
+            tl.to(obj, {
+                x: exitX,
+                y: exitY,
+                duration: outTime,
+                ease: "bounce.out"
+            });
+            // Final phase: Reset the object to the final position with text.
+            // This sets the object’s position to (endX, endY) after the out tween completes.
+            tl.set(obj, {
+                x: endX,
+                y: endY,
+                duration: parseFloat(selectedInSpeed) || 2,
                 ease: "bounce.out",
                 onUpdate: () => drawCanvas(condition),
             });
+
+
+            ////This is default effect of bounce
+            //gsap.to(obj, {
+            //    x: endX,
+            //    y: endY,
+            //    duration: parseFloat(selectedInSpeed) || 2,
+            //    ease: "bounce.out",
+            //    onUpdate: () => drawCanvas(condition),
+            //});
         } else if (animationType === "spiral") {
             gsap.to(obj, {
                 duration: 3,
@@ -548,8 +683,32 @@ function animateText(direction,condition ) {
 }
 
 
-function textAnimationClick(type) {
+function textAnimationClick(clickedElement, type) {
     $("#hdnTextAnimationType").val(type);
+    // Get the container using its ID.
+    var ulEffects = document.getElementById("ulEffects");
+
+    // Select all <a> elements within the container.
+    var links = ulEffects.getElementsByTagName("a");
+
+    // Remove the active_effect class from all links.
+    for (var i = 0; i < links.length; i++) {
+        links[i].classList.remove("active_effect");
+    }
+
+    // Add the active_effect class to the clicked element.
+    clickedElement.classList.add("active_effect");
+
+    // Get the container using its ID.
+    var ulDirection = document.getElementById("uldirection");
+
+    // Select all <a> elements within the container.
+    var links = ulDirection.getElementsByTagName("a");
+
+    // Remove the active_effect class from all links.
+    for (var i = 0; i < links.length; i++) {
+        links[i].classList.remove("active_effect");
+    }
 }
 function animateImage(condition) {
     const startX = parseInt(document.getElementById("imageStartX").value);
@@ -910,12 +1069,21 @@ function ShowAnimationOption() {
     //}
     document.getElementById("imageCoordinationforBounce").style.display = "block";
 }
-function setCoordinate(direction, imageStartX, imageStartY, imageEndX, imageEndY) {
-    //document.getElementById("textStartX").value = textStartX;
-    //document.getElementById("textStartY").value = textStartY;
-    //document.getElementById("textEndX").value = textEndX;
-    //document.getElementById("textEndY").value = textEndY;
-   // document.getElementById("textAnimation").value = $("#hdnTextAnimationType").val();
+function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imageEndX, imageEndY) {
+    // Get the container using its ID.
+    var ulDirection = document.getElementById("uldirection");
+
+    // Select all <a> elements within the container.
+    var links = ulDirection.getElementsByTagName("a");
+
+    // Remove the active_effect class from all links.
+    for (var i = 0; i < links.length; i++) {
+        links[i].classList.remove("active_effect");
+    }
+
+    // Add the active_effect class to the clicked element.
+    clickedElement.classList.add("active_effect");
+
     if ($("#hdnTextAnimationType").val() !== "") {
         document.getElementById("imageStartX").value = imageStartX;
         document.getElementById("imageStartY").value = imageStartY;
@@ -1107,7 +1275,7 @@ canvas.addEventListener("mouseleave", function () {
 //        textEditor.focus();
 //    }
 //});
-const canvasContainer = document.getElementById("canvasContainer");
+
 
 canvasContainer.addEventListener("dblclick", function (e) {
     const rect = canvas.getBoundingClientRect();
@@ -1232,7 +1400,7 @@ function TabShowHide(type) {
 document.getElementById('ddlSpeedControl').addEventListener('click', function (event) {
     if (event.target.matches('a.dropdown-item')) {
         // Retrieve the 'value' attribute from the clicked dropdown item.
-        selectedSpeed = event.target.getAttribute('value');
+        selectedInSpeed = event.target.getAttribute('value');
         document.getElementById('lblSpeed').textContent = event.target.textContent;
     }
 });
@@ -1240,10 +1408,19 @@ document.getElementById('ddlSpeedControl').addEventListener('click', function (e
 document.getElementById('ddlSecondsControl').addEventListener('click', function (event) {
     if (event.target.matches('a.dropdown-item')) {
         // Retrieve the 'value' attribute from the clicked dropdown item.
-        selectedSpeed = event.target.getAttribute('value');
+        selectedStaySpeed = event.target.getAttribute('value');
         document.getElementById('lblSeconds').textContent = event.target.textContent;
     }
 });
+
+document.getElementById('ddlOutSpeedControl').addEventListener('click', function (event) {
+    if (event.target.matches('a.dropdown-item')) {
+        // Retrieve the 'value' attribute from the clicked dropdown item.
+        selectedOutSpeed = event.target.getAttribute('value');
+        document.getElementById('lblOutSpeed').textContent = event.target.textContent;
+    }
+});
+
 //Calculate scroll height that travell
 canvasContainer.addEventListener("scroll", function () {
     scrollTop = canvasContainer.scrollTop;
