@@ -322,158 +322,6 @@ function OnChangefontFamily(value) {
 
     drawCanvas('ChangeStyle');
 }
-function animateTextold(condition) {
-    const startX = parseInt(document.getElementById("textStartX").value);
-    const startY = parseInt(document.getElementById("textStartY").value);
-    const endX = parseInt(document.getElementById("textEndX").value);
-    const endY = parseInt(document.getElementById("textEndY").value);
-    const animationType = document.getElementById("textAnimation").value;
-
-    textObjects.forEach(obj => {
-        // Optionally set each text object's starting position.
-        text = obj.text;
-        textPosition.content = obj.text;
-        obj.x = startX;
-        obj.y = startY;
-
-        if (animationType === "linear") {
-            gsap.to(obj, {
-                x: endX,
-                y: endY,
-                duration: 2,
-                ease: "power1.inOut",
-                onUpdate: function () {
-                    drawCanvas(condition);
-                }
-            });
-        } else if (animationType === "elastic") {
-            gsap.to(obj, {
-                x: endX,
-                y: endY,
-                duration: 2.5,
-                ease: "elastic.out(1, 0.3)",
-                onUpdate: function () {
-                    drawCanvas(condition);
-                }
-            });
-        } else if (animationType === "wave") {
-            // Use a separate ticker for the wave effect on each object.
-            let angle = 0;
-            gsap.ticker.add(() => {
-                obj.x = startX + (endX - startX) * 0.5 + Math.sin(angle) * 100;
-                obj.y = startY + (endY - startY) * 0.5;
-                drawCanvas(condition);
-                angle += 0.05;
-            });
-        } else if (animationType === "fadeIn") {
-            gsap.fromTo(
-                obj,
-                { opacity: 0, x: startX, y: startY },
-                {
-                    opacity: 1,
-                    x: endX,
-                    y: endY,
-                    duration: 2,
-                    ease: "power2.out",
-                    onUpdate: function () { drawCanvas(condition); }
-                }
-            );
-        } else if (animationType === "zoomInOut") {
-            gsap.fromTo(
-                obj,
-                { scale: 0, x: startX, y: startY },
-                {
-                    scale: 1,
-                    x: endX,
-                    y: endY,
-                    duration: 2,
-                    ease: "power2.inOut",
-                    onUpdate: function () { drawCanvas(condition); }
-                }
-            );
-        } else if (animationType === "rotate") {
-            gsap.fromTo(
-                obj,
-                { rotation: 0, x: startX, y: startY },
-                {
-                    rotation: 360,
-                    x: endX,
-                    y: endY,
-                    duration: 2,
-                    ease: "power2.inOut",
-                    onUpdate: function () { drawCanvas(condition); }
-                }
-            );
-        } else if (animationType === "bounce") {
-            gsap.to(obj, {
-                x: endX,
-                y: endY,
-                duration: 2,
-                ease: "bounce.out",
-                onUpdate: function () { drawCanvas(condition); }
-            });
-        } else if (animationType === "spiral") {
-            gsap.to(obj, {
-                duration: 3,
-                motionPath: {
-                    path: [
-                        { x: startX, y: startY },
-                        { x: endX - 50, y: endY - 50 },
-                        { x: endX, y: endY }
-                    ],
-                    autoRotate: true
-                },
-                ease: "power2.inOut",
-                onUpdate: function () { drawCanvas(condition); }
-            });
-        } else if (animationType === "fadeText") {
-            gsap.fromTo(
-                obj,
-                { x: startX, y: startY, opacity: 0 },
-                {
-                    x: endX,
-                    y: endY,
-                    opacity: 1,
-                    duration: 2,
-                    ease: "power2.inOut",
-                    onUpdate: function () { drawCanvas(condition); },
-                    onComplete: () => {
-                        gsap.to(obj, {
-                            opacity: 1,
-                            duration: 2,
-                            onUpdate: function () { drawCanvas(condition); }
-                        });
-                    }
-                }
-            );
-        } else if (animationType === "typeText") {
-            // For typing effect, assume each object stores its full text in obj.fullText.
-            // Start with an empty text.
-            obj.fullText = obj.fullText || obj.text;
-            obj.text = "";
-            gsap.to(obj, {
-                duration: obj.fullText.length * 0.15,
-                ease: "power2.inOut",
-                onUpdate: function () {
-                    const progress = Math.ceil(this.progress() * obj.fullText.length);
-                    obj.text = obj.fullText.slice(0, progress);
-                    drawCanvas(condition);
-                }
-            });
-        } else if (animationType === "morphText") {
-            gsap.to(obj, {
-                x: endX,
-                y: endY,
-                duration: 2.5,
-                ease: "elastic.out(1, 0.3)",
-                onUpdate: function () { drawCanvas(condition); },
-                repeat: 1,
-                yoyo: true
-            });
-        }
-    });
-}
-
 function animateText(direction,condition ) {
     const animationType = document.getElementById("hdnTextAnimationType").value;
     textObjects.forEach(obj => {
@@ -511,7 +359,13 @@ function animateText(direction,condition ) {
         obj.x = startX;
         obj.y = startY;
 
-
+        //This section is for in out and stay
+        const inTime = 2;   // How fast the object comes onto the canvas.
+        const stayTime = 5; // How long the object stays on screen.
+        const outTime = 10;  // How fast the object leaves the canvas.
+        const exitX = window.innerWidth; // Example: exit to the right of the screen.
+        const exitY = endY;              // Maintain the same vertical position.
+        ////end///////////
         if (animationType === "linear") {
             gsap.to(obj, {
                 x: endX,
@@ -520,6 +374,37 @@ function animateText(direction,condition ) {
                 ease: "power1.inOut",
                 onUpdate: () => drawCanvas(condition),
             });
+           ////This section is for in out and stay
+            //let tl = gsap.timeline({
+            //    onUpdate: function () {
+            //        drawCanvas(condition);
+            //    }
+            //});
+
+            //// "In" phase: Animate the object onto the canvas.
+            //tl.to(obj, {
+            //    x: endX,
+            //    y: endY,
+            //    duration: inTime,
+            //    ease: "power1.in"
+            //});
+
+            //// "Stay" phase: Hold the object in place for the stay duration.
+            //// This tween doesn't change any properties; it just acts as a pause.
+            //tl.to(obj, {
+            //    duration: stayTime,
+            //    ease: "none"
+            //});
+
+            //// "Out" phase: Animate the object off the canvas.
+            //tl.to(obj, {
+            //    x: exitX,
+            //    y: exitY,
+            //    duration: outTime,
+            //    ease: "power1.out"
+            //});
+            ////end///////////
+
         } else if (animationType === "elastic") {
             gsap.to(obj, {
                 x: endX,
