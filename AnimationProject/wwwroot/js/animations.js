@@ -1345,6 +1345,13 @@ document.getElementById('ddlSpeedControl').addEventListener('click', function (e
     }
 });
 
+document.getElementById('ddlSecondsControl').addEventListener('click', function (event) {
+    if (event.target.matches('a.dropdown-item')) {
+        // Retrieve the 'value' attribute from the clicked dropdown item.
+        selectedSpeed = event.target.getAttribute('value');
+        document.getElementById('lblSeconds').textContent = event.target.textContent;
+    }
+});
 //Calculate scroll height that travell
 canvasContainer.addEventListener("scroll", function () {
     scrollTop = canvasContainer.scrollTop;

@@ -122,6 +122,10 @@
             background-color: #4e43e1 !important;
             
         }
+
+         .nav-item  .dropdown-item:hover{
+            background-color: #4a32a3 !important;
+          }
         .profile{
             color: #fff !important;
             background-color: #4e43e1 !important;
@@ -153,6 +157,7 @@
         }
             $(document).ready(function(){
                document.getElementById('lblSpeed').textContent = "2 Sec";
+               document.getElementById('lblSeconds').textContent = "2 Sec";
         });
     </script>
 
@@ -467,9 +472,9 @@
                                 <div class="dropdown mb-3"> 
                                      <a class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"> 
                                          Seconds 
-                                    </a> <label id="lblSpeed"></label> 
-                                    <ul class="dropdown-menu"> 
-                                       <li><a class="dropdown-item" href="#">2 Sec</a></li> 
+                                    </a> <label id="lblSeconds"></label> 
+                                    <ul class="dropdown-menu" id="ddlSecondsControl">
+                                        <li><a class="dropdown-item" href="#">2 Sec</a></li> 
                                         <li><a class="dropdown-item" href="#">4 Sec</a></li> 
                                         <li><a class="dropdown-item" href="#">6 Sec</a></li> 
                                        <li><a class="dropdown-item" href="#">8 Sec</a></li> 
@@ -515,7 +520,11 @@
 
                                     <div class="clear"></div>
                                 </li>
+                                <li>
+                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-effict.png" alt="pattren" width="35"></a>
 
+                                    <div class="clear"></div>
+                                </li>
 
                             </ul>
 
@@ -524,30 +533,30 @@
                             <ul class="right-listone">
                                 <li>
                                     <a href="javascript:void(0)"> <img src="~/images/icons/icon-lr.png" alt="pattren"></a>
-                                    <p>LR</p>
+                                    
                                     <div class="clear"></div>
                                 </li>
                                 <li>
                                     <a href="javascript:void(0)"> <img src="~/images/icons/icon-rl.png" alt="text"></a>
-                                    <p>LR</p>
+                                    
                                 </li>
-                                <li>
-                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-bu.png" alt="circle"></a>
-                                    <p>LR</p>
-                                </li>
+                                @* <li> *@
+                                @*     <a href="javascript:void(0)"> <img src="~/images/icons/icon-bu.png" alt="circle"></a> *@
+                                @*     <p>LR</p> *@
+                                @* </li> *@
                                 <li>
                                     <a href="javascript:void(0)"> <img src="~/images/icons/icon-bt.png" alt="Masking"></a>
-                                    <p>LR</p>
+                                    
                                 </li>
                                 <li>
                                     <a href="javascript:void(0)"> <img src="~/images/icons/icon-tb.png" alt="image"></a>
-                                    <p>LR</p>
+                                    
                                 </li>
 
-                                <li>
-                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-ud.png" alt="image"></a>
-                                    <p>LR</p>
-                                </li>
+                                @* <li> *@
+                                @*     <a href="javascript:void(0)"> <img src="~/images/icons/icon-ud.png" alt="image"></a> *@
+                                @*     <p>LR</p> *@
+                                @* </li> *@
 
                             </ul>
                         </section>
