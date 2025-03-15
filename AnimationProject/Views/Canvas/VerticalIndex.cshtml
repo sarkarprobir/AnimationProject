@@ -137,20 +137,6 @@
     </style>
 
     <script>
-        // Function to handle swatch click.
-        function selectColor(color, element) {
-          // Remove 'selected' class from all swatches.
-          document.querySelectorAll('.color-swatch').forEach(swatch => {
-            swatch.classList.remove('selected');
-          });
-          // Add 'selected' class to the clicked swatch.
-          element.classList.add('selected');
-
-          $("#hdnTextColor").val(color);
-           ChangeStyle();
-          // For example, set a hidden input or apply the color style directly:
-          console.log("Selected color:", color);
-        }
             $(document).ready(function(){
                document.getElementById('lblSpeed').textContent = "2 Sec";
         });

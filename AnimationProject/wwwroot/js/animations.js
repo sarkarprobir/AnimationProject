@@ -1,9 +1,9 @@
-﻿const canvas = document.getElementById("myCanvas");
+﻿// Global variables
+const canvas = document.getElementById("myCanvas");
 const ctx = canvas.getContext("2d");
 const contextMenu = document.getElementById("contextMenu");
 let selectedSpeed = null;
 let scrollTop = 0;
-// Global variables
 let image = null;
 let recordedChunks = [];
 let text = $("#textInput").val();
@@ -11,11 +11,10 @@ let textPosition = { x: 100, y: 100, opacity: 1, content: text, }; // Default st
 let imagePosition = { x: 100, y: 20, scaleX: 1, scaleY: 1, opacity: 1, }; // Default start position
 
 /////this is for add multiple text
-
 const textEditor = document.getElementById("textEditor");
 const addTextBtn = document.getElementById("addTextBtn");
 
-// Settings for text style
+// Settings for default text style
 const fontSize = 35;
 const fontFamily = "Arial";
 const textColor = "black";
@@ -29,7 +28,6 @@ let currentDrag = null;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
 
-////////end
 ////This is for delete text///////////////////
 // Utility: Returns an object (text or image) if the (x,y) falls within its bounding box.
 function getObjectAt(x, y) {
