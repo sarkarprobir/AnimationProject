@@ -138,6 +138,11 @@
         .acc_list:hover {
             background-color: #2f2893 !important;
         }
+        .check_box{
+            width: 20px !important;
+            height: 20px !important;
+            border-color: #000000b3 !important;
+        }
     </style>
 
     <script>
@@ -581,7 +586,7 @@
 
                 <div class="col-md-12 mb-3">
                     <div class="row alignment-img">
-                        <ul>
+                        <ul class="d-flex justify-content-between mb-0">
                             <li>
                                 <a onclick="ChangeAlignStyle('right')"> <img src="~/images/icons/icon-align-left.png" title="Alignleft" alt="Icon-alignleft"></a>
                             </li>
@@ -591,10 +596,7 @@
                             <li>
                                 <a onclick="ChangeAlignStyle('left')"> <img src="~/images/icons/icon-align-right.png" title="Alignright" alt="Icon-alignleft"></a>
                             </li>
-                            <li>
-                            </li>
-                            <li>
-                            </li>
+
                         </ul>
                         <input type="hidden" id="textAlign" />
                     </div>
@@ -602,10 +604,10 @@
 
                 <div class="col-md-12 mb-3">
                     <div class="row FontSize">
-                        <div class="col-md-6 p-l-0">
+                        <div class="col-md-6 ">
                             <label>Size</label>
                         </div>
-                        <div class="col-md-6 p-r-0 text-end">
+                        <div class="col-md-6  text-end">
                             <select id="fontSize" onchange="ChangeStyle()">
                               
                                 <option value="18">18</option>
@@ -623,14 +625,14 @@
                     </div>
                 </div>
                 <div class="col-md-12 mb-3">
-                    <div class="row FontSize">
-                        <div class="col-md-6 p-l-0">
+                    <div class="row FontSize my-4">
+                        <div class="col-md-6  d-flex align-items-center">
                             <label>Text Color</label>
                         </div>
-                        <div class="col-md-6 p-r-0 text-end">
+                        <div class="col-md-6 text-end d-flex align-items-center justify-content-end">
                             <div class="color-palette">
                                 <input type="hidden" id="hdnTextColor" />
-                                <form action="/action_page.php">
+                                <form action="/action_page.php" class="d-flex">
                                     <input type="color" id="favcolor" name="favcolor" oninput="ChangeColor()" value="#000">
                                 </form>
                             </div>
@@ -640,48 +642,49 @@
                 </div>
                 <div class="col-md-12 mb-4">
                     <div class="row fillcolor">
-                        <div class="col-md-6 p-l-0">
+                        <div class="col-md-6 d-flex align-items-center">
                             <label>Fill</label>
                         </div>
-                        <div class="col-md-6 p-r-0 text-end">
-                            <div class="checkboxes__item">
-                                <label class="checkbox style-c">
-                                    <input type="checkbox" checked="checked" />
-                                    <div class="checkbox__checkmark"></div>
-                                </label>
+                        <div class="col-md-6  d-flex">
+                           
+                            <div class="form-check ms-auto">
+                                <input class="form-check-input check_box"
+                                       type="checkbox"
+                                       value=""
+                                       id="flexCheckDefault" />
                             </div>
                         </div>
 
                     </div>
                     <div class="row fillcolor mt-2">
-                        <div class="col-md-6 p-l-0">
+                        <div class="col-md-6 d-flex align-items-center">
                             <label>00000</label>
                         </div>
-                        <div class="col-md-6 p-r-0 text-end">
+                        <div class="col-md-6  text-end">
                             <span class="fill-solid"> </span>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-12 mb-4">
                     <div class="row Strock">
-                        <div class="col-md-6 p-l-0">
+                        <div class="col-md-6 d-flex align-items-center">
                             <label>Strock</label>
                         </div>
-                        <div class="col-md-6 p-r-0 text-end">
-                            <div class="checkboxes__item">
-                                <label class="checkbox style-c">
-                                    <input type="checkbox" checked="checked" />
-                                    <div class="checkbox__checkmark"></div>
-                                </label>
+                        <div class="col-md-6  d-flex">
+                            <div class="form-check ms-auto">
+                                <input class="form-check-input check_box"
+                                       type="checkbox"
+                                       value=""
+                                       id="flexCheckDefault" />
                             </div>
                         </div>
 
                     </div>
                     <div class="row Strock mt-2">
-                        <div class="col-md-6 p-l-0">
+                        <div class="col-md-6 ">
                             <label>00000</label>
                         </div>
-                        <div class="col-md-6 p-r-0 text-end">
+                        <div class="col-md-6  text-end">
                             <span class="fill-solid">
                             </span>
                         </div>
@@ -689,11 +692,11 @@
                 </div>
 
                 <div class="col-md-12 mb-2">
-                    <div class="row Strock-Line">
-                        <div class="col-md-6 p-l-0">
+                    <div class="row Strock-Line my-4">
+                        <div class="col-md-6 ">
                             <label>Strock Line</label>
                         </div>
-                        <div class="col-md-6 p-r-0 text-end">
+                        <div class="col-md-6  text-end">
                             <select>
                                 <option> 1</option>
                                 <option> 2</option>
@@ -708,10 +711,10 @@
 
                 <div class="col-md-12 mb-3">
                     <div class="row opasity">
-                        <div class="col-md-6 p-l-0">
+                        <div class="col-md-6 ">
                             <label>Opacity</label>
                         </div>
-                        <div class="col-md-6 p-r-0 text-end">
+                        <div class="col-md-6  text-end">
                             <label>100%</label>
                         </div>
 
@@ -837,7 +840,7 @@
                         <div class="gl-box">
                             <div class="col-md-12">
                                 <div class="row" style=" margin-left:-30px;">
-                                    <ul class="TextStyle">
+                                    <ul class="TextStyle mt-2">
                                         <li><a class="arial" onclick="OnChangefontFamily('Arial')">Arial</a></li>
                                         <li><a class="anton" onclick="OnChangefontFamily('Anton')">Anton</a></li>
                                         <li><a class="bebes" onclick="OnChangefontFamily('BEBES')">BEBES</a></li>
