@@ -23,6 +23,11 @@ const fontSize = 35;
 const fontFamily = "Arial";
 const textColor = "black";
 
+// Default text style settings
+const defaultFontSize = 35;
+const defaultFontFamily = "Arial";
+const defaultTextColor = "black";
+
 // Array to hold our text objects
 // Each text object will have: text, x, y, selected, editing
 let textObjects = [];
@@ -32,23 +37,62 @@ let currentDrag = null;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
 
-
+// For dragging/resizing state.
+let isDragging = false;
+let isResizing = false;
+let activeHandle = null;
+let dragOffset = { x: 0, y: 0 };
 
 // Configuration constants.
 const padding = 5;         // Padding inside the bounding box
 const handleSize = 10;     // Resize handle square size (in pixels)
 const minWidth = 50;       // Minimum bounding width
-const minHeight = 20;      // Minimum bounding height
+const minHeight = 30;      // Minimum bounding height
 
 ////This is for delete text///////////////////
 // Utility: Returns an object (text or image) if the (x,y) falls within its bounding box.
-function getObjectAt(x, y) {
+
+function wrapText(ctx, text, maxWidth) {
+    const words = text.split(" ");
+    const lines = [];
+    let currentLine = words[0];
+
+    for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        const testLine = currentLine + " " + word;
+        const testWidth = ctx.measureText(testLine).width;
+        if (testWidth < maxWidth) {
+            currentLine = testLine;
+        } else {
+            lines.push(currentLine);
+            currentLine = word;
+        }
+    }
+    lines.push(currentLine);
+    return lines;
+}
+function getMousePos(canvas, evt) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+        x: evt.clientX - rect.left,
+        y: evt.clientY - rect.top
+    };
+}
+function getObjectAtcontextmenu(x, y) {
     // Check text objects.
     for (let obj of textObjects) {
-        ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-        let width = ctx.measureText(obj.text).width;
-        // Assuming y is the baseline, top is approximately y - fontSize.
-        if (x >= obj.x && x <= obj.x + width && y >= obj.y - obj.fontSize && y <= obj.y) {
+        //ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+        //let width = ctx.measureText(obj.text).width;
+        //// Assuming y is the baseline, top is approximately y - fontSize.
+        //if (x >= obj.x && x <= obj.x + width && y >= obj.y - obj.fontSize && y <= obj.y) {
+        //    return { type: "text", obj: obj };
+        //}
+        if (
+            x >= obj.x - padding &&
+            x <= obj.x - padding + obj.boundingWidth + 2 * padding &&
+            y >= obj.y - padding &&
+            y <= obj.y - padding + obj.boundingHeight + 2 * padding
+        ) {
             return { type: "text", obj: obj };
         }
     }
@@ -63,43 +107,56 @@ function getObjectAt(x, y) {
    
     return null;
 }
+// Returns the text object (or image) if the (x,y) falls inside its bounding box.
+// For text objects, we use the stored bounding box properties. KD ignore
+function getObjectAt(x, y) {
+    for (let obj of textObjects) {
+        // Bounding box (including padding): top-left at (obj.x - padding, obj.y - padding)
+        // and dimensions: (obj.boundingWidth + 2*padding, obj.boundingHeight + 2*padding)
+        if (
+            x >= obj.x - padding &&
+            x <= obj.x - padding + obj.boundingWidth + 2 * padding &&
+            y >= obj.y - padding &&
+            y <= obj.y - padding + obj.boundingHeight + 2 * padding
+        ) {
+            return { type: "text", obj: obj };
+        }
+    }
+    if (image) {
+        if (x >= image.x && y >= image.y) {
+            return { type: "image", obj: image };
+        }
+    }
+    return null;
+}
+// Returns which resize handle (if any) is under the given mouse position.
+// Handles are drawn at the corners of the bounding box (including padding).
+function getHandleUnderMouse(mouseX, mouseY, obj) {
+    const boxX = obj.x - padding;
+    const boxY = obj.y - padding;
+    const boxWidth = obj.boundingWidth + 2 * padding;
+    const boxHeight = obj.boundingHeight + 2 * padding;
+    const handles = {
+        "top-left": { x: boxX, y: boxY },
+        "top-right": { x: boxX + boxWidth, y: boxY },
+        "bottom-left": { x: boxX, y: boxY + boxHeight },
+        "bottom-right": { x: boxX + boxWidth, y: boxY + boxHeight }
+    };
+    for (let key in handles) {
+        const hx = handles[key].x;
+        const hy = handles[key].y;
+        if (Math.abs(mouseX - hx) <= handleSize && Math.abs(mouseY - hy) <= handleSize) {
+            return key;
+        }
+    }
+    return null;
+}
+
 
 let selectedForContextMenu = null;
 let selectedType = null; // "text" or "image"
 
-//////canvasContainer.addEventListener("contextmenu", function (e) {
-//////    e.preventDefault();
-//////    const rect = canvas.getBoundingClientRect();
-//////    const mouseX = e.clientX - rect.left;
-//////    const mouseY = e.clientY - rect.top;
-//////    const obj = getObjectAt(mouseX, mouseY);
-    
 
-//////    if (obj) {
-//////        const offsetX = 210;  // adjust if needed
-//////        const offsetY = 43;  // adjust if needed
-//////        selectedForContextMenu = obj;
-//////        selectedType = obj.type;
-//////        const metrics = ctx.measureText(obj.text);
-//////        const textWidth = metrics.width;
-//////        let editorX;
-       
-//////        if (obj.textAlign === "center") {
-//////            editorX = obj.x - textWidth / 2;
-//////        } else if (obj.textAlign === "right") {
-//////            editorX = obj.x - textWidth;
-//////        } else {
-//////            editorX = obj.x;
-//////        }
-//////        // Position the text editor exactly over the original text
-//////        contextMenu.style.left = `${rect.left + editorX - offsetX}px`;
-//////        contextMenu.style.top = `${rect.top + obj.y + scrollTop -  offsetY}px`;
-//////        contextMenu.style.display = "block";
-//////    }
-//////    else {
-//////                contextMenu.style.display = "none";
-//////            }
-//////});
 
 // Show dynamic context menu on right-click.
 canvas.addEventListener("contextmenu", function (e) {
@@ -111,7 +168,7 @@ canvas.addEventListener("contextmenu", function (e) {
     const offsetY = e.clientY - rect.top;
     const adjustX = 155;
     const adjustY = 64;
-    const found = getObjectAt(offsetX, offsetY);
+    const found = getObjectAtcontextmenu(offsetX, offsetY);
     if (found) {
         selectedForContextMenu = found.obj;
         selectedType = found.type;
@@ -160,15 +217,12 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
     ctx.quadraticCurveTo(x, y, x + radius, y);
     ctx.closePath();
 
-    // Create a diagonal gradient for the stroke.
     const gradient = ctx.createLinearGradient(x, y, x + width, y + height);
     gradient.addColorStop(0, "#FF7F50");  // Coral
     gradient.addColorStop(1, "#FFD700");  // Gold
 
-    // Apply stylish effects: gradient stroke, thicker line, and shadow.
     ctx.strokeStyle = gradient;
     ctx.lineWidth = 3;
-    // Make the border solid by clearing any dash settings.
     ctx.setLineDash([]);
     ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
     ctx.shadowBlur = 10;
@@ -227,58 +281,13 @@ function drawCanvas(condition) {
             ctx.save(); 
             // If the object is selected, draw the red bounding box on top of the text.
             if (obj.selected) {
-                //const textWidth = ctx.measureText(obj.text).width;
-                //ctx.strokeStyle = "red";
-                //ctx.strokeRect(obj.x, obj.y - obj.fontSize, textWidth, obj.fontSize);
-                // Inside your drawCanvas (or similar) function when drawing selected text:
-                ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-                ctx.fillStyle = obj.textColor;
-                ctx.textAlign = obj.textAlign || "left";
-                const metrics = ctx.measureText(obj.text);
-                const textWidth = metrics.width;
-
-                // Compute the left side of the bounding box based on the text alignment.
-                let boxX;
-                if (obj.textAlign === "center") {
-                    boxX = obj.x - textWidth / 2;
-                } else if (obj.textAlign === "right") {
-                    boxX = obj.x - textWidth;
-                } else { // "left" (or undefined)
-                    boxX = obj.x;
-                }
-
-                // Use text metrics if available for vertical measurements.
-                const ascent = ('actualBoundingBoxAscent' in metrics)
-                    ? metrics.actualBoundingBoxAscent
-                    : obj.fontSize * 0.8;
-                const descent = ('actualBoundingBoxDescent' in metrics)
-                    ? metrics.actualBoundingBoxDescent
-                    : obj.fontSize * 0.2;
-                const textHeight = ascent + descent;
-
-              
-              //  const padding =5; // Adjust padding as needed
-
-                //// Draw a rounded rectangle around the text.
-                //drawRoundedRect(
-                //    ctx,
-                //    boxX - padding,
-                //    obj.y - ascent - padding,
-                //    textWidth + 2 * padding,
-                //    textHeight + 2 * padding,
-                //    5  // Corner radius
-                //);
-
-                // The box coordinates including padding.
-                boxX = boxX - padding;
-                const boxY = obj.y - ascent - padding;
-                const boxWidth = textWidth + 2 * padding;
-                const boxHeight = textHeight + 2 * padding;
-
-                // Draw the bounding box with a rounded rectangle.
+                // Calculate bounding box coordinates.
+                const boxX = obj.x - padding;
+                const boxY = obj.y - padding;
+                const boxWidth = obj.boundingWidth + 2 * padding;
+                const boxHeight = obj.boundingHeight + 2 * padding;
                 drawRoundedRect(ctx, boxX, boxY, boxWidth, boxHeight, 5);
-
-                // Draw the four resize handles.
+                // Draw handles.
                 const handles = [
                     { x: boxX, y: boxY },
                     { x: boxX + boxWidth, y: boxY },
@@ -294,27 +303,19 @@ function drawCanvas(condition) {
             ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
             ctx.fillStyle = obj.textColor;
             ctx.textAlign = obj.textAlign || "left";
-            // Draw the text.
-            ctx.fillText(obj.text, obj.x, obj.y);
+            ctx.textBaseline = "top";
+            const maxTextWidth = obj.boundingWidth - 2 * padding;
+            const availableHeight = obj.boundingHeight - 2 * padding;
+            const lines = wrapText(ctx, obj.text, maxTextWidth);
+            const lineHeight = obj.fontSize * 1.2;
+            const maxLines = Math.floor(availableHeight / lineHeight);
+            const startY = obj.y + padding;
+            for (let i = 0; i < Math.min(lines.length, maxLines); i++) {
+                ctx.fillText(lines[i], obj.x + padding, startY + i * lineHeight);
+            }
             ctx.restore();
         });
     }
-   // if (condition === 'applyAnimations') {
-        //const textToRender = ($("#textAnimation option:selected").val() === "typeText")
-        //    ? textPosition.content
-        //    : text;
-        //const textPositionX = ($("#textAnimation option:selected").val() === "typeText")
-        //    ? 300
-        //    : textPosition.x;
-        //const textPositionY = ($("#textAnimation option:selected").val() === "typeText")
-        //    ? 100
-        //    : textPosition.y;
-
-        ////textPosition.x = obj.x;
-        ////textPosition.y = obj.y;
-        //ctx.fillText(textToRender, textPositionX, textPositionY); // Draw the text
-        //ctx.restore(); // Restore canvas state
-    //}
     if (condition === 'applyAnimations') {
         textObjects.forEach(obj => {
             textPosition.content = obj.text;
@@ -367,23 +368,70 @@ document.getElementById("textInput").addEventListener("input", (e) => {
     drawCanvas();
 });
 function ChangeStyle() {
-    const fontSize = document.getElementById("fontSize").value; // Font size from dropdown
+    const fontSize = parseInt(document.getElementById("fontSize").value, 10); // Get new font size (as a number)
     const Obj = textObjects.find(obj => obj.selected);
     if (Obj) {
         Obj.fontSize = fontSize;
+        // Set the canvas font for accurate measurement.
+        ctx.font = `${Obj.fontSize}px ${Obj.fontFamily}`;
+        const metrics = ctx.measureText(Obj.text);
+        const width = metrics.width;
+        // Use actual metrics if available; otherwise, approximate.
+        const ascent = metrics.actualBoundingBoxAscent || Obj.fontSize * 0.8;
+        const descent = metrics.actualBoundingBoxDescent || Obj.fontSize * 0.2;
+        const height = ascent + descent;
+        // Add a little extra space if desired.
+        const offsetX = 20;  // adjust if needed
+        const offsetY = 28;  // adjust if needed
+
+        Obj.boundingWidth = width + offsetX;
+        Obj.boundingHeight = height + offsetY;
     }
     drawCanvas('ChangeStyle');
 }
+
+//function ChangeAlignStyle(value) {
+//    $("#textAlign").val(value);
+//    const textAlign = document.getElementById("textAlign").value; // Text alignment from dropdown
+
+//    const Obj = textObjects.find(obj => obj.selected);
+//    if (Obj) {
+//        Obj.textAlign = textAlign || 'left';
+//    }
+//    drawCanvas('ChangeStyle');
+//}
 function ChangeAlignStyle(value) {
     $("#textAlign").val(value);
-    const textAlign = document.getElementById("textAlign").value; // Text alignment from dropdown
-
+    const textAlign = document.getElementById("textAlign").value; // "left", "center", or "right"
     const Obj = textObjects.find(obj => obj.selected);
     if (Obj) {
-        Obj.textAlign = textAlign || 'left';
+        // Set the font to measure text.
+        ctx.font = `${Obj.fontSize}px ${Obj.fontFamily}`;
+        const measuredWidth = ctx.measureText(Obj.text).width;
+        // Add extra padding (e.g., 10px) to get new boundingWidth.
+        const newBoundingWidth = measuredWidth + 10;
+
+        if (textAlign === "left") {
+            // Left: keep left edge fixed (no change in x).
+            // (Obj.x remains unchanged.)
+        } else if (textAlign === "center") {
+            // Center: compute current center and update x so that the new box is centered.
+            const currentCenter = Obj.x + Obj.boundingWidth / 2;
+            Obj.x = currentCenter - newBoundingWidth / 2;
+        } else if (textAlign === "right") {
+            // Right: compute current right edge and update x so that the new box's right edge is fixed.
+            const rightEdge = Obj.x + Obj.boundingWidth;
+            Obj.x = rightEdge - newBoundingWidth;
+        }
+
+        // Update the object's boundingWidth and textAlign.
+        Obj.boundingWidth = newBoundingWidth;
+        Obj.textAlign = textAlign;
     }
-    drawCanvas('ChangeStyle');
+    drawCanvas("ChangeStyle");
 }
+
+
 function OnChangefontFamily(value) {
     $("#fontFamily").val(value);
     const fontFamily = document.getElementById("fontFamily").value; // Font family from dropdown
@@ -933,13 +981,6 @@ function loadImage(src) {
     };
     img.src = src; // Set the image source from the JSON
 }
-// JavaScript
-////KD//////////////////////////////////////////
-//document.getElementById("saveButton").addEventListener("click", () => {
-//    const savedState = saveCanvasState();
-//    console.log("Canvas State Saved:", savedState);
-//});
-////END////////////////////////////
 
 
 // Add a Load Button
@@ -1141,6 +1182,8 @@ function addDefaultText() {
         text: "Default Text",
         x: 50,
         y: 100,
+        //boundingWidth: 200,
+        //boundingHeight: 60,
         selected: false,
         editing: false,
         fontFamily: "Arial",     // Default font family
@@ -1148,6 +1191,22 @@ function addDefaultText() {
         textAlign: "left",        // Default text alignment
         fontSize: 35
     };
+    // Set the canvas font for accurate measurement.
+    ctx.font = `${newObj.fontSize}px ${newObj.fontFamily}`;
+    const metrics = ctx.measureText(newObj.text);
+    const width = metrics.width;
+    // Use actual bounding box values if available; otherwise, use a multiplier.
+    const ascent = metrics.actualBoundingBoxAscent || newObj.fontSize * 0.8;
+    const descent = metrics.actualBoundingBoxDescent || newObj.fontSize * 0.2;
+    const height = ascent + descent;
+
+    // Set bounding dimensions based on measured values.
+    const offsetX = 15;  // adjust if needed
+    const offsetY = 20;  // adjust if needed
+    newObj.boundingWidth = width + offsetX;
+    newObj.boundingHeight = height + offsetY;
+
+    
     // Deselect all, then add and select the new object
     textObjects.forEach(obj => obj.selected = false);
     newObj.selected = true;
@@ -1166,24 +1225,12 @@ function isWithinText(obj, x, y) {
 // Return the topmost text object at position (x, y) (if any)
 function getTextObjectAt(x, y) {
     for (let obj of textObjects) {
-        ctx.font = `${obj.fontSize}px Arial`;
-        const metrics = ctx.measureText(obj.text);
-        const textWidth = metrics.width;
-        let boxX;
-        if (obj.textAlign === "center") {
-            boxX = obj.x - textWidth / 2;
-        } else if (obj.textAlign === "right") {
-            boxX = obj.x - textWidth;
-        } else {
-            boxX = obj.x;
-        }
-        const ascent = ("actualBoundingBoxAscent" in metrics)
-            ? metrics.actualBoundingBoxAscent
-            : obj.fontSize * 0.8;
-        const descent = ("actualBoundingBoxDescent" in metrics)
-            ? metrics.actualBoundingBoxDescent
-            : obj.fontSize * 0.2;
-        if (x >= boxX && x <= boxX + textWidth && y >= obj.y - ascent && y <= obj.y + descent) {
+        const boxX = obj.x - padding;
+        const boxY = obj.y - padding;
+        const boxWidth = obj.boundingWidth + 2 * padding;
+        const boxHeight = obj.boundingHeight + 2 * padding;
+
+        if (x >= boxX && x <= boxX + boxWidth && y >= boxY && y <= boxY + boxHeight) {
             return obj;
         }
     }
@@ -1194,107 +1241,170 @@ function getTextObjectAt(x, y) {
 // Mouse events for dragging and selection
 canvas.addEventListener("mousedown", function (e) {
 
+    const pos = getMousePos(canvas, e);
+    // Check for a resize handle first.
+    const handle = getHandleUnderMouse(pos.x, pos.y, currentSelectedText());
+    if (currentSelectedText() && handle) {
+        isResizing = true;
+        activeHandle = handle;
+        e.preventDefault();
+    }
+    // Otherwise, if clicking inside a text object's bounding box, start dragging.
+    else if (currentSelectedText() && isInsideBox(pos.x, pos.y, currentSelectedText())) {
+        isDragging = true;
+        dragOffset.x = pos.x - currentSelectedText().x;
+        dragOffset.y = pos.y - currentSelectedText().y;
+        e.preventDefault();
+    }
+   
+    drawCanvas('Common');
+});
+canvas.addEventListener("click", function (e) {
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
 
-    // If the text editor is active, ignore this event
+    // If the text editor is active, ignore this event.
     if (document.activeElement === textEditor) return;
 
+    // Try to get a text object under the mouse.
     const obj = getTextObjectAt(mouseX, mouseY);
+
     if (obj) {
-        // Deselect others and select this object
+        // Deselect all and select this object.
         textObjects.forEach(o => o.selected = false);
         obj.selected = true;
-        // Bring the selected object to the front
+        // Bring the selected object to the front.
         textObjects.splice(textObjects.indexOf(obj), 1);
         textObjects.push(obj);
-
-        // Setup dragging for this object
-        currentDrag = obj;
-        dragOffsetX = mouseX - obj.x;
-        dragOffsetY = mouseY - obj.y;
     } else {
-        // Clicked outside any text, so deselect all
+        // If clicked outside any text, deselect all.
         textObjects.forEach(o => o.selected = false);
     }
+
     drawCanvas('Common');
 });
 
 canvas.addEventListener("mousemove", function (e) {
-    if (currentDrag) {
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-        currentDrag.x = mouseX - dragOffsetX;
-        currentDrag.y = mouseY - dragOffsetY;
-        drawCanvas('Common');
+    const pos = getMousePos(canvas, e);
+    // Update cursor style.
+    if (currentSelectedText()) {
+        if (getHandleUnderMouse(pos.x, pos.y, currentSelectedText())) {
+            canvas.style.cursor = "nwse-resize";
+        } else if (isInsideBox(pos.x, pos.y, currentSelectedText())) {
+            canvas.style.cursor = "move";
+        } else {
+            canvas.style.cursor = "default";
+        }
     }
+    console.log(isResizing , currentSelectedText() , activeHandle)
+    // Handle resizing.
+    if (isResizing && currentSelectedText() && activeHandle) {
+        const obj = currentSelectedText();
+        const oldLeft = obj.x;
+        const oldTop = obj.y;
+        const oldRight = obj.x + obj.boundingWidth;
+        const oldBottom = obj.y + obj.boundingHeight;
+
+        if (activeHandle === "top-left") {
+            obj.x = pos.x;
+            obj.y = pos.y;
+            obj.boundingWidth = oldRight - pos.x;
+            obj.boundingHeight = oldBottom - pos.y;
+        } else if (activeHandle === "top-right") {
+            obj.y = pos.y;
+            obj.boundingWidth = pos.x - oldLeft;
+            obj.boundingHeight = oldBottom - pos.y;
+        } else if (activeHandle === "bottom-left") {
+            obj.x = pos.x;
+            obj.boundingWidth = oldRight - pos.x;
+            obj.boundingHeight = pos.y - oldTop;
+        } else if (activeHandle === "bottom-right") {
+            obj.boundingWidth = pos.x - oldLeft;
+            obj.boundingHeight = pos.y - oldTop;
+        }
+        // Enforce minimum dimensions.
+        if (obj.boundingWidth < minWidth) obj.boundingWidth = minWidth;
+        if (obj.boundingHeight < minHeight) obj.boundingHeight = minHeight;
+        drawCanvas("Common");
+    }
+
+    // Handle dragging.
+    if (isDragging  && currentSelectedText()) {
+        const obj = currentSelectedText();
+        obj.x = pos.x - dragOffset.x;
+        obj.y = pos.y - dragOffset.y;
+
+        dragOffsetX = obj.x;
+        dragOffsetY = obj.y;
+        drawCanvas("Common");
+    }
+
+    //if (currentDrag) {
+    //    const rect = canvas.getBoundingClientRect();
+    //    const mouseX = e.clientX - rect.left;
+    //    const mouseY = e.clientY - rect.top;
+    //    currentDrag.x = mouseX - dragOffsetX;
+    //    currentDrag.y = mouseY - dragOffsetY;
+    //    drawCanvas('Common');
+    //}
 });
 
 canvas.addEventListener("mouseup", function () {
     currentDrag = null;
+    isResizing = false;
+    isDragging = false;
+    activeHandle = null;
 });
 
 canvas.addEventListener("mouseleave", function () {
     currentDrag = null;
+    isResizing = false;
+    isDragging = false;
+    activeHandle = null;
 });
 
-// On double-click, if over a text object, enable editing
-//canvas.addEventListener("dblclick", function (e) {
-//    const rect = canvas.getBoundingClientRect();
-//    const mouseX = e.clientX - rect.left;
-//    const mouseY = e.clientY - rect.top;
-//    const obj = getTextObjectAt(mouseX, mouseY);
-//    if (obj) {
-//        obj.editing = true;
-//        // Position the text editor input over the text object
-//        textEditor.style.left = obj.x + "px";
-//        textEditor.style.top = (obj.y - fontSize) + "px";
-//        textEditor.style.width = ctx.measureText(obj.text).width + "px";
-//        textEditor.value = obj.text;
-//        textEditor.style.display = "block";
-//        textEditor.focus();
-//    }
-//});
+function currentSelectedText() {
+    return textObjects.find(obj => obj.selected);
+}
 
+// Check if a point is inside a text object's bounding box.
+function isInsideBox(mouseX, mouseY, obj) {
+    const boxX = obj.x - padding;
+    const boxY = obj.y - padding;
+    const boxWidth = obj.boundingWidth + 2 * padding;
+    const boxHeight = obj.boundingHeight + 2 * padding;
+    return mouseX >= boxX && mouseX <= boxX + boxWidth &&
+         mouseY <= boxY + boxHeight;
+       /* mouseY >= boxY && mouseY <= boxY + boxHeight;*/
+}
 
 canvasContainer.addEventListener("dblclick", function (e) {
     const rect = canvas.getBoundingClientRect();
-    const mouseX =e.clientX - rect.left;
+    const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     const obj = getTextObjectAt(mouseX, mouseY);
 
     if (obj) {
         obj.editing = true;
 
-        // Set the canvas font to match the text object for accurate measurement
-        ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-        const metrics = ctx.measureText(obj.text);
-        const textWidth = metrics.width;
-        const ascent = metrics.actualBoundingBoxAscent || obj.fontSize * 0.8;
-        const descent = metrics.actualBoundingBoxDescent || obj.fontSize * 0.2;
-        const textHeight = ascent + descent;
+        // Use the object's bounding box and padding to set the editor's dimensions.
+        const editorX = obj.x - padding;  // Position relative to object's x
+        const editorY = obj.y - padding;  // Position relative to object's y
+                const offsetX = 282;  // adjust if needed
+                const offsetY = 45;  // adjust if needed
 
-        // Determine the correct X position based on text alignment
-        let editorX;
-        if (obj.textAlign === "center") {
-            editorX = obj.x - textWidth / 2;
-        } else if (obj.textAlign === "right") {
-            editorX = obj.x - textWidth;
-        } else {
-            editorX = obj.x;
-        }
-        const offsetX = 282;  // adjust if needed
-        const offsetY = 43;  // adjust if needed
 
-        // Position the text editor exactly over the original text
+
+        // Position the text editor over the object's bounding box.
         textEditor.style.left = `${rect.left + editorX - offsetX}px`;
-        textEditor.style.top = `${rect.top + obj.y + scrollTop - ascent - offsetY}px`;
-        textEditor.style.width = `${textWidth + 10}px`; // Slight padding for better visibility
-        textEditor.style.height = `${textHeight}px`;
+        textEditor.style.top = `${rect.top + editorY + scrollTop  - offsetY}px`;
+        //textEditor.style.left = `${rect.left + editorX}px`;
+        //textEditor.style.top = `${rect.top + editorY}px`;
+        textEditor.style.width = `${obj.boundingWidth + 2 * padding}px`;
+        textEditor.style.height = `${obj.boundingHeight + 2 * padding}px`;
 
-        // Match styles with the text object
+        // Match styles with the text object.
         textEditor.style.fontSize = `${obj.fontSize}px`;
         textEditor.style.fontFamily = obj.fontFamily;
         textEditor.style.color = obj.textColor;
@@ -1304,23 +1414,46 @@ canvasContainer.addEventListener("dblclick", function (e) {
         textEditor.style.padding = "2px 4px";
         textEditor.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.3)";
 
-        // Set the text and display the input box
+        // Set the current text and show the editor.
         textEditor.value = obj.text;
         textEditor.style.display = "block";
         textEditor.focus();
 
-        // Handle finishing editing
+        // Finish editing when Enter is pressed (unless using Shift+Enter for a new line) or on blur.
+        //function finishEditing() {
+        //    obj.text = textEditor.value;
+        //    obj.editing = false;
+        //    textEditor.style.display = "none";
+        //    drawCanvas('Common'); // Redraw canvas with updated text
+        //    textEditor.removeEventListener("keydown", onKeyDown);
+        //    textEditor.removeEventListener("blur", finishEditing);
+        //}
         function finishEditing() {
             obj.text = textEditor.value;
             obj.editing = false;
             textEditor.style.display = "none";
-            drawCanvas('Common'); // Redraw canvas with updated text
+
+            // Update bounding width and height dynamically based on font size
+            const ctx = canvas.getContext("2d");
+            ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+
+            const metrics = ctx.measureText(obj.text);
+            const textWidth = metrics.width;
+            const textHeight = obj.fontSize * 1.2; // Adjust height based on font size
+
+            const offsetX = 15;  // adjust if needed
+            const offsetY = 20;  // adjust if needed
+            obj.boundingWidth = textWidth + offsetX; // Add padding for better selection
+            obj.boundingHeight = textHeight + offsetY; // Slightly increase height
+
+            drawCanvas('Common'); // Redraw canvas with updated text size
             textEditor.removeEventListener("keydown", onKeyDown);
             textEditor.removeEventListener("blur", finishEditing);
         }
 
+
         function onKeyDown(e) {
-            if (e.key === "Enter") {
+            if (e.key === "Enter" && !e.shiftKey) {
                 finishEditing();
             }
         }
@@ -1329,6 +1462,77 @@ canvasContainer.addEventListener("dblclick", function (e) {
         textEditor.addEventListener("blur", finishEditing);
     }
 });
+
+//canvasContainer.addEventListener("dblclick", function (e) {
+//    const rect = canvas.getBoundingClientRect();
+//    const mouseX =e.clientX - rect.left;
+//    const mouseY = e.clientY - rect.top;
+//    const obj = getTextObjectAt(mouseX, mouseY);
+
+//    if (obj) {
+//        obj.editing = true;
+
+//        // Set the canvas font to match the text object for accurate measurement
+//        ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+//        const metrics = ctx.measureText(obj.text);
+//        const textWidth = metrics.width;
+//        const ascent = metrics.actualBoundingBoxAscent || obj.fontSize * 0.8;
+//        const descent = metrics.actualBoundingBoxDescent || obj.fontSize * 0.2;
+//        const textHeight = ascent + descent;
+
+//        // Determine the correct X position based on text alignment
+//        let editorX;
+//        if (obj.textAlign === "center") {
+//            editorX = obj.x - textWidth / 2;
+//        } else if (obj.textAlign === "right") {
+//            editorX = obj.x - textWidth;
+//        } else {
+//            editorX = obj.x;
+//        }
+//        const offsetX = 282;  // adjust if needed
+//        const offsetY = 13;  // adjust if needed
+
+//        // Position the text editor exactly over the original text
+//        textEditor.style.left = `${rect.left + editorX - offsetX}px`;
+//        textEditor.style.top = `${rect.top + obj.y + scrollTop - ascent - offsetY}px`;
+//        textEditor.style.width = `${textWidth + 10}px`; // Slight padding for better visibility
+//        textEditor.style.height = `${textHeight}px`;
+
+//        // Match styles with the text object
+//        textEditor.style.fontSize = `${obj.fontSize}px`;
+//        textEditor.style.fontFamily = obj.fontFamily;
+//        textEditor.style.color = obj.textColor;
+//        textEditor.style.textAlign = obj.textAlign;
+//        textEditor.style.background = "rgba(255,255,255,0.95)";
+//        textEditor.style.border = "1px solid #ccc";
+//        textEditor.style.padding = "2px 4px";
+//        textEditor.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.3)";
+
+//        // Set the text and display the input box
+//        textEditor.value = obj.text;
+//        textEditor.style.display = "block";
+//        textEditor.focus();
+
+//        // Handle finishing editing
+//        function finishEditing() {
+//            obj.text = textEditor.value;
+//            obj.editing = false;
+//            textEditor.style.display = "none";
+//            drawCanvas('Common'); // Redraw canvas with updated text
+//            textEditor.removeEventListener("keydown", onKeyDown);
+//            textEditor.removeEventListener("blur", finishEditing);
+//        }
+
+//        function onKeyDown(e) {
+//            if (e.key === "Enter") {
+//                finishEditing();
+//            }
+//        }
+
+//        textEditor.addEventListener("keydown", onKeyDown);
+//        textEditor.addEventListener("blur", finishEditing);
+//    }
+//});
 
 
 
