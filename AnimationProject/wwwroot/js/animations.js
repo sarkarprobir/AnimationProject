@@ -32,6 +32,14 @@ let currentDrag = null;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
 
+
+
+// Configuration constants.
+const padding = 5;         // Padding inside the bounding box
+const handleSize = 10;     // Resize handle square size (in pixels)
+const minWidth = 50;       // Minimum bounding width
+const minHeight = 20;      // Minimum bounding height
+
 ////This is for delete text///////////////////
 // Utility: Returns an object (text or image) if the (x,y) falls within its bounding box.
 function getObjectAt(x, y) {
@@ -249,17 +257,39 @@ function drawCanvas(condition) {
                 const textHeight = ascent + descent;
 
               
-                const padding =5; // Adjust padding as needed
+              //  const padding =5; // Adjust padding as needed
 
-                // Draw a rounded rectangle around the text.
-                drawRoundedRect(
-                    ctx,
-                    boxX - padding,
-                    obj.y - ascent - padding,
-                    textWidth + 2 * padding,
-                    textHeight + 2 * padding,
-                    5  // Corner radius
-                );
+                //// Draw a rounded rectangle around the text.
+                //drawRoundedRect(
+                //    ctx,
+                //    boxX - padding,
+                //    obj.y - ascent - padding,
+                //    textWidth + 2 * padding,
+                //    textHeight + 2 * padding,
+                //    5  // Corner radius
+                //);
+
+                // The box coordinates including padding.
+                boxX = boxX - padding;
+                const boxY = obj.y - ascent - padding;
+                const boxWidth = textWidth + 2 * padding;
+                const boxHeight = textHeight + 2 * padding;
+
+                // Draw the bounding box with a rounded rectangle.
+                drawRoundedRect(ctx, boxX, boxY, boxWidth, boxHeight, 5);
+
+                // Draw the four resize handles.
+                const handles = [
+                    { x: boxX, y: boxY },
+                    { x: boxX + boxWidth, y: boxY },
+                    { x: boxX, y: boxY + boxHeight },
+                    { x: boxX + boxWidth, y: boxY + boxHeight }
+                ];
+                ctx.fillStyle = "#FF7F50";
+                handles.forEach(handle => {
+                    ctx.fillRect(handle.x - handleSize / 2, handle.y - handleSize / 2, handleSize, handleSize);
+                });
+
             }
             ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
             ctx.fillStyle = obj.textColor;
