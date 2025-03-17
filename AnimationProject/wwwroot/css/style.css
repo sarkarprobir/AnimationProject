@@ -122,10 +122,15 @@ ul.right-listone{padding:0px; margin:0px; width: 100%;
 	
 .nav-right ul{float:right; padding:0px; margin:0px;}	
 .nav-right ul li{list-style-type:none;  float:left; margin-left:0px;    }
-.nav-right ul li .btn{color:#fff; font-size: var(--font-size14);    padding: 0px 0px;
+.nav-right ul li .btn{
+    color:#fff; font-size: var(--font-size14);    
+    padding: 0px 0px;
     margin: 6px 10px 6px 6px;
-    border-radius: 6px;}
-.nav-right ul li .btn:hover{background:#4e43e1;}
+    border-radius: 6px;
+}
+ .nav-right ul li:hover {
+        background-color: #6464647a;
+    }
 .nav-right ul li.play-btn .btn{color:#fff; font-size: var(--font-size14); padding: 7px 10px;
     border-radius: 6px; margin: 6px !important;}
 
@@ -229,9 +234,11 @@ input:focus-visible + label {
 .tabset {max-width: 65em;}
 a.logo{float:left; margin-right:6px; padding-top:7px;}
 a.logo img{width: 27px; margin-top: 3px;}
-ul.top-left-icon li{list-style-type:none;  padding:8px 6px; margin-bottom:5px;  margin-top:5px; float:left;} 
+ul.top-left-icon li{list-style-type:none;  padding:13px 6px; float:left;}
+ul.top-left-icon li:hover {
+        background-color: #6464647a;
+    }
 .top-left-icon li a{padding:5px 10px 6px 10px;}
-.top-left-icon li a:hover{background: #4e43e1; border-radius:6px;}
 .navbar ul.top-left-icon{float:left; margin:0px; padding:0px; margin-top: 0px;}
 .navbar .row{width:100%; --bs-gutter-x: 0rem !important;}
 
@@ -260,7 +267,7 @@ ul.top-left-icon li{list-style-type:none;  padding:8px 6px; margin-bottom:5px;  
 .gallery-image ul li img{width:100%;border:2px solid transparent; padding:5px; border-radius:6px;}
 .gallery-image ul li img:hover{ border:2px solid #ddd; }
 .gallery-image ul li:nth-child(3n) { margin-right:0px;}
-.panel-left-gallery .btn-cross{ border:0px solid #ddd; float:right; background:transparent; font-weight: bold;font-size: 15px; border-radius: 3px;}
+.panel-left-gallery .btn-cross{ border:0px solid #ddd; float:right; background:transparent; font-weight: bold;font-size: 15px; border-radius: 3px; padding-top: 2.3px;}
 .panel-left-gallery .btn-cross:hover{color:red}
 .pagination ul{padding:0px; margin:0px; }
 .pagination ul li{float:left;  list-style-type:none; border:2px solid #ddd;  border-radius:6px; color:#000; color:#000;
@@ -494,6 +501,11 @@ svg:hover {
     margin-top: 0;
 }
 #lblSeconds {
+    margin-left: 8px;
+    font-size: 14px;
+    margin-top: 0;
+}
+#lblOutSpeed {
     margin-left: 8px;
     font-size: 14px;
     margin-top: 0;
