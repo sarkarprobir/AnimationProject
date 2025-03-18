@@ -1304,6 +1304,23 @@ canvas.addEventListener("click", function (e) {
 
     drawCanvas('Common');
 });
+// Adjusts font size so that the wrapped text fits inside the new bounding box.
+// It measures the text using your wrapText helper and ensures that the total height of the lines is less than or equal to the available height.
+function adjustFontSizeToFitBox(obj) {
+    const availableWidth = obj.boundingWidth - 2 * padding;
+    const availableHeight = obj.boundingHeight - 2 * padding;
+    // We'll try from a maximum possible font size down to a minimum of 5.
+    let maxFontSize = Math.floor(availableHeight); // maximum based on height
+    for (let fs = maxFontSize; fs >= 5; fs--) {
+        ctx.font = `${fs}px ${obj.fontFamily}`;
+        let lines = wrapText(ctx, obj.text, availableWidth);
+        const lineHeight = fs * 1.2;
+        if (lines.length * lineHeight <= availableHeight) {
+            return fs;
+        }
+    }
+    return 5; // fallback minimum
+}
 
 canvas.addEventListener("mousemove", function (e) {
     const pos = getMousePos(canvas, e);
@@ -1322,9 +1339,10 @@ canvas.addEventListener("mousemove", function (e) {
         canvas.style.cursor = "default";
     }
 
+    // Debugging log.
     console.log(isResizing, currentSelectedText(), activeHandle);
 
-    // Handle resizing with eight handle options.
+    // Handle resizing.
     if (isResizing && currentSelectedText() && activeHandle) {
         const obj = currentSelectedText();
         const oldLeft = obj.x;
@@ -1332,50 +1350,69 @@ canvas.addEventListener("mousemove", function (e) {
         const oldRight = obj.x + obj.boundingWidth;
         const oldBottom = obj.y + obj.boundingHeight;
 
+        // Calculate the text's natural size
+        ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+        const textWidth = ctx.measureText(obj.text).width + 2 * padding;
+        const lineHeight = obj.fontSize * 1.2;
+        const lines = wrapText(ctx, obj.text, textWidth);
+        const textHeight = lines.length * lineHeight + 2 * padding;
+
         switch (activeHandle) {
             case "top-left":
                 obj.x = pos.x;
                 obj.y = pos.y;
                 obj.boundingWidth = oldRight - pos.x;
                 obj.boundingHeight = oldBottom - pos.y;
+                obj.fontSize = adjustFontSizeToFitBox(obj);
                 break;
             case "top-middle":
-                // Only update top edge.
-                obj.y = pos.y;
-                obj.boundingHeight = oldBottom - pos.y;
+                // Prevent reducing height beyond text height
+                if (oldBottom - pos.y >= textHeight) {
+                    obj.y = pos.y;
+                    obj.boundingHeight = oldBottom - pos.y;
+                }
                 break;
             case "top-right":
                 obj.y = pos.y;
                 obj.boundingWidth = pos.x - oldLeft;
                 obj.boundingHeight = oldBottom - pos.y;
+                obj.fontSize = adjustFontSizeToFitBox(obj);
                 break;
             case "right-middle":
-                // Only update right edge.
-                obj.boundingWidth = pos.x - oldLeft;
+                // Prevent reducing width beyond text width
+                if (pos.x - oldLeft >= textWidth) {
+                    obj.boundingWidth = pos.x - oldLeft;
+                }
                 break;
             case "bottom-right":
                 obj.boundingWidth = pos.x - oldLeft;
                 obj.boundingHeight = pos.y - oldTop;
+                obj.fontSize = adjustFontSizeToFitBox(obj);
                 break;
             case "bottom-middle":
-                // Only update bottom edge.
-                obj.boundingHeight = pos.y - oldTop;
+                // Prevent reducing height beyond text height
+                if (pos.y - oldTop >= textHeight) {
+                    obj.boundingHeight = pos.y - oldTop;
+                }
                 break;
             case "bottom-left":
                 obj.x = pos.x;
                 obj.boundingWidth = oldRight - pos.x;
                 obj.boundingHeight = pos.y - oldTop;
+                obj.fontSize = adjustFontSizeToFitBox(obj);
                 break;
             case "left-middle":
-                // Only update left edge.
-                obj.x = pos.x;
-                obj.boundingWidth = oldRight - pos.x;
+                // Prevent reducing width beyond text width
+                if (oldRight - pos.x >= textWidth) {
+                    obj.x = pos.x;
+                    obj.boundingWidth = oldRight - pos.x;
+                }
                 break;
         }
 
         // Enforce minimum dimensions.
-        if (obj.boundingWidth < minWidth) obj.boundingWidth = minWidth;
-        if (obj.boundingHeight < minHeight) obj.boundingHeight = minHeight;
+        if (obj.boundingWidth < textWidth) obj.boundingWidth = textWidth;
+        if (obj.boundingHeight < textHeight) obj.boundingHeight = textHeight;
 
         drawCanvas("Common");
     }
@@ -1385,10 +1422,10 @@ canvas.addEventListener("mousemove", function (e) {
         const obj = currentSelectedText();
         obj.x = pos.x - dragOffset.x;
         obj.y = pos.y - dragOffset.y;
-        // Optionally update dragOffsetX/Y if needed.
         drawCanvas("Common");
     }
 });
+
 
 
 
