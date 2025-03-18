@@ -132,16 +132,24 @@ function getObjectAt(x, y) {
 // Returns which resize handle (if any) is under the given mouse position.
 // Handles are drawn at the corners of the bounding box (including padding).
 function getHandleUnderMouse(mouseX, mouseY, obj) {
+    // Calculate the outer bounding box including padding.
     const boxX = obj.x - padding;
     const boxY = obj.y - padding;
     const boxWidth = obj.boundingWidth + 2 * padding;
     const boxHeight = obj.boundingHeight + 2 * padding;
+
+    // Define eight handles: four corners and four midpoints.
     const handles = {
         "top-left": { x: boxX, y: boxY },
+        "top-middle": { x: boxX + boxWidth / 2, y: boxY },
         "top-right": { x: boxX + boxWidth, y: boxY },
+        "right-middle": { x: boxX + boxWidth, y: boxY + boxHeight / 2 },
+        "bottom-right": { x: boxX + boxWidth, y: boxY + boxHeight },
+        "bottom-middle": { x: boxX + boxWidth / 2, y: boxY + boxHeight },
         "bottom-left": { x: boxX, y: boxY + boxHeight },
-        "bottom-right": { x: boxX + boxWidth, y: boxY + boxHeight }
+        "left-middle": { x: boxX, y: boxY + boxHeight / 2 }
     };
+
     for (let key in handles) {
         const hx = handles[key].x;
         const hy = handles[key].y;
@@ -151,6 +159,7 @@ function getHandleUnderMouse(mouseX, mouseY, obj) {
     }
     return null;
 }
+
 
 
 let selectedForContextMenu = null;
@@ -262,17 +271,25 @@ function drawCanvas(condition) {
                 const boxWidth = obj.boundingWidth + 2 * padding;
                 const boxHeight = obj.boundingHeight + 2 * padding;
                 drawRoundedRect(ctx, boxX, boxY, boxWidth, boxHeight, 5);
+
+                // Draw eight handles: four corners and four midpoints.
                 const handles = [
-                    { x: boxX, y: boxY },
-                    { x: boxX + boxWidth, y: boxY },
-                    { x: boxX, y: boxY + boxHeight },
-                    { x: boxX + boxWidth, y: boxY + boxHeight }
+                    { x: boxX, y: boxY }, // top-left
+                    { x: boxX + boxWidth / 2, y: boxY }, // top-middle
+                    { x: boxX + boxWidth, y: boxY }, // top-right
+                    { x: boxX + boxWidth, y: boxY + boxHeight / 2 }, // right-middle
+                    { x: boxX + boxWidth, y: boxY + boxHeight }, // bottom-right
+                    { x: boxX + boxWidth / 2, y: boxY + boxHeight }, // bottom-middle
+                    { x: boxX, y: boxY + boxHeight }, // bottom-left
+                    { x: boxX, y: boxY + boxHeight / 2 }  // left-middle
                 ];
+
                 ctx.fillStyle = "#FF7F50";
                 handles.forEach(handle => {
                     ctx.fillRect(handle.x - handleSize / 2, handle.y - handleSize / 2, handleSize, handleSize);
                 });
             }
+
 
             // Set text properties.
             ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
@@ -1290,18 +1307,24 @@ canvas.addEventListener("click", function (e) {
 
 canvas.addEventListener("mousemove", function (e) {
     const pos = getMousePos(canvas, e);
+
     // Update cursor style.
     if (currentSelectedText()) {
-        if (getHandleUnderMouse(pos.x, pos.y, currentSelectedText())) {
+        const handle = getHandleUnderMouse(pos.x, pos.y, currentSelectedText());
+        if (handle) {
             canvas.style.cursor = "nwse-resize";
         } else if (isInsideBox(pos.x, pos.y, currentSelectedText())) {
             canvas.style.cursor = "move";
         } else {
             canvas.style.cursor = "default";
         }
+    } else {
+        canvas.style.cursor = "default";
     }
-    console.log(isResizing , currentSelectedText() , activeHandle)
-    // Handle resizing.
+
+    console.log(isResizing, currentSelectedText(), activeHandle);
+
+    // Handle resizing with eight handle options.
     if (isResizing && currentSelectedText() && activeHandle) {
         const obj = currentSelectedText();
         const oldLeft = obj.x;
@@ -1309,49 +1332,65 @@ canvas.addEventListener("mousemove", function (e) {
         const oldRight = obj.x + obj.boundingWidth;
         const oldBottom = obj.y + obj.boundingHeight;
 
-        if (activeHandle === "top-left") {
-            obj.x = pos.x;
-            obj.y = pos.y;
-            obj.boundingWidth = oldRight - pos.x;
-            obj.boundingHeight = oldBottom - pos.y;
-        } else if (activeHandle === "top-right") {
-            obj.y = pos.y;
-            obj.boundingWidth = pos.x - oldLeft;
-            obj.boundingHeight = oldBottom - pos.y;
-        } else if (activeHandle === "bottom-left") {
-            obj.x = pos.x;
-            obj.boundingWidth = oldRight - pos.x;
-            obj.boundingHeight = pos.y - oldTop;
-        } else if (activeHandle === "bottom-right") {
-            obj.boundingWidth = pos.x - oldLeft;
-            obj.boundingHeight = pos.y - oldTop;
+        switch (activeHandle) {
+            case "top-left":
+                obj.x = pos.x;
+                obj.y = pos.y;
+                obj.boundingWidth = oldRight - pos.x;
+                obj.boundingHeight = oldBottom - pos.y;
+                break;
+            case "top-middle":
+                // Only update top edge.
+                obj.y = pos.y;
+                obj.boundingHeight = oldBottom - pos.y;
+                break;
+            case "top-right":
+                obj.y = pos.y;
+                obj.boundingWidth = pos.x - oldLeft;
+                obj.boundingHeight = oldBottom - pos.y;
+                break;
+            case "right-middle":
+                // Only update right edge.
+                obj.boundingWidth = pos.x - oldLeft;
+                break;
+            case "bottom-right":
+                obj.boundingWidth = pos.x - oldLeft;
+                obj.boundingHeight = pos.y - oldTop;
+                break;
+            case "bottom-middle":
+                // Only update bottom edge.
+                obj.boundingHeight = pos.y - oldTop;
+                break;
+            case "bottom-left":
+                obj.x = pos.x;
+                obj.boundingWidth = oldRight - pos.x;
+                obj.boundingHeight = pos.y - oldTop;
+                break;
+            case "left-middle":
+                // Only update left edge.
+                obj.x = pos.x;
+                obj.boundingWidth = oldRight - pos.x;
+                break;
         }
+
         // Enforce minimum dimensions.
         if (obj.boundingWidth < minWidth) obj.boundingWidth = minWidth;
         if (obj.boundingHeight < minHeight) obj.boundingHeight = minHeight;
+
         drawCanvas("Common");
     }
 
     // Handle dragging.
-    if (isDragging  && currentSelectedText()) {
+    if (isDragging && currentSelectedText()) {
         const obj = currentSelectedText();
         obj.x = pos.x - dragOffset.x;
         obj.y = pos.y - dragOffset.y;
-
-        dragOffsetX = obj.x;
-        dragOffsetY = obj.y;
+        // Optionally update dragOffsetX/Y if needed.
         drawCanvas("Common");
     }
-
-    //if (currentDrag) {
-    //    const rect = canvas.getBoundingClientRect();
-    //    const mouseX = e.clientX - rect.left;
-    //    const mouseY = e.clientY - rect.top;
-    //    currentDrag.x = mouseX - dragOffsetX;
-    //    currentDrag.y = mouseY - dragOffsetY;
-    //    drawCanvas('Common');
-    //}
 });
+
+
 
 canvas.addEventListener("mouseup", function () {
     currentDrag = null;
