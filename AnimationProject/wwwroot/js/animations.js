@@ -1322,10 +1322,113 @@ function adjustFontSizeToFitBox(obj) {
     return 5; // fallback minimum
 }
 
+//canvas.addEventListener("mousemove", function (e) {
+//    const pos = getMousePos(canvas, e);
+
+//    // Update cursor style.
+//    if (currentSelectedText()) {
+//        const handle = getHandleUnderMouse(pos.x, pos.y, currentSelectedText());
+//        if (handle) {
+//            canvas.style.cursor = "nwse-resize";
+//        } else if (isInsideBox(pos.x, pos.y, currentSelectedText())) {
+//            canvas.style.cursor = "move";
+//        } else {
+//            canvas.style.cursor = "default";
+//        }
+//    } else {
+//        canvas.style.cursor = "default";
+//    }
+
+//    // Debugging log.
+//    console.log(isResizing, currentSelectedText(), activeHandle);
+
+//    // Handle resizing.
+//    if (isResizing && currentSelectedText() && activeHandle) {
+//        const obj = currentSelectedText();
+//        const oldLeft = obj.x;
+//        const oldTop = obj.y;
+//        const oldRight = obj.x + obj.boundingWidth;
+//        const oldBottom = obj.y + obj.boundingHeight;
+
+//        // Calculate the text's natural size
+//        ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+//        const textWidth = ctx.measureText(obj.text).width + 2 * padding;
+//        const lineHeight = obj.fontSize * 1.2;
+//        const lines = wrapText(ctx, obj.text, textWidth);
+//        const textHeight = lines.length * lineHeight + 2 * padding;
+
+//        switch (activeHandle) {
+//            case "top-left":
+//                obj.x = pos.x;
+//                obj.y = pos.y;
+//                obj.boundingWidth = oldRight - pos.x;
+//                obj.boundingHeight = oldBottom - pos.y;
+//                obj.fontSize = adjustFontSizeToFitBox(obj);
+//                break;
+//            case "top-middle":
+//                // Prevent reducing height beyond text height
+//                if (oldBottom - pos.y >= textHeight) {
+//                    obj.y = pos.y;
+//                    obj.boundingHeight = oldBottom - pos.y;
+//                }
+//                break;
+//            case "top-right":
+//                obj.y = pos.y;
+//                obj.boundingWidth = pos.x - oldLeft;
+//                obj.boundingHeight = oldBottom - pos.y;
+//                obj.fontSize = adjustFontSizeToFitBox(obj);
+//                break;
+//            case "right-middle":
+//                // Prevent reducing width beyond text width
+//                if (pos.x - oldLeft >= textWidth) {
+//                    obj.boundingWidth = pos.x - oldLeft;
+//                }
+//                break;
+//            case "bottom-right":
+//                obj.boundingWidth = pos.x - oldLeft;
+//                obj.boundingHeight = pos.y - oldTop;
+//                obj.fontSize = adjustFontSizeToFitBox(obj);
+//                break;
+//            case "bottom-middle":
+//                // Prevent reducing height beyond text height
+//                if (pos.y - oldTop >= textHeight) {
+//                    obj.boundingHeight = pos.y - oldTop;
+//                }
+//                break;
+//            case "bottom-left":
+//                obj.x = pos.x;
+//                obj.boundingWidth = oldRight - pos.x;
+//                obj.boundingHeight = pos.y - oldTop;
+//                obj.fontSize = adjustFontSizeToFitBox(obj);
+//                break;
+//            case "left-middle":
+//                // Prevent reducing width beyond text width
+//                if (oldRight - pos.x >= textWidth) {
+//                    obj.x = pos.x;
+//                    obj.boundingWidth = oldRight - pos.x;
+//                }
+//                break;
+//        }
+
+//        // Enforce minimum dimensions.
+//        if (obj.boundingWidth < textWidth) obj.boundingWidth = textWidth;
+//        if (obj.boundingHeight < textHeight) obj.boundingHeight = textHeight;
+
+//        drawCanvas("Common");
+//    }
+
+//    // Handle dragging.
+//    if (isDragging && currentSelectedText()) {
+//        const obj = currentSelectedText();
+//        obj.x = pos.x - dragOffset.x;
+//        obj.y = pos.y - dragOffset.y;
+//        drawCanvas("Common");
+//    }
+//});
+
 canvas.addEventListener("mousemove", function (e) {
     const pos = getMousePos(canvas, e);
 
-    // Update cursor style.
     if (currentSelectedText()) {
         const handle = getHandleUnderMouse(pos.x, pos.y, currentSelectedText());
         if (handle) {
@@ -1339,10 +1442,6 @@ canvas.addEventListener("mousemove", function (e) {
         canvas.style.cursor = "default";
     }
 
-    // Debugging log.
-    console.log(isResizing, currentSelectedText(), activeHandle);
-
-    // Handle resizing.
     if (isResizing && currentSelectedText() && activeHandle) {
         const obj = currentSelectedText();
         const oldLeft = obj.x;
@@ -1350,12 +1449,11 @@ canvas.addEventListener("mousemove", function (e) {
         const oldRight = obj.x + obj.boundingWidth;
         const oldBottom = obj.y + obj.boundingHeight;
 
-        // Calculate the text's natural size
         ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-        const textWidth = ctx.measureText(obj.text).width + 2 * padding;
-        const lineHeight = obj.fontSize * 1.2;
-        const lines = wrapText(ctx, obj.text, textWidth);
-        const textHeight = lines.length * lineHeight + 2 * padding;
+        const maxTextWidth = obj.boundingWidth - 2 * padding;
+        let lines = wrapText(ctx, obj.text, maxTextWidth);
+        let widestLine = Math.max(...lines.map(line => ctx.measureText(line).width)) + 2 * padding;
+        let textHeight = lines.length * obj.fontSize * 1.2 + 2 * padding;
 
         switch (activeHandle) {
             case "top-left":
@@ -1366,7 +1464,7 @@ canvas.addEventListener("mousemove", function (e) {
                 obj.fontSize = adjustFontSizeToFitBox(obj);
                 break;
             case "top-middle":
-                // Prevent reducing height beyond text height
+                // Prevent reducing height below multiline height
                 if (oldBottom - pos.y >= textHeight) {
                     obj.y = pos.y;
                     obj.boundingHeight = oldBottom - pos.y;
@@ -1379,8 +1477,8 @@ canvas.addEventListener("mousemove", function (e) {
                 obj.fontSize = adjustFontSizeToFitBox(obj);
                 break;
             case "right-middle":
-                // Prevent reducing width beyond text width
-                if (pos.x - oldLeft >= textWidth) {
+                // Prevent reducing width below widest line (instead of max text width)
+                if (pos.x - oldLeft >= widestLine) {
                     obj.boundingWidth = pos.x - oldLeft;
                 }
                 break;
@@ -1390,7 +1488,7 @@ canvas.addEventListener("mousemove", function (e) {
                 obj.fontSize = adjustFontSizeToFitBox(obj);
                 break;
             case "bottom-middle":
-                // Prevent reducing height beyond text height
+                // Prevent reducing height below multiline height
                 if (pos.y - oldTop >= textHeight) {
                     obj.boundingHeight = pos.y - oldTop;
                 }
@@ -1402,22 +1500,21 @@ canvas.addEventListener("mousemove", function (e) {
                 obj.fontSize = adjustFontSizeToFitBox(obj);
                 break;
             case "left-middle":
-                // Prevent reducing width beyond text width
-                if (oldRight - pos.x >= textWidth) {
+                // Prevent reducing width below the widest line
+                if (oldRight - pos.x >= widestLine) {
                     obj.x = pos.x;
                     obj.boundingWidth = oldRight - pos.x;
                 }
                 break;
         }
 
-        // Enforce minimum dimensions.
-        if (obj.boundingWidth < textWidth) obj.boundingWidth = textWidth;
+        // Enforce minimum bounding box size
+        if (obj.boundingWidth < widestLine) obj.boundingWidth = widestLine;
         if (obj.boundingHeight < textHeight) obj.boundingHeight = textHeight;
 
         drawCanvas("Common");
     }
 
-    // Handle dragging.
     if (isDragging && currentSelectedText()) {
         const obj = currentSelectedText();
         obj.x = pos.x - dragOffset.x;
@@ -1425,7 +1522,6 @@ canvas.addEventListener("mousemove", function (e) {
         drawCanvas("Common");
     }
 });
-
 
 
 
