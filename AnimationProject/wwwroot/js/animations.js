@@ -235,59 +235,33 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
 
 
 function drawCanvas(condition) {
-  
     ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the entire canvas
 
-    // Draw Image (if any image exists)
+    // Draw image (if any)
     if (image) {
-        ctx.save(); // Save the current canvas state
-        ctx.globalAlpha = imagePosition.opacity || 1; // Apply opacity to the image
-
-        // Apply scaling if scaleX and scaleY exist
+        ctx.save();
+        ctx.globalAlpha = imagePosition.opacity || 1;
         const scaleX = imagePosition.scaleX || 1;
         const scaleY = imagePosition.scaleY || 1;
-
-        // Translate to the image's position for scaling
         ctx.translate(imagePosition.x, imagePosition.y);
         ctx.scale(scaleX, scaleY);
         ctx.drawImage(image, imagePosition.x, imagePosition.y, 650, 650);
-        ctx.restore(); // Restore canvas state
+        ctx.restore();
     }
-   
-    
 
-
-
-
-
-    ctx.save(); // Save canvas state for text
+    ctx.save();
     ctx.globalAlpha = textPosition.opacity || 1; // Apply text opacity
-
-    //const fontSize = document.getElementById("fontSize").value; // Font size from dropdown
-    //const fontFamily = document.getElementById("fontFamily").value; // Font family from dropdown
-    //const textColor = document.getElementById("hdnTextColor").value; // Text color from dropdown 
-    //const textAlign = document.getElementById("textAlign").value; // Text alignment from dropdown
-
-    //const selectedObj = textObjects.find(obj => obj.selected);
-    //if (selectedObj) {
-    //    selectedObj.fontSize = fontSize;
-    //    selectedObj.fontFamily = fontFamily || 'Arial';
-    //    selectedObj.textColor = textColor || 'black';
-    //    selectedObj.textAlign = textAlign || 'left';
-    //}
 
     if (condition === 'Common' || condition === 'ChangeStyle') {
         textObjects.forEach(obj => {
-            ctx.save(); 
-            // If the object is selected, draw the red bounding box on top of the text.
+            ctx.save();
+            // If the object is selected, draw its bounding box and handles.
             if (obj.selected) {
-                // Calculate bounding box coordinates.
                 const boxX = obj.x - padding;
                 const boxY = obj.y - padding;
                 const boxWidth = obj.boundingWidth + 2 * padding;
                 const boxHeight = obj.boundingHeight + 2 * padding;
                 drawRoundedRect(ctx, boxX, boxY, boxWidth, boxHeight, 5);
-                // Draw handles.
                 const handles = [
                     { x: boxX, y: boxY },
                     { x: boxX + boxWidth, y: boxY },
@@ -298,53 +272,63 @@ function drawCanvas(condition) {
                 handles.forEach(handle => {
                     ctx.fillRect(handle.x - handleSize / 2, handle.y - handleSize / 2, handleSize, handleSize);
                 });
-
             }
+
+            // Set text properties.
             ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
             ctx.fillStyle = obj.textColor;
-            ctx.textAlign = obj.textAlign || "left";
             ctx.textBaseline = "top";
+
+            // Wrap text into lines with max width = boundingWidth minus 2*padding.
             const maxTextWidth = obj.boundingWidth - 2 * padding;
-            const availableHeight = obj.boundingHeight - 2 * padding;
             const lines = wrapText(ctx, obj.text, maxTextWidth);
             const lineHeight = obj.fontSize * 1.2;
+            const availableHeight = obj.boundingHeight - 2 * padding;
             const maxLines = Math.floor(availableHeight / lineHeight);
             const startY = obj.y + padding;
+
+            // Draw each line using the proper horizontal offset based on alignment.
             for (let i = 0; i < Math.min(lines.length, maxLines); i++) {
-                ctx.fillText(lines[i], obj.x + padding, startY + i * lineHeight);
+                const line = lines[i];
+                const lineWidth = ctx.measureText(line).width;
+                let offsetX;
+                if (obj.textAlign === "center") {
+                    offsetX = obj.x + (obj.boundingWidth - lineWidth) / 2;
+                } else if (obj.textAlign === "right") {
+                    offsetX = obj.x + obj.boundingWidth - lineWidth - padding;
+                } else { // left alignment (or default)
+                    offsetX = obj.x + padding;
+                }
+                ctx.fillText(line, offsetX, startY + i * lineHeight);
             }
             ctx.restore();
         });
     }
+
     if (condition === 'applyAnimations') {
         textObjects.forEach(obj => {
             textPosition.content = obj.text;
-            //textPosition.x = obj.x;
-            //textPosition.y = obj.y;
-                    text = obj.text;
-            const textToRender = ($("#hdnTextAnimationType").val() === "typeText")
-                    ? textPosition.content
-                    : text;
-            const textPositionX = ($("#hdnTextAnimationType").val() === "typeText")
-                    ? 300
-                    : textPosition.x;
-            const textPositionY = ($("#hdnTextAnimationType").val() === "typeText")
-                    ? 100
-                    : textPosition.y;
+            text = obj.text;
+            const textToRender = (document.getElementById("hdnTextAnimationType").value === "typeText")
+                ? textPosition.content
+                : text;
+            const textPositionX = (document.getElementById("hdnTextAnimationType").value === "typeText")
+                ? 300
+                : textPosition.x;
+            const textPositionY = (document.getElementById("hdnTextAnimationType").value === "typeText")
+                ? 100
+                : textPosition.y;
             ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
             ctx.fillStyle = obj.textColor;
             ctx.textAlign = obj.textAlign || "left";
-                    //textPosition.x = obj.x;
-                    //textPosition.y = obj.y;
-            ctx.fillText(obj.text, obj.x, obj.y); // Draw the text
-               // ctx.restore(); // Restore canvas state
+            ctx.fillText(obj.text, obj.x, obj.y);
         });
-   }
+    }
 
-    // Reset opacity and transformations to ensure no impact on subsequent drawings
     ctx.globalAlpha = 1;
-
+    ctx.restore();
 }
+
 
 // Image Upload Handler
 document.getElementById("imageUpload").addEventListener("change", (e) => {
@@ -401,35 +385,54 @@ function ChangeStyle() {
 //    drawCanvas('ChangeStyle');
 //}
 function ChangeAlignStyle(value) {
+    // Update the alignment control value.
     $("#textAlign").val(value);
-    const textAlign = document.getElementById("textAlign").value; // "left", "center", or "right"
+    const newAlign = document.getElementById("textAlign").value; // "left", "center", or "right"
     const Obj = textObjects.find(obj => obj.selected);
     if (Obj) {
-        // Set the font to measure text.
+        // Set the canvas font for accurate measurement.
         ctx.font = `${Obj.fontSize}px ${Obj.fontFamily}`;
         const measuredWidth = ctx.measureText(Obj.text).width;
-        // Add extra padding (e.g., 10px) to get new boundingWidth.
-        const newBoundingWidth = measuredWidth + 10;
 
-        if (textAlign === "left") {
-            // Left: keep left edge fixed (no change in x).
-            // (Obj.x remains unchanged.)
-        } else if (textAlign === "center") {
-            // Center: compute current center and update x so that the new box is centered.
-            const currentCenter = Obj.x + Obj.boundingWidth / 2;
-            Obj.x = currentCenter - newBoundingWidth / 2;
-        } else if (textAlign === "right") {
-            // Right: compute current right edge and update x so that the new box's right edge is fixed.
-            const rightEdge = Obj.x + Obj.boundingWidth;
-            Obj.x = rightEdge - newBoundingWidth;
+        // Use a fixed inner padding (for both left and right sides).
+        const innerPadding = 15;
+        // Compute new boundingWidth from measured text width plus fixed inner padding on both sides.
+        const newBoundingWidth = measuredWidth + 2 * innerPadding;
+        const oldBoundingWidth = Obj.boundingWidth;
+
+        // Helper: Calculate text offset inside the box.
+        // - For "left": offset = innerPadding.
+        // - For "center": offset = (boundingWidth - measuredWidth) / 2.
+        // - For "right": offset = boundingWidth - measuredWidth - innerPadding.
+        function getTextOffset(alignment, boundingWidth, measuredWidth, pad) {
+            if (alignment === "left") {
+                return pad;
+            } else if (alignment === "center") {
+                return (boundingWidth - measuredWidth) / 2;
+            } else if (alignment === "right") {
+                return boundingWidth - measuredWidth - pad;
+            }
         }
+
+        const oldAlign = Obj.textAlign || "left";
+        const oldOffset = getTextOffset(oldAlign, oldBoundingWidth, measuredWidth, innerPadding);
+        const newOffset = getTextOffset(newAlign, newBoundingWidth, measuredWidth, innerPadding);
+
+        // Calculate the difference in offset (delta) and shift the entire object.
+        const delta = newOffset - oldOffset;
+        Obj.x = Obj.x - delta;
 
         // Update the object's boundingWidth and textAlign.
         Obj.boundingWidth = newBoundingWidth;
-        Obj.textAlign = textAlign;
+        Obj.textAlign = newAlign;
     }
     drawCanvas("ChangeStyle");
 }
+
+
+
+
+
 
 
 function OnChangefontFamily(value) {
