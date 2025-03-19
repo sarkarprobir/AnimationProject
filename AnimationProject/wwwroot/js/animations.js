@@ -280,13 +280,13 @@ function drawCanvas(condition) {
                 // Draw eight handles: four corners and four midpoints.
                 const handles = [
                     { x: boxX, y: boxY }, // top-left
-                    { x: boxX + boxWidth / 2, y: boxY }, // top-middle
+                    //{ x: boxX + boxWidth / 2, y: boxY }, // top-middle
                     { x: boxX + boxWidth, y: boxY }, // top-right
-                    { x: boxX + boxWidth, y: boxY + boxHeight / 2 }, // right-middle
+                    //{ x: boxX + boxWidth, y: boxY + boxHeight / 2 }, // right-middle
                     { x: boxX + boxWidth, y: boxY + boxHeight }, // bottom-right
-                    { x: boxX + boxWidth / 2, y: boxY + boxHeight }, // bottom-middle
+                    //{ x: boxX + boxWidth / 2, y: boxY + boxHeight }, // bottom-middle
                     { x: boxX, y: boxY + boxHeight }, // bottom-left
-                    { x: boxX, y: boxY + boxHeight / 2 }  // left-middle
+                    //{ x: boxX, y: boxY + boxHeight / 2 }  // left-middle
                 ];
                 ctx.fillStyle = "#FF7F50";
                 handles.forEach(handle => {
@@ -503,18 +503,18 @@ function animateText(direction,condition ) {
         switch (direction) {
             case "top":
                 startX = endX;           // same x as final
-                startY = 0;                // from top edge (or use -obj.fontSize to start off-canvas)
+                startY = - (obj.boundingHeight + 20);   // Place the object fully above the canvas:
                 break;
             case "bottom":
                 startX = endX;           // same x as final
-                startY = canvas.height;    // from bottom edge (or canvas.height + offset)
+                startY = canvas.height + 20;  // Place the object fully below the canvas:
                 break;
             case "left":
-                startX = 0;                // from left edge (or -width for off-canvas)
+                startX = - (obj.boundingWidth + 20); // Place the object fully to the left of the canvas:
                 startY = endY;           // same y as final
                 break;
             case "right":
-                startX = canvas.width;     // from right edge (or canvas.width + offset)
+                startX = canvas.width + 20;   // Place the object fully to the right of the canvas:
                 startY = endY;           // same y as final
                 break;
             default:
@@ -1287,30 +1287,31 @@ function getTextObjectAt(x, y) {
 
 
 // Mouse events for dragging and selection
-canvas.addEventListener("mousedown", function (e) {
+//canvas.addEventListener("mousedown", function (e) {
 
-    const pos = getMousePos(canvas, e);
-    // Check for a resize handle first.
-    const handle = getHandleUnderMouse(pos.x, pos.y, currentSelectedText());
-    if (currentSelectedText() && handle) {
-        isResizing = true;
-        activeHandle = handle;
-        e.preventDefault();
-    }
-    // Otherwise, if clicking inside a text object's bounding box, start dragging.
-    else if (currentSelectedText() && isInsideBox(pos.x, pos.y, currentSelectedText())) {
-        isDragging = true;
-        dragOffset.x = pos.x - currentSelectedText().x;
-        dragOffset.y = pos.y - currentSelectedText().y;
-        e.preventDefault();
-    }
-   
-    drawCanvas('Common');
-});
-canvas.addEventListener("click", function (e) {
+//    const pos = getMousePos(canvas, e);
+//    // Check for a resize handle first.
+//    const handle = getHandleUnderMouse(pos.x, pos.y, currentSelectedText());
+//    if (currentSelectedText() && handle) {
+//        isResizing = true;
+//        activeHandle = handle;
+//        e.preventDefault();
+//    }
+//    // Otherwise, if clicking inside a text object's bounding box, start dragging.
+//    else if (currentSelectedText() && isInsideBox(pos.x, pos.y, currentSelectedText())) {
+//        isDragging = true;
+//        dragOffset.x = pos.x - currentSelectedText().x;
+//        dragOffset.y = pos.y - currentSelectedText().y;
+//        e.preventDefault();
+//    }
+
+//    drawCanvas('Common');
+//});
+canvas.addEventListener("mousedown", function (e) {
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
+    const pos = { x: mouseX, y: mouseY };
 
     // If the text editor is active, ignore this event.
     if (document.activeElement === textEditor) return;
@@ -1325,13 +1326,55 @@ canvas.addEventListener("click", function (e) {
         // Bring the selected object to the front.
         textObjects.splice(textObjects.indexOf(obj), 1);
         textObjects.push(obj);
+        // Set the current drag object.
+        currentDrag = obj;
+
+        // Now check if the mouse is over a resize handle for this object.
+        const handle = getHandleUnderMouse(pos.x, pos.y, obj);
+        if (handle) {
+            isResizing = true;
+            activeHandle = handle;
+        } else if (isInsideBox(pos.x, pos.y, obj)) {
+            // Otherwise, if clicking inside the object's bounding box, start dragging.
+            isDragging = true;
+            dragOffset.x = pos.x - obj.x;
+            dragOffset.y = pos.y - obj.y;
+        }
     } else {
-        // If clicked outside any text, deselect all.
+        // If no text object is found, deselect all.
         textObjects.forEach(o => o.selected = false);
+        currentDrag = null;
     }
 
+    e.preventDefault();
     drawCanvas('Common');
 });
+
+//canvas.addEventListener("click", function (e) {
+//    const rect = canvas.getBoundingClientRect();
+//    const mouseX = e.clientX - rect.left;
+//    const mouseY = e.clientY - rect.top;
+
+//    // If the text editor is active, ignore this event.
+//    if (document.activeElement === textEditor) return;
+
+//    // Try to get a text object under the mouse.
+//    const obj = getTextObjectAt(mouseX, mouseY);
+
+//    if (obj) {
+//        // Deselect all and select this object.
+//        textObjects.forEach(o => o.selected = false);
+//        obj.selected = true;
+//        // Bring the selected object to the front.
+//        textObjects.splice(textObjects.indexOf(obj), 1);
+//        textObjects.push(obj);
+//    } else {
+//        // If clicked outside any text, deselect all.
+//        textObjects.forEach(o => o.selected = false);
+//    }
+
+//    drawCanvas('Common');
+//});
 // Adjusts font size so that the wrapped text fits inside the new bounding box.
 // It measures the text using your wrapText helper and ensures that the total height of the lines is less than or equal to the available height.
 function adjustFontSizeToFitBox(obj) {
