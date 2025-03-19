@@ -244,7 +244,7 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
 
 
 function drawCanvas(condition) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the entire canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear entire canvas
 
     // Draw image (if any)
     if (image) {
@@ -264,18 +264,13 @@ function drawCanvas(condition) {
     if (condition === 'Common' || condition === 'ChangeStyle') {
         textObjects.forEach(obj => {
             ctx.save();
-
-            // Constrain the selected box so that it does not cross canvas width.
-            // (You may add similar constraints for the left edge or height if needed.)
-            if (obj.x < 0) {
-                obj.x = 0;
-            }
-            if (obj.x + obj.boundingWidth > canvas.width) {
-                obj.boundingWidth = canvas.width - obj.x;
-            }
-
-            // If the object is selected, draw its bounding box and handles.
+            // If selected, draw the bounding box and handles.
             if (obj.selected) {
+                // Constrain the box if it goes beyond canvas boundaries.
+                if (obj.x < 0) obj.x = 0;
+                if (obj.x + obj.boundingWidth > canvas.width) {
+                    obj.boundingWidth = canvas.width - obj.x;
+                }
                 const boxX = obj.x - padding;
                 const boxY = obj.y - padding;
                 const boxWidth = obj.boundingWidth + 2 * padding;
@@ -304,10 +299,10 @@ function drawCanvas(condition) {
             ctx.fillStyle = obj.textColor;
             ctx.textBaseline = "top";
 
-            // Wrap text into lines with max width = boundingWidth minus 2*padding.
+            // Determine the maximum text width for wrapping.
             const maxTextWidth = obj.boundingWidth - 2 * padding;
             let lines;
-            // If text contains newline characters, use them; otherwise, wrap.
+            // If the text contains newline characters, use them; otherwise, wrap.
             if (obj.text.indexOf("\n") !== -1) {
                 lines = obj.text.split("\n");
             } else {
@@ -318,7 +313,7 @@ function drawCanvas(condition) {
             const maxLines = Math.floor(availableHeight / lineHeight);
             const startY = obj.y + padding;
 
-            // Draw each line using the proper horizontal offset based on alignment.
+            // Draw each line with the correct horizontal offset based on alignment.
             for (let i = 0; i < Math.min(lines.length, maxLines); i++) {
                 const line = lines[i];
                 const lineWidth = ctx.measureText(line).width;
@@ -327,7 +322,7 @@ function drawCanvas(condition) {
                     offsetX = obj.x + (obj.boundingWidth - lineWidth) / 2;
                 } else if (obj.textAlign === "right") {
                     offsetX = obj.x + obj.boundingWidth - lineWidth - padding;
-                } else { // left alignment (or default)
+                } else { // left alignment
                     offsetX = obj.x + padding;
                 }
                 ctx.fillText(line, offsetX, startY + i * lineHeight);
@@ -375,6 +370,7 @@ function drawCanvas(condition) {
     ctx.globalAlpha = 1;
     ctx.restore();
 }
+
 
 
 
@@ -1636,64 +1632,87 @@ canvasContainer.addEventListener("dblclick", function (e) {
         //    textEditor.removeEventListener("blur", finishEditing);
         //}
         function finishEditing() {
-            // Preserve the edited text (with newlines)
-            obj.text = textEditor.value;
+            // Get the edited text from the textarea.
+            let editedText = textEditor.value;
             obj.editing = false;
             textEditor.style.display = "none";
 
             const ctx = canvas.getContext("2d");
-            ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
 
-            // Extra padding values.
-            const extraWidth = 15;  // total extra width (both sides)
-            const extraHeight = 20; // total extra height (both sides)
+            // Start with the object's current font size.
+            let fontSize = obj.fontSize;
+            ctx.font = `${fontSize}px ${obj.fontFamily}`;
 
-            // Define a margin from the canvas edge (so box won't be flush with canvas border).
+            // Define a margin so that the box will not cross the canvas right edge.
             const canvasMargin = 20;
-
-            // Determine the available width from the object's x position.
+            // Available width is from the object's x to the canvas right edge minus margin.
             const availableWidth = canvas.width - obj.x - canvasMargin;
+            // Maximum text width inside the box (subtracting horizontal padding).
+            const maxWidth = availableWidth - 2 * padding;
 
-            // Initially wrap text with the object's current bounding width (minus padding).
-            let lines = wrapText(ctx, obj.text, obj.boundingWidth - 2 * padding);
+            // If the pasted text does not contain newlines, try to auto-wrap it.
+            let lines;
+            if (editedText.indexOf("\n") === -1) {
+                lines = wrapText(ctx, editedText, maxWidth);
+                // If only one line is produced and it exceeds maxWidth, decrease font size.
+                while (lines.length === 1 && ctx.measureText(editedText).width > maxWidth && fontSize > 5) {
+                    fontSize--;
+                    ctx.font = `${fontSize}px ${obj.fontFamily}`;
+                    lines = wrapText(ctx, editedText, maxWidth);
+                }
+            } else {
+                // If newlines exist, split by newline.
+                lines = editedText.split("\n");
+                // Even then, if the combined text (as one line) is too wide, decrease font size.
+                if (ctx.measureText(editedText.replace(/\n/g, " ")).width > maxWidth) {
+                    while (ctx.measureText(editedText.replace(/\n/g, " ")).width > maxWidth && fontSize > 5) {
+                        fontSize--;
+                        ctx.font = `${fontSize}px ${obj.fontFamily}`;
+                    }
+                }
+            }
+
+            // Update object's font size.
+            obj.fontSize = fontSize;
+            // Force multiline by joining wrapped lines if more than one line was produced.
+            if (lines.length > 1) {
+                editedText = lines.join("\n");
+            }
+
+            // Recalculate bounding dimensions based on the multiline content.
             let maxLineWidth = 0;
             lines.forEach(line => {
                 const w = ctx.measureText(line).width;
-                if (w > maxLineWidth) maxLineWidth = w;
+                if (w > maxLineWidth) {
+                    maxLineWidth = w;
+                }
             });
-
-            // If the computed bounding width (maxLineWidth + extraWidth) exceeds available width,
-            // then re-wrap the text using the availableWidth as the new maximum.
-            if (maxLineWidth + extraWidth > availableWidth) {
-                lines = wrapText(ctx, obj.text, availableWidth - extraWidth);
-                maxLineWidth = 0;
-                lines.forEach(line => {
-                    const w = ctx.measureText(line).width;
-                    if (w > maxLineWidth) maxLineWidth = w;
-                });
-            }
-
-            // Calculate total height based on the number of lines.
-            const lineHeight = obj.fontSize * 1.2;
+            const lineHeight = fontSize * 1.2;
             const totalTextHeight = lines.length * lineHeight;
 
-            // Update the object's bounding dimensions.
-            // Ensure the bounding width does not exceed available width.
+            // Extra padding (you can adjust these values).
+            const extraWidth = 12;
+            const extraHeight = 10;
+
+            // Ensure the new bounding width does not exceed available width.
             obj.boundingWidth = Math.min(maxLineWidth + extraWidth, availableWidth);
             obj.boundingHeight = totalTextHeight + extraHeight;
 
-            drawCanvas('Common'); // Redraw canvas with updated text and bounding box
+            // Save the (now multiline) text.
+            obj.text = editedText;
+
+            drawCanvas('Common'); // Redraw canvas with updated text and bounding box.
 
             textEditor.removeEventListener("keydown", onKeyDown);
             textEditor.removeEventListener("blur", finishEditing);
         }
-
 
         function onKeyDown(e) {
             if (e.key === "Enter" && !e.shiftKey) {
                 finishEditing();
             }
         }
+
 
         textEditor.addEventListener("keydown", onKeyDown);
         textEditor.addEventListener("blur", finishEditing);
