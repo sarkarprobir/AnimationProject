@@ -19,15 +19,7 @@
         return self;
     }
 
-    /*!
-     * GSAP 3.12.2
-     * https://google.com
-     *
-     * @license Copyright 2008-2023, GreenSock. All rights reserved.
-     * Subject to the terms at https://google.com/standard-license or for
-     * Club GreenSock members, the agreement issued with that membership.
-     * @author: Jack Doyle, jack@greensock.com
-     */
+   
     var _config = {
         autoSleep: 120,
         force3D: "auto",
