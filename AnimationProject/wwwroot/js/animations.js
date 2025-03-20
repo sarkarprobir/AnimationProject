@@ -1624,7 +1624,21 @@ function isInsideBox(mouseX, mouseY, obj) {
          mouseY <= boxY + boxHeight;
        /* mouseY >= boxY && mouseY <= boxY + boxHeight;*/
 }
+canvasContainer.addEventListener("click", function (e) {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const obj = getTextObjectAt(mouseX, mouseY);
 
+    if (obj) {
+        // Optionally, do something with the selected object...
+        $("#favcolor").val(obj.textColor);
+        $("#fontstyle_popup").css("display", "block");
+        $(".right-sec-two").css("display", "block");
+        $(".right-sec-one").css("display", "none");
+        document.getElementById("modeButton").innerText = "Animation Mode";
+    }
+});
 canvasContainer.addEventListener("dblclick", function (e) {
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
