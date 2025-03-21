@@ -280,13 +280,13 @@ function drawCanvas(condition) {
                 // Draw eight handles: four corners and four midpoints.
                 const handles = [
                     { x: boxX, y: boxY }, // top-left
-                    //{ x: boxX + boxWidth / 2, y: boxY }, // top-middle
+                    { x: boxX + boxWidth / 2, y: boxY }, // top-middle
                     { x: boxX + boxWidth, y: boxY }, // top-right
-                    //{ x: boxX + boxWidth, y: boxY + boxHeight / 2 }, // right-middle
+                    { x: boxX + boxWidth, y: boxY + boxHeight / 2 }, // right-middle
                     { x: boxX + boxWidth, y: boxY + boxHeight }, // bottom-right
-                    //{ x: boxX + boxWidth / 2, y: boxY + boxHeight }, // bottom-middle
+                    { x: boxX + boxWidth / 2, y: boxY + boxHeight }, // bottom-middle
                     { x: boxX, y: boxY + boxHeight }, // bottom-left
-                    //{ x: boxX, y: boxY + boxHeight / 2 }  // left-middle
+                    { x: boxX, y: boxY + boxHeight / 2 }  // left-middle
                 ];
                 ctx.fillStyle = "#FF7F50";
                 handles.forEach(handle => {
