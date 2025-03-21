@@ -349,6 +349,24 @@
     </script>
 
     <script>
+            function toggleMode() {
+            let button = document.getElementById("modeButton");
+
+            // Toggle visibility of elements
+            if (document.getElementById("opengl_popup").style.display == "block") {
+                $("#opengl_popup").hide();
+            }
+            $("#fontstyle_popup").toggle();
+            $(".right-sec-two").toggle();
+            $(".right-sec-one").toggle();
+
+            // Toggle button text between "Animation Mode" and "Graphic Mode"
+            if (button.innerText === "Animation Mode") {
+                button.innerText = "Graphic Mode";
+            } else {
+                button.innerText = "Animation Mode";
+            }
+        }
         function opentl()
          {
             if(document.getElementById("opengl_popup").style.display == "block"){
@@ -528,8 +546,7 @@
             <div class="container-1">
                 <div class="container-inner">
                     <div class="canvas-top-btn">
-               
-                        <button class="Graphic-More active" onclick="opentl();">Animation Mode</button>
+                        <button id="modeButton" class="Graphic-More active" onclick="toggleMode();">Animation Mode</button>
                     </div>
                     <div style="float: left; display: flex; flex-direction: column; align-items: center; width: 100%">
                         <div>
