@@ -49,6 +49,18 @@ const handleSize = 10;     // Resize handle square size (in pixels)
 const minWidth = 50;       // Minimum bounding width
 const minHeight = 30;      // Minimum bounding height
 
+/////////Image Section///////////////////
+let images = []; // Array to store image objects
+// Each image object: { img, src, x, y, width, height, scaleX, scaleY, selected }
+// Default minimum size for resizing
+const MIN_SIZE = 50;
+// Resize handle size
+let dragOffsetImage = { x: 0, y: 0 };
+// For dragging/resizing state
+let isDraggingImage = false;
+let isResizingImage = false;
+let activeImage = null;
+
 ////This is for delete text///////////////////
 // Utility: Returns an object (text or image) if the (x,y) falls within its bounding box.
 
@@ -81,12 +93,6 @@ function getMousePos(canvas, evt) {
 function getObjectAtcontextmenu(x, y) {
     // Check text objects.
     for (let obj of textObjects) {
-        //ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-        //let width = ctx.measureText(obj.text).width;
-        //// Assuming y is the baseline, top is approximately y - fontSize.
-        //if (x >= obj.x && x <= obj.x + width && y >= obj.y - obj.fontSize && y <= obj.y) {
-        //    return { type: "text", obj: obj };
-        //}
         if (
             x >= obj.x - padding &&
             x <= obj.x - padding + obj.boundingWidth + 2 * padding &&
@@ -96,17 +102,29 @@ function getObjectAtcontextmenu(x, y) {
             return { type: "text", obj: obj };
         }
     }
-   
-    // Check image object.
-    if (image) {
-        if (x >= image.x  &&
-            y >= image.y ) {
-            return { type: "image", obj: image };
+
+    // Check image objects (from the images array)
+    if (images && images.length) {
+        // Loop from top-most (last in array) to bottom.
+        for (let i = images.length - 1; i >= 0; i--) {
+            let imgObj = images[i];
+            // Calculate the displayed width and height dynamically.
+            const dispWidth = imgObj.width * (imgObj.scaleX || 1);
+            const dispHeight = imgObj.height * (imgObj.scaleY || 1);
+            if (
+                x >= imgObj.x &&
+                x <= imgObj.x + dispWidth &&
+                y >= imgObj.y &&
+                y <= imgObj.y + dispHeight
+            ) {
+                return { type: "image", obj: imgObj };
+            }
         }
     }
-   
+
     return null;
 }
+
 // Returns the text object (or image) if the (x,y) falls inside its bounding box.
 // For text objects, we use the stored bounding box properties. KD ignore
 function getObjectAt(x, y) {
@@ -171,9 +189,8 @@ let selectedType = null; // "text" or "image"
 canvas.addEventListener("contextmenu", function (e) {
     e.preventDefault(); // Prevent default browser context menu
 
-    // Get mouse coordinates relative to the canvas container.
     const rect = canvas.getBoundingClientRect();
-    const offsetX = e.clientX  - rect.left;
+    const offsetX = e.clientX - rect.left;
     const offsetY = e.clientY - rect.top;
     const adjustX = 155;
     const adjustY = 64;
@@ -181,12 +198,9 @@ canvas.addEventListener("contextmenu", function (e) {
     if (found) {
         selectedForContextMenu = found.obj;
         selectedType = found.type;
-
-        // Position the context menu dynamically within the canvas container.
+        // Position the context menu relative to the canvas
         contextMenu.style.left = offsetX + adjustX + "px";
         contextMenu.style.top = offsetY + adjustY + "px";
-        //contextMenu.style.left = `${rect.left + editorX - offsetX}px`;
-        //contextMenu.style.top = `${rect.top + found.obj.y + scrollTop - ascent - offsetY}px`;
         contextMenu.style.display = "block";
     } else {
         contextMenu.style.display = "none";
@@ -204,10 +218,12 @@ document.getElementById("deleteOption").addEventListener("click", function (e) {
         if (selectedType === "text") {
             textObjects = textObjects.filter(obj => obj !== selectedForContextMenu);
         } else if (selectedType === "image") {
-            image = null;
+            // Remove from images array
+            images = images.filter(imgObj => imgObj !== selectedForContextMenu);
         }
         drawCanvas('Common');
         selectedForContextMenu = null;
+        contextMenu.style.display = "none";
     }
 });
 ////END   This is for delete text///////////////////
@@ -246,16 +262,36 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
 function drawCanvas(condition) {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear entire canvas
 
-    // Draw image (if any)
-    if (image) {
-        ctx.save();
-        ctx.globalAlpha = imagePosition.opacity || 1;
-        const scaleX = imagePosition.scaleX || 1;
-        const scaleY = imagePosition.scaleY || 1;
-        ctx.translate(imagePosition.x, imagePosition.y);
-        ctx.scale(scaleX, scaleY);
-        ctx.drawImage(image, imagePosition.x, imagePosition.y, 650, 650);
-        ctx.restore();
+    // --- Draw multiple images from the images array ---
+    if (images && images.length) {
+        images.forEach(imgObj => {
+            ctx.save();
+            ctx.globalAlpha = imgObj.opacity || 1;
+            const scaleX = imgObj.scaleX || 1;
+            const scaleY = imgObj.scaleY || 1;
+            ctx.translate(imgObj.x, imgObj.y);
+            ctx.scale(scaleX, scaleY);
+            // Draw the image at (0,0) because translation has already been applied.
+            ctx.drawImage(imgObj.img, 0, 0, imgObj.width, imgObj.height);
+            ctx.restore();
+
+            // If this image is selected, draw a border and four resize handles.
+            if (imgObj.selected) {
+                ctx.save();
+                ctx.strokeStyle = "blue";
+                ctx.lineWidth = 2;
+                const dispW = imgObj.width * scaleX;
+                const dispH = imgObj.height * scaleY;
+                ctx.strokeRect(imgObj.x, imgObj.y, dispW, dispH);
+                // Draw handles at the four corners
+                const handles = getImageResizeHandles(imgObj); // Make sure this function uses your dynamic dimensions
+                ctx.fillStyle = "red";
+                handles.forEach(handle => {
+                    ctx.fillRect(handle.x - handleSize / 2, handle.y - handleSize / 2, handleSize, handleSize);
+                });
+                ctx.restore();
+            }
+        });
     }
 
     ctx.save();
@@ -755,6 +791,108 @@ function animateText(direction,condition ) {
             });
 
 
+        }
+    });
+
+    // ----- IMAGE ANIMATION SECTION -----
+    images.forEach(imgObj => {
+        // Save the image's final (target) position.
+        const endX = imgObj.x;
+        const endY = imgObj.y;
+        let startX, startY;
+
+        // Calculate displayed dimensions using scale factors.
+        const dispWidth = imgObj.width * (imgObj.scaleX || 1);
+        const dispHeight = imgObj.height * (imgObj.scaleY || 1);
+
+        // Determine starting position based on the chosen direction.
+        switch (direction) {
+            case "top":
+                startX = endX;  // same x as final
+                startY = -(dispHeight + 20);   // image fully above canvas
+                break;
+            case "bottom":
+                startX = endX;  // same x as final
+                startY = canvas.height + 20;  // image fully below canvas
+                break;
+            case "left":
+                startX = -(dispWidth + 20); // image fully to the left
+                startY = endY;  // same y as final
+                break;
+            case "right":
+                startX = canvas.width + 20; // image fully to the right
+                startY = endY;  // same y as final
+                break;
+            default:
+                startX = endX;
+                startY = endY;
+        }
+
+        // Set the image's starting position.
+        imgObj.x = startX;
+        imgObj.y = startY;
+
+        // Timing settings for images (using the same global speeds as text).
+        const inTime = parseFloat(selectedInSpeed) || 3;
+        const stayTime = parseFloat(selectedStaySpeed) || 6;
+        const outTime = parseFloat(selectedOutSpeed) || 2;
+        const exitX = window.innerWidth;  // exit to right (example)
+        const exitY = endY;               // maintain same vertical position.
+
+        let tl = gsap.timeline({
+            onUpdate: function () {
+                drawCanvas(condition);
+            }
+        });
+
+        if (animationType === "linear") {
+            tl.to(imgObj, {
+                x: endX,
+                y: endY,
+                duration: inTime,
+                ease: "power1.in"
+            });
+            tl.to(imgObj, {
+                duration: stayTime,
+                ease: "none"
+            });
+            tl.to(imgObj, {
+                x: exitX,
+                y: exitY,
+                duration: outTime,
+                ease: "power1.out"
+            });
+            tl.set(imgObj, {
+                x: endX,
+                y: endY,
+                duration: parseFloat(selectedInSpeed) || 2,
+                ease: "power1.inOut",
+                onUpdate: () => drawCanvas(condition)
+            });
+        } else if (animationType === "bounce") {
+            tl.to(imgObj, {
+                x: endX,
+                y: endY,
+                duration: inTime,
+                ease: "bounce.out"
+            });
+            tl.to(imgObj, {
+                duration: stayTime,
+                ease: "none"
+            });
+            tl.to(imgObj, {
+                x: exitX,
+                y: exitY,
+                duration: outTime,
+                ease: "bounce.out"
+            });
+            tl.set(imgObj, {
+                x: endX,
+                y: endY,
+                duration: parseFloat(selectedInSpeed) || 2,
+                ease: "bounce.out",
+                onUpdate: () => drawCanvas(condition)
+            });
         }
     });
 
@@ -1284,8 +1422,37 @@ function getTextObjectAt(x, y) {
     }
     return null;
 }
-
-
+// Returns an array of handle positions for a given image object
+function getImageResizeHandles(imageObj) {
+    const w = imageObj.width * imageObj.scaleX;
+    const h = imageObj.height * imageObj.scaleY;
+    return [
+        { name: "top-left", x: imageObj.x, y: imageObj.y },
+        { name: "top-right", x: imageObj.x + w, y: imageObj.y },
+        { name: "bottom-left", x: imageObj.x, y: imageObj.y + h },
+        { name: "bottom-right", x: imageObj.x + w, y: imageObj.y + h }
+    ];
+}
+function getHandleUnderMouseForImage(imgObj, pos) {
+    const handles = getImageResizeHandles(imgObj);
+    for (let h of handles) {
+        if (Math.abs(pos.x - h.x) < handleSize && Math.abs(pos.y - h.y) < handleSize) {
+            return h.name;
+        }
+    }
+    return null;
+}
+// Check if the mouse is over an image (returns the image object or null)
+function isMouseOverImage(imageObj, pos) {
+    const w = imageObj.width * imageObj.scaleX;
+    const h = imageObj.height * imageObj.scaleY;
+    return (
+        pos.x >= imageObj.x &&
+        pos.x <= imageObj.x + w &&
+        pos.y >= imageObj.y &&
+        pos.y <= imageObj.y + h
+    );
+}
 // Mouse events for dragging and selection
 //canvas.addEventListener("mousedown", function (e) {
 
@@ -1320,13 +1487,11 @@ canvas.addEventListener("mousedown", function (e) {
     const obj = getTextObjectAt(mouseX, mouseY);
 
     if (obj) {
-        // Deselect all and select this object.
         textObjects.forEach(o => o.selected = false);
         obj.selected = true;
         // Bring the selected object to the front.
         textObjects.splice(textObjects.indexOf(obj), 1);
         textObjects.push(obj);
-        // Set the current drag object.
         currentDrag = obj;
 
         // Now check if the mouse is over a resize handle for this object.
@@ -1335,20 +1500,51 @@ canvas.addEventListener("mousedown", function (e) {
             isResizing = true;
             activeHandle = handle;
         } else if (isInsideBox(pos.x, pos.y, obj)) {
-            // Otherwise, if clicking inside the object's bounding box, start dragging.
             isDragging = true;
             dragOffset.x = pos.x - obj.x;
             dragOffset.y = pos.y - obj.y;
         }
     } else {
-        // If no text object is found, deselect all.
-        textObjects.forEach(o => o.selected = false);
-        currentDrag = null;
+        // Check for images under the mouse
+        let imageFound = false;
+        for (let i = images.length - 1; i >= 0; i--) {
+            let imgObj = images[i];
+            // Check if mouse is over any resize handle of this image.
+            let handle = getHandleUnderMouseForImage(imgObj, pos);
+            if (handle) {
+                images.forEach(img => img.selected = false);
+                imgObj.selected = true;
+                activeImage = imgObj;
+                isResizingImage = true;
+                activeImageHandle = handle;
+                imageFound = true;
+                break;
+            }
+            // Otherwise, check if mouse is over the image.
+            if (isMouseOverImage(imgObj, pos)) {
+                images.forEach(img => img.selected = false);
+                imgObj.selected = true;
+                activeImage = imgObj;
+                isDraggingImage = true;
+                dragOffsetImage.x = pos.x - imgObj.x;
+                dragOffsetImage.y = pos.y - imgObj.y;
+                imageFound = true;
+                break;
+            }
+        }
+        if (!imageFound) {
+            // Deselect both text objects and images if nothing is found.
+            textObjects.forEach(o => o.selected = false);
+            images.forEach(img => img.selected = false);
+            currentDrag = null;
+            activeImage = null;
+        }
     }
 
     e.preventDefault();
     drawCanvas('Common');
 });
+
 
 //canvas.addEventListener("click", function (e) {
 //    const rect = canvas.getBoundingClientRect();
@@ -1500,6 +1696,7 @@ function adjustFontSizeToFitBox(obj) {
 canvas.addEventListener("mousemove", function (e) {
     const pos = getMousePos(canvas, e);
 
+    // --- Text Object Cursor Handling ---
     if (currentSelectedText()) {
         const handle = getHandleUnderMouse(pos.x, pos.y, currentSelectedText());
         if (handle) {
@@ -1510,9 +1707,33 @@ canvas.addEventListener("mousemove", function (e) {
             canvas.style.cursor = "default";
         }
     } else {
-        canvas.style.cursor = "default";
+        // --- Image Object Cursor Handling ---
+        let imageHandle = null;
+        // Check if mouse is over any image's resize handle
+        for (let imgObj of images) {
+            imageHandle = getHandleUnderMouseForImage(imgObj, pos);
+            if (imageHandle) break;
+        }
+        if (imageHandle) {
+            canvas.style.cursor = "nwse-resize";
+        } else {
+            // Check if mouse is over any image area (if not dragging/resizing)
+            let overImage = false;
+            for (let imgObj of images) {
+                if (isMouseOverImage(imgObj, pos)) {
+                    overImage = true;
+                    break;
+                }
+            }
+            if (overImage && !isDraggingImage && !isResizingImage) {
+                canvas.style.cursor = "move";
+            } else {
+                canvas.style.cursor = "default";
+            }
+        }
     }
 
+    // --- Text Resizing Logic ---
     if (isResizing && currentSelectedText() && activeHandle) {
         const obj = currentSelectedText();
         const oldLeft = obj.x;
@@ -1535,7 +1756,6 @@ canvas.addEventListener("mousemove", function (e) {
                 obj.fontSize = adjustFontSizeToFitBox(obj);
                 break;
             case "top-middle":
-                // Prevent reducing height below multiline height
                 if (oldBottom - pos.y >= textHeight) {
                     obj.y = pos.y;
                     obj.boundingHeight = oldBottom - pos.y;
@@ -1548,7 +1768,6 @@ canvas.addEventListener("mousemove", function (e) {
                 obj.fontSize = adjustFontSizeToFitBox(obj);
                 break;
             case "right-middle":
-                // Prevent reducing width below widest line (instead of max text width)
                 if (pos.x - oldLeft >= widestLine) {
                     obj.boundingWidth = pos.x - oldLeft;
                 }
@@ -1559,7 +1778,6 @@ canvas.addEventListener("mousemove", function (e) {
                 obj.fontSize = adjustFontSizeToFitBox(obj);
                 break;
             case "bottom-middle":
-                // Prevent reducing height below multiline height
                 if (pos.y - oldTop >= textHeight) {
                     obj.boundingHeight = pos.y - oldTop;
                 }
@@ -1571,7 +1789,6 @@ canvas.addEventListener("mousemove", function (e) {
                 obj.fontSize = adjustFontSizeToFitBox(obj);
                 break;
             case "left-middle":
-                // Prevent reducing width below the widest line
                 if (oldRight - pos.x >= widestLine) {
                     obj.x = pos.x;
                     obj.boundingWidth = oldRight - pos.x;
@@ -1579,7 +1796,6 @@ canvas.addEventListener("mousemove", function (e) {
                 break;
         }
 
-        // Enforce minimum bounding box size
         if (obj.boundingWidth < widestLine) obj.boundingWidth = widestLine;
         if (obj.boundingHeight < textHeight) obj.boundingHeight = textHeight;
 
@@ -1592,7 +1808,60 @@ canvas.addEventListener("mousemove", function (e) {
         obj.y = pos.y - dragOffset.y;
         drawCanvas("Common");
     }
+
+    // --- Image Drag/Resize Logic ---
+    if (isDraggingImage && activeImage) {
+        activeImage.x = pos.x - dragOffsetImage.x;
+        activeImage.y = pos.y - dragOffsetImage.y;
+        drawCanvas("Common");
+    }
+
+    if (isResizingImage && activeImage && activeImageHandle) {
+        let newWidth, newHeight;
+
+        switch (activeImageHandle) {
+            case "top-left":
+                newWidth = activeImage.width * activeImage.scaleX + (activeImage.x - pos.x);
+                newHeight = activeImage.height * activeImage.scaleY + (activeImage.y - pos.y);
+                activeImage.x = pos.x;
+                activeImage.y = pos.y;
+                break;
+            case "top-right":
+                newWidth = pos.x - activeImage.x;
+                newHeight = activeImage.height * activeImage.scaleY + (activeImage.y - pos.y);
+                activeImage.y = pos.y;
+                break;
+            case "bottom-left":
+                newWidth = activeImage.width * activeImage.scaleX + (activeImage.x - pos.x);
+                newHeight = pos.y - activeImage.y;
+                activeImage.x = pos.x;
+                break;
+            case "bottom-right":
+                newWidth = pos.x - activeImage.x;
+                newHeight = pos.y - activeImage.y;
+                break;
+        }
+
+        if (newWidth > MIN_SIZE) activeImage.scaleX = newWidth / activeImage.width;
+        if (newHeight > MIN_SIZE) activeImage.scaleY = newHeight / activeImage.height;
+
+        drawCanvas("Common");
+    }
 });
+function getHandleUnderMouseForImage(imgObj, pos) {
+    const handles = getImageResizeHandles(imgObj); // returns an array of handles with {name, x, y}
+    for (let h of handles) {
+        if (
+            Math.abs(pos.x - h.x) < handleSize &&
+            Math.abs(pos.y - h.y) < handleSize
+        ) {
+            return h.name;
+        }
+    }
+    return null;
+}
+
+
 
 
 
@@ -1601,6 +1870,9 @@ canvas.addEventListener("mouseup", function () {
     isResizing = false;
     isDragging = false;
     activeHandle = null;
+
+    isDraggingImage = false;
+    isResizingImage = false;
 });
 
 canvas.addEventListener("mouseleave", function () {
@@ -1608,6 +1880,9 @@ canvas.addEventListener("mouseleave", function () {
     isResizing = false;
     isDragging = false;
     activeHandle = null;
+
+    isDraggingImage = false;
+    isResizingImage = false;
 });
 
 function currentSelectedText() {
@@ -1628,17 +1903,54 @@ canvasContainer.addEventListener("click", function (e) {
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
+    const pos = { x: mouseX, y: mouseY };
+
     const obj = getTextObjectAt(mouseX, mouseY);
+    let imageFound = false;
+    let imgObj = null;
+
+    // Check if an image is clicked
+    for (let i = images.length - 1; i >= 0; i--) {
+        if (isMouseOverImage(images[i], pos)) {
+            imgObj = images[i];
+            imageFound = true;
+            break;
+        }
+    }
 
     if (obj) {
-        // Optionally, do something with the selected object...
+        // Select text object and update UI
+        textObjects.forEach(o => o.selected = false);
+        obj.selected = true;
+
         $("#favcolor").val(obj.textColor);
         $("#fontstyle_popup").css("display", "block");
         $(".right-sec-two").css("display", "block");
         $(".right-sec-one").css("display", "none");
         document.getElementById("modeButton").innerText = "Animation Mode";
+    } else if (imageFound) {
+        // Select image and update UI
+        images.forEach(img => img.selected = false);
+        imgObj.selected = true;
+
+        $("#fontstyle_popup").css("display", "block");
+        $(".right-sec-two").css("display", "block");
+        $(".right-sec-one").css("display", "none");
+        document.getElementById("modeButton").innerText = "Animation Mode";
+    } else {
+        // Deselect all if clicking on empty canvas
+        textObjects.forEach(o => o.selected = false);
+        images.forEach(img => img.selected = false);
+
+        $("#fontstyle_popup").css("display", "none");
+        $(".right-sec-two").css("display", "none");
+        $(".right-sec-one").css("display", "block");
+        document.getElementById("modeButton").innerText = "Edit Mode";
     }
+
+    drawCanvas('Common'); // Redraw to update selection changes
 });
+
 canvasContainer.addEventListener("dblclick", function (e) {
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
@@ -1923,4 +2235,46 @@ document.getElementById('ddlOutSpeedControl').addEventListener('click', function
 //Calculate scroll height that travell
 canvasContainer.addEventListener("scroll", function () {
     scrollTop = canvasContainer.scrollTop;
+});
+
+
+
+// Make images draggable from the DOM
+document.querySelectorAll("#imageContainer img").forEach(img => {
+    img.addEventListener("dragstart", function (e) {
+        // Transfer the image src as text
+        e.dataTransfer.setData("text/plain", e.target.src);
+    });
+});
+
+// Allow dropping on canvas
+canvas.addEventListener("dragover", function (e) {
+    e.preventDefault();
+});
+
+// When an image is dropped onto the canvas, add it to our images array
+canvas.addEventListener("drop", function (e) {
+    e.preventDefault();
+    const src = e.dataTransfer.getData("text/plain");
+    if (src) {
+        // Create a new image object
+        const img = new Image();
+        img.src = src;
+        img.onload = function () {
+            // Default position is drop position; default size is half the natural size
+            const newImgObj = {
+                img: img,
+                src: src, // keep the src path
+                x: e.offsetX,
+                y: e.offsetY,
+                width: img.width / 2,
+                height: img.height / 2,
+                scaleX: 1,
+                scaleY: 1,
+                selected: false
+            };
+            images.push(newImgObj);
+            drawCanvas('Common');
+        };
+    }
 });
