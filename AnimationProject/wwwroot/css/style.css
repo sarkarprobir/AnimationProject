@@ -41,11 +41,10 @@ Body{background:#fff; padding:0px; margin:0px;    overflow-x: hidden; font-famil
     background: #fff;
 }
 .panel-left {
-    width: 400px;
-    /* align-self: start; */
+    width: 500px;
 }
  .panel-right {
-    width: 400px;
+    width: 500px;
     height: calc(100vh - 50px);
     overflow: auto;
     text-align: left;
@@ -72,7 +71,7 @@ p.collapsed{    font-size: var(--font-size14);}
 .container-1 {
     height: auto;
     width: 100%;
-    padding: 32px 90px;
+    padding: 32px 45px;
 }
 .canvas{}
 .canvas-top-btn{float:left; width:100%;height:auto;  padding:0px; margin-bottom:35px; text-align:center; font-size: var(--font-size14);}
@@ -255,7 +254,16 @@ ul.top-left-icon li:hover {
 .p-r-0{padding-right:0px; justify-content:center;}
  
 .panel-left{ position:relative;}
-.panel-left-gallery{ width:277px; height:auto; background:#fff;    z-index: 9; padding: 20px; position:absolute; left:0px; top:10px}
+.panel-left-gallery{ 
+    width: 318px; 
+    height:auto; 
+    background:#fff;    
+    z-index: 9; 
+    padding: 20px; 
+    position:absolute; 
+    left:0px; 
+    top:10px
+}
 .panel-left-gallery h2{font-family: "Nunito Sans", serif;   font-size: var(--font-size18); font-weight: bold;}
 .gl-box{width:100%; height:100%;}
 .gallery-search-right button{border:0px;  position:absolute; right:6px; top:5px; background:transparent;}
@@ -303,7 +311,7 @@ ul.Shapes li:hover{background:#f5f5f5; border-radius:6px; cursor:pointer;}
 
  .top-gl-link .answer-group{ width: auto;  margin: 0px;padding: 7px 8px;cursor:pointer;}	
  .top-gl-link .collapsed .arrow-expand{font-size: 10px;}
- .collapse.show-gallery{position: absolute; left: 0px; top: 0px; bottom: 0px; background: #fff; width: 272px; z-index: 1; border-radius: 0;}
+ .collapse.show-gallery{position: absolute; left: 0px; top: 0px; bottom: 0px; background: #fff; width: 318px; z-index: 1; border-radius: 0;}
  .top-gl-link p{margin:0px;}
 /*.accordion .answer-group p{    font-size: var(--font-size14);
     display: flex;  line-height: 15px;
@@ -341,8 +349,8 @@ font-size: var(--font-size18);
     box-shadow: none;
 }
 
-.collapse.show-texteditor .panel-left-gallery{width:100%;}
-
+/*.collapse.show-texteditor .panel-left-gallery{width:100%;}
+*/
 ul.TextStyle{ margin:0px;}
 ul.TextStyle li {list-style-type:none; float:left; width:100%; margin-bottom:10px;}
  ul.TextStyle li a{color:#000; padding:0px 14px; float: left; text-decoration:none;}
