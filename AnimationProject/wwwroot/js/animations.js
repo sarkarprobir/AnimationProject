@@ -526,7 +526,7 @@ function OnChangefontFamily(value) {
 
     drawCanvas('ChangeStyle');
 }
-function animateText(direction,condition ) {
+function animateText(direction, condition, loopCount ) {
     const animationType = document.getElementById("hdnTextAnimationType").value;
     textObjects.forEach(obj => {
 
@@ -539,18 +539,18 @@ function animateText(direction,condition ) {
         switch (direction) {
             case "top":
                 startX = endX;           // same x as final
-                startY = - (obj.boundingHeight + 20);   // Place the object fully above the canvas:
+                startY = - (obj.boundingHeight + 5);   // Place the object fully above the canvas:
                 break;
             case "bottom":
                 startX = endX;           // same x as final
-                startY = canvas.height + 20;  // Place the object fully below the canvas:
+                startY = canvas.height + 5;  // Place the object fully below the canvas:
                 break;
             case "left":
-                startX = - (obj.boundingWidth + 20); // Place the object fully to the left of the canvas:
+                startX = - (obj.boundingWidth + 5); // Place the object fully to the left of the canvas:
                 startY = endY;           // same y as final
                 break;
             case "right":
-                startX = canvas.width + 20;   // Place the object fully to the right of the canvas:
+                startX = canvas.width + 5;   // Place the object fully to the right of the canvas:
                 startY = endY;           // same y as final
                 break;
             default:
@@ -574,6 +574,7 @@ function animateText(direction,condition ) {
           
            ////This section is for in out and stay
             let tl = gsap.timeline({
+                repeat: loopCount - 1, // loops = initial + (loopCount - 1) repeats
                 onUpdate: function () {
                     drawCanvas(condition);
                 }
@@ -606,7 +607,7 @@ function animateText(direction,condition ) {
             tl.set(obj, {
                     x: endX,
                     y: endY,
-                duration: parseFloat(selectedInSpeed) || 2,
+                duration: 0,
                     ease: "power1.inOut",
                     onUpdate: () => drawCanvas(condition),
             });
@@ -680,6 +681,7 @@ function animateText(direction,condition ) {
 
             ////This section is for in out and stay
             let tl = gsap.timeline({
+                repeat: loopCount - 1,
                 onUpdate: function () {
                     drawCanvas(condition);
                 }
@@ -712,7 +714,7 @@ function animateText(direction,condition ) {
             tl.set(obj, {
                 x: endX,
                 y: endY,
-                duration: parseFloat(selectedInSpeed) || 2,
+                duration: 0,
                 ease: "bounce.out",
                 onUpdate: () => drawCanvas(condition),
             });
@@ -809,18 +811,18 @@ function animateText(direction,condition ) {
         switch (direction) {
             case "top":
                 startX = endX;  // same x as final
-                startY = -(dispHeight + 20);   // image fully above canvas
+                startY = -(dispHeight + 5);   // image fully above canvas
                 break;
             case "bottom":
                 startX = endX;  // same x as final
-                startY = canvas.height + 20;  // image fully below canvas
+                startY = canvas.height + 5;  // image fully below canvas
                 break;
             case "left":
-                startX = -(dispWidth + 20); // image fully to the left
+                startX = -(dispWidth + 5); // image fully to the left
                 startY = endY;  // same y as final
                 break;
             case "right":
-                startX = canvas.width + 20; // image fully to the right
+                startX = canvas.width + 5; // image fully to the right
                 startY = endY;  // same y as final
                 break;
             default:
@@ -840,6 +842,7 @@ function animateText(direction,condition ) {
         const exitY = endY;               // maintain same vertical position.
 
         let tl = gsap.timeline({
+            repeat: loopCount - 1,
             onUpdate: function () {
                 drawCanvas(condition);
             }
@@ -865,7 +868,7 @@ function animateText(direction,condition ) {
             tl.set(imgObj, {
                 x: endX,
                 y: endY,
-                duration: parseFloat(selectedInSpeed) || 2,
+                duration: 0,
                 ease: "power1.inOut",
                 onUpdate: () => drawCanvas(condition)
             });
@@ -889,7 +892,7 @@ function animateText(direction,condition ) {
             tl.set(imgObj, {
                 x: endX,
                 y: endY,
-                duration: parseFloat(selectedInSpeed) || 2,
+                duration: 0,
                 ease: "bounce.out",
                 onUpdate: () => drawCanvas(condition)
             });
@@ -1083,7 +1086,7 @@ function applyAnimations(direction,conditionvalue) {
     //    text = obj.text;
     //    animateText(conditionvalue);
     //});
-    animateText(direction,conditionvalue);
+    animateText(direction,conditionvalue,5);
     animateImage(conditionvalue);
     
 }
@@ -1240,15 +1243,7 @@ const jsonArray = [
 ];
 let currentIndex = 0; // Track the current index
 
-//const loadButton = document.createElement("button");
-//loadButton.textContent = "Load JSON";
-//document.body.appendChild(loadButton);
 
-//loadButton.addEventListener("click", () => {
-//    currentIndex = 0; // Reset index when button is clicked
-//    startVideoCapture();
-//    loadNextJson(); // Start loading
-//});
 function loadJsonFile() {
     currentIndex = 0; // Reset index when button is clicked
     startVideoCapture();
@@ -1273,9 +1268,6 @@ function loadNextJson() {
 //end////////////
 
 function ShowAnimationOption() {
-    //if ($("#imageAnimation option:selected").val() == "bounce" || $("#imageAnimation option:selected").val() == "zoomImage" || $("#imageAnimation option:selected").val() == "pathMotion") {
-    //    document.getElementById("imageCoordinationforBounce").style.display = "block";
-    //}
     document.getElementById("imageCoordinationforBounce").style.display = "block";
 }
 function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imageEndX, imageEndY) {
@@ -1292,7 +1284,8 @@ function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imag
 
     // Add the active_effect class to the clicked element.
     clickedElement.classList.add("active_effect");
-
+    textObjects.forEach(o => o.selected = false);
+    images.forEach(img => img.selected = false);
     if ($("#hdnTextAnimationType").val() !== "") {
         document.getElementById("imageStartX").value = imageStartX;
         document.getElementById("imageStartY").value = imageStartY;
@@ -1340,27 +1333,6 @@ function startVideoCapture() {
         recorder.stop();
     }, 8000); // Record for 5 seconds (change as needed)
 }
-
-
-
-//function drawCanvas() {
-//    ctx.clearRect(0, 0, canvas.width, canvas.height);
-//    ctx.save();
-//    ctx.font = `${fontSize}px ${fontFamily}`;
-//    ctx.fillStyle = textColor;
-//    ctx.textAlign = "left";
-
-//    textObjects.forEach(obj => {
-//        ctx.fillText(obj.text, obj.x, obj.y);
-//        // If selected, draw a bounding box
-//        if (obj.selected) {
-//            const textWidth = ctx.measureText(obj.text).width;
-//            ctx.strokeStyle = "red";
-//            ctx.strokeRect(obj.x, obj.y - fontSize, textWidth, fontSize);
-//        }
-//    });
-//    ctx.restore();
-//}
 
 // Add a new text object with default text
 function addDefaultText() {
@@ -1453,27 +1425,7 @@ function isMouseOverImage(imageObj, pos) {
         pos.y <= imageObj.y + h
     );
 }
-// Mouse events for dragging and selection
-//canvas.addEventListener("mousedown", function (e) {
 
-//    const pos = getMousePos(canvas, e);
-//    // Check for a resize handle first.
-//    const handle = getHandleUnderMouse(pos.x, pos.y, currentSelectedText());
-//    if (currentSelectedText() && handle) {
-//        isResizing = true;
-//        activeHandle = handle;
-//        e.preventDefault();
-//    }
-//    // Otherwise, if clicking inside a text object's bounding box, start dragging.
-//    else if (currentSelectedText() && isInsideBox(pos.x, pos.y, currentSelectedText())) {
-//        isDragging = true;
-//        dragOffset.x = pos.x - currentSelectedText().x;
-//        dragOffset.y = pos.y - currentSelectedText().y;
-//        e.preventDefault();
-//    }
-
-//    drawCanvas('Common');
-//});
 canvas.addEventListener("mousedown", function (e) {
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
@@ -1529,6 +1481,14 @@ canvas.addEventListener("mousedown", function (e) {
                 dragOffsetImage.x = pos.x - imgObj.x;
                 dragOffsetImage.y = pos.y - imgObj.y;
                 imageFound = true;
+                if (activeImage && activeImage.src && activeImage.src.endsWith('.svg')) {
+                    enableFillColorDiv();
+                    enableStrockColorDiv()
+                }
+                else {
+                    disableFillColorDiv();
+                    disableStrockColorDiv()
+                }
                 break;
             }
         }
@@ -1538,6 +1498,8 @@ canvas.addEventListener("mousedown", function (e) {
             images.forEach(img => img.selected = false);
             currentDrag = null;
             activeImage = null;
+            enableFillColorDiv();
+            enableStrockColorDiv()
         }
     }
 
@@ -1545,32 +1507,27 @@ canvas.addEventListener("mousedown", function (e) {
     drawCanvas('Common');
 });
 
+function disableFillColorDiv() {
+    const div = document.getElementById("divfill");
+    div.style.pointerEvents = "none";
+    div.style.opacity = "0.5";
+}
+function enableFillColorDiv() {
+    const div = document.getElementById("divfill");
+    div.style.pointerEvents = "auto";
+    div.style.opacity = "1";
+}
+function disableStrockColorDiv() {
+    const div = document.getElementById("divStrock");
+    div.style.pointerEvents = "none";
+    div.style.opacity = "0.5";
+}
+function enableStrockColorDiv() {
+    const div = document.getElementById("divStrock");
+    div.style.pointerEvents = "auto";
+    div.style.opacity = "1";
+}
 
-//canvas.addEventListener("click", function (e) {
-//    const rect = canvas.getBoundingClientRect();
-//    const mouseX = e.clientX - rect.left;
-//    const mouseY = e.clientY - rect.top;
-
-//    // If the text editor is active, ignore this event.
-//    if (document.activeElement === textEditor) return;
-
-//    // Try to get a text object under the mouse.
-//    const obj = getTextObjectAt(mouseX, mouseY);
-
-//    if (obj) {
-//        // Deselect all and select this object.
-//        textObjects.forEach(o => o.selected = false);
-//        obj.selected = true;
-//        // Bring the selected object to the front.
-//        textObjects.splice(textObjects.indexOf(obj), 1);
-//        textObjects.push(obj);
-//    } else {
-//        // If clicked outside any text, deselect all.
-//        textObjects.forEach(o => o.selected = false);
-//    }
-
-//    drawCanvas('Common');
-//});
 // Adjusts font size so that the wrapped text fits inside the new bounding box.
 // It measures the text using your wrapText helper and ensures that the total height of the lines is less than or equal to the available height.
 function adjustFontSizeToFitBox(obj) {
@@ -1589,109 +1546,6 @@ function adjustFontSizeToFitBox(obj) {
     return 5; // fallback minimum
 }
 
-//canvas.addEventListener("mousemove", function (e) {
-//    const pos = getMousePos(canvas, e);
-
-//    // Update cursor style.
-//    if (currentSelectedText()) {
-//        const handle = getHandleUnderMouse(pos.x, pos.y, currentSelectedText());
-//        if (handle) {
-//            canvas.style.cursor = "nwse-resize";
-//        } else if (isInsideBox(pos.x, pos.y, currentSelectedText())) {
-//            canvas.style.cursor = "move";
-//        } else {
-//            canvas.style.cursor = "default";
-//        }
-//    } else {
-//        canvas.style.cursor = "default";
-//    }
-
-//    // Debugging log.
-//    console.log(isResizing, currentSelectedText(), activeHandle);
-
-//    // Handle resizing.
-//    if (isResizing && currentSelectedText() && activeHandle) {
-//        const obj = currentSelectedText();
-//        const oldLeft = obj.x;
-//        const oldTop = obj.y;
-//        const oldRight = obj.x + obj.boundingWidth;
-//        const oldBottom = obj.y + obj.boundingHeight;
-
-//        // Calculate the text's natural size
-//        ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-//        const textWidth = ctx.measureText(obj.text).width + 2 * padding;
-//        const lineHeight = obj.fontSize * 1.2;
-//        const lines = wrapText(ctx, obj.text, textWidth);
-//        const textHeight = lines.length * lineHeight + 2 * padding;
-
-//        switch (activeHandle) {
-//            case "top-left":
-//                obj.x = pos.x;
-//                obj.y = pos.y;
-//                obj.boundingWidth = oldRight - pos.x;
-//                obj.boundingHeight = oldBottom - pos.y;
-//                obj.fontSize = adjustFontSizeToFitBox(obj);
-//                break;
-//            case "top-middle":
-//                // Prevent reducing height beyond text height
-//                if (oldBottom - pos.y >= textHeight) {
-//                    obj.y = pos.y;
-//                    obj.boundingHeight = oldBottom - pos.y;
-//                }
-//                break;
-//            case "top-right":
-//                obj.y = pos.y;
-//                obj.boundingWidth = pos.x - oldLeft;
-//                obj.boundingHeight = oldBottom - pos.y;
-//                obj.fontSize = adjustFontSizeToFitBox(obj);
-//                break;
-//            case "right-middle":
-//                // Prevent reducing width beyond text width
-//                if (pos.x - oldLeft >= textWidth) {
-//                    obj.boundingWidth = pos.x - oldLeft;
-//                }
-//                break;
-//            case "bottom-right":
-//                obj.boundingWidth = pos.x - oldLeft;
-//                obj.boundingHeight = pos.y - oldTop;
-//                obj.fontSize = adjustFontSizeToFitBox(obj);
-//                break;
-//            case "bottom-middle":
-//                // Prevent reducing height beyond text height
-//                if (pos.y - oldTop >= textHeight) {
-//                    obj.boundingHeight = pos.y - oldTop;
-//                }
-//                break;
-//            case "bottom-left":
-//                obj.x = pos.x;
-//                obj.boundingWidth = oldRight - pos.x;
-//                obj.boundingHeight = pos.y - oldTop;
-//                obj.fontSize = adjustFontSizeToFitBox(obj);
-//                break;
-//            case "left-middle":
-//                // Prevent reducing width beyond text width
-//                if (oldRight - pos.x >= textWidth) {
-//                    obj.x = pos.x;
-//                    obj.boundingWidth = oldRight - pos.x;
-//                }
-//                break;
-//        }
-
-//        // Enforce minimum dimensions.
-//        if (obj.boundingWidth < textWidth) obj.boundingWidth = textWidth;
-//        if (obj.boundingHeight < textHeight) obj.boundingHeight = textHeight;
-
-//        drawCanvas("Common");
-//    }
-
-//    // Handle dragging.
-//    if (isDragging && currentSelectedText()) {
-//        const obj = currentSelectedText();
-//        obj.x = pos.x - dragOffset.x;
-//        obj.y = pos.y - dragOffset.y;
-//        drawCanvas("Common");
-//    }
-//});
 
 canvas.addEventListener("mousemove", function (e) {
     const pos = getMousePos(canvas, e);
@@ -1899,7 +1753,14 @@ function isInsideBox(mouseX, mouseY, obj) {
          mouseY <= boxY + boxHeight;
        /* mouseY >= boxY && mouseY <= boxY + boxHeight;*/
 }
-canvasContainer.addEventListener("click", function (e) {
+//canvasContainer.addEventListener("click", function (e) {
+//    // Deselect all if clicking on empty canvas
+//    textObjects.forEach(o => o.selected = false);
+//    images.forEach(img => img.selected = false);
+//    drawCanvas('Common');
+  
+//});
+canvas.addEventListener("click", function (e) {
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
@@ -1932,7 +1793,6 @@ canvasContainer.addEventListener("click", function (e) {
         // Select image and update UI
         images.forEach(img => img.selected = false);
         imgObj.selected = true;
-
         $("#fontstyle_popup").css("display", "block");
         $(".right-sec-two").css("display", "block");
         $(".right-sec-one").css("display", "none");
@@ -1942,10 +1802,10 @@ canvasContainer.addEventListener("click", function (e) {
         textObjects.forEach(o => o.selected = false);
         images.forEach(img => img.selected = false);
 
-        $("#fontstyle_popup").css("display", "none");
-        $(".right-sec-two").css("display", "none");
-        $(".right-sec-one").css("display", "block");
-        document.getElementById("modeButton").innerText = "Edit Mode";
+        //$("#fontstyle_popup").css("display", "none");
+        //$(".right-sec-two").css("display", "none");
+        //$(".right-sec-one").css("display", "block");
+        //document.getElementById("modeButton").innerText = "Graphic Mode";
     }
 
     drawCanvas('Common'); // Redraw to update selection changes
@@ -1992,14 +1852,6 @@ canvasContainer.addEventListener("dblclick", function (e) {
         textEditor.focus();
 
         // Finish editing when Enter is pressed (unless using Shift+Enter for a new line) or on blur.
-        //function finishEditing() {
-        //    obj.text = textEditor.value;
-        //    obj.editing = false;
-        //    textEditor.style.display = "none";
-        //    drawCanvas('Common'); // Redraw canvas with updated text
-        //    textEditor.removeEventListener("keydown", onKeyDown);
-        //    textEditor.removeEventListener("blur", finishEditing);
-        //}
         function finishEditing() {
             // Get the edited text from the textarea.
             let editedText = textEditor.value;
@@ -2088,79 +1940,6 @@ canvasContainer.addEventListener("dblclick", function (e) {
     }
 });
 
-//canvasContainer.addEventListener("dblclick", function (e) {
-//    const rect = canvas.getBoundingClientRect();
-//    const mouseX =e.clientX - rect.left;
-//    const mouseY = e.clientY - rect.top;
-//    const obj = getTextObjectAt(mouseX, mouseY);
-
-//    if (obj) {
-//        obj.editing = true;
-
-//        // Set the canvas font to match the text object for accurate measurement
-//        ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-//        const metrics = ctx.measureText(obj.text);
-//        const textWidth = metrics.width;
-//        const ascent = metrics.actualBoundingBoxAscent || obj.fontSize * 0.8;
-//        const descent = metrics.actualBoundingBoxDescent || obj.fontSize * 0.2;
-//        const textHeight = ascent + descent;
-
-//        // Determine the correct X position based on text alignment
-//        let editorX;
-//        if (obj.textAlign === "center") {
-//            editorX = obj.x - textWidth / 2;
-//        } else if (obj.textAlign === "right") {
-//            editorX = obj.x - textWidth;
-//        } else {
-//            editorX = obj.x;
-//        }
-//        const offsetX = 282;  // adjust if needed
-//        const offsetY = 13;  // adjust if needed
-
-//        // Position the text editor exactly over the original text
-//        textEditor.style.left = `${rect.left + editorX - offsetX}px`;
-//        textEditor.style.top = `${rect.top + obj.y + scrollTop - ascent - offsetY}px`;
-//        textEditor.style.width = `${textWidth + 10}px`; // Slight padding for better visibility
-//        textEditor.style.height = `${textHeight}px`;
-
-//        // Match styles with the text object
-//        textEditor.style.fontSize = `${obj.fontSize}px`;
-//        textEditor.style.fontFamily = obj.fontFamily;
-//        textEditor.style.color = obj.textColor;
-//        textEditor.style.textAlign = obj.textAlign;
-//        textEditor.style.background = "rgba(255,255,255,0.95)";
-//        textEditor.style.border = "1px solid #ccc";
-//        textEditor.style.padding = "2px 4px";
-//        textEditor.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.3)";
-
-//        // Set the text and display the input box
-//        textEditor.value = obj.text;
-//        textEditor.style.display = "block";
-//        textEditor.focus();
-
-//        // Handle finishing editing
-//        function finishEditing() {
-//            obj.text = textEditor.value;
-//            obj.editing = false;
-//            textEditor.style.display = "none";
-//            drawCanvas('Common'); // Redraw canvas with updated text
-//            textEditor.removeEventListener("keydown", onKeyDown);
-//            textEditor.removeEventListener("blur", finishEditing);
-//        }
-
-//        function onKeyDown(e) {
-//            if (e.key === "Enter") {
-//                finishEditing();
-//            }
-//        }
-
-//        textEditor.addEventListener("keydown", onKeyDown);
-//        textEditor.addEventListener("blur", finishEditing);
-//    }
-//});
-
-
-
 // When the text editor loses focus or Enter is pressed, update the text
 textEditor.addEventListener("blur", function () {
     const editingObj = textObjects.find(o => o.editing);
@@ -2179,6 +1958,8 @@ textEditor.addEventListener("keydown", function (e) {
 });
 
 const colorPicker = document.getElementById("favcolor");
+const fillColorPicker = document.getElementById("favFillcolor");
+const strockColorPicker = document.getElementById("favStrockcolor");
 function ChangeColor() {
     $("#hdnTextColor").val(colorPicker.value);
     const textColor = document.getElementById("hdnTextColor").value; // Text color from dropdown 
@@ -2188,8 +1969,14 @@ function ChangeColor() {
     }
     drawCanvas('ChangeStyle');
 }
-
-
+function ChangeFillColor() {
+    $("#hdnfillColor").val(fillColorPicker.value);
+    updateSelectedImageColors($("#hdnfillColor").val(), $("#hdnStrockColor").val());
+}
+function ChangeStrockColor() {
+    $("#hdnStrockColor").val(strockColorPicker.value);
+    updateSelectedImageColors($("#hdnfillColor").val(), $("#hdnStrockColor").val());
+}
 function TabShowHide(type) {
     if (type === 'In') {
         $("#marzen").css("display", "block");
@@ -2267,8 +2054,8 @@ canvas.addEventListener("drop", function (e) {
                 src: src, // keep the src path
                 x: e.offsetX,
                 y: e.offsetY,
-                width: img.width / 2,
-                height: img.height / 2,
+                width: img.width / 4,
+                height: img.height / 4,
                 scaleX: 1,
                 scaleY: 1,
                 selected: false
@@ -2278,3 +2065,111 @@ canvas.addEventListener("drop", function (e) {
         };
     }
 });
+document.getElementById("saveButton").addEventListener("click", function () {
+    const savedData = saveCanvasData();
+    // For demonstration, log to console or store in local storage
+    console.log(savedData);
+});
+function saveCanvasData() {
+    // Build a data object with two properties: text and images.
+    const data = {
+        text: textObjects.map(obj => ({
+            text: obj.text,
+            x: obj.x,
+            y: obj.y,
+            boundingWidth: obj.boundingWidth,
+            boundingHeight: obj.boundingHeight,
+            fontSize: obj.fontSize,
+            fontFamily: obj.fontFamily,
+            textColor: obj.textColor,
+            textAlign: obj.textAlign,
+            opacity: obj.opacity
+        })),
+        images: images.map(img => ({
+            src: img.src,                // The source path of the image.
+            x: img.x,
+            y: img.y,
+            width: img.width,            // The original width.
+            height: img.height,          // The original height.
+            scaleX: img.scaleX || 1,
+            scaleY: img.scaleY || 1,
+            opacity: img.opacity
+        }))
+    };
+
+    // Convert the data object to a JSON string.
+    const jsonData = JSON.stringify(data, null, 2); // pretty-print with 2 spaces indent
+    return jsonData;
+}
+function updateSelectedImageColors(newFill, newStroke) {
+    if (activeImage && activeImage.src && activeImage.src.endsWith('.svg')) {
+        if (activeImage.originalSVG) {
+            applySvgColorChanges(activeImage.originalSVG);
+        } else {
+            fetch(activeImage.src)
+                .then(response => response.text())
+                .then(svgText => {
+                    activeImage.originalSVG = svgText; // Cache original markup
+                    applySvgColorChanges(svgText);
+                })
+                .catch(err => console.error("Error fetching SVG:", err));
+        }
+    }
+
+    function applySvgColorChanges(svgText) {
+        // Update fill attributes
+        let updatedSvg = svgText.replace(/fill="[^"]*"/gi, `fill="${newFill}"`);
+        // Update stroke attributes (if exists, replace; if not, insert stroke attribute)
+        if (/stroke="[^"]*"/gi.test(updatedSvg)) {
+            updatedSvg = updatedSvg.replace(/stroke="[^"]*"/gi, `stroke="${newStroke}"`);
+        } else {
+            updatedSvg = updatedSvg.replace(/<svg([^>]*)>/i, `<svg$1 stroke="${newStroke}">`);
+        }
+
+        // Save the updated markup to a property (for later saving)
+        activeImage.svgData = updatedSvg;
+
+        // Create a new Blob URL for displaying the updated image
+        const svgBlob = new Blob([updatedSvg], { type: 'image/svg+xml;charset=utf-8' });
+        const newUrl = URL.createObjectURL(svgBlob);
+
+        const updatedImg = new Image();
+        updatedImg.onload = function () {
+            activeImage.img = updatedImg;
+            activeImage.src = newUrl;
+            drawCanvas('Common');
+        };
+        updatedImg.src = newUrl;
+    }
+}
+////save canvas data////
+function saveCanvasData() {
+    const data = {
+        text: textObjects.map(obj => ({
+            text: obj.text,
+            x: obj.x,
+            y: obj.y,
+            boundingWidth: obj.boundingWidth,
+            boundingHeight: obj.boundingHeight,
+            fontSize: obj.fontSize,
+            fontFamily: obj.fontFamily,
+            textColor: obj.textColor,
+            textAlign: obj.textAlign,
+            opacity: obj.opacity
+        })),
+        images: images.map(imgObj => ({
+            // Save the updated SVG markup if it exists, otherwise the src.
+            src: imgObj.svgData || imgObj.src,
+            x: imgObj.x,
+            y: imgObj.y,
+            width: imgObj.width,
+            height: imgObj.height,
+            scaleX: imgObj.scaleX || 1,
+            scaleY: imgObj.scaleY || 1,
+            opacity: imgObj.opacity
+        }))
+    };
+
+    return JSON.stringify(data, null, 2);
+}
+/// Do not delete////
