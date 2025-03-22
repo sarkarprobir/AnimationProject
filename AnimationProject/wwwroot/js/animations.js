@@ -2278,3 +2278,39 @@ canvas.addEventListener("drop", function (e) {
         };
     }
 });
+document.getElementById("saveButton").addEventListener("click", function () {
+    const savedData = saveCanvasData();
+    // For demonstration, log to console or store in local storage
+    console.log(savedData);
+});
+function saveCanvasData() {
+    // Build a data object with two properties: text and images.
+    const data = {
+        text: textObjects.map(obj => ({
+            text: obj.text,
+            x: obj.x,
+            y: obj.y,
+            boundingWidth: obj.boundingWidth,
+            boundingHeight: obj.boundingHeight,
+            fontSize: obj.fontSize,
+            fontFamily: obj.fontFamily,
+            textColor: obj.textColor,
+            textAlign: obj.textAlign,
+            opacity: obj.opacity
+        })),
+        images: images.map(img => ({
+            src: img.src,                // The source path of the image.
+            x: img.x,
+            y: img.y,
+            width: img.width,            // The original width.
+            height: img.height,          // The original height.
+            scaleX: img.scaleX || 1,
+            scaleY: img.scaleY || 1,
+            opacity: img.opacity
+        }))
+    };
+
+    // Convert the data object to a JSON string.
+    const jsonData = JSON.stringify(data, null, 2); // pretty-print with 2 spaces indent
+    return jsonData;
+}
