@@ -39,10 +39,16 @@ button.accept-policy {
   line-height: inherit;
 }
 
-.footer {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  white-space: nowrap;
-  line-height: 60px;
+/*footer*/
+footer {
+    position: absolute !important;
+    bottom: 0;
+    width: 100%;
+    white-space: nowrap;
+    z-index: 999;
+    background-color: #fff;
+}
+ a .privacy-link {
+    color: grey !important;
+    text-decoration: none !important;
 }

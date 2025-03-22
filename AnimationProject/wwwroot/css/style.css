@@ -256,7 +256,8 @@ ul.top-left-icon li:hover {
 .panel-left{ position:relative;}
 .panel-left-gallery{ 
     width: 318px; 
-    height:auto; 
+    max-height: 679px; 
+    height: auto;
     background:#fff;    
     z-index: 9; 
     padding: 20px; 
@@ -518,3 +519,4 @@ svg:hover {
     font-size: 14px;
     margin-top: 0;
 }
+
