@@ -526,7 +526,7 @@ function OnChangefontFamily(value) {
 
     drawCanvas('ChangeStyle');
 }
-function animateText(direction,condition ) {
+function animateText(direction, condition, loopCount ) {
     const animationType = document.getElementById("hdnTextAnimationType").value;
     textObjects.forEach(obj => {
 
@@ -539,18 +539,18 @@ function animateText(direction,condition ) {
         switch (direction) {
             case "top":
                 startX = endX;           // same x as final
-                startY = - (obj.boundingHeight + 20);   // Place the object fully above the canvas:
+                startY = - (obj.boundingHeight + 5);   // Place the object fully above the canvas:
                 break;
             case "bottom":
                 startX = endX;           // same x as final
-                startY = canvas.height + 20;  // Place the object fully below the canvas:
+                startY = canvas.height + 5;  // Place the object fully below the canvas:
                 break;
             case "left":
-                startX = - (obj.boundingWidth + 20); // Place the object fully to the left of the canvas:
+                startX = - (obj.boundingWidth + 5); // Place the object fully to the left of the canvas:
                 startY = endY;           // same y as final
                 break;
             case "right":
-                startX = canvas.width + 20;   // Place the object fully to the right of the canvas:
+                startX = canvas.width + 5;   // Place the object fully to the right of the canvas:
                 startY = endY;           // same y as final
                 break;
             default:
@@ -574,6 +574,7 @@ function animateText(direction,condition ) {
           
            ////This section is for in out and stay
             let tl = gsap.timeline({
+                repeat: loopCount - 1, // loops = initial + (loopCount - 1) repeats
                 onUpdate: function () {
                     drawCanvas(condition);
                 }
@@ -606,7 +607,7 @@ function animateText(direction,condition ) {
             tl.set(obj, {
                     x: endX,
                     y: endY,
-                duration: parseFloat(selectedInSpeed) || 2,
+                duration: 0,
                     ease: "power1.inOut",
                     onUpdate: () => drawCanvas(condition),
             });
@@ -680,6 +681,7 @@ function animateText(direction,condition ) {
 
             ////This section is for in out and stay
             let tl = gsap.timeline({
+                repeat: loopCount - 1,
                 onUpdate: function () {
                     drawCanvas(condition);
                 }
@@ -712,7 +714,7 @@ function animateText(direction,condition ) {
             tl.set(obj, {
                 x: endX,
                 y: endY,
-                duration: parseFloat(selectedInSpeed) || 2,
+                duration: 0,
                 ease: "bounce.out",
                 onUpdate: () => drawCanvas(condition),
             });
@@ -809,18 +811,18 @@ function animateText(direction,condition ) {
         switch (direction) {
             case "top":
                 startX = endX;  // same x as final
-                startY = -(dispHeight + 20);   // image fully above canvas
+                startY = -(dispHeight + 5);   // image fully above canvas
                 break;
             case "bottom":
                 startX = endX;  // same x as final
-                startY = canvas.height + 20;  // image fully below canvas
+                startY = canvas.height + 5;  // image fully below canvas
                 break;
             case "left":
-                startX = -(dispWidth + 20); // image fully to the left
+                startX = -(dispWidth + 5); // image fully to the left
                 startY = endY;  // same y as final
                 break;
             case "right":
-                startX = canvas.width + 20; // image fully to the right
+                startX = canvas.width + 5; // image fully to the right
                 startY = endY;  // same y as final
                 break;
             default:
@@ -840,6 +842,7 @@ function animateText(direction,condition ) {
         const exitY = endY;               // maintain same vertical position.
 
         let tl = gsap.timeline({
+            repeat: loopCount - 1,
             onUpdate: function () {
                 drawCanvas(condition);
             }
@@ -865,7 +868,7 @@ function animateText(direction,condition ) {
             tl.set(imgObj, {
                 x: endX,
                 y: endY,
-                duration: parseFloat(selectedInSpeed) || 2,
+                duration: 0,
                 ease: "power1.inOut",
                 onUpdate: () => drawCanvas(condition)
             });
@@ -889,7 +892,7 @@ function animateText(direction,condition ) {
             tl.set(imgObj, {
                 x: endX,
                 y: endY,
-                duration: parseFloat(selectedInSpeed) || 2,
+                duration: 0,
                 ease: "bounce.out",
                 onUpdate: () => drawCanvas(condition)
             });
@@ -1083,7 +1086,7 @@ function applyAnimations(direction,conditionvalue) {
     //    text = obj.text;
     //    animateText(conditionvalue);
     //});
-    animateText(direction,conditionvalue);
+    animateText(direction,conditionvalue,5);
     animateImage(conditionvalue);
     
 }
