@@ -214,12 +214,15 @@
         .gallery {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
             margin-top: 10px;
-            
+            min-height: 375px;
         }
 
-            .gallery img {
+        .my_img_gal {
+            min-height: 326.7px;
+        }
+
+        .gallery img {
                 width: 85px;
                 height: 85px;
                 object-fit: cover;
@@ -228,8 +231,7 @@
         .pagination {
             display: flex;
             justify-content: center;
-            margin-top: 45px;
-            margin-bottom: 25px;
+            margin-top: 24px;
         }
 
             .pagination span {
@@ -269,7 +271,7 @@
 
             .temp_gallery img {
                 width: auto;
-                height: 130px;
+                height: 120px;
             }
             .gallery_head {
                 font-size: 18px;
@@ -963,7 +965,7 @@
                     
 
                     <div class="panel-left-gallery">
-                        <div class="d-flex justify-content-between mb-2">
+                        <div class="d-flex justify-content-between mb-3">
                             <p class="gallery_head m-0">Gallery</p>
                             <!-- <div class="tab cross">x</div> -->
                             <button class="btn-cross b-radius-6 tab cross"
@@ -1010,7 +1012,7 @@
                                 <img src="~/images/Gallery-img/gl006.png" />
                                 <img src="~/images/Gallery-img/gl007.png" />
                                 <img src="~/images/Gallery-img/gl008.png" />
-                                
+                                <img src="~/images/Gallery-img/gl009.png" /> 
                             </div>
                         </div>
                         <!-- my images tab -->
@@ -1030,7 +1032,7 @@
                                 </div>
                             
                             <p class="my-3 gallery_type">All My Images</p>
-                            <div class="gallery d-flex flex-wrap justify-content-between">
+                            <div class="gallery d-flex flex-wrap justify-content-between my_img_gal">
                                 <img src="~/images/Gallery-img/gl001.png" />
                                 <img src="~/images/Gallery-img/gl002.png" />
                                 <img src="~/images/Gallery-img/gl003.png" />
