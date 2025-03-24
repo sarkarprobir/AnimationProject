@@ -1086,7 +1086,7 @@ function applyAnimations(direction,conditionvalue) {
     //    text = obj.text;
     //    animateText(conditionvalue);
     //});
-    animateText(direction,conditionvalue,5);
+    animateText(direction, conditionvalue, parseInt($("#hdnlLoopControl").val()) || 1);
     animateImage(conditionvalue);
     
 }
@@ -1823,7 +1823,7 @@ canvasContainer.addEventListener("dblclick", function (e) {
         // Use the object's bounding box and padding to set the editor's dimensions.
         const editorX = obj.x - padding;  // Position relative to object's x
         const editorY = obj.y - padding;  // Position relative to object's y
-                const offsetX = 282;  // adjust if needed
+                const offsetX = 317;  // adjust if needed
                 const offsetY = 45;  // adjust if needed
 
 
@@ -2018,7 +2018,14 @@ document.getElementById('ddlOutSpeedControl').addEventListener('click', function
         document.getElementById('lblOutSpeed').textContent = event.target.textContent;
     }
 });
-
+document.getElementById('ddlLoopControl').addEventListener('click', function (event) {
+    if (event.target.matches('a.dropdown-item')) {
+        // Retrieve the 'value' attribute from the clicked dropdown item.
+        selectedInSpeed = event.target.getAttribute('value');
+        document.getElementById('lblLoop').textContent = event.target.textContent;
+        $("#hdnlLoopControl").val(selectedInSpeed);
+    }
+});
 //Calculate scroll height that travell
 canvasContainer.addEventListener("scroll", function () {
     scrollTop = canvasContainer.scrollTop;

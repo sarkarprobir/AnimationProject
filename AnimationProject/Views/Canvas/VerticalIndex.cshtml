@@ -326,6 +326,10 @@
                document.getElementById('lblSpeed').textContent = "3 Sec";
                document.getElementById('lblSeconds').textContent = "6 Sec";
                 document.getElementById('lblOutSpeed').textContent = "2 Sec";
+                document.getElementById('lblLoop').textContent = "1 time";
+                 $("#hdnlLoopControl").val(1);
+                 $("#hdnfillColor").val('#42b3f5');
+                 $("#hdnStrockColor").val('#78f542');
                  let button = document.getElementById("modeButton");
                    button.innerText = "Graphic Mode";
         });
@@ -620,6 +624,19 @@
                                         <li><a class="dropdown-item" value="10">10 Sec</a></li>
                                     </ul>
                                 </div>
+                                <div class="dropdown mb-3" style="display:none;">
+                                    <a class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Loop
+                                    </a> <label id="lblLoop"></label><input type="hidden" id="hdnlLoopControl" value="1" />
+                                    <ul class="dropdown-menu" id="ddlLoopControl">
+                                        <li><a class="dropdown-item" value="1">1 time</a></li>
+                                        <li><a class="dropdown-item" value="2">2 time</a></li>
+                                        <li><a class="dropdown-item" value="3">3 time</a></li>
+                                        <li><a class="dropdown-item" value="4">4 time</a></li>
+                                        <li><a class="dropdown-item" value="5">5 time</a></li>
+                                        <li><a class="dropdown-item" value="6">6 time</a></li>
+                                    </ul>
+                                </div>
                             <h2>Effects</h2>
                                 <ul class="right-listone" id="ulEffects">
                                 <li>
@@ -882,7 +899,7 @@
                                 <input class="form-check-input check_box"
                                        type="checkbox"
                                        value=""
-                                       id="flexCheckDefault" />
+                                       id="chkFillBox"/>
                             </div>
                           @*   <input type="color" id="fillPicker" value="#ff0000">
                             <input type="color" id="strokePicker" value="#00ff00">
@@ -899,7 +916,7 @@
                             <div class="color-palette">
                                 <input type="hidden" id="hdnfillColor" />
                                 <form action="/action_page.php" class="d-flex">
-                                    <input type="color" id="favFillcolor" name="favFillcolor" oninput="ChangeFillColor()" value="#000000">
+                                    <input type="color" id="favFillcolor" name="favFillcolor" oninput="ChangeFillColor()" value="#42b3f5">
                                 </form>
                             </div>
                         </div>
@@ -917,7 +934,7 @@
                                 <input class="form-check-input check_box"
                                        type="checkbox"
                                        value=""
-                                       id="flexCheckDefault" />
+                                       id="chkStrockBox"/>
                             </div>
                         </div>
 
@@ -930,7 +947,7 @@
                             <div class="color-palette">
                                 <input type="hidden" id="hdnStrockColor" />
                                 <form action="/action_page.php" class="d-flex">
-                                    <input type="color" id="favStrockcolor" name="favStrockcolor" oninput="ChangeStrockColor()" value="#000000">
+                                    <input type="color" id="favStrockcolor" name="favStrockcolor" oninput="ChangeStrockColor()" value="#78f542">
                                 </form>
                             </div>
                         </div>
