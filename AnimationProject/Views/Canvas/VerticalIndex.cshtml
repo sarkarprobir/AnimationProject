@@ -129,8 +129,8 @@
         .profile{
             color: #fff !important;
             background-color: #4e43e1 !important;
-            width: 55px;
-            height: 50px;
+            width: 46.5px;
+            height: 46.5px;
         }
         .acc_list:hover {
             background-color: #2f2893 !important;
@@ -176,10 +176,10 @@
         }
 
         .tab {
-            padding: 5px;
+            padding: 4px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 15px;
+            font-size: 14px;
             border: 1px solid transparent;
         }
         .tab:hover {
@@ -228,8 +228,8 @@
         }
 
         .gallery img {
-                width: 85px;
-                height: 85px;
+                width: 60px;
+                height: 60px;
                 object-fit: cover;
             }
 
@@ -242,6 +242,8 @@
             .pagination span {
                 margin: 0 9px;
                 cursor: pointer;
+                font-size: 14px;
+                right-listone
             }
 
         .shapes_drop {
@@ -416,6 +418,16 @@
                 fileName.textContent = 'No File';
             }
         }
+        
+        //bacground popup show button
+        function showBack() {
+             document.getElementById("background_popup").style.display = "block";
+         }
+
+         function hideBack() {
+             document.getElementById("background_popup").style.display = "none";
+         }
+
 
     </script>
     
@@ -431,7 +443,7 @@
                     <a class="logo" href="javascript:void(0)"> <img src="~/images/icons/icon-left-arrow.png" alt="Logo" alt="Logo" width="35"></a>
                     <ul class="top-left-icon">
                         <li>
-                            <a href="javascript:void(0)"> <img src="~/images/icons/ico-pattren.svg" title="Pattren" alt="pattren" width="25"></a>
+                            <a href="javascript:void(0)"> <img onclick="showBack()" src="~/images/icons/ico-pattren.svg" title="Pattren" alt="pattren" width="25"></a>
                         </li>
                         <li>
                             <a href="javascript:void(0)"> <img onclick="addDefaultText();opentl();" src="~/images/icons/icon-text.png" title="Text" alt="text" width="20"></a>
@@ -625,31 +637,25 @@
                             <h2>In</h2>
                                 <ul class="right-listone" id="uldirection">
                                 <li>
-                                        <a  onclick="setCoordinate(this,'left',100,20,50,50)"> <img src="~/images/icons/icon-lr.png" alt="pattren"></a>
+                                        <a onclick="setCoordinate(this,'left',100,20,50,50)"> <img class="in_direction" src="~/images/icons/icon-lr.png" alt="pattren"></a>
                                     
                                     <div class="clear"></div>
                                 </li>
                                 <li>
-                                        <a onclick="setCoordinate(this,'right',400,0,50,50)"> <img src="~/images/icons/icon-rl.png" alt="text"></a>
+                                        <a onclick="setCoordinate(this,'right',400,0,50,50)"> <img class="in_direction" src="~/images/icons/icon-rl.png" alt="text"></a>
                                     
                                 </li>
-                                @*  <li>
-                                    <a onclick="setCoordinate('bottom',800,500,50,50)"> <img src="~/images/icons/icon-bu.png" alt="circle" width="35"></a>
-                                    <p>LR</p>
-                                </li> *@
+                                
                                 <li>
-                                        <a onclick="setCoordinate(this,'bottom',800,0,50,50)"> <img src="~/images/icons/icon-bt.png" alt="Masking"></a>
+                                        <a onclick="setCoordinate(this,'bottom',800,0,50,50)"> <img class="in_direction" src="~/images/icons/icon-bt.png" alt="Masking"></a>
                                     
                                 </li>
                                 <li>
-                                        <a onclick="setCoordinate(this,'top',400,0,50,50)"> <img src="~/images/icons/icon-tb.png" alt="image"></a>
+                                        <a onclick="setCoordinate(this,'top',400,0,50,50)"> <img class="in_direction" src="~/images/icons/icon-tb.png" alt="image"></a>
                                     
                                 </li>
 
-                                @*   <li>
-                                    <a onclick="setCoordinate(100,100,400,300,100,20,50,50)"> <img src="~/images/icons/icon-ud.png" alt="image" width="35"></a>
-                                    <p>LR</p>
-                                </li> *@
+                                
 
                             </ul>
                             </div>
@@ -1015,6 +1021,7 @@
                                 <img src="~/images/Gallery-img/gl004.png" />
                                 <img src="~/images/Gallery-img/gl005.png" />
                                 <img src="~/images/Gallery-img/gl006.png" />
+                                <img src="~/images/Gallery-img/gl006.png" />
                                 @* <img src="~/images/Gallery-img/gl007.png" />
                                 <img src="~/images/Gallery-img/gl008.png" />
                                 <img src="~/images/Gallery-img/gl009.png" />  *@
@@ -1097,6 +1104,10 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            <div id="backgorund_popup" class="collapse show-background">
+                <button id="close_button" onclick="hideBack()">X</button>
+                This is a toggleable div!
             </div>
         </div>
     </div>
