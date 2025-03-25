@@ -1197,9 +1197,9 @@
                             </div>
                             <div class="col-md-6 text-end d-flex gap-3 align-items-center justify-content-end">
                                 <div class="color-palette">
-                                    <input type="hidden" id="hdnBackgroundColor" />
+                                    <input type="hidden" id="hdnBackgroundAllColor" />
                                     <form action="/action_page.php" class="d-flex">
-                                        <input id="favBackgroundcolor" name="favBackgroundcolor" oninput="ChangeBackgroundColor()" value="#78f542">
+                                        <input id="favBackgroundcolor" type="color" name="favBackgroundcolor" oninput="ChangeAllBackgroundColor()" value="#fafcfc">
                                     </form>
                                 </div>
                                 <div class="color-palette">
@@ -1221,9 +1221,9 @@
                             </div>
                             <div class="col-md-6 text-end d-flex gap-3 align-items-center justify-content-end">
                                 <div class="color-palette">
-                                    <input type="hidden" id="hdnfillColor" />
+                                    <input type="hidden" id="hdnBackgroundSpecificColor" />
                                     <form action="/action_page.php" class="d-flex">
-                                        <input type="color" name="favFillcolor" value="#000000">
+                                        <input id="favBackgroundSpecificcolor" type="color" name="favBackgroundSpecificcolor" oninput="ChangeSpecificBackgroundColor('myCanvas')" value="#fafcfc">
                                     </form>
                                 </div>
                                 <div class="color-palette">
@@ -1284,7 +1284,7 @@
                         </div>
 
                         <div class="d-flex justify-content-between align-items-center mt-4">
-                            <p>Texture</p>
+                            <p>Texture</p><input class="form-check-input check_box" type="checkbox" value="" id="chkRemoveBackground" onchange="RemoveBackgroundImage();">
                             <div class="d-flex gap-2">
                                 <p>Opacity</p>
                                 <p>100%</p>
@@ -1292,7 +1292,7 @@
                         </div>
 
                         <div class="texture_images d-flex justify-content-between align-items-center flex-wrap gap-3">
-                            <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
+                            <img class="texture_img" src="~/images/Gallery-img/Texture2.jpg" onclick="setCanvasBackgroundImage('/images/Gallery-img/Texture2.jpg')" alt="Alternate Text" />
                             <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
                             <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
                             <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />

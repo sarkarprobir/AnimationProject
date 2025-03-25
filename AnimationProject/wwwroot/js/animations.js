@@ -192,7 +192,7 @@ canvas.addEventListener("contextmenu", function (e) {
     const rect = canvas.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
     const offsetY = e.clientY - rect.top;
-    const adjustX = 155;
+    const adjustX = 230;
     const adjustY = 64;
     const found = getObjectAtcontextmenu(offsetX, offsetY);
     if (found) {
@@ -261,6 +261,10 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
 
 function drawCanvas(condition) {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear entire canvas
+    // Draw background image if available.
+    if (canvas.bgImage) {
+        ctx.drawImage(canvas.bgImage, 0, 0, canvas.width, canvas.height);
+    }
 
     // --- Draw multiple images from the images array ---
     if (images && images.length) {
@@ -1823,7 +1827,7 @@ canvasContainer.addEventListener("dblclick", function (e) {
         // Use the object's bounding box and padding to set the editor's dimensions.
         const editorX = obj.x - padding;  // Position relative to object's x
         const editorY = obj.y - padding;  // Position relative to object's y
-                const offsetX = 317;  // adjust if needed
+        const offsetX = 260;  // adjust if needed
                 const offsetY = 45;  // adjust if needed
 
 
@@ -2077,37 +2081,7 @@ document.getElementById("saveButton").addEventListener("click", function () {
     // For demonstration, log to console or store in local storage
     console.log(savedData);
 });
-function saveCanvasData() {
-    // Build a data object with two properties: text and images.
-    const data = {
-        text: textObjects.map(obj => ({
-            text: obj.text,
-            x: obj.x,
-            y: obj.y,
-            boundingWidth: obj.boundingWidth,
-            boundingHeight: obj.boundingHeight,
-            fontSize: obj.fontSize,
-            fontFamily: obj.fontFamily,
-            textColor: obj.textColor,
-            textAlign: obj.textAlign,
-            opacity: obj.opacity
-        })),
-        images: images.map(img => ({
-            src: img.src,                // The source path of the image.
-            x: img.x,
-            y: img.y,
-            width: img.width,            // The original width.
-            height: img.height,          // The original height.
-            scaleX: img.scaleX || 1,
-            scaleY: img.scaleY || 1,
-            opacity: img.opacity
-        }))
-    };
 
-    // Convert the data object to a JSON string.
-    const jsonData = JSON.stringify(data, null, 2); // pretty-print with 2 spaces indent
-    return jsonData;
-}
 function updateSelectedImageColors(newFill, newStroke) {
     if (activeImage && activeImage.src && activeImage.src.endsWith('.svg')) {
         if (activeImage.originalSVG) {
@@ -2151,7 +2125,14 @@ function updateSelectedImageColors(newFill, newStroke) {
 }
 ////save canvas data////
 function saveCanvasData() {
+    // Retrieve the canvas background color. If not set, default to white.
+    const canvasBgColor = canvas.style.backgroundColor || "#ffffff";
+    // Retrieve the background image source if available.
+    const canvasBgImage = canvas.bgImage ? canvas.bgImage.src : "";
+
     const data = {
+        canvasBgColor: canvasBgColor,  // Background color of the canvas.
+        canvasBgImage: canvasBgImage,  // Background image source URL.
         text: textObjects.map(obj => ({
             text: obj.text,
             x: obj.x,
@@ -2179,4 +2160,49 @@ function saveCanvasData() {
 
     return JSON.stringify(data, null, 2);
 }
+
+
 /// Do not delete////
+const backgroundColorPicker = document.getElementById("favBackgroundcolor");
+const backgroundSpecificColorPicker = document.getElementById("favBackgroundSpecificcolor");
+function ChangeAllBackgroundColor() {
+    $("#hdnBackgroundAllColor").val(backgroundColorPicker.value);
+    // setCanvasBackground('myCanvas', backgroundColorPicker.value);
+    setAllCanvasesBackground('.clsmyCanvas', backgroundColorPicker.value);
+}
+function ChangeSpecificBackgroundColor(controlid) {
+    $("#hdnBackgroundSpecificColor").val(backgroundSpecificColorPicker.value);
+    setCanvasBackground(controlid, backgroundSpecificColorPicker.value);
+}
+function setCanvasBackground(canvasId, color) {
+    document.getElementById(canvasId).style.backgroundColor = color;
+}
+function setAllCanvasesBackground(selector, color) {
+    const canvases = document.querySelectorAll(selector);
+    canvases.forEach(canvas => {
+        canvas.style.backgroundColor = color;
+    });
+}
+function setCanvasBackground(canvasId, color) {
+    document.getElementById(canvasId).style.backgroundColor = color;
+}
+function setCanvasBackgroundImage(imageSrc) {
+    const bgImage = new Image();
+    bgImage.onload = function () {
+        // Clear the canvas, then draw the background image to fill the canvas.
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Draw the image so that it fills the entire canvas.
+        ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+        // Optionally, you can store the background image info for later use.
+        canvas.bgImage = bgImage;
+    };
+    bgImage.src = imageSrc;
+    $("#hdnBackgroundImage").val(imageSrc);
+    $('#chkRemoveBackground').prop('checked', true);
+}
+function RemoveBackgroundImage() {
+    canvas.bgImage = null;
+    drawCanvas('Common'); // Redraw the canvas without the background image.
+   
+}
+
