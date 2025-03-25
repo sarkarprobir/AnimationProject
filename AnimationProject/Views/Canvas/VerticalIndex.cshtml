@@ -624,7 +624,7 @@
                     </div>
                     <div style="float: left; display: flex; flex-direction: column; align-items: center; width: 100%">
                         <div>
-                            <canvas id="myCanvas" width="595" height="1058"></canvas>
+                            <canvas id="myCanvas" class="clsmyCanvas" width="595" height="1058"></canvas>
                             <!-- Custom context menu for deletion -->
                             <div id="contextMenu">
                                 <ul>
@@ -1197,9 +1197,9 @@
                             </div>
                             <div class="col-md-6 text-end d-flex gap-3 align-items-center justify-content-end">
                                 <div class="color-palette">
-                                    <input type="hidden" id="hdnfillColor" />
+                                    <input type="hidden" id="hdnBackgroundColor" />
                                     <form action="/action_page.php" class="d-flex">
-                                        <input type="color"  name="favFillcolor"  value="#000000">
+                                        <input id="favBackgroundcolor" name="favBackgroundcolor" oninput="ChangeBackgroundColor()" value="#78f542">
                                     </form>
                                 </div>
                                 <div class="color-palette">
