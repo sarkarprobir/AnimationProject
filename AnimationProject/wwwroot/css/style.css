@@ -170,7 +170,8 @@ ul.right-listone{padding:0px; margin:0px; width: 100%;
 .nav-middle .D-icon-save{    font-size: var(--font-size14);  color: #fff;
     background: transparent;
     border: 0px;
-    margin: 6px 0 0 0px;    padding: 2px 10px 2px 16px;
+    margin: 6px 0px 0px 0px;    
+    padding: 0px 10px 0px 16px;
 }
 .nav-middle .D-icon-save:hover{background:#4e43e1; border-radius:6px;}
 	/*tab css =========================*/

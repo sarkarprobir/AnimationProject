@@ -1,12 +1,20 @@
 ﻿<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+@* google fonts *@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap" rel="stylesheet">
 <style>
     body {
         background-color: #fff;
+        font-family: "Nunito Sans", sans-serif;
     }
-
+    p{
+        font-size: 15px;
+    }
     .acc_cont{
-        margin-block: 5.5rem;
+        margin-top: 3.5rem;
+        margin-bottom: 5.5rem;
         padding-left: 130px !important;
         padding-right: 70px !important;
     }
@@ -14,6 +22,9 @@
     .account{
         color: white;
         margin-bottom: 0;
+        font-size: 15px;
+        text-decoration: none;
+        cursor: pointer;
     }
     .header {
         background-color: black;
@@ -66,14 +77,48 @@
     .profile {
         color: #fff !important;
         background-color: #4e43e1 !important;
-        width: 55px;
-        height: 50px;
+        width: 47px;
+        height: 47px;
         font-size: 17px !important;
         font-weight: 600 !important;
     }
 
     .acc_list:hover {
         background-color: #2f2893 !important;
+    }
+
+    .pay_button {
+        border-radius: 0 !important;
+        width: 145px;
+        font-size: 15px !important;
+    }
+
+    .my-button {
+        border-radius: 0 !important;
+        height: 47px;
+        width: 220px;
+        font-size: 15px !important;
+        font-weight: 600 !important;
+    }
+
+    .my-button:hover {
+        background-color: #000000 !important;
+        color: #fff !important;
+    }
+    .create_button {
+        background-color: #4e43e1 !important;
+        border-color: transparent !important;
+    }
+
+    .browse_button {
+        color: black !important;
+        background-color: #d4d3e1 !important;
+        border-color: transparent !important;
+    }
+    input::placeholder {
+        color: grey !important;
+        font-weight: 600 !important;
+        font-size: 15px !important;    
     }
 </style>
 
@@ -103,19 +148,23 @@
 <nav class="navbar bg-dark-topnav navbar-expand-lg fixed-top">
     <div class="container-fluid p-r-0" style="justify-content: center !important;">
         <div class="row">
-            <div class="col-md-3 d-flex align-items-center ms-4">
-                <p class="account">My Account</p>
+            <div class="col-md-5 d-flex align-items-center gap-4 ms-4">
+                <a class="account"><img src="~/images/icons/icon-left-arrow.png" width="25px" height="25px" alt="Alternate Text" /></a>
+                <a class="account">Account</a>
+                <a class="account">Boards</a>
+                <a class="account">TV/Screens</a>
+                <a class="account">Billing</a>   
             </div>
 
             
             <div class="col-md-3 nav-right ms-auto">
                 <ul>
-                    <li class="play-btn">
-                        <button class="btn" title="Play"><img src="~/images/icons/Icon-01.svg" width="25"> </button>
-                    </li>
-                    <li>
-                        <button class="btn" type="submit" title="download"><img src="~/images/icons/ico-download.svg"> </button>
-                    </li>
+                    @* <li class="play-btn"> *@
+                    @*     <button class="btn" title="Play"><img src="~/images/icons/Icon-01.svg" width="25"> </button> *@
+                    @* </li> *@
+                    @* <li> *@
+                    @*     <button class="btn" type="submit" title="download"><img src="~/images/icons/ico-download.svg"> </button> *@
+                    @* </li> *@
 
                     <li class="nav-item dropdown">
                         <a class="profile nav-link text-light d-flex justify-content-center align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -126,7 +175,7 @@
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown" style="background-color: #4E43E1; border: none; border-radius:0; max-width: 106px; box-shadow: none;">
                             <li class="w-100 acc_list">
                                 <a class="dropdown-item d-flex align-items-center text-white" asp-controller="Canvas" asp-action="Account">
-                                    Account
+                                   Account
                                 </a>
                             </li>
                             <li class="w-100 acc_list">
@@ -135,6 +184,16 @@
                                 </a>
                             </li>
 
+                            <li class="w-100 acc_list">
+                                <a class="dropdown-item d-flex align-items-center text-white" href="/logout">
+                                    TV/Screens
+                                </a>
+                            </li>
+                            <li class="w-100 acc_list">
+                                <a class="dropdown-item d-flex align-items-center text-white" href="/logout">
+                                    Billing
+                                </a>
+                            </li>
                             <li class="w-100 acc_list">
                                 <a class="dropdown-item d-flex align-items-center text-white" href="/logout">
                                     Sign Out
@@ -151,48 +210,66 @@
 </nav>
 
 
-<div class="container  acc_cont ">
-    <h2 class="heading_acc">My Account</h2>
+
+<div class="container  acc_cont">
+    <div>
+        <button class="btn btn-danger pay_button">Pay and Renew</button>
+        <span class="ms-2 fs-8">Expired in 30 Days</span>
+    </div>
+    <div class="mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-5">
+           <h2 class="heading_acc">My Account</h2>
+           <div>
+               <button class="btn btn-primary my-button create_button">+ Create New Aniboard</button>
+                <button class="btn btn-secondary my-button browse_button">Browse The Template</button>
+           </div>
+        </div>
 
     <div class="row mt-4 mb-4">
         <div class="col-md-4">
-            <h5 class="fw-bold">Smith Tremblay</h5>
+            <h5 class="mt-4 fw-bold">Smith Tremblay</h5>
             <p>sm@gmail.com</p>
             <p>smthteam@gmail.com <a href="#" class="text-decoration-none">&#9998;</a></p>
-            <p>212-555-6789</p>
-            <p>132 My Street, Kingston, New York<br>12401, US</p>
-
-            <h5 class="mt-4 fw-bold">Password</h5>
-            <form>
-                <div class="mb-2">
-                    <input type="password" class="form-control acc_input" placeholder="New Password">
-                </div>
-                <div class="mb-2">
-                    <input type="password" class="form-control acc_input" placeholder="Confirm Password">
-                </div>
-                <button type="submit" class="btn btn-outline-dark acc_btn">Reset</button>
-            </form>
+            <p>Another@gmail.com</p>
+            <p class="fs-5">212-555-6789</p>
         </div>
 
-        <div class="col-md-8">
-            <h5 class="fw-bold">Transactions</h5>
-            <table class="table">
-                <tbody>
-                    <tr>
-                        <td>$299.27 USD</td>
-                        <td>12/03/2025</td>
-                        <td>stripe</td>
-                        <td>pi_3R1bWsKZa1YSLvs00rDypCa5</td>
-                    </tr>
-                    <tr>
-                        <td>$299.27 USD</td>
-                        <td>12/03/2024</td>
-                        <td>stripe</td>
-                        <td>pi_3R0qliKZa1YSLvs00snjbm8D</td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="col-md-4">
+                <h5 class="mt-4 fw-bold">Address</h5>
+                <p>132 My street, Kingstone, New <br /> York 12404, US</p>
         </div>
+
+        <div class="col-md-4">
+            @* <h5 class="fw-bold">Transactions</h5> *@
+            @* <table class="table"> *@
+            @*     <tbody> *@
+            @*         <tr> *@
+            @*             <td>$299.27 USD</td> *@
+            @*             <td>12/03/2025</td> *@
+            @*             <td>stripe</td> *@
+            @*             <td>pi_3R1bWsKZa1YSLvs00rDypCa5</td> *@
+            @*         </tr> *@
+            @*         <tr> *@
+            @*             <td>$299.27 USD</td> *@
+            @*             <td>12/03/2024</td> *@
+            @*             <td>stripe</td> *@
+            @*             <td>pi_3R0qliKZa1YSLvs00snjbm8D</td> *@
+            @*         </tr> *@
+            @*     </tbody> *@
+            @* </table> *@
+                <h5 class="mt-4 fw-bold">Password</h5>
+                <form>
+                    <div class="mb-2">
+                        <input type="password" class="form-control acc_input" placeholder="New Password">
+                    </div>
+                    <div class="mb-2">
+                        <input type="password" class="form-control acc_input" placeholder="Confirm Password">
+                    </div>
+                    <button type="submit" class="btn btn-outline-dark acc_btn">Reset</button>
+                </form>
+        </div>
+        
+    </div>
     </div>
 </div>
 

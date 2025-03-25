@@ -318,7 +318,44 @@
             .custom-file-input input {
                 display: none;
             }
+            /* background image upload */
+        #background_popup {
+            display: none;
+            width: 254px;
+            height: 100%;
+            background-color: #fff;
+            padding: 20px;
+            position: absolute;
+            top: 3px;
+            left: 0;
+        }
 
+        #close_button {
+            border: 0px solid #ddd;
+            float: right;
+            background: transparent;
+            font-weight: bold;
+            font-size: 15px;
+            border-radius: 3px;
+            padding-top: 2.3px;
+        }
+        .back_label{
+            font-size: 15px;
+        }
+
+        .background_edit {
+            font-family: "Nunito Sans", sans-serif;
+            font-size: 15px;
+        }
+
+        .texture_img {
+            width: 90px;
+            height: 85px;
+        }
+
+        .texture_images{
+            height: 303px;
+        }
     </style>
 
     <script>
@@ -424,14 +461,26 @@
         }
         
         //bacground popup show button
-        function showBack() {
-             document.getElementById("background_popup").style.display = "block";
-         }
+        document.addEventListener("DOMContentLoaded", function() {
+            let toggleImg = document.getElementById("toggle_img");
+            let closeButton = document.getElementById("close_button");
+            let popup = document.getElementById("background_popup");
 
-         function hideBack() {
-             document.getElementById("background_popup").style.display = "none";
-         }
+            if (!popup) {
+                console.error("Element #background_popup not found!");
+                return;
+            }
 
+            // Click event to show the popup
+            toggleImg.onclick = function() {
+                popup.style.display = "block";
+            };
+
+            // Click event to hide the popup
+            closeButton.onclick = function() {
+                popup.style.display = "none";
+            };
+        });
 
     </script>
     
@@ -447,7 +496,7 @@
                     <a class="logo" href="javascript:void(0)"> <img src="~/images/icons/icon-left-arrow.png" alt="Logo" alt="Logo" width="35"></a>
                     <ul class="top-left-icon">
                         <li>
-                            <a href="javascript:void(0)"> <img onclick="showBack()" src="~/images/icons/ico-pattren.svg" title="Pattren" alt="pattren" width="25"></a>
+                            <a href="javascript:void(0)"> <img id="toggle_img" src="~/images/icons/ico-pattren.svg" title="Pattren" alt="pattren" width="25"></a>
                         </li>
                         <li>
                             <a href="javascript:void(0)"> <img onclick="addDefaultText();opentl();" src="~/images/icons/icon-text.png" title="Text" alt="text" width="20"></a>
@@ -1122,9 +1171,148 @@
                     </div>
                 </div>
             </div>
-            <div id="backgorund_popup" class="collapse show-background">
-                <button id="close_button" onclick="hideBack()">X</button>
-                This is a toggleable div!
+            <div class="background_edit" id="background_popup">
+                @* <button id="close_button" onclick="hideBack()">X</button> *@
+                @* This is a toggleable div! *@
+                <div class="d-flex justify-content-between mb-3">
+                    <p class="gallery_head m-0">Background</p>
+                    <!-- <div class="tab cross">x</div> -->
+                    <button class="btn-cross b-radius-6 tab cross"
+                            id="close_button"
+                            type="button"
+                            onclick="hideBack()">
+                        ✕
+                    </button>
+                </div>
+                <div>
+                    <div class="">
+
+                        <div class="row">
+                            <div class="col-md-6  d-flex align-items-center gap-2">
+                                <input class="form-check-input check_box mt-0"
+                                    type="checkbox"
+                                    value=""
+                                    id="chkFillBox" />
+                                <label class="back_label">All</label>
+                            </div>
+                            <div class="col-md-6 text-end d-flex gap-3 align-items-center justify-content-end">
+                                <div class="color-palette">
+                                    <input type="hidden" id="hdnfillColor" />
+                                    <form action="/action_page.php" class="d-flex">
+                                        <input type="color"  name="favFillcolor"  value="#000000">
+                                    </form>
+                                </div>
+                                <div class="color-palette">
+                                    <input type="hidden" id="hdnfillColor" />
+                                    <form action="/action_page.php" class="d-flex">
+                                        <input type="color"  name="favFillcolor"  value="#000000">
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-2">
+                            <div class="col-md-6  d-flex align-items-center gap-2">
+                                <input class="form-check-input check_box mt-0"
+                                       type="checkbox"
+                                       value=""
+                                       id="chkFillBox" />
+                                <label class="back_label">Board1</label>
+                            </div>
+                            <div class="col-md-6 text-end d-flex gap-3 align-items-center justify-content-end">
+                                <div class="color-palette">
+                                    <input type="hidden" id="hdnfillColor" />
+                                    <form action="/action_page.php" class="d-flex">
+                                        <input type="color" name="favFillcolor" value="#000000">
+                                    </form>
+                                </div>
+                                <div class="color-palette">
+                                    <input type="hidden" id="hdnfillColor" />
+                                    <form action="/action_page.php" class="d-flex">
+                                        <input type="color" name="favFillcolor" value="#000000">
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-2">
+                            <div class="col-md-6  d-flex align-items-center gap-2">
+                                <input class="form-check-input check_box mt-0"
+                                       type="checkbox"
+                                       value=""
+                                       id="chkFillBox" />
+                                <label class="back_label">Board2</label>
+                            </div>
+                            <div class="col-md-6 text-end d-flex gap-3 align-items-center justify-content-end">
+                                <div class="color-palette">
+                                    <input type="hidden" id="hdnfillColor" />
+                                    <form action="/action_page.php" class="d-flex">
+                                        <input type="color" name="favFillcolor" value="#000000">
+                                    </form>
+                                </div>
+                                <div class="color-palette">
+                                    <input type="hidden" id="hdnfillColor" />
+                                    <form action="/action_page.php" class="d-flex">
+                                        <input type="color" name="favFillcolor" value="#000000">
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-2">
+                            <div class="col-md-6  d-flex align-items-center gap-2">
+                                <input class="form-check-input check_box mt-0"
+                                       type="checkbox"
+                                       value=""
+                                       id="chkFillBox" />
+                                <label class="back_label">Board3</label>
+                            </div>
+                            <div class="col-md-6 text-end d-flex gap-3 align-items-center justify-content-end">
+                                <div class="color-palette">
+                                    <input type="hidden" id="hdnfillColor" />
+                                    <form action="/action_page.php" class="d-flex">
+                                        <input type="color" name="favFillcolor" value="#000000">
+                                    </form>
+                                </div>
+                                <div class="color-palette">
+                                    <input type="hidden" id="hdnfillColor" />
+                                    <form action="/action_page.php" class="d-flex">
+                                        <input type="color" name="favFillcolor" value="#000000">
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <p>Texture</p>
+                            <div class="d-flex gap-2">
+                                <p>Opacity</p>
+                                <p>100%</p>
+                            </div>
+                        </div>
+
+                        <div class="texture_images d-flex justify-content-between align-items-center flex-wrap gap-3">
+                            <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
+                            <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
+                            <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
+                            <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
+                            <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
+                            <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
+                        </div>
+
+                        <div class="pagination">
+                            <span>&lt;</span>
+                            <span>4</span>
+                            <span>6</span>
+                            <span>7</span>
+                            <span>9</span>
+                            <span>10</span>
+                            <span>11</span>
+                            <span>&gt;</span>
+                        </div>
+
+                    </div>
+                </div>
             </div>
         </div>
     </div>
