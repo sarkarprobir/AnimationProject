@@ -2167,11 +2167,16 @@ const backgroundColorPicker = document.getElementById("favBackgroundcolor");
 const backgroundSpecificColorPicker = document.getElementById("favBackgroundSpecificcolor");
 function ChangeAllBackgroundColor() {
     $("#hdnBackgroundAllColor").val(backgroundColorPicker.value);
-    // setCanvasBackground('myCanvas', backgroundColorPicker.value);
+    //RemoveBackgroundImage
+    canvas.bgImage = null;
+    drawCanvas('Common'); // Redraw the canvas without the background image.
     setAllCanvasesBackground('.clsmyCanvas', backgroundColorPicker.value);
 }
 function ChangeSpecificBackgroundColor(controlid) {
     $("#hdnBackgroundSpecificColor").val(backgroundSpecificColorPicker.value);
+    //RemoveBackgroundImage
+    canvas.bgImage = null;
+    drawCanvas('Common'); // Redraw the canvas without the background image.
     setCanvasBackground(controlid, backgroundSpecificColorPicker.value);
 }
 function setCanvasBackground(canvasId, color) {
