@@ -16,5 +16,9 @@ namespace AnimationProject.Controllers
         {
             return View();
         }
+        public IActionResult Boards()
+        {
+            return View();
+        }
     }
 }
