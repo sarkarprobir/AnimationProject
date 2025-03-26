@@ -43,7 +43,7 @@
             width: 30px;
             height: 30px;
             padding: 0;
-            border: none;
+            /* border: none; */
             border-radius: 7px;
         }
         .color-swatch {
@@ -163,7 +163,7 @@
             width: 500px;
             height: 100vh;
             background: var(--color-white);
-            z-index: 9;
+            /* z-index: 9; */
             padding: 25px 30px;
             position: absolute;
             left: 0px;
@@ -230,7 +230,7 @@
         .gallery img {
                 width: 60px;
                 height: 60px;
-                object-fit: cover;
+                object-fit: contain;
             }
 
         .pagination {
@@ -353,8 +353,25 @@
             height: 85px;
         }
 
-        .texture_images{
+        .texture_images {
             height: 303px;
+        }
+        .texture_palette {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            border: 2px solid #000000 !important;
+            border-radius: 7px;
+            overflow: hidden;
+        }
+
+        .texture_palette img {
+            width: 30px;
+            height: 30px;
+        }
+
+        #texture_box {
+            display: none;
         }
     </style>
 
@@ -480,6 +497,13 @@
             closeButton.onclick = function() {
                 popup.style.display = "none";
             };
+        });
+        // texture popuo show
+        document.querySelectorAll(".texture_palette").forEach(element => {
+            element.addEventListener("click", function() {
+                let box = document.getElementById("texture_box");
+                box.style.display = (box.style.display === "none" || box.style.display === "") ? "block" : "none";
+            });
         });
 
     </script>
@@ -1087,10 +1111,8 @@
                                 <img src="~/images/Gallery-img/gl004.png" />
                                 <img src="~/images/Gallery-img/gl005.png" />
                                 <img src="~/images/Gallery-img/gl006.png" />
-                                <img src="~/images/Gallery-img/gl006.png" />
-                                @* <img src="~/images/Gallery-img/gl007.png" />
-                                <img src="~/images/Gallery-img/gl008.png" />
-                                <img src="~/images/Gallery-img/gl009.png" />  *@
+                                <img src="~/images/Gallery-img/iphone16.png" />
+                                
                             </div>
                         </div>
                         <!-- my images tab -->
@@ -1202,11 +1224,8 @@
                                         <input id="favBackgroundcolor" type="color" name="favBackgroundcolor" oninput="ChangeAllBackgroundColor()" value="#fafcfc">
                                     </form>
                                 </div>
-                                <div class="color-palette">
-                                    <input type="hidden" id="hdnfillColor" />
-                                    <form action="/action_page.php" class="d-flex">
-                                        <input type="color"  name="favFillcolor"  value="#000000">
-                                    </form>
+                                <div class="texture_palette">
+                                    <img src="~/images/texture.jpg" alt="Alternate Text" />
                                 </div>
                             </div>
                         </div>
@@ -1226,11 +1245,8 @@
                                         <input id="favBackgroundSpecificcolor" type="color" name="favBackgroundSpecificcolor" oninput="ChangeSpecificBackgroundColor('myCanvas')" value="#fafcfc">
                                     </form>
                                 </div>
-                                <div class="color-palette">
-                                    <input type="hidden" id="hdnfillColor" />
-                                    <form action="/action_page.php" class="d-flex">
-                                        <input type="color" name="favFillcolor" value="#000000">
-                                    </form>
+                                <div class="texture_palette">
+                                    <img src="~/images/texture.jpg" alt="Alternate Text" />
                                 </div>
                             </div>
                         </div>
@@ -1250,11 +1266,8 @@
                                         <input type="color" name="favFillcolor" value="#000000">
                                     </form>
                                 </div>
-                                <div class="color-palette">
-                                    <input type="hidden" id="hdnfillColor" />
-                                    <form action="/action_page.php" class="d-flex">
-                                        <input type="color" name="favFillcolor" value="#000000">
-                                    </form>
+                                <div class="texture_palette">
+                                    <img src="~/images/texture.jpg" alt="Alternate Text" />
                                 </div>
                             </div>
                         </div>
@@ -1274,15 +1287,12 @@
                                         <input type="color" name="favFillcolor" value="#000000">
                                     </form>
                                 </div>
-                                <div class="color-palette">
-                                    <input type="hidden" id="hdnfillColor" />
-                                    <form action="/action_page.php" class="d-flex">
-                                        <input type="color" name="favFillcolor" value="#000000">
-                                    </form>
+                                <div class="texture_palette">
+                                    <img src="~/images/texture.jpg" alt="Alternate Text" />
                                 </div>
                             </div>
                         </div>
-
+                    <div id="texture_box">
                         <div class="d-flex justify-content-between align-items-center mt-4">
                             <p>Texture</p>
                             <div class="d-flex gap-2">
@@ -1293,8 +1303,8 @@
 
                         <div class="texture_images d-flex justify-content-between align-items-center flex-wrap gap-3">
                             <img class="texture_img" src="~/images/Gallery-img/Texture2.jpg" onclick="setCanvasBackgroundImage('/images/Gallery-img/Texture2.jpg')" alt="Alternate Text" />
-                            <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
-                            <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
+                            <img class="texture_img" src="~/images/horizontal-background-texture.jpg" alt="Alternate Text" />
+                            <img class="texture_img" src="~/images/vertical-background-texture.jpg" alt="Alternate Text" />
                             <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
                             <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
                             <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
@@ -1310,6 +1320,7 @@
                             <span>11</span>
                             <span>&gt;</span>
                         </div>
+                    </div>
 
                     </div>
                 </div>
