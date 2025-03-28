@@ -107,19 +107,33 @@ $.ajax({
    
 };
 
-
+function clearCanvas() {
+    const canvas = document.getElementById("myCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.bgImage = null;
+    // Clear the entire canvas
+    ctx.fillStyle = "#ffffff"; // Your desired background color
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    gsap.globalTimeline.clear();
+    canvas.width = canvas.width;
+    images = [];
+    textObjects = [];
+}
 
 function SaveDesignBoardSlide(slideNumber) {
     ShowLoader();
     try {
         if (parseInt(slideNo) == 1) {
             verticalSlide1 = saveCanvasData();
+            clearCanvas();
         }
         else if (parseInt(slideNo) == 2) {
             verticalSlide2 = saveCanvasData();
+            clearCanvas();
         }
         else if (parseInt(slideNo) == 3) {
             verticalSlide3 = saveCanvasData();
+            clearCanvas();
         }
         //var data = {
         //    DesignBoardDetailsId: $("#hdnDesignBoardDetailsId").val(),
