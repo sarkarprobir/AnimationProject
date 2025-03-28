@@ -373,6 +373,67 @@
         #texture_box {
             display: none;
         }
+        /* modal */
+        .modal-backdrop{
+            z-index: 1000 !important;
+        }
+        .modal-dialog {
+            margin-top: 200px !important                                                                                                                                                                                                                                                                                                                                            ;
+        }
+        .modal-content{
+            height: 315px !important;
+            border-radius: 0 !important;
+        }
+        .modal-title {
+            font-size: 16px !important;
+            font-weight: 600 !important;
+        }
+        .modal-header {
+            border: none !important;
+        }
+        .modal-footer{
+            border: none !important;
+        }
+        .option-box {
+            border: 2px solid transparent;
+            padding: 14px;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+
+        .option-box:hover{
+            border: 2px solid black;
+        }
+        .landscape-icon,
+        .portrait-icon {
+            border: 2px solid black;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        .landscape-icon {
+            width: 30px;
+            height: 20px;
+        }
+
+        .portrait-icon {
+            width: 20px;
+            height: 30px;
+        }
+
+        .create-btn {
+            background-color: black;
+            color: white;
+            border: none;
+            padding: 9px 40px;
+        }
+
+        .create-btn:hover {
+            background-color: #333;
+        }
+        .vertical_option{
+            margin-left: 11px;
+        }
     </style>
 
     <script>
@@ -536,8 +597,15 @@
                                 <img onclick="opengl()" src="~/images/icons/icon_gallery.svg" title="Gallery" alt="Gallery" width="25">
                             </a>
                         </li>
+                        <li>
+                            <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                                <img onclick="opengl()" src="~/images/icons/plus.png" title="Gallery" alt="Gallery" width="20">
+                            </a>
+                        </li>
                     </ul>
                 </div>
+
+                
 
                 <div class="col-md-6 nav-middle">
                     <button class="D-icon-save" id="saveButton"  type="submit">My Design Board<img src="~/images/icons/ico-save.svg"> </button>
@@ -582,8 +650,41 @@
             </div>
         </div>
     </nav>
-  
-   
+
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content p-3">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="aniBoardModalLabel">New AniBoard</h5>
+                </div>
+
+                <div class="modal-body">
+                    <!-- Horizontal Option -->
+                    <div class="option-box d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="landscape-icon"></div>
+                            <span>Horizontal / Landscape</span>
+                        </div>
+                        <span>1920x1080</span>
+                    </div>
+
+                    <!-- Vertical Option -->
+                    <div class="option-box d-flex justify-content-between align-items-center mb-0">
+                        <div class="d-flex align-items-center">
+                            <div class="portrait-icon"></div>
+                            <span class="vertical_option">Vertical / Portrait</span>
+                        </div>
+                        <span>1080x1920</span>
+                    </div>
+                </div>
+
+                <div class="modal-footer pt-0">
+                    <button class="create-btn">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="d-flex align-items-stretch  main-canvas-content">
            
