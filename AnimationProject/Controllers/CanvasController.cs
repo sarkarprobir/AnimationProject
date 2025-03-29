@@ -164,6 +164,24 @@ namespace AnimationProject.Controllers
             }
 
         }
+        [HttpPost]
+        public async Task<IActionResult> GetDesignBoardDetailsById(RequestGetDesignBoardById request)
+        {
+            //if (!_checkSession.IsSession()) return Ok("login");
+            var response = new Response<ResponseGetDesignBoardById>();
+            try
+            {
+                var getDesignBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetDesignBoardDetailsById", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<ResponseGetDesignBoardById>>(getDesignBoard);
+                return Json(response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***GetDesignBoardDetailsById*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return Json("NO");
+            }
+
+        }
         #endregion
     }
 }

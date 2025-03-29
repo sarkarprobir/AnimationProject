@@ -19,4 +19,21 @@ namespace AnimationProject.Models
         public string GifImagePath { get; set; }
         public string SlideType { get; set; }
     }
+    public class ResponseGetDesignBoardById
+    {
+        public Guid DesignBoardId { get; set; }
+        public string DesignBoardName { get; set; }
+        public string GifImagePath { get; set; }
+        public string SlideType { get; set; }
+        public List<DesignBoardDetailsList> DesignBoardDetailsList { get; set; }
+    }
+    public class DesignBoardDetailsList
+    {
+        public Guid DesignBoardDetailsId { get; set; }
+        public string SlideName { get; set; }
+        public int SlideSequence { get; set; }
+        public string JsonFile { get; set; }
+        public string Effect { get; set; }
+        public string Direction { get; set; }
+    }
 }

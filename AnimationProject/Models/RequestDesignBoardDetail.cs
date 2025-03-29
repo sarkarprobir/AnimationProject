@@ -9,6 +9,7 @@
         public bool IsActive { get; set; }
         public Guid CreatedBy { get; set; }
         public string SlideType { get; set; }
+        public string GifImagePath { get; set; }
     }
     public class RequestDesignBoardSlideDetail
     {
@@ -17,15 +18,21 @@
         public string SlideName { get; set; }
         public int SlideSequence { get; set; }
         public string JsonFile { get; set; }
-        public string GifImagePath { get; set; }
         public bool IsActive { get; set; }
         public Guid CreatedBy { get; set; }
+        public string Effect { get; set; }
+        public string Direction { get; set; }
 
     }
     public class RequestGetDesignBoard
     {
         public Guid CustomerId { get; set; }
         public Guid CompanyId { get; set; }
+
+    }
+    public class RequestGetDesignBoardById
+    {
+        public Guid DesignBoardId { get; set; }
 
     }
 }
