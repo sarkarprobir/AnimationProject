@@ -33,7 +33,7 @@ Body{background:#fff; padding:0px; margin:0px;    overflow-x: hidden; font-famil
 
 .main-canvas-content {
     margin: 0;
-    height: calc(100vh - 50px);
+    height: calc(100vh - 90px);
 }
 
 .panel-left {
