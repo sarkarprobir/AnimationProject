@@ -2076,11 +2076,7 @@ canvas.addEventListener("drop", function (e) {
         };
     }
 });
-document.getElementById("saveButton").addEventListener("click", function () {
-    const savedData = saveCanvasData();
-    // For demonstration, log to console or store in local storage
-    console.log(savedData);
-});
+
 
 function updateSelectedImageColors(newFill, newStroke) {
     if (activeImage && activeImage.src && activeImage.src.endsWith('.svg')) {
@@ -2123,46 +2119,7 @@ function updateSelectedImageColors(newFill, newStroke) {
         updatedImg.src = newUrl;
     }
 }
-////save canvas data////
-function saveCanvasData() {
-    // Retrieve the canvas background color. If not set, default to white.
-    const canvasBgColor = canvas.style.backgroundColor || "#ffffff";
-    // Retrieve the background image source if available.
-    const canvasBgImage = canvas.bgImage ? canvas.bgImage.src : "";
 
-    const data = {
-        canvasBgColor: canvasBgColor,  // Background color of the canvas.
-        canvasBgImage: canvasBgImage,  // Background image source URL.
-        text: textObjects.map(obj => ({
-            text: obj.text,
-            x: obj.x,
-            y: obj.y,
-            boundingWidth: obj.boundingWidth,
-            boundingHeight: obj.boundingHeight,
-            fontSize: obj.fontSize,
-            fontFamily: obj.fontFamily,
-            textColor: obj.textColor,
-            textAlign: obj.textAlign,
-            opacity: obj.opacity
-        })),
-        images: images.map(imgObj => ({
-            // Save the updated SVG markup if it exists, otherwise the src.
-            src: imgObj.svgData || imgObj.src,
-            x: imgObj.x,
-            y: imgObj.y,
-            width: imgObj.width,
-            height: imgObj.height,
-            scaleX: imgObj.scaleX || 1,
-            scaleY: imgObj.scaleY || 1,
-            opacity: imgObj.opacity
-        }))
-    };
-
-    return JSON.stringify(data, null, 2);
-}
-
-
-/// Do not delete////
 const backgroundColorPicker = document.getElementById("favBackgroundcolor");
 const backgroundSpecificColorPicker = document.getElementById("favBackgroundSpecificcolor");
 function ChangeAllBackgroundColor() {

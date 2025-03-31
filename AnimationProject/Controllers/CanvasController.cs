@@ -88,12 +88,12 @@ namespace AnimationProject.Controllers
             var response = new Response<ResponseSaveDesignBoardDetail>();
             try
             {
-                request.DesignBoardId = Guid.Parse("2900F758-5ACE-4A50-9499-2D9CB7F240CF"); //Guid.NewGuid();
-                request.CustomerId = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
-                request.CompanyId = Guid.Parse("F174A15A-76B7-4E19-BE4B-4E240983DE55");
+                request.DesignBoardId = Guid.Parse(request.DesignBoardId.ToString()); //Guid.NewGuid();
+                request.CustomerId = Guid.Parse(request.CustomerId.ToString());
+                request.CompanyId = Guid.Parse(request.CompanyId.ToString());
                 request.IsActive = true;
                 request.CreatedBy = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
-                request.DesignBoardName = "DesignBoard-1 Edited 1";
+                //request.DesignBoardName = "DesignBoard-1 Edited 1";
                 var saveDesignBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/SaveUpdateDesignBoard", JsonConvert.SerializeObject(request), user.token);
                 response = JsonConvert.DeserializeObject<Response<ResponseSaveDesignBoardDetail>>(saveDesignBoard);
                 return Json(response.Data);
