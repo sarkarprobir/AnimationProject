@@ -530,6 +530,7 @@ function OnChangefontFamily(value) {
 
     drawCanvas('ChangeStyle');
 }
+
 function animateText(direction, condition, loopCount ) {
     const animationType = document.getElementById("hdnTextAnimationType").value;
     textObjects.forEach(obj => {

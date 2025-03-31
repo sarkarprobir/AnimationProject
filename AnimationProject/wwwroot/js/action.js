@@ -3,7 +3,7 @@ var activeSlide = 1;  // initially, assume slide 1 is active
 var verticalSlide1 = null;
 var verticalSlide2 = null;
 var verticalSlide3 = null;
-
+var canvasBgColor = null;
 function SaveDesignBoard() {
     // Save the current slide before proceeding (if you have an active slide mechanism)
     saveCurrentSlide();
@@ -207,7 +207,7 @@ function SelectionOfEffectandDirection(activeSlide) {
 
 function saveCanvasData() {
     // Retrieve the canvas background color. If not set, default to white.
-    const canvasBgColor = canvas.style.backgroundColor || "#ffffff";
+     canvasBgColor = canvas.style.backgroundColor || "#ffffff";
     // Retrieve the background image source if available.
     const canvasBgImage = canvas.bgImage ? canvas.bgImage.src : "";
 
@@ -258,6 +258,7 @@ function GetDesignBoardById(id) {
             success: function (result) {
                 if (result) { 
                     $("#hdnDesignBoardId").val(result.designBoardId);
+                    
                 if ( Array.isArray(result.designBoardDetailsList) && result.designBoardDetailsList.length > 0) {
                     // Reset global variables first to avoid stale data
 
@@ -336,7 +337,6 @@ function RedirectToVerticalPageDirect() {
 function loadCanvasFromJson(jsonData, condition) {
     // Clear the canvas first.
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
     // If no JSON data, simply call drawCanvas with default settings.
     if (!jsonData) {
         drawCanvas(condition);
@@ -346,13 +346,12 @@ function loadCanvasFromJson(jsonData, condition) {
     try {
         // Parse the JSON string.
         var data = JSON.parse(jsonData);
-
         // Set the canvas background color.
         canvasBgColor = data.canvasBgColor || "#ffffff";
         // Fill the canvas with the background color.
-        ctx.fillStyle = canvasBgColor;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+        //ctx.fillStyle = canvasBgColor;
+        //ctx.fillRect(0, 0, canvas.width, canvas.height);
+        canvas.style.backgroundColor = canvasBgColor;
         // Load the background image, if provided.
         if (data.canvasBgImage) {
             canvas.bgImage = new Image();
@@ -418,7 +417,7 @@ function loadCanvasFromJson(jsonData, condition) {
             // No images in JSON.
             checkAllImagesLoaded();
         }
-
+      
         // If there is a background image, set up its onload.
         if (canvas.bgImage) {
             canvas.bgImage.onload = function () {
@@ -440,3 +439,5 @@ function loadCanvasFromJson(jsonData, condition) {
         drawCanvas(condition);
     }
 }
+
+
