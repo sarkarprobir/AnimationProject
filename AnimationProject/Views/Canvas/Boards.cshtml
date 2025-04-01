@@ -1,4 +1,8 @@
-﻿<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+﻿@model  List<AnimationProject.Models.ResponseGetDesignBoard>
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+<script src="~/js/action.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
+<script src="~/js/animation_min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 @* google fonts *@
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6,12 +10,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap" rel="stylesheet">
 <style>
     body {
-        background-color: #fff;
-        font-family: "Nunito Sans", sans-serif;
+    background-color: #fff;
+    font-family: "Nunito Sans", sans-serif;
     }
 
     p {
-        font-size: 15px;
+    font-size: 15px;
     }
 
     .acc_cont {
@@ -22,139 +26,139 @@
     }
 
     .account {
-        color: white;
-        margin-bottom: 0;
-        font-size: 15px;
-        text-decoration: none;
-        cursor: pointer;
+    color: white;
+    margin-bottom: 0;
+    font-size: 15px;
+    text-decoration: none;
+    cursor: pointer;
     }
 
     .header {
-        background-color: black;
-        padding: 10px 20px;
+    background-color: black;
+    padding: 10px 20px;
     }
 
     .heading_acc {
-        font-weight: 800;
+    font-weight: 800;
     }
 
     .acc_input {
-        border: none !important;
-        padding-left: 0 !important;
+    border: none !important;
+    padding-left: 0 !important;
     }
 
     .acc_btn {
-        border-radius: 0 !important;
-        width: 250px;
-        font-weight: 600 !important;
+    border-radius: 0 !important;
+    width: 250px;
+    font-weight: 600 !important;
     }
 
     tr {
-        border-color: transparent !important;
+    border-color: transparent !important;
     }
 
     .dropdown-menu.show {
-        background: #fff;
-        border-radius: 1rem;
-        border: 0px;
-        height: auto !important;
-        width: 240px;
-        -webkit-box-shadow: 0px 0px 7px #c1bbbb;
-        box-shadow: 0px 0px 7px #c1bbbb;
-        overflow: hidden !important;
+    background: #fff;
+    border-radius: 1rem;
+    border: 0px;
+    height: auto !important;
+    width: 240px;
+    -webkit-box-shadow: 0px 0px 7px #c1bbbb;
+    box-shadow: 0px 0px 7px #c1bbbb;
+    overflow: hidden !important;
     }
 
     .dropdown {
-        color: #000000 !important;
+    color: #000000 !important;
     }
 
 
 
 
     .dropdown-item:hover {
-        color: #fff !important;
-        background-color: #4e43e1 !important;
+    color: #fff !important;
+    background-color: #4e43e1 !important;
     }
 
     .nav-item .dropdown-item:hover {
-        background-color: #4a32a3 !important;
+    background-color: #4a32a3 !important;
     }
 
     .profile {
-        color: #fff !important;
-        background-color: #4e43e1 !important;
-        width: 47px;
-        height: 47px;
-        font-size: 17px !important;
-        font-weight: 600 !important;
+    color: #fff !important;
+    background-color: #4e43e1 !important;
+    width: 47px;
+    height: 47px;
+    font-size: 17px !important;
+    font-weight: 600 !important;
     }
 
     .acc_list:hover {
-        background-color: #2f2893 !important;
+    background-color: #2f2893 !important;
     }
 
     .pay_button {
-        border-radius: 0 !important;
-        width: 145px;
-        font-size: 15px !important;
+    border-radius: 0 !important;
+    width: 145px;
+    font-size: 15px !important;
     }
 
     .my-button {
-        border-radius: 0 !important;
-        height: 47px;
-        width: 220px;
-        font-size: 15px !important;
-        font-weight: 600 !important;
+    border-radius: 0 !important;
+    height: 47px;
+    width: 220px;
+    font-size: 15px !important;
+    font-weight: 600 !important;
     }
 
-        .my-button:hover {
-            background-color: #000000 !important;
-            color: #fff !important;
-        }
+    .my-button:hover {
+    background-color: #000000 !important;
+    color: #fff !important;
+    }
 
     .create_button {
-        background-color: #4e43e1 !important;
-        border-color: transparent !important;
+    background-color: #4e43e1 !important;
+    border-color: transparent !important;
     }
 
     .browse_button {
-        color: black !important;
-        background-color: #d4d3e1 !important;
-        border-color: transparent !important;
+    color: black !important;
+    background-color: #d4d3e1 !important;
+    border-color: transparent !important;
     }
 
     input::placeholder {
-        color: grey !important;
-        font-weight: 600 !important;
-        font-size: 15px !important;
+    color: grey !important;
+    font-weight: 600 !important;
+    font-size: 15px !important;
     }
     .nav_active{
-        color: #3cbeee;
-        
+    color: #3cbeee;
+
     }
     .board_hori {
-        width: 263px; 
-        height: auto;
+    width: 263px; 
+    height: auto;
     }
 
     .board_button {
-        font-size: 14px;
-        text-decoration: none;
-        color: #000000;
+    font-size: 14px;
+    text-decoration: none;
+    color: #000000;
     }
 
     .board_button:hover {
-        color: #3cbeee;
+    color: #3cbeee;
     }
 
     .board_verti {
-        width: 167px;
-        height: auto;
+    width: 167px;
+    height: auto;
     }
 </style>
 
 <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
-      rel="stylesheet">
+rel="stylesheet">
 <link href="~/css/animate/animate.min.css" rel="stylesheet">
 <link href="~/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
@@ -260,46 +264,67 @@
             <div class="col-md-6">
                 <p class="mb-4">Horizontal Screens</p>
                 <div class="row">
-                      <div class="col-md-6">
-                        <img class="board_hori" src="~/images/banner.png"  alt="Alternate Text" />
-                          <div class="d-flex justify-content-center gap-4 mt-3">
-							<a class="board_button" href="#">Edit</a>
-                            <a class="board_button" href="#">Duplicate</a>
-                          </div>
-                      </div>
-                      <div class="col-md-6">
+                    @if (Model != null && Model.Count > 0)
+                    {
+                        @foreach (var item in Model)
+                        {
+                            if (item.SlideType == "Horizontal")
+                            {
+                                <div class="col-md-6">
+                                    <img class="board_hori" src="~/images/banner.png"  alt="Alternate Text" />
+                                    <div class="d-flex justify-content-center gap-4 mt-3">
+                                        <b>@item.DesignBoardName</b>
+                                    </div>
+                                    <div class="d-flex justify-content-center gap-4 mt-3">
+                                        <a class="board_button" href="#">Edit</a>
+                                        <a class="board_button" href="#">Duplicate</a>
+                                    </div>
+                                </div>
+                            }
+
+                        }
+                    }
+                    <div class="col-md-6">
                         <img class="board_hori" src="~/images/banner.png" alt="Alternate Text" />
                         <div class="d-flex justify-content-center gap-4 mt-3">
                             <a class="board_button" href="#">Edit</a>
                             <a class="board_button" href="#">Duplicate</a>
                         </div>
-                      </div>
+                    </div>
+                    <div class="col-md-6">
+                        <img class="board_hori" src="~/images/banner.png" alt="Alternate Text" />
+                        <div class="d-flex justify-content-center gap-4 mt-3">
+                            <a class="board_button" href="#">Edit</a>
+                            <a class="board_button" href="#">Duplicate</a>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="col-md-6">
                 <p class="mb-4">Vertical Screens</p>
                 <div class="row">
-                    <div class="col-md-4">
-                        <img class="board_verti" src="~/images/Vertical-Menuboard.png" alt="Alternate Text" />
-                        <div class="d-flex justify-content-center gap-4 mt-3">
-                            <a class="board_button" href="#">Edit</a>
-                            <a class="board_button" href="#">Duplicate</a>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <img class="board_verti" src="~/images/Vertical-Menuboard.png" alt="Alternate Text" />
-                        <div class="d-flex justify-content-center gap-4 mt-3">
-                            <a class="board_button" href="#">Edit</a>
-                            <a class="board_button" href="#">Duplicate</a>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <img class="board_verti" src="~/images/Vertical-Menuboard.png" alt="Alternate Text" />
-                        <div class="d-flex justify-content-center gap-4 mt-3">
-                            <a class="board_button" href="#">Edit</a>
-                            <a class="board_button" href="#">Duplicate</a>
-                        </div>
-                    </div>
+                    @if (Model != null && Model.Count>0)
+                    {
+                        int i = 1;
+                        @foreach (var item in Model)
+                        {
+                            if (item.SlideType == "Vertical")
+                            {
+                                <div class="col-md-4">
+                                    @* <img class="board_verti" src="@item.GifImagePath" alt="Alternate Text" /> *@
+                                    <canvas id="@("boardCanvas_" + i)" class="board_verti" width="167" height="250"></canvas>
+                                    <div class="d-flex justify-content-center gap-4 mt-3">
+                                        <b>@item.DesignBoardName</b>
+                                    </div>
+                                    <div class="d-flex justify-content-center gap-4 mt-3">
+                                        <a class="board_button" onclick="RedirectToVerticalPage('@item.DesignBoardId')">Edit</a>
+                                        <a class="board_button" href="#">Duplicate</a>
+                                    </div>
+                                </div>
+                                i++;
+                            }
+                        }
+                    }
                 </div>
             </div>
             
@@ -307,4 +332,49 @@
         </div>
     </div>
 </div>
-
+@section scripts {
+    <script src="~/js/boards.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
+  
+    <script>
+$(document).ready(function () {
+  // Loop through each canvas with a dynamic ID and call the function.
+  // Assuming you have a list of IDs, or you can select them by class.
+  $('.board_verti').each(function(index) {
+      // Construct the dynamic ID. For instance, if your canvas ID is "boardCanvas_1", "boardCanvas_2", etc.
+      var canvasId = $(this).attr('id');
+      // Get your JSON data (replace jsonData with your actual JSON string or object)
+                              var jsonData = {
+          "canvasBgColor": "rgb(255, 255, 255)",
+          "canvasBgImage": "https://localhost:7097/images/vertical-background-texture.jpg",
+          "slideEffect": "bounce",
+          "slideDedirection": "right",
+          "text": [
+            {
+              "text": "Slide-1 E",
+              "x": 50,
+              "y": 100,
+              "boundingWidth": 363.6953125,
+              "boundingHeight": 140.79999999999998,
+              "fontSize": 20,
+              "fontFamily": "Anton",
+              "textColor": "#9b1212",
+              "textAlign": "left"
+            }
+          ],
+          "images": [
+            {
+              "src": "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\r\n<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->\r\n<svg fill=\"#e9f542\" height=\"800px\" width=\"800px\" version=\"1.1\" id=\"Capa_1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" \r\n\t viewBox=\"0 0 471.2 471.2\" xml:space=\"preserve\" stroke=\"#78f542\">\r\n<g>\r\n\t<g>\r\n\t\t<path d=\"M457.7,230.15c-7.5,0-13.5,6-13.5,13.5v122.8c0,33.4-27.2,60.5-60.5,60.5H87.5c-33.4,0-60.5-27.2-60.5-60.5v-124.8\r\n\t\t\tc0-7.5-6-13.5-13.5-13.5s-13.5,6-13.5,13.5v124.8c0,48.3,39.3,87.5,87.5,87.5h296.2c48.3,0,87.5-39.3,87.5-87.5v-122.8\r\n\t\t\tC471.2,236.25,465.2,230.15,457.7,230.15z\"/>\r\n\t\t<path d=\"M226.1,346.75c2.6,2.6,6.1,4,9.5,4s6.9-1.3,9.5-4l85.8-85.8c5.3-5.3,5.3-13.8,0-19.1c-5.3-5.3-13.8-5.3-19.1,0l-62.7,62.8\r\n\t\t\tV30.75c0-7.5-6-13.5-13.5-13.5s-13.5,6-13.5,13.5v273.9l-62.8-62.8c-5.3-5.3-13.8-5.3-19.1,0c-5.3,5.3-5.3,13.8,0,19.1\r\n\t\t\tL226.1,346.75z\"/>\r\n\t</g>\r\n</g>\r\n</svg>",
+              "x": 175,
+              "y": 328,
+              "width": 200,
+              "height": 200,
+              "scaleX": 1,
+              "scaleY": 1
+            }
+          ]
+        };
+                      loadCanvasFromJsonForBoards(canvasId, jsonData, 'Common', "left","bounce");
+  });
+});
+</script>
+}

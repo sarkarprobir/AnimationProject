@@ -530,6 +530,7 @@ function OnChangefontFamily(value) {
 
     drawCanvas('ChangeStyle');
 }
+
 function animateText(direction, condition, loopCount ) {
     const animationType = document.getElementById("hdnTextAnimationType").value;
     textObjects.forEach(obj => {
@@ -908,6 +909,15 @@ function animateText(direction, condition, loopCount ) {
 
 function textAnimationClick(clickedElement, type) {
     $("#hdnTextAnimationType").val(type);
+    if (activeSlide === 1) {
+        $("#hdnEffectSlide1").val(type);
+    }
+    else if (activeSlide === 2) {
+        $("#hdnEffectSlide2").val(type);
+    }
+    else if (activeSlide === 3) {
+        $("#hdnEffectSlide3").val(type);
+    }
     // Get the container using its ID.
     var ulEffects = document.getElementById("ulEffects");
 
@@ -1277,7 +1287,16 @@ function ShowAnimationOption() {
 function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imageEndX, imageEndY) {
     // Get the container using its ID.
     var ulDirection = document.getElementById("uldirection");
-
+    $("#hdnslideDedirection").val(direction);
+    if (activeSlide === 1) {
+        $("#hdnDirectiontSlide1").val(direction);
+    }
+    else if (activeSlide === 2) {
+        $("#hdnDirectiontSlide2").val(direction);
+    }
+    else if (activeSlide === 3) {
+        $("#hdnDirectiontSlide3").val(direction);
+    }
     // Select all <a> elements within the container.
     var links = ulDirection.getElementsByTagName("a");
 
@@ -2167,4 +2186,16 @@ function RemoveBackgroundImage() {
     drawCanvas('Common'); // Redraw the canvas without the background image.
    
 }
-
+function clearCanvas() {
+    const canvas = document.getElementById("myCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.bgImage = null;
+    // Clear the entire canvas
+    ctx.fillStyle = "#ffffff"; // Your desired background color
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    gsap.globalTimeline.clear();
+    canvas.width = canvas.width;
+    images = [];
+    textObjects = [];
+    //canvas.clear()
+}

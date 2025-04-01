@@ -3,6 +3,7 @@ using AnimationProject.Helpers;
 using AnimationProject.Models;
 using AnimationProject.Models.Common;
 using AnimationProject.Services;
+using DocumentFormat.OpenXml.Office2016.Excel;
 using DocumentFormat.OpenXml.Spreadsheet;
 using log4net;
 using Microsoft.AspNetCore.Http;
@@ -53,9 +54,25 @@ namespace AnimationProject.Controllers
         {
             return View();
         }
-        public IActionResult Boards()
+        public async Task<IActionResult> Boards()
         {
-            return View();
+            //if (!_checkSession.IsSession()) return Ok("login");
+            var response = new Response<List<ResponseGetDesignBoard>>();
+            RequestGetDesignBoard request = new RequestGetDesignBoard();
+            try
+            {
+                request.CustomerId = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
+                request.CompanyId = Guid.Parse("F174A15A-76B7-4E19-BE4B-4E240983DE55");
+                var saveDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetDesignBoard", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<List<ResponseGetDesignBoard>>>(saveDesignSlideBoard);
+                return View("Boards", response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***SaveUpdateDesignSlideBoard*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return View();
+            }
+           
         }
         [HttpPost]
         public async Task<IActionResult> GetCompanyDetails(RequestTestModel companysetting)
@@ -93,7 +110,7 @@ namespace AnimationProject.Controllers
                 request.CompanyId = Guid.Parse(request.CompanyId.ToString());
                 request.IsActive = true;
                 request.CreatedBy = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
-                //request.DesignBoardName = "DesignBoard-1 Edited 1";
+                
                 var saveDesignBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/SaveUpdateDesignBoard", JsonConvert.SerializeObject(request), user.token);
                 response = JsonConvert.DeserializeObject<Response<ResponseSaveDesignBoardDetail>>(saveDesignBoard);
                 return Json(response.Data);
@@ -101,6 +118,66 @@ namespace AnimationProject.Controllers
             catch (Exception ex)
             {
                 log.Info("***SaveUpdateDesignBoard*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return Json("NO");
+            }
+
+        }
+        [HttpPost]
+        public async Task<IActionResult> SaveUpdateDesignSlideBoard(RequestDesignBoardSlideDetail request)
+        {
+            //if (!_checkSession.IsSession()) return Ok("login");
+            var response = new Response<ResponseSaveDesignBoardSlideDetail>();
+            try
+            {
+                request.DesignBoardDetailsId = Guid.Parse(request.DesignBoardDetailsId.ToString());
+                request.DesignBoardId = Guid.Parse(request.DesignBoardId.ToString()); 
+                request.IsActive = true;
+                request.CreatedBy = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
+                var saveDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/SaveUpdateDesignSlideBoard", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<ResponseSaveDesignBoardSlideDetail>>(saveDesignSlideBoard);
+                return Json(response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***SaveUpdateDesignSlideBoard*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return Json("NO");
+            }
+
+        }
+        [HttpPost]
+        public async Task<IActionResult> GetDesignBoardDetails(RequestGetDesignBoard request)
+        {
+            //if (!_checkSession.IsSession()) return Ok("login");
+            var response = new Response<List<ResponseGetDesignBoard>>();
+            try
+            {
+                request.CustomerId = Guid.Parse(request.CustomerId.ToString());
+                request.CompanyId = Guid.Parse(request.CompanyId.ToString());
+                var saveDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetDesignBoard", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<List<ResponseGetDesignBoard>>>(saveDesignSlideBoard);
+                return Json(response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***SaveUpdateDesignSlideBoard*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return Json("NO");
+            }
+
+        }
+        [HttpPost]
+        public async Task<IActionResult> GetDesignBoardDetailsById(RequestGetDesignBoardById request)
+        {
+            //if (!_checkSession.IsSession()) return Ok("login");
+            var response = new Response<ResponseGetDesignBoardById>();
+            try
+            {
+                var getDesignBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetDesignBoardDetailsById", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<ResponseGetDesignBoardById>>(getDesignBoard);
+                return Json(response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***GetDesignBoardDetailsById*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
                 return Json("NO");
             }
 

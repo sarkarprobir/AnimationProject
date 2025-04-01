@@ -449,6 +449,21 @@
                  $("#hdnStrockColor").val('#78f542');
                  let button = document.getElementById("modeButton");
                    button.innerText = "Graphic Mode";
+
+                        // Function to get URL parameter
+                        function getUrlParameter(name) {
+                            const urlParams = new URLSearchParams(window.location.search);
+                            return urlParams.get(name);
+                        }
+
+                        // Get the ID from URL
+                        const id = getUrlParameter('id');
+
+                        // Check if parameter exists
+                        if(id) {
+                            // Call your initialization function with the ID
+                            GetDesignBoardById(id);
+                        }
         });
     </script>
 
@@ -610,7 +625,11 @@
                 
 
                 <div class="col-md-6 nav-middle">
-                    <button class="D-icon-save" id="btnsaveButton"  type="submit">My Design Board<img src="~/images/icons/ico-save.svg"> </button>
+                    <button class="D-icon-save" id="saveButton" onclick="SaveDesignBoard();"  type="submit">My Design Board<img src="~/images/icons/ico-save.svg"> </button>
+                    <input type="hidden" id="hdnDesignBoardId" />
+                    <input type="hidden" id="hdnDesignBoardDetailsIdSlide1" />
+                    <input type="hidden" id="hdnDesignBoardDetailsIdSlide2" />
+                    <input type="hidden" id="hdnDesignBoardDetailsIdSlide3" />
                 </div>
                 <div class="col-md-3 nav-right">
                     <ul>
@@ -700,7 +719,7 @@
             <div class="panel-left-scroll panel-vertical-scroll">
                 <ul>
                     <li>
-                        <img src="~/images/Vertical-Menuboard.png" class="menuboard-vertical-thum" alt="Banner">
+                        <img src="~/images/Vertical-Menuboard.png" class="menuboard-vertical-thum" alt="Banner" onclick="SaveDesignBoardSlide(1);">
                         <p>
                             <span>Slide 1</span>
                             <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
@@ -708,7 +727,7 @@
                         </p>
                     </li>
                     <li>
-                        <img src="~/images/Vertical-Menuboard.png" class="menuboard-vertical-thum" alt="Banner">
+                        <img src="~/images/Vertical-Menuboard.png" class="menuboard-vertical-thum" alt="Banner" onclick="SaveDesignBoardSlide(2);">
                         <p>
                             <span>Slide 2</span>
                             <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
@@ -716,7 +735,7 @@
                         </p>
                     </li>
                     <li>
-                        <img src="~/images/Vertical-Menuboard.png" class="menuboard-vertical-thum" alt="Banner">
+                        <img src="~/images/Vertical-Menuboard.png" class="menuboard-vertical-thum" alt="Banner" onclick="SaveDesignBoardSlide(3);">
                         <p>
                             <span>Slide 3</span>
                             <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
@@ -800,36 +819,41 @@
                             <h2>Effects</h2>
                                 <ul class="right-listone" id="ulEffects">
                                 <li>
-                                        <a  href="javascript:void(0)" onclick="textAnimationClick(this, 'linear')"> <img src="~/images/icons/icon-effict.png" alt="pattren"></a>
+                                        <a id="alinear"  href="javascript:void(0)" onclick="textAnimationClick(this, 'linear')"> <img src="~/images/icons/icon-effict.png" alt="pattren"></a>
                                     <div class="clear"></div>
                                 </li>
                               
                                 <li>
-                                        <a href="javascript:void(0)" onclick="textAnimationClick(this, 'bounce')"> <img src="~/images/icons/icon-effict.png" alt="pattren"></a>
+                                        <a id="abounce" href="javascript:void(0)" onclick="textAnimationClick(this, 'bounce')"> <img src="~/images/icons/icon-effict.png" alt="pattren"></a>
                                     <div class="clear"></div>
                                 </li>
                             </ul>
                             <input type="hidden" id="hdnTextAnimationType" />
-
+                             <input type="hidden" id="hdnslideDedirection" />
+                              <input type="hidden" id="hdnEffectSlide1" />
+                                <input type="hidden" id="hdnEffectSlide2" />
+                                <input type="hidden" id="hdnEffectSlide3" />
+                                <input type="hidden" id="hdnDirectiontSlide1" />
+                                <input type="hidden" id="hdnDirectiontSlide2" />
+                                <input type="hidden" id="hdnDirectiontSlide3" />
                             <h2>In</h2>
                                 <ul class="right-listone" id="uldirection">
                                 <li>
-                                        <a onclick="setCoordinate(this,'left',100,20,50,50)"> <img class="in_direction" src="~/images/icons/icon-lr.png" alt="pattren"></a>
+                                        <a id="aleft" onclick="setCoordinate(this,'left',100,20,50,50)"> <img class="in_direction" src="~/images/icons/icon-lr.png" alt="pattren"></a>
                                     
                                     <div class="clear"></div>
                                 </li>
                                 <li>
-                                        <a onclick="setCoordinate(this,'right',400,0,50,50)"> <img class="in_direction" src="~/images/icons/icon-rl.png" alt="text"></a>
+                                        <a id="aright" onclick="setCoordinate(this,'right',400,0,50,50)"> <img class="in_direction" src="~/images/icons/icon-rl.png" alt="text"></a>
                                     
                                 </li>
                                 
                                 <li>
-                                        <a onclick="setCoordinate(this,'bottom',800,0,50,50)"> <img class="in_direction" src="~/images/icons/icon-bt.png" alt="Masking"></a>
+                                        <a id="abottom" onclick="setCoordinate(this,'bottom',800,0,50,50)"> <img class="in_direction" src="~/images/icons/icon-bt.png" alt="Masking"></a>
                                     
                                 </li>
                                 <li>
-                                        <a onclick="setCoordinate(this,'top',400,0,50,50)"> <img class="in_direction" src="~/images/icons/icon-tb.png" alt="image"></a>
-                                    
+                                        <a id="atop" onclick="setCoordinate(this,'top',400,0,50,50)"> <img class="in_direction" src="~/images/icons/icon-tb.png" alt="image"></a>
                                 </li>
 
                                 
