@@ -634,6 +634,8 @@ svg:hover {
 }
 .success-fa-color {
     color: #007823;
+    font-size: 30px;
+    padding: 5.5px 2px;
 }
 .generic-datamodal .modal-content {
     border-radius: 0;

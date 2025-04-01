@@ -52,3 +52,13 @@ footer {
     color: grey !important;
     text-decoration: none !important;
 }
+/*modal design*/
+.saving_modal {
+    height: 125px !important;
+}
+.user-editable-modal .modal.fade .modal-dialog {
+    transform: translate(0, -125px) !important;
+}
+.ok_button {
+    background-color: #4e43e1 !important;
+}
