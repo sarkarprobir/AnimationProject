@@ -81,7 +81,7 @@ function wrapText(ctx, text, maxWidth) {
     return lines;
 }
 
-function animateText(direction, condition, loopCount, direction, effect) {
+function animateTextBoard(direction, condition, loopCount, direction, effect) {
     const animationType = effect;
     textObjects.forEach(obj => {
 
@@ -131,7 +131,7 @@ function animateText(direction, condition, loopCount, direction, effect) {
             let tl = gsap.timeline({
                 repeat: loopCount - 1, // loops = initial + (loopCount - 1) repeats
                 onUpdate: function () {
-                    drawCanvas(condition);
+                    drawCanvasBoard(condition);
                 }
             });
 
@@ -164,7 +164,7 @@ function animateText(direction, condition, loopCount, direction, effect) {
                 y: endY,
                 duration: 0,
                 ease: "power1.inOut",
-                onUpdate: () => drawCanvas(condition),
+                onUpdate: () => drawCanvasBoard(condition),
             });
             ////end///////////
             ////This is default animation of linear
@@ -183,14 +183,14 @@ function animateText(direction, condition, loopCount, direction, effect) {
                 y: endY,
                 duration: parseFloat(selectedInSpeed) || 2.5,
                 ease: "elastic.out(1, 0.3)",
-                onUpdate: drawCanvas,
+                onUpdate: drawCanvasBoard,
             });
         } else if (animationType === "wave") {
             let angle = 0;
             gsap.ticker.add(() => {
                 obj.x = startX + (endX - startX) * 0.5 + Math.sin(angle) * 100;
                 obj.y = startY + (endY - startY) * 0.5;
-                drawCanvas(condition);
+                drawCanvasBoard(condition);
                 angle += 0.05;
             });
         } else if (animationType === "fadeIn") {
@@ -203,7 +203,7 @@ function animateText(direction, condition, loopCount, direction, effect) {
                     y: endY,
                     duration: 2,
                     ease: "power2.out",
-                    onUpdate: drawCanvas,
+                    onUpdate: drawCanvasBoard,
                 }
             );
         } else if (animationType === "zoomInOut") {
@@ -216,7 +216,7 @@ function animateText(direction, condition, loopCount, direction, effect) {
                     y: endY,
                     duration: 2,
                     ease: "power2.inOut",
-                    onUpdate: drawCanvas,
+                    onUpdate: drawCanvasBoard,
                 }
             );
         } else if (animationType === "rotate") {
@@ -229,7 +229,7 @@ function animateText(direction, condition, loopCount, direction, effect) {
                     y: endY,
                     duration: 2,
                     ease: "power2.inOut",
-                    onUpdate: drawCanvas,
+                    onUpdate: drawCanvasBoard,
                 }
             );
         } else if (animationType === "bounce") {
@@ -238,7 +238,7 @@ function animateText(direction, condition, loopCount, direction, effect) {
             let tl = gsap.timeline({
                 repeat: loopCount - 1,
                 onUpdate: function () {
-                    drawCanvas(condition);
+                    drawCanvasBoard(condition);
                 }
             });
 
@@ -271,7 +271,7 @@ function animateText(direction, condition, loopCount, direction, effect) {
                 y: endY,
                 duration: 0,
                 ease: "bounce.out",
-                onUpdate: () => drawCanvas(condition),
+                onUpdate: () => drawCanvasBoard(condition),
             });
 
 
@@ -295,7 +295,7 @@ function animateText(direction, condition, loopCount, direction, effect) {
                     autoRotate: true,
                 },
                 ease: "power2.inOut",
-                onUpdate: drawCanvas,
+                onUpdate: drawCanvasBoard,
             });
         }
         else if (animationType === "fadeText") {
@@ -308,14 +308,14 @@ function animateText(direction, condition, loopCount, direction, effect) {
                     opacity: 1, // Target opacity
                     duration: 2,
                     ease: "power2.inOut",
-                    onUpdate: drawCanvas, // Updates canvas on every frame
+                    onUpdate: drawCanvasBoard, // Updates canvas on every frame
                     onComplete: () => {
                         // Fade out after a delay
                         gsap.to(obj, {
                             opacity: 1,
                             duration: 2,
                             //delay: 2,
-                            onUpdate: drawCanvas,
+                            onUpdate: drawCanvasBoard,
                         });
                     },
                 }
@@ -329,7 +329,7 @@ function animateText(direction, condition, loopCount, direction, effect) {
                     // Update the text content dynamically during the animation
                     const progress = Math.ceil(this.progress() * text.length);
                     obj.text = text.slice(0, progress);  // Slice the text to create the typing effect
-                    drawCanvas(condition);  // Redraw the canvas at each update
+                    drawCanvasBoard(condition);  // Redraw the canvas at each update
                 },
             });
 
@@ -340,7 +340,7 @@ function animateText(direction, condition, loopCount, direction, effect) {
                 y: endY,  // Similarly, endY for vertical position change
                 duration: 2.5,
                 ease: "elastic.out(1, 0.3)",  // Apply easing for a bounce effect
-                onUpdate: drawCanvas,  // Redraw the canvas on each update
+                onUpdate: drawCanvasBoard,  // Redraw the canvas on each update
                 repeat: 1,  // Repeat the animation once (total of 2 times)
                 yoyo: true,  // Make the animation reverse after completing
                 onComplete: function () {
@@ -399,7 +399,7 @@ function animateText(direction, condition, loopCount, direction, effect) {
         let tl = gsap.timeline({
             repeat: loopCount - 1,
             onUpdate: function () {
-                drawCanvas(condition);
+                drawCanvasBoard(condition);
             }
         });
 
@@ -425,7 +425,7 @@ function animateText(direction, condition, loopCount, direction, effect) {
                 y: endY,
                 duration: 0,
                 ease: "power1.inOut",
-                onUpdate: () => drawCanvas(condition)
+                onUpdate: () => drawCanvasBoard(condition)
             });
         } else if (animationType === "bounce") {
             tl.to(imgObj, {
@@ -449,7 +449,7 @@ function animateText(direction, condition, loopCount, direction, effect) {
                 y: endY,
                 duration: 0,
                 ease: "bounce.out",
-                onUpdate: () => drawCanvas(condition)
+                onUpdate: () => drawCanvasBoard(condition)
             });
         }
     });
@@ -464,7 +464,7 @@ function loadCanvasFromJsonForBoards(canvasId, jsonData, condition, direction, e
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     // If no JSON data, simply call drawCanvas with default settings.
     if (!jsonData) {
-        drawCanvas(canvasId, condition, direction, effect);
+        drawCanvasBoard(canvasId, condition, direction, effect);
         return;
     }
 
@@ -500,7 +500,7 @@ function loadCanvasFromJsonForBoards(canvasId, jsonData, condition, direction, e
             }
             if (imageLoadCount >= totalImages && bgLoaded) {
                 // Once all images are loaded, call drawCanvas.
-                drawCanvas(canvasId, condition, direction, effect);
+                drawCanvasBoard(canvasId, condition, direction, effect);
             }
         }
 
@@ -559,16 +559,16 @@ function loadCanvasFromJsonForBoards(canvasId, jsonData, condition, direction, e
     } catch (e) {
         console.error("Error parsing canvas JSON:", e);
         // In case of an error, draw with current values.
-        drawCanvas(canvasId, condition, direction, effect);
+        drawCanvasBoard(canvasId, condition, direction, effect);
     }
     
     //animateText('left', 'Common', 5, direction, effect);
     setTimeout(() => {
-        animateText('left', 'Common', 5, direction, effect);
+        animateTextBoard('left', 'Common', 5, direction, effect);
     }, 500); // Delay to ensure elements are ready
 }
 
-function drawCanvas(canvasId, condition, direction, effect) {
+function drawCanvasBoard(canvasId, condition, direction, effect) {
     const canvas = document.getElementById(canvasId);
   
     if (canvas) {
