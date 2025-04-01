@@ -7,6 +7,10 @@ let selectedInSpeed = null;
 let selectedStaySpeed = null;
 let selectedOutSpeed = null;
 
+const stream = canvas.captureStream(7); // Capture at 30 fps
+const recorder = new MediaRecorder(stream);
+const chunks = [];
+
 let scrollTop = 0;
 let image = null;
 let recordedChunks = [];
@@ -1316,12 +1320,92 @@ function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imag
         document.getElementById("imageEndY").value = imageEndY;
         document.getElementById("imageAnimation").value = $("#imageAnimation option:selected").val();
         applyAnimations(direction, 'applyAnimations');
+        // Start recording before starting your GSAP animation
+        recorder.start();
+
+        // Later, when you want to stop recording (e.g., after the animation completes)
+        setTimeout(() => {
+            recorder.stop();
+        }, 4000);
     }
     else {
         alert('Please select Text Animation')
     }
     
 }
+recorder.ondataavailable = (e) => chunks.push(e.data);
+// Example usage inside your MediaRecorder's onstop callback
+recorder.onstop = () => {
+    const blob = new Blob(chunks, { type: 'video/mp4; codecs=vp9' });
+
+    // Determine if it's edit mode or save mode.
+    // If 'existingFolderId' is defined, it indicates edit mode.
+    // Otherwise, use null for save mode.
+    const existingFolderId = $(`#hdnDesignBoardDetailsIdSlide${activeSlide}`).val() || null;
+    
+
+    // Call the upload function with the blob and folder ID (if any)
+    uploadVideo(blob, existingFolderId);
+};
+
+function uploadVideo(blob, existingFolderId = null) {
+    const formData = new FormData();
+    formData.append('video', blob, 'animation.mp4');
+
+    if (existingFolderId) {
+        formData.append('folderId', existingFolderId);
+    }
+
+    fetch('/api/video/save-video', {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Video saved successfully:', data);
+            $(`#hdnDesignBoardDetailsIdSlideFilePath${activeSlide}`).val(data.filePath);
+            // ✅ Force browser to fetch latest file
+            const videoPlayer = document.getElementById('miniPlayer');
+            videoPlayer.src = `${data.filePath}&t=${new Date().getTime()}`;
+            videoPlayer.load();
+            videoPlayer.play();
+        })
+        .catch(error => {
+            console.error('Error saving video:', error);
+        });
+}
+
+
+//recorder.onstop = () => {
+//    const blob = new Blob(chunks, { type: 'video/mp4;codecs=vp9' });
+//    const url = URL.createObjectURL(blob);
+//    const formData = new FormData();
+//    formData.append('video', blob, 'animation.mp4');
+//    //// Use this URL to download or replay the animation video
+//    //const a = document.createElement('a');
+//    //a.href = url;
+//    //a.download = 'animation.mp4';
+//    //a.click();
+
+//    // Set video source to recorded video
+//    const videoPlayer = document.getElementById('miniPlayer');
+//    videoPlayer.src = url;
+//    videoPlayer.play();
+//    console.log(url);
+
+//    fetch('/api/video/save-video', {
+//        method: 'POST',
+//        body: formData
+//    })
+//        .then(response => response.json())
+//        .then(data => {
+//            console.log('Video saved successfully:', data);
+//            // You can now update your mini player or UI as needed.
+//        })
+//        .catch(error => {
+//            console.error('Error saving video:', error);
+//        });
+//};
 // Start Recording
 function startRecording() {
     let stream = canvas.captureStream(30); // 30 FPS
