@@ -407,7 +407,8 @@
         .option-box:hover{
             border: 2px solid black;
         }
-        .option-box_active{
+
+        .option-box.selected {
             border: 2px solid black;
         }
         .landscape-icon,
@@ -602,6 +603,38 @@
         });
 
     </script>
+
+    <!-- JavaScript for Handling Selection and Redirection -->
+    <script>
+        let selectedOption = ""; // Variable to store the selected board type
+
+        document.getElementById("horizontal-option").addEventListener("click", function () {
+            selectedOption = "horizontal";
+            highlightSelection("horizontal-option");
+        });
+
+        document.getElementById("vertical-option").addEventListener("click", function () {
+            selectedOption = "vertical";
+            highlightSelection("vertical-option");
+        });
+
+        document.getElementById("create-button").addEventListener("click", function () {
+            if (selectedOption === "horizontal") {
+                window.location.href = "/"; // Redirect to horizontal page
+            } else if (selectedOption === "vertical") {
+                window.location.href = "/Canvas/VerticalIndex"; // Redirect to vertical page
+            } else {
+                alert("Please select an option before proceeding!");
+            }
+        });
+
+        // Function to highlight selected option
+        function highlightSelection(selectedId) {
+            document.getElementById("horizontal-option").classList.remove("selected");
+            document.getElementById("vertical-option").classList.remove("selected");
+            document.getElementById(selectedId).classList.add("selected");
+        }
+    </script>
     
 
 }
@@ -694,6 +727,41 @@
     </nav>
 
     <!-- Modal -->
+    @* <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true"> *@
+    @*     <div class="modal-dialog"> *@
+    @*         <div class="modal-content p-3"> *@
+    @*             <div class="modal-header"> *@
+    @*                 <h5 class="modal-title" id="aniBoardModalLabel">New AniBoard</h5> *@
+    @*             </div> *@
+
+    @*             <div class="modal-body"> *@
+    @*                 <!-- Horizontal Option --> *@
+    @*                 <div class="option-box d-flex justify-content-between align-items-center"> *@
+    @*                     <div class="d-flex align-items-center"> *@
+    @*                         <div class="landscape-icon"></div> *@
+    @*                         <span>Horizontal / Landscape</span> *@
+    @*                     </div> *@
+    @*                     <span>1920x1080</span> *@
+    @*                 </div> *@
+
+    @*                 <!-- Vertical Option --> *@
+    @*                 <div class="option-box d-flex justify-content-between align-items-center mb-0"> *@
+    @*                     <div class="d-flex align-items-center"> *@
+    @*                         <div class="portrait-icon"></div> *@
+    @*                         <span class="vertical_option">Vertical / Portrait</span> *@
+    @*                     </div> *@
+    @*                     <span>1080x1920</span> *@
+    @*                 </div> *@
+    @*             </div> *@
+
+    @*             <div class="modal-footer pt-0"> *@
+    @*                 <button class="create-btn">Create</button> *@
+    @*             </div> *@
+    @*         </div> *@
+    @*     </div> *@
+    @* </div> *@
+
+    <!-- Modal Structure -->
     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content p-3">
@@ -703,7 +771,7 @@
 
                 <div class="modal-body">
                     <!-- Horizontal Option -->
-                    <div class="option-box d-flex justify-content-between align-items-center">
+                    <div class="option-box d-flex justify-content-between align-items-center" id="horizontal-option">
                         <div class="d-flex align-items-center">
                             <div class="landscape-icon"></div>
                             <span>Horizontal / Landscape</span>
@@ -712,7 +780,7 @@
                     </div>
 
                     <!-- Vertical Option -->
-                    <div class="option-box d-flex justify-content-between align-items-center mb-0">
+                    <div class="option-box d-flex justify-content-between align-items-center mb-0" id="vertical-option">
                         <div class="d-flex align-items-center">
                             <div class="portrait-icon"></div>
                             <span class="vertical_option">Vertical / Portrait</span>
@@ -722,11 +790,13 @@
                 </div>
 
                 <div class="modal-footer pt-0">
-                    <button class="create-btn">Create</button>
+                    <button class="create-btn" id="create-button">Create</button>
                 </div>
             </div>
         </div>
     </div>
+
+    
 
     <div class="d-flex align-items-stretch  main-canvas-content">
            
