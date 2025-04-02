@@ -173,7 +173,7 @@ ul.right-listone{padding:0px; margin:0px; width: 100%;
         font-size: var(--font-size14);
         color: #fff;
         background: transparent;
-        border: 1px solid #fff;
+        border: none;
         border-radius: 5px;
         height: 35px;
         margin: 0 !important;

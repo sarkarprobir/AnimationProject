@@ -222,11 +222,11 @@
             display: flex;
             flex-wrap: wrap;
             margin-top: 10px;
-            min-height: 375px;
+            min-height: 365px;
         }
 
         .my_img_gal {
-            min-height: 326.7px;
+            min-height: 317.7px;
         }
 
         .gallery img {
@@ -280,7 +280,7 @@
 
             .temp_gallery img {
                 width: auto;
-                height: 120px;
+                height: 117px;
             }
             .gallery_head {
                 font-size: 18px;
@@ -357,7 +357,7 @@
         }
 
         .texture_images {
-            height: 303px;
+            min-height: 407px;
         }
         .texture_palette {
             width: 30px;
@@ -444,10 +444,14 @@
 
         .nav_input {
             background-color: transparent !important;
-            border: 1px solid #fff !important;
-            width: 200px !important;
+            border: transparent !important;
+            width: 150px !important;
             height: 35px !important;
             color: #fff !important;
+        }
+
+        .nav_input::placeholder{
+                color: #ffffffba !important;
         }
         .rename_button{
             background-color: blue;
@@ -675,7 +679,7 @@
                 
 
                 <div class="col-md-6 nav-middle d-flex gap-2 justify-content-center align-items-center">
-                    <input type="text" class="form-control nav_input"  aria-label="Username" id="txtSaveDesignBoardName">
+                    <input type="text" class="form-control nav_input" placeholder="Board Name"  aria-label="Username" id="txtSaveDesignBoardName">
                     <button class="D-icon-save" id="saveButton" onclick="SaveDesignBoard();"  type="submit"><img src="~/images/icons/ico-save.svg"> </button>
                     <input type="hidden" id="hdnDesignBoardId" />
                     <input type="hidden" id="hdnDesignBoardDetailsIdSlide1" />
@@ -1412,34 +1416,34 @@
                 <div>
                     <div class="">
 
-                        <div class="row">
-                            <div class="col-md-6  d-flex align-items-center gap-2">
-                                <input class="form-check-input check_box mt-0"
-                                    type="checkbox"
-                                    value=""
-                                    id="chkFillBox" />
-                                <label class="back_label">All</label>
-                            </div>
-                            <div class="col-md-6 text-end d-flex gap-3 align-items-center justify-content-end">
-                                <div class="color-palette">
-                                    <input type="hidden" id="hdnBackgroundAllColor" />
-                                    <form action="/action_page.php" class="d-flex">
-                                        <input id="favBackgroundcolor" type="color" name="favBackgroundcolor" oninput="ChangeAllBackgroundColor()" value="#fafcfc">
-                                    </form>
-                                </div>
-                                <div class="texture_palette">
-                                    <img src="~/images/texture.jpg" alt="Alternate Text" />
-                                </div>
-                            </div>
-                        </div>
+                        @* <div class="row"> *@
+                        @*     <div class="col-md-6  d-flex align-items-center gap-2"> *@
+                        @*         <input class="form-check-input check_box mt-0" *@
+                        @*             type="checkbox" *@
+                        @*             value="" *@
+                        @*             id="chkFillBox" /> *@
+                        @*         <label class="back_label">All</label> *@
+                        @*     </div> *@
+                        @*     <div class="col-md-6 text-end d-flex gap-3 align-items-center justify-content-end"> *@
+                        @*         <div class="color-palette"> *@
+                        @*             <input type="hidden" id="hdnBackgroundAllColor" /> *@
+                        @*             <form action="/action_page.php" class="d-flex"> *@
+                        @*                 <input id="favBackgroundcolor" type="color" name="favBackgroundcolor" oninput="ChangeAllBackgroundColor()" value="#fafcfc"> *@
+                        @*             </form> *@
+                        @*         </div> *@
+                        @*         <div class="texture_palette"> *@
+                        @*             <img src="~/images/texture.jpg" alt="Alternate Text" /> *@
+                        @*         </div> *@
+                        @*     </div> *@
+                        @* </div> *@
 
-                        <div class="row mt-2">
+                        <div class="row">
                             <div class="col-md-6  d-flex align-items-center gap-2">
                                 <input class="form-check-input check_box mt-0"
                                        type="checkbox"
                                        value=""
                                        id="chkFillBox" />
-                                <label class="back_label">Board1</label>
+                                <label class="back_label">Colors</label>
                             </div>
                             <div class="col-md-6 text-end d-flex gap-3 align-items-center justify-content-end">
                                 <div class="color-palette">
@@ -1454,47 +1458,47 @@
                             </div>
                         </div>
 
-                        <div class="row mt-2">
-                            <div class="col-md-6  d-flex align-items-center gap-2">
-                                <input class="form-check-input check_box mt-0"
-                                       type="checkbox"
-                                       value=""
-                                       id="chkFillBox" />
-                                <label class="back_label">Board2</label>
-                            </div>
-                            <div class="col-md-6 text-end d-flex gap-3 align-items-center justify-content-end">
-                                <div class="color-palette">
-                                    <input type="hidden" id="hdnfillColor" />
-                                    <form action="/action_page.php" class="d-flex">
-                                        <input type="color" name="favFillcolor" value="#000000">
-                                    </form>
-                                </div>
-                                <div class="texture_palette">
-                                    <img src="~/images/texture.jpg" alt="Alternate Text" />
-                                </div>
-                            </div>
-                        </div>
+                        @* <div class="row mt-2"> *@
+                        @*     <div class="col-md-6  d-flex align-items-center gap-2"> *@
+                        @*         <input class="form-check-input check_box mt-0" *@
+                        @*                type="checkbox" *@
+                        @*                value="" *@
+                        @*                id="chkFillBox" /> *@
+                        @*         <label class="back_label">Board2</label> *@
+                        @*     </div> *@
+                        @*     <div class="col-md-6 text-end d-flex gap-3 align-items-center justify-content-end"> *@
+                        @*         <div class="color-palette"> *@
+                        @*             <input type="hidden" id="hdnfillColor" /> *@
+                        @*             <form action="/action_page.php" class="d-flex"> *@
+                        @*                 <input type="color" name="favFillcolor" value="#000000"> *@
+                        @*             </form> *@
+                        @*         </div> *@
+                        @*         <div class="texture_palette"> *@
+                        @*             <img src="~/images/texture.jpg" alt="Alternate Text" /> *@
+                        @*         </div> *@
+                        @*     </div> *@
+                        @* </div> *@
 
-                        <div class="row mt-2">
-                            <div class="col-md-6  d-flex align-items-center gap-2">
-                                <input class="form-check-input check_box mt-0"
-                                       type="checkbox"
-                                       value=""
-                                       id="chkFillBox" />
-                                <label class="back_label">Board3</label>
-                            </div>
-                            <div class="col-md-6 text-end d-flex gap-3 align-items-center justify-content-end">
-                                <div class="color-palette">
-                                    <input type="hidden" id="hdnfillColor" />
-                                    <form action="/action_page.php" class="d-flex">
-                                        <input type="color" name="favFillcolor" value="#000000">
-                                    </form>
-                                </div>
-                                <div class="texture_palette">
-                                    <img src="~/images/texture.jpg" alt="Alternate Text" />
-                                </div>
-                            </div>
-                        </div>
+                        @* <div class="row mt-2"> *@
+                        @*     <div class="col-md-6  d-flex align-items-center gap-2"> *@
+                        @*         <input class="form-check-input check_box mt-0" *@
+                        @*                type="checkbox" *@
+                        @*                value="" *@
+                        @*                id="chkFillBox" /> *@
+                        @*         <label class="back_label">Board3</label> *@
+                        @*     </div> *@
+                        @*     <div class="col-md-6 text-end d-flex gap-3 align-items-center justify-content-end"> *@
+                        @*         <div class="color-palette"> *@
+                        @*             <input type="hidden" id="hdnfillColor" /> *@
+                        @*             <form action="/action_page.php" class="d-flex"> *@
+                        @*                 <input type="color" name="favFillcolor" value="#000000"> *@
+                        @*             </form> *@
+                        @*         </div> *@
+                        @*         <div class="texture_palette"> *@
+                        @*             <img src="~/images/texture.jpg" alt="Alternate Text" /> *@
+                        @*         </div> *@
+                        @*     </div> *@
+                        @* </div> *@
                     <div id="texture_box">
                         <div class="d-flex justify-content-between align-items-center mt-4">
                             <p>Texture</p>
@@ -1508,6 +1512,8 @@
                             <img class="texture_img" src="~/images/Gallery-img/Texture2.jpg" onclick="setCanvasBackgroundImage('/images/Gallery-img/Texture2.jpg')" alt="Alternate Text" />
                             <img class="texture_img" src="~/images/horizontal-background-texture.jpg" onclick="setCanvasBackgroundImage('/images/horizontal-background-texture.jpg')" alt="Alternate Text" />
                             <img class="texture_img" src="~/images/vertical-background-texture.jpg" onclick="setCanvasBackgroundImage('/images/vertical-background-texture.jpg')" alt="Alternate Text" />
+                            <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
+                            <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
                             <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
                             <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
                             <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
