@@ -541,6 +541,25 @@ function OnChangefontFamily(value) {
     drawCanvas('ChangeStyle');
 }
 
+function uploadImage(blob, existingFolderId = 'new') {
+    const formData = new FormData();
+    formData.append('image', blob, 'canvas.png'); // Save as canvas.png
+    formData.append('folderId', existingFolderId);
+
+    fetch('/api/video/save-image', {  // Adjust API endpoint as needed
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Image saved successfully:', data);
+            // Update hidden input field with the saved file path
+            $(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`).val(data.filePath);
+        })
+        .catch(error => {
+            console.error('Error saving image:', error);
+        });
+}
 function animateText(direction, condition, loopCount ) {
     const animationType = document.getElementById("hdnTextAnimationType").value;
     textObjects.forEach(obj => {
@@ -624,7 +643,46 @@ function animateText(direction, condition, loopCount ) {
                     y: endY,
                 duration: 0,
                     ease: "power1.inOut",
-                    onUpdate: () => drawCanvas(condition),
+                onUpdate: () => drawCanvas(condition),
+                onComplete: function () {
+                    setTimeout(() => {
+                        const canvas = document.getElementById('myCanvas'); // Your canvas element
+                        const ctx = canvas.getContext('2d');
+
+                        // Ensure all images & SVGs are fully loaded before capturing
+                        const images = document.querySelectorAll("img, svg");
+                        let loadedCount = 0;
+                        images.forEach(img => {
+                            if (!img.complete) {
+                                img.onload = () => {
+                                    loadedCount++;
+                                    if (loadedCount === images.length) captureCanvas();
+                                };
+                                img.onerror = () => {
+                                    console.warn("Failed to load image:", img.src);
+                                    loadedCount++;
+                                };
+                            } else {
+                                loadedCount++;
+                            }
+                        });
+
+                        if (loadedCount === images.length) captureCanvas(); // If all images are already loaded
+
+                        function captureCanvas() {
+                            canvas.toBlob((blob) => {
+                                if (!blob) {
+                                    console.error("Canvas capture failed");
+                                    return;
+                                }
+
+                                // Determine edit/save mode
+                                const existingFolderId = $(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`).val() || 'new';
+                                uploadImage(blob, existingFolderId);
+                            }, "image/png");
+                        }
+                    }, 300); // Small delay to ensure rendering is complete
+                }
             });
             ////end///////////
             ////This is default animation of linear
@@ -732,6 +790,46 @@ function animateText(direction, condition, loopCount ) {
                 duration: 0,
                 ease: "bounce.out",
                 onUpdate: () => drawCanvas(condition),
+                
+                onComplete: function () {
+                    setTimeout(() => {
+                        const canvas = document.getElementById('myCanvas'); // Your canvas element
+                        const ctx = canvas.getContext('2d');
+
+                        // Ensure all images & SVGs are fully loaded before capturing
+                        const images = document.querySelectorAll("img, svg");
+                        let loadedCount = 0;
+                        images.forEach(img => {
+                            if (!img.complete) {
+                                img.onload = () => {
+                                    loadedCount++;
+                                    if (loadedCount === images.length) captureCanvas();
+                                };
+                                img.onerror = () => {
+                                    console.warn("Failed to load image:", img.src);
+                                    loadedCount++;
+                                };
+                            } else {
+                                loadedCount++;
+                            }
+                        });
+
+                        if (loadedCount === images.length) captureCanvas(); // If all images are already loaded
+
+                        function captureCanvas() {
+                            canvas.toBlob((blob) => {
+                                if (!blob) {
+                                    console.error("Canvas capture failed");
+                                    return;
+                                }
+
+                                // Determine edit/save mode
+                                const existingFolderId = $(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`).val() || 'new';
+                                uploadImage(blob, existingFolderId);
+                            }, "image/png");
+                        }
+                    }, 300); // Small delay to ensure rendering is complete
+                }
             });
 
 
