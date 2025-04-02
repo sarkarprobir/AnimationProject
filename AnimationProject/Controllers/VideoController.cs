@@ -34,7 +34,7 @@ namespace YourNamespace.Controllers
             }
 
             string targetFolder;
-            if (!string.IsNullOrEmpty(folderId))
+            if (!string.IsNullOrEmpty(folderId) && folderId !="new")
             {
                 targetFolder = Path.Combine(baseFolder, folderId);
                 if (!Directory.Exists(targetFolder))
@@ -46,6 +46,7 @@ namespace YourNamespace.Controllers
             {
                 var uniqueFolderName = Guid.NewGuid().ToString();
                 targetFolder = Path.Combine(baseFolder, uniqueFolderName);
+                folderId = null;
                 Directory.CreateDirectory(targetFolder);
             }
 

@@ -265,6 +265,12 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
 
 function drawCanvas(condition) {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear entire canvas
+    const bgColor = $("#hdnBackgroundSpecificColor").val();
+    if (bgColor && bgColor.trim() !== "") {
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
     // Draw background image if available.
     if (canvas.bgImage) {
         ctx.drawImage(canvas.bgImage, 0, 0, canvas.width, canvas.height);
@@ -1098,15 +1104,21 @@ function applyAnimations(direction,conditionvalue) {
     //textPosition.y = parseInt(document.getElementById("textStartY").value);
     imagePosition.x = parseInt(document.getElementById("imageStartX").value);
     imagePosition.y = parseInt(document.getElementById("imageStartY").value);
-
+    // Start recording before starting your GSAP animation
+    recorder.start();
+    const bgColor = $("#hdnBackgroundSpecificColor").val();
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     drawCanvas(conditionvalue);
-    //textObjects.forEach(obj => {
-    //    text = obj.text;
-    //    animateText(conditionvalue);
-    //});
+    
     animateText(direction, conditionvalue, parseInt($("#hdnlLoopControl").val()) || 1);
     animateImage(conditionvalue);
-    
+  
+
+    // Later, when you want to stop recording (e.g., after the animation completes)
+    setTimeout(() => {
+        recorder.stop();
+    }, 4000);
 }
 // Save Canvas State
 function saveCanvasState() {
@@ -1320,13 +1332,13 @@ function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imag
         document.getElementById("imageEndY").value = imageEndY;
         document.getElementById("imageAnimation").value = $("#imageAnimation option:selected").val();
         applyAnimations(direction, 'applyAnimations');
-        // Start recording before starting your GSAP animation
-        recorder.start();
+        //// Start recording before starting your GSAP animation
+        //recorder.start();
 
-        // Later, when you want to stop recording (e.g., after the animation completes)
-        setTimeout(() => {
-            recorder.stop();
-        }, 4000);
+        //// Later, when you want to stop recording (e.g., after the animation completes)
+        //setTimeout(() => {
+        //    recorder.stop();
+        //}, 4000);
     }
     else {
         alert('Please select Text Animation')
@@ -1341,20 +1353,18 @@ recorder.onstop = () => {
     // Determine if it's edit mode or save mode.
     // If 'existingFolderId' is defined, it indicates edit mode.
     // Otherwise, use null for save mode.
-    const existingFolderId = $(`#hdnDesignBoardDetailsIdSlide${activeSlide}`).val() || null;
+    const existingFolderId = $(`#hdnDesignBoardDetailsIdSlide${activeSlide}`).val() || 'new';
     
 
     // Call the upload function with the blob and folder ID (if any)
     uploadVideo(blob, existingFolderId);
 };
 
-function uploadVideo(blob, existingFolderId = null) {
+function uploadVideo(blob, existingFolderId = 'new') {
     const formData = new FormData();
     formData.append('video', blob, 'animation.mp4');
 
-    if (existingFolderId) {
-        formData.append('folderId', existingFolderId);
-    }
+    formData.append('folderId', existingFolderId);
 
     fetch('/api/video/save-video', {
         method: 'POST',
@@ -1363,15 +1373,8 @@ function uploadVideo(blob, existingFolderId = null) {
         .then(response => response.json())
         .then(data => {
             console.log('Video saved successfully:', data);
+            $(`#hdnDesignBoardDetailsIdSlideFilePath${activeSlide}`).val('');
             $(`#hdnDesignBoardDetailsIdSlideFilePath${activeSlide}`).val(data.filePath);
-           
-            const videoPlayer = $(`#miniPlayerSlide${activeSlide}`);
-            if (videoPlayer.length) {
-                videoPlayer.attr('src', `${data.filePath}&t=${new Date().getTime()}`);
-                videoPlayer[0].load();
-                videoPlayer[0].play();
-            }
-
         })
         .catch(error => {
             console.error('Error saving video:', error);
@@ -2243,7 +2246,8 @@ function ChangeSpecificBackgroundColor(controlid) {
     setCanvasBackground(controlid, backgroundSpecificColorPicker.value);
 }
 function setCanvasBackground(canvasId, color) {
-    document.getElementById(canvasId).style.backgroundColor = color;
+    /* document.getElementById(canvasId).style.backgroundColor = color;*/
+    ctx.fillStyle = color;
 }
 function setAllCanvasesBackground(selector, color) {
     const canvases = document.querySelectorAll(selector);
