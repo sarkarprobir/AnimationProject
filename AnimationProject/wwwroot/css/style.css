@@ -166,12 +166,18 @@ ul.right-listone{padding:0px; margin:0px; width: 100%;
 }
 .nav-right ul li button.login:hover{text-decoration:none;}
 
-.nav-middle{text-align:center;}
-.nav-middle .D-icon-save{    font-size: var(--font-size14);  color: #fff;
-    background: transparent;
-    border: 0px;
-    margin: 6px 0px 0px 0px;    
-    padding: 0px 10px 0px 16px;
+.nav-middle{
+    text-align:center;
+}
+.nav-middle .D-icon-save {
+        font-size: var(--font-size14);
+        color: #fff;
+        background: transparent;
+        border: 1px solid #fff;
+        border-radius: 5px;
+        height: 35px;
+        margin: 0 !important;
+        padding: 0px !important;
 }
 .nav-middle .D-icon-save:hover{background:#4e43e1; border-radius:6px;}
 	/*tab css =========================*/
@@ -628,6 +634,8 @@ svg:hover {
 }
 .success-fa-color {
     color: #007823;
+    font-size: 30px;
+    padding: 5.5px 2px;
 }
 .generic-datamodal .modal-content {
     border-radius: 0;

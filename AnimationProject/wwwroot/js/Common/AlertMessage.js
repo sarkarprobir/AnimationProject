@@ -7,18 +7,18 @@
             msgHtml = msgHtml + '<div class="padding-control-withmsgdivstyle error-msg mb-10"><label class="alert-icons-label error-sm-bg"><i class="fa fa-times-circle error-fa-color"></i></label>' + message + '</div>';
         }
         else if (msgType.toLowerCase() == 'success') {
-            msgHtml = msgHtml + '<div class="padding-control-withmsgdivstyle sucess-msg mb-10"><label class="alert-icons-label success-sm-bg"><i class="fa fa-check-circle success-fa-color"></i></label>' + message + '</div>';
+            msgHtml = msgHtml + '<div class="padding-control-withmsgdivstyle sucess-msg mb-10"><label class="alert-icons-label  success-sm-bg"><i class="fa fa-check-circle success-fa-color"></i></label>' + message + '</div>';
         }
         else if (msgType.toLowerCase() == 'warning') {
-            msgHtml = msgHtml + '<div class="padding-control-withmsgdivstyle warning-msg mb-10"><label class="alert-icons-label warning-sm-bg"><i class="fa fa-exclamation-triangle warning-fa-color"></i></label>' + message + '</div>';
+            msgHtml = msgHtml + '<div class="padding-control-withmsgdivstyle warning-msg mb-10"><label class="alert-icons-label  warning-sm-bg"><i class="fa fa-exclamation-triangle warning-fa-color"></i></label>' + message + '</div>';
         }
         else {
-            msgHtml = msgHtml + '<div class="padding-control-withmsgdivstyle info-msg mb-10"><label class="alert-icons-label info-sm-bg"><i class="fa fa-info-circle info-fa-color"></i></label>' + message + '</div>';
+            msgHtml = msgHtml + '<div class="padding-control-withmsgdivstyle info-msg mb-10"><label class="alert-icons-label  info-sm-bg"><i class="fa fa-info-circle info-fa-color"></i></label>' + message + '</div>';
         }
 
         var dvButtonHtml = '';
         dvButtonHtml = dvButtonHtml + '<button class="btn btn-cancel min-w-80px" onclick="' + noFunction + '; CloseMessage();">No</button>';
-        dvButtonHtml = dvButtonHtml + '<button class="btn btn-save min-w-80px" onclick="' + yesFunction + '; CloseMessage();">Yes</button>';
+        dvButtonHtml = dvButtonHtml + '<button class="btn btn-save ok_button min-w-80px" onclick="' + yesFunction + '; CloseMessage();">Yes</button>';
 
         $('#pMessageShow').html('');
         $('#pMessageShow').html(msgHtml);

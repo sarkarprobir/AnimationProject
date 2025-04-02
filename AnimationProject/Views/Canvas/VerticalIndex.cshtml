@@ -407,6 +407,9 @@
         .option-box:hover{
             border: 2px solid black;
         }
+        .option-box_active{
+            border: 2px solid black;
+        }
         .landscape-icon,
         .portrait-icon {
             border: 2px solid black;
@@ -436,6 +439,19 @@
         }
         .vertical_option{
             margin-left: 11px;
+        }
+
+        .nav_input {
+            background-color: transparent !important;
+            border: 1px solid #fff !important;
+            width: 200px !important;
+            height: 35px !important;
+            color: #fff !important;
+        }
+        .rename_button{
+            background-color: blue;
+            border: 1px solid #fff;
+            border-radius: 4px;
         }
     </style>
 
@@ -625,8 +641,9 @@
 
                 
 
-                <div class="col-md-6 nav-middle">
-                    <button class="D-icon-save" id="saveButton" onclick="SaveDesignBoard();"  type="submit">My Design Board<img src="~/images/icons/ico-save.svg"> </button>
+                <div class="col-md-6 nav-middle d-flex gap-2 justify-content-center align-items-center">
+                    <input type="text" class="form-control nav_input"  aria-label="Username">
+                    <button class="D-icon-save" id="saveButton" onclick="SaveDesignBoard();"  type="submit"><img src="~/images/icons/ico-save.svg"> </button>
                     <input type="hidden" id="hdnDesignBoardId" />
                     <input type="hidden" id="hdnDesignBoardDetailsIdSlide1" />
                     <input type="hidden" id="hdnDesignBoardDetailsIdSlide2" />
