@@ -9,7 +9,6 @@
         public bool IsActive { get; set; }
         public Guid CreatedBy { get; set; }
         public string SlideType { get; set; }
-        public string GifImagePath { get; set; }
     }
     public class RequestDesignBoardSlideDetail
     {
@@ -22,7 +21,8 @@
         public Guid CreatedBy { get; set; }
         public string Effect { get; set; }
         public string Direction { get; set; }
-
+        public string AnimationVideoPath { get; set; }
+        
     }
     public class RequestGetDesignBoard
     {

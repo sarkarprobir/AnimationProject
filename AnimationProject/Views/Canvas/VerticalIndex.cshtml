@@ -642,7 +642,7 @@
                 
 
                 <div class="col-md-6 nav-middle d-flex gap-2 justify-content-center align-items-center">
-                    <input type="text" class="form-control nav_input"  aria-label="Username">
+                    <input type="text" class="form-control nav_input"  aria-label="Username" id="txtSaveDesignBoardName">
                     <button class="D-icon-save" id="saveButton" onclick="SaveDesignBoard();"  type="submit"><img src="~/images/icons/ico-save.svg"> </button>
                     <input type="hidden" id="hdnDesignBoardId" />
                     <input type="hidden" id="hdnDesignBoardDetailsIdSlide1" />
@@ -741,7 +741,7 @@
                 <ul>
                     <li>
                         @* <img src="~/images/Vertical-Menuboard.png" class="menuboard-vertical-thum" alt="Banner" onclick="SaveDesignBoardSlide(1);"> *@
-                        <video id="miniPlayer" controls width="300" height="200" class="menuboard-vertical-thum" onclick="SaveDesignBoardSlide(1);">
+                        <video id="miniPlayerSlide1" controls width="300" height="200" class="menuboard-vertical-thum" onclick="SaveDesignBoardSlide(1);">
                         </video>
                         
                         <p>
@@ -751,7 +751,9 @@
                         </p>
                     </li>
                     <li>
-                        <img src="~/images/Vertical-Menuboard.png" class="menuboard-vertical-thum" alt="Banner" onclick="SaveDesignBoardSlide(2);">
+                       @*  <img src="~/images/Vertical-Menuboard.png" class="menuboard-vertical-thum" alt="Banner" onclick="SaveDesignBoardSlide(2);"> *@
+                        <video id="miniPlayerSlide2" controls width="300" height="200" class="menuboard-vertical-thum" onclick="SaveDesignBoardSlide(2);">
+                        </video>
                         <p>
                             <span>Slide 2</span>
                             <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
@@ -759,7 +761,9 @@
                         </p>
                     </li>
                     <li>
-                        <img src="~/images/Vertical-Menuboard.png" class="menuboard-vertical-thum" alt="Banner" onclick="SaveDesignBoardSlide(3);">
+                        @* <img src="~/images/Vertical-Menuboard.png" class="menuboard-vertical-thum" alt="Banner" onclick="SaveDesignBoardSlide(3);"> *@
+                        <video id="miniPlayerSlide3" controls width="300" height="200" class="menuboard-vertical-thum" onclick="SaveDesignBoardSlide(3);">
+                        </video>
                         <p>
                             <span>Slide 3</span>
                             <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>

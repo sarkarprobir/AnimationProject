@@ -16,14 +16,13 @@ namespace AnimationProject.Models
     {
         public Guid DesignBoardId { get; set; }
         public string DesignBoardName { get; set; }
-        public string GifImagePath { get; set; }
+        public string AnimationVideoPath { get; set; }
         public string SlideType { get; set; }
     }
     public class ResponseGetDesignBoardById
     {
         public Guid DesignBoardId { get; set; }
         public string DesignBoardName { get; set; }
-        public string GifImagePath { get; set; }
         public string SlideType { get; set; }
         public List<DesignBoardDetailsList> DesignBoardDetailsList { get; set; }
     }
@@ -35,5 +34,6 @@ namespace AnimationProject.Models
         public string JsonFile { get; set; }
         public string Effect { get; set; }
         public string Direction { get; set; }
+        public string AnimationVideoPath { get; set; }
     }
 }

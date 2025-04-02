@@ -1364,11 +1364,14 @@ function uploadVideo(blob, existingFolderId = null) {
         .then(data => {
             console.log('Video saved successfully:', data);
             $(`#hdnDesignBoardDetailsIdSlideFilePath${activeSlide}`).val(data.filePath);
-            // ✅ Force browser to fetch latest file
-            const videoPlayer = document.getElementById('miniPlayer');
-            videoPlayer.src = `${data.filePath}&t=${new Date().getTime()}`;
-            videoPlayer.load();
-            videoPlayer.play();
+           
+            const videoPlayer = $(`#miniPlayerSlide${activeSlide}`);
+            if (videoPlayer.length) {
+                videoPlayer.attr('src', `${data.filePath}&t=${new Date().getTime()}`);
+                videoPlayer[0].load();
+                videoPlayer[0].play();
+            }
+
         })
         .catch(error => {
             console.error('Error saving video:', error);
