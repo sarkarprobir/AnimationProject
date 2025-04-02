@@ -8,6 +8,11 @@ function SaveDesignBoard() {
     // Save the current slide before proceeding (if you have an active slide mechanism)
     saveCurrentSlide();
     try {
+        var boardName = $("#txtSaveDesignBoardName").val().trim();
+        if (!boardName) {
+            MessageShow('', 'Design Board name can not be blank', 'error');
+            return false; // Halt execution if needed
+        }
         // Build the main design board data object.
         var boardData = {
             DesignBoardId: $("#hdnDesignBoardId").val() || '00000000-0000-0000-0000-000000000000',
@@ -310,14 +315,6 @@ function GetDesignBoardById(id) {
 
                         const value = result.designBoardDetailsList[index]?.animationVideoPath || '';
                         $(selector).val(value);
-                        videoSelector = (`#miniPlayerSlide${index+1}`)
-                       //  Update the video player source
-                        const videoPlayer = $(videoSelector);
-                        if (videoPlayer.length) {
-                            videoPlayer.attr('src', `${value}&t=${new Date().getTime()}`);
-                            videoPlayer[0].load();
-                            videoPlayer[0].play();
-                        }
                     };
                     setHiddenSlideFilePath(0, '#hdnDesignBoardDetailsIdSlideFilePath1');
                     setHiddenSlideFilePath(1, '#hdnDesignBoardDetailsIdSlideFilePath2');
@@ -372,6 +369,7 @@ function loadCanvasFromJson(jsonData, condition) {
         var data = JSON.parse(jsonData);
         // Set the canvas background color.
         canvasBgColor = data.canvasBgColor || "#ffffff";
+        $("#hdnBackgroundSpecificColor").val(canvasBgColor);
         // Fill the canvas with the background color.
         //ctx.fillStyle = canvasBgColor;
         //ctx.fillRect(0, 0, canvas.width, canvas.height);
