@@ -4,7 +4,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <script src="~/js/animations.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
     <script src="~/js/action.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.1/gsap.min.js"></script>
     
     <style>
         #canvasContainer {
@@ -945,7 +945,9 @@
                                 <ul class="right-listone" id="uldirection">
                                 <li>
                                         <a id="aleft" onclick="setCoordinate(this,'left',100,20,50,50)"> <img class="in_direction" src="~/images/icons/icon-lr.png" alt="pattren"></a>
-                                    
+                                        <canvas id="miniCanvas" class="player-module--miniPlayer--123ba" width="200" height="200"
+                                                data-sentry-component="MiniPlayer" data-sentry-source-file="miniPlayer.tsx"
+                                                style="border: 1px solid #000;"></canvas>
                                     <div class="clear"></div>
                                 </li>
                                 <li>
