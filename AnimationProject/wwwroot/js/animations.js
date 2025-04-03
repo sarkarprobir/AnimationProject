@@ -554,7 +554,10 @@ function uploadImage(blob, existingFolderId = 'new') {
         .then(data => {
             console.log('Image saved successfully:', data);
             // Update hidden input field with the saved file path
+            $(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`).val('');
             $(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`).val(data.filePath);
+            const imageVerticalControl = $(`#imageVertical${activeSlide}`);
+            imageVerticalControl.attr('src', `${data.filePath}&t=${new Date().getTime()}`);
         })
         .catch(error => {
             console.error('Error saving image:', error);

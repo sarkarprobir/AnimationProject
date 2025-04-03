@@ -35,5 +35,6 @@ namespace AnimationProject.Models
         public string Effect { get; set; }
         public string Direction { get; set; }
         public string AnimationVideoPath { get; set; }
+        public string AnimationImagePath { get; set; }
     }
 }
