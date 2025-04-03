@@ -37,12 +37,13 @@ function SaveDesignBoard() {
                 var defaultEffect = 'bounce';
                 var defaultDirection = 'left';
                 var defaultAnimationVideoPath = '';
+                var defaultAnimationImagePath = '';
 
                 // Prepare slide data for each slide
                 var slides = [
-                    { slideSeq: 1, json: verticalSlide1, hdnField: "#hdnDesignBoardDetailsIdSlide1", slideName: 'Slide-1', effect: "#hdnEffectSlide1", direction: "#hdnDirectiontSlide1", animationVideoPath:"#hdnDesignBoardDetailsIdSlideFilePath1" },
-                    { slideSeq: 2, json: verticalSlide2, hdnField: "#hdnDesignBoardDetailsIdSlide2", slideName: 'Slide-2', effect: "#hdnEffectSlide2", direction: "#hdnDirectiontSlide2", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath2" },
-                    { slideSeq: 3, json: verticalSlide3, hdnField: "#hdnDesignBoardDetailsIdSlide3", slideName: 'Slide-3', effect: "#hdnEffectSlide3", direction: "#hdnDirectiontSlide3", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath3" }
+                    { slideSeq: 1, json: verticalSlide1, hdnField: "#hdnDesignBoardDetailsIdSlide1", slideName: 'Slide-1', effect: "#hdnEffectSlide1", direction: "#hdnDirectiontSlide1", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath1", animationImagePath: "#hdnDesignBoardDetailsIdSlideImageFilePath1" },
+                    { slideSeq: 2, json: verticalSlide2, hdnField: "#hdnDesignBoardDetailsIdSlide2", slideName: 'Slide-2', effect: "#hdnEffectSlide2", direction: "#hdnDirectiontSlide2", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath2", animationImagePath: "#hdnDesignBoardDetailsIdSlideImageFilePath2" },
+                    { slideSeq: 3, json: verticalSlide3, hdnField: "#hdnDesignBoardDetailsIdSlide3", slideName: 'Slide-3', effect: "#hdnEffectSlide3", direction: "#hdnDirectiontSlide3", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath3", animationImagePath: "#hdnDesignBoardDetailsIdSlideImageFilePath3" }
                 ];
 
                 // Function to save/update one slide
@@ -52,6 +53,7 @@ function SaveDesignBoard() {
                     var currentEffect = $(slide.effect).val() || defaultEffect;
                     var currentDirection = $(slide.direction).val() || defaultDirection;
                     var currentAnimationVideoPath = $(slide.animationVideoPath).val() || defaultAnimationVideoPath;
+                    var currentAnimationImagePath = $(slide.animationImagePath).val() || defaultAnimationImagePath;
                     var dataSlide = {
                         DesignBoardDetailsId: currentDetailId,  // if new, this is default, if update, this is the actual id
                         DesignBoardId: $("#hdnDesignBoardId").val(),
@@ -60,7 +62,8 @@ function SaveDesignBoard() {
                         SlideName: slide.slideName,
                         Effect: currentEffect,
                         Direction: currentDirection,
-                        AnimationVideoPath: currentAnimationVideoPath 
+                        AnimationVideoPath: currentAnimationVideoPath,
+                        AnimationImagePath: currentAnimationImagePath
                     };
 
                     $.ajax({
@@ -319,6 +322,24 @@ function GetDesignBoardById(id) {
                     setHiddenSlideFilePath(0, '#hdnDesignBoardDetailsIdSlideFilePath1');
                     setHiddenSlideFilePath(1, '#hdnDesignBoardDetailsIdSlideFilePath2');
                     setHiddenSlideFilePath(2, '#hdnDesignBoardDetailsIdSlideFilePath3');
+
+                    // Update hidden fields with safety checks hdnDesignBoardDetailsIdSlideFilePath1
+                    const setHiddenSlideImageFilePath = (index, selector, videoSelector) => {
+                        if (!result || !result.designBoardDetailsList || !Array.isArray(result.designBoardDetailsList)) {
+                            console.error("Invalid result object");
+                            return;
+                        }
+
+                        const value = result.designBoardDetailsList[index]?.animationImagePath || '';
+                        $(selector).val(value);
+                        if (value !='')
+                        $(`#imageVertical${index + 1}`).attr('src', `${value}&t=${new Date().getTime()}`);
+                    };
+                    setHiddenSlideImageFilePath(0, '#hdnDesignBoardDetailsIdSlideImageFilePath1');
+                    setHiddenSlideImageFilePath(1, '#hdnDesignBoardDetailsIdSlideImageFilePath2');
+                    setHiddenSlideImageFilePath(2, '#hdnDesignBoardDetailsIdSlideImageFilePath3');
+
+                   
                     
                     // Optionally, load one of the slides into the canvas
                     // For example, load slide 1's JSON data if available:

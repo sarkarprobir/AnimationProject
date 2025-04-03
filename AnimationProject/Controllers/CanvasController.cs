@@ -69,7 +69,7 @@ namespace AnimationProject.Controllers
             }
             catch (Exception ex)
             {
-                log.Info("***SaveUpdateDesignSlideBoard*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                log.Info("****** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
                 return View();
             }
            
@@ -129,6 +129,15 @@ namespace AnimationProject.Controllers
             var response = new Response<ResponseSaveDesignBoardSlideDetail>();
             try
             {
+                if(request.AnimationImagePath==null)
+                {
+                    request.AnimationImagePath = "";
+                }
+                if (request.AnimationVideoPath == null)
+                {
+                    request.AnimationVideoPath = "";
+                }
+
                 request.DesignBoardDetailsId = Guid.Parse(request.DesignBoardDetailsId.ToString());
                 request.DesignBoardId = Guid.Parse(request.DesignBoardId.ToString()); 
                 request.IsActive = true;
