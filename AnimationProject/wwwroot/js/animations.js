@@ -678,9 +678,9 @@ function animateText(direction, condition, loopCount ) {
                                     console.error("Canvas capture failed");
                                     return;
                                 }
-
+                                
                                 // Determine edit/save mode
-                                const existingFolderId = $(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`).val() || 'new';
+                                const existingFolderId = $(`#hdnDesignBoardDetailsIdSlide${activeSlide}`).val() || 'new';
                                 uploadImage(blob, existingFolderId);
                             }, "image/png");
                         }
@@ -827,7 +827,7 @@ function animateText(direction, condition, loopCount ) {
                                 }
 
                                 // Determine edit/save mode
-                                const existingFolderId = $(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`).val() || 'new';
+                                const existingFolderId = $(`#hdnDesignBoardDetailsIdSlide${activeSlide}`).val() || 'new';
                                 uploadImage(blob, existingFolderId);
                             }, "image/png");
                         }

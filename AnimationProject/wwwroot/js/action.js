@@ -102,7 +102,9 @@ function SaveDesignBoard() {
                     return false;
                 }
                 if (result !== null) {
-                    MessageShow('RedirectToVerticalPageDirect()', 'Design Board saved successfully!', 'success');
+                   
+
+                    MessageShow('RedirectToVerticalPageWithQueryString()', 'Design Board saved successfully!', 'success');
                 }
                 HideLoader();
             },
@@ -116,8 +118,12 @@ function SaveDesignBoard() {
         HideLoader();
     }
 }
+function RedirectToVerticalPageWithQueryString() {
+    // Get the GUID from the hidden field
+    var boardId = $("#hdnDesignBoardId").val();
 
-
+    window.location = `${baseURL}Canvas/VerticalIndex?id=${boardId}`;
+}
 function saveCurrentSlide() {
     var currentState = saveCanvasData();
     // Parse the JSON string to an object.
@@ -333,7 +339,8 @@ function GetDesignBoardById(id) {
                         const value = result.designBoardDetailsList[index]?.animationImagePath || '';
                         $(selector).val(value);
                         if (value !='')
-                        $(`#imageVertical${index + 1}`).attr('src', `${value}&t=${new Date().getTime()}`);
+                            $(`#imageVertical${index + 1}`).attr('src', `${value}`);
+                        console.log(`${value}`);
                     };
                     setHiddenSlideImageFilePath(0, '#hdnDesignBoardDetailsIdSlideImageFilePath1');
                     setHiddenSlideImageFilePath(1, '#hdnDesignBoardDetailsIdSlideImageFilePath2');
