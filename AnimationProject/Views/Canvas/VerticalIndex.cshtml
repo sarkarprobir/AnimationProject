@@ -175,6 +175,7 @@
         .tabs {
             display: flex;
             justify-content: space-between;
+            width: 47%;
         }
 
         .tab {
@@ -222,18 +223,18 @@
             display: flex;
             flex-wrap: wrap;
             margin-top: 10px;
-            min-height: 365px;
+            min-height: 370px;
         }
 
         .my_img_gal {
-            min-height: 317.7px;
+            min-height: 368.7px;
         }
 
         .gallery img {
-                width: 95px;
-                height: 95px;
-                object-fit: contain;
-            }
+            width: 110px;
+            height: 110px;
+            object-fit: contain;
+        }
 
         .pagination {
             display: flex;
@@ -251,6 +252,12 @@
         .shapes_drop {
             text-decoration: none;
             color: var(--color-muted-grey);
+        }
+
+        .shapes_tabs a {
+            font-size: 14px;
+            text-decoration: none;
+            color: black;
         }
 
         .left-panel-imput {
@@ -276,11 +283,12 @@
             gap: 8px;
             flex-wrap: wrap;
             overflow-y: hidden;
+            min-height: 370px;
         }
 
             .temp_gallery img {
                 width: auto;
-                height: 117px;
+                height: 147px;
             }
             .gallery_head {
                 font-size: 18px;
@@ -458,7 +466,7 @@
         }
         .nav_input:focus {
                 box-shadow: none !important;
-                background-color: #4e43e1 !important;
+                background-color: #2a2929 !important;
         }
         .rename_button{
             background-color: blue;
@@ -1300,53 +1308,79 @@
                         </div>
                         <!-- images tab -->
                         <div id="images" class="left_content active">
-                            <!-- search box -->
-                            <div class="search-box">
-                                <input class="left-panel-imput" type="text" placeholder="Search..." />
-                            </div>
-                            <!-- dropdown -->
-                            <div class="dropdown my-3">
-                                <a class="dropdown-toggle shapes_drop gallery_type"
-                                   type="button"
-                                   data-bs-toggle="dropdown"
-                                   aria-expanded="false">
-                                    Shapes
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="#">Shape 1</a></li>
-                                    <li><a class="dropdown-item" href="#">Shape 2</a></li>
-                                    <li><a class="dropdown-item" href="#">Shape 3</a></li>
-                                </ul>
-                            </div>
-                            <div class="gallery d-flex flex-wrap justify-content-between">
-                                <img src="~/images/Gallery-img/SVG1.svg" />
-                                <img src="~/images/Gallery-img/gl006.png" />
-                                <img src="~/images/Gallery-img/iphone16.png" />
-                                
-                            </div>
-                        </div>
-                        <!-- my images tab -->
-                        <div id="my-images" class="left_content">
-                            
+                            <div class="d-flex justify-content-between gap-3">
                                 <!-- search box -->
-                                <div class="search-box">
-                                    <input class="left-panel-imput"
-                                           type="text"
-                                           placeholder="Search..." />
+                                <div class="search-box w-100">
+                                    <input class="left-panel-imput" type="text" placeholder="Search..." />
                                 </div>
                                 <!-- file upload -->
-                                <div class="custom-file-input choose_file">
+                                <div class="custom-file-input choose_file w-100">
                                     <label for="fileUpload">Choose File</label>
                                     <span id="fileName">No File</span>
                                     <input type="file" id="fileUpload" onchange="updateFileName()">
                                 </div>
-                            
+                            </div>
+                            <!-- dropdown -->
+                            @* <div class="dropdown my-3"> *@
+                            @*     <a class="dropdown-toggle shapes_drop gallery_type" *@
+                            @*        type="button" *@
+                            @*        data-bs-toggle="dropdown" *@
+                            @*        aria-expanded="false"> *@
+                            @*         Shapes *@
+                            @*     </a> *@
+                            @*     <ul class="dropdown-menu"> *@
+                            @*         <li><a class="dropdown-item" href="#">Shape 1</a></li> *@
+                            @*         <li><a class="dropdown-item" href="#">Shape 2</a></li> *@
+                            @*         <li><a class="dropdown-item" href="#">Shape 3</a></li> *@
+                            @*     </ul> *@
+                            @* </div> *@
+
+                            <div class="shapes_tabs my-3 d-flex justify-content-between w-75">
+                                <a href="#">Photo</a>
+                                <a href="#">Shapes</a>
+                                <a href="#">Icons</a>
+                                <a href="#">Patterns</a>
+                                <a href="#">Animation</a>
+                            </div>
+
+                            <div class="gallery d-flex flex-wrap justify-content-between">
+                                <img src="~/images/Gallery-img/SVG1.svg" />
+                                <img src="~/images/Gallery-img/gl006.png" />
+                                <img src="~/images/Gallery-img/iphone16.png" />   
+                                <img src="~/images/Gallery-img/iphone16.png" />
+                            </div>
+
+                        </div>
+                        <!-- my images tab -->
+                        <div id="my-images" class="left_content">
+
+                            <div class="d-flex justify-content-between gap-3">
+                                <!-- search box -->
+                                <div class="search-box w-100">
+                                    <input class="left-panel-imput" type="text" placeholder="Search..." />
+                                </div>
+                                <!-- file upload -->
+                                <div class="custom-file-input choose_file w-100">
+                                    <label for="fileUpload">Choose File</label>
+                                    <span id="fileName">No File</span>
+                                    <input type="file" id="fileUpload" onchange="updateFileName()">
+                                </div>
+                            </div>
+
                             <p class="my-3 gallery_type">All My Images</p>
                             <div class="gallery d-flex flex-wrap justify-content-between my_img_gal">
                                 <img src="~/images/Gallery-img/gl001.png" />
                                 <img src="~/images/Gallery-img/gl002.png" />
                                 <img src="~/images/Gallery-img/gl003.png" />
                                 <img src="~/images/Gallery-img/gl004.png" />
+                                <img src="~/images/Gallery-img/gl001.png" />
+                                <img src="~/images/Gallery-img/gl002.png" />
+                                <img src="~/images/Gallery-img/gl003.png" />
+                                <img src="~/images/Gallery-img/gl004.png" />
+                                <img src="~/images/Gallery-img/gl001.png" />
+                                <img src="~/images/Gallery-img/gl002.png" />
+                                <img src="~/images/Gallery-img/gl003.png" />
+                                <img src="~/images/Gallery-img/gl004.png" />        
                                 
                             </div>
                         </div>
@@ -1354,7 +1388,7 @@
                         <!-- templates tab -->
                         <div id="templates" class="left_content">
                             <!-- serach box -->
-                            <div class="search-box">
+                            <div class="search-box w-50">
                                 <input class="left-panel-imput" type="text" placeholder="Search..." />
                             </div>
                             <p class="my-3 gallery_type">Templates</p>
@@ -1442,10 +1476,10 @@
 
                         <div class="row">
                             <div class="col-md-6  d-flex align-items-center gap-2">
-                                <input class="form-check-input check_box mt-0"
-                                       type="checkbox"
-                                       value=""
-                                       id="chkFillBox" />
+                                @* <input class="form-check-input check_box mt-0" *@
+                                @*        type="checkbox" *@
+                                @*        value="" *@
+                                @*        id="chkFillBox" /> *@
                                 <label class="back_label">Colors</label>
                             </div>
                             <div class="col-md-6 text-end d-flex gap-3 align-items-center justify-content-end">
