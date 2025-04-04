@@ -2424,7 +2424,7 @@ const miniCanvas = document.getElementById('miniCanvas');
 const miniCtx = miniCanvas.getContext('2d');
 
 // Define the text to display.
-const textNew = "Your Text Here";
+const textNew = "Demo Text";
 
 // Calculate the center of the canvas.
 const centerX = miniCanvas.width / 2;
