@@ -2391,3 +2391,175 @@ function clearCanvas() {
     textObjects = [];
     //canvas.clear()
 }
+
+
+
+
+
+
+
+
+
+
+// Global variable to control the animation mode.
+// Default is "bounce" mode.
+let animationMode = "bounce";
+
+// Mode selection: when a mode button is clicked.
+function textAnimationClick(el, mode) {
+    animationMode = mode;
+    // Update UI feedback (optional)
+    document.getElementById('alinear').classList.remove('active_effect');
+    document.getElementById('abounce').classList.remove('active_effect');
+    el.classList.add('active_effect');
+}
+
+// Helper to return the easing type.
+function getEase() {
+    return animationMode === "bounce" ? "bounce.out" : "linear";
+}
+
+// Setup the mini canvas.
+const miniCanvas = document.getElementById('miniCanvas');
+const miniCtx = miniCanvas.getContext('2d');
+
+// Define the text to display.
+const textNew = "Demo Text";
+
+// Calculate the center of the canvas.
+const centerX = miniCanvas.width / 2;
+const centerY = miniCanvas.height / 2;
+
+// Set common text styles.
+miniCtx.font = "20px Arial";
+miniCtx.textAlign = "center";
+miniCtx.textBaseline = "middle";
+
+// Helper function to clear and draw the text at (x, y).
+function drawPreview(x, y) {
+    miniCtx.clearRect(0, 0, miniCanvas.width, miniCanvas.height);
+    miniCtx.fillText(textNew, x, y);
+}
+
+// Draw the default (centered) text.
+drawPreview(centerX, centerY);
+
+/* ===================================================
+   For each directional button, we:
+   - Immediately set the text position at the edge,
+     then animate it to the center.
+   - On mouseout, animate back to the center.
+=================================================== */
+
+/* ---------------------------
+   Left-to-Right Animation
+   --------------------------- */
+const aleft = document.getElementById('aleft');
+aleft.addEventListener('mouseover', () => {
+    // Set the text immediately at the left edge.
+    drawPreview(0, centerY);
+    // Animate from left edge to center.
+    gsap.to({ val: 0 }, {
+        duration: 0.5,
+        val: centerX,
+        ease: getEase(),
+        onUpdate: function () {
+            drawPreview(this.targets()[0].val, centerY);
+        }
+    });
+});
+aleft.addEventListener('mouseout', () => {
+    // In case the text is not exactly centered, animate it to center.
+    gsap.to({ val: centerX }, {
+        duration: 0.5,
+        val: centerX,
+        ease: getEase(),
+        onUpdate: function () {
+            drawPreview(this.targets()[0].val, centerY);
+        }
+    });
+});
+
+/* ---------------------------
+   Right-to-Left Animation
+   --------------------------- */
+const aright = document.getElementById('aright');
+aright.addEventListener('mouseover', () => {
+    // Set the text immediately at the right edge.
+    drawPreview(miniCanvas.width, centerY);
+    // Animate from right edge to center.
+    gsap.to({ val: miniCanvas.width }, {
+        duration: 0.5,
+        val: centerX,
+        ease: getEase(),
+        onUpdate: function () {
+            drawPreview(this.targets()[0].val, centerY);
+        }
+    });
+});
+aright.addEventListener('mouseout', () => {
+    gsap.to({ val: centerX }, {
+        duration: 0.5,
+        val: centerX,
+        ease: getEase(),
+        onUpdate: function () {
+            drawPreview(this.targets()[0].val, centerY);
+        }
+    });
+});
+
+/* ---------------------------
+   Bottom-to-Top Animation
+   --------------------------- */
+const abottom = document.getElementById('abottom');
+abottom.addEventListener('mouseover', () => {
+    // Set the text immediately at the bottom edge.
+    drawPreview(centerX, miniCanvas.height);
+    // Animate from bottom edge to center.
+    gsap.to({ val: miniCanvas.height }, {
+        duration: 0.5,
+        val: centerY,
+        ease: getEase(),
+        onUpdate: function () {
+            drawPreview(centerX, this.targets()[0].val);
+        }
+    });
+});
+abottom.addEventListener('mouseout', () => {
+    gsap.to({ val: centerY }, {
+        duration: 0.5,
+        val: centerY,
+        ease: getEase(),
+        onUpdate: function () {
+            drawPreview(centerX, this.targets()[0].val);
+        }
+    });
+});
+
+/* ---------------------------
+   Top-to-Bottom Animation
+   --------------------------- */
+const atop = document.getElementById('atop');
+atop.addEventListener('mouseover', () => {
+    // Set the text immediately at the top edge.
+    drawPreview(centerX, 0);
+    // Animate from top edge to center.
+    gsap.to({ val: 0 }, {
+        duration: 0.5,
+        val: centerY,
+        ease: getEase(),
+        onUpdate: function () {
+            drawPreview(centerX, this.targets()[0].val);
+        }
+    });
+});
+atop.addEventListener('mouseout', () => {
+    gsap.to({ val: centerY }, {
+        duration: 0.5,
+        val: centerY,
+        ease: getEase(),
+        onUpdate: function () {
+            drawPreview(centerX, this.targets()[0].val);
+        }
+    });
+});
