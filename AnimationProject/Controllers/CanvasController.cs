@@ -191,6 +191,25 @@ namespace AnimationProject.Controllers
             }
 
         }
+        [HttpPost]
+        public async Task<IActionResult> UpdateDesignDesignBoardDetailsImagePath(RequestDesignBoardDetailsImagePath request)
+        {
+            //if (!_checkSession.IsSession()) return Ok("login");
+            var response = new Response<ResponseUpdateDesignBoardSlideDetailImagePath>();
+            try
+            {
+                request.DesignBoardDetailsId = Guid.Parse(request.DesignBoardDetailsId.ToString());
+                var updateDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/UpdateDesignDesignBoardDetailsImagePath", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<ResponseUpdateDesignBoardSlideDetailImagePath>>(updateDesignSlideBoard);
+                return Json(response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***UpdateDesignDesignBoardDetailsImagePath*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return Json("NO");
+            }
+
+        }
         #endregion
     }
 }

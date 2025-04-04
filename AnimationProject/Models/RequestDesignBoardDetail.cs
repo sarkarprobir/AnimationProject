@@ -25,8 +25,13 @@
         public string AnimationImagePath { get; set; }
 
     }
-    public class RequestGetDesignBoard
+    public class RequestDesignBoardDetailsImagePath
     {
+        public Guid DesignBoardDetailsId { get; set; }
+        public string ImagePath { get; set; }
+    }
+     public class RequestGetDesignBoard
+     {
         public Guid CustomerId { get; set; }
         public Guid CompanyId { get; set; }
 

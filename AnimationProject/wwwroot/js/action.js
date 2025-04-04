@@ -7,47 +7,8 @@ var canvasBgColor = null;
 function SaveDesignBoard() {
     try {
         ShowLoader();
-        const canvas = document.getElementById('myCanvas'); // Your canvas element
-        const ctx = canvas.getContext('2d');
-
-        // Ensure all images & SVGs are fully loaded before capturing
-        const images = document.querySelectorAll("img, svg");
-        let loadedCount = 0;
-        images.forEach(img => {
-            if (!img.complete) {
-                img.onload = () => {
-                    loadedCount++;
-                    if (loadedCount === images.length) captureCanvas();
-                };
-                img.onerror = () => {
-                    console.warn("Failed to load image:", img.src);
-                    loadedCount++;
-                };
-            } else {
-                loadedCount++;
-            }
-        });
-
-        if (loadedCount === images.length) captureCanvas(); // If all images are already loaded
-
-        function captureCanvas() {
-            canvas.toBlob((blob) => {
-                if (!blob) {
-                    console.error("Canvas capture failed");
-                    return;
-                }
-
-                // Determine edit/save mode
-                const existingFolderId = $(`#hdnDesignBoardDetailsIdSlide${activeSlide}`).val() || 'new';
-                uploadImage(blob, existingFolderId);
-            }, "image/png");
-        }
-    
-
-
-
-
-
+        textObjects.forEach(o => o.selected = false);
+        images.forEach(img => img.selected = false);
 
     // Save the current slide before proceeding (if you have an active slide mechanism)
     saveCurrentSlide();
@@ -118,6 +79,84 @@ function SaveDesignBoard() {
                         success: function (slideResult) {
                             // Update the hidden field with returned id so that future updates know this record exists
                             $(slide.hdnField).val(slideResult.result);
+
+
+                            if (slideResult.result !== '' && $(`#hdnDesignBoardDetailsIdSlide${activeSlide}`).val() === slideResult.result) { 
+                            const canvas = document.getElementById('myCanvas'); // Your canvas element
+                            const ctx = canvas.getContext('2d');
+
+                            // Ensure all images & SVGs are fully loaded before capturing
+                            const images = document.querySelectorAll("img, svg");
+                            let loadedCount = 0;
+                            images.forEach(img => {
+                                if (!img.complete) {
+                                    img.onload = () => {
+                                        loadedCount++;
+                                        if (loadedCount === images.length) captureCanvas();
+                                    };
+                                    img.onerror = () => {
+                                        console.warn("Failed to load image:", img.src);
+                                        loadedCount++;
+                                    };
+                                } else {
+                                    loadedCount++;
+                                }
+                            });
+
+                            if (loadedCount === images.length) captureCanvas(); // If all images are already loaded
+
+                            function captureCanvas() {
+                                canvas.toBlob((blob) => {
+                                    if (!blob) {
+                                        console.error("Canvas capture failed");
+                                        return;
+                                    }
+
+                                    // Determine edit/save mode
+                                    const existingFolderId = slideResult.result || 'new';
+                                    /*uploadImage(blob, existingFolderId);*/
+                                    const formData = new FormData();
+                                    formData.append('image', blob, 'canvas.png'); // Save as canvas.png
+                                    formData.append('folderId', existingFolderId);
+
+                                    fetch('/api/video/save-image', {  // Adjust API endpoint as needed
+                                        method: 'POST',
+                                        body: formData
+                                    })
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            console.log('Image saved successfully:', data);
+                                            // Update hidden input field with the saved file path
+                                            $(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`).val('');
+                                            $(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`).val(data.filePath);
+                                            const imageVerticalControl = $(`#imageVertical${activeSlide}`);
+                                            imageVerticalControl.attr('src', `${data.filePath}&t=${new Date().getTime()}`);
+
+
+
+                                            var dataImagePath = {
+                                                DesignBoardDetailsId: slideResult.result,
+                                                ImagePath: data.filePath
+                                            };
+
+                                            $.ajax({
+                                                url: baseURL + "Canvas/UpdateDesignDesignBoardDetailsImagePath",
+                                                type: "POST",
+                                                dataType: "json",
+                                                data: dataImagePath,
+                                                success: function (slideResult) {
+                                                },
+                                                error: function (data) {
+                                                    console.log("error in saving Image " + activeSlide);
+                                                }
+                                            });
+                                        })
+                                        .catch(error => {
+                                            console.error('Error saving image:', error);
+                                        });
+                                }, "image/png");
+                            }
+                        }
                         },
                         error: function (data) {
                             console.log("error in saving slide " + slide.slideSeq, data);
