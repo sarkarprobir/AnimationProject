@@ -7,6 +7,8 @@ let selectedInSpeed = null;
 let selectedStaySpeed = null;
 let selectedOutSpeed = null;
 
+let animationMode = "bounce";
+
 const stream = canvas.captureStream(7); // Capture at 30 fps
 const recorder = new MediaRecorder(stream);
 const chunks = [];
@@ -647,45 +649,45 @@ function animateText(direction, condition, loopCount ) {
                 duration: 0,
                     ease: "power1.inOut",
                 onUpdate: () => drawCanvas(condition),
-                onComplete: function () {
-                    setTimeout(() => {
-                        const canvas = document.getElementById('myCanvas'); // Your canvas element
-                        const ctx = canvas.getContext('2d');
+                //onComplete: function () {
+                //    setTimeout(() => {
+                //        const canvas = document.getElementById('myCanvas'); // Your canvas element
+                //        const ctx = canvas.getContext('2d');
 
-                        // Ensure all images & SVGs are fully loaded before capturing
-                        const images = document.querySelectorAll("img, svg");
-                        let loadedCount = 0;
-                        images.forEach(img => {
-                            if (!img.complete) {
-                                img.onload = () => {
-                                    loadedCount++;
-                                    if (loadedCount === images.length) captureCanvas();
-                                };
-                                img.onerror = () => {
-                                    console.warn("Failed to load image:", img.src);
-                                    loadedCount++;
-                                };
-                            } else {
-                                loadedCount++;
-                            }
-                        });
+                //        // Ensure all images & SVGs are fully loaded before capturing
+                //        const images = document.querySelectorAll("img, svg");
+                //        let loadedCount = 0;
+                //        images.forEach(img => {
+                //            if (!img.complete) {
+                //                img.onload = () => {
+                //                    loadedCount++;
+                //                    if (loadedCount === images.length) captureCanvas();
+                //                };
+                //                img.onerror = () => {
+                //                    console.warn("Failed to load image:", img.src);
+                //                    loadedCount++;
+                //                };
+                //            } else {
+                //                loadedCount++;
+                //            }
+                //        });
 
-                        if (loadedCount === images.length) captureCanvas(); // If all images are already loaded
+                //        if (loadedCount === images.length) captureCanvas(); // If all images are already loaded
 
-                        function captureCanvas() {
-                            canvas.toBlob((blob) => {
-                                if (!blob) {
-                                    console.error("Canvas capture failed");
-                                    return;
-                                }
+                //        function captureCanvas() {
+                //            canvas.toBlob((blob) => {
+                //                if (!blob) {
+                //                    console.error("Canvas capture failed");
+                //                    return;
+                //                }
                                 
-                                // Determine edit/save mode
-                                const existingFolderId = $(`#hdnDesignBoardDetailsIdSlide${activeSlide}`).val() || 'new';
-                                uploadImage(blob, existingFolderId);
-                            }, "image/png");
-                        }
-                    }, 300); // Small delay to ensure rendering is complete
-                }
+                //                // Determine edit/save mode
+                //                const existingFolderId = $(`#hdnDesignBoardDetailsIdSlide${activeSlide}`).val() || 'new';
+                //                uploadImage(blob, existingFolderId);
+                //            }, "image/png");
+                //        }
+                //    }, 300); // Small delay to ensure rendering is complete
+                //}
             });
             ////end///////////
             ////This is default animation of linear
@@ -794,45 +796,45 @@ function animateText(direction, condition, loopCount ) {
                 ease: "bounce.out",
                 onUpdate: () => drawCanvas(condition),
                 
-                onComplete: function () {
-                    setTimeout(() => {
-                        const canvas = document.getElementById('myCanvas'); // Your canvas element
-                        const ctx = canvas.getContext('2d');
+                //onComplete: function () {
+                //    setTimeout(() => {
+                //        const canvas = document.getElementById('myCanvas'); // Your canvas element
+                //        const ctx = canvas.getContext('2d');
 
-                        // Ensure all images & SVGs are fully loaded before capturing
-                        const images = document.querySelectorAll("img, svg");
-                        let loadedCount = 0;
-                        images.forEach(img => {
-                            if (!img.complete) {
-                                img.onload = () => {
-                                    loadedCount++;
-                                    if (loadedCount === images.length) captureCanvas();
-                                };
-                                img.onerror = () => {
-                                    console.warn("Failed to load image:", img.src);
-                                    loadedCount++;
-                                };
-                            } else {
-                                loadedCount++;
-                            }
-                        });
+                //        // Ensure all images & SVGs are fully loaded before capturing
+                //        const images = document.querySelectorAll("img, svg");
+                //        let loadedCount = 0;
+                //        images.forEach(img => {
+                //            if (!img.complete) {
+                //                img.onload = () => {
+                //                    loadedCount++;
+                //                    if (loadedCount === images.length) captureCanvas();
+                //                };
+                //                img.onerror = () => {
+                //                    console.warn("Failed to load image:", img.src);
+                //                    loadedCount++;
+                //                };
+                //            } else {
+                //                loadedCount++;
+                //            }
+                //        });
 
-                        if (loadedCount === images.length) captureCanvas(); // If all images are already loaded
+                //        if (loadedCount === images.length) captureCanvas(); // If all images are already loaded
 
-                        function captureCanvas() {
-                            canvas.toBlob((blob) => {
-                                if (!blob) {
-                                    console.error("Canvas capture failed");
-                                    return;
-                                }
+                //        function captureCanvas() {
+                //            canvas.toBlob((blob) => {
+                //                if (!blob) {
+                //                    console.error("Canvas capture failed");
+                //                    return;
+                //                }
 
-                                // Determine edit/save mode
-                                const existingFolderId = $(`#hdnDesignBoardDetailsIdSlide${activeSlide}`).val() || 'new';
-                                uploadImage(blob, existingFolderId);
-                            }, "image/png");
-                        }
-                    }, 300); // Small delay to ensure rendering is complete
-                }
+                //                // Determine edit/save mode
+                //                const existingFolderId = $(`#hdnDesignBoardDetailsIdSlide${activeSlide}`).val() || 'new';
+                //                uploadImage(blob, existingFolderId);
+                //            }, "image/png");
+                //        }
+                //    }, 300); // Small delay to ensure rendering is complete
+                //}
             });
 
 
@@ -1020,6 +1022,7 @@ function animateText(direction, condition, loopCount ) {
 
 function textAnimationClick(clickedElement, type) {
     $("#hdnTextAnimationType").val(type);
+    animationMode = type;
     if (activeSlide === 1) {
         $("#hdnEffectSlide1").val(type);
     }
@@ -2403,16 +2406,16 @@ function clearCanvas() {
 
 // Global variable to control the animation mode.
 // Default is "bounce" mode.
-let animationMode = "bounce";
+
 
 // Mode selection: when a mode button is clicked.
-function textAnimationClick(el, mode) {
-    animationMode = mode;
-    // Update UI feedback (optional)
-    document.getElementById('alinear').classList.remove('active_effect');
-    document.getElementById('abounce').classList.remove('active_effect');
-    el.classList.add('active_effect');
-}
+//function textAnimationClick(el, mode) {
+//    animationMode = mode;
+//    // Update UI feedback (optional)
+//    document.getElementById('alinear').classList.remove('active_effect');
+//    document.getElementById('abounce').classList.remove('active_effect');
+//    el.classList.add('active_effect');
+//}
 
 // Helper to return the easing type.
 function getEase() {
