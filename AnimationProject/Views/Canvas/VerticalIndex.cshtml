@@ -473,6 +473,38 @@
             border: 1px solid #fff;
             border-radius: 4px;
         }
+        /* play modal */
+
+        .play_modal_body .modal-content {
+            border-radius: 10px;
+            width: 1000px !important;
+            height: 580px !important;
+            transform: translate(3px, -122px);
+        }
+
+        .play_modal_body .modal-body img {
+            width: 100%;
+           
+        }
+
+        .modal-open .modal {
+            overflow-y: hidden !important;
+        }
+
+        .play_modal_body .modal.show .modal-dialog {
+            max-width: 1000px !important;
+        }
+
+        .play_modal_btn  {
+            position: absolute;
+            top: -16px;
+            right: -16px;
+            background-color: #ff0000 !important;
+            opacity: 1 !important;
+            border-radius: 100% !important;
+            padding: 7px !important;
+            color: #fff !important;
+        }
     </style>
     <script>
             $(document).ready(function(){
@@ -709,7 +741,7 @@
                 <div class="col-md-3 nav-right">
                     <ul>
                         <li class="play-btn">
-                            <button class="btn" title="Play"><img src="~/images/icons/Icon-01.svg" width="25"> </button>
+                            <button class="btn" title="Play" data-bs-toggle="modal" data-bs-target="#imageModal"><img src="~/images/icons/Icon-01.svg" width="25"> </button>
                         </li>
                         <li>
                             <button class="btn" type="submit" title="download"><img src="~/images/icons/ico-download.svg"> </button>
@@ -747,40 +779,24 @@
         </div>
     </nav>
 
-    <!-- Modal -->
-    @* <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true"> *@
-    @*     <div class="modal-dialog"> *@
-    @*         <div class="modal-content p-3"> *@
-    @*             <div class="modal-header"> *@
-    @*                 <h5 class="modal-title" id="aniBoardModalLabel">New AniBoard</h5> *@
-    @*             </div> *@
+    <!-- Modal for preview board design-->
+    <div class="play_modal_body">
 
-    @*             <div class="modal-body"> *@
-    @*                 <!-- Horizontal Option --> *@
-    @*                 <div class="option-box d-flex justify-content-between align-items-center"> *@
-    @*                     <div class="d-flex align-items-center"> *@
-    @*                         <div class="landscape-icon"></div> *@
-    @*                         <span>Horizontal / Landscape</span> *@
-    @*                     </div> *@
-    @*                     <span>1920x1080</span> *@
-    @*                 </div> *@
+        <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
 
-    @*                 <!-- Vertical Option --> *@
-    @*                 <div class="option-box d-flex justify-content-between align-items-center mb-0"> *@
-    @*                     <div class="d-flex align-items-center"> *@
-    @*                         <div class="portrait-icon"></div> *@
-    @*                         <span class="vertical_option">Vertical / Portrait</span> *@
-    @*                     </div> *@
-    @*                     <span>1080x1920</span> *@
-    @*                 </div> *@
-    @*             </div> *@
+                    <button type="button" class="btn-close play_modal_btn" data-bs-dismiss="modal" aria-label="Close"></button>
 
-    @*             <div class="modal-footer pt-0"> *@
-    @*                 <button class="create-btn">Create</button> *@
-    @*             </div> *@
-    @*         </div> *@
-    @*     </div> *@
-    @* </div> *@
+                    <div class="modal-body">
+                        <img src="~/images/banner.png" alt="Placeholder Image">
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+   
 
     <!-- Modal Structure -->
     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
