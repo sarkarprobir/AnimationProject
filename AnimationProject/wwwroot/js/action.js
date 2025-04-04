@@ -5,9 +5,53 @@ var verticalSlide2 = null;
 var verticalSlide3 = null;
 var canvasBgColor = null;
 function SaveDesignBoard() {
+    try {
+        ShowLoader();
+        const canvas = document.getElementById('myCanvas'); // Your canvas element
+        const ctx = canvas.getContext('2d');
+
+        // Ensure all images & SVGs are fully loaded before capturing
+        const images = document.querySelectorAll("img, svg");
+        let loadedCount = 0;
+        images.forEach(img => {
+            if (!img.complete) {
+                img.onload = () => {
+                    loadedCount++;
+                    if (loadedCount === images.length) captureCanvas();
+                };
+                img.onerror = () => {
+                    console.warn("Failed to load image:", img.src);
+                    loadedCount++;
+                };
+            } else {
+                loadedCount++;
+            }
+        });
+
+        if (loadedCount === images.length) captureCanvas(); // If all images are already loaded
+
+        function captureCanvas() {
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    console.error("Canvas capture failed");
+                    return;
+                }
+
+                // Determine edit/save mode
+                const existingFolderId = $(`#hdnDesignBoardDetailsIdSlide${activeSlide}`).val() || 'new';
+                uploadImage(blob, existingFolderId);
+            }, "image/png");
+        }
+    
+
+
+
+
+
+
     // Save the current slide before proceeding (if you have an active slide mechanism)
     saveCurrentSlide();
-    try {
+
         var boardName = $("#txtSaveDesignBoardName").val().trim();
         if (!boardName) {
             MessageShow('', 'Design Board name can not be blank', 'error');
@@ -22,7 +66,7 @@ function SaveDesignBoard() {
             SlideType: 'Vertical'
         };
 
-        ShowLoader();
+       
         $.ajax({
             url: baseURL + "Canvas/SaveUpdateDesignBoard",
             type: "POST",
@@ -118,6 +162,7 @@ function SaveDesignBoard() {
         HideLoader();
     }
 }
+
 function RedirectToVerticalPageWithQueryString() {
     // Get the GUID from the hidden field
     var boardId = $("#hdnDesignBoardId").val();
