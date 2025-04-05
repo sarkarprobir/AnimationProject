@@ -54,6 +54,11 @@ namespace AnimationProject.Controllers
         {
             return View();
         }
+        public IActionResult Schedular()
+        {
+            return View();
+        }
+        
         public async Task<IActionResult> Boards()
         {
             //if (!_checkSession.IsSession()) return Ok("login");
@@ -210,6 +215,26 @@ namespace AnimationProject.Controllers
             }
 
         }
+        [HttpPost]
+        public async Task<IActionResult> UpdateDesignDesignBoardDetailsVideoPath(RequestDesignBoardDetailsVideoPath request)
+        {
+            //if (!_checkSession.IsSession()) return Ok("login");
+            var response = new Response<ResponseUpdateDesignBoardSlideDetailVideoPath>();
+            try
+            {
+                request.DesignBoardDetailsId = Guid.Parse(request.DesignBoardDetailsId.ToString());
+                var updateDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/UpdateDesignDesignBoardDetailsVideoPath", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<ResponseUpdateDesignBoardSlideDetailVideoPath>>(updateDesignSlideBoard);
+                return Json(response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***UpdateDesignDesignBoardDetailsVideoPath*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return Json("NO");
+            }
+
+        }
+        
         #endregion
     }
 }

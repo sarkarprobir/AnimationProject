@@ -30,7 +30,12 @@
         public Guid DesignBoardDetailsId { get; set; }
         public string ImagePath { get; set; }
     }
-     public class RequestGetDesignBoard
+    public class RequestDesignBoardDetailsVideoPath
+    {
+        public Guid DesignBoardDetailsId { get; set; }
+        public string VideoPath { get; set; }
+    }
+    public class RequestGetDesignBoard
      {
         public Guid CustomerId { get; set; }
         public Guid CompanyId { get; set; }

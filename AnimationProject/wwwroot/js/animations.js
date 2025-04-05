@@ -9,9 +9,9 @@ let selectedOutSpeed = null;
 
 let animationMode = "linear";
 document.getElementById('alinear').classList.add('active_effect');
-const stream = canvas.captureStream(7); // Capture at 30 fps
-const recorder = new MediaRecorder(stream);
-const chunks = [];
+//const stream = canvas.captureStream(7); // Capture at 30 fps
+//const recorder = new MediaRecorder(stream);
+//const chunks = [];
 
 let scrollTop = 0;
 let image = null;
@@ -1209,7 +1209,7 @@ function applyAnimations(direction,conditionvalue) {
     imagePosition.x = parseInt(document.getElementById("imageStartX").value);
     imagePosition.y = parseInt(document.getElementById("imageStartY").value);
     // Start recording before starting your GSAP animation
-    recorder.start();
+   // recorder.start();
     const bgColor = $("#hdnBackgroundSpecificColor").val();
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1220,9 +1220,9 @@ function applyAnimations(direction,conditionvalue) {
   
 
     // Later, when you want to stop recording (e.g., after the animation completes)
-    setTimeout(() => {
-        recorder.stop();
-    }, 4000);
+    //setTimeout(() => {
+    //    recorder.stop();
+    //}, 4000);
 }
 // Save Canvas State
 function saveCanvasState() {
@@ -1306,100 +1306,7 @@ function loadImage(src) {
 }
 
 
-// Add a Load Button
-const jsonArray = [
-    {
-        "text": {
-            "content": "Champignon Carpaccio",
-            "startX": 100,
-            "startY": 100,
-            "endX": 400,
-            "endY": 100,
-            "animation": "bounce",
-            "fontSize": "50",
-            "fontFamily": "Times New Roman",
-            "textColor": "green",
-            "textAlign": "center"
-        },
-        "image": {
-            "startX": 100,
-            "startY": 20,
-            "endX": 50,
-            "endY": 50,
-            "animation": "elastic",
-            "imageSrc": "https://thumbs.dreamstime.com/z/salad-8311603.jpg?ct=jpeg"
-        }
-    },
-    {
-        "text": {
-            "content": "Salmon carpaccio",
-            "startX": 150,
-            "startY": 150,
-            "endX": 450,
-            "endY": 150,
-            "animation": "linear",
-            "fontSize": "60",
-            "fontFamily": "Arial",
-            "textColor": "blue",
-            "textAlign": "center"
-        },
-        "image": {
-            "startX": 120,
-            "startY": 30,
-            "endX": 80,
-            "endY": 60,
-            "animation": "zoomImage",
-            "imageSrc": "https://thumbs.dreamstime.com/z/salmon-carpaccio-arugula-salad-onions-capers-white-plate-201622172.jpg?ct=jpeg"
-        }
-    },
-    {
-        "text": {
-            "content": "Fresh oranges juice",
-            "startX": 200,
-            "startY": 150,
-            "endX": 450,
-            "endY": 150,
-            "animation": "morphText",
-            "fontSize": "40",
-            "fontFamily": "Verdana",
-            "textColor": "red",
-            "textAlign": "center"
-        },
-        "image": {
-            "startX": 200,
-            "startY": 50,
-            "endX": 100,
-            "endY": 80,
-            "animation": "zoomImage",
-            "imageSrc": "https://thumbs.dreamstime.com/z/fresh-oranges-falling-juice-19966424.jpg?ct=jpeg"
-        }
-    }
-];
-let currentIndex = 0; // Track the current index
 
-
-function loadJsonFile() {
-    currentIndex = 0; // Reset index when button is clicked
-    startVideoCapture();
-    loadNextJson(); // Start loading
-}
-function loadNextJson() {
-    if (currentIndex < jsonArray.length) {
-        const state = jsonArray[currentIndex];
-        loadCanvasState(state);
-        console.log("Canvas State Loaded:", state);
-
-        currentIndex++; // Move to the next JSON
-
-        // Load next JSON after a delay (e.g., 3 seconds)
-        setTimeout(loadNextJson, 3000);
-    } else {
-        console.log("All JSON objects loaded.");
-    }
-}
-////KD/////////////////////////////
-//document.body.appendChild(loadButton);
-//end////////////
 
 function ShowAnimationOption() {
     document.getElementById("imageCoordinationforBounce").style.display = "block";
@@ -1455,41 +1362,7 @@ function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imag
     }
     
 }
-recorder.ondataavailable = (e) => chunks.push(e.data);
-// Example usage inside your MediaRecorder's onstop callback
-recorder.onstop = () => {
-    const blob = new Blob(chunks, { type: 'video/mp4; codecs=vp9' });
 
-    // Determine if it's edit mode or save mode.
-    // If 'existingFolderId' is defined, it indicates edit mode.
-    // Otherwise, use null for save mode.
-    const existingFolderId = $(`#hdnDesignBoardDetailsIdSlide${activeSlide}`).val() || 'new';
-    
-
-    // Call the upload function with the blob and folder ID (if any)
-    uploadVideo(blob, existingFolderId);
-};
-
-function uploadVideo(blob, existingFolderId = 'new') {
-    const formData = new FormData();
-    formData.append('video', blob, 'animation.mp4');
-
-    formData.append('folderId', existingFolderId);
-
-    fetch('/api/video/save-video', {
-        method: 'POST',
-        body: formData
-    })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Video saved successfully:', data);
-            $(`#hdnDesignBoardDetailsIdSlideFilePath${activeSlide}`).val('');
-            $(`#hdnDesignBoardDetailsIdSlideFilePath${activeSlide}`).val(data.filePath);
-        })
-        .catch(error => {
-            console.error('Error saving video:', error);
-        });
-}
 
 
 //recorder.onstop = () => {
