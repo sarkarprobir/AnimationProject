@@ -6,6 +6,7 @@ var verticalSlide3 = null;
 var canvasBgColor = null;
 
 let currentIndex = 0;
+let videoSaveForOnetime = 1;
 let jsonArray = []; // Global array to store JSON objects
 const canvasElement = document.getElementById("myCanvasElement");
 const ctxElement = canvasElement.getContext("2d");
@@ -585,43 +586,48 @@ function loadCanvasFromJson(jsonData, condition) {
 
 async function GetDesignBoardByIdForPublish() {
     var id = $('#hdnDesignBoardId').val(); // get GUID value
-    try {
-        var data = {
-            DesignBoardId: id
-        };
-        ShowLoader();
+    if (id !== '') {
+        try {
+            var data = {
+                DesignBoardId: id
+            };
+            ShowLoader();
 
-        // Await the ajax call which returns a promise (jQuery 3+)
-        const result = await $.ajax({
-            url: baseURL + "Canvas/GetDesignBoardDetailsById",
-            type: "POST",
-            dataType: "json",
-            data: data
-        });
-
-        if (result && Array.isArray(result.designBoardDetailsList) && result.designBoardDetailsList.length > 0) {
-            // Create the jsonArray from the designBoardDetailsList items.
-            // Each item.jsonFile is assumed to be a JSON string.
-            jsonArray = result.designBoardDetailsList.map(item => {
-                let jsonObj;
-                try {
-                    jsonObj = JSON.parse(item.jsonFile);
-                } catch (e) {
-                    console.error("Error parsing jsonFile:", item.jsonFile, e);
-                    jsonObj = {}; // fallback to an empty object if parsing fails
-                }
-                // Ensure default values for effect and direction
-                jsonObj.effect = item.effect || "bounce";
-                jsonObj.direction = item.direction || "left";
-                return jsonObj;
+            // Await the ajax call which returns a promise (jQuery 3+)
+            const result = await $.ajax({
+                url: baseURL + "Canvas/GetDesignBoardDetailsById",
+                type: "POST",
+                dataType: "json",
+                data: data
             });
-            console.log("jsonArray:", jsonArray);
-            loadJsonFile();
+
+            if (result && Array.isArray(result.designBoardDetailsList) && result.designBoardDetailsList.length > 0) {
+                // Create the jsonArray from the designBoardDetailsList items.
+                // Each item.jsonFile is assumed to be a JSON string.
+                jsonArray = result.designBoardDetailsList.map(item => {
+                    let jsonObj;
+                    try {
+                        jsonObj = JSON.parse(item.jsonFile);
+                    } catch (e) {
+                        console.error("Error parsing jsonFile:", item.jsonFile, e);
+                        jsonObj = {}; // fallback to an empty object if parsing fails
+                    }
+                    // Ensure default values for effect and direction
+                    jsonObj.effect = item.effect || "bounce";
+                    jsonObj.direction = item.direction || "left";
+                    return jsonObj;
+                });
+                console.log("jsonArray:", jsonArray);
+                loadJsonFile();
+            }
+            HideLoader();
+        } catch (e) {
+            console.log("catch", e);
+            HideLoader();
         }
-        HideLoader();
-    } catch (e) {
-        console.log("catch", e);
-        HideLoader();
+    }
+    else {
+        MessageShow('', 'Before Publish Mest Save Board', 'error');
     }
 }
 
@@ -631,7 +637,7 @@ function loadJsonFile() {
     loadNextJson();   // Start loading the first JSON object
     setTimeout(() => {
         recorder.stop();
-    }, 10000);
+    }, 15000);
 }
 
 function loadNextJson() {
@@ -699,7 +705,7 @@ function uploadVideo(blob, existingFolderId = 'new', currentIndex =1) {
             console.log('Video saved successfully:', data);
             $(`#hdnDesignBoardDetailsIdSlideFilePath${activeSlide}`).val('');
             $(`#hdnDesignBoardDetailsIdSlideFilePath${activeSlide}`).val(data.filePath);
-            if (currentIndex === 1) {
+            if (videoSaveForOnetime === 1) {
             var dataVideoPath = {
                 DesignBoardDetailsId: $(`#hdnDesignBoardDetailsIdSlide1`).val(),
                 VideoPath: data.filePath
@@ -711,6 +717,7 @@ function uploadVideo(blob, existingFolderId = 'new', currentIndex =1) {
                 dataType: "json",
                 data: dataVideoPath,
                 success: function (slideResult) {
+                    videoSaveForOnetime++;
                 },
                 error: function (data) {
                     console.log("error in saving Image " + activeSlide);
