@@ -8,6 +8,9 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\images\client-logo\" />
+    <Folder Include="wwwroot\images\client-logo\" />
+    <Folder Include="wwwroot\SlideVideo\" />
+    <Folder Include="wwwroot\SlideImage\" />
     <Folder Include="wwwroot\SlideVideo\" />
     <Folder Include="wwwroot\SlideImage\" />
   </ItemGroup>

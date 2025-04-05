@@ -12,6 +12,16 @@ namespace AnimationProject.Models
         public string Response { get; set; }
         public Guid Result { get; set; }
     }
+    public class ResponseUpdateDesignBoardSlideDetailImagePath
+    {
+        public string Response { get; set; }
+        public Guid Result { get; set; }
+    }
+    public class ResponseUpdateDesignBoardSlideDetailVideoPath
+    {
+        public string Response { get; set; }
+        public Guid Result { get; set; }
+    }
     public class ResponseGetDesignBoard
     {
         public Guid DesignBoardId { get; set; }
