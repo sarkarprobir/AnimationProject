@@ -505,6 +505,9 @@
             padding: 7px !important;
             color: #fff !important;
         }
+        .menuboard-vertical-thum .active {
+            border: 2px solid #0000ff80;
+        }
     </style>
     <script>
             $(document).ready(function(){
@@ -684,8 +687,19 @@
             document.getElementById("vertical-option").classList.remove("selected");
             document.getElementById(selectedId).classList.add("selected");
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+          document.querySelectorAll('.panel-vertical-scroll .menuboard-vertical-thum')
+            .forEach(item => {
+              item.addEventListener('click', function () {
+                this.classList.toggle('active');
+              });
+            });
+        });
+
+
     </script>
-    
+        
 
 }
 
