@@ -741,10 +741,10 @@
                 <div class="col-md-3 nav-right">
                     <ul>
                         <li class="play-btn">
-                            <button class="btn" title="Publish" data-bs-toggle="modal" onclick="GetDesignBoardByIdForPublish()" data-bs-target="#imageModal"><img src="~/images/icons/Icon-01.svg" width="25"> </button>
+                            <button class="btn" title="Publish" data-bs-toggle="modal" onclick="GetDesignBoardByIdForPublish();" data-bs-target="#imageModal"><img src="~/images/icons/Icon-01.svg" width="25"> </button>
                         </li>
                         <li>
-                            <button class="btn" type="submit" title="download"><img src="~/images/icons/ico-download.svg"> </button>
+                            <button class="btn" type="submit"  onclick="GetDesignBoardByIdForDownload('download')" title="download" ><img src="~/images/icons/ico-download.svg"> </button>
                         </li>
                         
                         <li class="nav-item dropdown">
@@ -797,7 +797,24 @@
             </div>
         </div>
     </div>
-   
+    <!-- Modal for preview board design will be visible false-->
+    <div class="play_modal_body" style="display:none">
+        <div  id="downloadModal" tabindex="-1"  aria-hidden="true" >
+            <div>
+                <div class="modal-content">
+
+                    <button type="button" class="btn-close play_modal_btn" data-bs-dismiss="modal" aria-label="Close"></button>
+
+                    <div class="modal-body">
+                        @* <img src="~/images/banner.png" alt="Placeholder Image"> *@
+                        <canvas id="myCanvasElementDownload" class="clsmyCanvas" width="595" height="640" style="background: lightgray; position: relative;"></canvas>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    
 
     <!-- Modal Structure -->
     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
