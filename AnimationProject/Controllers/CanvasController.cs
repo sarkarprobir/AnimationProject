@@ -261,11 +261,11 @@ namespace AnimationProject.Controllers
         public async Task<IActionResult> LoadPlaylist(RequestGetPlayList request)
         {
             //if (!_checkSession.IsSession()) return Ok("login");
-            var response = new Response<ResponseGetPlayList>();
+            var response = new Response<List<ResponseGetPlayList>>();
             try
             {
                 var getDesignBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetLoadPlaylist", JsonConvert.SerializeObject(request), user.token);
-                response = JsonConvert.DeserializeObject<Response<ResponseGetPlayList>>(getDesignBoard);
+                response = JsonConvert.DeserializeObject<Response<List<ResponseGetPlayList>>>(getDesignBoard);
                 return Json(response.Data);
             }
             catch (Exception ex)

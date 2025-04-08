@@ -57,5 +57,8 @@
         public string PlayStartTime { get; set; }
         public string PlayEndTime { get; set; }
         public long CompanyUniqueId { get; set; }
+        public string ScreenType { get; set; }
+        public int ScreenNo { get; set; }
+        
     }
 }
