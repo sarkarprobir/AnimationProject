@@ -58,7 +58,11 @@ namespace AnimationProject.Controllers
         {
             return View();
         }
-        
+        public IActionResult VScreen1()
+        {
+            return View();
+        }
+
         public async Task<IActionResult> Boards()
         {
             //if (!_checkSession.IsSession()) return Ok("login");
@@ -249,6 +253,24 @@ namespace AnimationProject.Controllers
             catch (Exception ex)
             {
                 log.Info("***UpdateDesignBoardLargeVideoPath*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return Json("NO");
+            }
+
+        }
+        [HttpPost]
+        public async Task<IActionResult> LoadPlaylist(RequestGetPlayList request)
+        {
+            //if (!_checkSession.IsSession()) return Ok("login");
+            var response = new Response<ResponseGetPlayList>();
+            try
+            {
+                var getDesignBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetLoadPlaylist", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<ResponseGetPlayList>>(getDesignBoard);
+                return Json(response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***LoadPlaylist*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
                 return Json("NO");
             }
 
