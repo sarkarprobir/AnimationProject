@@ -234,7 +234,26 @@ namespace AnimationProject.Controllers
             }
 
         }
-        
+        [HttpPost]
+        public async Task<IActionResult> UpdateDesignBoardLargeVideoPath(RequestDesignBoardLargeVideoPath request)
+        {
+            //if (!_checkSession.IsSession()) return Ok("login");
+            var response = new Response<ResponseUpdateDesignBoardLargeVideoPath>();
+            try
+            {
+                request.DesignBoardId = Guid.Parse(request.DesignBoardId.ToString());
+                var updateDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/UpdateDesignBoardLargeVideoPath", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<ResponseUpdateDesignBoardLargeVideoPath>>(updateDesignSlideBoard);
+                return Json(response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***UpdateDesignBoardLargeVideoPath*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return Json("NO");
+            }
+
+        }
+
         #endregion
     }
 }

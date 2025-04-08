@@ -13,6 +13,19 @@ const ctxElement = canvasElement.getContext("2d");
 const stream = canvasElement.captureStream(7); // Capture at 30 fps
 const recorder = new MediaRecorder(stream);
 const chunks = [];
+let publishDownloadcondition = '';
+
+const options = {
+    mimeType: 'video/webm; codecs=vp9',
+    videoBitsPerSecond: 5000000  // 5 Mbps; adjust as needed
+};
+let currentIndexForDownload = 0;
+const canvasForDownload = document.getElementById("myCanvasElementDownload");
+const ctxElementForDownload = canvasForDownload.getContext("2d");
+const streamForDownload = canvasForDownload.captureStream(30); // Capture at 30 fps
+const recorderForDownload = new MediaRecorder(streamForDownload, options);
+const chunksForDownload = [];
+
 function SaveDesignBoard() {
     try {
         ShowLoader();
@@ -620,6 +633,7 @@ async function GetDesignBoardByIdForPublish() {
                 console.log("jsonArray:", jsonArray);
                 loadJsonFile();
             }
+            setTimeout(() => { GetDesignBoardByIdForDownload(''); }, 25000);
             HideLoader();
         } catch (e) {
             console.log("catch", e);
@@ -627,10 +641,59 @@ async function GetDesignBoardByIdForPublish() {
         }
     }
     else {
-        MessageShow('', 'Before Publish Mest Save Board', 'error');
+        MessageShow('', 'Before Publish Must Save Board', 'error');
     }
 }
+async function GetDesignBoardByIdForDownload(condition) {
+    publishDownloadcondition = condition;
+    var id = $('#hdnDesignBoardId').val(); // get GUID value
+    if (id !== '') {
+        try {
+            var data = {
+                DesignBoardId: id
+            };
+           
+            if (publishDownloadcondition === 'download') {
+                ShowLoader();
+            }
+            //ShowLoader();
+            // Await the ajax call which returns a promise (jQuery 3+)
+            const result = await $.ajax({
+                url: baseURL + "Canvas/GetDesignBoardDetailsById",
+                type: "POST",
+                dataType: "json",
+                data: data
+            });
 
+            if (result && Array.isArray(result.designBoardDetailsList) && result.designBoardDetailsList.length > 0) {
+                // Create the jsonArray from the designBoardDetailsList items.
+                // Each item.jsonFile is assumed to be a JSON string.
+                jsonArray = result.designBoardDetailsList.map(item => {
+                    let jsonObj;
+                    try {
+                        jsonObj = JSON.parse(item.jsonFile);
+                    } catch (e) {
+                        console.error("Error parsing jsonFile:", item.jsonFile, e);
+                        jsonObj = {}; // fallback to an empty object if parsing fails
+                    }
+                    // Ensure default values for effect and direction
+                    jsonObj.effect = item.effect || "bounce";
+                    jsonObj.direction = item.direction || "left";
+                    return jsonObj;
+                });
+                console.log("jsonArray:", jsonArray);
+                loadJsonFileForDownload();
+            }
+           // HideLoader();
+        } catch (e) {
+            console.log("catch", e);
+            HideLoader();
+        }
+    }
+    else {
+        MessageShow('', 'Before Download Must Save Board', 'error');
+    }
+}
 function loadJsonFile() {
     recorder.start();
     currentIndex = 0; // Reset index when button is clicked
@@ -638,6 +701,14 @@ function loadJsonFile() {
     setTimeout(() => {
         recorder.stop();
     }, 15000);
+}
+function loadJsonFileForDownload() {
+    recorderForDownload.start();
+    currentIndexForDownload = 0; // Reset index when button is clicked
+    loadNextJsonForDownload();   // Start loading the first JSON object
+    setTimeout(() => {
+        recorderForDownload.stop();
+    }, 25000);
 }
 
 function loadNextJson() {
@@ -656,6 +727,26 @@ function loadNextJson() {
 
         // Load next JSON after a delay (adjust the delay as needed)
         setTimeout(loadNextJson, 5000);
+    } else {
+        console.log("All JSON objects loaded.");
+    }
+}
+function loadNextJsonForDownload() {
+    if (currentIndexForDownload < jsonArray.length) {
+        const state = jsonArray[currentIndexForDownload];
+
+        // Draw the current state into the fixed canvas.
+        loadCanvasFromJsonForDownload(state, 'Common');
+        console.log("Canvas State Loaded:", state);
+
+        // Now trigger the animation using the state's direction and effect.
+        // You can modify applyAnimations to also use the effect if needed.
+        applyAnimationsforDownload(state.effect, state.direction, 'applyAnimations');
+
+        currentIndexForDownload++; // Move to the next JSON object
+
+        // Load next JSON after a delay (adjust the delay as needed)
+        setTimeout(loadNextJsonForDownload, 5000);
     } else {
         console.log("All JSON objects loaded.");
     }
@@ -689,7 +780,103 @@ recorder.onstop = () => {
     // Call the upload function with the blob and folder ID (if any)
     uploadVideo(blob, existingFolderId,  currentIndex);
 };
+function applyAnimationsforDownload(animationType, direction, conditionValue) {
+    drawCanvasForDownload(conditionValue);
+    animateTextForDownload(animationType, direction, conditionValue, parseInt($("#hdnlLoopControl").val()) || 1);
+}
+recorderForDownload.ondataavailable = (e) => chunksForDownload.push(e.data);
+// Example usage inside your MediaRecorder's onstop callback
+recorderForDownload.onstop = () => {
+    const blob = new Blob(chunksForDownload, { type: 'video/webm' });
+    const existingFolderId = $(`#hdnDesignBoardId`).val() || 'new';
 
+    if (publishDownloadcondition !== 'download') {
+        //// Call the upload function with the blob and folder ID (if any)
+        uploadLargeVideo(blob, existingFolderId, currentIndex);
+    }
+
+    if (publishDownloadcondition === 'download') {
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'animation.webm'; // Download as .webm file
+        a.click();
+    }
+    HideLoader();
+};
+function startVideoCapture() {
+    //const canvas = document.getElementById("myCanvasElementDownload");
+   // const ctxElement = canvasElement.getContext("2d");
+    // Ensure your canvas is set to 1920 x 1080 if you need HD quality.
+    canvasForDownload.width = 1920;
+    canvasForDownload.height = 1080;
+
+    //const stream = canvasForDownload.captureStream(30); // Capture 30 fps from the canvas
+
+    // Use a MIME type that is widely supported. Here, we use WebM with VP9.
+    //const options = {
+    //    mimeType: 'video/webm; codecs=vp9',
+    //    videoBitsPerSecond: 5000000  // 5 Mbps; adjust as needed
+    //};
+
+    //const recorder = new MediaRecorder(streamForDownload, options);
+    //const chunks = [];
+    recorder.ondataavailable = (e) => chunks.push(e.data);
+    recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'animation.webm'; // Download as .webm file
+        a.click();
+    };
+
+    recorder.start();
+
+    // Stop recording after 8 seconds (adjust as needed)
+    setTimeout(() => {
+        recorder.stop();
+    }, 8000);
+}
+
+
+function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
+    const formData = new FormData();
+    formData.append('video', blob, 'animation.mp4');
+
+    formData.append('folderId', existingFolderId);
+
+    fetch('/api/video/save-Large-video', {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log('large Video saved successfully:', data);
+                var dataVideoPath = {
+                    DesignBoardId: $(`#hdnDesignBoardId`).val(),
+                    VideoPath: data.filePath
+                };
+
+                $.ajax({
+                    url: baseURL + "Canvas/UpdateDesignBoardLargeVideoPath",
+                    type: "POST",
+                    dataType: "json",
+                    data: dataVideoPath,
+                    success: function (slideResult) {
+                    },
+                    error: function (data) {
+                        console.log("error in saving Image " + activeSlide);
+                    }
+
+
+                })
+        })
+        .catch(error => {
+            console.error('Error saving video:', error);
+        });
+}
 function uploadVideo(blob, existingFolderId = 'new', currentIndex =1) {
     const formData = new FormData();
     formData.append('video', blob, 'animation.mp4');
@@ -718,6 +905,7 @@ function uploadVideo(blob, existingFolderId = 'new', currentIndex =1) {
                 data: dataVideoPath,
                 success: function (slideResult) {
                     videoSaveForOnetime++;
+                    //startVideoCapture();
                 },
                 error: function (data) {
                     console.log("error in saving Image " + activeSlide);
@@ -824,6 +1012,101 @@ function loadCanvasFromJsonForPublish(jsonData, condition) {
         };
     } else {
         checkAllImagesLoadedPublish();
+    }
+}
+function loadCanvasFromJsonForDownload(jsonData, condition) {
+    // Clear the canvas first.
+    ctxElementForDownload.clearRect(0, 0, canvas.width, canvas.height);
+
+    let data;
+    // If jsonData is a string, parse it; otherwise assume it's an object.
+    if (typeof jsonData === "string") {
+        try {
+            data = JSON.parse(jsonData);
+        } catch (e) {
+            console.error("Error parsing canvas JSON:", e);
+            drawCanvasForDownload(condition);
+            return;
+        }
+    } else {
+        data = jsonData;
+    }
+
+    // Set the canvas background color.
+    canvasBgColor = data.canvasBgColor || "#ffffff";
+    $("#hdnBackgroundSpecificColor").val(canvasBgColor);
+    canvasForDownload.style.backgroundColor = canvasBgColor;
+
+    // Load the background image if provided; otherwise, clear any previous background image.
+    if (data.canvasBgImage) {
+        canvasForDownload.bgImage = new Image();
+        canvasForDownload.bgImage.src = data.canvasBgImage;
+    } else {
+        canvasForDownload.bgImage = null;
+    }
+
+    // Process text objects.
+    textObjects = data.text || [];
+
+    // Process image objects.
+    images = []; // Reset images array
+    var imageLoadCount = 0;
+    var totalImages = (data.images ? data.images.length : 0);
+
+    // A helper function to check if all images are loaded.
+    function checkAllImagesLoadedForDownload() {
+        var bgLoaded = true;
+        if (canvasForDownload.bgImage) {
+            bgLoaded = canvasForDownload.bgImage.complete;
+        }
+        if (imageLoadCount >= totalImages && bgLoaded) {
+            // Once all images are loaded, call drawCanvasPublish.
+            drawCanvasForDownload(condition);
+        }
+    }
+
+    // Process each image in the JSON.
+    if (data.images && data.images.length) {
+        data.images.forEach(function (imgObj) {
+            var newImgObj = Object.assign({}, imgObj);
+            var imgElement = new Image();
+            if (imgObj.src.trim().charAt(0) === "<") {
+                var blob = new Blob([imgObj.src], { type: "image/svg+xml" });
+                imgElement.src = URL.createObjectURL(blob);
+            } else {
+                imgElement.src = imgObj.src;
+            }
+            newImgObj.img = imgElement;
+
+            imgElement.onload = function () {
+                imageLoadCount++;
+                checkAllImagesLoadedForDownload();
+            };
+            imgElement.onerror = function () {
+                console.error("Error loading image", imgObj.src);
+                imageLoadCount++;
+                checkAllImagesLoadedForDownload();
+            };
+
+            images.push(newImgObj);
+        });
+    } else {
+        // No images in JSON.
+        checkAllImagesLoadedForDownload();
+    }
+
+    // Handle the background image load.
+    if (canvasForDownload.bgImage) {
+        canvasForDownload.bgImage.onload = function () {
+            checkAllImagesLoadedForDownload();
+        };
+        canvasForDownload.bgImage.onerror = function () {
+            console.error("Error loading canvas background image", data.canvasBgImage);
+            canvasForDownload.bgImage = null;
+            checkAllImagesLoadedForDownload();
+        };
+    } else {
+        checkAllImagesLoadedForDownload();
     }
 }
 
@@ -984,6 +1267,163 @@ function drawCanvasPublish(condition) {
 
     ctxElement.globalAlpha = 1;
     ctxElement.restore();
+}
+function drawCanvasForDownload(condition) {
+    ctxElementForDownload.clearRect(0, 0, canvasForDownload.width, canvasForDownload.height); // Clear entire canvas
+    const bgColor = $("#hdnBackgroundSpecificColor").val();
+    if (bgColor && bgColor.trim() !== "") {
+        ctxElementForDownload.fillStyle = bgColor;
+        ctxElementForDownload.fillRect(0, 0, canvasForDownload.width, canvasForDownload.height);
+    }
+
+    // Draw background image if available.
+    if (canvasForDownload.bgImage) {
+        ctxElementForDownload.drawImage(canvasForDownload.bgImage, 0, 0, canvasForDownload.width, canvasForDownload.height);
+    }
+
+    // --- Draw multiple images from the images array ---
+    if (images && images.length) {
+        images.forEach(imgObj => {
+            ctxElementForDownload.save();
+            ctxElementForDownload.globalAlpha = imgObj.opacity || 1;
+            const scaleX = imgObj.scaleX || 1;
+            const scaleY = imgObj.scaleY || 1;
+            ctxElementForDownload.translate(imgObj.x, imgObj.y);
+            ctxElementForDownload.scale(scaleX, scaleY);
+            // Draw the image at (0,0) because translation has already been applied.
+            ctxElementForDownload.drawImage(imgObj.img, 0, 0, imgObj.width, imgObj.height);
+            ctxElementForDownload.restore();
+
+            // If this image is selected, draw a border and four resize handles.
+            if (imgObj.selected) {
+                ctxElementForDownload.save();
+                ctxElementForDownload.strokeStyle = "blue";
+                ctxElementForDownload.lineWidth = 2;
+                const dispW = imgObj.width * scaleX;
+                const dispH = imgObj.height * scaleY;
+                ctxElementForDownload.strokeRect(imgObj.x, imgObj.y, dispW, dispH);
+                // Draw handles at the four corners
+                const handles = getImageResizeHandles(imgObj); // Make sure this function uses your dynamic dimensions
+                ctxElementForDownload.fillStyle = "red";
+                handles.forEach(handle => {
+                    ctxElementForDownload.fillRect(handle.x - handleSize / 2, handle.y - handleSize / 2, handleSize, handleSize);
+                });
+                ctxElementForDownload.restore();
+            }
+        });
+    }
+
+    ctxElementForDownload.save();
+    ctxElementForDownload.globalAlpha = textPosition.opacity || 1; // Apply text opacity
+
+    if (condition === 'Common' || condition === 'ChangeStyle') {
+        textObjects.forEach(obj => {
+            ctxElementForDownload.save();
+            // If selected, draw the bounding box and handles.
+            if (obj.selected) {
+                // Constrain the box if it goes beyond canvas boundaries.
+                if (obj.x < 0) obj.x = 0;
+                if (obj.x + obj.boundingWidth > canvasForDownload.width) {
+                    obj.boundingWidth = canvasForDownload.width - obj.x;
+                }
+                const boxX = obj.x - padding;
+                const boxY = obj.y - padding;
+                const boxWidth = obj.boundingWidth + 2 * padding;
+                const boxHeight = obj.boundingHeight + 2 * padding;
+                //drawRoundedRect(ctxElement, boxX, boxY, boxWidth, boxHeight, 5);
+
+                // Draw eight handles: four corners and four midpoints.
+                const handles = [
+                    { x: boxX, y: boxY }, // top-left
+                    { x: boxX + boxWidth / 2, y: boxY }, // top-middle
+                    { x: boxX + boxWidth, y: boxY }, // top-right
+                    { x: boxX + boxWidth, y: boxY + boxHeight / 2 }, // right-middle
+                    { x: boxX + boxWidth, y: boxY + boxHeight }, // bottom-right
+                    { x: boxX + boxWidth / 2, y: boxY + boxHeight }, // bottom-middle
+                    { x: boxX, y: boxY + boxHeight }, // bottom-left
+                    { x: boxX, y: boxY + boxHeight / 2 }  // left-middle
+                ];
+                ctxElementForDownload.fillStyle = "#FF7F50";
+                handles.forEach(handle => {
+                    ctxElementForDownload.fillRect(handle.x - handleSize / 2, handle.y - handleSize / 2, handleSize, handleSize);
+                });
+            }
+
+            // Set text properties.
+            ctxElementForDownload.font = `${obj.fontSize}px ${obj.fontFamily}`;
+            ctxElementForDownload.fillStyle = obj.textColor;
+            ctxElementForDownload.textBaseline = "top";
+
+            // Determine the maximum text width for wrapping.
+            const maxTextWidth = obj.boundingWidth - 2 * padding;
+            let lines;
+            // If the text contains newline characters, use them; otherwise, wrap.
+            if (obj.text.indexOf("\n") !== -1) {
+                lines = obj.text.split("\n");
+            } else {
+                lines = wrapText(ctxElementForDownload, obj.text, maxTextWidth);
+            }
+            const lineHeight = obj.fontSize * 1.2;
+            const availableHeight = obj.boundingHeight - 2 * padding;
+            const maxLines = Math.floor(availableHeight / lineHeight);
+            const startY = obj.y + padding;
+
+            // Draw each line with the correct horizontal offset based on alignment.
+            for (let i = 0; i < Math.min(lines.length, maxLines); i++) {
+                const line = lines[i];
+                const lineWidth = ctxElementForDownload.measureText(line).width;
+                let offsetX;
+                if (obj.textAlign === "center") {
+                    offsetX = obj.x + (obj.boundingWidth - lineWidth) / 2;
+                } else if (obj.textAlign === "right") {
+                    offsetX = obj.x + obj.boundingWidth - lineWidth - padding;
+                } else { // left alignment
+                    offsetX = obj.x + padding;
+                }
+                ctxElementForDownload.fillText(line, offsetX, startY + i * lineHeight);
+            }
+            ctxElementForDownload.restore();
+        });
+    }
+
+    if (condition === 'applyAnimations') {
+        textObjects.forEach(obj => {
+            ctxElementForDownload.save();
+            ctxElementForDownload.font = `${obj.fontSize}px ${obj.fontFamily}`;
+            ctxElementForDownload.fillStyle = obj.textColor;
+            ctxElementForDownload.textBaseline = "top";
+
+            const maxTextWidth = obj.boundingWidth - 2 * padding;
+            let lines;
+            if (obj.text.indexOf("\n") !== -1) {
+                lines = obj.text.split("\n");
+            } else {
+                lines = wrapText(ctxElementForDownload, obj.text, maxTextWidth);
+            }
+            const lineHeight = obj.fontSize * 1.2;
+            const availableHeight = obj.boundingHeight - 2 * padding;
+            const maxLines = Math.floor(availableHeight / lineHeight);
+            const startY = obj.y + padding;
+
+            for (let i = 0; i < Math.min(lines.length, maxLines); i++) {
+                const line = lines[i];
+                const lineWidth = ctxElementForDownload.measureText(line).width;
+                let offsetX;
+                if (obj.textAlign === "center") {
+                    offsetX = obj.x + (obj.boundingWidth - lineWidth) / 2;
+                } else if (obj.textAlign === "right") {
+                    offsetX = obj.x + obj.boundingWidth - lineWidth - padding;
+                } else {
+                    offsetX = obj.x + padding;
+                }
+                ctxElementForDownload.fillText(line, offsetX, startY + i * lineHeight);
+            }
+            ctxElementForDownload.restore();
+        });
+    }
+
+    ctxElementForDownload.globalAlpha = 1;
+    ctxElementForDownload.restore();
 }
 function animateTextForPublish(animationType,direction, condition, loopCount) {
     
@@ -1349,4 +1789,373 @@ function animateTextForPublish(animationType,direction, condition, loopCount) {
         }
     });
 
+}
+
+function animateTextForDownload(animationType, direction, condition, loopCount) {
+
+    textObjects.forEach(obj => {
+
+        // Save the object's final position.
+        const endX = obj.x;
+        const endY = obj.y;
+        let startX, startY;
+
+        // Determine starting position based on the chosen direction.
+        switch (direction) {
+            case "top":
+                startX = endX;           // same x as final
+                startY = - (obj.boundingHeight + 5);   // Place the object fully above the canvas:
+                break;
+            case "bottom":
+                startX = endX;           // same x as final
+                startY = canvasForDownload.height + 5;  // Place the object fully below the canvas:
+                break;
+            case "left":
+                startX = - (obj.boundingWidth + 5); // Place the object fully to the left of the canvas:
+                startY = endY;           // same y as final
+                break;
+            case "right":
+                startX = canvasForDownload.width + 5;   // Place the object fully to the right of the canvas:
+                startY = endY;           // same y as final
+                break;
+            default:
+                // If no valid direction is provided, use current values.
+                startX = endX;
+                startY = endY;
+        }
+
+        // Set the object's starting position.
+        obj.x = startX;
+        obj.y = startY;
+
+        //This section is for in out and stay
+        const inTime = parseFloat(selectedInSpeed) || 3;   // How fast the object comes onto the canvas.
+        const stayTime = parseFloat(selectedStaySpeed) || 6; // How long the object stays on screen.
+        const outTime = parseFloat(selectedOutSpeed) || 2;  // How fast the object leaves the canvas.
+        const exitX = window.innerWidth; // Example: exit to the right of the screen.
+        const exitY = endY;              // Maintain the same vertical position.
+        ////end///////////
+        if (animationType === "linear") {
+
+            ////This section is for in out and stay
+            let tl = gsap.timeline({
+                repeat: loopCount - 1, // loops = initial + (loopCount - 1) repeats
+                onUpdate: function () {
+                    drawCanvasForDownload(condition);
+                }
+            });
+
+            // "In" phase: Animate the object onto the canvas.
+            tl.to(obj, {
+                x: endX,
+                y: endY,
+                duration: inTime,
+                ease: "power1.in"
+            });
+
+            // "Stay" phase: Hold the object in place for the stay duration.
+            // This tween doesn't change any properties; it just acts as a pause.
+            tl.to(obj, {
+                duration: stayTime,
+                ease: "none"
+            });
+
+            // "Out" phase: Animate the object off the canvas.
+            tl.to(obj, {
+                x: exitX,
+                y: exitY,
+                duration: outTime,
+                ease: "power1.out"
+            });
+            // Final phase: Reset the object to the final position with text.
+            // This sets the object’s position to (endX, endY) after the out tween completes.
+            tl.set(obj, {
+                x: endX,
+                y: endY,
+                duration: 0,
+                ease: "power1.inOut",
+                onUpdate: () => drawCanvasForDownload(condition)
+            });
+
+        } else if (animationType === "elastic") {
+            gsap.to(obj, {
+                x: endX,
+                y: endY,
+                duration: parseFloat(selectedInSpeed) || 2.5,
+                ease: "elastic.out(1, 0.3)",
+                onUpdate: drawCanvasForDownload,
+            });
+        } else if (animationType === "wave") {
+            let angle = 0;
+            gsap.ticker.add(() => {
+                obj.x = startX + (endX - startX) * 0.5 + Math.sin(angle) * 100;
+                obj.y = startY + (endY - startY) * 0.5;
+                drawCanvasForDownload(condition);
+                angle += 0.05;
+            });
+        } else if (animationType === "fadeIn") {
+            gsap.fromTo(
+                obj,
+                { opacity: 0, x: startX, y: startY },
+                {
+                    opacity: 1,
+                    x: endX,
+                    y: endY,
+                    duration: 2,
+                    ease: "power2.out",
+                    onUpdate: drawCanvasForDownload(condition),
+                }
+            );
+        } else if (animationType === "zoomInOut") {
+            gsap.fromTo(
+                obj,
+                { scale: 0, x: startX, y: startY },
+                {
+                    scale: 1,
+                    x: endX,
+                    y: endY,
+                    duration: 2,
+                    ease: "power2.inOut",
+                    onUpdate: drawCanvasForDownload(condition),
+                }
+            );
+        } else if (animationType === "rotate") {
+            gsap.fromTo(
+                obj,
+                { rotation: 0, x: startX, y: startY },
+                {
+                    rotation: 360,
+                    x: endX,
+                    y: endY,
+                    duration: 2,
+                    ease: "power2.inOut",
+                    onUpdate: drawCanvasForDownload(condition),
+                }
+            );
+        } else if (animationType === "bounce") {
+
+            ////This section is for in out and stay
+            let tl = gsap.timeline({
+                repeat: loopCount - 1,
+                onUpdate: function () {
+                    drawCanvasForDownload(condition);
+                }
+            });
+
+            // "In" phase: Animate the object onto the canvas.
+            tl.to(obj, {
+                x: endX,
+                y: endY,
+                duration: inTime,
+                ease: "bounce.out"
+            });
+
+            // "Stay" phase: Hold the object in place for the stay duration.
+            // This tween doesn't change any properties; it just acts as a pause.
+            tl.to(obj, {
+                duration: stayTime,
+                ease: "none"
+            });
+
+            // "Out" phase: Animate the object off the canvas.
+            tl.to(obj, {
+                x: exitX,
+                y: exitY,
+                duration: outTime,
+                ease: "bounce.out"
+            });
+            // Final phase: Reset the object to the final position with text.
+            // This sets the object’s position to (endX, endY) after the out tween completes.
+            tl.set(obj, {
+                x: endX,
+                y: endY,
+                duration: 0,
+                ease: "bounce.out",
+                onUpdate: () => drawCanvasForDownload(condition),
+
+            });
+
+
+            ////This is default effect of bounce
+            //gsap.to(obj, {
+            //    x: endX,
+            //    y: endY,
+            //    duration: parseFloat(selectedInSpeed) || 2,
+            //    ease: "bounce.out",
+            //    onUpdate: () => drawCanvas(condition),
+            //});
+        } else if (animationType === "spiral") {
+            gsap.to(obj, {
+                duration: 3,
+                motionPath: {
+                    path: [
+                        { x: startX, y: startY },
+                        { x: endX - 50, y: endY - 50 },
+                        { x: endX, y: endY },
+                    ],
+                    autoRotate: true,
+                },
+                ease: "power2.inOut",
+                onUpdate: drawCanvasForDownload(condition),
+            });
+        }
+        else if (animationType === "fadeText") {
+            gsap.fromTo(
+                obj,
+                { x: startX, y: startY, opacity: 0 }, // Initial state
+                {
+                    x: endX,
+                    y: endY,
+                    opacity: 1, // Target opacity
+                    duration: 2,
+                    ease: "power2.inOut",
+                    onUpdate: drawCanvasForDownload(condition), // Updates canvas on every frame
+                    onComplete: () => {
+                        // Fade out after a delay
+                        gsap.to(obj, {
+                            opacity: 1,
+                            duration: 2,
+                            //delay: 2,
+                            onUpdate: drawCanvasForDownload(condition),
+                        });
+                    },
+                }
+            );
+        }
+        else if (animationType === "typeText") {
+            gsap.to(obj, {
+                duration: text.length * 0.15,  // Slow down the typing speed (adjust the multiplier)
+                ease: "power2.inOut",
+                onUpdate: function () {
+                    // Update the text content dynamically during the animation
+                    const progress = Math.ceil(this.progress() * text.length);
+                    obj.text = text.slice(0, progress);  // Slice the text to create the typing effect
+                    drawCanvasForDownload(condition);  // Redraw the canvas at each update
+                },
+            });
+
+        }
+        else if (animationType === "morphText") {
+            gsap.to(obj, {
+                x: endX,  // You can use any values for endX and endY
+                y: endY,  // Similarly, endY for vertical position change
+                duration: 2.5,
+                ease: "elastic.out(1, 0.3)",  // Apply easing for a bounce effect
+                onUpdate: drawCanvasForDownload(condition),  // Redraw the canvas on each update
+                repeat: 1,  // Repeat the animation once (total of 2 times)
+                yoyo: true,  // Make the animation reverse after completing
+                onComplete: function () {
+                }
+            });
+
+
+        }
+    });
+
+    // ----- IMAGE ANIMATION SECTION -----
+    images.forEach(imgObj => {
+        // Save the image's final (target) position.
+        const endX = imgObj.x;
+        const endY = imgObj.y;
+        let startX, startY;
+
+        // Calculate displayed dimensions using scale factors.
+        const dispWidth = imgObj.width * (imgObj.scaleX || 1);
+        const dispHeight = imgObj.height * (imgObj.scaleY || 1);
+
+        // Determine starting position based on the chosen direction.
+        switch (direction) {
+            case "top":
+                startX = endX;  // same x as final
+                startY = -(dispHeight + 5);   // image fully above canvas
+                break;
+            case "bottom":
+                startX = endX;  // same x as final
+                startY = canvasForDownload.height + 5;  // image fully below canvas
+                break;
+            case "left":
+                startX = -(dispWidth + 5); // image fully to the left
+                startY = endY;  // same y as final
+                break;
+            case "right":
+                startX = canvasForDownload.width + 5; // image fully to the right
+                startY = endY;  // same y as final
+                break;
+            default:
+                startX = endX;
+                startY = endY;
+        }
+
+        // Set the image's starting position.
+        imgObj.x = startX;
+        imgObj.y = startY;
+
+        // Timing settings for images (using the same global speeds as text).
+        const inTime = parseFloat(selectedInSpeed) || 3;
+        const stayTime = parseFloat(selectedStaySpeed) || 6;
+        const outTime = parseFloat(selectedOutSpeed) || 2;
+        const exitX = window.innerWidth;  // exit to right (example)
+        const exitY = endY;               // maintain same vertical position.
+
+        let tl = gsap.timeline({
+            repeat: loopCount - 1,
+            onUpdate: function () {
+                drawCanvasForDownload(condition);
+            }
+        });
+
+        if (animationType === "linear") {
+            tl.to(imgObj, {
+                x: endX,
+                y: endY,
+                duration: inTime,
+                ease: "power1.in"
+            });
+            tl.to(imgObj, {
+                duration: stayTime,
+                ease: "none"
+            });
+            tl.to(imgObj, {
+                x: exitX,
+                y: exitY,
+                duration: outTime,
+                ease: "power1.out"
+            });
+            tl.set(imgObj, {
+                x: endX,
+                y: endY,
+                duration: 0,
+                ease: "power1.inOut",
+                onUpdate: () => drawCanvasForDownload(condition)
+            });
+        } else if (animationType === "bounce") {
+            tl.to(imgObj, {
+                x: endX,
+                y: endY,
+                duration: inTime,
+                ease: "bounce.out"
+            });
+            tl.to(imgObj, {
+                duration: stayTime,
+                ease: "none"
+            });
+            tl.to(imgObj, {
+                x: exitX,
+                y: exitY,
+                duration: outTime,
+                ease: "bounce.out"
+            });
+            tl.set(imgObj, {
+                x: endX,
+                y: endY,
+                duration: 0,
+                ease: "bounce.out",
+                onUpdate: () => drawCanvasForDownload(condition)
+            });
+        }
+    });
+
+}
+function showPublishMessage() {
+    MessageShow('', 'Please publish the board to preview here', 'error');
 }

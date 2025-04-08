@@ -35,6 +35,11 @@
         public Guid DesignBoardDetailsId { get; set; }
         public string VideoPath { get; set; }
     }
+    public class RequestDesignBoardLargeVideoPath
+    {
+        public Guid DesignBoardId { get; set; }
+        public string VideoPath { get; set; }
+    }
     public class RequestGetDesignBoard
      {
         public Guid CustomerId { get; set; }
