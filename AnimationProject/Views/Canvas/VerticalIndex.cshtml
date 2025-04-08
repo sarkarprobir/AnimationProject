@@ -755,7 +755,10 @@
                 <div class="col-md-3 nav-right">
                     <ul>
                         <li class="play-btn">
-                            <button class="btn" title="Publish" data-bs-toggle="modal" onclick="GetDesignBoardByIdForPublish();" data-bs-target="#imageModal"><img src="~/images/icons/Icon-01.svg" width="25"> </button>
+                            <button class="btn" title="Preview" data-bs-toggle="modal" onclick="GetDesignBoardByIdForPublish();" data-bs-target="#imageModal"><img src="~/images/icons/Icon-01.svg" width="25"> </button>
+                        </li>
+                        <li class="play-btn">
+                            <button class="btn" title="Publish" onclick="GetDesignBoardByIdForDownload('')" id="btnPublish">P </button>
                         </li>
                         <li>
                             <button class="btn" type="submit"  onclick="GetDesignBoardByIdForDownload('download')" title="download" ><img src="~/images/icons/ico-download.svg"> </button>
@@ -821,7 +824,7 @@
 
                     <div class="modal-body">
                         @* <img src="~/images/banner.png" alt="Placeholder Image"> *@
-                        <canvas id="myCanvasElementDownload" class="clsmyCanvas" width="595" height="640" style="background: lightgray; position: relative;"></canvas>
+                        <canvas id="myCanvasElementDownload" class="clsmyCanvas" width="1080" height="1920" style="background: lightgray; position: relative;"></canvas>
                     </div>
 
                 </div>

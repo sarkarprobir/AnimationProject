@@ -51,4 +51,11 @@
         public Guid DesignBoardId { get; set; }
 
     }
+    public class RequestGetPlayList
+    {
+        public string PlayDate { get; set; }
+        public string PlayStartTime { get; set; }
+        public string PlayEndTime { get; set; }
+        public long CompanyUniqueId { get; set; }
+    }
 }

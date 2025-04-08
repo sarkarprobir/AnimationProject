@@ -633,7 +633,7 @@ async function GetDesignBoardByIdForPublish() {
                 console.log("jsonArray:", jsonArray);
                 loadJsonFile();
             }
-            setTimeout(() => { GetDesignBoardByIdForDownload(''); }, 25000);
+            //setTimeout(() => { GetDesignBoardByIdForDownload(''); }, 25000);
             HideLoader();
         } catch (e) {
             console.log("catch", e);
@@ -653,9 +653,7 @@ async function GetDesignBoardByIdForDownload(condition) {
                 DesignBoardId: id
             };
            
-            if (publishDownloadcondition === 'download') {
-                ShowLoader();
-            }
+            ShowLoader();
             //ShowLoader();
             // Await the ajax call which returns a promise (jQuery 3+)
             const result = await $.ajax({

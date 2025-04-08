@@ -41,6 +41,10 @@ namespace AnimationProject.Models
         public string SlideType { get; set; }
         public List<DesignBoardDetailsList> DesignBoardDetailsList { get; set; }
     }
+    public class ResponseGetPlayList
+    {
+        public string VideoPath { get; set; }
+    }
     public class DesignBoardDetailsList
     {
         public Guid DesignBoardDetailsId { get; set; }
