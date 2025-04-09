@@ -45,6 +45,10 @@ namespace AnimationProject.Models
     {
         public string VideoPath { get; set; }
     }
+    public class ResponseRefreshMinutes
+    {
+        public long RefreshMinutes { get; set; }
+    }
     public class DesignBoardDetailsList
     {
         public Guid DesignBoardDetailsId { get; set; }

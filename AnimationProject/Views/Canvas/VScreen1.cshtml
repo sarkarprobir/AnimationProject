@@ -1,19 +1,17 @@
-﻿<div id="videoContainer">
-    <video id="videoPlayer" controls autoplay muted playsinline>
-        @* <source id="videoSource" src="/SlideLargeVideo/177fd9c8-aa05-4721-be88-e1cda6b6c868/animation.mp4?nocache=f30f705d-77ad-4c28-a2bc-720cf500cfcb" type="video/mp4"> *@
-        <source id="videoSource"  type="video/mp4">
-    </video>
-    </div>
-@section scripts {
+﻿@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    // Set the flag to hide the footer on this page.
+    ViewBag.HideFooter = true;
+}
+<body style="background-color:#000;">
     <style>
         /* Ensure the page occupies the entire viewport */
         html, body {
+            background-color: #000; /* ensure the background is black */
+            color: #fff;
             margin: 0;
             padding: 0;
             height: 100%;
-            width: 100%;
-            overflow: hidden;
-            background: black;
         }
         /* Video container covers the full browser window */
         #videoContainer {
@@ -32,116 +30,10 @@
             background: black;
         }
     </style>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-          var videoPlayer = document.getElementById("videoPlayer");
-
-          // List of video URLs for sequential playback.
-          // Initially, we keep the videoSources array empty.
-          var videoSources = [];
-          var currentVideoIndex = 0;
-
-          // Sequential playback: when one video ends, load and play the next.
-          videoPlayer.addEventListener("ended", function () {
-            if (videoSources.length > 0) {
-              currentVideoIndex = (currentVideoIndex + 1) % videoSources.length;
-              // Update the video source and play
-              setVideoSource(videoSources[currentVideoIndex]);
-            }
-          });
-
-          // Attempt to trigger browser full-screen on the first user click.
-          document.body.addEventListener('click', function requestFullScreen() {
-            if (!document.fullscreenElement) {
-              document.documentElement.requestFullscreen().catch(function (error) {
-                console.warn("Failed to enter full-screen mode: ", error);
-              });
-            }
-            document.body.removeEventListener('click', requestFullScreen);
-          });
-
-          // Start the playlist load process.
-          checkTimeAndUpdatePlaylist();
-        });
-
-        // Helper function to update the video source
-        function setVideoSource(sourceUrl) {
-          var videoSourceElement = document.getElementById("videoSource");
-          videoSourceElement.src = sourceUrl;
-          var videoPlayer = document.getElementById("videoPlayer");
-          videoPlayer.load();
-          videoPlayer.play();
-        }
-
-        // Function to check if it's time to switch playlists.
-        function checkTimeAndUpdatePlaylist() {
-          const now = new Date();
-          const hours = now.getHours();
-          const minutes = now.getMinutes();
-          const times1 = ConvertToTimeFormat(hours, minutes);
-          const startHoursConverted = times1[0];
-          const endHoursConverted = times1[1];
-          const sqlFormattedDateTime = now.toISOString().replace('T', ' ').slice(0, 23);
-          loadPlaylist(sqlFormattedDateTime, startHoursConverted, endHoursConverted);
-        }
-
-        function loadPlaylist(sqlFormattedDateTime, startTime, endTime) {
-          console.log(`Loading playlist for the time slot: ${startTime} - ${endTime}`);
-
-          // Helper function to extract the last parameter from the URL.
-          function getUrlParameter(url) {
-            const segments = url.split('/');
-            const filteredSegments = segments.filter(segment => segment !== '');
-            const lastSegment = filteredSegments.pop();
-            return lastSegment;
-          }
-
-          const currentUrl = window.location.href;
-          const id = getUrlParameter(currentUrl);
-          if (id) {
-            var dataVideoPlayList = {
-              PlayDate: sqlFormattedDateTime,
-              PlayStartTime: startTime,
-              PlayEndTime: endTime,
-              CompanyUniqueId: id,
-              ScreenType: 'Vertical',
-              ScreenNo: 1
-            };
-
-            $.ajax({
-              url: baseURL + "Canvas/LoadPlaylist",
-              type: "POST",
-              dataType: "json",
-              data: dataVideoPlayList,
-              success: function (playVideopath) {
-                // Update the video sources array if you need sequential playback.
-                // For now we assume the API returns a single video URL.
-                // If your API returns more than one video path, you can assign them to the videoSources array.
-                var videoSources = [playVideopath];
-
-                // Set the first video (or the only video) as the current source.
-                setVideoSource(playVideopath);
-              },
-              error: function (data) {
-                console.log("Error loading playlist:", data);
-              }
-            });
-          }
-        }
-
-        // Check every 10 seconds if the time condition is met.
-        // Uncomment the line below to enable periodic playlist checks.
-        // setInterval(checkTimeAndUpdatePlaylist, 10000);
-
-        function ConvertToTimeFormat(hours, minutes) {
-          // Ensure hours and minutes are two-digit strings.
-          const formattedHours = String(hours).padStart(2, '0');
-          const formattedMinutes = String(minutes).padStart(2, '0');
-
-          const hourStartTime = `${formattedHours}:00:00`;
-          const hourEndTime  = `${formattedHours}:${formattedMinutes}:00`;
-
-          return [hourStartTime, hourEndTime];
-        }
-    </script>
-}
+    <script src="~/js/verticalScreen.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
+<div id="videoContainer">
+    <video id="videoPlayer" controls autoplay muted playsinline>
+        <source id="videoSource"  type="video/mp4">
+    </video>
+    </div>
+    </body>

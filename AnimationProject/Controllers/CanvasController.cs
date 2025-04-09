@@ -264,7 +264,7 @@ namespace AnimationProject.Controllers
             var response = new Response<List<ResponseGetPlayList>>();
             try
             {
-                if(request.CompanyUniqueId==0)
+                if(request !=null && request.CompanyUniqueId==0)
                 {
                     return Json("NO");
                 }
@@ -275,6 +275,28 @@ namespace AnimationProject.Controllers
             catch (Exception ex)
             {
                 log.Info("***LoadPlaylist*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return Json("NO");
+            }
+
+        }
+        [HttpPost]
+        public async Task<IActionResult> GetScreenRefreshInterval(ScreenRefreshInterval request)
+        {
+            //if (!_checkSession.IsSession()) return Ok("login");
+            var response = new Response<ResponseRefreshMinutes>();
+            try
+            {
+                if (request != null && request.CompanyUniqueId == 0)
+                {
+                    return Json("NO");
+                }
+                var getDesignBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetScreenRefreshInterval", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<ResponseRefreshMinutes>>(getDesignBoard);
+                return Json(response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***GetScreenRefreshInterval*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
                 return Json("NO");
             }
 

@@ -61,4 +61,9 @@
         public int ScreenNo { get; set; }
         
     }
+    public class ScreenRefreshInterval
+    {
+        public long CompanyUniqueId { get; set; }
+        public int ScreenNo { get; set; }
+    }
 }
