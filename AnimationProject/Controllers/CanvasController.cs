@@ -264,9 +264,13 @@ namespace AnimationProject.Controllers
             var response = new Response<List<ResponseGetPlayList>>();
             try
             {
+                if(request.CompanyUniqueId==0)
+                {
+                    return Json("NO");
+                }
                 var getDesignBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetLoadPlaylist", JsonConvert.SerializeObject(request), user.token);
                 response = JsonConvert.DeserializeObject<Response<List<ResponseGetPlayList>>>(getDesignBoard);
-                return Json(response.Data);
+                return Json(response.Data[0].VideoPath);
             }
             catch (Exception ex)
             {

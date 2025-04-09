@@ -1,6 +1,7 @@
 ﻿<div id="videoContainer">
     <video id="videoPlayer" controls autoplay muted playsinline>
-        <source id="videoSource" src="/SlideLargeVideo/177fd9c8-aa05-4721-be88-e1cda6b6c868/animation.mp4?nocache=f30f705d-77ad-4c28-a2bc-720cf500cfcb" type="video/mp4">
+        @* <source id="videoSource" src="/SlideLargeVideo/177fd9c8-aa05-4721-be88-e1cda6b6c868/animation.mp4?nocache=f30f705d-77ad-4c28-a2bc-720cf500cfcb" type="video/mp4"> *@
+        <source id="videoSource"  type="video/mp4">
     </video>
     </div>
 @section scripts {
@@ -36,95 +37,111 @@
           var videoPlayer = document.getElementById("videoPlayer");
 
           // List of video URLs for sequential playback.
-          var videoSources = [
-             "/SlideLargeVideo/177fd9c8-aa05-4721-be88-e1cda6b6c868/animation.mp4?nocache=f30f705d-77ad-4c28-a2bc-720cf500cfcb"
-          ];
+          // Initially, we keep the videoSources array empty.
+          var videoSources = [];
           var currentVideoIndex = 0;
 
           // Sequential playback: when one video ends, load and play the next.
           videoPlayer.addEventListener("ended", function () {
-            currentVideoIndex = (currentVideoIndex + 1) % videoSources.length;
-            videoPlayer.src = videoSources[currentVideoIndex];
-            videoPlayer.load();
-            videoPlayer.play();
+            if (videoSources.length > 0) {
+              currentVideoIndex = (currentVideoIndex + 1) % videoSources.length;
+              // Update the video source and play
+              setVideoSource(videoSources[currentVideoIndex]);
+            }
           });
 
-          // Attempt to trigger browser full-screen (similar to F11) on the first user click.
+          // Attempt to trigger browser full-screen on the first user click.
           document.body.addEventListener('click', function requestFullScreen() {
             if (!document.fullscreenElement) {
-              // Request full screen mode for the entire document.
               document.documentElement.requestFullscreen().catch(function (error) {
                 console.warn("Failed to enter full-screen mode: ", error);
               });
             }
-            // Remove the event listener after the first click.
             document.body.removeEventListener('click', requestFullScreen);
           });
+
+          // Start the playlist load process.
           checkTimeAndUpdatePlaylist();
         });
 
-        // Function to check if it's time to switch playlists
-         function checkTimeAndUpdatePlaylist() {
-           const now = new Date();
-           const hours = now.getHours();
-           const minutes = now.getMinutes();
-           const times1 = ConvertToTimeFormat(hours,minutes)
-             const startHoursConverted=times1[0];
-              const endHoursConverted=times1[1];
-           const sqlFormattedDateTime = now.toISOString().replace('T', ' ').slice(0, 23);
-           loadPlaylist(sqlFormattedDateTime,startHoursConverted,endHoursConverted);
+        // Helper function to update the video source
+        function setVideoSource(sourceUrl) {
+          var videoSourceElement = document.getElementById("videoSource");
+          videoSourceElement.src = sourceUrl;
+          var videoPlayer = document.getElementById("videoPlayer");
+          videoPlayer.load();
+          videoPlayer.play();
         }
-        function loadPlaylist(sqlFormattedDateTime,startTime, endTime) {
-          console.log(`Loading playlist for the time slot: ${startTime} - ${endTime}`);
-            // Function to get URL parameter
-                          function getUrlParameter(url) {
-                                  const segments = url.split('/');
-                                // Remove any empty strings, in case the URL ends with a slash
-                                const filteredSegments = segments.filter(segment => segment !== '');
-                                const lastSegment = filteredSegments.pop();
-                                 return lastSegment;
-                              }
-                          const currentUrl = window.location.href;
-                          const id = getUrlParameter(currentUrl);
-                         // Check if parameter exists
-                    if(id)
-                     {
-                     var dataVideoPlayList = {
-                          PlayDate: sqlFormattedDateTime,
-                          PlayStartTime: startTime,
-                          PlayEndTime: endTime,
-                          CompanyUniqueId:id,
-                          ScreenType:'Vertical',
-                          ScreenNo:1
-                     };
 
-                 $.ajax({
-                      url: baseURL + "Canvas/LoadPlaylist",
-                     type: "POST",
-                     dataType: "json",
-                     data: dataVideoPlayList,
-                     success: function (playVideoResult) {
-                     
-                     },
-                     error: function (data) {
-                         console.log("error in saving Image " + activeSlide);
-                     }
-                 })
-             }
+        // Function to check if it's time to switch playlists.
+        function checkTimeAndUpdatePlaylist() {
+          const now = new Date();
+          const hours = now.getHours();
+          const minutes = now.getMinutes();
+          const times1 = ConvertToTimeFormat(hours, minutes);
+          const startHoursConverted = times1[0];
+          const endHoursConverted = times1[1];
+          const sqlFormattedDateTime = now.toISOString().replace('T', ' ').slice(0, 23);
+          loadPlaylist(sqlFormattedDateTime, startHoursConverted, endHoursConverted);
+        }
+
+        function loadPlaylist(sqlFormattedDateTime, startTime, endTime) {
+          console.log(`Loading playlist for the time slot: ${startTime} - ${endTime}`);
+
+          // Helper function to extract the last parameter from the URL.
+          function getUrlParameter(url) {
+            const segments = url.split('/');
+            const filteredSegments = segments.filter(segment => segment !== '');
+            const lastSegment = filteredSegments.pop();
+            return lastSegment;
+          }
+
+          const currentUrl = window.location.href;
+          const id = getUrlParameter(currentUrl);
+          if (id) {
+            var dataVideoPlayList = {
+              PlayDate: sqlFormattedDateTime,
+              PlayStartTime: startTime,
+              PlayEndTime: endTime,
+              CompanyUniqueId: id,
+              ScreenType: 'Vertical',
+              ScreenNo: 1
+            };
+
+            $.ajax({
+              url: baseURL + "Canvas/LoadPlaylist",
+              type: "POST",
+              dataType: "json",
+              data: dataVideoPlayList,
+              success: function (playVideopath) {
+                // Update the video sources array if you need sequential playback.
+                // For now we assume the API returns a single video URL.
+                // If your API returns more than one video path, you can assign them to the videoSources array.
+                var videoSources = [playVideopath];
+
+                // Set the first video (or the only video) as the current source.
+                setVideoSource(playVideopath);
+              },
+              error: function (data) {
+                console.log("Error loading playlist:", data);
+              }
+            });
+          }
         }
 
         // Check every 10 seconds if the time condition is met.
-       // setInterval(checkTimeAndUpdatePlaylist, 10000);
+        // Uncomment the line below to enable periodic playlist checks.
+        // setInterval(checkTimeAndUpdatePlaylist, 10000);
+
         function ConvertToTimeFormat(hours, minutes) {
-          // Ensure hours and minutes are two-digit strings
+          // Ensure hours and minutes are two-digit strings.
           const formattedHours = String(hours).padStart(2, '0');
           const formattedMinutes = String(minutes).padStart(2, '0');
 
+          const hourStartTime = `${formattedHours}:00:00`;
+          const hourEndTime  = `${formattedHours}:${formattedMinutes}:00`;
 
-           const hourStartTime = `${formattedHours}:00:00`;
-            const hourEndTime  = `${formattedHours}:${formattedMinutes}:00`;
-
-             return [hourStartTime, hourEndTime ];
+          return [hourStartTime, hourEndTime];
         }
     </script>
 }
