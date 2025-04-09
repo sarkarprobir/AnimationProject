@@ -111,7 +111,7 @@ ul.right-listone li {
     list-style-type:none; 
     width: 19.7%;
     float:left; 
-    margin-right:15px; 
+    margin: 0; 
 }
     ul.right-listone li a {
         margin-bottom: 17px;
@@ -144,17 +144,28 @@ ul.right-listone{padding:0px; margin:0px; width: 100%;
 	
 .nav-right ul{float:right; padding:0px; margin:0px;}	
 .nav-right ul li{list-style-type:none;  float:left; margin-left:0px;    }
-.nav-right ul li .btn{
-    color:#fff; font-size: var(--font-size14);    
-    padding: 0px 0px;
-    margin: 6px 10px 3px 6px;
-    border-radius: 6px;
-}
+    .nav-right ul li .btn {
+        color: #fff;
+        font-size: var(--font-size14);
+        padding: 0px 0px;
+        margin: 7px 8px 8px 8px;
+        border-radius: 6px;
+        box-shadow: none;
+        border: none;
+    }
  .nav-right ul li:hover {
         background-color: #6464647a;
     }
-.nav-right ul li.play-btn .btn{color:#fff; font-size: var(--font-size14); padding: 6px 10px;
-    border-radius: 6px; margin: 6px !important;}
+.nav-right ul li.play-btn .btn {
+    color:#fff; 
+    font-size: 16px; 
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 6px; 
+    margin: 6px !important;
+    box-shadow: none;
+    border: none;
+}
 
 .nav-right ul li button.login {
     color:#fff;
@@ -269,7 +280,11 @@ input:focus-visible + label {
 
 .tabset {max-width: 65em;}
 a.logo{float:left; margin-right:6px; padding-top:7px;}
-a.logo img{width: 27px; margin-top: 3px;}
+    a.logo img {
+        width: 25px;
+        margin-top: 4.8px;
+        height: 25px;
+    }
 ul.top-left-icon li{list-style-type:none;  padding:11px 6px; float:left;}
 ul.top-left-icon li:hover {
         background-color: #6464647a;
