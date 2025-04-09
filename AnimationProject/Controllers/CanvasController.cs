@@ -261,16 +261,42 @@ namespace AnimationProject.Controllers
         public async Task<IActionResult> LoadPlaylist(RequestGetPlayList request)
         {
             //if (!_checkSession.IsSession()) return Ok("login");
-            var response = new Response<ResponseGetPlayList>();
+            var response = new Response<List<ResponseGetPlayList>>();
             try
             {
+                if(request !=null && request.CompanyUniqueId==0)
+                {
+                    return Json("NO");
+                }
                 var getDesignBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetLoadPlaylist", JsonConvert.SerializeObject(request), user.token);
-                response = JsonConvert.DeserializeObject<Response<ResponseGetPlayList>>(getDesignBoard);
-                return Json(response.Data);
+                response = JsonConvert.DeserializeObject<Response<List<ResponseGetPlayList>>>(getDesignBoard);
+                return Json(response.Data[0].VideoPath);
             }
             catch (Exception ex)
             {
                 log.Info("***LoadPlaylist*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return Json("NO");
+            }
+
+        }
+        [HttpPost]
+        public async Task<IActionResult> GetScreenRefreshInterval(ScreenRefreshInterval request)
+        {
+            //if (!_checkSession.IsSession()) return Ok("login");
+            var response = new Response<ResponseRefreshMinutes>();
+            try
+            {
+                if (request != null && request.CompanyUniqueId == 0)
+                {
+                    return Json("NO");
+                }
+                var getDesignBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetScreenRefreshInterval", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<ResponseRefreshMinutes>>(getDesignBoard);
+                return Json(response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***GetScreenRefreshInterval*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
                 return Json("NO");
             }
 
