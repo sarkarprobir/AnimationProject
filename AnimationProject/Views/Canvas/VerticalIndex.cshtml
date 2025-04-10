@@ -508,6 +508,13 @@
         .menuboard-vertical-thum .active {
             border: 2px solid #0000ff80;
         }
+         
+        .miniCanvas {
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            width: 40px;
+            height: 40px;
+        }
     </style>
     <script>
             $(document).ready(function(){
@@ -712,25 +719,25 @@
                     <a class="logo ms-2" href="javascript:void(0)"> <img src="~/images/icons/icon-left-arrow.png" alt="Logo" alt="Logo" ></a>
                     <ul class="top-left-icon">
                         <li>
-                            <a href="javascript:void(0)"> <img id="toggle_img" src="~/images/icons/ico-pattren.svg" title="Pattren" alt="pattren" width="25"></a>
+                            <a href="javascript:void(0)"> <img id="toggle_img" src="~/images/icons/ico-pattren.svg" title="Pattren" alt="pattren" width="20"></a>
                         </li>
                         <li>
-                            <a href="javascript:void(0)"> <img onclick="addDefaultText();opentl();" src="~/images/icons/icon-text.png" title="Text" alt="text" width="20"></a>
+                            <a href="javascript:void(0)"> <img onclick="addDefaultText();opentl();" src="~/images/icons/icon-text.png" title="Text" alt="text" width="17"></a>
                         </li>
                         <li>
-                            <a href="javascript:void(0)"> <img src="~/images/icons/icon_circle.svg" title="Circle" alt="circle" width="20"></a>
+                            <a href="javascript:void(0)"> <img src="~/images/icons/icon_circle.svg" title="Circle" alt="circle" width="16"></a>
                         </li>
                         <li>
-                            <a href="javascript:void(0)"> <img src="~/images/icons/ico-shapes-masking.svg" title="Masking" alt="Masking" width="20"></a>
+                            <a href="javascript:void(0)"> <img src="~/images/icons/ico-shapes-masking.svg" title="Masking" alt="Masking" width="17"></a>
                         </li>
                         <li>
                             <a href="javascript:void(0)">
-                                <img onclick="opengl()" src="~/images/icons/icon_gallery.svg" title="Gallery" alt="Gallery" width="25">
+                                <img onclick="opengl()" src="~/images/icons/icon_gallery.svg" title="Gallery" alt="Gallery" width="20">
                             </a>
                         </li>
                         <li>
                             <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                                <img onclick="opengl()" src="~/images/icons/plus.png" title="Gallery" alt="Gallery" width="20">
+                                <img onclick="opengl()" src="~/images/icons/plus.png" title="Create" alt="Create_Board" width="18">
                             </a>
                         </li>
                     </ul>
@@ -755,13 +762,13 @@
                 <div class="col-md-3 nav-right">
                     <ul>
                         <li class="play-btn">
-                            <button class="btn" title="Preview" data-bs-toggle="modal" onclick="GetDesignBoardByIdForPublish();" data-bs-target="#imageModal"><img src="~/images/icons/Icon-01.svg" width="25"> </button>
+                            <button class="btn" title="Preview" data-bs-toggle="modal" onclick="GetDesignBoardByIdForPublish();" data-bs-target="#imageModal"><img src="~/images/icons/Icon-01.svg" width="20"> </button>
                         </li>
                         <li class="play-btn">
                             <button class="btn" title="Publish" onclick="triggerAutorefresh()" id="btnPublish">P </button>
                         </li>
                         <li>
-                            <button class="btn" type="submit"  onclick="GetDesignBoardByIdForDownload('download')" title="download" ><img src="~/images/icons/ico-download.svg"> </button>
+                            <button class="btn" type="submit"  onclick="GetDesignBoardByIdForDownload('download')" title="download" ><img src="~/images/icons/ico-download.svg" width="30"> </button>
                         </li>
                         
                         <li class="nav-item dropdown">
@@ -987,7 +994,7 @@
                                     </ul>
                                 </div>
                             <h2>Effects</h2>
-                                <ul class="right-listone" id="ulEffects">
+                                <ul class="right-listone d-flex gap-3" id="ulEffects">
                                 <li>
                                         <a id="alinear"  href="javascript:void(0)" onclick="textAnimationClick(this, 'linear')"> <img src="~/images/icons/icon-effict.png" alt="pattren"></a>
                                     <div class="clear"></div>
@@ -1007,46 +1014,46 @@
                                 <input type="hidden" id="hdnDirectiontSlide2" />
                                 <input type="hidden" id="hdnDirectiontSlide3" />
                             <h2>In</h2>
-                                <ul class="right-listone" id="uldirection">
+                                <ul class="right-listone d-flex justify-content-between align-items-center" id="uldirection">
                                     <li>
-                                        <div class="btn-canvas-container" style="position: relative; width: 50px; height: 50px;">
+                                        <div class="btn-canvas-container" style="width: 50px; height: 50px;">
                                             <!-- The button is visible by default -->
                                             <a id="aleft" href="javascript:void(0)" style="display: block; width: 100%; height: 100%;">
                                                 <img src="/images/icons/icon-lr.png" alt="Left to Center" style="width:100%; height:100%;">
                                             </a>
                                             <!-- The mini canvas is hidden by default -->
                                             <canvas onclick="setCoordinate(this,'left',100,20,50,50)" id="miniCanvas_aleft" class="miniCanvas" width="50" height="50"
-                                                    style="display: none; position: absolute; top: 0; left: 0; border: 1px solid #000;"></canvas>
+                                                    style="display: none;"></canvas>
                                         </div>
                                         <div class="clear"></div>
                                     </li>
                                     <li>
-                                        <div class="btn-canvas-container" style="position: relative; width: 50px; height: 50px;">
+                                        <div class="btn-canvas-container" style="width: 50px; height: 50px;">
                                             <a id="aright" href="javascript:void(0)" style="display: block; width: 100%; height: 100%;">
                                                 <img src="/images/icons/icon-rl.png" alt="Right to Center" style="width:100%; height:100%;">
                                             </a>
                                             <canvas onclick="setCoordinate(this,'right',400,0,50,50)" id="miniCanvas_aright" class="miniCanvas" width="50" height="50"
-                                                    style="display: none; position: absolute; top: 0; left: 0; border: 1px solid #000;"></canvas>
+                                                    style="display: none;"></canvas>
                                         </div>
                                         <div class="clear"></div>
                                     </li>
                                     <li>
-                                        <div class="btn-canvas-container" style="position: relative; width: 50px; height: 50px;">
+                                        <div class="btn-canvas-container" style="width: 50px; height: 50px;">
                                             <a id="abottom" href="javascript:void(0)" style="display: block; width: 100%; height: 100%;">
                                                 <img src="/images/icons/icon-bt.png" alt="Bottom to Center" style="width:100%; height:100%;">
                                             </a>
                                             <canvas onclick="setCoordinate(this,'bottom',800,0,50,50)" id="miniCanvas_abottom" class="miniCanvas" width="50" height="50"
-                                                    style="display: none; position: absolute; top: 0; left: 0; border: 1px solid #000;"></canvas>
+                                                    style="display: none;"></canvas>
                                         </div>
                                         <div class="clear"></div>
                                     </li>
                                     <li>
-                                        <div class="btn-canvas-container" style="position: relative; width: 50px; height: 50px;">
+                                        <div class="btn-canvas-container" style="width: 50px; height: 50px;">
                                             <a id="atop" href="javascript:void(0)" style="display: block; width: 100%; height: 100%;">
                                                 <img src="/images/icons/icon-tb.png" alt="Top to Center" style="width:100%; height:100%;">
                                             </a>
                                             <canvas onclick="setCoordinate(this,'top',400,0,50,50)" id="miniCanvas_atop" class="miniCanvas" width="50" height="50"
-                                                    style="display: none; position: absolute; top: 0; left: 0; border: 1px solid #000;"></canvas>
+                                                    style="display: none;"></canvas>
                                         </div>
                                         <div class="clear"></div>
                                     </li>
