@@ -40,6 +40,10 @@
         public Guid DesignBoardId { get; set; }
         public string VideoPath { get; set; }
     }
+    public class RequestTriggerAutorefresh
+    {
+        public long CompanyUniqueId { get; set; }
+    }
     public class RequestGetDesignBoard
      {
         public Guid CustomerId { get; set; }

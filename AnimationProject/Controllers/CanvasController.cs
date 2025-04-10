@@ -3,6 +3,7 @@ using AnimationProject.Helpers;
 using AnimationProject.Models;
 using AnimationProject.Models.Common;
 using AnimationProject.Services;
+using DocumentFormat.OpenXml.EMMA;
 using DocumentFormat.OpenXml.Office2016.Excel;
 using DocumentFormat.OpenXml.Spreadsheet;
 using log4net;
@@ -23,6 +24,7 @@ namespace AnimationProject.Controllers
     {
         private readonly IServiceAPI _restAPI;
         private readonly ICheckSession _checkSession;
+        private readonly IRefreshNotifier _refreshNotifier;
 
 
         private readonly AppSettings _appSettings;
@@ -35,12 +37,14 @@ namespace AnimationProject.Controllers
         public CanvasController(IServiceAPI restAPI,
             ICheckSession checkSession,
             IHttpContextAccessor httpContextAccessor,
-            IOptions<AppSettings> appSettings)
+            IOptions<AppSettings> appSettings,
+            IRefreshNotifier refreshNotifier)
         {
             _restAPI = restAPI;
             _checkSession = checkSession;
             _httpContextAccessor = httpContextAccessor;
             _appSettings = appSettings.Value;
+            _refreshNotifier = refreshNotifier;
         }
         public IActionResult Index()
         {
@@ -249,6 +253,25 @@ namespace AnimationProject.Controllers
                 var updateDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/UpdateDesignBoardLargeVideoPath", JsonConvert.SerializeObject(request), user.token);
                 response = JsonConvert.DeserializeObject<Response<ResponseUpdateDesignBoardLargeVideoPath>>(updateDesignSlideBoard);
                 return Json(response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***UpdateDesignBoardLargeVideoPath*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return Json("NO");
+            }
+
+        }
+        [HttpPost]
+        public async Task<IActionResult> TriggerAutorefresh(RequestTriggerAutorefresh request)
+        {
+            //if (!_checkSession.IsSession()) return Ok("login");
+            try
+            {
+                //
+                await Task.Delay(2000);
+                request.CompanyUniqueId = 1;//pass it from session
+                await _refreshNotifier.NotifyRefreshForCompanyAsync(request.CompanyUniqueId.ToString());
+                return Json("");
             }
             catch (Exception ex)
             {

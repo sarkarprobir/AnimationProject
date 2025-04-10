@@ -633,7 +633,7 @@ async function GetDesignBoardByIdForPublish() {
                 console.log("jsonArray:", jsonArray);
                 loadJsonFile();
             }
-            //setTimeout(() => { GetDesignBoardByIdForDownload(''); }, 25000);
+            setTimeout(() => { GetDesignBoardByIdForDownload(''); }, 25000);
             HideLoader();
         } catch (e) {
             console.log("catch", e);
@@ -863,6 +863,7 @@ function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
                     dataType: "json",
                     data: dataVideoPath,
                     success: function (slideResult) {
+                       // triggerAutorefresh();
                     },
                     error: function (data) {
                         console.log("error in saving Image " + activeSlide);
@@ -874,6 +875,23 @@ function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
         .catch(error => {
             console.error('Error saving video:', error);
         });
+}
+function triggerAutorefresh() {
+    var dataVideoAutorefresh = {
+        CompanyUniqueId: 0
+    };
+
+    $.ajax({
+        url: baseURL + "Canvas/TriggerAutorefresh",
+        type: "POST",
+        dataType: "json",
+        data: dataVideoAutorefresh,
+        success: function (autoTriggerResult) {
+        },
+        error: function (data) {
+            console.log("error in Trigger Autorefresh " + activeSlide);
+        }
+    });
 }
 function uploadVideo(blob, existingFolderId = 'new', currentIndex =1) {
     const formData = new FormData();

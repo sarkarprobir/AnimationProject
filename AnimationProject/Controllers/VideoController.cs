@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿using AnimationProject.Services;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -13,6 +14,7 @@ namespace YourNamespace.Controllers
     public class VideoController : ControllerBase
     {
         private readonly IWebHostEnvironment _env;
+        
 
         public VideoController(IWebHostEnvironment env)
         {
@@ -157,6 +159,23 @@ namespace YourNamespace.Controllers
             var folderName = !string.IsNullOrEmpty(folderId) ? folderId : Path.GetFileName(targetFolder);
             var relativeFilePath = $"/SlideLargeVideo/{folderName}/{fileName}?nocache={Guid.NewGuid()}";
 
+            
+
+            // Wait until the file is accessible (with a maximum wait time if needed)
+            int maxAttempts = 60;  // e.g., 60 attempts * 500ms = 30 seconds max
+            int attempts = 0;
+            while (!IsFileReady(filePath) && attempts < maxAttempts)
+            {
+                await Task.Delay(500);  // Wait 500ms
+                attempts++;
+            }
+
+            //if (attempts >= maxAttempts)
+            //{
+            //    // Optionally handle the case when the file is still not ready.
+            //    Console.WriteLine("Warning: File is not accessible after waiting.");
+            //}
+
             return Ok(new
             {
                 message = "Video saved successfully",
@@ -165,6 +184,23 @@ namespace YourNamespace.Controllers
                 filePath = relativeFilePath
             });
         }
+        // Helper method to check if a file is ready (not locked)
+        private bool IsFileReady(string filePath)
+        {
+            try
+            {
+                // Attempt to open the file exclusively.
+                using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.None))
+                {
+                    return true;
+                }
+            }
+            catch (IOException)
+            {
+                return false;
+            }
+        }
+
         [HttpPost("save-image")]
         public async Task<IActionResult> SaveImage([FromForm] IFormFile image, [FromForm] string folderId)
         {

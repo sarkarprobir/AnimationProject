@@ -127,18 +127,6 @@
                 data: dataRefreshInterval
             });
             return response.refreshMinutes;
-            //$.ajax({
-            //    url: baseURL + "Canvas/GetScreenRefreshInterval",
-            //    type: "POST",
-            //    dataType: "json",
-            //    data: dataRefreshInterval,
-            //    success: function (refreshInterval) {
-            //        return refreshInterval.refreshMinutes;
-            //    },
-            //    error: function (data) {
-            //        return 200;
-            //    }
-            //});
         } catch (error) {
             return 200;
         }
@@ -183,4 +171,32 @@
         console.log('Fetched refresh interval (in minutes):', refreshIntervalMinutes);
         scheduleRefresh(refreshIntervalMinutes);
     }
+
+    function getCompanyIdFromUrl() {
+        const segments = window.location.pathname.split('/').filter(segment => segment !== '');
+        // Assuming the last segment is the company ID.
+        return segments.length ? segments[segments.length - 1] : null;
+    }
+
+    const companyUniqueId = getCompanyIdFromUrl();
+
+    // Establish an EventSource connection to the SSE endpoint.
+    const evtSource = new EventSource("/sse");
+
+    evtSource.onmessage = function (event) {
+        try {
+            const message = JSON.parse(event.data);
+            if (message.action === "refresh" && message.companyUniqueId === companyUniqueId) {
+                console.log("Data updated for my company. Refreshing page.");
+                window.location.replace(window.location.href);
+            }
+        } catch (err) {
+            console.error("Error parsing SSE message:", err);
+        }
+    };
+
+    evtSource.onerror = function (err) {
+        console.error("SSE connection error:", err);
+    };
+
 })();
