@@ -765,7 +765,7 @@
                             <button class="btn" title="Preview" data-bs-toggle="modal" onclick="GetDesignBoardByIdForPublish();" data-bs-target="#imageModal"><img src="~/images/icons/Icon-01.svg" width="20"> </button>
                         </li>
                         <li class="play-btn">
-                            <button class="btn" title="Publish" onclick="GetDesignBoardByIdForDownload('')" id="btnPublish">P </button>
+                            <button class="btn" title="Publish" onclick="triggerAutorefresh()" id="btnPublish">P </button>
                         </li>
                         <li>
                             <button class="btn" type="submit"  onclick="GetDesignBoardByIdForDownload('download')" title="download" ><img src="~/images/icons/ico-download.svg" width="30"> </button>
@@ -814,7 +814,14 @@
 
                     <div class="modal-body">
                         @* <img src="~/images/banner.png" alt="Placeholder Image"> *@
-                        <canvas id="myCanvasElement" class="clsmyCanvas" width="427" height="635" style="background: lightgray; position: relative;"></canvas>
+                       @*  <canvas id="myCanvasElement" class="clsmyCanvas" width="427" height="635" style="background: lightgray; position: relative;"></canvas> *@
+                        <canvas id="myCanvasElement"
+                                class="clsmyCanvas"
+                                width="595"
+                                height="1058"
+                                style="background: lightgray; width: 100%; max-width: 427px; height: 635px;">
+                        </canvas>
+
                     </div>
 
                 </div>
@@ -822,7 +829,7 @@
         </div>
     </div>
     <!-- Modal for preview board design will be visible false-->
-    <div class="play_modal_body" style="display:none">
+    <div class="play_modal_body" style="display:none;">
         <div  id="downloadModal" tabindex="-1"  aria-hidden="true" >
             <div>
                 <div class="modal-content">
