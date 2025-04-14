@@ -1443,7 +1443,7 @@ function drawCanvasForDownload(condition) {
 }
 function animateTextForPublish(animationType,direction, condition, loopCount) {
     
-    textObjects.forEach(obj => {
+    textObjects.forEach((obj, index) => {
 
         // Save the object's final position.
         const endX = obj.x;
@@ -1485,7 +1485,7 @@ function animateTextForPublish(animationType,direction, condition, loopCount) {
         const exitX = window.innerWidth; // Example: exit to the right of the screen.
         const exitY = endY;              // Maintain the same vertical position.
         ////end///////////
-        if (animationType === "linear") {
+        if (animationType === "linear" || animationType === "zoom") {
 
             ////This section is for in out and stay
             let tl = gsap.timeline({
@@ -1527,7 +1527,52 @@ function animateTextForPublish(animationType,direction, condition, loopCount) {
                 onUpdate: () => drawCanvasPublish(condition)
             });   
 
-        } else if (animationType === "elastic") {
+        }
+        else if (animationType === "delaylinear") {
+            setTimeout(() => {
+                ////This section is for in out and stay
+                let tl = gsap.timeline({
+                    repeat: loopCount - 1, // loops = initial + (loopCount - 1) repeats
+                    onUpdate: function () {
+                        drawCanvasPublish(condition);
+                    }
+                });
+
+                // "In" phase: Animate the object onto the canvas.
+                tl.to(obj, {
+                    x: endX,
+                    y: endY,
+                    duration: inTime,
+                    ease: "power1.in"
+                });
+
+                // "Stay" phase: Hold the object in place for the stay duration.
+                // This tween doesn't change any properties; it just acts as a pause.
+                tl.to(obj, {
+                    duration: stayTime,
+                    ease: "none"
+                });
+
+                // "Out" phase: Animate the object off the canvas.
+                tl.to(obj, {
+                    x: exitX,
+                    y: exitY,
+                    duration: outTime,
+                    ease: "power1.out"
+                });
+                // Final phase: Reset the object to the final position with text.
+                // This sets the object’s position to (endX, endY) after the out tween completes.
+                tl.set(obj, {
+                    x: endX,
+                    y: endY,
+                    duration: 0,
+                    ease: "power1.inOut",
+                    onUpdate: () => drawCanvasPublish(condition),
+                });
+            }, index * 2000); // 3000 milliseconds per index increment
+        }
+
+        else if (animationType === "elastic") {
             gsap.to(obj, {
                 x: endX,
                 y: endY,
@@ -1582,7 +1627,7 @@ function animateTextForPublish(animationType,direction, condition, loopCount) {
                     onUpdate: drawCanvasPublish(condition),
                 }
             );
-        } else if (animationType === "bounce") {
+        } else if (animationType === "bounce" || animationType === "blur") {
 
             ////This section is for in out and stay
             let tl = gsap.timeline({
@@ -1703,7 +1748,7 @@ function animateTextForPublish(animationType,direction, condition, loopCount) {
     });
 
     // ----- IMAGE ANIMATION SECTION -----
-    images.forEach(imgObj => {
+    images.forEach((imgObj, indexImg) => {
         // Save the image's final (target) position.
         const endX = imgObj.x;
         const endY = imgObj.y;
@@ -1712,6 +1757,10 @@ function animateTextForPublish(animationType,direction, condition, loopCount) {
         // Calculate displayed dimensions using scale factors.
         const dispWidth = imgObj.width * (imgObj.scaleX || 1);
         const dispHeight = imgObj.height * (imgObj.scaleY || 1);
+
+        // Save original scales (or use default if not defined).
+        const originalScaleX = imgObj.scaleX || 1;
+        const originalScaleY = imgObj.scaleY || 1;
 
         // Determine starting position based on the chosen direction.
         switch (direction) {
@@ -1803,13 +1852,146 @@ function animateTextForPublish(animationType,direction, condition, loopCount) {
                 onUpdate: () => drawCanvasPublish(condition)
             });
         }
+        else if (animationType === "delaylinear") {
+            setTimeout(() => {
+                tl.to(imgObj, {
+                    x: endX,
+                    y: endY,
+                    duration: inTime,
+                    ease: "power1.in"
+                });
+                tl.to(imgObj, {
+                    duration: stayTime,
+                    ease: "none"
+                });
+                tl.to(imgObj, {
+                    x: exitX,
+                    y: exitY,
+                    duration: outTime,
+                    ease: "power1.out"
+                });
+                tl.set(imgObj, {
+                    x: endX,
+                    y: endY,
+                    duration: 0,
+                    ease: "power1.inOut",
+                    onUpdate: () => drawCanvasPublish(condition)
+                });
+            }, indexImg * 4000); // 3000 milliseconds per index increment
+        }
+        else if (animationType === "zoom") {
+            // Zoom in: animate from scale 0 to the original scale (the "large" size) while moving to end position.
+            tl.fromTo(
+                imgObj,
+                { scaleX: 0, scaleY: 0, x: startX, y: startY },
+                {
+                    scaleX: originalScaleX,
+                    scaleY: originalScaleY,
+                    x: endX,
+                    y: endY,
+                    duration: inTime,
+                    ease: "power2.out",
+                    onUpdate: () => drawCanvasPublish(condition)
+                }
+            );
+
+            // Pause at full size.
+            tl.to(imgObj, {
+                duration: stayTime,
+                ease: "none"
+            });
+
+            // Zoom out: animate to scale down and move off screen (exit position).
+            tl.to(imgObj, {
+                scaleX: 0,
+                scaleY: 0,
+                x: exitX,
+                y: exitY,
+                duration: outTime,
+                ease: "power2.in",
+                onUpdate: () => drawCanvasPublish(condition)
+            });
+
+            // Optionally reset the image's position and scale.
+            tl.set(imgObj, {
+                x: endX,
+                y: endY,
+                scaleX: originalScaleX,
+                scaleY: originalScaleY,
+                duration: 0,
+                ease: "none",
+                onUpdate: () => drawCanvasPublish(condition)
+            });
+        }
+        else if (animationType === "blur") {
+            // Initialize a custom property "blur" on the image; start fully blurred.
+            imgObj.blur = 5; // for example, start with 5px blur
+
+            // 1. Blur-In Phase:
+            // Animate the image from fully blurred at the start position to no blur at the end position.
+            tl.fromTo(
+                imgObj,
+                { blur: 5, x: startX, y: startY },
+                {
+                    blur: 0, // end with no blur
+                    x: endX,
+                    y: endY,
+                    duration: inTime,
+                    ease: "power2.out",
+                    onUpdate: () => {
+                        // While animating, update the canvas filter based on the current blur value.
+                        ctx.filter = `blur(${imgObj.blur}px)`;
+                        drawCanvasPublish(condition);
+                    },
+                    onComplete: () => {
+                        // Ensure the canvas filter is cleared when the inTime phase is done.
+                        ctx.filter = "none";
+                        drawCanvasPublish(condition);
+                    }
+                }
+            );
+
+            // 2. Stay Phase (no blur effect here).
+            tl.to(imgObj, {
+                duration: stayTime,
+                ease: "none",
+                onUpdate: () => {
+                    ctx.filter = "none"; // keep canvas clear of blur during stay
+                    drawCanvasPublish(condition);
+                }
+            });
+
+            // 3. Out Phase: move the image to the exit position (with no blur).
+            tl.to(imgObj, {
+                x: exitX,
+                y: exitY,
+                duration: outTime,
+                ease: "power2.in",
+                onUpdate: () => {
+                    ctx.filter = "none";
+                    drawCanvasPublish(condition);
+                }
+            });
+
+            // Optionally, reset the image's properties if needed.
+            tl.set(imgObj, {
+                x: endX,
+                y: endY,
+                duration: 0,
+                ease: "none",
+                onUpdate: () => {
+                    ctx.filter = "none";
+                    drawCanvasPublish(condition);
+                }
+            });
+        }
     });
 
 }
 
 function animateTextForDownload(animationType, direction, condition, loopCount) {
 
-    textObjects.forEach(obj => {
+    textObjects.forEach((obj, index) => {
 
         // Save the object's final position.
         const endX = obj.x;
@@ -1851,7 +2033,7 @@ function animateTextForDownload(animationType, direction, condition, loopCount) 
         const exitX = window.innerWidth; // Example: exit to the right of the screen.
         const exitY = endY;              // Maintain the same vertical position.
         ////end///////////
-        if (animationType === "linear") {
+        if (animationType === "linear" || animationType === "zoom") {
 
             ////This section is for in out and stay
             let tl = gsap.timeline({
@@ -1893,7 +2075,51 @@ function animateTextForDownload(animationType, direction, condition, loopCount) 
                 onUpdate: () => drawCanvasForDownload(condition)
             });
 
-        } else if (animationType === "elastic") {
+        } else if (animationType === "delaylinear") {
+            setTimeout(() => {
+                ////This section is for in out and stay
+                let tl = gsap.timeline({
+                    repeat: loopCount - 1, // loops = initial + (loopCount - 1) repeats
+                    onUpdate: function () {
+                        drawCanvasForDownload(condition);
+                    }
+                });
+
+                // "In" phase: Animate the object onto the canvas.
+                tl.to(obj, {
+                    x: endX,
+                    y: endY,
+                    duration: inTime,
+                    ease: "power1.in"
+                });
+
+                // "Stay" phase: Hold the object in place for the stay duration.
+                // This tween doesn't change any properties; it just acts as a pause.
+                tl.to(obj, {
+                    duration: stayTime,
+                    ease: "none"
+                });
+
+                // "Out" phase: Animate the object off the canvas.
+                tl.to(obj, {
+                    x: exitX,
+                    y: exitY,
+                    duration: outTime,
+                    ease: "power1.out"
+                });
+                // Final phase: Reset the object to the final position with text.
+                // This sets the object’s position to (endX, endY) after the out tween completes.
+                tl.set(obj, {
+                    x: endX,
+                    y: endY,
+                    duration: 0,
+                    ease: "power1.inOut",
+                    onUpdate: () => drawCanvasForDownload(condition),
+                });
+            }, index * 2000); // 3000 milliseconds per index increment
+        }
+
+        else if (animationType === "elastic") {
             gsap.to(obj, {
                 x: endX,
                 y: endY,
@@ -1948,7 +2174,7 @@ function animateTextForDownload(animationType, direction, condition, loopCount) 
                     onUpdate: drawCanvasForDownload(condition),
                 }
             );
-        } else if (animationType === "bounce") {
+        } else if (animationType === "bounce" || animationType === "blur") {
 
             ////This section is for in out and stay
             let tl = gsap.timeline({
@@ -2069,7 +2295,7 @@ function animateTextForDownload(animationType, direction, condition, loopCount) 
     });
 
     // ----- IMAGE ANIMATION SECTION -----
-    images.forEach(imgObj => {
+    images.forEach((imgObj, indexImg) => {
         // Save the image's final (target) position.
         const endX = imgObj.x;
         const endY = imgObj.y;
@@ -2078,6 +2304,10 @@ function animateTextForDownload(animationType, direction, condition, loopCount) 
         // Calculate displayed dimensions using scale factors.
         const dispWidth = imgObj.width * (imgObj.scaleX || 1);
         const dispHeight = imgObj.height * (imgObj.scaleY || 1);
+
+        // Save original scales (or use default if not defined).
+        const originalScaleX = imgObj.scaleX || 1;
+        const originalScaleY = imgObj.scaleY || 1;
 
         // Determine starting position based on the chosen direction.
         switch (direction) {
@@ -2167,6 +2397,139 @@ function animateTextForDownload(animationType, direction, condition, loopCount) 
                 duration: 0,
                 ease: "bounce.out",
                 onUpdate: () => drawCanvasForDownload(condition)
+            });
+        }
+        else if (animationType === "delaylinear") {
+            setTimeout(() => {
+                tl.to(imgObj, {
+                    x: endX,
+                    y: endY,
+                    duration: inTime,
+                    ease: "power1.in"
+                });
+                tl.to(imgObj, {
+                    duration: stayTime,
+                    ease: "none"
+                });
+                tl.to(imgObj, {
+                    x: exitX,
+                    y: exitY,
+                    duration: outTime,
+                    ease: "power1.out"
+                });
+                tl.set(imgObj, {
+                    x: endX,
+                    y: endY,
+                    duration: 0,
+                    ease: "power1.inOut",
+                    onUpdate: () => drawCanvasForDownload(condition)
+                });
+            }, indexImg * 4000); // 3000 milliseconds per index increment
+        }
+        else if (animationType === "zoom") {
+            // Zoom in: animate from scale 0 to the original scale (the "large" size) while moving to end position.
+            tl.fromTo(
+                imgObj,
+                { scaleX: 0, scaleY: 0, x: startX, y: startY },
+                {
+                    scaleX: originalScaleX,
+                    scaleY: originalScaleY,
+                    x: endX,
+                    y: endY,
+                    duration: inTime,
+                    ease: "power2.out",
+                    onUpdate: () => drawCanvasForDownload(condition)
+                }
+            );
+
+            // Pause at full size.
+            tl.to(imgObj, {
+                duration: stayTime,
+                ease: "none"
+            });
+
+            // Zoom out: animate to scale down and move off screen (exit position).
+            tl.to(imgObj, {
+                scaleX: 0,
+                scaleY: 0,
+                x: exitX,
+                y: exitY,
+                duration: outTime,
+                ease: "power2.in",
+                onUpdate: () => drawCanvasForDownload(condition)
+            });
+
+            // Optionally reset the image's position and scale.
+            tl.set(imgObj, {
+                x: endX,
+                y: endY,
+                scaleX: originalScaleX,
+                scaleY: originalScaleY,
+                duration: 0,
+                ease: "none",
+                onUpdate: () => drawCanvasForDownload(condition)
+            });
+        }
+        else if (animationType === "blur") {
+            // Initialize a custom property "blur" on the image; start fully blurred.
+            imgObj.blur = 5; // for example, start with 5px blur
+
+            // 1. Blur-In Phase:
+            // Animate the image from fully blurred at the start position to no blur at the end position.
+            tl.fromTo(
+                imgObj,
+                { blur: 5, x: startX, y: startY },
+                {
+                    blur: 0, // end with no blur
+                    x: endX,
+                    y: endY,
+                    duration: inTime,
+                    ease: "power2.out",
+                    onUpdate: () => {
+                        // While animating, update the canvas filter based on the current blur value.
+                        ctx.filter = `blur(${imgObj.blur}px)`;
+                        drawCanvasForDownload(condition);
+                    },
+                    onComplete: () => {
+                        // Ensure the canvas filter is cleared when the inTime phase is done.
+                        ctx.filter = "none";
+                        drawCanvasForDownload(condition);
+                    }
+                }
+            );
+
+            // 2. Stay Phase (no blur effect here).
+            tl.to(imgObj, {
+                duration: stayTime,
+                ease: "none",
+                onUpdate: () => {
+                    ctx.filter = "none"; // keep canvas clear of blur during stay
+                    drawCanvasForDownload(condition);
+                }
+            });
+
+            // 3. Out Phase: move the image to the exit position (with no blur).
+            tl.to(imgObj, {
+                x: exitX,
+                y: exitY,
+                duration: outTime,
+                ease: "power2.in",
+                onUpdate: () => {
+                    ctx.filter = "none";
+                    drawCanvasForDownload(condition);
+                }
+            });
+
+            // Optionally, reset the image's properties if needed.
+            tl.set(imgObj, {
+                x: endX,
+                y: endY,
+                duration: 0,
+                ease: "none",
+                onUpdate: () => {
+                    ctx.filter = "none";
+                    drawCanvasForDownload(condition);
+                }
             });
         }
     });
