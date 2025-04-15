@@ -695,8 +695,6 @@ function animateText(direction, condition, loopCount) {
             images.forEach(img => {
                 img.x = img.finalX;
                 img.y = img.finalY;
-                console.log('image x', img.finalX)
-                console.log('image y', img.finalY)
             });
             textObjects.forEach(txt => {
                 txt.x = txt.finalX;
