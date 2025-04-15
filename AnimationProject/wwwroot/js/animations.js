@@ -565,646 +565,512 @@ function uploadImage(blob, existingFolderId = 'new') {
             console.error('Error saving image:', error);
         });
 }
-function animateText(direction, condition, loopCount ) {
+function animateText(direction, condition, loopCount) {
     const animationType = document.getElementById("hdnTextAnimationType").value;
-    textObjects.forEach((obj, index) => {
-       
-          
-       
-        // Save the object's final position.
-        const endX = obj.x;
-        const endY = obj.y;
-        let startX, startY;
 
-        // Determine starting position based on the chosen direction.
+    // Global timing settings (from your selected speeds).
+    const inTime = parseFloat(selectedInSpeed) || 4;   // e.g. 4 seconds for all "in"
+    const outTime = parseFloat(selectedOutSpeed) || 3;   // e.g. 3 seconds for all "out"
+    const stayTime = parseFloat(selectedStaySpeed) || 6; // Overall stay time (applied globally if desired)
+
+    // ----- TEXT ANIMATION SECTION -----
+    // Pre-calculate final positions and offscreen positions.
+    textObjects.forEach((obj) => {
+       
+        // Save the final (target) position.
+        obj.finalX = obj.x;
+        obj.finalY = obj.y;
+
+        // Compute the starting (offscreen) and exit positions based on the direction.
         switch (direction) {
             case "top":
-                startX = endX;           // same x as final
-                startY = - (obj.boundingHeight + 5);   // Place the object fully above the canvas:
+                obj.x = obj.finalX;
+                obj.y = -(obj.boundingHeight + 5);
+                obj.exitX = obj.finalX;
+                obj.exitY = -(obj.boundingHeight + 5);
                 break;
             case "bottom":
-                startX = endX;           // same x as final
-                startY = canvas.height + 5;  // Place the object fully below the canvas:
+                obj.x = obj.finalX;
+                obj.y = canvas.height + 5;
+                obj.exitX = obj.finalX;
+                obj.exitY = canvas.height + 5;
                 break;
             case "left":
-                startX = - (obj.boundingWidth + 5); // Place the object fully to the left of the canvas:
-                startY = endY;           // same y as final
+                obj.x = -(obj.boundingWidth + 5);
+                obj.y = obj.finalY;
+                obj.exitX = -(obj.boundingWidth + 5);
+                obj.exitY = obj.finalY;
                 break;
             case "right":
-                startX = canvas.width + 5;   // Place the object fully to the right of the canvas:
-                startY = endY;           // same y as final
+                obj.x = canvas.width + 5;
+                obj.y = obj.finalY;
+                obj.exitX = canvas.width + 5;
+                obj.exitY = obj.finalY;
                 break;
             default:
-                // If no valid direction is provided, use current values.
-                startX = endX;
-                startY = endY;
+                // Default: animate offscreen to the right.
+                obj.x = obj.finalX;
+                obj.y = obj.finalY;
+                obj.exitX = window.innerWidth;
+                obj.exitY = obj.finalY;
         }
-
-        // Set the object's starting position.
-        obj.x = startX;
-        obj.y = startY;
-
-        //This section is for in out and stay
-        const inTime = parseFloat(selectedInSpeed) || 3;   // How fast the object comes onto the canvas.
-        const stayTime = parseFloat(selectedStaySpeed) || 6; // How long the object stays on screen.
-        const outTime = parseFloat(selectedOutSpeed) || 2;  // How fast the object leaves the canvas.
-        const exitX = window.innerWidth; // Example: exit to the right of the screen.
-        const exitY = endY;              // Maintain the same vertical position.
-        ////end///////////
-        if (animationType === "linear" || animationType === "zoom") {
-
-            ////This section is for in out and stay
-            let tl = gsap.timeline({
-                repeat: loopCount - 1, // loops = initial + (loopCount - 1) repeats
-                onUpdate: function () {
-                    drawCanvas(condition);
-                }
-            });
-
-            // "In" phase: Animate the object onto the canvas.
-            tl.to(obj, {
-                x: endX,
-                y: endY,
-                duration: inTime,
-                ease: "power1.in"
-            });
-
-            // "Stay" phase: Hold the object in place for the stay duration.
-            // This tween doesn't change any properties; it just acts as a pause.
-            tl.to(obj, {
-                duration: stayTime,
-                ease: "none"
-            });
-
-            // "Out" phase: Animate the object off the canvas.
-            tl.to(obj, {
-                x: exitX,
-                y: exitY,
-                duration: outTime,
-                ease: "power1.out"
-            });
-            // Final phase: Reset the object to the final position with text.
-            // This sets the object’s position to (endX, endY) after the out tween completes.
-            tl.set(obj, {
-                x: endX,
-                y: endY,
-                duration: 0,
-                ease: "power1.inOut",
-                onUpdate: () => drawCanvas(condition),
-                //onComplete: function () {
-                //    setTimeout(() => {
-                //        const canvas = document.getElementById('myCanvas'); // Your canvas element
-                //        const ctx = canvas.getContext('2d');
-
-                //        // Ensure all images & SVGs are fully loaded before capturing
-                //        const images = document.querySelectorAll("img, svg");
-                //        let loadedCount = 0;
-                //        images.forEach(img => {
-                //            if (!img.complete) {
-                //                img.onload = () => {
-                //                    loadedCount++;
-                //                    if (loadedCount === images.length) captureCanvas();
-                //                };
-                //                img.onerror = () => {
-                //                    console.warn("Failed to load image:", img.src);
-                //                    loadedCount++;
-                //                };
-                //            } else {
-                //                loadedCount++;
-                //            }
-                //        });
-
-                //        if (loadedCount === images.length) captureCanvas(); // If all images are already loaded
-
-                //        function captureCanvas() {
-                //            canvas.toBlob((blob) => {
-                //                if (!blob) {
-                //                    console.error("Canvas capture failed");
-                //                    return;
-                //                }
-
-                //                // Determine edit/save mode
-                //                const existingFolderId = $(`#hdnDesignBoardDetailsIdSlide${activeSlide}`).val() || 'new';
-                //                uploadImage(blob, existingFolderId);
-                //            }, "image/png");
-                //        }
-                //    }, 300); // Small delay to ensure rendering is complete
-                //}
-            });
-            ////end///////////
-            ////This is default animation of linear
-            //gsap.to(obj, {
-            //    x: endX,
-            //    y: endY,
-            //    duration: parseFloat(selectedSpeed) || 2,
-            //    ease: "power1.inOut",
-            //    onUpdate: () => drawCanvas(condition),
-            //});
-
-
-        } else if (animationType === "delaylinear") {
-            setTimeout(() => {
-            ////This section is for in out and stay
-            let tl = gsap.timeline({
-                repeat: loopCount - 1, // loops = initial + (loopCount - 1) repeats
-                onUpdate: function () {
-                    drawCanvas(condition);
-                }
-            });
-
-            // "In" phase: Animate the object onto the canvas.
-            tl.to(obj, {
-                x: endX,
-                y: endY,
-                duration: inTime,
-                ease: "power1.in"
-            });
-
-            // "Stay" phase: Hold the object in place for the stay duration.
-            // This tween doesn't change any properties; it just acts as a pause.
-            tl.to(obj, {
-                duration: stayTime,
-                ease: "none"
-            });
-
-            // "Out" phase: Animate the object off the canvas.
-            tl.to(obj, {
-                x: exitX,
-                y: exitY,
-                duration: outTime,
-                ease: "power1.out"
-            });
-            // Final phase: Reset the object to the final position with text.
-            // This sets the object’s position to (endX, endY) after the out tween completes.
-            tl.set(obj, {
-                x: endX,
-                y: endY,
-                duration: 0,
-                ease: "power1.inOut",
-                onUpdate: () => drawCanvas(condition),
-            });
-            }, index * 2000); // 3000 milliseconds per index increment
-        }
-
-        else if (animationType === "elastic") {
-            gsap.to(obj, {
-                x: endX,
-                y: endY,
-                duration: parseFloat(selectedInSpeed) || 2.5,
-                ease: "elastic.out(1, 0.3)",
-                onUpdate: drawCanvas,
-            });
-        } else if (animationType === "wave") {
-            let angle = 0;
-            gsap.ticker.add(() => {
-                obj.x = startX + (endX - startX) * 0.5 + Math.sin(angle) * 100;
-                obj.y = startY + (endY - startY) * 0.5;
-                drawCanvas(condition);
-                angle += 0.05;
-            });
-        } else if (animationType === "fadeIn") {
-            gsap.fromTo(
-                obj,
-                { opacity: 0, x: startX, y: startY },
-                {
-                    opacity: 1,
-                    x: endX,
-                    y: endY,
-                    duration: 2,
-                    ease: "power2.out",
-                    onUpdate: drawCanvas,
-                }
-            );
-        } else if (animationType === "zoomInOut") {
-            gsap.fromTo(
-                obj,
-                { scale: 0, x: startX, y: startY },
-                {
-                    scale: 1,
-                    x: endX,
-                    y: endY,
-                    duration: 2,
-                    ease: "power2.inOut",
-                    onUpdate: drawCanvas,
-                }
-            );
-        } else if (animationType === "rotate") {
-            gsap.fromTo(
-                obj,
-                { rotation: 0, x: startX, y: startY },
-                {
-                    rotation: 360,
-                    x: endX,
-                    y: endY,
-                    duration: 2,
-                    ease: "power2.inOut",
-                    onUpdate: drawCanvas,
-                }
-            );
-        } else if (animationType === "bounce" || animationType === "blur") {
-
-            ////This section is for in out and stay
-            let tl = gsap.timeline({
-                repeat: loopCount - 1,
-                onUpdate: function () {
-                    drawCanvas(condition);
-                }
-            });
-
-            // "In" phase: Animate the object onto the canvas.
-            tl.to(obj, {
-                x: endX,
-                y: endY,
-                duration: inTime,
-                ease: "bounce.out"
-            });
-
-            // "Stay" phase: Hold the object in place for the stay duration.
-            // This tween doesn't change any properties; it just acts as a pause.
-            tl.to(obj, {
-                duration: stayTime,
-                ease: "none"
-            });
-
-            // "Out" phase: Animate the object off the canvas.
-            tl.to(obj, {
-                x: exitX,
-                y: exitY,
-                duration: outTime,
-                ease: "bounce.out"
-            });
-            // Final phase: Reset the object to the final position with text.
-            // This sets the object’s position to (endX, endY) after the out tween completes.
-            tl.set(obj, {
-                x: endX,
-                y: endY,
-                duration: 0,
-                ease: "bounce.out",
-                onUpdate: () => drawCanvas(condition),
-
-                //onComplete: function () {
-                //    setTimeout(() => {
-                //        const canvas = document.getElementById('myCanvas'); // Your canvas element
-                //        const ctx = canvas.getContext('2d');
-
-                //        // Ensure all images & SVGs are fully loaded before capturing
-                //        const images = document.querySelectorAll("img, svg");
-                //        let loadedCount = 0;
-                //        images.forEach(img => {
-                //            if (!img.complete) {
-                //                img.onload = () => {
-                //                    loadedCount++;
-                //                    if (loadedCount === images.length) captureCanvas();
-                //                };
-                //                img.onerror = () => {
-                //                    console.warn("Failed to load image:", img.src);
-                //                    loadedCount++;
-                //                };
-                //            } else {
-                //                loadedCount++;
-                //            }
-                //        });
-
-                //        if (loadedCount === images.length) captureCanvas(); // If all images are already loaded
-
-                //        function captureCanvas() {
-                //            canvas.toBlob((blob) => {
-                //                if (!blob) {
-                //                    console.error("Canvas capture failed");
-                //                    return;
-                //                }
-
-                //                // Determine edit/save mode
-                //                const existingFolderId = $(`#hdnDesignBoardDetailsIdSlide${activeSlide}`).val() || 'new';
-                //                uploadImage(blob, existingFolderId);
-                //            }, "image/png");
-                //        }
-                //    }, 300); // Small delay to ensure rendering is complete
-                //}
-            });
-
-
-            ////This is default effect of bounce
-            //gsap.to(obj, {
-            //    x: endX,
-            //    y: endY,
-            //    duration: parseFloat(selectedInSpeed) || 2,
-            //    ease: "bounce.out",
-            //    onUpdate: () => drawCanvas(condition),
-            //});
-        } else if (animationType === "spiral") {
-            gsap.to(obj, {
-                duration: 3,
-                motionPath: {
-                    path: [
-                        { x: startX, y: startY },
-                        { x: endX - 50, y: endY - 50 },
-                        { x: endX, y: endY },
-                    ],
-                    autoRotate: true,
-                },
-                ease: "power2.inOut",
-                onUpdate: drawCanvas,
-            });
-        }
-        else if (animationType === "fadeText") {
-            gsap.fromTo(
-                obj,
-                { x: startX, y: startY, opacity: 0 }, // Initial state
-                {
-                    x: endX,
-                    y: endY,
-                    opacity: 1, // Target opacity
-                    duration: 2,
-                    ease: "power2.inOut",
-                    onUpdate: drawCanvas, // Updates canvas on every frame
-                    onComplete: () => {
-                        // Fade out after a delay
-                        gsap.to(obj, {
-                            opacity: 1,
-                            duration: 2,
-                            //delay: 2,
-                            onUpdate: drawCanvas,
-                        });
-                    },
-                }
-            );
-        }
-        else if (animationType === "typeText") {
-            gsap.to(obj, {
-                duration: text.length * 0.15,  // Slow down the typing speed (adjust the multiplier)
-                ease: "power2.inOut",
-                onUpdate: function () {
-                    // Update the text content dynamically during the animation
-                    const progress = Math.ceil(this.progress() * text.length);
-                    obj.text = text.slice(0, progress);  // Slice the text to create the typing effect
-                    drawCanvas(condition);  // Redraw the canvas at each update
-                },
-            });
-
-        }
-        else if (animationType === "morphText") {
-            gsap.to(obj, {
-                x: endX,  // You can use any values for endX and endY
-                y: endY,  // Similarly, endY for vertical position change
-                duration: 2.5,
-                ease: "elastic.out(1, 0.3)",  // Apply easing for a bounce effect
-                onUpdate: drawCanvas,  // Redraw the canvas on each update
-                repeat: 1,  // Repeat the animation once (total of 2 times)
-                yoyo: true,  // Make the animation reverse after completing
-                onComplete: function () {
-                }
-            });
-
-
-        }
-     
     });
 
-    // ----- IMAGE ANIMATION SECTION -----
-    
-    images.forEach((imgObj, indexImg) => {
-        // Save the image's final (target) position.
-        const endX = imgObj.x;
-        const endY = imgObj.y;
-        let startX, startY;
+    if (animationType === "delaylinear") {
+        const nominalPerObj = .50;
+        const countText = textObjects.length;
 
-        // Calculate displayed dimensions using scale factors.
-        const dispWidth = imgObj.width * (imgObj.scaleX || 1);
-        const dispHeight = imgObj.height * (imgObj.scaleY || 1);
+        const scaleInText = inTime / (countText * nominalPerObj);
+        const scaleOutText = outTime / (countText * nominalPerObj);
 
-        // Save original scales (or use default if not defined).
-        const originalScaleX = imgObj.scaleX || 1;
-        const originalScaleY = imgObj.scaleY || 1;
+        const individualTweenText = 0.20 * scaleInText;
+        const individualTweenOutText = 0.20 * scaleOutText;
 
-        // Determine starting position based on the chosen direction.
-        switch (direction) {
-            case "top":
-                startX = endX;  // same x as final
-                startY = -(dispHeight + 5);   // image fully above canvas
-                break;
-            case "bottom":
-                startX = endX;  // same x as final
-                startY = canvas.height + 5;  // image fully below canvas
-                break;
-            case "left":
-                startX = -(dispWidth + 5); // image fully to the left
-                startY = endY;  // same y as final
-                break;
-            case "right":
-                startX = canvas.width + 5; // image fully to the right
-                startY = endY;  // same y as final
-                break;
-            default:
-                startX = endX;
-                startY = endY;
-        }
-
-        // Set the image's starting position.
-        imgObj.x = startX;
-        imgObj.y = startY;
-
-        // Timing settings for images (using the same global speeds as text).
-        const inTime = parseFloat(selectedInSpeed) || 3;
-        const stayTime = parseFloat(selectedStaySpeed) || 6;
-        const outTime = parseFloat(selectedOutSpeed) || 2;
-        const exitX = window.innerWidth;  // exit to right (example)
-        const exitY = endY;               // maintain same vertical position.
-
-        let tl = gsap.timeline({
+        let tlText = gsap.timeline({
             repeat: loopCount - 1,
-            onUpdate: function () {
-                drawCanvas(condition);
-            }
+            onUpdate: () => drawCanvas(condition)
         });
 
-        if (animationType === "linear") {
-            tl.to(imgObj, {
-                x: endX,
-                y: endY,
-                duration: inTime,
-                ease: "power1.in"
-            });
-            tl.to(imgObj, {
-                duration: stayTime,
-                ease: "none"
-            });
-            tl.to(imgObj, {
-                x: exitX,
-                y: exitY,
-                duration: outTime,
-                ease: "power1.out"
-            });
-            tl.set(imgObj, {
-                x: endX,
-                y: endY,
-                duration: 0,
-                ease: "power1.inOut",
+        // --- Text IN ---
+        tlText.to(textObjects, {
+            x: (i, target) => target.finalX,
+            y: (i, target) => target.finalY,
+            duration: individualTweenText,
+            ease: "power1.in",
+            stagger: individualTweenText * 0.5,
+            onUpdate: () => drawCanvas(condition)
+        });
+
+
+
+        // --- Image IN ---
+        images.forEach((imgObj) => {
+            tlText.to(imgObj, {
+                //x: imgObj.finalX,
+                //y: imgObj.finalY,
+                x: (i, target) => target.finalX,
+                y: (i, target) => target.finalY,
+                duration: individualTweenText*.22 ,
+                ease: "power1.in",
+                stagger: individualTweenText * 0.5,
                 onUpdate: () => drawCanvas(condition)
             });
-        } else if (animationType === "delaylinear") {
-            setTimeout(() => {
-                tl.to(imgObj, {
+        });
+
+        // --- Stay Time ---
+        tlText.to({}, { duration: stayTime, ease: "none" });
+
+        // --- Image OUT (First!) ---
+        [...images].reverse().forEach((imgObj) => {
+            tlText.to(imgObj, {
+                //x: imgObj.exitX,
+                //y: imgObj.exitY,
+                x: (i, target) => target.exitX,
+                y: (i, target) => target.exitY,
+                duration: individualTweenOutText * .22,
+                ease: "power1.out",
+                stagger: individualTweenOutText * 0.5,
+                onUpdate: () => drawCanvas(condition)
+            });
+        });
+
+        // --- Text OUT (After Image) ---
+        tlText.to([...textObjects].reverse(), {
+            x: (i, target) => target.exitX,
+            y: (i, target) => target.exitY,
+            duration: individualTweenOutText,
+            ease: "power1.out",
+            stagger: individualTweenOutText * 0.5,
+            onUpdate: () => drawCanvas(condition)
+        });
+
+        //// --- Reset text to final position only (leave image off-screen) ---
+        //tlText.set([...textObjects, ...images], {
+        //    x: (i, target) => target.finalX,
+        //    y: (i, target) => target.finalY,
+        //    duration: 0,
+        //    onUpdate: () => drawCanvas(condition)
+        //});
+        tlText.eventCallback("onComplete", () => {
+            images.forEach(img => {
+                img.x = img.finalX;
+                img.y = img.finalY;
+                console.log('image x', img.finalX)
+                console.log('image y', img.finalY)
+            });
+            textObjects.forEach(txt => {
+                txt.x = txt.finalX;
+                txt.y = txt.finalY;
+            });
+
+            drawCanvas(condition); // Force redraw
+        });
+
+    }
+
+
+    else if (animationType === "linear" || animationType === "zoom" ||
+        animationType === "bounce" || animationType === "blur") {
+        // Keep your existing implementation for these cases.
+        textObjects.forEach((obj) => {
+            const endX = obj.finalX;
+            const endY = obj.finalY;
+            let exitX, exitY;
+            switch (direction) {
+                case "top":
+                    exitX = endX;
+                    exitY = -(obj.boundingHeight + 5);
+                    break;
+                case "bottom":
+                    exitX = endX;
+                    exitY = canvas.height + 5;
+                    break;
+                case "left":
+                    exitX = -(obj.boundingWidth + 5);
+                    exitY = endY;
+                    break;
+                case "right":
+                    exitX = canvas.width + 5;
+                    exitY = endY;
+                    break;
+                default:
+                    exitX = window.innerWidth;
+                    exitY = endY;
+            }
+            if (animationType === "linear" || animationType === "zoom") {
+                let tl = gsap.timeline({
+                    repeat: loopCount - 1,
+                    onUpdate: function () {
+                        drawCanvas(condition);
+                    }
+                });
+
+                tl.to(obj, {
                     x: endX,
                     y: endY,
                     duration: inTime,
                     ease: "power1.in"
                 });
-                tl.to(imgObj, {
+                tl.to(obj, {
                     duration: stayTime,
                     ease: "none"
                 });
-                tl.to(imgObj, {
+                tl.to(obj, {
                     x: exitX,
                     y: exitY,
                     duration: outTime,
                     ease: "power1.out"
                 });
-                tl.set(imgObj, {
+                tl.set(obj, {
                     x: endX,
                     y: endY,
                     duration: 0,
                     ease: "power1.inOut",
                     onUpdate: () => drawCanvas(condition)
                 });
-            }, indexImg * 4000); // 3000 milliseconds per index increment
-        }
+            }
+            else if (animationType === "bounce" || animationType === "blur") {
 
-        else if (animationType === "bounce") {
-            tl.to(imgObj, {
-                x: endX,
-                y: endY,
-                duration: inTime,
-                ease: "bounce.out"
-            });
-            tl.to(imgObj, {
-                duration: stayTime,
-                ease: "none"
-            });
-            tl.to(imgObj, {
-                x: exitX,
-                y: exitY,
-                duration: outTime,
-                ease: "bounce.out"
-            });
-            tl.set(imgObj, {
-                x: endX,
-                y: endY,
-                duration: 0,
-                ease: "bounce.out",
-                onUpdate: () => drawCanvas(condition)
-            });
-        }
-  
-        else if (animationType === "zoom") {
-            // Zoom in: animate from scale 0 to the original scale (the "large" size) while moving to end position.
-            tl.fromTo(
-                imgObj,
-                { scaleX: 0, scaleY: 0, x: startX, y: startY },
-                {
-                    scaleX: originalScaleX,
-                    scaleY: originalScaleY,
-                    x: endX,
-                    y: endY,
-                    duration: inTime,
-                    ease: "power2.out",
-                    onUpdate: () => drawCanvas(condition)
-                }
-            );
-
-            // Pause at full size.
-            tl.to(imgObj, {
-                duration: stayTime,
-                ease: "none"
-            });
-
-            // Zoom out: animate to scale down and move off screen (exit position).
-            tl.to(imgObj, {
-                scaleX: 0,
-                scaleY: 0,
-                x: exitX,
-                y: exitY,
-                duration: outTime,
-                ease: "power2.in",
-                onUpdate: () => drawCanvas(condition)
-            });
-
-            // Optionally reset the image's position and scale.
-            tl.set(imgObj, {
-                x: endX,
-                y: endY,
-                scaleX: originalScaleX,
-                scaleY: originalScaleY,
-                duration: 0,
-                ease: "none",
-                onUpdate: () => drawCanvas(condition)
-            });
-        } else if (animationType === "blur") {
-            // Initialize a custom property "blur" on the image; start fully blurred.
-            imgObj.blur = 5; // for example, start with 5px blur
-
-            // 1. Blur-In Phase:
-            // Animate the image from fully blurred at the start position to no blur at the end position.
-            tl.fromTo(
-                imgObj,
-                { blur: 5, x: startX, y: startY },
-                {
-                    blur: 0, // end with no blur
-                    x: endX,
-                    y: endY,
-                    duration: inTime,
-                    ease: "power2.out",
-                    onUpdate: () => {
-                        // While animating, update the canvas filter based on the current blur value.
-                        ctx.filter = `blur(${imgObj.blur}px)`;
-                        drawCanvas(condition);
-                    },
-                    onComplete: () => {
-                        // Ensure the canvas filter is cleared when the inTime phase is done.
-                        ctx.filter = "none";
+                ////This section is for in out and stay
+                let tl = gsap.timeline({
+                    repeat: loopCount - 1,
+                    onUpdate: function () {
                         drawCanvas(condition);
                     }
-                }
-            );
+                });
 
-            // 2. Stay Phase (no blur effect here).
-            tl.to(imgObj, {
-                duration: stayTime,
-                ease: "none",
-                onUpdate: () => {
-                    ctx.filter = "none"; // keep canvas clear of blur during stay
-                    drawCanvas(condition);
-                }
+                // "In" phase: Animate the object onto the canvas.
+                tl.to(obj, {
+                    x: endX,
+                    y: endY,
+                    duration: inTime,
+                    ease: "bounce.out"
+                });
+
+                // "Stay" phase: Hold the object in place for the stay duration.
+                // This tween doesn't change any properties; it just acts as a pause.
+                tl.to(obj, {
+                    duration: stayTime,
+                    ease: "none"
+                });
+
+                // "Out" phase: Animate the object off the canvas.
+                tl.to(obj, {
+                    x: exitX,
+                    y: exitY,
+                    duration: outTime,
+                    ease: "bounce.out"
+                });
+                // Final phase: Reset the object to the final position with text.
+                // This sets the object’s position to (endX, endY) after the out tween completes.
+                tl.set(obj, {
+                    x: endX,
+                    y: endY,
+                    duration: 0,
+                    ease: "bounce.out",
+                    onUpdate: () => drawCanvas(condition),
+
+
+                });
+
+
+                ////This is default effect of bounce
+                //gsap.to(obj, {
+                //    x: endX,
+                //    y: endY,
+                //    duration: parseFloat(selectedInSpeed) || 2,
+                //    ease: "bounce.out",
+                //    onUpdate: () => drawCanvas(condition),
+                //});
+            }
+
+        });
+    }
+
+    // ----- IMAGE ANIMATION SECTION -----
+    // (A similar approach can be applied to images.)
+    images.forEach((imgObj) => {
+        imgObj.finalX = imgObj.x;
+        imgObj.finalY = imgObj.y;
+        const dispWidth = imgObj.width * (imgObj.scaleX || 1);
+        const dispHeight = imgObj.height * (imgObj.scaleY || 1);
+        switch (direction) {
+            case "top":
+                imgObj.x = imgObj.finalX;
+                imgObj.y = -(dispHeight + 5);
+                imgObj.exitX = imgObj.finalX;
+                imgObj.exitY = -(dispHeight + 5);
+                break;
+            case "bottom":
+                imgObj.x = imgObj.finalX;
+                imgObj.y = canvas.height + 5;
+                imgObj.exitX = imgObj.finalX;
+                imgObj.exitY = canvas.height + 5;
+                break;
+            case "left":
+                imgObj.x = -(dispWidth + 5);
+                imgObj.y = imgObj.finalY;
+                imgObj.exitX = -(dispWidth + 5);
+                imgObj.exitY = imgObj.finalY;
+                break;
+            case "right":
+                imgObj.x = canvas.width + 5;
+                imgObj.y = imgObj.finalY;
+                imgObj.exitX = canvas.width + 5;
+                imgObj.exitY = imgObj.finalY;
+                break;
+            default:
+                imgObj.x = imgObj.finalX;
+                imgObj.y = imgObj.finalY;
+                imgObj.exitX = window.innerWidth;
+                imgObj.exitY = imgObj.finalY;
+        }
+    });
+
+    if (animationType === "delaylinear1") {
+        if (images.length) {
+            const countImg = images.length;
+            const scaleImgIn = inTime / (countImg * 1.0);
+            const indTweenImg = 0.5 * scaleImgIn;
+            const indHoldImg = 0.5 * scaleImgIn;
+
+            const scaleImgOut = outTime / (countImg * 1.0);
+            const indTweenImgOut = 0.5 * scaleImgOut;
+            const indHoldImgOut = 0.5 * scaleImgOut;
+
+            let tlImg = gsap.timeline({
+                repeat: loopCount - 1,
+                onUpdate: () => { drawCanvas(condition); }
             });
-
-            // 3. Out Phase: move the image to the exit position (with no blur).
-            tl.to(imgObj, {
-                x: exitX,
-                y: exitY,
-                duration: outTime,
-                ease: "power2.in",
-                onUpdate: () => {
-                    ctx.filter = "none";
-                    drawCanvas(condition);
-                }
+            images.forEach((imgObj) => {
+                tlImg.to(imgObj, {
+                    x: imgObj.finalX,
+                    y: imgObj.finalY,
+                    duration: indTweenImg,
+                    ease: "power1.in"
+                });
+                tlImg.to({}, { duration: indHoldImg, ease: "none" });
             });
-
-            // Optionally, reset the image's properties if needed.
-            tl.set(imgObj, {
-                x: endX,
-                y: endY,
+            // (Optional: you can also add a global stay phase here if you wish.)
+            tlImg.to({}, { duration: stayTime });
+            [...images].reverse().forEach((imgObj) => {
+                tlImg.to(imgObj, {
+                    x: imgObj.exitX,
+                    y: imgObj.exitY,
+                    duration: indTweenImgOut,
+                    ease: "power1.out"
+                });
+                tlImg.to({}, { duration: indHoldImgOut, ease: "none" });
+            });
+            tlImg.set(images, {
+                x: (i, target) => target.finalX,
+                y: (i, target) => target.finalY,
                 duration: 0,
-                ease: "none",
-                onUpdate: () => {
-                    ctx.filter = "none";
-                    drawCanvas(condition);
-                }
+                ease: "power1.inOut",
+                onUpdate: () => { drawCanvas(condition); }
             });
         }
+    }
+    else if (animationType === "linear" || animationType === "zoom" ||
+        animationType === "bounce" || animationType === "blur") {
+        // Keep the existing branches for images.
+        let exitX, exitY;
+        images.forEach((imgObj) => {
+            const endX = imgObj.finalX;
+            const endY = imgObj.finalY;
+                    let tl = gsap.timeline({
+                        repeat: loopCount - 1,
+                        onUpdate: function () {
+                            drawCanvas(condition);
+                        }
+                    });
 
-
-    });
+                    if (animationType === "linear") {
+                        tl.to(imgObj, {
+                            x: endX,
+                            y: endY,
+                            duration: inTime,
+                            ease: "power1.in"
+                        });
+                        tl.to(imgObj, {
+                            duration: stayTime,
+                            ease: "none"
+                        });
+                        tl.to(imgObj, {
+                            x: exitX,
+                            y: exitY,
+                            duration: outTime,
+                            ease: "power1.out"
+                        });
+                        tl.set(imgObj, {
+                            x: endX,
+                            y: endY,
+                            duration: 0,
+                            ease: "power1.inOut",
+                            onUpdate: () => drawCanvas(condition)
+                        });
+                    }
+                    else if (animationType === "bounce") {
+                        tl.to(imgObj, {
+                            x: endX,
+                            y: endY,
+                            duration: inTime,
+                            ease: "bounce.out"
+                        });
+                        tl.to(imgObj, {
+                            duration: stayTime,
+                            ease: "none"
+                        });
+                        tl.to(imgObj, {
+                            x: exitX,
+                            y: exitY,
+                            duration: outTime,
+                            ease: "bounce.out"
+                        });
+                        tl.set(imgObj, {
+                            x: endX,
+                            y: endY,
+                            duration: 0,
+                            ease: "bounce.out",
+                            onUpdate: () => drawCanvas(condition)
+                        });
+                    }
+                    else if (animationType === "zoom") {
+                        // Zoom in then out.
+                        tl.fromTo(
+                            imgObj,
+                            { scaleX: 0, scaleY: 0, x: startX, y: startY },
+                            {
+                                scaleX: originalScaleX,
+                                scaleY: originalScaleY,
+                                x: endX,
+                                y: endY,
+                                duration: inTime,
+                                ease: "power2.out",
+                                onUpdate: () => drawCanvas(condition)
+                            }
+                        );
+                        tl.to(imgObj, {
+                            duration: stayTime,
+                            ease: "none"
+                        });
+                        tl.to(imgObj, {
+                            scaleX: 0,
+                            scaleY: 0,
+                            x: exitX,
+                            y: exitY,
+                            duration: outTime,
+                            ease: "power2.in",
+                            onUpdate: () => drawCanvas(condition)
+                        });
+                        tl.set(imgObj, {
+                            x: endX,
+                            y: endY,
+                            scaleX: originalScaleX,
+                            scaleY: originalScaleY,
+                            duration: 0,
+                            ease: "none",
+                            onUpdate: () => drawCanvas(condition)
+                        });
+                    }
+                    else if (animationType === "blur") {
+                        imgObj.blur = 5;
+                        tl.fromTo(
+                            imgObj,
+                            { blur: 5, x: startX, y: startY },
+                            {
+                                blur: 0,
+                                x: endX,
+                                y: endY,
+                                duration: inTime + 2,
+                                ease: "power2.out",
+                                onUpdate: () => {
+                                    ctx.filter = `blur(${imgObj.blur}px)`;
+                                    drawCanvas(condition);
+                                },
+                                onComplete: () => {
+                                    ctx.filter = "none";
+                                    drawCanvas(condition);
+                                }
+                            }
+                        );
+                        tl.to(imgObj, {
+                            duration: stayTime,
+                            ease: "none",
+                            onUpdate: () => {
+                                ctx.filter = "none";
+                                drawCanvas(condition);
+                            }
+                        });
+                        tl.to(imgObj, {
+                            x: exitX,
+                            y: exitY,
+                            duration: outTime,
+                            ease: "power2.in",
+                            onUpdate: () => {
+                                ctx.filter = "none";
+                                drawCanvas(condition);
+                            }
+                        });
+                        tl.set(imgObj, {
+                            x: endX,
+                            y: endY,
+                            duration: 0,
+                            ease: "none",
+                            onUpdate: () => {
+                                ctx.filter = "none";
+                                drawCanvas(condition);
+                            }
+                        });
+                    }
+        });
+    }
 }
+
+
+
+
+
 
 
 function textAnimationClick(clickedElement, type) {
