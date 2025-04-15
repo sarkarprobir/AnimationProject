@@ -189,6 +189,7 @@
             if (message.action === "refresh" && message.companyUniqueId === companyUniqueId) {
                 console.log("Data updated for my company. Refreshing page.");
                 window.location.replace(window.location.href);
+                //window.location.replace("https://www.xyz.com/companyUniqueId");
             }
         } catch (err) {
             console.error("Error parsing SSE message:", err);

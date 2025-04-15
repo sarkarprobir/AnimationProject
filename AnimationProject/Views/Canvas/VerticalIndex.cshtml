@@ -761,11 +761,12 @@
                 </div>
                 <div class="col-md-3 nav-right">
                     <ul>
-                        <li class="play-btn">
+                        <li class="play-btn" style="display:none;">
                             <button class="btn" title="Preview" data-bs-toggle="modal" onclick="GetDesignBoardByIdForPublish();" data-bs-target="#imageModal"><img src="~/images/icons/Icon-01.svg" width="20"> </button>
                         </li>
                         <li class="play-btn">
-                            <button class="btn" title="Publish" onclick="triggerAutorefresh()" id="btnPublish">P </button>
+                           @*  <button class="btn" title="Publish" onclick="triggerAutorefresh()" id="btnPublish">P </button> *@
+                            <button class="btn" title="Publish" data-bs-toggle="modal" onclick="GetDesignBoardByIdForPublish();" id="btnPublish" data-bs-target="#imageModal">P </button>
                         </li>
                         <li>
                             <button class="btn" type="submit"  onclick="GetDesignBoardByIdForDownload('download')" title="download" ><img src="~/images/icons/ico-download.svg" width="30"> </button>
