@@ -515,6 +515,11 @@
             width: 40px;
             height: 40px;
         }
+        /* all time deropdown */
+        .time_dropdown {
+            font-size: 13.8px !important;
+            font-weight: 500 !important;
+        }
     </style>
     <script>
             $(document).ready(function(){
@@ -968,7 +973,7 @@
 
                             <div class="accordion" style=" position: relative;   left: 0px; top: 0; margin-bottom: 26px; width: 100%; ">
                                 <div class="dropdown mb-3">
-                                    <a class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <a class="dropdown-toggle time_dropdown" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         Speed  
                                     </a> <label id="lblSpeed"></label>
                                     <ul class="dropdown-menu" id="ddlSpeedControl">
@@ -994,7 +999,7 @@
                                     </ul>
                                 </div>
                             <h2>Effects</h2>
-                                <ul class="right-listone d-flex gap-3" id="ulEffects">
+                                <ul class="right-listone d-flex flex-wrap gap-2 mb-3" id="ulEffects">
                                 <li>
                                         <a id="alinear" href="javascript:void(0)" onclick="textAnimationClick(this, 'linear')" title="Linear"> <img src="~/images/icons/icon-effict.png" alt="pattren"></a>
                                     <div class="clear"></div>
@@ -1107,7 +1112,7 @@
                                 
 
                                 <div class="dropdown mb-3"> 
-                                     <a class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"> 
+                                     <a class="dropdown-toggle time_dropdown" type="button" data-bs-toggle="dropdown" aria-expanded="false"> 
                                          Seconds 
                                     </a> <label id="lblSeconds"></label>
                                     <ul class="dropdown-menu" id="ddlSecondsControl">
@@ -1138,7 +1143,7 @@
                                 width: 100%;">
 
                                 <div class="dropdown mb-3">
-                                    <a class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <a class="dropdown-toggle time_dropdown" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         Speed
                                     </a>
                                     <label id="lblOutSpeed"></label>

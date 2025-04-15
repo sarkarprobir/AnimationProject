@@ -43,7 +43,7 @@ Body {
 }
 
 .panel-left {
-    padding: 20px;
+    padding: 11px;
     background: #fff;
 }
 .panel-left {
@@ -57,9 +57,14 @@ Body {
 	background: #fff;
 	padding: 20px;
 }
- .panel-right .headtext{ font-size:14px;  font-weight: var(--weight); background:var(--secondColor);
+ .panel-right .headtext{ 
+     font-size:13px;  
+     font-weight: 600 !important; 
+     background:var(--secondColor);
     font-weight: normal;
-    margin-bottom: 20px; width:100%; margin-bottom:20px;
+    margin-bottom: 20px; 
+    width:100%; 
+    margin-bottom:20px;
 }
 p.collapsed{    font-size: var(--font-size14);}
 
@@ -79,7 +84,12 @@ p.collapsed{    font-size: var(--font-size14);}
     width: 100%;
     padding: 32px 45px;
 }
-
+.canvas {
+    height: 84vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 .canvas-top-btn {
     font-size: var(--font-size14);
     position: absolute;
@@ -99,14 +109,30 @@ p.collapsed{    font-size: var(--font-size14);}
 }
 .Graphic-More:hover{background:#4e43e1; color:#fff;}
 .panel-left h2{ font-size: var(--font-size18);  font-weight: bold;font-family: "Nunito Sans", serif; padding: 0 0 0 24px;}
-.panel-left-scroll  {overflow:auto; height: 100%; padding:10px 25px 25px 25px}
-.panel-left ul li{list-style-type:none; width:100%;  margin-bottom:25px;  border-radius:2px;}
+.panel-left-scroll {
+    overflow: hidden;
+    height: 100%;
+    padding: 15px;
+}
+.panel-left ul li {
+    list-style-type: none; 
+    width: 100%;  
+    margin-bottom: 10px;  
+    border-radius: 2px;
+}
 .panel-left ul {margin:0px; padding:0px;}
 .panel-left ul li .menuboard-thum{width:100%; margin-bottom:15px;border:2px solid #ddd; padding:4px; margin-bottom:20px;}
 .panel-left ul li p{margin:0px 0px 10px 0px;}
-.panel-left ul li .sd-btn-right{ float:right; float: right;
-    border: 2px solid #ddd;  border-radius: 6px;background:transparent; padding: 5px 15px; 
-    color: #747474; font-weight:bold;}
+    .panel-left ul li .sd-btn-right {
+        float: right;
+        border: 2px solid #ddd;
+        border-radius: 6px;
+        background: transparent;
+        padding: 3px 11px;
+        color: #747474;
+        font-weight: bold;
+        font-size: 13px !important;
+    }
   .sd-btn-right img{float:left!important; margin:1px 10px 0px 0px !important;}
 .panel-left ul li b {
         font-size: var(--font-size14);
@@ -129,12 +155,12 @@ p.collapsed{    font-size: var(--font-size14);}
  }
 ul.right-listone li {
     list-style-type:none; 
-    width: 19.7%;
+    width: 22%;
     float:left; 
     margin: 0; 
 }
     ul.right-listone li a {
-        margin-bottom: 17px;
+        margin-bottom: 0;
         padding: 8px 8px;
         border: 2px solid transparent;
         border-radius: 8px;
@@ -142,8 +168,8 @@ ul.right-listone li {
         text-align: center;
     }
 ul.right-listone li a img {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
 }
 ul.right-listone li a:hover {
     border: 2px solid #ccc;
@@ -305,7 +331,11 @@ a.logo{float:left; margin-right:6px; padding-top:7px;}
         margin-top: 4.8px;
         height: 25px;
     }
-ul.top-left-icon li{list-style-type:none;  padding:11px 6px; float:left;}
+ul.top-left-icon li {
+    list-style-type:none;  
+    padding: 11px 2px; 
+    float:left;
+}
 ul.top-left-icon li:hover {
         background-color: #6464647a;
     }
@@ -459,7 +489,15 @@ ul.TextStyle li a.neto{ font-family: 'Noto Sans'; font-weight: normal; font-styl
 ul.TextStyle li a.pacifico{ font-family: 'Pacifico'; font-weight: normal; font-style: normal; font-size: 35px;}
 ul.TextStyle li a.Roboto{ font-family: 'Roboto'; font-weight: bold; font-size: 35px;}
 
-.middle-resulation {width:100%; width: 100%; padding: 25px 0px; color: #979393;}
+.middle-resulation {
+    width: 100%;
+    padding: 15px 0px !important;
+    font-size: 13px;
+    color: #979393;
+    position: absolute;
+    bottom: -16px;
+    left: -450px;
+}
 /*.alignment-img ul{ margin: 0px 0px 0px -8px; }*/
 .alignment-img ul li{list-style-type:none; float:left;}
 .alignment-img ul li img{width: 40px;border: 2px solid transparent; padding: 7px; border-radius: 6px;}
@@ -553,7 +591,7 @@ svg:hover {
 .vertical-Mboard p{text-align:center;}
 .panel-vertical-scroll li{text-align: center;}
 .panel-vertical-scroll .menuboard-vertical-thum{
-    margin-bottom:25px; 
+    margin-bottom:10px; 
     width:100px; 
     border: 2px solid #ddd; 
     padding:4px;
@@ -605,17 +643,17 @@ svg:hover {
 }
 #lblSpeed {
     margin-left: 8px;
-    font-size: 14px;
+    font-size: 13px;
     margin-top: 0;
 }
 #lblSeconds {
     margin-left: 8px;
-    font-size: 14px;
+    font-size: 13px;
     margin-top: 0;
 }
 #lblOutSpeed {
     margin-left: 8px;
-    font-size: 14px;
+    font-size: 13px;
     margin-top: 0;
 }
 .in_direction {
