@@ -1,50 +1,133 @@
-﻿<div class="text-center"  style="position:relative">
+﻿
+
+<div class="text-center"  style="position:relative">
+
     <nav class="navbar bg-dark-topnav navbar-expand-lg fixed-top">
         <div class="container-fluid p-r-0" style="justify-content: center !important;">
             <div class="row">
                 <div class="col-md-3">
-                    <a class="logo" href="javascript:void(0)"> <img src="~/images/icons/icon-left-arrow.png" alt="Logo" alt="Logo" width="35"></a>
+                    <a class="logo ms-2" href="javascript:void(0)"> <img src="~/images/icons/icon-left-arrow.png" alt="Logo" alt="Logo"></a>
                     <ul class="top-left-icon">
                         <li>
-                            <a href="javascript:void(0)"> <img src="~/images/icons/ico-pattren.svg" title="Pattren" alt="pattren" width="25"></a>
+                            <a href="javascript:void(0)"> <img id="toggle_img" src="~/images/icons/ico-pattren.svg" title="Pattren" alt="pattren" width="20"></a>
                         </li>
                         <li>
-                            <a href="javascript:void(0)"> <img onclick="opentl()" src="~/images/icons/icon-text.png" title="Text" alt="text" width="20"></a>
+                            <a href="javascript:void(0)"> <img onclick="addDefaultText();opentl();" src="~/images/icons/icon-text.png" title="Text" alt="text" width="17"></a>
                         </li>
                         <li>
-                            <a href="javascript:void(0)"> <img src="~/images/icons/icon_circle.svg" title="Circle" alt="circle" width="20"></a>
+                            <a href="javascript:void(0)"> <img src="~/images/icons/icon_circle.svg" title="Circle" alt="circle" width="16"></a>
                         </li>
                         <li>
-                            <a href="javascript:void(0)"> <img src="~/images/icons/ico-shapes-masking.svg" title="Masking" alt="Masking" width="20"></a>
+                            <a href="javascript:void(0)"> <img src="~/images/icons/ico-shapes-masking.svg" title="Masking" alt="Masking" width="17"></a>
                         </li>
                         <li>
                             <a href="javascript:void(0)">
-                                <img onclick="opengl()" src="~/images/icons/icon_gallery.svg" title="Gallery" alt="Gallery" width="25">
+                                <img onclick="opengl()" src="~/images/icons/icon_gallery.svg" title="Gallery" alt="Gallery" width="20">
+                            </a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                                <img onclick="opengl()" src="~/images/icons/plus.png" title="Create" alt="Create_Board" width="18">
                             </a>
                         </li>
                     </ul>
                 </div>
 
-                <div class="col-md-6 nav-middle">
-                    <button class="D-icon-save" type="submit">My Design Board<img src="~/images/icons/ico-save.svg"> </button>
+
+
+                <div class="col-md-6 nav-middle d-flex gap-2 justify-content-center align-items-center">
+                    <input type="text" class="form-control nav_input" placeholder="Board Name" aria-label="Username" id="txtSaveDesignBoardName">
+                    <button class="D-icon-save" id="saveButton" onclick="SaveDesignBoard();" type="submit"><img src="~/images/icons/ico-save.svg"> </button>
+                    <input type="hidden" id="hdnDesignBoardId" />
+                    <input type="hidden" id="hdnDesignBoardDetailsIdSlide1" />
+                    <input type="hidden" id="hdnDesignBoardDetailsIdSlide2" />
+                    <input type="hidden" id="hdnDesignBoardDetailsIdSlide3" />
+                    <input type="hidden" id="hdnDesignBoardDetailsIdSlideFilePath1" value="" />
+                    <input type="hidden" id="hdnDesignBoardDetailsIdSlideFilePath2" value="" />
+                    <input type="hidden" id="hdnDesignBoardDetailsIdSlideFilePath3" value="" />
+                    <input type="hidden" id="hdnDesignBoardDetailsIdSlideImageFilePath1" value="" />
+                    <input type="hidden" id="hdnDesignBoardDetailsIdSlideImageFilePath2" value="" />
+                    <input type="hidden" id="hdnDesignBoardDetailsIdSlideImageFilePath3" value="" />
                 </div>
                 <div class="col-md-3 nav-right">
                     <ul>
                         <li class="play-btn">
-                            <button class="btn" title="Play"><img src="~/images/icons/Icon-01.svg" width="25"> </button>
+                            <button class="btn" title="Preview" data-bs-toggle="modal" onclick="GetDesignBoardByIdForPublish();" data-bs-target="#imageModal"><img src="~/images/icons/Icon-01.svg" width="20"> </button>
+                        </li>
+                        <li class="play-btn">
+                            <button class="btn" title="Publish" onclick="triggerAutorefresh()" id="btnPublish">P </button>
                         </li>
                         <li>
-                            <button class="btn" type="submit" title="download"><img src="~/images/icons/ico-download.svg"> </button>
+                            <button class="btn" type="submit" onclick="GetDesignBoardByIdForDownload('download')" title="download"><img src="~/images/icons/ico-download.svg" width="30"> </button>
                         </li>
-                        <li>
-                            <button class="login" type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#myModal">A</button>
+
+                        <li class="nav-item dropdown">
+                            <a class="profile nav-link text-light d-flex justify-content-center align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+
+
+                                A
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown" style="background-color: #4E43E1; border: none; border-radius:0; max-width: 106px; box-shadow: none;">
+                                <li class="w-100 acc_list">
+                                    <a class="dropdown-item d-flex align-items-center text-white" asp-controller="Canvas" asp-action="Account">
+                                        Account
+                                    </a>
+                                </li>
+                                <li class="w-100 acc_list">
+                                    <a class="dropdown-item d-flex align-items-center text-white" asp-controller="Canvas" asp-action="Boards">
+                                        Boards
+                                    </a>
+                                </li>
+
+                                <li class="w-100 acc_list">
+                                    <a class="dropdown-item d-flex align-items-center text-white" href="/logout">
+                                        Sign Out
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
+
+
                     </ul>
                 </div>
             </div>
         </div>
     </nav>
 
+    <!-- Modal Structure -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content p-3">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="aniBoardModalLabel">New AniBoard</h5>
+                </div>
+
+                <div class="modal-body">
+                    <!-- Horizontal Option -->
+                    <div class="option-box d-flex justify-content-between align-items-center" id="horizontal-option">
+                        <div class="d-flex align-items-center">
+                            <div class="landscape-icon"></div>
+                            <span>Horizontal / Landscape</span>
+                        </div>
+                        <span>1920x1080</span>
+                    </div>
+
+                    <!-- Vertical Option -->
+                    <div class="option-box d-flex justify-content-between align-items-center mb-0" id="vertical-option">
+                        <div class="d-flex align-items-center">
+                            <div class="portrait-icon"></div>
+                            <span class="vertical_option">Vertical / Portrait</span>
+                        </div>
+                        <span>1080x1920</span>
+                    </div>
+                </div>
+
+                <div class="modal-footer pt-0">
+                    <button class="create-btn" id="create-button">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- The Modal -->
     <div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -66,12 +149,12 @@
     <div class="d-flex align-items-stretch   main-canvas-content mt-0">
         <div class="panel-left ">
             
-            <div class="mb-3 d-flex">
-                <span class="mt-2 d-inline-block fw-bolder me-auto">Slides</span>
-                <a class="H-link active" href="@Url.Action("Index", "Canvas")">H</a>
-                <a class="V-link" href="@Url.Action("VerticalIndex", "Canvas")">V</a>
-                <div class="clear"></div>
-            </div>
+            @* <div class="mb-3 d-flex"> *@
+            @*     <span class="mt-2 d-inline-block fw-bolder me-auto">Slides</span> *@
+            @*     <a class="H-link active" href="@Url.Action("Index", "Canvas")">H</a> *@
+            @*     <a class="V-link" href="@Url.Action("VerticalIndex", "Canvas")">V</a> *@
+            @*     <div class="clear"></div> *@
+            @* </div> *@
             <div class="panel-left-scroll ">
                 <ul>
                     <li>
@@ -98,22 +181,7 @@
                             <div class="clear"></div>
                         </p>
                     </li>
-                    <li>
-                        <img src="~/images/banner-old.png" class="menuboard-thum" alt="Banner" style="width: 100%; height: auto;">
-                        <p>
-                            <span>Slide 4</span>
-                            <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
-                            <div class="clear"></div>
-                        </p>
-                    </li>
-                    <li>
-                        <img src="~/images/banner.png" class="menuboard-thum" alt="Banner" style="width: 100%; height: auto;">
-                        <p>
-                            <span>Slide 5</span>
-                            <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
-                            <div class="clear"></div>
-                        </p>
-                    </li>
+                    
                 </ul>
             </div>
         </div>
@@ -623,6 +691,48 @@
               $(".right-sec-one").toggle();
              }
         </script>
-       
+    <!-- JavaScript for Handling Selection and Redirection -->
+    <script>
+        let selectedOption = ""; // Variable to store the selected board type
+
+        document.getElementById("horizontal-option").addEventListener("click", function () {
+            selectedOption = "horizontal";
+            highlightSelection("horizontal-option");
+        });
+
+        document.getElementById("vertical-option").addEventListener("click", function () {
+            selectedOption = "vertical";
+            highlightSelection("vertical-option");
+        });
+
+        document.getElementById("create-button").addEventListener("click", function () {
+            if (selectedOption === "horizontal") {
+                window.location.href = "/"; // Redirect to horizontal page
+            } else if (selectedOption === "vertical") {
+                window.location.href = "/Canvas/VerticalIndex"; // Redirect to vertical page
+            } else {
+                alert("Please select an option before proceeding!");
+            }
+        });
+
+        // Function to highlight selected option
+        function highlightSelection(selectedId) {
+            document.getElementById("horizontal-option").classList.remove("selected");
+            document.getElementById("vertical-option").classList.remove("selected");
+            document.getElementById(selectedId).classList.add("selected");
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+          document.querySelectorAll('.panel-vertical-scroll .menuboard-vertical-thum')
+            .forEach(item => {
+              item.addEventListener('click', function () {
+                this.classList.toggle('active');
+              });
+            });
+        });
+
+
+    </script>
+
         }
 
