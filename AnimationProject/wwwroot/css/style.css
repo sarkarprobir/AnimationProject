@@ -2,17 +2,24 @@
  
 :root {
  /*================font-size================*/
-  --font-size14:14px;
-  --font-size18:18px;
+  --font-size14: 13px;
+  --font-size18: 18px;
   
 /*=============border-radius*===============*/
   --border-radius6:3px;
  
 /*=============border*===============*/ 
-  --border-gray2:2px solid #ccc;
+  --border-gray2: 2px solid #ccc;
 }
- 
-Body{background:#fff; padding:0px; margin:0px;    overflow-x: hidden; font-family: "Nunito Sans", serif;}
+
+Body {
+    background: #fff;
+    padding: 0px;
+    margin: 0px;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    font-family: "Nunito Sans", serif;
+}
  
 
 .fixed-top {
@@ -32,8 +39,7 @@ Body{background:#fff; padding:0px; margin:0px;    overflow-x: hidden; font-famil
 }
 
 .main-canvas-content {
-    margin-top: 5px;
-    height: calc(100vh - 94px);
+    height: calc(100vh - 41px);
 }
 
 .panel-left {
@@ -73,10 +79,24 @@ p.collapsed{    font-size: var(--font-size14);}
     width: 100%;
     padding: 32px 45px;
 }
-.canvas{}
-.canvas-top-btn{float:left; width:100%;height:auto;  padding:0px; margin-bottom:35px; text-align:center; font-size: var(--font-size14);}
-.Graphic-More{ border: 0px; margin-left:15px; padding: 8px 20px; border-radius:var(--border-radius6); color:#000; font-size:var(--font-size14);}
-.Graphic-More.active{ background:#4e43e1; color:#fff}
+
+.canvas-top-btn {
+    font-size: var(--font-size14);
+    position: absolute;
+    transform: translate(820px, -12px);
+}
+.Graphic-More { 
+    border: 0px; 
+    margin-left:15px; 
+    padding: 7px 12px; 
+    border-radius:var(--border-radius6); 
+    color:#000; 
+    font-size:var(--font-size14);
+}
+.Graphic-More.active{ 
+    background:#000; 
+    color:#fff
+}
 .Graphic-More:hover{background:#4e43e1; color:#fff;}
 .panel-left h2{ font-size: var(--font-size18);  font-weight: bold;font-family: "Nunito Sans", serif; padding: 0 0 0 24px;}
 .panel-left-scroll  {overflow:auto; height: 100%; padding:10px 25px 25px 25px}
@@ -126,10 +146,10 @@ ul.right-listone li a img {
     height: 30px;
 }
 ul.right-listone li a:hover {
-    border: 2px solid #4e43e1;
+    border: 2px solid #ccc;
 }
 .active_effect {
-    border: 2px solid #4e43e1 !important;
+    border: 2px solid #ccc !important;
 }
 
 ul.right-listone li:nth-child(3){margin-right:0px;}
@@ -241,9 +261,9 @@ input:focus-visible + label {
 .tabset > label:hover,
 .tabset > input:focus + label,
 .tabset > input:checked + label {
-  background: #4e43e1;
+  background: #000;
   color:#fff;
- border:2px solid #4e43e1 !important
+ border:2px solid #000 !important
 }
 
 .tabset > label:hover::after,
