@@ -863,51 +863,52 @@ function animateText(direction, condition, loopCount) {
         }
     });
 
-    if (animationType === "delaylinear1") {
-        if (images.length) {
-            const countImg = images.length;
-            const scaleImgIn = inTime / (countImg * 1.0);
-            const indTweenImg = 0.5 * scaleImgIn;
-            const indHoldImg = 0.5 * scaleImgIn;
+    //if (animationType === "delaylinear") {
+    //    if (images.length) {
+    //        const countImg = images.length;
+    //        const scaleImgIn = inTime / (countImg * 1.0);
+    //        const indTweenImg = 0.5 * scaleImgIn;
+    //        const indHoldImg = 0.5 * scaleImgIn;
 
-            const scaleImgOut = outTime / (countImg * 1.0);
-            const indTweenImgOut = 0.5 * scaleImgOut;
-            const indHoldImgOut = 0.5 * scaleImgOut;
+    //        const scaleImgOut = outTime / (countImg * 1.0);
+    //        const indTweenImgOut = 0.5 * scaleImgOut;
+    //        const indHoldImgOut = 0.5 * scaleImgOut;
 
-            let tlImg = gsap.timeline({
-                repeat: loopCount - 1,
-                onUpdate: () => { drawCanvas(condition); }
-            });
-            images.forEach((imgObj) => {
-                tlImg.to(imgObj, {
-                    x: imgObj.finalX,
-                    y: imgObj.finalY,
-                    duration: indTweenImg,
-                    ease: "power1.in"
-                });
-                tlImg.to({}, { duration: indHoldImg, ease: "none" });
-            });
-            // (Optional: you can also add a global stay phase here if you wish.)
-            tlImg.to({}, { duration: stayTime });
-            [...images].reverse().forEach((imgObj) => {
-                tlImg.to(imgObj, {
-                    x: imgObj.exitX,
-                    y: imgObj.exitY,
-                    duration: indTweenImgOut,
-                    ease: "power1.out"
-                });
-                tlImg.to({}, { duration: indHoldImgOut, ease: "none" });
-            });
-            tlImg.set(images, {
-                x: (i, target) => target.finalX,
-                y: (i, target) => target.finalY,
-                duration: 0,
-                ease: "power1.inOut",
-                onUpdate: () => { drawCanvas(condition); }
-            });
-        }
-    }
-    else if (animationType === "linear" || animationType === "zoom" ||
+    //        let tlImg = gsap.timeline({
+    //            repeat: loopCount - 1,
+    //            onUpdate: () => { drawCanvas(condition); }
+    //        });
+    //        images.forEach((imgObj) => {
+    //            tlImg.to(imgObj, {
+    //                x: imgObj.finalX,
+    //                y: imgObj.finalY,
+    //                duration: indTweenImg,
+    //                ease: "power1.in"
+    //            });
+    //            tlImg.to({}, { duration: indHoldImg, ease: "none" });
+    //        });
+    //        // (Optional: you can also add a global stay phase here if you wish.)
+    //        tlImg.to({}, { duration: stayTime });
+    //        [...images].reverse().forEach((imgObj) => {
+    //            tlImg.to(imgObj, {
+    //                x: imgObj.exitX,
+    //                y: imgObj.exitY,
+    //                duration: indTweenImgOut,
+    //                ease: "power1.out"
+    //            });
+    //            tlImg.to({}, { duration: indHoldImgOut, ease: "none" });
+    //        });
+    //        tlImg.set(images, {
+    //            x: (i, target) => target.finalX,
+    //            y: (i, target) => target.finalY,
+    //            duration: 0,
+    //            ease: "power1.inOut",
+    //            onUpdate: () => { drawCanvas(condition); }
+    //        });
+    //    }
+    //}
+    //else
+        if (animationType === "linear" || animationType === "zoom" ||
         animationType === "bounce" || animationType === "blur") {
         // Keep the existing branches for images.
         let exitX, exitY;
