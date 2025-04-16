@@ -623,8 +623,8 @@ function animateText(direction, condition, loopCount) {
         const scaleInText = inTime / (countText * nominalPerObj);
         const scaleOutText = outTime / (countText * nominalPerObj);
 
-        const individualTweenText = 0.20 * scaleInText;
-        const individualTweenOutText = 0.20 * scaleOutText;
+        const individualTweenText = 0.15 * scaleInText;
+        const individualTweenOutText = 0.15 * scaleOutText;
 
         let tlText = gsap.timeline({
             repeat: loopCount - 1,
@@ -637,7 +637,7 @@ function animateText(direction, condition, loopCount) {
             y: (i, target) => target.finalY,
             duration: individualTweenText,
             ease: "power1.in",
-            stagger: individualTweenText * 0.5,
+            stagger: individualTweenText *.70 ,
             onUpdate: () => drawCanvas(condition)
         });
 
@@ -646,13 +646,11 @@ function animateText(direction, condition, loopCount) {
         // --- Image IN ---
         images.forEach((imgObj) => {
             tlText.to(imgObj, {
-                //x: imgObj.finalX,
-                //y: imgObj.finalY,
                 x: (i, target) => target.finalX,
                 y: (i, target) => target.finalY,
-                duration: individualTweenText*.22 ,
+                duration: individualTweenText  ,
                 ease: "power1.in",
-                stagger: individualTweenText * 0.5,
+                stagger: individualTweenText * .70 ,
                 onUpdate: () => drawCanvas(condition)
             });
         });
@@ -667,9 +665,9 @@ function animateText(direction, condition, loopCount) {
                 //y: imgObj.exitY,
                 x: (i, target) => target.exitX,
                 y: (i, target) => target.exitY,
-                duration: individualTweenOutText * .22,
+                duration: individualTweenOutText  ,
                 ease: "power1.out",
-                stagger: individualTweenOutText * 0.5,
+                stagger: individualTweenOutText * 0.70,
                 onUpdate: () => drawCanvas(condition)
             });
         });
@@ -678,9 +676,9 @@ function animateText(direction, condition, loopCount) {
         tlText.to([...textObjects].reverse(), {
             x: (i, target) => target.exitX,
             y: (i, target) => target.exitY,
-            duration: individualTweenOutText,
+            duration: individualTweenOutText ,
             ease: "power1.out",
-            stagger: individualTweenOutText * 0.5,
+            stagger: individualTweenOutText * .70,
             onUpdate: () => drawCanvas(condition)
         });
 
