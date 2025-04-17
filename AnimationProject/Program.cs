@@ -45,7 +45,7 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Canvas}/{action=Index}/{id?}");
+    pattern: "{controller=Canvas}/{action=Login}/{id?}");
 
 // SSE endpoint: Clients connect here to listen for refresh events.
 app.MapGet("/sse", async (HttpContext context) =>

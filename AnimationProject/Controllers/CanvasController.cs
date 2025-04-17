@@ -66,7 +66,10 @@ namespace AnimationProject.Controllers
         {
             return View();
         }
-
+        public IActionResult Login()
+        {
+            return View();
+        }
         public async Task<IActionResult> Boards()
         {
             //if (!_checkSession.IsSession()) return Ok("login");
