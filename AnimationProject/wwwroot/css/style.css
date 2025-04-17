@@ -32,7 +32,7 @@ Body {
 .bg-dark-topnav {
     background: #000;
     color:#fff;
-	height: 46px;
+	height: 40px;
 }
 .main-canvas-content {
     overflow: hidden;
@@ -82,7 +82,7 @@ p.collapsed{    font-size: var(--font-size14);}
 .container-1 {
     height: auto;
     width: 100%;
-    padding: 32px 45px;
+    padding: 9px 45px;
 }
 .canvas {
     height: 84vh;
@@ -91,17 +91,19 @@ p.collapsed{    font-size: var(--font-size14);}
     align-items: center;
 }
 .canvas-top-btn {
+    margin-top: 10px;
     font-size: var(--font-size14);
     position: absolute;
-    transform: translate(820px, -12px);
+    transform: translate(838px, -12px);
 }
-.Graphic-More { 
-    border: 0px; 
-    margin-left:15px; 
-    padding: 7px 12px; 
-    border-radius:var(--border-radius6); 
-    color:#000; 
-    font-size:var(--font-size14);
+.Graphic-More {
+    width: 122px;
+    border: 0px;
+    margin-left: 15px;
+    padding: 7px 12px;
+    border-radius: var(--border-radius6);
+    color: #000;
+    font-size: var(--font-size14);
 }
 .Graphic-More.active{ 
     background:#000; 
@@ -155,17 +157,25 @@ p.collapsed{    font-size: var(--font-size14);}
  }
 ul.right-listone li {
     list-style-type:none; 
-    width: 22%;
+    width: 30%;
     float:left; 
     margin: 0; 
 }
     ul.right-listone li a {
         margin-bottom: 0;
-        padding: 8px 8px;
         border: 2px solid transparent;
         border-radius: 8px;
         float: left;
         text-align: center;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+        color: #000;
+        width: 53px;
+        height: 46px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 ul.right-listone li a img {
     width: 28px;
@@ -194,9 +204,9 @@ ul.right-listone{padding:0px; margin:0px; width: 100%;
         color: #fff;
         font-size: var(--font-size14);
         padding: 0px 0px;
-        margin: 7px 8px 8px 8px;
+        margin: 6px 8px 5px 8px;
         border-radius: 6px;
-        box-shadow: none;
+        box-shadow: none !important;
         border: none;
     }
  .nav-right ul li:hover {
@@ -206,9 +216,9 @@ ul.right-listone{padding:0px; margin:0px; width: 100%;
         color: #fff;
         font-size: 16px;
         font-weight: 600;
-        padding: 5px 12px;
+        padding: 4.2px 12px;
         border-radius: 3px;
-        margin: 6px !important;
+        margin: 4px !important;
         box-shadow: none;
         border: 1px solid #fff;
     }
@@ -236,7 +246,10 @@ ul.right-listone{padding:0px; margin:0px; width: 100%;
         margin: 0 !important;
         padding: 0px !important;
 }
-.nav-middle .D-icon-save:hover{background:#4e43e1; border-radius:6px;}
+.nav-middle .D-icon-save:hover {
+    background:#4e43e1; 
+    border-radius:3px;
+}
 	/*tab css =========================*/
      
  .tabset > input[type="radio"] {
@@ -328,12 +341,12 @@ input:focus-visible + label {
 a.logo{float:left; margin-right:6px; padding-top:7px;}
     a.logo img {
         width: 25px;
-        margin-top: 4.8px;
+        margin-top: 2px;
         height: 25px;
     }
 ul.top-left-icon li {
     list-style-type:none;  
-    padding: 11px 2px; 
+    padding: 8.2px 2px; 
     float:left;
 }
 ul.top-left-icon li:hover {
@@ -639,7 +652,7 @@ svg:hover {
     height: 18px;
 }
 .dropdown-menu[data-bs-popper] {
-    top: 96%;
+    top: 95%;
 }
 #lblSpeed {
     margin-left: 8px;
@@ -777,7 +790,7 @@ svg:hover {
 
     .nav_input::placeholder {
         color: #ffffffba !important;
-        font-size: 14px !important
+        font-size: 13px !important
     }
 
     .nav_input:focus {
@@ -872,7 +885,7 @@ svg:hover {
     color: #fff !important;
     background-color: #4e43e1 !important;
     width: 46.5px;
-    height: 46.5px;
+    height: 41.2px;
 }
 
 .acc_list:hover {
