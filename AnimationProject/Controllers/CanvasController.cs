@@ -70,6 +70,31 @@ namespace AnimationProject.Controllers
         {
             return View();
         }
+        public IActionResult Home()
+        {
+            return View();
+        }
+        public IActionResult Templates()
+        {
+            return View();
+        }
+        public IActionResult Pricing()
+        {
+            return View();
+        }
+        public IActionResult Signup()
+        {
+            return View();
+        }
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+        public IActionResult Contactus()
+        {
+            return View();
+        }
+        
         public async Task<IActionResult> Boards()
         {
             //if (!_checkSession.IsSession()) return Ok("login");
