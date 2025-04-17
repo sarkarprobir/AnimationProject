@@ -409,11 +409,19 @@
         }
          
         .miniCanvas {
-            border: 2px solid #ccc;
             border-radius: 5px;
             width: 40px;
             height: 40px;
         }
+
+            .miniCanvas:hover{
+                border: 2px solid #ccc;
+            }
+
+           
+            .miniCanvas_active{ 
+                border: 2px solid #ccc; 
+             }
         /* all time deropdown */
         .time_dropdown {
             font-size: 13.8px !important;
@@ -607,6 +615,20 @@
               });
             });
         });
+
+
+        const elements = document.querySelectorAll('.miniCanvas');
+
+        elements.forEach(element => {
+          element.addEventListener('click', () => {
+            // Remove 'active' class from all elements
+            elements.forEach(el => el.classList.remove('miniCanvas_active'));
+
+            // Add 'active' to the clicked element
+            element.classList.add('miniCanvas_active');
+          });
+        });
+
 
 
     </script>
