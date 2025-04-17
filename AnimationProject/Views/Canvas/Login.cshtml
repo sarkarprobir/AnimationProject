@@ -2,4 +2,103 @@
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
 @{
+    Layout = null;
 }
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+@* google fonts *@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lobster&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
+      rel="stylesheet">
+<link href="~/css/animate/animate.min.css" rel="stylesheet">
+<link href="~/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<link href="~/css/style.css" rel="stylesheet">
+<link href="~/css/canvas.css" rel="stylesheet">
+<link href="~/css/responsive.css" rel="stylesheet">
+<script src='https://code.jquery.com/jquery-3.2.1.slim.min.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js'></script>
+<script src="~/js/wow.min.js"></script>
+<style>
+    /* Reset default styles */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    /* Full height and center content */
+    body, html {
+        height: 100%;
+        background-color: #fff;
+        font-family: "Nunito Sans", sans-serif;
+    }
+
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+    }
+
+    .login-box {
+        text-align: center;
+        width: 375px;
+    }
+
+    .logo {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .subtitle {
+        font-size: 0.9rem;
+        color: #333;
+        margin-bottom: 25px;
+    }
+
+    .input {
+        display: block;
+        width: 100%;
+        padding: 7px 16px;
+        margin-bottom: 10px;
+        border: none;
+        background-color: #e5ebed;
+        font-size: 1rem;
+        border-radius: 0;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 8px 10px;
+        background-color: #4e3eff;
+        color: #fff;
+        font-size: 1rem;
+        border: none;
+        border-radius: 0;
+        cursor: pointer;
+    }
+
+        .btn:hover {
+            background-color: #3e2ee0;
+            color: #fff !important;
+        }
+
+</style>
+
+
+
+<div class="container">
+    <div class="login-box">
+        <h1 class="logo">AniBoard</h1>
+        <p class="subtitle">Sign in to continue, or register for a new account.</p>
+        <input type="email" class="input" placeholder="Email" />
+        <input type="password" class="input" placeholder="Password" />
+        <button class="btn">Continue</button>
+    </div>
+</div>
