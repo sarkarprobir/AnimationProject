@@ -2327,100 +2327,80 @@ function clearCanvas() {
 
 
 
+const arrowImage = new Image();
+arrowImage.src = "/images/icons/icon-lr.png";
+
 function getEase() {
     return animationMode === "bounce" ? "bounce.out" : "linear";
 }
 
-// --------------------------------------------------------------------
-// Global arrow image (used by all directions).
-const arrowImage = new Image();
-arrowImage.src = "/images/icons/icon-lr.png"; // Use an absolute path or update as needed.
-
-// --------------------------------------------------------------------
-// Helper function for drawing an arrow based on the animation type.
-// The parameters specify the canvas context to draw onto and the desired center offsets.
 function drawArrow(ctx, x, centerY) {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     ctx.save();
     ctx.translate(x, centerY);
-    const animationTypeMiniCanvas = document.getElementById("hdnTextAnimationType").value; 
-    if (animationTypeMiniCanvas === "zoom") {
-        // Larger arrow for zoom animation (50×50).
+    const type = document.getElementById("hdnTextAnimationType").value;
+    if (type === "zoom") {
         ctx.drawImage(arrowImage, -25, -25, 50, 50);
-    } else if (animationTypeMiniCanvas === "blur") {
-        // Apply a blur filter for blur animation.
+    } else if (type === "blur") {
         ctx.filter = "blur(4px)";
         ctx.drawImage(arrowImage, -20, -20, 40, 40);
         ctx.filter = "none";
     } else {
-        // Default: normal size (40×40).
         ctx.drawImage(arrowImage, -20, -20, 40, 40);
     }
     ctx.restore();
 }
 
-// --------------------------------------------------------------------
-// 1. Left-to-Center (Button id: "aleft", Canvas id: "miniCanvas_aleft")
-const aleft = document.getElementById('aleft');
+// grab elements & context
 const miniCanvasAleft = document.getElementById('miniCanvas_aleft');
 const ctxAleft = miniCanvasAleft.getContext('2d');
 const centerX_left = miniCanvasAleft.width / 2;
 const centerY_left = miniCanvasAleft.height / 2;
 
-function drawArrowFromLeft(x) {
-    drawArrow(ctxAleft, x, centerY_left);
-}
+// draw the arrow at center immediately
+drawArrow(ctxAleft, centerX_left, centerY_left);
 
-aleft.addEventListener('mouseover', () => {
-    aleft.style.display = 'none';
-    miniCanvasAleft.style.display = 'block';
-    // Draw arrow at the left edge.
-    drawArrowFromLeft(0);
-    // Animate arrow from left edge to center.
+// animate on hover
+miniCanvasAleft.addEventListener('mouseenter', () => {
+    drawArrow(ctxAleft, 0, centerY_left);
     gsap.to({ pos: 0 }, {
         duration: 0.5,
         pos: centerX_left,
         ease: getEase(),
-        onUpdate: function () {
-            drawArrowFromLeft(this.targets()[0].pos);
+        onUpdate() {
+            drawArrow(ctxAleft, this.targets()[0].pos, centerY_left);
         }
     });
 });
 
-miniCanvasAleft.addEventListener('mouseout', () => {
+miniCanvasAleft.addEventListener('mouseleave', () => {
     gsap.to({ pos: centerX_left }, {
         duration: 0.5,
         pos: centerX_left,
         ease: getEase(),
-        onUpdate: function () {
-            drawArrowFromLeft(this.targets()[0].pos);
-        },
-        onComplete: function () {
-            miniCanvasAleft.style.display = 'none';
-            aleft.style.display = 'block';
+        onUpdate() {
+            drawArrow(ctxAleft, this.targets()[0].pos, centerY_left);
         }
     });
 });
 
 // --------------------------------------------------------------------
-// 2. Right-to-Center (Button id: "aright", Canvas id: "miniCanvas_aright")
-const aright = document.getElementById('aright');
+// 2. Right-to-Center (Canvas id: "miniCanvas_aright")
 const miniCanvasAright = document.getElementById('miniCanvas_aright');
 const ctxAright = miniCanvasAright.getContext('2d');
 const centerX_right = miniCanvasAright.width / 2;
 const centerY_right = miniCanvasAright.height / 2;
 
+// Helper to draw & rotate the arrow so it points left
 function drawArrowFromRight(x) {
     ctxAright.clearRect(0, 0, miniCanvasAright.width, miniCanvasAright.height);
     ctxAright.save();
-    // For right-to-center, translate then rotate 180° so the arrow points left.
     ctxAright.translate(x, centerY_right);
-    ctxAright.rotate(Math.PI);
-    const animationTypeMiniCanvas = document.getElementById("hdnTextAnimationType").value; 
-    // Use the same helper but note the coordinate system is already shifted.
-    if (animationTypeMiniCanvas === "zoom") {
+    ctxAright.rotate(Math.PI);  // flip 180°
+    const type = document.getElementById("hdnTextAnimationType").value;
+    if (type === "zoom") {
         ctxAright.drawImage(arrowImage, -25, -25, 50, 50);
-    } else if (animationTypeMiniCanvas === "blur") {
+    } else if (type === "blur") {
         ctxAright.filter = "blur(4px)";
         ctxAright.drawImage(arrowImage, -20, -20, 40, 40);
         ctxAright.filter = "none";
@@ -2430,56 +2410,53 @@ function drawArrowFromRight(x) {
     ctxAright.restore();
 }
 
-aright.addEventListener('mouseover', () => {
-    aright.style.display = 'none';
-    miniCanvasAright.style.display = 'block';
-    // Draw arrow at right edge.
+// draw arrow centered by default
+drawArrowFromRight(centerX_right);
+
+// animate on hover
+miniCanvasAright.addEventListener('mouseenter', () => {
+    // start off-screen at right edge
     drawArrowFromRight(miniCanvasAright.width);
-    // Animate arrow from right edge to center.
     gsap.to({ pos: miniCanvasAright.width }, {
         duration: 0.5,
         pos: centerX_right,
         ease: getEase(),
-        onUpdate: function () {
+        onUpdate() {
             drawArrowFromRight(this.targets()[0].pos);
         }
     });
 });
 
-miniCanvasAright.addEventListener('mouseout', () => {
+miniCanvasAright.addEventListener('mouseleave', () => {
+    // smoothly “reset” to center (or just remain)
     gsap.to({ pos: centerX_right }, {
         duration: 0.5,
         pos: centerX_right,
         ease: getEase(),
-        onUpdate: function () {
+        onUpdate() {
             drawArrowFromRight(this.targets()[0].pos);
-        },
-        onComplete: function () {
-            miniCanvasAright.style.display = 'none';
-            aright.style.display = 'block';
         }
     });
 });
 
+
 // --------------------------------------------------------------------
-// 3. Bottom-to-Center (Button id: "abottom", Canvas id: "miniCanvas_abottom")
-const abottom = document.getElementById('abottom');
+// 3. Bottom-to-Center (Canvas id: "miniCanvas_abottom")
 const miniCanvasAbottom = document.getElementById('miniCanvas_abottom');
 const ctxAbottom = miniCanvasAbottom.getContext('2d');
 const centerX_bottom = miniCanvasAbottom.width / 2;
 const centerY_bottom = miniCanvasAbottom.height / 2;
 
+// Draw & rotate the arrow so it points up
 function drawArrowFromBottom(y) {
     ctxAbottom.clearRect(0, 0, miniCanvasAbottom.width, miniCanvasAbottom.height);
     ctxAbottom.save();
-    // Translate to the horizontal center.
     ctxAbottom.translate(centerX_bottom, y);
-    // Rotate -90° so the arrow points up.
-    ctxAbottom.rotate(-Math.PI / 2);
-    const animationTypeMiniCanvas = document.getElementById("hdnTextAnimationType").value; 
-    if (animationTypeMiniCanvas === "zoom") {
+    ctxAbottom.rotate(-Math.PI / 2);  // rotate -90°
+    const type = document.getElementById("hdnTextAnimationType").value;
+    if (type === "zoom") {
         ctxAbottom.drawImage(arrowImage, -25, -25, 50, 50);
-    } else if (animationTypeMiniCanvas === "blur") {
+    } else if (type === "blur") {
         ctxAbottom.filter = "blur(4px)";
         ctxAbottom.drawImage(arrowImage, -20, -20, 40, 40);
         ctxAbottom.filter = "none";
@@ -2489,55 +2466,53 @@ function drawArrowFromBottom(y) {
     ctxAbottom.restore();
 }
 
-abottom.addEventListener('mouseover', () => {
-    abottom.style.display = 'none';
-    miniCanvasAbottom.style.display = 'block';
-    // Draw arrow at the bottom edge.
+// Draw arrow at center on load
+drawArrowFromBottom(centerY_bottom);
+
+// Animate on hover
+miniCanvasAbottom.addEventListener('mouseenter', () => {
+    // start off-screen at bottom edge
     drawArrowFromBottom(miniCanvasAbottom.height);
     gsap.to({ pos: miniCanvasAbottom.height }, {
         duration: 0.5,
         pos: centerY_bottom,
         ease: getEase(),
-        onUpdate: function () {
+        onUpdate() {
             drawArrowFromBottom(this.targets()[0].pos);
         }
     });
 });
 
-miniCanvasAbottom.addEventListener('mouseout', () => {
+miniCanvasAbottom.addEventListener('mouseleave', () => {
+    // smoothly reset to center
     gsap.to({ pos: centerY_bottom }, {
         duration: 0.5,
         pos: centerY_bottom,
         ease: getEase(),
-        onUpdate: function () {
+        onUpdate() {
             drawArrowFromBottom(this.targets()[0].pos);
-        },
-        onComplete: function () {
-            miniCanvasAbottom.style.display = 'none';
-            abottom.style.display = 'block';
         }
     });
 });
 
+
 // --------------------------------------------------------------------
-// 4. Top-to-Center (Button id: "atop", Canvas id: "miniCanvas_atop")
-const atop = document.getElementById('atop');
+// 4. Top-to-Center (Canvas id: "miniCanvas_atop")
 const miniCanvasAtop = document.getElementById('miniCanvas_atop');
 const ctxAtop = miniCanvasAtop.getContext('2d');
 const centerX_top = miniCanvasAtop.width / 2;
 const centerY_top = miniCanvasAtop.height / 2;
 
+// Draw & rotate the arrow so it points down
 function drawArrowFromTop(y) {
     ctxAtop.clearRect(0, 0, miniCanvasAtop.width, miniCanvasAtop.height);
     ctxAtop.save();
-    // Translate to horizontal center.
     ctxAtop.translate(centerX_top, y);
-    // Rotate 90° so the arrow points down.
-    ctxAtop.rotate(Math.PI / 2);
-    const animationTypeMiniCanvas = document.getElementById("hdnTextAnimationType").value; 
-    if (animationTypeMiniCanvas === "zoom") {
+    ctxAtop.rotate(Math.PI / 2);  // rotate 90°
+    const type = document.getElementById("hdnTextAnimationType").value;
+    if (type === "zoom") {
         ctxAtop.drawImage(arrowImage, -25, -25, 50, 50);
-    } else if (animationTypeMiniCanvas === "blur") {
+    } else if (type === "blur") {
         ctxAtop.filter = "blur(4px)";
         ctxAtop.drawImage(arrowImage, -20, -20, 40, 40);
         ctxAtop.filter = "none";
@@ -2547,33 +2522,33 @@ function drawArrowFromTop(y) {
     ctxAtop.restore();
 }
 
-atop.addEventListener('mouseover', () => {
-    atop.style.display = 'none';
-    miniCanvasAtop.style.display = 'block';
-    // Draw arrow at the top edge.
+// Draw arrow at center on load
+drawArrowFromTop(centerY_top);
+
+// Animate on hover
+miniCanvasAtop.addEventListener('mouseenter', () => {
+    // start off-screen at top edge (y=0)
     drawArrowFromTop(0);
     gsap.to({ pos: 0 }, {
         duration: 0.5,
         pos: centerY_top,
         ease: getEase(),
-        onUpdate: function () {
+        onUpdate() {
             drawArrowFromTop(this.targets()[0].pos);
         }
     });
 });
 
-miniCanvasAtop.addEventListener('mouseout', () => {
+miniCanvasAtop.addEventListener('mouseleave', () => {
+    // smoothly reset to center
     gsap.to({ pos: centerY_top }, {
         duration: 0.5,
         pos: centerY_top,
         ease: getEase(),
-        onUpdate: function () {
+        onUpdate() {
             drawArrowFromTop(this.targets()[0].pos);
-        },
-        onComplete: function () {
-            miniCanvasAtop.style.display = 'none';
-            atop.style.display = 'block';
         }
     });
 });
+
 
