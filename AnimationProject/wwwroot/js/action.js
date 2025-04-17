@@ -864,7 +864,10 @@ function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
                     dataType: "json",
                     data: dataVideoPath,
                     success: function (slideResult) {
-                       // triggerAutorefresh();
+                        // triggerAutorefresh();
+                        //Need to remove as this is temporary
+                        const targetUrl = window.location.origin + "/Canvas/VScreen1/1";
+                        window.open(targetUrl, "_blank");
                     },
                     error: function (data) {
                         console.log("error in saving Image " + activeSlide);
