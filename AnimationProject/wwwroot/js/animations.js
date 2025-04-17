@@ -1644,8 +1644,10 @@ canvas.addEventListener("mousedown", function (e) {
             images.forEach(img => img.selected = false);
             currentDrag = null;
             activeImage = null;
-            enableFillColorDiv();
-            enableStrockColorDiv()
+            //enableFillColorDiv();
+            //enableStrockColorDiv()
+            disableFillColorDiv();
+            disableStrockColorDiv()
         }
     }
 
@@ -1654,21 +1656,29 @@ canvas.addEventListener("mousedown", function (e) {
 });
 
 function disableFillColorDiv() {
+    const divfillColor = document.getElementById("divFillColor");
+    divfillColor.style.display = "none";
     const div = document.getElementById("divfill");
     div.style.pointerEvents = "none";
     div.style.opacity = "0.5";
 }
 function enableFillColorDiv() {
+    const divfillColor = document.getElementById("divFillColor");
+    divfillColor.style.display = "block";
     const div = document.getElementById("divfill");
     div.style.pointerEvents = "auto";
     div.style.opacity = "1";
 }
 function disableStrockColorDiv() {
+    const divstrockColor = document.getElementById("divStrockColor");
+    divstrockColor.style.display = "none";
     const div = document.getElementById("divStrock");
     div.style.pointerEvents = "none";
     div.style.opacity = "0.5";
 }
 function enableStrockColorDiv() {
+    const divstrockColor = document.getElementById("divStrockColor");
+    divstrockColor.style.display = "block";
     const div = document.getElementById("divStrock");
     div.style.pointerEvents = "auto";
     div.style.opacity = "1";
