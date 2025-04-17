@@ -90,15 +90,46 @@
         }
 
 </style>
+<script>
+        // Wait for DOM to load before accessing elements
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add Enter key support to inputs
+        document.getElementById('emailInput').addEventListener('keypress', function(e) {
+            if(e.key === 'Enter') validateCredentials();
+        });
+        document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+            if(e.key === 'Enter') validateCredentials();
+        });
+    });
 
+    function validateCredentials() {
+        // Static credentials (already in lowercase)
+        const staticEmail = "demo@aniboard.com";
+        const staticPassword = "demo123";
+
+        // Get user input values and convert to lowercase
+        const enteredEmail = document.getElementById('emailInput').value.toLowerCase().trim();
+        const enteredPassword = document.getElementById('passwordInput').value.toLowerCase().trim();
+
+        // Validation check
+        if(enteredEmail === staticEmail && enteredPassword === staticPassword) {
+           window.location.href = window.location.origin + '/Canvas/VerticalIndex';
+            // You can redirect or perform other actions here
+        } else {
+            alert("Invalid credentials!");
+            // Clear password field for retry
+            document.getElementById('passwordInput').value = '';
+        }
+    }
+</script>
 
 
 <div class="container">
     <div class="login-box">
         <h1 class="logo">AniBoard</h1>
         <p class="subtitle">Sign in to continue, or register for a new account.</p>
-        <input type="email" class="input" placeholder="Email" />
-        <input type="password" class="input" placeholder="Password" />
-        <button class="btn">Continue</button>
+        <input type="email" class="input" id="emailInput" placeholder="Email" />
+        <input type="password" id="passwordInput" class="input" placeholder="Password" />
+        <button type="button" onclick="validateCredentials();"  class="btn">Continue</button>
     </div>
 </div>
