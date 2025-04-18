@@ -1,5 +1,739 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+﻿
+
+<div class="text-center" style="position:relative">
+
+    <nav class="navbar bg-dark-topnav navbar-expand-lg fixed-top">
+        <div class="container-fluid p-r-0" style="justify-content: center !important;">
+            <div class="row">
+                <div class="col-md-3">
+                    <a class="logo ms-2" href="javascript:void(0)"> <img src="~/images/icons/icon-left-arrow.png" alt="Logo" alt="Logo"></a>
+                    <ul class="top-left-icon">
+                        <li>
+                            <a href="javascript:void(0)"> <img id="toggle_img" src="~/images/icons/ico-pattren.svg" title="Pattren" alt="pattren" width="20"></a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)"> <img onclick="addDefaultText();opentl();" src="~/images/icons/icon-text.png" title="Text" alt="text" width="17"></a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)"> <img src="~/images/icons/icon_circle.svg" title="Circle" alt="circle" width="16"></a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)"> <img src="~/images/icons/ico-shapes-masking.svg" title="Masking" alt="Masking" width="17"></a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)">
+                                <img onclick="opengl()" src="~/images/icons/icon_gallery.svg" title="Gallery" alt="Gallery" width="20">
+                            </a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                                <img onclick="opengl()" src="~/images/icons/plus.png" title="Create" alt="Create_Board" width="18">
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+
+
+                <div class="col-md-6 nav-middle d-flex gap-2 justify-content-center align-items-center">
+                    <input type="text" class="form-control nav_input" placeholder="Board Name" aria-label="Username" id="txtSaveDesignBoardName">
+                    <button class="D-icon-save" id="saveButton" onclick="SaveDesignBoard();" type="submit"><img src="~/images/icons/ico-save.svg"> </button>
+                    <input type="hidden" id="hdnDesignBoardId" />
+                    <input type="hidden" id="hdnDesignBoardDetailsIdSlide1" />
+                    <input type="hidden" id="hdnDesignBoardDetailsIdSlide2" />
+                    <input type="hidden" id="hdnDesignBoardDetailsIdSlide3" />
+                    <input type="hidden" id="hdnDesignBoardDetailsIdSlideFilePath1" value="" />
+                    <input type="hidden" id="hdnDesignBoardDetailsIdSlideFilePath2" value="" />
+                    <input type="hidden" id="hdnDesignBoardDetailsIdSlideFilePath3" value="" />
+                    <input type="hidden" id="hdnDesignBoardDetailsIdSlideImageFilePath1" value="" />
+                    <input type="hidden" id="hdnDesignBoardDetailsIdSlideImageFilePath2" value="" />
+                    <input type="hidden" id="hdnDesignBoardDetailsIdSlideImageFilePath3" value="" />
+                </div>
+                <div class="col-md-3 nav-right">
+                    <ul>
+                        @* <li class="play-btn"> *@
+                        @*     <button class="btn" title="Preview" data-bs-toggle="modal" onclick="GetDesignBoardByIdForPublish();" data-bs-target="#imageModal"><img src="~/images/icons/Icon-01.svg" width="20"> </button> *@
+                        @* </li> *@
+                        <li class="play-btn">
+                            <button class="btn" title="Publish" onclick="triggerAutorefresh()" id="btnPublish">P </button>
+                        </li>
+                        <li>
+                            <button class="btn" type="submit" onclick="GetDesignBoardByIdForDownload('download')" title="download"><img src="~/images/icons/ico-download.svg" width="30"> </button>
+                        </li>
+
+                        <li class="nav-item dropdown">
+                            <a class="profile nav-link text-light d-flex justify-content-center align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+
+
+                                A
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown" style="background-color: #4E43E1; border: none; border-radius:0; max-width: 106px; box-shadow: none;">
+                                <li class="w-100 acc_list">
+                                    <a class="dropdown-item d-flex align-items-center text-white" asp-controller="Canvas" asp-action="Account">
+                                        Account
+                                    </a>
+                                </li>
+                                <li class="w-100 acc_list">
+                                    <a class="dropdown-item d-flex align-items-center text-white" asp-controller="Canvas" asp-action="Boards">
+                                        Boards
+                                    </a>
+                                </li>
+
+                                <li class="w-100 acc_list">
+                                    <a class="dropdown-item d-flex align-items-center text-white" href="/logout">
+                                        Sign Out
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+
+
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Modal Structure -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content p-3">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="aniBoardModalLabel">New AniBoard</h5>
+                </div>
+
+                <div class="modal-body">
+                    <!-- Horizontal Option -->
+                    <div class="option-box d-flex justify-content-between align-items-center" id="horizontal-option">
+                        <div class="d-flex align-items-center">
+                            <div class="landscape-icon"></div>
+                            <span>Horizontal / Landscape</span>
+                        </div>
+                        <span>1920x1080</span>
+                    </div>
+
+                    <!-- Vertical Option -->
+                    <div class="option-box d-flex justify-content-between align-items-center mb-0" id="vertical-option">
+                        <div class="d-flex align-items-center">
+                            <div class="portrait-icon"></div>
+                            <span class="vertical_option">Vertical / Portrait</span>
+                        </div>
+                        <span>1080x1920</span>
+                    </div>
+                </div>
+
+                <div class="modal-footer pt-0">
+                    <button class="create-btn" id="create-button">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- The Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <a href="#">
+                        <img src="https://cdn-icons-png.flaticon.com/512/747/747376.png" class="icon">
+                        My account
+                    </a>
+                    <a href="#">
+                        <img src="https://cdn-icons-png.flaticon.com/512/126/126467.png" class="icon">
+                        Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex align-items-stretch   main-canvas-content mt-0">
+        <div class="panel-left ">
+
+            @* <div class="mb-3 d-flex"> *@
+            @*     <span class="mt-2 d-inline-block fw-bolder me-auto">Slides</span> *@
+            @*     <a class="H-link active" href="@Url.Action("Index", "Canvas")">H</a> *@
+            @*     <a class="V-link" href="@Url.Action("VerticalIndex", "Canvas")">V</a> *@
+            @*     <div class="clear"></div> *@
+            @* </div> *@
+            <div class="panel-left-scroll ">
+                <ul>
+                    <li>
+                        <img src="~/images/banner.png" class="menuboard-thum" alt="Banner" style="width: 80%; height: auto;">
+                        <div class="d-flex justify-content-center align-items-center gap-3">
+                            <span>Slide 1</span>
+                            <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
+                            <div class="clear"></div>
+                        </div>
+                    </li>
+                    <li>
+                        <img src="~/images/banner-old.png" class="menuboard-thum" alt="Banner" style="width: 80%; height: auto;">
+                        <div class="d-flex justify-content-center align-items-center gap-3">
+                            <span>Slide 2</span>
+                            <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
+                            <div class="clear"></div>
+                        </div>
+                    </li>
+                    <li>
+                        <img src="~/images/banner.png" class="menuboard-thum" alt="Banner" style="width: 80%; height: auto;">
+                        <div class="d-flex justify-content-center align-items-center gap-3">
+                            <span>Slide 3</span>
+                            <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
+                            <div class="clear"></div>
+                        </div>
+                    </li>
+
+                </ul>
+            </div>
+        </div>
+        <div class="panel-middle">
+            <div class="container-1">
+                <div class="container-inner">
+                    <div class="canvas-top-btn">
+
+                        <button class="Graphic-More active">Animation Mode</button>
+                    </div>
+
+                    <div class="canvas" id="">
+                        @* <img src="~/images/banner.png" alt="Banner" style="width: 100%; height: auto;"> *@
+                        <div id="canvasContainer">
+                            <canvas id="myCanvas" height="377" width="670" style="background-color:#fff"></canvas>
+                        </div>
+                        <p class="middle-resulation">1920x1080</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-right content">
+            <div class="right-sec-one">
+                <div class="headtext">Board Animation</div>
+                <div class="tabset">
+
+                    <!-- Tab 1 -->
+                    <input type="radio" name="tabset" id="tab1" aria-controls="marzen" checked>
+                    <label style="margin-left:0px;" for="tab1">In</label>
+                    <!-- Tab 2 -->
+                    <input type="radio" name="tabset" id="tab2" aria-controls="rauchbier">
+                    <label for="tab2">Stay</label>
+                    <!-- Tab 3 -->
+                    <input type="radio" name="tabset" id="tab3" aria-controls="dunkles">
+                    <label style="margin-right:0px;" for="tab3">Out</label>
+
+
+                    <div class="tab-panels">
+
+                        <section id="marzen" class="tab-panel">
+
+                            <div class="accordion" style=" position: relative;   left: 0px; top: 0; margin-bottom: 26px; width: 100%; ">
+
+                                <div class="answer-group">
+                                    <p class="collapsed" data-toggle="collapse" data-target="#collapse-4" aria-expanded="true" aria-controls="collapse-1">
+                                        Speed<i class="fa arrow-expand" aria-hidden="true"></i>
+                                    </p>
+                                    <div id="collapse-4" class="collapse">
+                                        <div class="card-body">
+                                            <ul class="speed-list">
+                                                <li>2 Sec</li>
+                                                <li>4 Sec</li>
+                                                <li>6 Sec</li>
+                                                <li>8 Sec</li>
+                                                <li>10 Sec</li>
+                                                <div class="clear"></div>
+                                            </ul>
+                                            <div class="clear"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <h2>Effects</h2>
+                            <ul class="right-listone">
+                                <li>
+                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-effict.png" alt="pattren"></a>
+                                    <div class="clear"></div>
+                                </li>
+                            </ul>
+
+
+                            <h2>In</h2>
+                            <ul class="right-listone">
+                                <li>
+                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-lr.png" alt="pattren"></a>
+
+
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-rl.png" alt="text"></a>
+
+                                </li>
+
+                                <li>
+                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-bt.png" alt="Masking"></a>
+
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-tb.png" alt="image"></a>
+
+                                </li>
+
+                                <li>
+                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-ud.png" alt="image"></a>
+
+                                </li>
+
+                            </ul>
+                        </section>
+
+
+                        <section id="rauchbier" class="tab-panel">
+                            <div class="accordion" style=" position: relative;   left: 0px; top: 0; margin-bottom: 26px; width: 100%;">
+
+                                <div class="answer-group">
+                                    <p class="collapsed" data-toggle="collapse" data-target="#collapse-3" aria-expanded="true" aria-controls="collapse-1">
+                                        Seconds <i class="fa arrow-expand" aria-hidden="true"></i>
+                                    </p>
+                                    <div id="collapse-3" class="collapse">
+                                        <div class="card-body">
+                                            <ul class="speed-list">
+                                                <li>2 Sec</li>
+                                                <li>4 Sec</li>
+                                                <li>6 Sec</li>
+                                                <li>8 Sec</li>
+                                                <li>10 Sec</li>
+                                                <div class="clear"></div>
+                                            </ul>
+                                            <div class="clear"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </section>
+
+
+
+
+
+                        <section id="dunkles" class="tab-panel">
+
+                            <div class="accordion" style=" position: relative;
+                            left: 0px;
+                            top: 0;
+                            margin-bottom: 26px;
+                            width: 100%;">
+
+                                <div class="answer-group">
+                                    <p class="collapsed" data-toggle="collapse" data-target="#collapse-6" aria-expanded="true" aria-controls="collapse-1">
+                                        Speed<i class="fa arrow-expand" aria-hidden="true"></i>
+                                    </p>
+                                    <div id="collapse-6" class="collapse">
+                                        <div class="card-body">
+                                            <ul class="speed-list">
+                                                <li>2 Sec</li>
+                                                <li>4 Sec</li>
+                                                <li>6 Sec</li>
+                                                <li>8 Sec</li>
+                                                <li>10 Sec</li>
+
+                                            </ul>
+                                            <div class="clear"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <h2>Effects</h2>
+                            <ul class="right-listone">
+                                <li>
+                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-effict.png" alt="pattren" width="35"></a>
+
+                                    <div class="clear"></div>
+                                </li>
+
+
+                            </ul>
+
+                            <h2>Out</h2>
+
+                            <ul class="right-listone">
+                                <li>
+                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-lr.png" alt="pattren"></a>
+                                    <p>LR</p>
+                                    <div class="clear"></div>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-rl.png" alt="text"></a>
+                                    <p>LR</p>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-bu.png" alt="circle"></a>
+                                    <p>LR</p>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-bt.png" alt="Masking"></a>
+                                    <p>LR</p>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-tb.png" alt="image"></a>
+                                    <p>LR</p>
+                                </li>
+
+                                <li>
+                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-ud.png" alt="image"></a>
+                                    <p>LR</p>
+                                </li>
+
+                            </ul>
+                        </section>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="right-sec-two" style="display:none;">
+                <div class="headtext">Text</div>
+
+                <div class="col-md-12 mb-3">
+                    <div class="row alignment-img">
+                        <ul>
+                            <li>
+                                <a href="javascript:void(0)"> <img src="~/images/icons/icon-align-left.png" title="Alignleft" alt="Icon-alignleft"></a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0)"> <img src="~/images/icons/icon-align-center.png" title="Aligncenter" alt="Icon-alignleft"></a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0)"> <img src="~/images/icons/icon-align-right.png" title="Alignright" alt="Icon-alignleft"></a>
+                            </li>
+                            <li>
+                            </li>
+                            <li>
+                            </li>
+                        </ul>
+
+                    </div>
+                </div>
+
+                <div class="col-md-12 mb-3">
+                    <div class="row FontSize">
+                        <div class="col-md-6 p-l-0">
+                            <label>Size</label>
+                        </div>
+                        <div class="col-md-6 p-r-0 text-end">
+                            <select>
+                                <option> 12</option>
+                                <option> 14</option>
+                                <option> 16</option>
+                                <option> 18</option>
+                                <option> 20</option>
+                            </select>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="col-md-12 mb-4">
+                    <div class="row fillcolor">
+                        <div class="col-md-6 p-l-0">
+                            <label>Fill</label>
+                        </div>
+                        <div class="col-md-6 p-r-0 text-end">
+                            <div class="checkboxes__item">
+                                <label class="checkbox style-c">
+                                    <input type="checkbox" checked="checked" />
+                                    <div class="checkbox__checkmark"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="row fillcolor mt-2">
+                        <div class="col-md-6 p-l-0">
+                            <label>00000</label>
+                        </div>
+                        <div class="col-md-6 p-r-0 text-end">
+                            <span class="fill-solid"> </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12 mb-4">
+                    <div class="row Strock">
+                        <div class="col-md-6 p-l-0">
+                            <label>Strock</label>
+                        </div>
+                        <div class="col-md-6 p-r-0 text-end">
+                            <div class="checkboxes__item">
+                                <label class="checkbox style-c">
+                                    <input type="checkbox" checked="checked" />
+                                    <div class="checkbox__checkmark"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="row Strock mt-2">
+                        <div class="col-md-6 p-l-0">
+                            <label>00000</label>
+                        </div>
+                        <div class="col-md-6 p-r-0 text-end">
+                            <span class="fill-solid">
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-12 mb-2">
+                    <div class="row Strock-Line">
+                        <div class="col-md-6 p-l-0">
+                            <label>Strock Line</label>
+                        </div>
+                        <div class="col-md-6 p-r-0 text-end">
+                            <select>
+                                <option> 1</option>
+                                <option> 2</option>
+                                <option> 3</option>
+                                <option> 4</option>
+                                <option> 5</option>
+                            </select>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="col-md-12 mb-3">
+                    <div class="row opasity">
+                        <div class="col-md-6 p-l-0">
+                            <label>Opacity</label>
+                        </div>
+                        <div class="col-md-6 p-r-0 text-end">
+                            <label>100%</label>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div id="opengl_popup" class="collapse show-gallery">
+
+                <div class="card-body">
+                    <div class="panel-left-gallery">
+                        <input class="form-control mb-4" type="file" id="formFileMultiple" multiple />
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h2 class="fs-4 mb-0">Gallery</h2>
+                            <button class="btn-cross b-radius-6" type="button" onclick="opengl()">  ✕  </button>
+                        </div>
+                        <div class="gl-box">
+                            <div class="col-md-12">
+                                <div class="row my-4 align-items-center">
+                                    <div class="col-md-6 ps-0">
+                                        <div class="accordion">
+                                            <div class="answer-group">
+                                                <p class="collapsed fs-6 mb-0" data-toggle="collapse" data-target="#collapse-1" aria-expanded="true" aria-controls="collapse-1">
+                                                    Shapes<i class="fa arrow-expand" aria-hidden="true"></i>
+                                                </p>
+                                                <div id="collapse-1" class="collapse">
+                                                    <div class="card-body">
+                                                        <ul class="Shapes">
+                                                            <li>Shapes 1 </li>
+                                                            <li>Shapes 1 </li>
+                                                            <li>Shapes 1 </li>
+                                                            <li>Shapes 1 </li>
+                                                            <li>Shapes 1 </li>
+                                                            <li>Shapes 1 </li>
+                                                            <li>Shapes 1 </li>
+                                                            <li>Shapes 1 </li>
+                                                            <li>Shapes 1 </li>
+                                                            <li>Shapes 1 </li>
+                                                        </ul>
+                                                        <div class="clear"></div>
+                                                    </div>
+                                                    <div class="clear"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 gallery-search-right" style="padding-right:0px;">
+                                        <input type="text" class="form-search b-radius-6">
+                                        <button class="btn-search" type="button">
+                                            <img src="~/images/icons/ico-search.svg" width="18">
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="row gallery-image">
+                                    <ul>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl001.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl002.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl003.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl004.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl005.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl006.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl007.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl008.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl009.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl0010.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl0011.png" alt="">
+                                        </li>
+                                        <li>
+                                            <img src="~/images/Gallery-img/gl0012.png" alt="">
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div class="row pagination">
+                                    <ul>
+                                        <li style="border:0px;"> < </li>
+                                        <li>2</li>
+                                        <li>3</li>
+                                        <li>4</li>
+                                        <li>5</li>
+                                        <li>5</li>
+                                        <li>6</li>
+                                        <li>7</li>
+                                        <li style="border:0px;">></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="fontstyle_popup" class="collapse show-texteditor">
+                <div class="card-body">
+                    <div class="panel-left-gallery">
+                        <h2>Font Family <button class="btn-cross b-radius-6" type="button" onclick="opentl();">✕</button></h2>
+                        <div class="gl-box">
+                            <div class="col-md-12">
+                                <div class="row" style=" margin-left:-30px;">
+                                    <ul class="TextStyle">
+                                        <li><a class="arial" href="javascript:void(0)">Arial</a></li>
+                                        <li><a class="anton" href="javascript:void(0)">Anton</a></li>
+                                        <li><a class="bebes" href="javascript:void(0)">BEBES</a></li>
+                                        <li><a class="monstro" href="javascript:void(0)">MONSTRO</a></li>
+                                        <li><a class="Montserrat" href="javascript:void(0)">Montserrat</a></li>
+                                        <li><a class="neto" href="javascript:void(0)">Neto</a></li>
+                                        <li><a class="pacifico" href="javascript:void(0)">Pacifico</a></li>
+                                        <li><a class="Roboto" href="javascript:void(0)">Roboto</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section scripts {
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
+          rel="stylesheet">
+    <link href="~/css/animate/animate.min.css" rel="stylesheet">
+    <link href="~/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="~/css/style.css" rel="stylesheet">
+    <link href="~/css/canvas.css" rel="stylesheet">
+    <link href="~/css/responsive.css" rel="stylesheet">
+    <script src='https://code.jquery.com/jquery-3.2.1.slim.min.js'></script>
+@*  <script src='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js'></script> *@
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js'></script>
+    <script src="~/js/wow.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+                document.querySelectorAll('.H-link, .V-link').forEach(link => {
+          link.addEventListener('click', () => {
+            document.querySelectorAll('.H-link, .V-link').forEach(el => el.classList.remove('active'));
+            link.classList.add('active');
+          });
+        });
+    </script>
+    <script>
+        function opengl()
+         {
+          $("#opengl_popup").toggle();
+          if(document.getElementById("fontstyle_popup").style.display == "block"){
+                $("#fontstyle_popup").hide();
+                $(".right-sec-two").toggle();
+                $(".right-sec-one").toggle();
+            }
+         }
+    </script>
+
+    <script>
+        function opentl()
+         {
+            if(document.getElementById("opengl_popup").style.display == "block"){
+                $("#opengl_popup").hide();
+            }
+          $("#fontstyle_popup").toggle();
+          $(".right-sec-two").toggle();
+          $(".right-sec-one").toggle();
+         }
+    </script>
+    <!-- JavaScript for Handling Selection and Redirection -->
+    <script>
+        let selectedOption = ""; // Variable to store the selected board type
+
+        document.getElementById("horizontal-option").addEventListener("click", function () {
+            selectedOption = "horizontal";
+            highlightSelection("horizontal-option");
+        });
+
+        document.getElementById("vertical-option").addEventListener("click", function () {
+            selectedOption = "vertical";
+            highlightSelection("vertical-option");
+        });
+
+        document.getElementById("create-button").addEventListener("click", function () {
+            if (selectedOption === "horizontal") {
+                window.location.href = "/"; // Redirect to horizontal page
+            } else if (selectedOption === "vertical") {
+                window.location.href = "/Canvas/VerticalIndex"; // Redirect to vertical page
+            } else {
+                alert("Please select an option before proceeding!");
+            }
+        });
+
+        // Function to highlight selected option
+        function highlightSelection(selectedId) {
+            document.getElementById("horizontal-option").classList.remove("selected");
+            document.getElementById("vertical-option").classList.remove("selected");
+            document.getElementById(selectedId).classList.add("selected");
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+          document.querySelectorAll('.panel-vertical-scroll .menuboard-vertical-thum')
+            .forEach(item => {
+              item.addEventListener('click', function () {
+                this.classList.toggle('active');
+              });
+            });
+        });
+
+
+    </script>
+
+        }
+
