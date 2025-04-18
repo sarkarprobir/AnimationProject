@@ -2100,10 +2100,11 @@ textEditor.addEventListener("keydown", function (e) {
     }
 });
 
-const colorPicker = document.getElementById("favcolor");
-const fillColorPicker = document.getElementById("favFillcolor");
-const strockColorPicker = document.getElementById("favStrockcolor");
+
+
+
 function ChangeColor() {
+    const colorPicker = document.getElementById("favcolor");
     $("#hdnTextColor").val(colorPicker.value);
     const textColor = document.getElementById("hdnTextColor").value; // Text color from dropdown 
     const Obj = textObjects.find(obj => obj.selected);
@@ -2113,10 +2114,12 @@ function ChangeColor() {
     drawCanvas('ChangeStyle');
 }
 function ChangeFillColor() {
+    const fillColorPicker = document.getElementById("favFillcolor");
     $("#hdnfillColor").val(fillColorPicker.value);
     updateSelectedImageColors($("#hdnfillColor").val(), $("#hdnStrockColor").val());
 }
 function ChangeStrockColor() {
+    const strockColorPicker = document.getElementById("favStrockcolor");
     $("#hdnStrockColor").val(strockColorPicker.value);
     updateSelectedImageColors($("#hdnfillColor").val(), $("#hdnStrockColor").val());
 }

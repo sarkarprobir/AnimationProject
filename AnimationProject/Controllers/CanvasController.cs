@@ -105,22 +105,45 @@ namespace AnimationProject.Controllers
             return PartialView("_PartialHeaderSection");
         }
         [HttpPost]
+        public IActionResult CreateHeaderSectionHorizontalhtml()
+        {
+            return PartialView("_PartialHeaderSection");
+        }
+        [HttpPost]
         public IActionResult CreateBackgroundSectionhtml()
         {
             return PartialView("_PartialBackgroundSection");
         }
         [HttpPost]
+        public IActionResult CreateBackgroundHorizontalSectionhtml()
+        {
+            return PartialView("_PartialBackgroundSection");
+        }
+        
+        [HttpPost]
         public IActionResult CreateLeftSectionhtml()
         {
+            ViewBag.Orientation = "Vertical";
             return PartialView("_PartialLeftSection");
         }
+        [HttpPost]
+        public IActionResult CreateLeftSectionHorizontalhtml()
+        {
+            ViewBag.Orientation = "Horizontal";
+            return PartialView("_PartialLeftSection");
+        }
+        
         [HttpPost]
         public IActionResult CreateRightSectionhtml()
         {
             return PartialView("_PartialRightSection");
         }
+        [HttpPost]
+        public IActionResult CreateRightSectionHorizontalhtml()
+        {
+            return PartialView("_PartialRightSection");
+        }
         
-
         public async Task<IActionResult> Boards()
         {
             //if (!_checkSession.IsSession()) return Ok("login");
