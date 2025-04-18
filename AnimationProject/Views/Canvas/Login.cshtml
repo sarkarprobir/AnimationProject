@@ -113,7 +113,8 @@
 
         // Validation check
         if(enteredEmail === staticEmail && enteredPassword === staticPassword) {
-           window.location.href = window.location.origin + '/Canvas/VerticalIndex';
+           // window.location.href = window.location.origin + '/Canvas/VerticalIndex';
+             window.location.href = window.location.origin+ '/Canvas/VerticalIndex?openModal=true';
             // You can redirect or perform other actions here
         } else {
             alert("Invalid credentials!");

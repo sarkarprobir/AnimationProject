@@ -94,7 +94,28 @@ namespace AnimationProject.Controllers
         {
             return View();
         }
+        [HttpPost]
+        public IActionResult CreateHeaderSectionhtml()
+        {
+            return PartialView("_PartialHeaderSection");
+        }
+        [HttpPost]
+        public IActionResult CreateBackgroundSectionhtml()
+        {
+            return PartialView("_PartialBackgroundSection");
+        }
+        [HttpPost]
+        public IActionResult CreateLeftSectionhtml()
+        {
+            return PartialView("_PartialLeftSection");
+        }
+        [HttpPost]
+        public IActionResult CreateRightSectionhtml()
+        {
+            return PartialView("_PartialRightSection");
+        }
         
+
         public async Task<IActionResult> Boards()
         {
             //if (!_checkSession.IsSession()) return Ok("login");

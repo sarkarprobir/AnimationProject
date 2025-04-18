@@ -4,8 +4,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <script src="~/js/animations.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
     <script src="~/js/action.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
- 
-    
+
+
     <style>
         #canvasContainer {
             position: relative;
@@ -40,14 +40,15 @@
     </style>
 
     <style>
-       
-        input[type="color" i]{
+
+        input[type="color" i] {
             width: 30px;
             height: 30px;
             padding: 0;
             /* border: none; */
             border-radius: 7px;
         }
+
         .color-swatch {
             width: 40px;
             height: 40px;
@@ -89,11 +90,11 @@
                 cursor: pointer;
             }
 
-           #contextMenu li:hover {
-             background-color: #eee;
-           }
+                #contextMenu li:hover {
+                    background-color: #eee;
+                }
 
-        .dropdown-toggle{
+        .dropdown-toggle {
             text-decoration: none;
             color: #777b7c;
         }
@@ -108,24 +109,25 @@
             box-shadow: 0px 0px 7px #c1bbbb;
             overflow: hidden !important;
         }
-        .dropdown{
+
+        .dropdown {
             color: #000000 !important;
         }
 
-        .dropdown:hover{
-            color: #212529 !important;
-        }
+            .dropdown:hover {
+                color: #212529 !important;
+            }
 
         .dropdown-item {
             color: #212529 !important;
         }
-        .dropdown-item:hover{
-            color: #fff !important;
-            background-color: #4e43e1 !important;
-            
-        }
 
-         
+            .dropdown-item:hover {
+                color: #fff !important;
+                background-color: #4e43e1 !important;
+            }
+
+
 
         /* gallery styles */
 
@@ -170,16 +172,17 @@
             border: 1px solid transparent;
             border-radius: 3px !important;
         }
-        .tab:hover {
+
+            .tab:hover {
                 border: 1px solid #08080836;
                 border-radius: 5px;
             }
-        
-        
 
-            .cross:hover {
-                color: red;
-            }
+
+
+        .cross:hover {
+            color: red;
+        }
 
         .tab.active {
             background: var(--color-blue);
@@ -191,9 +194,9 @@
             display: none;
         }
 
-        .left_content.active {
-            display: block;
-        }
+            .left_content.active {
+                display: block;
+            }
 
         .search-box {
             display: flex;
@@ -254,13 +257,11 @@
 
         .search-box,
         .choose_file {
-            
             margin-top: 15px;
         }
 
         .file_upload {
             border-radius: 5px !important;
-            
         }
 
         .temp_gallery {
@@ -275,14 +276,16 @@
                 width: auto;
                 height: 147px;
             }
-            .gallery_head {
-                font-size: 18px;
-                font-weight: 700;
-            }
-            .gallery_type {
-                font-size: 15px;
-            }
-    /* file upload css */
+
+        .gallery_head {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .gallery_type {
+            font-size: 15px;
+        }
+        /* file upload css */
         .custom-file-input {
             display: flex;
             align-items: center;
@@ -314,7 +317,7 @@
             .custom-file-input input {
                 display: none;
             }
-            /* background image upload */
+        /* background image upload */
         #background_popup {
             display: none;
             width: 254px;
@@ -335,7 +338,8 @@
             border-radius: 3px;
             padding-top: 2.3px;
         }
-        .back_label{
+
+        .back_label {
             font-size: 15px;
         }
 
@@ -352,6 +356,7 @@
         .texture_images {
             min-height: 469px;
         }
+
         .texture_palette {
             width: 30px;
             height: 30px;
@@ -361,17 +366,17 @@
             overflow: hidden;
         }
 
-        .texture_palette img {
-            width: 30px;
-            height: 30px;
-        }
+            .texture_palette img {
+                width: 30px;
+                height: 30px;
+            }
 
         #texture_box {
             display: block;
         }
-        
 
-        
+
+
         /* play modal */
 
         .play_modal_body .modal-content {
@@ -383,7 +388,6 @@
 
         .play_modal_body .modal-body img {
             width: 100%;
-           
         }
 
         .modal-open .modal {
@@ -394,7 +398,7 @@
             max-width: 1000px !important;
         }
 
-        .play_modal_btn  {
+        .play_modal_btn {
             position: absolute;
             top: -16px;
             right: -16px;
@@ -404,24 +408,25 @@
             padding: 7px !important;
             color: #fff !important;
         }
+
         .menuboard-vertical-thum .active {
             border: 2px solid #0000ff80;
         }
-         
+
         .miniCanvas {
             border-radius: 5px;
             width: 40px;
             height: 40px;
         }
 
-            .miniCanvas:hover{
+            .miniCanvas:hover {
                 border: 2px solid #ccc;
             }
 
-           
-            .miniCanvas_active{ 
-                border: 2px solid #ccc; 
-             }
+
+        .miniCanvas_active {
+            border: 2px solid #ccc;
+        }
         /* all time deropdown */
         .time_dropdown {
             font-size: 13.8px !important;
@@ -430,10 +435,11 @@
     </style>
     <script>
             $(document).ready(function(){
-               document.getElementById('lblSpeed').textContent = "3 Sec";
-               document.getElementById('lblSeconds').textContent = "6 Sec";
-                document.getElementById('lblOutSpeed').textContent = "2 Sec";
-                document.getElementById('lblLoop').textContent = "1 time";
+               CreateHeaderSectionhtml();
+               CreateBackgroundSectionhtml();
+               CreateLeftSectionhtml();
+               CreateRightSectionhtml()
+              
                  $("#hdnlLoopControl").val(1);
                  $("#hdnfillColor").val('#42b3f5');
                  $("#hdnStrockColor").val('#78f542');
@@ -454,6 +460,14 @@
                             // Call your initialization function with the ID
                             GetDesignBoardById(id);
                         }
+
+         const params = new URLSearchParams(window.location.search);
+        if (params.get('openModal') === 'true') {
+          // Bootstrap 5 way:
+          const modalEl = document.getElementById('exampleModal');
+          const bsModal = new bootstrap.Modal(modalEl);
+          bsModal.show();
+        }
         });
     </script>
 
@@ -472,7 +486,7 @@
     <script src='https://code.jquery.com/jquery-3.2.1.slim.min.js'></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js'></script>
     <script src="~/js/wow.min.js"></script>
-    
+
     <script>
         function opengl()
          {
@@ -544,28 +558,21 @@
                 fileName.textContent = 'No File';
             }
         }
+
         
-        //bacground popup show button
-        document.addEventListener("DOMContentLoaded", function() {
-            let toggleImg = document.getElementById("toggle_img");
-            let closeButton = document.getElementById("close_button");
-            let popup = document.getElementById("background_popup");
-
-            if (!popup) {
-                console.error("Element #background_popup not found!");
-                return;
-            }
-
-            // Click event to show the popup
-            toggleImg.onclick = function() {
-                popup.style.display = "block";
-            };
-
-            // Click event to hide the popup
-            closeButton.onclick = function() {
-                popup.style.display = "none";
-            };
+                // show the popup when the pattern icon is clicked
+        $(document).on('click', '#toggle_img', function(e) {
+          e.preventDefault();
+          CreateBackgroundSectionhtml();
+          $('#background_popup').show();
         });
+
+        // hide the popup when the close button is clicked
+        $(document).on('click', '#close_button', function(e) {
+          e.preventDefault();
+          $('#background_popup').hide();
+        });
+
         // texture popuo show
         document.querySelectorAll(".texture_palette").forEach(element => {
             element.addEventListener("click", function() {
@@ -592,7 +599,7 @@
 
         document.getElementById("create-button").addEventListener("click", function () {
             if (selectedOption === "horizontal") {
-                window.location.href = "/"; // Redirect to horizontal page
+                window.location.href = "/Canvas/Index"; // Redirect to horizontal page
             } else if (selectedOption === "vertical") {
                 window.location.href = "/Canvas/VerticalIndex"; // Redirect to vertical page
             } else {
@@ -632,7 +639,7 @@
 
 
     </script>
-        
+
 
 }
 
@@ -640,92 +647,7 @@
 <div class="text-center" style="position:relative">
     <nav class="navbar bg-dark-topnav navbar-expand-lg fixed-top">
         <div class="container-fluid p-r-0" style="justify-content: center !important;">
-            <div class="row">
-                <div class="col-md-3">
-                    <a class="logo ms-2" href="javascript:void(0)"> <img src="~/images/icons/icon-left-arrow.png" alt="Logo" alt="Logo" ></a>
-                    <ul class="top-left-icon">
-                        <li>
-                            <a href="javascript:void(0)"> <img id="toggle_img" src="~/images/icons/ico-pattren.svg" title="Pattren" alt="pattren" width="20"></a>
-                        </li>
-                        <li>
-                            <a href="javascript:void(0)"> <img onclick="addDefaultText();opentl();" src="~/images/icons/icon-text.png" title="Text" alt="text" width="17"></a>
-                        </li>
-                        <li>
-                            <a href="javascript:void(0)"> <img src="~/images/icons/icon_circle.svg" title="Circle" alt="circle" width="16"></a>
-                        </li>
-                        <li>
-                            <a href="javascript:void(0)"> <img src="~/images/icons/ico-shapes-masking.svg" title="Masking" alt="Masking" width="17"></a>
-                        </li>
-                        <li>
-                            <a href="javascript:void(0)">
-                                <img onclick="opengl()" src="~/images/icons/icon_gallery.svg" title="Gallery" alt="Gallery" width="20">
-                            </a>
-                        </li>
-                        <li>
-                            <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                                <img onclick="opengl()" src="~/images/icons/plus.png" title="Create" alt="Create_Board" width="18">
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-
-                
-
-                <div class="col-md-6 nav-middle d-flex gap-2 justify-content-center align-items-center">
-                    <input type="text" class="form-control nav_input" placeholder="Board Name"  aria-label="Username" id="txtSaveDesignBoardName">
-                    <button class="D-icon-save" id="saveButton" onclick="SaveDesignBoard();"  type="submit"><img src="~/images/icons/ico-save.svg"> </button>
-                    <input type="hidden" id="hdnDesignBoardId" />
-                    <input type="hidden" id="hdnDesignBoardDetailsIdSlide1" />
-                    <input type="hidden" id="hdnDesignBoardDetailsIdSlide2" />
-                    <input type="hidden" id="hdnDesignBoardDetailsIdSlide3" />
-                    <input type="hidden" id="hdnDesignBoardDetailsIdSlideFilePath1" value="" />
-                    <input type="hidden" id="hdnDesignBoardDetailsIdSlideFilePath2" value="" />
-                    <input type="hidden" id="hdnDesignBoardDetailsIdSlideFilePath3" value="" />
-                    <input type="hidden" id="hdnDesignBoardDetailsIdSlideImageFilePath1" value="" />
-                    <input type="hidden" id="hdnDesignBoardDetailsIdSlideImageFilePath2" value="" />
-                    <input type="hidden" id="hdnDesignBoardDetailsIdSlideImageFilePath3" value="" />
-                </div>
-                <div class="col-md-3 nav-right">
-                    <ul>
-                        @* <li class="play-btn"> *@
-                        @*     <button class="btn" title="Preview" data-bs-toggle="modal" onclick="GetDesignBoardByIdForPublish();" data-bs-target="#imageModal"><img src="~/images/icons/Icon-01.svg" width="20"> </button> *@
-                        @* </li> *@
-                        <li class="play-btn">
-                           @*  <button class="btn" title="Publish" onclick="triggerAutorefresh()" id="btnPublish">P </button> *@
-                            <button class="btn" title="Publish" data-bs-toggle="modal" onclick="GetDesignBoardByIdForPublish();" id="btnPublish" data-bs-target="#imageModal">P </button>
-                        </li>
-                        <li>
-                            <button class="btn" type="submit"  onclick="GetDesignBoardByIdForDownload('download')" title="download" ><img src="~/images/icons/ico-download.svg" width="30"> </button>
-                        </li>
-                        
-                        <li class="nav-item dropdown">
-                            <a class="profile nav-link text-light d-flex justify-content-center align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                
-                   
-                                A </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown" style="background-color: #4E43E1; border: none; border-radius:0; max-width: 106px; box-shadow: none;">
-                                <li class="w-100 acc_list">
-                                    <a class="dropdown-item d-flex align-items-center text-white" asp-controller="Canvas" asp-action="Account">
-                                         Account
-                                    </a>
-                                </li>
-                                <li class="w-100 acc_list">
-                                    <a class="dropdown-item d-flex align-items-center text-white" asp-controller="Canvas" asp-action="Boards">
-                                        Boards
-                                    </a>
-                                </li>
-                               
-                                <li class="w-100 acc_list">
-                                    <a class="dropdown-item d-flex align-items-center text-white" href="/Canvas/Login">
-                                        Sign Out
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-
-                        
-                    </ul>
-                </div>
+            <div class="row" id="divHeaderSection">
             </div>
         </div>
     </nav>
@@ -738,7 +660,7 @@
                 <div class="modal-content">
 
                     <button type="button" class="btn-close play_modal_btn" data-bs-dismiss="modal" aria-label="Close"></button>
-
+                    <input type="hidden" id="hdnBackgroundSpecificColor" />
                     <div class="modal-body">
                         <canvas id="myCanvasElement"
                                 class="clsmyCanvas"
@@ -755,7 +677,7 @@
     </div>
     <!-- Modal for preview board design will be visible false-->
     <div class="play_modal_body" style="display:none;">
-        <div  id="downloadModal" tabindex="-1"  aria-hidden="true" >
+        <div id="downloadModal" tabindex="-1" aria-hidden="true">
             <div>
                 <div class="modal-content">
 
@@ -770,7 +692,7 @@
             </div>
         </div>
     </div>
-    
+
 
     <!-- Modal Structure -->
     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -807,42 +729,13 @@
         </div>
     </div>
 
-    
+
 
     <div class="d-flex align-items-stretch  main-canvas-content">
-           
-        <div class="panel-left ">
-            
-            <div class="panel-left-scroll panel-vertical-scroll">
-                <ul>
-                    <li>
-                        <img src="~/images/Default_Slide_Image.jpeg" id="imageVertical1" class="menuboard-vertical-thum" alt="Banner" onclick="SaveDesignBoardSlide(1);">
-                        <div class="d-flex justify-content-center align-items-center gap-3">
-                            <span>Slide 1</span>
-                            <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
-                            <div class="clear"></div>
-                        </div>
-                    </li>
-                    <li>
-                        <img src="~/images/Default_Slide_Image.jpeg" id="imageVertical2" class="menuboard-vertical-thum" alt="Banner" onclick="SaveDesignBoardSlide(2);">
-                        <div class="d-flex justify-content-center align-items-center gap-3">
-                            <span>Slide 2</span>
-                            <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
-                            <div class="clear"></div>
-                        </div>
-                    </li>
-                    <li>
-                        <img src="~/images/Default_Slide_Image.jpeg" id="imageVertical3" class="menuboard-vertical-thum" alt="Banner" onclick="SaveDesignBoardSlide(3);">
-                        <div class="d-flex justify-content-center align-items-center gap-3">
-                            <span>Slide 3</span>
-                            <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
-                            <div class="clear"></div>
-                        </div>
-                    </li>                 
-                </ul>
-            </div>
+
+        <div class="panel-left " id="divpanelleft">
         </div>
-           
+
         <div class="panel-middle" id="canvasContainer">
             <div class="container-1">
                 <div class="container-inner">
@@ -859,741 +752,17 @@
                                 </ul>
                             </div>
 
-                       
+
                         </div>
                         <p class="middle-resulation">1080x1920</p>
                     </div>
-                    <textarea  wrap="hard" style="display:none;" id="textEditor"></textarea>
+                    <textarea wrap="hard" style="display:none;" id="textEditor"></textarea>
                 </div>
             </div>
         </div>
-           
-        <div class="panel-right content">
-            <div class="right-sec-one">
-                <div class="headtext">Board Animation</div>
-                <div class="tabset">
-                    <!-- Tab 1 -->
-                    <input type="radio" name="tabset" id="tab1" onclick="TabShowHide('In')" aria-controls="marzen" checked>
-                    <label style="margin-left:0px;" for="tab1">In</label>
-                    <!-- Tab 2 -->
-                    <input type="radio" name="tabset" id="tab2" onclick="TabShowHide('Stay')" aria-controls="rauchbier">
-                    <label for="tab2">Stay</label>
-                    <!-- Tab 3 -->
-                    <input type="radio" name="tabset" id="tab3" onclick="TabShowHide('Out')" aria-controls="dunkles">
-                    <label style="margin-right:0px;" for="tab3">Out</label>
 
-                    <div class="tab-panels">
-
-                        <section id="marzen" class="tab-panel">
-
-                            <div class="accordion" style=" position: relative;   left: 0px; top: 0; margin-bottom: 26px; width: 100%; ">
-                                <div class="dropdown mb-3">
-                                    <a class="dropdown-toggle time_dropdown" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Speed  
-                                    </a> <label id="lblSpeed"></label>
-                                    <ul class="dropdown-menu" id="ddlSpeedControl">
-                                        <li><a class="dropdown-item" value="2">2 Sec</a></li>
-                                        <li><a class="dropdown-item" value="3">3 Sec</a></li>
-                                        <li><a class="dropdown-item" value="4">4 Sec</a></li>
-                                        <li><a class="dropdown-item" value="6">6 Sec</a></li>
-                                        <li><a class="dropdown-item" value="8">8 Sec</a></li>
-                                        <li><a class="dropdown-item" value="10">10 Sec</a></li>
-                                    </ul>
-                                </div>
-                                <div class="dropdown mb-3" style="display:none;">
-                                    <a class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Loop
-                                    </a> <label id="lblLoop"></label><input type="hidden" id="hdnlLoopControl" value="1" />
-                                    <ul class="dropdown-menu" id="ddlLoopControl">
-                                        <li><a class="dropdown-item" value="1">1 time</a></li>
-                                        <li><a class="dropdown-item" value="2">2 time</a></li>
-                                        <li><a class="dropdown-item" value="3">3 time</a></li>
-                                        <li><a class="dropdown-item" value="4">4 time</a></li>
-                                        <li><a class="dropdown-item" value="5">5 time</a></li>
-                                        <li><a class="dropdown-item" value="6">6 time</a></li>
-                                    </ul>
-                                </div>
-                            <h2>Effects</h2>
-                                <ul class="right-listone d-flex flex-wrap gap-2 mb-3" id="ulEffects">
-                                <li style="display:none;">
-                                        <a id="alinear" href="javascript:void(0)" onclick="textAnimationClick(this, 'linear')" title="Linear">Linear</a>
-                                    <div class="clear"></div>
-                                </li>
-
-                                    <li style="display:none;">
-                                        <a id="abounce" href="javascript:void(0)" onclick="textAnimationClick(this, 'bounce')" title="Bounce">Bounce</a>
-                                    <div class="clear"></div>
-                                </li>
-                                    <li>
-                                        <a id="adelaylinear" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear')" title="linear">Linear</a>
-                                        <div class="clear"></div>
-                                    </li>
-                                    <li style="display:none;">
-                                        <a id="azoomInOut" href="javascript:void(0)" onclick="textAnimationClick(this, 'zoom')" title="Zoom">Zoom</a>
-                                        <div class="clear"></div>
-                                    </li>
-                                    <li>
-                                        <a id="ablur" href="javascript:void(0)" title="Zoom in">Zoom </br> in</a>
-                                        <div class="clear"></div>
-                                    </li>
-                                    <li>
-                                        <a id="ablur" href="javascript:void(0)" title="Cross Fade">Cross Fade</a>
-                                        <div class="clear"></div>
-                                    </li>
-                                    <li>
-                                        <a id="ablur" href="javascript:void(0)" title="Type">Type</a>
-                                        <div class="clear"></div>
-                                    </li>
-                                    <li>
-                                        <a id="ablur" href="javascript:void(0)" title="Blur">Blur</a>
-                                        <div class="clear"></div>
-                                    </li>
-
-                            </ul>
-                            <input type="hidden" id="hdnTextAnimationType" />
-                             <input type="hidden" id="hdnslideDedirection" />
-                              <input type="hidden" id="hdnEffectSlide1" />
-                                <input type="hidden" id="hdnEffectSlide2" />
-                                <input type="hidden" id="hdnEffectSlide3" />
-                                <input type="hidden" id="hdnDirectiontSlide1" />
-                                <input type="hidden" id="hdnDirectiontSlide2" />
-                                <input type="hidden" id="hdnDirectiontSlide3" />
-                            <h2>In</h2>
-                                <ul class="right-listone d-flex justify-content-between align-items-center" id="uldirection">
-                                    <li>
-                                        <div class="btn-canvas-container" style="width: 50px; height: 50px;">
-                                            <!-- hide the <a> by default -->
-                                            <a id="aleft" href="javascript:void(0)"
-                                               style="display: none; width:100%; height:100%;">
-                                                <img src="/images/icons/icon-lr.png" alt="Left to Center"
-                                                     style="width:100%; height:100%;">
-                                            </a>
-                                            <!-- show the canvas by default -->
-                                            <canvas onclick="setCoordinate(this,'left',100,20,50,50)"
-                                                    id="miniCanvas_aleft" class="miniCanvas"
-                                                    width="50" height="50"
-                                                    style="display: block;"></canvas>
-                                        </div>
-                                        <div class="clear"></div>
-                                    </li>
-                                    <li>
-                                        <div class="btn-canvas-container" style="width: 50px; height: 50px;">
-                                            <!-- hide the <a> by default -->
-                                            <a id="aright" href="javascript:void(0)"
-                                               style="display: none; width:100%; height:100%;">
-                                                <img src="/images/icons/icon-rl.png" alt="Right to Center"
-                                                     style="width:100%; height:100%;">
-                                            </a>
-                                            <!-- show the canvas by default -->
-                                            <canvas onclick="setCoordinate(this,'right',400,0,50,50)"
-                                                    id="miniCanvas_aright" class="miniCanvas"
-                                                    width="50" height="50"
-                                                    style="display: block;"></canvas>
-                                        </div>
-                                        <div class="clear"></div>
-                                    </li>
-
-                                    <li>
-                                        <div class="btn-canvas-container" style="width: 50px; height: 50px;">
-                                            <!-- hide the <a> by default -->
-                                            <a id="abottom" href="javascript:void(0)"
-                                               style="display: none; width:100%; height:100%;">
-                                                <img src="/images/icons/icon-bt.png" alt="Bottom to Center"
-                                                     style="width:100%; height:100%;">
-                                            </a>
-                                            <!-- show the canvas by default -->
-                                            <canvas onclick="setCoordinate(this,'bottom',800,0,50,50)"
-                                                    id="miniCanvas_abottom" class="miniCanvas"
-                                                    width="50" height="50"
-                                                    style="display: block;"></canvas>
-                                        </div>
-                                        <div class="clear"></div>
-                                    </li>
-
-                                    <li>
-                                        <div class="btn-canvas-container" style="width: 50px; height: 50px;">
-                                            <!-- hide the <a> by default -->
-                                            <a id="atop" href="javascript:void(0)"
-                                               style="display: none; width:100%; height:100%;">
-                                                <img src="/images/icons/icon-tb.png" alt="Top to Center"
-                                                     style="width:100%; height:100%;">
-                                            </a>
-                                            <!-- show the canvas by default -->
-                                            <canvas onclick="setCoordinate(this,'top',400,0,50,50)"
-                                                    id="miniCanvas_atop" class="miniCanvas"
-                                                    width="50" height="50"
-                                                    style="display: block;"></canvas>
-                                        </div>
-                                        <div class="clear"></div>
-                                    </li>
-
-                            </ul>
-                            </div>
-                        </section>
-                        <div class="controls" style="display:none;">
-                            <input type="text" id="textInput" placeholder="Enter text" />
-                            <label for="textAnimation">Text Animation:</label>
-                            <select id="textAnimation">
-                                <option value="linear">Linear</option>
-                                <option value="elastic">Elastic</option>
-                                <option value="bounce">Bounce</option>
-                                <option value="morphText">Morphing</option>
-                                <option value="spin">Spin</option>
-                                <option value="zoomInOut">Zoom In-Out</option>
-                                <option value="fadeText">Fade In/Out</option>
-                                <option value="typeText">Typing Effect</option>
-                            </select>
-                     
-                            <label for="imageUpload">Upload Image:</label>
-                            <input type="file" id="imageUpload" accept="image/*" />
-                           
-                            <label for="imageAnimation">Image Animation:</label>
-                            <select id="imageAnimation">
-                                <option value="linear">Linear Move</option>
-                                <option value="elastic">Elastic Bounce</option>
-                                <option value="fade-in">Fade-In</option>
-                                <option value="bounce">Bounce</option>
-                                <option value="zoomImage">Zoom In/Out</option>
-                                <option value="flip">Flip</option>
-                                <option value="blur">Blur</option>
-                            </select>
-                            </div>
-
-                        <section id="rauchbier" class="tab-panel">
-                            <div class="accordion" style=" position: relative;   left: 0px; top: 0; margin-bottom: 26px; width: 100%;">
-
-                                
-
-                                <div class="dropdown mb-3"> 
-                                     <a class="dropdown-toggle time_dropdown" type="button" data-bs-toggle="dropdown" aria-expanded="false"> 
-                                         Seconds 
-                                    </a> <label id="lblSeconds"></label>
-                                    <ul class="dropdown-menu" id="ddlSecondsControl">
-                                        <li><a class="dropdown-item" value="2">2 Sec</a></li>
-                                        <li><a class="dropdown-item" value="3">3 Sec</a></li>
-                                        <li><a class="dropdown-item" value="4">4 Sec</a></li>
-                                        <li><a class="dropdown-item" value="6">6 Sec</a></li>
-                                        <li><a class="dropdown-item" value="8">8 Sec</a></li>
-                                        <li><a class="dropdown-item" value="10">10 Sec</a></li>
-                                    </ul> 
-                                </div> 
-
-                                
-
-                            </div>
-
-                        </section>
-
-
-
-
-
-                        <section id="dunkles" class="tab-panel">
-
-                            <div class="accordion" style=" position: relative;
-                                left: 0px;
-                                top: 0;
-                                width: 100%;">
-
-                                <div class="dropdown mb-3">
-                                    <a class="dropdown-toggle time_dropdown" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Speed
-                                    </a>
-                                    <label id="lblOutSpeed"></label>
-                                    <ul class="dropdown-menu" id="ddlOutSpeedControl">
-                                        <li><a class="dropdown-item" value="2">2 Sec</a></li>
-                                        <li><a class="dropdown-item" value="3">3 Sec</a></li>
-                                        <li><a class="dropdown-item" value="4">4 Sec</a></li>
-                                        <li><a class="dropdown-item" value="6">6 Sec</a></li>
-                                        <li><a class="dropdown-item" value="8">8 Sec</a></li>
-                                        <li><a class="dropdown-item" value="10">10 Sec</a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                            <h2>Effects</h2>
-                            <ul class="right-listone d-flex gap-3">
-                                <li>
-                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-effict.png" alt="pattren"></a>
-
-                                    <div class="clear"></div>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-effict.png" alt="pattren"></a>
-
-                                    <div class="clear"></div>
-                                </li>
-
-                            </ul>
-
-                            <h2>Out</h2>
-
-                            <ul class="right-listone d-flex justify-content-between">
-                                <li>
-                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-lr.png" alt="pattren"></a>
-                                    
-                                    <div class="clear"></div>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-rl.png" alt="text"></a>
-                                    
-                                </li>
-                                @* <li> *@
-                                @*     <a href="javascript:void(0)"> <img src="~/images/icons/icon-bu.png" alt="circle"></a> *@
-                                @*     <p>LR</p> *@
-                                @* </li> *@
-                                <li>
-                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-bt.png" alt="Masking"></a>
-                                    
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0)"> <img src="~/images/icons/icon-tb.png" alt="image"></a>
-                                    
-                                </li>
-
-                                @* <li> *@
-                                @*     <a href="javascript:void(0)"> <img src="~/images/icons/icon-ud.png" alt="image"></a> *@
-                                @*     <p>LR</p> *@
-                                @* </li> *@
-
-                            </ul>
-                        </section>
-                        <div id="imageCoordination" style="display:none;">
-                            <label for="imageStartX">Start X:</label>
-                            <input type="number" id="imageStartX" value="200" />
-                            <label for="imageStartY">Start Y:</label>
-                            <input type="number" id="imageStartY" value="200" />
-                            <label for="imageEndX">End X:</label>
-                            <input type="number" id="imageEndX" value="600" />
-                            <label for="imageEndY">End Y:</label>
-                            <input type="number" id="imageEndY" value="400" />
-                        </div>
-                        <div id="textCoordination" style="display:none;">
-                            <label for="textStartX">Start X:</label>
-                            <input type="number" id="textStartX" value="100" />
-                            <label for="textStartY">Start Y:</label>
-                            <input type="number" id="textStartY" value="100" />
-                            <label for="textEndX">End X:</label>
-                            <input type="number" id="textEndX" value="400" />
-                            <label for="textEndY">End Y:</label>
-                            <input type="number" id="textEndY" value="300" />
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <div class="right-sec-two" style="display:none;">
-                <div class="headtext">Text</div>
-
-                <div class="col-md-12 mb-3">
-                    <div class="row alignment-img">
-                        <ul class="d-flex justify-content-between mb-0">
-                            <li>
-                                <a onclick="ChangeAlignStyle('right')"> <img src="~/images/icons/icon-align-left.png" title="Alignleft" alt="Icon-alignleft"></a>
-                            </li>
-                            <li>
-                                <a onclick="ChangeAlignStyle('center')"> <img src="~/images/icons/icon-align-center.png" title="Aligncenter" alt="Icon-alignleft"></a>
-                            </li>
-                            <li>
-                                <a onclick="ChangeAlignStyle('left')"> <img src="~/images/icons/icon-align-right.png" title="Alignright" alt="Icon-alignleft"></a>
-                            </li>
-
-                        </ul>
-                        <input type="hidden" id="textAlign" />
-                    </div>
-                </div>
-
-                <div class="col-md-12 mb-3">
-                    <div class="row FontSize">
-                        <div class="col-md-6 ">
-                            <label>Size</label>
-                        </div>
-                        <div class="col-md-6  text-end">
-                            <select id="fontSize" onchange="ChangeStyle()">
-                              
-                                <option value="18">18</option>
-                                <option value="20">20</option>
-                                <option value="25">25</option>
-                                <option value="30">30</option>
-                                <option value="35" selected>35</option>
-                                <option value="40">40</option>
-                                <option value="45">45</option>
-                                <option value="50">50</option>
-                                <option value="60">60</option>
-                            </select>
-                        </div>
-
-                    </div>
-                </div>
-                <div class="col-md-12 mb-3">
-                    <div class="row FontSize my-4">
-                        <div class="col-md-6  d-flex align-items-center">
-                            <label>Text Color</label>
-                        </div>
-                        <div class="col-md-6 text-end d-flex align-items-center justify-content-end">
-                            <div class="color-palette">
-                                <input type="hidden" id="hdnTextColor" />
-                                <form action="/action_page.php" class="d-flex">
-                                    <input type="color" id="favcolor" name="favcolor" oninput="ChangeColor()" value="#000000">
-                                </form>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-                <div class="col-md-12 mb-4" id="divFillColor" style="display:none;">
-                    <div class="row fillcolor">
-                        <div class="col-md-6 d-flex align-items-center">
-                            <label>Fill</label>
-                        </div>
-                        <div class="col-md-6  d-flex justify-content-end">
-                            <div id="divfill">
-                                <div class="color-palette">
-                                    <input type="hidden" id="hdnfillColor" />
-                                    <form action="/action_page.php" class="d-flex">
-                                        <input type="color" id="favFillcolor" name="favFillcolor" oninput="ChangeFillColor()" value="#42b3f5">
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-12 mb-4" id="divStrockColor" style="display:none;">
-                    <div class="row Strock">
-                        <div class="col-md-6 d-flex align-items-center">
-                            <label>Strock</label>
-                        </div>
-                        <div class="col-md-6  d-flex justify-content-end">
-                            <div id="divStrock">
-                                <div class="color-palette">
-                                    <input type="hidden" id="hdnStrockColor" />
-                                    <form action="/action_page.php" class="d-flex">
-                                        <input type="color" id="favStrockcolor" name="favStrockcolor" oninput="ChangeStrockColor()" value="#78f542">
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                   
-                </div>
-
-                @* <div class="col-md-12 mb-2"> *@
-                @*     <div class="row Strock-Line my-4"> *@
-                @*         <div class="col-md-6 "> *@
-                @*             <label>Strock Line</label> *@
-                @*         </div> *@
-                @*         <div class="col-md-6  text-end"> *@
-                @*             <select> *@
-                @*                 <option> 1</option> *@
-                @*                 <option> 2</option> *@
-                @*                 <option> 3</option> *@
-                @*                 <option> 4</option> *@
-                @*                 <option> 5</option> *@
-                @*             </select> *@
-                @*         </div> *@
-
-                @*     </div> *@
-                @* </div> *@
-
-                @* <div class="col-md-12 mb-3"> *@
-                @*     <div class="row opasity"> *@
-                @*         <div class="col-md-6 "> *@
-                @*             <label>Opacity</label> *@
-                @*         </div> *@
-                @*         <div class="col-md-6  text-end"> *@
-                @*             <label>100%</label> *@
-                @*         </div> *@
-
-                @*     </div> *@
-                @* </div> *@
-
-            </div>
-
-
-            <div id="opengl_popup" class="collapse show-gallery">
-
-                <div class="card-body">
-                    
-
-                    <div class="panel-left-gallery">
-                        <div class="d-flex justify-content-between mb-3">
-                            <p class="gallery_head m-0">Gallery</p>
-                            <!-- <div class="tab cross">x</div> -->
-                            <button class="btn-cross b-radius-6 tab cross"
-                                    type="button"
-                                    onclick="opengl()">
-                                ✕
-                            </button>
-                        </div>
-                        <div class="tabs">
-                            <div class="tab active" onclick="switchTab(this, 'images')">Images</div>
-                            <div class="tab" onclick="switchTab(this, 'my-images')">My Images</div>
-                            <div class="tab" onclick="switchTab(this, 'templates')">Templates</div>
-
-                            
-                        </div>
-                        <!-- images tab -->
-                        <div id="images" class="left_content active">
-                            <div class="d-flex justify-content-between gap-3">
-                                <!-- search box -->
-                                <div class="search-box w-50">
-                                    <input class="left-panel-imput" type="text" placeholder="Search..." />
-                                </div>
-                                
-                            </div>
-                            <!-- dropdown -->
-                            @* <div class="dropdown my-3"> *@
-                            @*     <a class="dropdown-toggle shapes_drop gallery_type" *@
-                            @*        type="button" *@
-                            @*        data-bs-toggle="dropdown" *@
-                            @*        aria-expanded="false"> *@
-                            @*         Shapes *@
-                            @*     </a> *@
-                            @*     <ul class="dropdown-menu"> *@
-                            @*         <li><a class="dropdown-item" href="#">Shape 1</a></li> *@
-                            @*         <li><a class="dropdown-item" href="#">Shape 2</a></li> *@
-                            @*         <li><a class="dropdown-item" href="#">Shape 3</a></li> *@
-                            @*     </ul> *@
-                            @* </div> *@
-
-                            <div class="shapes_tabs my-3 d-flex justify-content-between w-75">
-                                <a href="#">Photo</a>
-                                <a href="#">Shapes</a>
-                                <a href="#">Icons</a>
-                                <a href="#">Patterns</a>
-                                <a href="#">Animation</a>
-                            </div>
-
-                            <div class="gallery d-flex flex-wrap justify-content-between">
-                                <img src="~/images/Gallery-img/SVG1.svg" />
-                                <img src="~/images/Gallery-img/gl006.png" />
-                                <img src="~/images/Gallery-img/iphone16.png" />   
-                                <img src="~/images/Gallery-img/iphone16.png" />
-                            </div>
-
-                        </div>
-                        <!-- my images tab -->
-                        <div id="my-images" class="left_content">
-
-                            <div class="d-flex justify-content-between gap-3">
-                                <!-- search box -->
-                                <div class="search-box w-100">
-                                    <input class="left-panel-imput" type="text" placeholder="Search..." />
-                                </div>
-                                <!-- file upload -->
-                                <div class="custom-file-input choose_file w-100">
-                                    <label for="fileUpload">Choose File</label>
-                                    <span id="fileName">No File</span>
-                                    <input type="file" id="fileUpload" onchange="updateFileName()">
-                                </div>
-                            </div>
-
-                            <p class="my-3 gallery_type">All My Images</p>
-                            <div class="gallery d-flex flex-wrap justify-content-between my_img_gal">
-                                <img src="~/images/Gallery-img/gl001.png" />
-                                <img src="~/images/Gallery-img/gl002.png" />
-                                <img src="~/images/Gallery-img/gl003.png" />
-                                <img src="~/images/Gallery-img/gl004.png" />
-                                <img src="~/images/Gallery-img/gl001.png" />
-                                <img src="~/images/Gallery-img/gl002.png" />
-                                <img src="~/images/Gallery-img/gl003.png" />
-                                <img src="~/images/Gallery-img/gl004.png" />
-                                <img src="~/images/Gallery-img/gl001.png" />
-                                <img src="~/images/Gallery-img/gl002.png" />
-                                <img src="~/images/Gallery-img/gl003.png" />
-                                <img src="~/images/Gallery-img/gl004.png" />        
-                                
-                            </div>
-                        </div>
-
-                        <!-- templates tab -->
-                        <div id="templates" class="left_content">
-                            <!-- serach box -->
-                            <div class="search-box w-50">
-                                <input class="left-panel-imput" type="text" placeholder="Search..." />
-                            </div>
-                            <p class="my-3 gallery_type">Templates</p>
-                            <div class="temp_gallery">
-                                <img src="~/images/banner.png" />
-                                <img src="~/images/banner.png" />
-                                <img src="~/images/Vertical-Menuboard.png" />
-                                <img src="~/images/Vertical-Menuboard.png" />
-                            </div>
-                        </div>
-                        <div class="pagination">
-                            <span>&lt;</span>
-                            <span>4</span>
-                            <span>6</span>
-                            <span>7</span>
-                            <span>9</span>
-                            <span>10</span>
-                            <span>11</span>
-                            <span>&gt;</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="fontstyle_popup" class="collapse show-texteditor">
-                <div class="card-body">
-                    <div class="panel-left-gallery">
-                        <h2>Font Family <button class="btn-cross b-radius-6" type="button" onclick="opentl();">✕</button></h2>
-                        <div class="gl-box">
-                            <div class="col-md-12">
-                                <div class="row" style=" margin-left:-30px;">
-                                    <ul class="TextStyle mt-2">
-                                        <li><a class="arial" onclick="OnChangefontFamily('Arial')">Arial</a></li>
-                                        <li><a class="anton" onclick="OnChangefontFamily('Anton')">Anton</a></li>
-                                        <li><a class="bebes" onclick="OnChangefontFamily('BEBES')">BEBES</a></li>
-                                        <li><a class="monstro" onclick="OnChangefontFamily('monstro')">MONSTRO</a></li>
-                                        <li><a class="Montserrat" onclick="OnChangefontFamily('Montserrat')">Montserrat</a></li>
-                                        <li><a class="neto" onclick="OnChangefontFamily('neto')">Neto</a></li>
-                                        <li><a class="pacifico" onclick="OnChangefontFamily('Pacifico')">Pacifico</a></li>
-                                        <li><a class="Roboto" onclick="OnChangefontFamily('Roboto')">Roboto</a></li>
-                                    </ul>
-                                    <input type="hidden" id="fontFamily" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="background_edit" id="background_popup">
-                @* <button id="close_button" onclick="hideBack()">X</button> *@
-                @* This is a toggleable div! *@
-                <div class="d-flex justify-content-between mb-3">
-                    <p class="gallery_head m-0">Background</p>
-                    <!-- <div class="tab cross">x</div> -->
-                    <button class="btn-cross b-radius-6 tab cross"
-                            id="close_button"
-                            type="button"
-                            onclick="hideBack()">
-                        ✕
-                    </button>
-                </div>
-                <div>
-                    <div class="">
-
-                        @* <div class="row"> *@
-                        @*     <div class="col-md-6  d-flex align-items-center gap-2"> *@
-                        @*         <input class="form-check-input check_box mt-0" *@
-                        @*             type="checkbox" *@
-                        @*             value="" *@
-                        @*             id="chkFillBox" /> *@
-                        @*         <label class="back_label">All</label> *@
-                        @*     </div> *@
-                        @*     <div class="col-md-6 text-end d-flex gap-3 align-items-center justify-content-end"> *@
-                        @*         <div class="color-palette"> *@
-                        @*             <input type="hidden" id="hdnBackgroundAllColor" /> *@
-                        @*             <form action="/action_page.php" class="d-flex"> *@
-                        @*                 <input id="favBackgroundcolor" type="color" name="favBackgroundcolor" oninput="ChangeAllBackgroundColor()" value="#fafcfc"> *@
-                        @*             </form> *@
-                        @*         </div> *@
-                        @*         <div class="texture_palette"> *@
-                        @*             <img src="~/images/texture.jpg" alt="Alternate Text" /> *@
-                        @*         </div> *@
-                        @*     </div> *@
-                        @* </div> *@
-
-                        <div class="row">
-                            <div class="col-md-6  d-flex align-items-center gap-2">
-                                @* <input class="form-check-input check_box mt-0" *@
-                                @*        type="checkbox" *@
-                                @*        value="" *@
-                                @*        id="chkFillBox" /> *@
-                                <label class="back_label">Colors</label>
-                            </div>
-                            <div class="col-md-6 text-end d-flex gap-3 align-items-center justify-content-end">
-                                <div class="color-palette">
-                                    <input type="hidden" id="hdnBackgroundSpecificColor" />
-                                    <form action="/action_page.php" class="d-flex">
-                                        <input id="favBackgroundSpecificcolor" type="color" name="favBackgroundSpecificcolor" oninput="ChangeSpecificBackgroundColor('myCanvas')" value="#fafcfc">
-                                    </form>
-                                </div>
-                                <div class="texture_palette">
-                                    <img src="~/images/texture.jpg" alt="Alternate Text" />
-                                </div>
-                            </div>
-                        </div>
-
-                        @* <div class="row mt-2"> *@
-                        @*     <div class="col-md-6  d-flex align-items-center gap-2"> *@
-                        @*         <input class="form-check-input check_box mt-0" *@
-                        @*                type="checkbox" *@
-                        @*                value="" *@
-                        @*                id="chkFillBox" /> *@
-                        @*         <label class="back_label">Board2</label> *@
-                        @*     </div> *@
-                        @*     <div class="col-md-6 text-end d-flex gap-3 align-items-center justify-content-end"> *@
-                        @*         <div class="color-palette"> *@
-                        @*             <input type="hidden" id="hdnfillColor" /> *@
-                        @*             <form action="/action_page.php" class="d-flex"> *@
-                        @*                 <input type="color" name="favFillcolor" value="#000000"> *@
-                        @*             </form> *@
-                        @*         </div> *@
-                        @*         <div class="texture_palette"> *@
-                        @*             <img src="~/images/texture.jpg" alt="Alternate Text" /> *@
-                        @*         </div> *@
-                        @*     </div> *@
-                        @* </div> *@
-
-                        @* <div class="row mt-2"> *@
-                        @*     <div class="col-md-6  d-flex align-items-center gap-2"> *@
-                        @*         <input class="form-check-input check_box mt-0" *@
-                        @*                type="checkbox" *@
-                        @*                value="" *@
-                        @*                id="chkFillBox" /> *@
-                        @*         <label class="back_label">Board3</label> *@
-                        @*     </div> *@
-                        @*     <div class="col-md-6 text-end d-flex gap-3 align-items-center justify-content-end"> *@
-                        @*         <div class="color-palette"> *@
-                        @*             <input type="hidden" id="hdnfillColor" /> *@
-                        @*             <form action="/action_page.php" class="d-flex"> *@
-                        @*                 <input type="color" name="favFillcolor" value="#000000"> *@
-                        @*             </form> *@
-                        @*         </div> *@
-                        @*         <div class="texture_palette"> *@
-                        @*             <img src="~/images/texture.jpg" alt="Alternate Text" /> *@
-                        @*         </div> *@
-                        @*     </div> *@
-                        @* </div> *@
-                    <div id="texture_box">
-                        <div class="d-flex justify-content-between align-items-center mt-4">
-                            <p>Texture</p>
-                            <div class="d-flex gap-2">
-                                <p>Opacity</p>
-                                <p>100%</p>
-                            </div>
-                        </div>
-
-                        <div class="texture_images d-flex justify-content-between align-items-center flex-wrap gap-3">
-                            <img class="texture_img" src="~/images/Gallery-img/Texture2.jpg" onclick="setCanvasBackgroundImage('/images/Gallery-img/Texture2.jpg')" alt="Alternate Text" />
-                            <img class="texture_img" src="~/images/horizontal-background-texture.jpg" onclick="setCanvasBackgroundImage('/images/horizontal-background-texture.jpg')" alt="Alternate Text" />
-                            <img class="texture_img" src="~/images/vertical-background-texture.jpg" onclick="setCanvasBackgroundImage('/images/vertical-background-texture.jpg')" alt="Alternate Text" />
-                            <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
-                            <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
-                            <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
-                            <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
-                            <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
-                        </div>
-
-                        <div class="pagination">
-                            <span>&lt;</span>
-                            <span>4</span>
-                            <span>6</span>
-                            <span>7</span>
-                            <span>9</span>
-                            <span>10</span>
-                            <span>11</span>
-                            <span>&gt;</span>
-                        </div>
-                    </div>
-
-                    </div>
-                </div>
-            </div>
+        <div class="panel-right content" id="divpanelright">
         </div>
     </div>
-   
+
 </div>
