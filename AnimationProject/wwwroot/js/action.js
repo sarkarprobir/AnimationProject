@@ -481,10 +481,10 @@ function GetDesignBoardById(id) {
         HideLoader();
     }
 };
-function RedirectToVerticalPage(id) {
-    // Use encodeURIComponent for URL safety
-    window.location = `${baseURL}Canvas/VerticalIndex?id=${encodeURIComponent(id)}`;
-}
+//function RedirectToVerticalPage(id) {
+//    // Use encodeURIComponent for URL safety
+//    window.location = `${baseURL}Canvas/VerticalIndex?id=${encodeURIComponent(id)}`;
+//}
 function RedirectToVerticalPageDirect() {
     // Use encodeURIComponent for URL safety
     window.location = `${baseURL}Canvas/VerticalIndex`;
