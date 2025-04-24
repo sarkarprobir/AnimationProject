@@ -34,6 +34,8 @@
 
     .navbar-brand {
         font-size: 1.8rem;
+        font-weight: 800;
+        font-family: "Montserrat", sans-serif !important;
     }
 
     .nav-link {
@@ -178,7 +180,7 @@
         padding: 105px 145px;
     }
 
-    .cate_text h6{
+    h6{
         font-weight: 700;
         font-family: "Montserrat", sans-serif !important;
     }
@@ -187,9 +189,45 @@
         font-size: 14px;
     }
 
+    .display {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
     .display h2{
         font-weight: 800;
         font-family: "Montserrat", sans-serif !important;
+    }
+
+    .circle_icon{
+        width: 60px;
+        height: 60px;
+        background-color: #000;
+        border-radius: 100%;
+    }
+
+    .goals{
+        width: 52%;
+    }
+
+    .foot_img{
+        width: 80%;
+    }
+
+    .foot-head{
+        font-weight:900;
+    }
+
+    .foot-para{
+        color: #fff;
+    }
+
+    .foot-text{
+        width: 33%;
+    }
+
+    footer{
+        background-color: #4e43e1;
     }
 </style>
 
@@ -198,7 +236,7 @@
     <div class="container-fluid d-flex justify-content-between align-items-center">
         <!-- Left: Logo + Links -->
         <div class="d-flex align-items-center">
-            <a class="navbar-brand fw-bold" href="#">AniBoard</a>
+            <a class="navbar-brand" href="#">AniBoard</a>
             <ul class="navbar-nav flex-row ms-4">
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle"
@@ -336,5 +374,44 @@
         <h2 class="mb-3">Easily animate your content <br /> on digital displays.</h2>
         <p>No experinece? No problem. AniBoards empowers any <br /> designer to create sleek animations in minutes.</p>
     </div>
+    <div class="goals d-flex jutify-content-center gap-5 my-5">
+        <div class="d-flex gap-4 align-items-center justify-content-center w-50">
+            <div class="circle_icon d-flex align-items-center justify-content-center">
+                <img src="~/images/icons/pen_design.png" width="38px" alt="Alternate Text" />
+            </div>
+            <h6 class="w-50">Beautiful Animation Templates</h6>
+        </div>
+        <div class="d-flex gap-4 align-items-center justify-content-center w-50">
+            <div class="circle_icon d-flex align-items-center justify-content-center">
+                <img src="~/images/icons/stack.png" width="19px" alt="Alternate Text" />
+            </div>
+            <h6 class="w-50">Preset Animation Effects</h6>
+        </div>
+        <div class="d-flex gap-4 align-items-center justify-content-center w-50">
+            <div class="circle_icon d-flex align-items-center justify-content-center">
+                <img src="~/images/icons/camera.png" width="48px" alt="Alternate Text" />
+            </div>
+            <h6 class="w-50">Publish Animation on Screen</h6>
+        </div>
+    </div>
 </div>
+
+<footer>
+    <div class="container">
+        <div class="d-flex justify-content-center align-items-center">
+            <div>
+                <img class="foot_img ms-5" src="~/images/screen-H.png" alt="Alternate Text" />
+            </div>
+            <div>
+                <img class="foot_img" src="~/images/screen-V.png" alt="Alternate Text" />
+            </div>
+            <div class="foot-text">
+                <h2 class="foot-head">Features</h2>
+                <p class="foot-para">No designer or animator needed... Just design it yourself and the animation will be created automatically.It's super simple to create an animation board for your signage screen.</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
