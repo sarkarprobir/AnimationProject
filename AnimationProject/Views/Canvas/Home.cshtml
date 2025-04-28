@@ -193,6 +193,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+        padding: 20px 0 50px 0;
     }
     .display h2{
         font-weight: 800;
@@ -220,6 +221,7 @@
 
     .foot-para{
         color: #fff;
+        line-height: 17.5px;
     }
 
     .foot-text{
@@ -228,6 +230,36 @@
 
     footer{
         background-color: #4e43e1;
+    }
+
+    .foot-nav-link{
+        text-decoration: none;
+        color: #fff;
+        font-size: 14px;
+    }
+
+    .foot-nav-item{
+        list-style: none;
+    }
+
+    .footer_nav{
+        padding: 15px 60px;
+    }
+
+    .copyright-text{
+        color: #fff;
+    }
+
+    .foot_brand{
+        text-decoration: none;
+        color: #fff;
+        font-size: 23px;
+        font-weight: 900;
+        font-family: "Montserrat", sans-serif !important;
+    }
+
+    .footer-content{
+        padding: 80px 0;
     }
 </style>
 
@@ -398,16 +430,32 @@
 
 <footer>
     <div class="container">
-        <div class="d-flex justify-content-center align-items-center">
-            <div>
+        <div class="d-flex justify-content-center footer-content">
+            <div class="align-self-center">
                 <img class="foot_img ms-5" src="~/images/screen-H.png" alt="Alternate Text" />
             </div>
-            <div>
+            <div class="align-self-center">
                 <img class="foot_img" src="~/images/screen-V.png" alt="Alternate Text" />
             </div>
-            <div class="foot-text">
-                <h2 class="foot-head">Features</h2>
+            <div class="foot-text py-5">
+                <h2 class="foot-head mb-4">Features</h2>
                 <p class="foot-para">No designer or animator needed... Just design it yourself and the animation will be created automatically.It's super simple to create an animation board for your signage screen.</p>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid">
+        <div class="footer_nav d-flex justify-content-between">
+            <div class="copyright-text d-flex align-items-center">
+                <p>&#169; 2025 - All Rights Reserved.</p>
+            </div>
+            <div>
+                <ul class="d-flex gap-5 align-items-center">
+                    <li class="foot-nav-item"><a class="foot-nav-link" href="#">About Us</a></li>
+                    <li class="foot-nav-item"><a class="foot-nav-link" href="#">Templates</a></li>
+                    <li class="foot-nav-item"><a class="foot-nav-link" href="#">Pricing</a></li>
+                    <li class="foot-nav-item"><a class="foot-nav-link" href="#">Contact</a></li>
+                    <a class="foot_brand" href="#">AniBoard</a>
+                </ul>
             </div>
         </div>
     </div>
