@@ -1,0 +1,84 @@
+﻿@{
+    Layout = null;
+}
+@* <script>
+     
+        const toggleImg = document.getElementById("toggle_img");
+        const closeButton = document.getElementById("close_button");
+        const popup = document.getElementById("background_popup");
+
+        if (!popup) return;
+
+        if (toggleImg) {
+            toggleImg.onclick = () => popup.style.display = "block";
+        }
+        if (closeButton) {
+            closeButton.onclick = () => popup.style.display = "none";
+        }
+  
+</script> *@
+<div class="d-flex justify-content-between mb-3">
+    <p class="gallery_head m-0">Background</p>
+    <!-- <div class="tab cross">x</div> -->
+    <button class="btn-cross b-radius-6 tab cross"
+            id="close_button"
+            type="button"
+            onclick="hideBack()">
+        ✕
+    </button>
+</div>
+<div>
+    <div class="">
+
+        <div class="row">
+            <div class="col-md-6  d-flex align-items-center gap-2">
+                <label class="back_label">Colors</label>
+            </div>
+            <div class="col-md-6 text-end d-flex gap-3 align-items-center justify-content-end">
+                <div class="color-palette">
+                  
+                    <form action="/action_page.php" class="d-flex">
+                        <input id="favBackgroundSpecificcolor" type="color" name="favBackgroundSpecificcolor" oninput="ChangeSpecificBackgroundColor('myCanvas')" value="#fafcfc">
+                    </form>
+                </div>
+                <div class="texture_palette">
+                    <img src="~/images/texture.jpg" alt="Alternate Text" />
+                </div>
+            </div>
+        </div>
+
+        
+        <div id="texture_box">
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <p>Texture</p>
+                <div class="d-flex gap-2">
+                    <p>Opacity</p>
+                    <p>100%</p>
+                </div>
+            </div>
+
+            <div class="texture_images d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <img class="texture_img" src="~/images/Gallery-img/Texture2.jpg" onclick="setCanvasBackgroundImage('/images/Gallery-img/Texture2.jpg')" alt="Alternate Text" />
+                <img class="texture_img" src="~/images/horizontal-background-texture.jpg" onclick="setCanvasBackgroundImage('/images/horizontal-background-texture.jpg')" alt="Alternate Text" />
+                <img class="texture_img" src="~/images/vertical-background-texture.jpg" onclick="setCanvasBackgroundImage('/images/vertical-background-texture.jpg')" alt="Alternate Text" />
+                <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
+                <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
+                <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
+                <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
+                <img class="texture_img" src="~/images/texture.jpg" alt="Alternate Text" />
+            </div>
+
+            <div class="pagination">
+                <span>&lt;</span>
+                <span>4</span>
+                <span>6</span>
+                <span>7</span>
+                <span>9</span>
+                <span>10</span>
+                <span>11</span>
+                <span>&gt;</span>
+            </div>
+        </div>
+
+    </div>
+</div>

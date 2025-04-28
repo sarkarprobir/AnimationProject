@@ -1,6 +1,6 @@
 ﻿@model  List<AnimationProject.Models.ResponseGetDesignBoard>
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
-<script src="~/js/action.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
+@* <script src="~/js/action.js?v=@Configuration["AppSettings:FilesVersion"]"></script> *@
 @* <script src="~/js/animation_min.js"></script> *@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -315,7 +315,7 @@ rel="stylesheet">
                                     @* <img class="board_verti" src="@item.GifImagePath" alt="Alternate Text" /> *@
                                     @* <canvas id="@("boardCanvas_" + i)" class="board_verti" width="167" height="250"></canvas> *@
                                     <video class="miniPlayer board_verti" controls width="300" height="200" muted playsinline>
-                                        <source class="videoSource" src="@item.AnimationVideoPath" type="video/mp4">
+                                        <source class="videoSource" src="@Url.Content(item.AnimationVideoPath)" type="video/mp4">
                                     </video>
 
 
@@ -375,6 +375,9 @@ rel="stylesheet">
                 });
             });
         });
-
+                function RedirectToVerticalPage(id) {
+            // Use encodeURIComponent for URL safety
+            window.location = `${baseURL}Canvas/VerticalIndex?id=${encodeURIComponent(id)}`;
+        }
 </script>
 }

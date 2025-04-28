@@ -1,0 +1,793 @@
+﻿@{
+    Layout = null;
+}
+<script>
+        const arrowImage = new Image();
+    arrowImage.src = "/images/icons/icon-lr.png";
+
+    function getEase() {
+        return animationMode === "bounce" ? "bounce.out" : "linear";
+    }
+
+    function drawArrow(ctx, x, centerY) {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.save();
+        ctx.translate(x, centerY);
+        const type = document.getElementById("hdnTextAnimationType").value;
+        if (type === "zoom") {
+            ctx.drawImage(arrowImage, -25, -25, 50, 50);
+        } else if (type === "blur") {
+            ctx.filter = "blur(4px)";
+            ctx.drawImage(arrowImage, -20, -20, 40, 40);
+            ctx.filter = "none";
+        } else {
+            ctx.drawImage(arrowImage, -20, -20, 40, 40);
+        }
+        ctx.restore();
+    }
+
+    // grab elements & context
+    const miniCanvasAleft = document.getElementById('miniCanvas_aleft');
+    const ctxAleft = miniCanvasAleft.getContext('2d');
+    const centerX_left = miniCanvasAleft.width / 2;
+    const centerY_left = miniCanvasAleft.height / 2;
+
+    // draw the arrow at center immediately
+    drawArrow(ctxAleft, centerX_left, centerY_left);
+
+    // animate on hover
+    miniCanvasAleft.addEventListener('mouseenter', () => {
+        drawArrow(ctxAleft, 0, centerY_left);
+        gsap.to({ pos: 0 }, {
+            duration: 0.5,
+            pos: centerX_left,
+            ease: getEase(),
+            onUpdate() {
+                drawArrow(ctxAleft, this.targets()[0].pos, centerY_left);
+            }
+        });
+    });
+
+    miniCanvasAleft.addEventListener('mouseleave', () => {
+        gsap.to({ pos: centerX_left }, {
+            duration: 0.5,
+            pos: centerX_left,
+            ease: getEase(),
+            onUpdate() {
+                drawArrow(ctxAleft, this.targets()[0].pos, centerY_left);
+            }
+        });
+    });
+
+    // --------------------------------------------------------------------
+    // 2. Right-to-Center (Canvas id: "miniCanvas_aright")
+    const miniCanvasAright = document.getElementById('miniCanvas_aright');
+    const ctxAright = miniCanvasAright.getContext('2d');
+    const centerX_right = miniCanvasAright.width / 2;
+    const centerY_right = miniCanvasAright.height / 2;
+
+    // Helper to draw & rotate the arrow so it points left
+    function drawArrowFromRight(x) {
+        ctxAright.clearRect(0, 0, miniCanvasAright.width, miniCanvasAright.height);
+        ctxAright.save();
+        ctxAright.translate(x, centerY_right);
+        ctxAright.rotate(Math.PI);  // flip 180°
+        const type = document.getElementById("hdnTextAnimationType").value;
+        if (type === "zoom") {
+            ctxAright.drawImage(arrowImage, -25, -25, 50, 50);
+        } else if (type === "blur") {
+            ctxAright.filter = "blur(4px)";
+            ctxAright.drawImage(arrowImage, -20, -20, 40, 40);
+            ctxAright.filter = "none";
+        } else {
+            ctxAright.drawImage(arrowImage, -20, -20, 40, 40);
+        }
+        ctxAright.restore();
+    }
+
+    // draw arrow centered by default
+    drawArrowFromRight(centerX_right);
+
+    // animate on hover
+    miniCanvasAright.addEventListener('mouseenter', () => {
+        // start off-screen at right edge
+        drawArrowFromRight(miniCanvasAright.width);
+        gsap.to({ pos: miniCanvasAright.width }, {
+            duration: 0.5,
+            pos: centerX_right,
+            ease: getEase(),
+            onUpdate() {
+                drawArrowFromRight(this.targets()[0].pos);
+            }
+        });
+    });
+
+    miniCanvasAright.addEventListener('mouseleave', () => {
+        // smoothly “reset” to center (or just remain)
+        gsap.to({ pos: centerX_right }, {
+            duration: 0.5,
+            pos: centerX_right,
+            ease: getEase(),
+            onUpdate() {
+                drawArrowFromRight(this.targets()[0].pos);
+            }
+        });
+    });
+
+
+    // --------------------------------------------------------------------
+    // 3. Bottom-to-Center (Canvas id: "miniCanvas_abottom")
+    const miniCanvasAbottom = document.getElementById('miniCanvas_abottom');
+    const ctxAbottom = miniCanvasAbottom.getContext('2d');
+    const centerX_bottom = miniCanvasAbottom.width / 2;
+    const centerY_bottom = miniCanvasAbottom.height / 2;
+
+    // Draw & rotate the arrow so it points up
+    function drawArrowFromBottom(y) {
+        ctxAbottom.clearRect(0, 0, miniCanvasAbottom.width, miniCanvasAbottom.height);
+        ctxAbottom.save();
+        ctxAbottom.translate(centerX_bottom, y);
+        ctxAbottom.rotate(-Math.PI / 2);  // rotate -90°
+        const type = document.getElementById("hdnTextAnimationType").value;
+        if (type === "zoom") {
+            ctxAbottom.drawImage(arrowImage, -25, -25, 50, 50);
+        } else if (type === "blur") {
+            ctxAbottom.filter = "blur(4px)";
+            ctxAbottom.drawImage(arrowImage, -20, -20, 40, 40);
+            ctxAbottom.filter = "none";
+        } else {
+            ctxAbottom.drawImage(arrowImage, -20, -20, 40, 40);
+        }
+        ctxAbottom.restore();
+    }
+
+    // Draw arrow at center on load
+    drawArrowFromBottom(centerY_bottom);
+
+    // Animate on hover
+    miniCanvasAbottom.addEventListener('mouseenter', () => {
+        // start off-screen at bottom edge
+        drawArrowFromBottom(miniCanvasAbottom.height);
+        gsap.to({ pos: miniCanvasAbottom.height }, {
+            duration: 0.5,
+            pos: centerY_bottom,
+            ease: getEase(),
+            onUpdate() {
+                drawArrowFromBottom(this.targets()[0].pos);
+            }
+        });
+    });
+
+    miniCanvasAbottom.addEventListener('mouseleave', () => {
+        // smoothly reset to center
+        gsap.to({ pos: centerY_bottom }, {
+            duration: 0.5,
+            pos: centerY_bottom,
+            ease: getEase(),
+            onUpdate() {
+                drawArrowFromBottom(this.targets()[0].pos);
+            }
+        });
+    });
+
+
+    // --------------------------------------------------------------------
+    // 4. Top-to-Center (Canvas id: "miniCanvas_atop")
+    const miniCanvasAtop = document.getElementById('miniCanvas_atop');
+    const ctxAtop = miniCanvasAtop.getContext('2d');
+    const centerX_top = miniCanvasAtop.width / 2;
+    const centerY_top = miniCanvasAtop.height / 2;
+
+    // Draw & rotate the arrow so it points down
+    function drawArrowFromTop(y) {
+        ctxAtop.clearRect(0, 0, miniCanvasAtop.width, miniCanvasAtop.height);
+        ctxAtop.save();
+        ctxAtop.translate(centerX_top, y);
+        ctxAtop.rotate(Math.PI / 2);  // rotate 90°
+        const type = document.getElementById("hdnTextAnimationType").value;
+        if (type === "zoom") {
+            ctxAtop.drawImage(arrowImage, -25, -25, 50, 50);
+        } else if (type === "blur") {
+            ctxAtop.filter = "blur(4px)";
+            ctxAtop.drawImage(arrowImage, -20, -20, 40, 40);
+            ctxAtop.filter = "none";
+        } else {
+            ctxAtop.drawImage(arrowImage, -20, -20, 40, 40);
+        }
+        ctxAtop.restore();
+    }
+
+    // Draw arrow at center on load
+    drawArrowFromTop(centerY_top);
+
+    // Animate on hover
+    miniCanvasAtop.addEventListener('mouseenter', () => {
+        // start off-screen at top edge (y=0)
+        drawArrowFromTop(0);
+        gsap.to({ pos: 0 }, {
+            duration: 0.5,
+            pos: centerY_top,
+            ease: getEase(),
+            onUpdate() {
+                drawArrowFromTop(this.targets()[0].pos);
+            }
+        });
+    });
+
+    miniCanvasAtop.addEventListener('mouseleave', () => {
+        // smoothly reset to center
+        gsap.to({ pos: centerY_top }, {
+            duration: 0.5,
+            pos: centerY_top,
+            ease: getEase(),
+            onUpdate() {
+                drawArrowFromTop(this.targets()[0].pos);
+            }
+        });
+    });
+</script>
+<div class="right-sec-one">
+    <div class="headtext">Board Animation</div>
+    <div class="tabset">
+        <!-- Tab 1 -->
+        <input type="radio" name="tabset" id="tab1" onclick="TabShowHide('In')" aria-controls="marzen" checked>
+        <label style="margin-left:0px;" for="tab1">In</label>
+        <!-- Tab 2 -->
+        <input type="radio" name="tabset" id="tab2" onclick="TabShowHide('Stay')" aria-controls="rauchbier">
+        <label for="tab2">Stay</label>
+        <!-- Tab 3 -->
+        <input type="radio" name="tabset" id="tab3" onclick="TabShowHide('Out')" aria-controls="dunkles">
+        <label style="margin-right:0px;" for="tab3">Out</label>
+
+        <div class="tab-panels">
+
+            <section id="marzen" class="tab-panel">
+
+                <div class="accordion" style=" position: relative;   left: 0px; top: 0; margin-bottom: 26px; width: 100%; ">
+                    <div class="dropdown mb-3">
+                        <a class="dropdown-toggle time_dropdown" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Speed
+                        </a> <label id="lblSpeed"></label>
+                        <ul class="dropdown-menu" id="ddlSpeedControl">
+                            <li><a class="dropdown-item" value="2">2 Sec</a></li>
+                            <li><a class="dropdown-item" value="3">3 Sec</a></li>
+                            <li><a class="dropdown-item" value="4">4 Sec</a></li>
+                            <li><a class="dropdown-item" value="6">6 Sec</a></li>
+                            <li><a class="dropdown-item" value="8">8 Sec</a></li>
+                            <li><a class="dropdown-item" value="10">10 Sec</a></li>
+                        </ul>
+                    </div>
+                    <div class="dropdown mb-3" style="display:none;">
+                        <a class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            Loop
+                        </a> <label id="lblLoop"></label><input type="hidden" id="hdnlLoopControl" value="1" />
+                        <ul class="dropdown-menu" id="ddlLoopControl">
+                            <li><a class="dropdown-item" value="1">1 time</a></li>
+                            <li><a class="dropdown-item" value="2">2 time</a></li>
+                            <li><a class="dropdown-item" value="3">3 time</a></li>
+                            <li><a class="dropdown-item" value="4">4 time</a></li>
+                            <li><a class="dropdown-item" value="5">5 time</a></li>
+                            <li><a class="dropdown-item" value="6">6 time</a></li>
+                        </ul>
+                    </div>
+                    <h2>Effects</h2>
+                    <ul class="right-listone d-flex flex-wrap gap-2 mb-3" id="ulEffects">
+                        <li style="display:none;">
+                            <a id="alinear" href="javascript:void(0)" onclick="textAnimationClick(this, 'linear')" title="Linear">Linear</a>
+                            <div class="clear"></div>
+                        </li>
+
+                        <li style="display:none;">
+                            <a id="abounce" href="javascript:void(0)" onclick="textAnimationClick(this, 'bounce')" title="Bounce">Bounce</a>
+                            <div class="clear"></div>
+                        </li>
+                        <li>
+                            <a id="adelaylinear" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear')" title="linear">Linear</a>
+                            <div class="clear"></div>
+                        </li>
+                        <li style="display:none;">
+                            <a id="azoomInOut" href="javascript:void(0)" onclick="textAnimationClick(this, 'zoom')" title="Zoom">Zoom</a>
+                            <div class="clear"></div>
+                        </li>
+                        <li>
+                            <a id="ablur" href="javascript:void(0)" title="Zoom in">Zoom </br> in</a>
+                            <div class="clear"></div>
+                        </li>
+                        <li>
+                            <a id="ablur" href="javascript:void(0)" title="Cross Fade">Cross Fade</a>
+                            <div class="clear"></div>
+                        </li>
+                        <li>
+                            <a id="ablur" href="javascript:void(0)" title="Type">Type</a>
+                            <div class="clear"></div>
+                        </li>
+                        <li>
+                            <a id="ablur" href="javascript:void(0)" title="Blur">Blur</a>
+                            <div class="clear"></div>
+                        </li>
+
+                    </ul>
+                    <input type="hidden" id="hdnTextAnimationType" />
+                    <input type="hidden" id="hdnslideDedirection" />
+                    <input type="hidden" id="hdnEffectSlide1" />
+                    <input type="hidden" id="hdnEffectSlide2" />
+                    <input type="hidden" id="hdnEffectSlide3" />
+                    <input type="hidden" id="hdnDirectiontSlide1" />
+                    <input type="hidden" id="hdnDirectiontSlide2" />
+                    <input type="hidden" id="hdnDirectiontSlide3" />
+                    <h2>In</h2>
+                    <ul class="right-listone d-flex justify-content-between align-items-center" id="uldirection">
+                        <li>
+                            <div class="btn-canvas-container" style="width: 50px; height: 50px;">
+                                <!-- hide the <a> by default -->
+                                <a id="aleft" href="javascript:void(0)"
+                                   style="display: none; width:100%; height:100%;">
+                                    <img src="/images/icons/icon-lr.png" alt="Left to Center"
+                                         style="width:100%; height:100%;">
+                                </a>
+                                <!-- show the canvas by default -->
+                                <canvas onclick="setCoordinate(this,'left',100,20,50,50)"
+                                        id="miniCanvas_aleft" class="miniCanvas"
+                                        width="50" height="50"
+                                        style="display: block;"></canvas>
+                            </div>
+                            <div class="clear"></div>
+                        </li>
+                        <li>
+                            <div class="btn-canvas-container" style="width: 50px; height: 50px;">
+                                <!-- hide the <a> by default -->
+                                <a id="aright" href="javascript:void(0)"
+                                   style="display: none; width:100%; height:100%;">
+                                    <img src="/images/icons/icon-rl.png" alt="Right to Center"
+                                         style="width:100%; height:100%;">
+                                </a>
+                                <!-- show the canvas by default -->
+                                <canvas onclick="setCoordinate(this,'right',400,0,50,50)"
+                                        id="miniCanvas_aright" class="miniCanvas"
+                                        width="50" height="50"
+                                        style="display: block;"></canvas>
+                            </div>
+                            <div class="clear"></div>
+                        </li>
+
+                        <li>
+                            <div class="btn-canvas-container" style="width: 50px; height: 50px;">
+                                <!-- hide the <a> by default -->
+                                <a id="abottom" href="javascript:void(0)"
+                                   style="display: none; width:100%; height:100%;">
+                                    <img src="/images/icons/icon-bt.png" alt="Bottom to Center"
+                                         style="width:100%; height:100%;">
+                                </a>
+                                <!-- show the canvas by default -->
+                                <canvas onclick="setCoordinate(this,'bottom',800,0,50,50)"
+                                        id="miniCanvas_abottom" class="miniCanvas"
+                                        width="50" height="50"
+                                        style="display: block;"></canvas>
+                            </div>
+                            <div class="clear"></div>
+                        </li>
+
+                        <li>
+                            <div class="btn-canvas-container" style="width: 50px; height: 50px;">
+                                <!-- hide the <a> by default -->
+                                <a id="atop" href="javascript:void(0)"
+                                   style="display: none; width:100%; height:100%;">
+                                    <img src="/images/icons/icon-tb.png" alt="Top to Center"
+                                         style="width:100%; height:100%;">
+                                </a>
+                                <!-- show the canvas by default -->
+                                <canvas onclick="setCoordinate(this,'top',400,0,50,50)"
+                                        id="miniCanvas_atop" class="miniCanvas"
+                                        width="50" height="50"
+                                        style="display: block;"></canvas>
+                            </div>
+                            <div class="clear"></div>
+                        </li>
+
+                    </ul>
+                </div>
+            </section>
+          
+
+            <section id="rauchbier" class="tab-panel">
+                <div class="accordion" style=" position: relative;   left: 0px; top: 0; margin-bottom: 26px; width: 100%;">
+
+
+
+                    <div class="dropdown mb-3">
+                        <a class="dropdown-toggle time_dropdown" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Seconds
+                        </a> <label id="lblSeconds"></label>
+                        <ul class="dropdown-menu" id="ddlSecondsControl">
+                            <li><a class="dropdown-item" value="2">2 Sec</a></li>
+                            <li><a class="dropdown-item" value="3">3 Sec</a></li>
+                            <li><a class="dropdown-item" value="4">4 Sec</a></li>
+                            <li><a class="dropdown-item" value="6">6 Sec</a></li>
+                            <li><a class="dropdown-item" value="8">8 Sec</a></li>
+                            <li><a class="dropdown-item" value="10">10 Sec</a></li>
+                        </ul>
+                    </div>
+
+
+
+                </div>
+
+            </section>
+
+
+
+
+
+            <section id="dunkles" class="tab-panel">
+
+                <div class="accordion" style=" position: relative;
+                                left: 0px;
+                                top: 0;
+                                width: 100%;">
+
+                    <div class="dropdown mb-3">
+                        <a class="dropdown-toggle time_dropdown" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Speed
+                        </a>
+                        <label id="lblOutSpeed"></label>
+                        <ul class="dropdown-menu" id="ddlOutSpeedControl">
+                            <li><a class="dropdown-item" value="2">2 Sec</a></li>
+                            <li><a class="dropdown-item" value="3">3 Sec</a></li>
+                            <li><a class="dropdown-item" value="4">4 Sec</a></li>
+                            <li><a class="dropdown-item" value="6">6 Sec</a></li>
+                            <li><a class="dropdown-item" value="8">8 Sec</a></li>
+                            <li><a class="dropdown-item" value="10">10 Sec</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <h2>Effects</h2>
+                <ul class="right-listone d-flex gap-3">
+                    <li>
+                        <a href="javascript:void(0)"> <img src="~/images/icons/icon-effict.png" alt="pattren"></a>
+
+                        <div class="clear"></div>
+                    </li>
+                    <li>
+                        <a href="javascript:void(0)"> <img src="~/images/icons/icon-effict.png" alt="pattren"></a>
+
+                        <div class="clear"></div>
+                    </li>
+
+                </ul>
+
+                <h2>Out</h2>
+
+                <ul class="right-listone d-flex justify-content-between">
+                    <li>
+                        <a href="javascript:void(0)"> <img src="~/images/icons/icon-lr.png" alt="pattren"></a>
+
+                        <div class="clear"></div>
+                    </li>
+                    <li>
+                        <a href="javascript:void(0)"> <img src="~/images/icons/icon-rl.png" alt="text"></a>
+
+                    </li>
+                    @* <li> *@
+                    @*     <a href="javascript:void(0)"> <img src="~/images/icons/icon-bu.png" alt="circle"></a> *@
+                    @*     <p>LR</p> *@
+                    @* </li> *@
+                    <li>
+                        <a href="javascript:void(0)"> <img src="~/images/icons/icon-bt.png" alt="Masking"></a>
+
+                    </li>
+                    <li>
+                        <a href="javascript:void(0)"> <img src="~/images/icons/icon-tb.png" alt="image"></a>
+
+                    </li>
+
+                    @* <li> *@
+                    @*     <a href="javascript:void(0)"> <img src="~/images/icons/icon-ud.png" alt="image"></a> *@
+                    @*     <p>LR</p> *@
+                    @* </li> *@
+
+                </ul>
+            </section>
+            <div id="imageCoordination" style="display:none;">
+                <label for="imageStartX">Start X:</label>
+                <input type="number" id="imageStartX" value="200" />
+                <label for="imageStartY">Start Y:</label>
+                <input type="number" id="imageStartY" value="200" />
+                <label for="imageEndX">End X:</label>
+                <input type="number" id="imageEndX" value="600" />
+                <label for="imageEndY">End Y:</label>
+                <input type="number" id="imageEndY" value="400" />
+            </div>
+            <div id="textCoordination" style="display:none;">
+                <label for="textStartX">Start X:</label>
+                <input type="number" id="textStartX" value="100" />
+                <label for="textStartY">Start Y:</label>
+                <input type="number" id="textStartY" value="100" />
+                <label for="textEndX">End X:</label>
+                <input type="number" id="textEndX" value="400" />
+                <label for="textEndY">End Y:</label>
+                <input type="number" id="textEndY" value="300" />
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="right-sec-two" style="display:none;">
+    <div class="headtext">Text</div>
+
+    <div class="col-md-12 mb-3">
+        <div class="row alignment-img">
+            <ul class="d-flex justify-content-between mb-0">
+                <li>
+                    <a onclick="ChangeAlignStyle('right')"> <img src="~/images/icons/icon-align-left.png" title="Alignleft" alt="Icon-alignleft"></a>
+                </li>
+                <li>
+                    <a onclick="ChangeAlignStyle('center')"> <img src="~/images/icons/icon-align-center.png" title="Aligncenter" alt="Icon-alignleft"></a>
+                </li>
+                <li>
+                    <a onclick="ChangeAlignStyle('left')"> <img src="~/images/icons/icon-align-right.png" title="Alignright" alt="Icon-alignleft"></a>
+                </li>
+
+            </ul>
+            <input type="hidden" id="textAlign" />
+        </div>
+    </div>
+
+    <div class="col-md-12 mb-3">
+        <div class="row FontSize">
+            <div class="col-md-6 ">
+                <label>Size</label>
+            </div>
+            <div class="col-md-6  text-end">
+                <select id="fontSize" onchange="ChangeStyle()">
+
+                    <option value="18">18</option>
+                    <option value="20">20</option>
+                    <option value="25">25</option>
+                    <option value="30">30</option>
+                    <option value="35" selected>35</option>
+                    <option value="40">40</option>
+                    <option value="45">45</option>
+                    <option value="50">50</option>
+                    <option value="60">60</option>
+                </select>
+            </div>
+
+        </div>
+    </div>
+    <div class="col-md-12 mb-3">
+        <div class="row FontSize my-4">
+            <div class="col-md-6  d-flex align-items-center">
+                <label>Text Color</label>
+            </div>
+            <div class="col-md-6 text-end d-flex align-items-center justify-content-end">
+                <div class="color-palette">
+                    <input type="hidden" id="hdnTextColor" />
+                    <form action="/action_page.php" class="d-flex">
+                        <input type="color" id="favcolor" name="favcolor" oninput="ChangeColor()" value="#000000">
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="col-md-12 mb-4" id="divFillColor" style="display:none;">
+        <div class="row fillcolor">
+            <div class="col-md-6 d-flex align-items-center">
+                <label>Fill</label>
+            </div>
+            <div class="col-md-6  d-flex justify-content-end">
+                <div id="divfill">
+                    <div class="color-palette">
+                        <input type="hidden" id="hdnfillColor" />
+                        <form action="/action_page.php" class="d-flex">
+                            <input type="color" id="favFillcolor" name="favFillcolor" oninput="ChangeFillColor()" value="#42b3f5">
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-12 mb-4" id="divStrockColor" style="display:none;">
+        <div class="row Strock">
+            <div class="col-md-6 d-flex align-items-center">
+                <label>Strock</label>
+            </div>
+            <div class="col-md-6  d-flex justify-content-end">
+                <div id="divStrock">
+                    <div class="color-palette">
+                        <input type="hidden" id="hdnStrockColor" />
+                        <form action="/action_page.php" class="d-flex">
+                            <input type="color" id="favStrockcolor" name="favStrockcolor" oninput="ChangeStrockColor()" value="#78f542">
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    @* <div class="col-md-12 mb-2"> *@
+    @*     <div class="row Strock-Line my-4"> *@
+    @*         <div class="col-md-6 "> *@
+    @*             <label>Strock Line</label> *@
+    @*         </div> *@
+    @*         <div class="col-md-6  text-end"> *@
+    @*             <select> *@
+    @*                 <option> 1</option> *@
+    @*                 <option> 2</option> *@
+    @*                 <option> 3</option> *@
+    @*                 <option> 4</option> *@
+    @*                 <option> 5</option> *@
+    @*             </select> *@
+    @*         </div> *@
+
+    @*     </div> *@
+    @* </div> *@
+
+    @* <div class="col-md-12 mb-3"> *@
+    @*     <div class="row opasity"> *@
+    @*         <div class="col-md-6 "> *@
+    @*             <label>Opacity</label> *@
+    @*         </div> *@
+    @*         <div class="col-md-6  text-end"> *@
+    @*             <label>100%</label> *@
+    @*         </div> *@
+
+    @*     </div> *@
+    @* </div> *@
+
+</div>
+
+
+<div id="opengl_popup" class="collapse show-gallery">
+
+    <div class="card-body">
+
+
+        <div class="panel-left-gallery">
+            <div class="d-flex justify-content-between mb-3">
+                <p class="gallery_head m-0">Gallery</p>
+                <!-- <div class="tab cross">x</div> -->
+                <button class="btn-cross b-radius-6 tab cross"
+                        type="button"
+                        onclick="opengl()">
+                    ✕
+                </button>
+            </div>
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab(this, 'images')">Images</div>
+                <div class="tab" onclick="switchTab(this, 'my-images')">My Images</div>
+                <div class="tab" onclick="switchTab(this, 'templates')">Templates</div>
+
+
+            </div>
+            <!-- images tab -->
+            <div id="images" class="left_content active">
+                <div class="d-flex justify-content-between gap-3">
+                    <!-- search box -->
+                    <div class="search-box w-50">
+                        <input class="left-panel-imput" type="text" placeholder="Search..." />
+                    </div>
+
+                </div>
+                <!-- dropdown -->
+                @* <div class="dropdown my-3"> *@
+                @*     <a class="dropdown-toggle shapes_drop gallery_type" *@
+                @*        type="button" *@
+                @*        data-bs-toggle="dropdown" *@
+                @*        aria-expanded="false"> *@
+                @*         Shapes *@
+                @*     </a> *@
+                @*     <ul class="dropdown-menu"> *@
+                @*         <li><a class="dropdown-item" href="#">Shape 1</a></li> *@
+                @*         <li><a class="dropdown-item" href="#">Shape 2</a></li> *@
+                @*         <li><a class="dropdown-item" href="#">Shape 3</a></li> *@
+                @*     </ul> *@
+                @* </div> *@
+
+                <div class="shapes_tabs my-3 d-flex justify-content-between w-75">
+                    <a href="#">Photo</a>
+                    <a href="#">Shapes</a>
+                    <a href="#">Icons</a>
+                    <a href="#">Patterns</a>
+                    <a href="#">Animation</a>
+                </div>
+
+                <div class="gallery d-flex flex-wrap justify-content-between">
+                    <img src="~/images/Gallery-img/SVG1.svg" />
+                    <img src="~/images/Gallery-img/gl006.png" />
+                    <img src="~/images/Gallery-img/iphone16.png" />
+                    <img src="~/images/Gallery-img/iphone16.png" />
+                </div>
+
+            </div>
+            <!-- my images tab -->
+            <div id="my-images" class="left_content">
+
+                <div class="d-flex justify-content-between gap-3">
+                    <!-- search box -->
+                    <div class="search-box w-100">
+                        <input class="left-panel-imput" type="text" placeholder="Search..." />
+                    </div>
+                    <!-- file upload -->
+                    <div class="custom-file-input choose_file w-100">
+                        <label for="fileUpload">Choose File</label>
+                        <span id="fileName">No File</span>
+                        <input type="file" id="fileUpload" onchange="updateFileName()">
+                    </div>
+                </div>
+
+                <p class="my-3 gallery_type">All My Images</p>
+                <div class="gallery d-flex flex-wrap justify-content-between my_img_gal">
+                    <img src="~/images/Gallery-img/gl001.png" />
+                    <img src="~/images/Gallery-img/gl002.png" />
+                    <img src="~/images/Gallery-img/gl003.png" />
+                    <img src="~/images/Gallery-img/gl004.png" />
+                    <img src="~/images/Gallery-img/gl001.png" />
+                    <img src="~/images/Gallery-img/gl002.png" />
+                    <img src="~/images/Gallery-img/gl003.png" />
+                    <img src="~/images/Gallery-img/gl004.png" />
+                    <img src="~/images/Gallery-img/gl001.png" />
+                    <img src="~/images/Gallery-img/gl002.png" />
+                    <img src="~/images/Gallery-img/gl003.png" />
+                    <img src="~/images/Gallery-img/gl004.png" />
+
+                </div>
+            </div>
+
+            <!-- templates tab -->
+            <div id="templates" class="left_content">
+                <!-- serach box -->
+                <div class="search-box w-50">
+                    <input class="left-panel-imput" type="text" placeholder="Search..." />
+                </div>
+                <p class="my-3 gallery_type">Templates</p>
+                <div class="temp_gallery">
+                    <img src="~/images/banner.png" />
+                    <img src="~/images/banner.png" />
+                    <img src="~/images/Vertical-Menuboard.png" />
+                    <img src="~/images/Vertical-Menuboard.png" />
+                </div>
+            </div>
+            <div class="pagination">
+                <span>&lt;</span>
+                <span>4</span>
+                <span>6</span>
+                <span>7</span>
+                <span>9</span>
+                <span>10</span>
+                <span>11</span>
+                <span>&gt;</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="fontstyle_popup" class="collapse show-texteditor">
+    <div class="card-body">
+        <div class="panel-left-gallery">
+            <h2>Font Family <button class="btn-cross b-radius-6" type="button" onclick="opentl();">✕</button></h2>
+            <div class="gl-box">
+                <div class="col-md-12">
+                    <div class="row" style=" margin-left:-30px;">
+                        <ul class="TextStyle mt-2">
+                            <li><a class="arial" onclick="OnChangefontFamily('Arial')">Arial</a></li>
+                            <li><a class="anton" onclick="OnChangefontFamily('Anton')">Anton</a></li>
+                            <li><a class="bebes" onclick="OnChangefontFamily('BEBES')">BEBES</a></li>
+                            <li><a class="monstro" onclick="OnChangefontFamily('monstro')">MONSTRO</a></li>
+                            <li><a class="Montserrat" onclick="OnChangefontFamily('Montserrat')">Montserrat</a></li>
+                            <li><a class="neto" onclick="OnChangefontFamily('neto')">Neto</a></li>
+                            <li><a class="pacifico" onclick="OnChangefontFamily('Pacifico')">Pacifico</a></li>
+                            <li><a class="Roboto" onclick="OnChangefontFamily('Roboto')">Roboto</a></li>
+                        </ul>
+                        <input type="hidden" id="fontFamily" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="background_edit" id="background_popup">
+</div>

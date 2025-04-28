@@ -8,7 +8,7 @@ let selectedStaySpeed = null;
 let selectedOutSpeed = null;
 
 let animationMode = "linear";
-document.getElementById('alinear').classList.add('active_effect');
+//document.getElementById('alinear').classList.add('active_effect');
 //const stream = canvas.captureStream(7); // Capture at 30 fps
 //const recorder = new MediaRecorder(stream);
 //const chunks = [];
@@ -427,27 +427,14 @@ function drawCanvas(condition) {
 
 
 
-// Image Upload Handler
-document.getElementById("imageUpload").addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.onload = (event) => {
-        const img = new Image();
-        img.onload = () => {
-            image = img;
-            drawCanvas();
-        };
-        img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
-});
 
-// Text Input Handler
-document.getElementById("textInput").addEventListener("input", (e) => {
 
-    text = e.target.value || "Hello, SBOED!";
-    drawCanvas();
-});
+//// Text Input Handler
+//document.getElementById("textInput").addEventListener("input", (e) => {
+
+//    text = e.target.value || "Hello, SBOED!";
+//    drawCanvas();
+//});
 function ChangeStyle() {
     const fontSize = parseInt(document.getElementById("fontSize").value, 10); // Get new font size (as a number)
     const Obj = textObjects.find(obj => obj.selected);
@@ -576,7 +563,7 @@ function animateText(direction, condition, loopCount) {
     // ----- TEXT ANIMATION SECTION -----
     // Pre-calculate final positions and offscreen positions.
     textObjects.forEach((obj) => {
-       
+
         // Save the final (target) position.
         obj.finalX = obj.x;
         obj.finalY = obj.y;
@@ -637,7 +624,7 @@ function animateText(direction, condition, loopCount) {
             y: (i, target) => target.finalY,
             duration: individualTweenText,
             ease: "power1.in",
-            stagger: individualTweenText *.70 ,
+            stagger: individualTweenText * .70,
             onUpdate: () => drawCanvas(condition)
         });
 
@@ -648,9 +635,9 @@ function animateText(direction, condition, loopCount) {
             tlText.to(imgObj, {
                 x: (i, target) => target.finalX,
                 y: (i, target) => target.finalY,
-                duration: individualTweenText  ,
+                duration: individualTweenText,
                 ease: "power1.in",
-                stagger: individualTweenText * .70 ,
+                stagger: individualTweenText * .70,
                 onUpdate: () => drawCanvas(condition)
             });
         });
@@ -665,7 +652,7 @@ function animateText(direction, condition, loopCount) {
                 //y: imgObj.exitY,
                 x: (i, target) => target.exitX,
                 y: (i, target) => target.exitY,
-                duration: individualTweenOutText  ,
+                duration: individualTweenOutText,
                 ease: "power1.out",
                 stagger: individualTweenOutText * 0.70,
                 onUpdate: () => drawCanvas(condition)
@@ -676,7 +663,7 @@ function animateText(direction, condition, loopCount) {
         tlText.to([...textObjects].reverse(), {
             x: (i, target) => target.exitX,
             y: (i, target) => target.exitY,
-            duration: individualTweenOutText ,
+            duration: individualTweenOutText,
             ease: "power1.out",
             stagger: individualTweenOutText * .70,
             onUpdate: () => drawCanvas(condition)
@@ -908,158 +895,158 @@ function animateText(direction, condition, loopCount) {
     //    }
     //}
     //else
-        if (animationType === "linear" || animationType === "zoom" ||
+    if (animationType === "linear" || animationType === "zoom" ||
         animationType === "bounce" || animationType === "blur") {
         // Keep the existing branches for images.
         let exitX, exitY;
         images.forEach((imgObj) => {
             const endX = imgObj.finalX;
             const endY = imgObj.finalY;
-                    let tl = gsap.timeline({
-                        repeat: loopCount - 1,
-                        onUpdate: function () {
+            let tl = gsap.timeline({
+                repeat: loopCount - 1,
+                onUpdate: function () {
+                    drawCanvas(condition);
+                }
+            });
+
+            if (animationType === "linear") {
+                tl.to(imgObj, {
+                    x: endX,
+                    y: endY,
+                    duration: inTime,
+                    ease: "power1.in"
+                });
+                tl.to(imgObj, {
+                    duration: stayTime,
+                    ease: "none"
+                });
+                tl.to(imgObj, {
+                    x: exitX,
+                    y: exitY,
+                    duration: outTime,
+                    ease: "power1.out"
+                });
+                tl.set(imgObj, {
+                    x: endX,
+                    y: endY,
+                    duration: 0,
+                    ease: "power1.inOut",
+                    onUpdate: () => drawCanvas(condition)
+                });
+            }
+            else if (animationType === "bounce") {
+                tl.to(imgObj, {
+                    x: endX,
+                    y: endY,
+                    duration: inTime,
+                    ease: "bounce.out"
+                });
+                tl.to(imgObj, {
+                    duration: stayTime,
+                    ease: "none"
+                });
+                tl.to(imgObj, {
+                    x: exitX,
+                    y: exitY,
+                    duration: outTime,
+                    ease: "bounce.out"
+                });
+                tl.set(imgObj, {
+                    x: endX,
+                    y: endY,
+                    duration: 0,
+                    ease: "bounce.out",
+                    onUpdate: () => drawCanvas(condition)
+                });
+            }
+            else if (animationType === "zoom") {
+                // Zoom in then out.
+                tl.fromTo(
+                    imgObj,
+                    { scaleX: 0, scaleY: 0, x: startX, y: startY },
+                    {
+                        scaleX: originalScaleX,
+                        scaleY: originalScaleY,
+                        x: endX,
+                        y: endY,
+                        duration: inTime,
+                        ease: "power2.out",
+                        onUpdate: () => drawCanvas(condition)
+                    }
+                );
+                tl.to(imgObj, {
+                    duration: stayTime,
+                    ease: "none"
+                });
+                tl.to(imgObj, {
+                    scaleX: 0,
+                    scaleY: 0,
+                    x: exitX,
+                    y: exitY,
+                    duration: outTime,
+                    ease: "power2.in",
+                    onUpdate: () => drawCanvas(condition)
+                });
+                tl.set(imgObj, {
+                    x: endX,
+                    y: endY,
+                    scaleX: originalScaleX,
+                    scaleY: originalScaleY,
+                    duration: 0,
+                    ease: "none",
+                    onUpdate: () => drawCanvas(condition)
+                });
+            }
+            else if (animationType === "blur") {
+                imgObj.blur = 5;
+                tl.fromTo(
+                    imgObj,
+                    { blur: 5, x: startX, y: startY },
+                    {
+                        blur: 0,
+                        x: endX,
+                        y: endY,
+                        duration: inTime + 2,
+                        ease: "power2.out",
+                        onUpdate: () => {
+                            ctx.filter = `blur(${imgObj.blur}px)`;
+                            drawCanvas(condition);
+                        },
+                        onComplete: () => {
+                            ctx.filter = "none";
                             drawCanvas(condition);
                         }
-                    });
-
-                    if (animationType === "linear") {
-                        tl.to(imgObj, {
-                            x: endX,
-                            y: endY,
-                            duration: inTime,
-                            ease: "power1.in"
-                        });
-                        tl.to(imgObj, {
-                            duration: stayTime,
-                            ease: "none"
-                        });
-                        tl.to(imgObj, {
-                            x: exitX,
-                            y: exitY,
-                            duration: outTime,
-                            ease: "power1.out"
-                        });
-                        tl.set(imgObj, {
-                            x: endX,
-                            y: endY,
-                            duration: 0,
-                            ease: "power1.inOut",
-                            onUpdate: () => drawCanvas(condition)
-                        });
                     }
-                    else if (animationType === "bounce") {
-                        tl.to(imgObj, {
-                            x: endX,
-                            y: endY,
-                            duration: inTime,
-                            ease: "bounce.out"
-                        });
-                        tl.to(imgObj, {
-                            duration: stayTime,
-                            ease: "none"
-                        });
-                        tl.to(imgObj, {
-                            x: exitX,
-                            y: exitY,
-                            duration: outTime,
-                            ease: "bounce.out"
-                        });
-                        tl.set(imgObj, {
-                            x: endX,
-                            y: endY,
-                            duration: 0,
-                            ease: "bounce.out",
-                            onUpdate: () => drawCanvas(condition)
-                        });
+                );
+                tl.to(imgObj, {
+                    duration: stayTime,
+                    ease: "none",
+                    onUpdate: () => {
+                        ctx.filter = "none";
+                        drawCanvas(condition);
                     }
-                    else if (animationType === "zoom") {
-                        // Zoom in then out.
-                        tl.fromTo(
-                            imgObj,
-                            { scaleX: 0, scaleY: 0, x: startX, y: startY },
-                            {
-                                scaleX: originalScaleX,
-                                scaleY: originalScaleY,
-                                x: endX,
-                                y: endY,
-                                duration: inTime,
-                                ease: "power2.out",
-                                onUpdate: () => drawCanvas(condition)
-                            }
-                        );
-                        tl.to(imgObj, {
-                            duration: stayTime,
-                            ease: "none"
-                        });
-                        tl.to(imgObj, {
-                            scaleX: 0,
-                            scaleY: 0,
-                            x: exitX,
-                            y: exitY,
-                            duration: outTime,
-                            ease: "power2.in",
-                            onUpdate: () => drawCanvas(condition)
-                        });
-                        tl.set(imgObj, {
-                            x: endX,
-                            y: endY,
-                            scaleX: originalScaleX,
-                            scaleY: originalScaleY,
-                            duration: 0,
-                            ease: "none",
-                            onUpdate: () => drawCanvas(condition)
-                        });
+                });
+                tl.to(imgObj, {
+                    x: exitX,
+                    y: exitY,
+                    duration: outTime,
+                    ease: "power2.in",
+                    onUpdate: () => {
+                        ctx.filter = "none";
+                        drawCanvas(condition);
                     }
-                    else if (animationType === "blur") {
-                        imgObj.blur = 5;
-                        tl.fromTo(
-                            imgObj,
-                            { blur: 5, x: startX, y: startY },
-                            {
-                                blur: 0,
-                                x: endX,
-                                y: endY,
-                                duration: inTime + 2,
-                                ease: "power2.out",
-                                onUpdate: () => {
-                                    ctx.filter = `blur(${imgObj.blur}px)`;
-                                    drawCanvas(condition);
-                                },
-                                onComplete: () => {
-                                    ctx.filter = "none";
-                                    drawCanvas(condition);
-                                }
-                            }
-                        );
-                        tl.to(imgObj, {
-                            duration: stayTime,
-                            ease: "none",
-                            onUpdate: () => {
-                                ctx.filter = "none";
-                                drawCanvas(condition);
-                            }
-                        });
-                        tl.to(imgObj, {
-                            x: exitX,
-                            y: exitY,
-                            duration: outTime,
-                            ease: "power2.in",
-                            onUpdate: () => {
-                                ctx.filter = "none";
-                                drawCanvas(condition);
-                            }
-                        });
-                        tl.set(imgObj, {
-                            x: endX,
-                            y: endY,
-                            duration: 0,
-                            ease: "none",
-                            onUpdate: () => {
-                                ctx.filter = "none";
-                                drawCanvas(condition);
-                            }
-                        });
+                });
+                tl.set(imgObj, {
+                    x: endX,
+                    y: endY,
+                    duration: 0,
+                    ease: "none",
+                    onUpdate: () => {
+                        ctx.filter = "none";
+                        drawCanvas(condition);
                     }
+                });
+            }
         });
     }
 }
@@ -1112,7 +1099,7 @@ function animateImage(condition) {
     const startY = parseInt(document.getElementById("imageStartY").value);
     const endX = parseInt(document.getElementById("imageEndX").value);
     const endY = parseInt(document.getElementById("imageEndY").value);
-    const animationType = document.getElementById("imageAnimation").value;
+    const animationType = $("#hdnTextAnimationType").val();
 
     if (animationType === "linear") {
         gsap.to(imagePosition, {
@@ -1120,7 +1107,7 @@ function animateImage(condition) {
             y: endY,
             duration: 2,
             ease: "power1.inOut",
-            onUpdate: function () { drawCanvas(condition); }, 
+            onUpdate: function () { drawCanvas(condition); },
         });
     } else if (animationType === "elastic") {
         gsap.to(imagePosition, {
@@ -1252,22 +1239,22 @@ function animateImage(condition) {
 
 
 // Apply Animations
-function applyAnimations(direction,conditionvalue) {
+function applyAnimations(direction, conditionvalue) {
     // Reset text and image positions
     //textPosition.x = parseInt(document.getElementById("textStartX").value);
     //textPosition.y = parseInt(document.getElementById("textStartY").value);
     imagePosition.x = parseInt(document.getElementById("imageStartX").value);
     imagePosition.y = parseInt(document.getElementById("imageStartY").value);
     // Start recording before starting your GSAP animation
-   // recorder.start();
+    // recorder.start();
     const bgColor = $("#hdnBackgroundSpecificColor").val();
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     drawCanvas(conditionvalue);
-    
+
     animateText(direction, conditionvalue, parseInt($("#hdnlLoopControl").val()) || 1);
     animateImage(conditionvalue);
-  
+
 
     // Later, when you want to stop recording (e.g., after the animation completes)
     //setTimeout(() => {
@@ -1336,7 +1323,7 @@ function loadCanvasState(state) {
             image = img; // Set the image
             drawCanvas(); // Redraw the canvas with the loaded image
         };
-       // img.src = imageState.imageSrc; // Set the image source from the JSON
+        // img.src = imageState.imageSrc; // Set the image source from the JSON
         if (imageState.imageSrc) {
             loadImage(imageState.imageSrc); // Call loadImage to handle image loading
         }
@@ -1397,7 +1384,7 @@ function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imag
         document.getElementById("imageStartY").value = imageStartY;
         document.getElementById("imageEndX").value = imageEndX;
         document.getElementById("imageEndY").value = imageEndY;
-        document.getElementById("imageAnimation").value = $("#imageAnimation option:selected").val();
+       // document.getElementById("imageAnimation").value = $("#imageAnimation option:selected").val();
         applyAnimations(direction, 'applyAnimations');
         //// Start recording before starting your GSAP animation
         //recorder.start();
@@ -1410,7 +1397,7 @@ function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imag
     else {
         alert('Please select Text Animation')
     }
-    
+
 }
 
 
@@ -1510,7 +1497,7 @@ function addDefaultText() {
     newObj.boundingWidth = width + offsetX;
     newObj.boundingHeight = height + offsetY;
 
-    
+
     // Deselect all, then add and select the new object
     textObjects.forEach(obj => obj.selected = false);
     newObj.selected = true;
@@ -1906,15 +1893,15 @@ function isInsideBox(mouseX, mouseY, obj) {
     const boxWidth = obj.boundingWidth + 2 * padding;
     const boxHeight = obj.boundingHeight + 2 * padding;
     return mouseX >= boxX && mouseX <= boxX + boxWidth &&
-         mouseY <= boxY + boxHeight;
-       /* mouseY >= boxY && mouseY <= boxY + boxHeight;*/
+        mouseY <= boxY + boxHeight;
+    /* mouseY >= boxY && mouseY <= boxY + boxHeight;*/
 }
 //canvasContainer.addEventListener("click", function (e) {
 //    // Deselect all if clicking on empty canvas
 //    textObjects.forEach(o => o.selected = false);
 //    images.forEach(img => img.selected = false);
 //    drawCanvas('Common');
-  
+
 //});
 canvas.addEventListener("click", function (e) {
     const rect = canvas.getBoundingClientRect();
@@ -1980,13 +1967,13 @@ canvasContainer.addEventListener("dblclick", function (e) {
         const editorX = obj.x - padding;  // Position relative to object's x
         const editorY = obj.y - padding;  // Position relative to object's y
         const offsetX = 260;  // adjust if needed
-                const offsetY = 45;  // adjust if needed
+        const offsetY = 45;  // adjust if needed
 
 
 
         // Position the text editor over the object's bounding box.
         textEditor.style.left = `${rect.left + editorX - offsetX}px`;
-        textEditor.style.top = `${rect.top + editorY + scrollTop  - offsetY}px`;
+        textEditor.style.top = `${rect.top + editorY + scrollTop - offsetY}px`;
         //textEditor.style.left = `${rect.left + editorX}px`;
         //textEditor.style.top = `${rect.top + editorY}px`;
         textEditor.style.width = `${obj.boundingWidth + 2 * padding}px`;
@@ -2113,10 +2100,11 @@ textEditor.addEventListener("keydown", function (e) {
     }
 });
 
-const colorPicker = document.getElementById("favcolor");
-const fillColorPicker = document.getElementById("favFillcolor");
-const strockColorPicker = document.getElementById("favStrockcolor");
+
+
+
 function ChangeColor() {
+    const colorPicker = document.getElementById("favcolor");
     $("#hdnTextColor").val(colorPicker.value);
     const textColor = document.getElementById("hdnTextColor").value; // Text color from dropdown 
     const Obj = textObjects.find(obj => obj.selected);
@@ -2126,10 +2114,12 @@ function ChangeColor() {
     drawCanvas('ChangeStyle');
 }
 function ChangeFillColor() {
+    const fillColorPicker = document.getElementById("favFillcolor");
     $("#hdnfillColor").val(fillColorPicker.value);
     updateSelectedImageColors($("#hdnfillColor").val(), $("#hdnStrockColor").val());
 }
 function ChangeStrockColor() {
+    const strockColorPicker = document.getElementById("favStrockcolor");
     $("#hdnStrockColor").val(strockColorPicker.value);
     updateSelectedImageColors($("#hdnfillColor").val(), $("#hdnStrockColor").val());
 }
@@ -2151,37 +2141,37 @@ function TabShowHide(type) {
     }
 }
 // Listen for clicks on the dropdown menu.
-document.getElementById('ddlSpeedControl').addEventListener('click', function (event) {
-    if (event.target.matches('a.dropdown-item')) {
-        // Retrieve the 'value' attribute from the clicked dropdown item.
-        selectedInSpeed = event.target.getAttribute('value');
-        document.getElementById('lblSpeed').textContent = event.target.textContent;
-    }
-});
+//document.getElementById('ddlSpeedControl').addEventListener('click', function (event) {
+//    if (event.target.matches('a.dropdown-item')) {
+//        // Retrieve the 'value' attribute from the clicked dropdown item.
+//        selectedInSpeed = event.target.getAttribute('value');
+//        document.getElementById('lblSpeed').textContent = event.target.textContent;
+//    }
+//});
 
-document.getElementById('ddlSecondsControl').addEventListener('click', function (event) {
-    if (event.target.matches('a.dropdown-item')) {
-        // Retrieve the 'value' attribute from the clicked dropdown item.
-        selectedStaySpeed = event.target.getAttribute('value');
-        document.getElementById('lblSeconds').textContent = event.target.textContent;
-    }
-});
+//document.getElementById('ddlSecondsControl').addEventListener('click', function (event) {
+//    if (event.target.matches('a.dropdown-item')) {
+//        // Retrieve the 'value' attribute from the clicked dropdown item.
+//        selectedStaySpeed = event.target.getAttribute('value');
+//        document.getElementById('lblSeconds').textContent = event.target.textContent;
+//    }
+//});
 
-document.getElementById('ddlOutSpeedControl').addEventListener('click', function (event) {
-    if (event.target.matches('a.dropdown-item')) {
-        // Retrieve the 'value' attribute from the clicked dropdown item.
-        selectedOutSpeed = event.target.getAttribute('value');
-        document.getElementById('lblOutSpeed').textContent = event.target.textContent;
-    }
-});
-document.getElementById('ddlLoopControl').addEventListener('click', function (event) {
-    if (event.target.matches('a.dropdown-item')) {
-        // Retrieve the 'value' attribute from the clicked dropdown item.
-        selectedInSpeed = event.target.getAttribute('value');
-        document.getElementById('lblLoop').textContent = event.target.textContent;
-        $("#hdnlLoopControl").val(selectedInSpeed);
-    }
-});
+//document.getElementById('ddlOutSpeedControl').addEventListener('click', function (event) {
+//    if (event.target.matches('a.dropdown-item')) {
+//        // Retrieve the 'value' attribute from the clicked dropdown item.
+//        selectedOutSpeed = event.target.getAttribute('value');
+//        document.getElementById('lblOutSpeed').textContent = event.target.textContent;
+//    }
+//});
+//document.getElementById('ddlLoopControl').addEventListener('click', function (event) {
+//    if (event.target.matches('a.dropdown-item')) {
+//        // Retrieve the 'value' attribute from the clicked dropdown item.
+//        selectedInSpeed = event.target.getAttribute('value');
+//        document.getElementById('lblLoop').textContent = event.target.textContent;
+//        $("#hdnlLoopControl").val(selectedInSpeed);
+//    }
+//});
 //Calculate scroll height that travell
 canvasContainer.addEventListener("scroll", function () {
     scrollTop = canvasContainer.scrollTop;
@@ -2273,7 +2263,13 @@ function updateSelectedImageColors(newFill, newStroke) {
 }
 
 const backgroundColorPicker = document.getElementById("favBackgroundcolor");
-const backgroundSpecificColorPicker = document.getElementById("favBackgroundSpecificcolor");
+function hideBack() {
+    const popup = document.getElementById("background_popup");
+    if (popup) {
+        popup.style.display = "none";
+    }
+}
+
 function ChangeAllBackgroundColor() {
     $("#hdnBackgroundAllColor").val(backgroundColorPicker.value);
     //RemoveBackgroundImage
@@ -2282,6 +2278,7 @@ function ChangeAllBackgroundColor() {
     setAllCanvasesBackground('.clsmyCanvas', backgroundColorPicker.value);
 }
 function ChangeSpecificBackgroundColor(controlid) {
+    const backgroundSpecificColorPicker = document.getElementById("favBackgroundSpecificcolor");
     $("#hdnBackgroundSpecificColor").val(backgroundSpecificColorPicker.value);
     //RemoveBackgroundImage
     canvas.bgImage = null;
@@ -2318,7 +2315,7 @@ function setCanvasBackgroundImage(imageSrc) {
 function RemoveBackgroundImage() {
     canvas.bgImage = null;
     drawCanvas('Common'); // Redraw the canvas without the background image.
-   
+
 }
 function clearCanvas() {
     const canvas = document.getElementById("myCanvas");
@@ -2337,228 +2334,385 @@ function clearCanvas() {
 
 
 
-const arrowImage = new Image();
-arrowImage.src = "/images/icons/icon-lr.png";
+//const arrowImage = new Image();
+//arrowImage.src = "/images/icons/icon-lr.png";
 
-function getEase() {
-    return animationMode === "bounce" ? "bounce.out" : "linear";
-}
+//function getEase() {
+//    return animationMode === "bounce" ? "bounce.out" : "linear";
+//}
 
-function drawArrow(ctx, x, centerY) {
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.save();
-    ctx.translate(x, centerY);
-    const type = document.getElementById("hdnTextAnimationType").value;
-    if (type === "zoom") {
-        ctx.drawImage(arrowImage, -25, -25, 50, 50);
-    } else if (type === "blur") {
-        ctx.filter = "blur(4px)";
-        ctx.drawImage(arrowImage, -20, -20, 40, 40);
-        ctx.filter = "none";
-    } else {
-        ctx.drawImage(arrowImage, -20, -20, 40, 40);
+//function drawArrow(ctx, x, centerY) {
+//    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+//    ctx.save();
+//    ctx.translate(x, centerY);
+//    const type = document.getElementById("hdnTextAnimationType").value;
+//    if (type === "zoom") {
+//        ctx.drawImage(arrowImage, -25, -25, 50, 50);
+//    } else if (type === "blur") {
+//        ctx.filter = "blur(4px)";
+//        ctx.drawImage(arrowImage, -20, -20, 40, 40);
+//        ctx.filter = "none";
+//    } else {
+//        ctx.drawImage(arrowImage, -20, -20, 40, 40);
+//    }
+//    ctx.restore();
+//}
+
+//// grab elements & context
+//const miniCanvasAleft = document.getElementById('miniCanvas_aleft');
+//const ctxAleft = miniCanvasAleft.getContext('2d');
+//const centerX_left = miniCanvasAleft.width / 2;
+//const centerY_left = miniCanvasAleft.height / 2;
+
+//// draw the arrow at center immediately
+//drawArrow(ctxAleft, centerX_left, centerY_left);
+
+//// animate on hover
+//miniCanvasAleft.addEventListener('mouseenter', () => {
+//    drawArrow(ctxAleft, 0, centerY_left);
+//    gsap.to({ pos: 0 }, {
+//        duration: 0.5,
+//        pos: centerX_left,
+//        ease: getEase(),
+//        onUpdate() {
+//            drawArrow(ctxAleft, this.targets()[0].pos, centerY_left);
+//        }
+//    });
+//});
+
+//miniCanvasAleft.addEventListener('mouseleave', () => {
+//    gsap.to({ pos: centerX_left }, {
+//        duration: 0.5,
+//        pos: centerX_left,
+//        ease: getEase(),
+//        onUpdate() {
+//            drawArrow(ctxAleft, this.targets()[0].pos, centerY_left);
+//        }
+//    });
+//});
+
+//// --------------------------------------------------------------------
+//// 2. Right-to-Center (Canvas id: "miniCanvas_aright")
+//const miniCanvasAright = document.getElementById('miniCanvas_aright');
+//const ctxAright = miniCanvasAright.getContext('2d');
+//const centerX_right = miniCanvasAright.width / 2;
+//const centerY_right = miniCanvasAright.height / 2;
+
+//// Helper to draw & rotate the arrow so it points left
+//function drawArrowFromRight(x) {
+//    ctxAright.clearRect(0, 0, miniCanvasAright.width, miniCanvasAright.height);
+//    ctxAright.save();
+//    ctxAright.translate(x, centerY_right);
+//    ctxAright.rotate(Math.PI);  // flip 180°
+//    const type = document.getElementById("hdnTextAnimationType").value;
+//    if (type === "zoom") {
+//        ctxAright.drawImage(arrowImage, -25, -25, 50, 50);
+//    } else if (type === "blur") {
+//        ctxAright.filter = "blur(4px)";
+//        ctxAright.drawImage(arrowImage, -20, -20, 40, 40);
+//        ctxAright.filter = "none";
+//    } else {
+//        ctxAright.drawImage(arrowImage, -20, -20, 40, 40);
+//    }
+//    ctxAright.restore();
+//}
+
+//// draw arrow centered by default
+//drawArrowFromRight(centerX_right);
+
+//// animate on hover
+//miniCanvasAright.addEventListener('mouseenter', () => {
+//    // start off-screen at right edge
+//    drawArrowFromRight(miniCanvasAright.width);
+//    gsap.to({ pos: miniCanvasAright.width }, {
+//        duration: 0.5,
+//        pos: centerX_right,
+//        ease: getEase(),
+//        onUpdate() {
+//            drawArrowFromRight(this.targets()[0].pos);
+//        }
+//    });
+//});
+
+//miniCanvasAright.addEventListener('mouseleave', () => {
+//    // smoothly “reset” to center (or just remain)
+//    gsap.to({ pos: centerX_right }, {
+//        duration: 0.5,
+//        pos: centerX_right,
+//        ease: getEase(),
+//        onUpdate() {
+//            drawArrowFromRight(this.targets()[0].pos);
+//        }
+//    });
+//});
+
+
+//// --------------------------------------------------------------------
+//// 3. Bottom-to-Center (Canvas id: "miniCanvas_abottom")
+//const miniCanvasAbottom = document.getElementById('miniCanvas_abottom');
+//const ctxAbottom = miniCanvasAbottom.getContext('2d');
+//const centerX_bottom = miniCanvasAbottom.width / 2;
+//const centerY_bottom = miniCanvasAbottom.height / 2;
+
+//// Draw & rotate the arrow so it points up
+//function drawArrowFromBottom(y) {
+//    ctxAbottom.clearRect(0, 0, miniCanvasAbottom.width, miniCanvasAbottom.height);
+//    ctxAbottom.save();
+//    ctxAbottom.translate(centerX_bottom, y);
+//    ctxAbottom.rotate(-Math.PI / 2);  // rotate -90°
+//    const type = document.getElementById("hdnTextAnimationType").value;
+//    if (type === "zoom") {
+//        ctxAbottom.drawImage(arrowImage, -25, -25, 50, 50);
+//    } else if (type === "blur") {
+//        ctxAbottom.filter = "blur(4px)";
+//        ctxAbottom.drawImage(arrowImage, -20, -20, 40, 40);
+//        ctxAbottom.filter = "none";
+//    } else {
+//        ctxAbottom.drawImage(arrowImage, -20, -20, 40, 40);
+//    }
+//    ctxAbottom.restore();
+//}
+
+//// Draw arrow at center on load
+//drawArrowFromBottom(centerY_bottom);
+
+//// Animate on hover
+//miniCanvasAbottom.addEventListener('mouseenter', () => {
+//    // start off-screen at bottom edge
+//    drawArrowFromBottom(miniCanvasAbottom.height);
+//    gsap.to({ pos: miniCanvasAbottom.height }, {
+//        duration: 0.5,
+//        pos: centerY_bottom,
+//        ease: getEase(),
+//        onUpdate() {
+//            drawArrowFromBottom(this.targets()[0].pos);
+//        }
+//    });
+//});
+
+//miniCanvasAbottom.addEventListener('mouseleave', () => {
+//    // smoothly reset to center
+//    gsap.to({ pos: centerY_bottom }, {
+//        duration: 0.5,
+//        pos: centerY_bottom,
+//        ease: getEase(),
+//        onUpdate() {
+//            drawArrowFromBottom(this.targets()[0].pos);
+//        }
+//    });
+//});
+
+
+//// --------------------------------------------------------------------
+//// 4. Top-to-Center (Canvas id: "miniCanvas_atop")
+//const miniCanvasAtop = document.getElementById('miniCanvas_atop');
+//const ctxAtop = miniCanvasAtop.getContext('2d');
+//const centerX_top = miniCanvasAtop.width / 2;
+//const centerY_top = miniCanvasAtop.height / 2;
+
+//// Draw & rotate the arrow so it points down
+//function drawArrowFromTop(y) {
+//    ctxAtop.clearRect(0, 0, miniCanvasAtop.width, miniCanvasAtop.height);
+//    ctxAtop.save();
+//    ctxAtop.translate(centerX_top, y);
+//    ctxAtop.rotate(Math.PI / 2);  // rotate 90°
+//    const type = document.getElementById("hdnTextAnimationType").value;
+//    if (type === "zoom") {
+//        ctxAtop.drawImage(arrowImage, -25, -25, 50, 50);
+//    } else if (type === "blur") {
+//        ctxAtop.filter = "blur(4px)";
+//        ctxAtop.drawImage(arrowImage, -20, -20, 40, 40);
+//        ctxAtop.filter = "none";
+//    } else {
+//        ctxAtop.drawImage(arrowImage, -20, -20, 40, 40);
+//    }
+//    ctxAtop.restore();
+//}
+
+//// Draw arrow at center on load
+//drawArrowFromTop(centerY_top);
+
+//// Animate on hover
+//miniCanvasAtop.addEventListener('mouseenter', () => {
+//    // start off-screen at top edge (y=0)
+//    drawArrowFromTop(0);
+//    gsap.to({ pos: 0 }, {
+//        duration: 0.5,
+//        pos: centerY_top,
+//        ease: getEase(),
+//        onUpdate() {
+//            drawArrowFromTop(this.targets()[0].pos);
+//        }
+//    });
+//});
+
+//miniCanvasAtop.addEventListener('mouseleave', () => {
+//    // smoothly reset to center
+//    gsap.to({ pos: centerY_top }, {
+//        duration: 0.5,
+//        pos: centerY_top,
+//        ease: getEase(),
+//        onUpdate() {
+//            drawArrowFromTop(this.targets()[0].pos);
+//        }
+//    });
+//});
+
+function CreateHeaderSectionhtml() {
+    try {
+        $.ajax({
+            url: baseURL + "Canvas/CreateHeaderSectionhtml",
+            type: "POST",
+            dataType: "html",
+            success: function (result) {
+                $("#divHeaderSection").html(result);
+               
+                const lin = document.getElementById('alinear');
+                if (lin) {
+                    lin.classList.add('active_effect');
+                } else {
+                   // console.warn("#alinear still not found!");
+                }
+              
+
+                wireSpeedDropdown();
+                wireOutSpeedDropdown();
+                wireLoopDropdown();
+               /* wireUpPopupHandlers();*/
+            },
+            error: function () {
+            }
+        })
+
+    } catch (e) {
+        console.log("catch", e);
     }
-    ctx.restore();
 }
+function CreateBackgroundSectionhtml() {
+    try {
+        $.ajax({
+            url: baseURL + "Canvas/CreateBackgroundSectionhtml",
+            type: "POST",
+            dataType: "html",
+            success: function (result) {
+                $("#background_popup").html(result);
+              //  wireUpPopupHandlers();
+            },
+            error: function () {
+            }
+        })
 
-// grab elements & context
-const miniCanvasAleft = document.getElementById('miniCanvas_aleft');
-const ctxAleft = miniCanvasAleft.getContext('2d');
-const centerX_left = miniCanvasAleft.width / 2;
-const centerY_left = miniCanvasAleft.height / 2;
-
-// draw the arrow at center immediately
-drawArrow(ctxAleft, centerX_left, centerY_left);
-
-// animate on hover
-miniCanvasAleft.addEventListener('mouseenter', () => {
-    drawArrow(ctxAleft, 0, centerY_left);
-    gsap.to({ pos: 0 }, {
-        duration: 0.5,
-        pos: centerX_left,
-        ease: getEase(),
-        onUpdate() {
-            drawArrow(ctxAleft, this.targets()[0].pos, centerY_left);
-        }
-    });
-});
-
-miniCanvasAleft.addEventListener('mouseleave', () => {
-    gsap.to({ pos: centerX_left }, {
-        duration: 0.5,
-        pos: centerX_left,
-        ease: getEase(),
-        onUpdate() {
-            drawArrow(ctxAleft, this.targets()[0].pos, centerY_left);
-        }
-    });
-});
-
-// --------------------------------------------------------------------
-// 2. Right-to-Center (Canvas id: "miniCanvas_aright")
-const miniCanvasAright = document.getElementById('miniCanvas_aright');
-const ctxAright = miniCanvasAright.getContext('2d');
-const centerX_right = miniCanvasAright.width / 2;
-const centerY_right = miniCanvasAright.height / 2;
-
-// Helper to draw & rotate the arrow so it points left
-function drawArrowFromRight(x) {
-    ctxAright.clearRect(0, 0, miniCanvasAright.width, miniCanvasAright.height);
-    ctxAright.save();
-    ctxAright.translate(x, centerY_right);
-    ctxAright.rotate(Math.PI);  // flip 180°
-    const type = document.getElementById("hdnTextAnimationType").value;
-    if (type === "zoom") {
-        ctxAright.drawImage(arrowImage, -25, -25, 50, 50);
-    } else if (type === "blur") {
-        ctxAright.filter = "blur(4px)";
-        ctxAright.drawImage(arrowImage, -20, -20, 40, 40);
-        ctxAright.filter = "none";
-    } else {
-        ctxAright.drawImage(arrowImage, -20, -20, 40, 40);
+    } catch (e) {
+        console.log("catch", e);
     }
-    ctxAright.restore();
 }
+function CreateLeftSectionhtml() {
+    try {
+        $.ajax({
+            url: baseURL + "Canvas/CreateLeftSectionhtml",
+            type: "POST",
+            dataType: "html",
+            success: function (result) {
+                $("#divpanelleft").html(result);
 
-// draw arrow centered by default
-drawArrowFromRight(centerX_right);
+            },
+            error: function () {
+            }
+        })
 
-// animate on hover
-miniCanvasAright.addEventListener('mouseenter', () => {
-    // start off-screen at right edge
-    drawArrowFromRight(miniCanvasAright.width);
-    gsap.to({ pos: miniCanvasAright.width }, {
-        duration: 0.5,
-        pos: centerX_right,
-        ease: getEase(),
-        onUpdate() {
-            drawArrowFromRight(this.targets()[0].pos);
-        }
-    });
-});
-
-miniCanvasAright.addEventListener('mouseleave', () => {
-    // smoothly “reset” to center (or just remain)
-    gsap.to({ pos: centerX_right }, {
-        duration: 0.5,
-        pos: centerX_right,
-        ease: getEase(),
-        onUpdate() {
-            drawArrowFromRight(this.targets()[0].pos);
-        }
-    });
-});
-
-
-// --------------------------------------------------------------------
-// 3. Bottom-to-Center (Canvas id: "miniCanvas_abottom")
-const miniCanvasAbottom = document.getElementById('miniCanvas_abottom');
-const ctxAbottom = miniCanvasAbottom.getContext('2d');
-const centerX_bottom = miniCanvasAbottom.width / 2;
-const centerY_bottom = miniCanvasAbottom.height / 2;
-
-// Draw & rotate the arrow so it points up
-function drawArrowFromBottom(y) {
-    ctxAbottom.clearRect(0, 0, miniCanvasAbottom.width, miniCanvasAbottom.height);
-    ctxAbottom.save();
-    ctxAbottom.translate(centerX_bottom, y);
-    ctxAbottom.rotate(-Math.PI / 2);  // rotate -90°
-    const type = document.getElementById("hdnTextAnimationType").value;
-    if (type === "zoom") {
-        ctxAbottom.drawImage(arrowImage, -25, -25, 50, 50);
-    } else if (type === "blur") {
-        ctxAbottom.filter = "blur(4px)";
-        ctxAbottom.drawImage(arrowImage, -20, -20, 40, 40);
-        ctxAbottom.filter = "none";
-    } else {
-        ctxAbottom.drawImage(arrowImage, -20, -20, 40, 40);
+    } catch (e) {
+        console.log("catch", e);
     }
-    ctxAbottom.restore();
 }
+function CreateRightSectionhtml() {
+    try {
+        $.ajax({
+            url: baseURL + "Canvas/CreateRightSectionhtml",
+            type: "POST",
+            dataType: "html",
+            success: function (result) {
+                $("#divpanelright").html(result);
+                // Now safe to access elements from the partial
+                document.getElementById('lblSpeed').textContent = "3 Sec";
+                document.getElementById('lblSeconds').textContent = "6 Sec";
+                document.getElementById('lblOutSpeed').textContent = "2 Sec";
+                document.getElementById('lblLoop').textContent = "1 time";
 
-// Draw arrow at center on load
-drawArrowFromBottom(centerY_bottom);
+            },
+            error: function () {
+            }
+        })
 
-// Animate on hover
-miniCanvasAbottom.addEventListener('mouseenter', () => {
-    // start off-screen at bottom edge
-    drawArrowFromBottom(miniCanvasAbottom.height);
-    gsap.to({ pos: miniCanvasAbottom.height }, {
-        duration: 0.5,
-        pos: centerY_bottom,
-        ease: getEase(),
-        onUpdate() {
-            drawArrowFromBottom(this.targets()[0].pos);
-        }
-    });
-});
-
-miniCanvasAbottom.addEventListener('mouseleave', () => {
-    // smoothly reset to center
-    gsap.to({ pos: centerY_bottom }, {
-        duration: 0.5,
-        pos: centerY_bottom,
-        ease: getEase(),
-        onUpdate() {
-            drawArrowFromBottom(this.targets()[0].pos);
-        }
-    });
-});
-
-
-// --------------------------------------------------------------------
-// 4. Top-to-Center (Canvas id: "miniCanvas_atop")
-const miniCanvasAtop = document.getElementById('miniCanvas_atop');
-const ctxAtop = miniCanvasAtop.getContext('2d');
-const centerX_top = miniCanvasAtop.width / 2;
-const centerY_top = miniCanvasAtop.height / 2;
-
-// Draw & rotate the arrow so it points down
-function drawArrowFromTop(y) {
-    ctxAtop.clearRect(0, 0, miniCanvasAtop.width, miniCanvasAtop.height);
-    ctxAtop.save();
-    ctxAtop.translate(centerX_top, y);
-    ctxAtop.rotate(Math.PI / 2);  // rotate 90°
-    const type = document.getElementById("hdnTextAnimationType").value;
-    if (type === "zoom") {
-        ctxAtop.drawImage(arrowImage, -25, -25, 50, 50);
-    } else if (type === "blur") {
-        ctxAtop.filter = "blur(4px)";
-        ctxAtop.drawImage(arrowImage, -20, -20, 40, 40);
-        ctxAtop.filter = "none";
-    } else {
-        ctxAtop.drawImage(arrowImage, -20, -20, 40, 40);
+    } catch (e) {
+        console.log("catch", e);
     }
-    ctxAtop.restore();
 }
+function wireSpeedDropdown() {
+    const ddl = document.getElementById('ddlSpeedControl');
+    if (!ddl) {
+       // console.warn("#ddlSpeedControl not found!");
+        return;
+    }
+    ddl.addEventListener('click', function (event) {
+        if (event.target.matches('a.dropdown-item')) {
+            const selectedInSpeed = event.target.getAttribute('value');
+            document.getElementById('lblSpeed').textContent = event.target.textContent;
 
-// Draw arrow at center on load
-drawArrowFromTop(centerY_top);
-
-// Animate on hover
-miniCanvasAtop.addEventListener('mouseenter', () => {
-    // start off-screen at top edge (y=0)
-    drawArrowFromTop(0);
-    gsap.to({ pos: 0 }, {
-        duration: 0.5,
-        pos: centerY_top,
-        ease: getEase(),
-        onUpdate() {
-            drawArrowFromTop(this.targets()[0].pos);
         }
     });
-});
-
-miniCanvasAtop.addEventListener('mouseleave', () => {
-    // smoothly reset to center
-    gsap.to({ pos: centerY_top }, {
-        duration: 0.5,
-        pos: centerY_top,
-        ease: getEase(),
-        onUpdate() {
-            drawArrowFromTop(this.targets()[0].pos);
+}
+function wireSecondsDropdown() {
+    const ddl = document.getElementById('ddlSecondsControl');
+    if (!ddl) {
+        console.warn("#ddlSecondsControl not found!");
+        return;
+    }
+    ddl.addEventListener('click', function (event) {
+        if (event.target.matches('a.dropdown-item')) {
+            const val = event.target.getAttribute('value');
+            document.getElementById('lblSeconds').textContent = event.target.textContent;
+            // store val if you need it: selectedStaySpeed = val;
         }
     });
-});
+}
+function wireOutSpeedDropdown() {
+    const ddlOut = document.getElementById('ddlOutSpeedControl');
+    if (!ddlOut) {
+       // console.warn("#ddlOutSpeedControl not found!");
+        return;
+    }
 
+    ddlOut.addEventListener('click', function (event) {
+        if (!event.target.matches('a.dropdown-item')) return;
+
+        // store the value
+        selectedOutSpeed = event.target.getAttribute('value');
+
+        // update the label
+        const lbl = document.getElementById('lblOutSpeed');
+        if (lbl) {
+            lbl.textContent = event.target.textContent;
+        }
+    });
+}
+function wireLoopDropdown() {
+    const ddlLoop = document.getElementById('ddlLoopControl');
+    if (!ddlLoop) {
+     //   console.warn("#ddlLoopControl not found!");
+        return;
+    }
+
+    ddlLoop.addEventListener('click', function (event) {
+        if (!event.target.matches('a.dropdown-item')) return;
+
+        // grab the value and update your globals/hidden field
+        const val = event.target.getAttribute('value');
+        selectedInSpeed = val;
+        $("#hdnlLoopControl").val(val);
+
+        // update the visible label
+        const lbl = document.getElementById('lblLoop');
+        if (lbl) lbl.textContent = event.target.textContent;
+    });
+}
 

@@ -105,7 +105,7 @@
     function validateCredentials() {
         // Static credentials (already in lowercase)
         const staticEmail = "demo@aniboard.com";
-        const staticPassword = "demo123";
+        const staticPassword = "123";
 
         // Get user input values and convert to lowercase
         const enteredEmail = document.getElementById('emailInput').value.toLowerCase().trim();
@@ -113,7 +113,8 @@
 
         // Validation check
         if(enteredEmail === staticEmail && enteredPassword === staticPassword) {
-           window.location.href = window.location.origin + '/Canvas/VerticalIndex';
+           // window.location.href = window.location.origin + '/Canvas/VerticalIndex';
+             window.location.href = window.location.origin+ '/Canvas/VerticalIndex?openModal=true';
             // You can redirect or perform other actions here
         } else {
             alert("Invalid credentials!");
