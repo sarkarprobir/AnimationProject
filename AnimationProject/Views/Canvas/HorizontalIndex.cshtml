@@ -411,6 +411,11 @@
             font-size: 13.8px !important;
             font-weight: 500 !important;
         }
+
+        .hori_canvas{
+            width: 80%;
+            aspect-ratio: 16/9;
+        }
     </style>
     <script>
                   $(document).ready(function(){
@@ -636,23 +641,22 @@
                 </ul>
             </div> *@
         </div>
-        <div class="panel-middle">
-            <div class="container-1">
-                <div class="container-inner">
+        <div class="panel-middle d-flex justify-content-center">
+            
+                
                     <div class="canvas-top-btn">
 
                         <button class="Graphic-More active">Animation Mode</button>
                     </div>
 
-                    <div class="canvas" id="">
-                        @* <img src="~/images/banner.png" alt="Banner" style="width: 100%; height: auto;"> *@
+                    
+                        
                         <div id="canvasContainer">
-                            <canvas id="myCanvas" height="377" width="670" style="background-color:#fff"></canvas>
+                            <canvas class="hori_canvas" id="myCanvas" style="background-color:#fff"></canvas>
                         </div>
                         <p class="middle-resulation">1920x1080</p>
-                    </div>
-                </div>
-            </div>
+                    
+                
         </div>
 
         <div class="panel-right content" id="divpanelrightH">

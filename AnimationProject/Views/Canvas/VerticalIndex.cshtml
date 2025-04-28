@@ -10,7 +10,7 @@
         #canvasContainer {
             position: relative;
             display: inline-block;
-            height: auto;
+            height: 96vh;
         }
         /* Canvas styling */
         #myCanvas {
@@ -432,6 +432,11 @@
             font-size: 13.8px !important;
             font-weight: 500 !important;
         }
+        /* canvas size */
+        .vertical_canvas{
+            width: 40%;
+            aspect-ratio: 9/16;
+        }
     </style>
     <script>
             $(document).ready(function(){
@@ -736,29 +741,20 @@
         <div class="panel-left " id="divpanelleft">
         </div>
 
-        <div class="panel-middle" id="canvasContainer">
-            <div class="container-1">
-                <div class="container-inner">
+        <div class="panel-middle d-flex align-items-center justify-content-center" id="canvasContainer">
+                
                     <div class="canvas-top-btn">
                         <button id="modeButton" class="Graphic-More active" onclick="toggleMode();"></button>
                     </div>
-                    <div style="float: left; display: flex; flex-direction: column; align-items: center; width: 100%">
-                        <div>
-                            <canvas id="myCanvas" class="clsmyCanvas" width="377" height="670"></canvas>
+                    <canvas id="myCanvas" class="clsmyCanvas vertical_canvas"></canvas>
                             <!-- Custom context menu for deletion -->
                             <div id="contextMenu">
                                 <ul>
                                     <li id="deleteOption">Delete</li>
                                 </ul>
                             </div>
-
-
-                        </div>
-                        <p class="middle-resulation">1080x1920</p>
-                    </div>
+                    <p class="middle-resulation">1080x1920</p>
                     <textarea wrap="hard" style="display:none;" id="textEditor"></textarea>
-                </div>
-            </div>
         </div>
 
         <div class="panel-right content" id="divpanelright">
