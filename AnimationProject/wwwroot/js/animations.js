@@ -1364,16 +1364,16 @@ function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imag
     // Find the closest container wrapping the <a>
     var container = clickedElement.closest('div.btn-canvas-container');
     // From that container, select the first <a> element.
-    var targetLink = container ? container.querySelector("a") : null;
+    var targetLink = container ? container.querySelector("canvas") : null;
 
     if (targetLink) {
         // Remove the active_effect class from all <a> elements in the ul.
-        var links = document.getElementById("uldirection").getElementsByTagName("a");
+        var links = document.getElementById("uldirection").getElementsByTagName("canvas");
         for (var i = 0; i < links.length; i++) {
             links[i].classList.remove("active_effect");
         }
         // Add the active_effect class to the target link.
-        targetLink.classList.add("active_effect");
+        clickedElement.classList.add("active_effect");
     }
 
 
