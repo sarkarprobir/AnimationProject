@@ -226,6 +226,66 @@
         });
     });
 </script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const dpr = window.devicePixelRatio || 1;
+
+      // Cache your canvases & centers
+      const miniCanvasAtop    = document.getElementById('miniCanvasAtop');
+      const miniCanvasAleft   = document.getElementById('miniCanvasAleft');
+      const miniCanvasAright  = document.getElementById('miniCanvasAright');
+      const miniCanvasAbottom = document.getElementById('miniCanvasAbottom');
+
+      // Top
+      miniCanvasAtop.addEventListener('mouseleave', () => {
+        gsap.to({ pos: centerY_top }, {
+          duration: 0.5,
+          pos: centerY_top,
+          ease: getEase(),
+          onUpdate() {
+            drawArrowFromTop(this.targets()[0].pos);
+          }
+        });
+      });
+
+      // Left
+      miniCanvasAleft.addEventListener('mouseleave', () => {
+        gsap.to({ pos: centerX_left }, {
+          duration: 0.5,
+          pos: centerX_left,
+          ease: getEase(),
+          onUpdate() {
+            drawArrow(ctxAleft, this.targets()[0].pos, centerY_left);
+          }
+        });
+      });
+
+      // Right
+      miniCanvasAright.addEventListener('mouseleave', () => {
+        gsap.to({ pos: centerX_right }, {
+          duration: 0.5,
+          pos: centerX_right,
+          ease: getEase(),
+          onUpdate() {
+            drawArrowFromRight(this.targets()[0].pos);
+          }
+        });
+      });
+
+      // Bottom
+      miniCanvasAbottom.addEventListener('mouseleave', () => {
+        gsap.to({ pos: centerY_bottom }, {
+          duration: 0.5,
+          pos: centerY_bottom,
+          ease: getEase(),
+          onUpdate() {
+            drawArrowFromBottom(this.targets()[0].pos);
+          }
+        });
+      });
+    });
+</script>
+
 <div class="right-sec-one">
     <div class="headtext">Board Animation</div>
     <div class="tabset">
