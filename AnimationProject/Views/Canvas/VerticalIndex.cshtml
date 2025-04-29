@@ -434,7 +434,7 @@
         }
         /* canvas size */
         .vertical_canvas{
-            width: 40%;
+            width: 32%;
             aspect-ratio: 9/16;
         }
     </style>
@@ -644,7 +644,47 @@
 
 
     </script>
+        <script>
+    (function(){
+      const canvas    = document.getElementById('myCanvas');
+      const container = document.getElementById('canvasContainer');
+      const ctx       = canvas.getContext('2d');
+      const dpr       = window.devicePixelRatio || 1;
 
+      // change these to taste:
+      const widthPct     = 0.32;   // 32% of container width
+      const aspectW      = 9;      // aspect-ratio numerator
+      const aspectH      = 16;     // aspect-ratio denominator
+
+      function resizeCanvas() {
+        // 1) compute CSS display width & height
+        const containerW      = container.clientWidth;
+        const cssWidth        = containerW * widthPct;
+        const cssHeight       = cssWidth * (aspectH / aspectW);
+
+        // 2) apply to the canvas style
+        canvas.style.width   = `${cssWidth}px`;
+        canvas.style.height  = `${cssHeight}px`;
+
+        // 3) size the drawing buffer for HiDPI
+        const bufW = Math.round(cssWidth  * dpr);
+        const bufH = Math.round(cssHeight * dpr);
+        if (canvas.width !== bufW || canvas.height !== bufH) {
+          canvas.width  = bufW;
+          canvas.height = bufH;
+        }
+
+        // 4) make 1 unit === 1 CSS-pixel
+        ctx.resetTransform();
+        ctx.scale(dpr, dpr);
+        
+      }
+
+      window.addEventListener('resize', resizeCanvas);
+      window.addEventListener('DOMContentLoaded', resizeCanvas);
+     
+    })();
+    </script>
 
 }
 
@@ -746,7 +786,7 @@
                     <div class="canvas-top-btn">
                         <button id="modeButton" class="Graphic-More active" onclick="toggleMode();"></button>
                     </div>
-                    <canvas id="myCanvas" class="clsmyCanvas vertical_canvas"></canvas>
+                    <canvas id="myCanvas" class="clsmyCanvas"></canvas>
                             <!-- Custom context menu for deletion -->
                             <div id="contextMenu">
                                 <ul>
