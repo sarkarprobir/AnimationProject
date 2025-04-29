@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace YourNamespace.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class VideoController : ControllerBase
     {
