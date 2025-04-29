@@ -45,17 +45,17 @@ Body {
 .panel-left {
     padding: 11px;
     background: #fff;
-    height: 96vh;
+    height: 95vh;
     width: 385px;
     position: relative;
 }
  .panel-right {
     width: 385px;
-    height: 96vh;
+    height: 95vh;
     overflow: auto;
     text-align: left;
 	background: #fff;
-	padding: 20px;
+	padding: 20px 15px 20px 25px;
 }
  .panel-right .headtext{ 
      font-size:13px;  
@@ -206,23 +206,26 @@ ul.right-listone{padding:0px; margin:0px; width: 100%;
         font-size: var(--font-size14);
         padding: 0px 0px;
         margin: 6px 8px 5px 8px;
-        border-radius: 6px;
+        border-radius: 4px;
         box-shadow: none !important;
         border: none;
     }
- .nav-right ul li:hover {
-        background-color: #6464647a;
+    .nav-right ul li .btn:hover {
+        background-color: #4e43e1;
     }
     .nav-right ul li.play-btn .btn {
         color: #fff;
         font-size: 16px;
         font-weight: 600;
-        padding: 4.2px 12px;
+        padding: 0.2px 7px;
         border-radius: 3px;
         margin: 4px !important;
         box-shadow: none;
         border: 1px solid #fff;
     }
+        .nav-right ul li.play-btn .btn:hover {
+            background-color: #4e43e1;
+        }
 
 .nav-right ul li button.login {
     color:#fff;
@@ -339,21 +342,27 @@ input:focus-visible + label {
  
 
 .tabset {max-width: 65em;}
-a.logo{float:left; margin-right:6px; padding-top:7px;}
+a.logo{
+    float:left; 
+   
+}
     a.logo img {
         width: 25px;
-        margin-top: 2px;
         height: 25px;
     }
 ul.top-left-icon li {
-    list-style-type:none;  
-    padding: 8.2px 2px; 
-    float:left;
+    list-style-type: none;
+    float: left;
+    padding: 2px 7px;
+    border-radius: 4px;
 }
-ul.top-left-icon li:hover {
-        background-color: #6464647a;
+    ul.top-left-icon li:hover {
+        background-color: #4e43e1;
+        padding: 2px 7px;
     }
-.top-left-icon li a{padding:5px 10px 6px 10px;}
+.top-left-icon li a{
+/*    padding:5px 10px 6px 10px;*/
+}
 .navbar ul.top-left-icon{float:left; margin:0px; padding:0px; margin-top: 0px;}
 .navbar .row{width:100%; --bs-gutter-x: 0rem !important;}
 
