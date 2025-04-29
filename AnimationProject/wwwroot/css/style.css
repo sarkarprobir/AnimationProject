@@ -511,6 +511,7 @@ ul.TextStyle li a.Roboto{ font-family: 'Roboto'; font-weight: bold; font-size: 3
     position: absolute;
     bottom: -16px;
     left: 16px;
+    -*=-09873 
 }
 /*.alignment-img ul{ margin: 0px 0px 0px -8px; }*/
 .alignment-img ul li{list-style-type:none; float:left;}
