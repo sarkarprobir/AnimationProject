@@ -315,17 +315,24 @@ function SelectionOfEffectandDirection(activeSlide) {
 
 
     if (activeSlide === 1) {
-        document.getElementById("a" + $("#hdnEffectSlide1").val() + "").classList.add("active_effect");
-        document.getElementById("a" + $("#hdnDirectiontSlide1").val() + "").classList.add("active_effect");
+        if ($("#hdnEffectSlide1").val() !== '') {
+            document.getElementById("a" + $("#hdnEffectSlide1").val() + "").classList.add("active_effect");
+            document.getElementById("a" + $("#hdnDirectiontSlide1").val() + "").classList.add("active_effect");
+        }
     }
     else if (activeSlide === 2) {
-        document.getElementById("a" + $("#hdnEffectSlide2").val() + "").classList.add("active_effect");
-        document.getElementById("a" + $("#hdnDirectiontSlide2").val() + "").classList.add("active_effect");
+        if ($("#hdnEffectSlide2").val() !== '') {
+            document.getElementById("a" + $("#hdnEffectSlide2").val() + "").classList.add("active_effect");
+            document.getElementById("a" + $("#hdnDirectiontSlide2").val() + "").classList.add("active_effect");
+        }
     }
     else if (activeSlide === 3) {
-        document.getElementById("a" + $("#hdnEffectSlide3").val() + "").classList.add("active_effect");
-        document.getElementById("a" + $("#hdnDirectiontSlide3").val() + "").classList.add("active_effect");
+        if ($("#hdnEffectSlide3").val() !== '') {
+            document.getElementById("a" + $("#hdnEffectSlide3").val() + "").classList.add("active_effect");
+            document.getElementById("a" + $("#hdnDirectiontSlide3").val() + "").classList.add("active_effect");
+        }
     }
+    resizeCanvas();
 }
 
 function saveCanvasData() {

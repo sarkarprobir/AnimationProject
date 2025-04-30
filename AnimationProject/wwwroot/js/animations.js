@@ -198,7 +198,7 @@ canvas.addEventListener("contextmenu", function (e) {
     const rect = canvas.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
     const offsetY = e.clientY - rect.top;
-    const adjustX = 230;
+    const adjustX = 280;
     const adjustY = 64;
     const found = getObjectAtcontextmenu(offsetX, offsetY);
     if (found) {
