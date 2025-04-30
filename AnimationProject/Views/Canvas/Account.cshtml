@@ -140,48 +140,7 @@
 <script src='https://code.jquery.com/jquery-3.2.1.slim.min.js'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js'></script>
 <script src="~/js/wow.min.js"></script>
-<script>
-    let selectedOption = ""; // Variable to store the selected board type
 
-        document.getElementById("horizontal-option").addEventListener("click", function () {
-            selectedOption = "horizontal";
-            highlightSelection("horizontal-option");
-        });
-
-        document.getElementById("vertical-option").addEventListener("click", function () {
-            selectedOption = "vertical";
-            highlightSelection("vertical-option");
-        });
-
-        document.getElementById("create-button").addEventListener("click", function () {
-            if (selectedOption === "horizontal") {
-                window.location.href = "/Canvas/HorizontalIndex"; // Redirect to horizontal page
-            } else if (selectedOption === "vertical") {
-                window.location.href = "/Canvas/VerticalIndex"; // Redirect to vertical page
-            } else {
-                alert("Please select an option before proceeding!");
-            }
-        });
-
-        // Function to highlight selected option
-        function highlightSelection(selectedId) {
-            document.getElementById("horizontal-option").classList.remove("selected");
-            document.getElementById("vertical-option").classList.remove("selected");
-            document.getElementById(selectedId).classList.add("selected");
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-          document.querySelectorAll('.panel-vertical-scroll .menuboard-vertical-thum')
-            .forEach(item => {
-              item.addEventListener('click', function () {
-                this.classList.toggle('active');
-              });
-            });
-        });
-
-
-  
-</script>
 
 
 
@@ -266,7 +225,7 @@
     <div class="mt-5">
         <div class="d-flex justify-content-between align-items-center mb-5">
            <h2 class="heading_acc">My Account</h2>
-           <div>
+            <div class="d-flex gap-2">
                 <button class="btn btn-primary my-button create_button" data-bs-toggle="modal" data-bs-target="#exampleModal">+ Create New Aniboard</button>
                 <button class="btn btn-secondary my-button browse_button">Browse The Template</button>
            </div>
@@ -354,3 +313,46 @@
         </div>
     </div>
 </div>
+
+<script>
+    let selectedOption = ""; // Variable to store the selected board type
+
+        document.getElementById("horizontal-option").addEventListener("click", function () {
+            selectedOption = "horizontal";
+            highlightSelection("horizontal-option");
+        });
+
+        document.getElementById("vertical-option").addEventListener("click", function () {
+            selectedOption = "vertical";
+            highlightSelection("vertical-option");
+        });
+
+        document.getElementById("create-button").addEventListener("click", function () {
+            if (selectedOption === "horizontal") {
+                window.location.href = "/Canvas/HorizontalIndex"; // Redirect to horizontal page
+            } else if (selectedOption === "vertical") {
+                window.location.href = "/Canvas/VerticalIndex"; // Redirect to vertical page
+            } else {
+                alert("Please select an option before proceeding!");
+            }
+        });
+
+        // Function to highlight selected option
+        function highlightSelection(selectedId) {
+            document.getElementById("horizontal-option").classList.remove("selected");
+            document.getElementById("vertical-option").classList.remove("selected");
+            document.getElementById(selectedId).classList.add("selected");
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+          document.querySelectorAll('.panel-vertical-scroll .menuboard-vertical-thum')
+            .forEach(item => {
+              item.addEventListener('click', function () {
+                this.classList.toggle('active');
+              });
+            });
+        });
+
+
+
+</script>
