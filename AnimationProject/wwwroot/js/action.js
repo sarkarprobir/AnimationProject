@@ -142,7 +142,7 @@ function SaveDesignBoard() {
                                     formData.append('image', blob, 'canvas.png'); // Save as canvas.png
                                     formData.append('folderId', existingFolderId);
 
-                                    fetch('/video/save-image', {  // Adjust API endpoint as needed
+                                    fetch(baseURL + "video/save-image", {  // Adjust API endpoint as needed
                                         method: 'POST',
                                         body: formData
                                     })
@@ -846,7 +846,7 @@ function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
 
     formData.append('folderId', existingFolderId);
 
-    fetch('/video/save-Large-video', {
+    fetch(baseURL + "video/save-Large-video", {
         method: 'POST',
         body: formData
     })
@@ -903,7 +903,7 @@ function uploadVideo(blob, existingFolderId = 'new', currentIndex =1) {
 
     formData.append('folderId', existingFolderId);
 
-    fetch('/video/save-video', {
+    fetch(baseURL + "video/save-video", {
         method: 'POST',
         body: formData
     })

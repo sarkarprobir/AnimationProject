@@ -535,7 +535,7 @@ function uploadImage(blob, existingFolderId = 'new') {
     formData.append('image', blob, 'canvas.png'); // Save as canvas.png
     formData.append('folderId', existingFolderId);
 
-    fetch('/video/save-image', {  // Adjust API endpoint as needed
+    fetch(baseURL + "video/save-image", {  // Adjust API endpoint as needed
         method: 'POST',
         body: formData
     })
