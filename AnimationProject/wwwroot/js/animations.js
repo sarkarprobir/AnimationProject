@@ -1161,7 +1161,90 @@ function textAnimationClick(clickedElement, type) {
     for (var i = 0; i < links.length; i++) {
         links[i].classList.remove("active_effect");
     }
+    initMiniCanvasHandlers();
 }
+// miniCanvasHandlers.js
+
+(function (window, document, gsap) {
+    
+    // all your canvases & centers live here:
+    let miniCanvasAtop,
+        miniCanvasAleft,
+        miniCanvasAright,
+        miniCanvasAbottom;
+
+    // your init function
+    function initMiniCanvasHandlers() {
+        const dpr = window.devicePixelRatio || 1;
+
+        // grab the elements (they MUST exist in the DOM before this runs!)
+        miniCanvasAtop = document.getElementById('miniCanvasAtop');
+        miniCanvasAleft = document.getElementById('miniCanvasAleft');
+        miniCanvasAright = document.getElementById('miniCanvasAright');
+        miniCanvasAbottom = document.getElementById('miniCanvasAbottom');
+
+        if (!miniCanvasAtop || !miniCanvasAleft || !miniCanvasAright || !miniCanvasAbottom) {
+            console.warn('miniCanvasHandlers: some canvas elements not found.');
+            return;
+        }
+
+        // Top
+        miniCanvasAtop.addEventListener('mouseleave', () => {
+            gsap.to({ pos: centerY_top }, {
+                duration: 0.5,
+                pos: centerY_top,
+                ease: getEase(),
+                onUpdate() {
+                    drawArrowFromTop(this.targets()[0].pos);
+                }
+            });
+        });
+
+        // Left
+        miniCanvasAleft.addEventListener('mouseleave', () => {
+            gsap.to({ pos: centerX_left }, {
+                duration: 0.5,
+                pos: centerX_left,
+                ease: getEase(),
+                onUpdate() {
+                    drawArrow(ctxAleft, this.targets()[0].pos, centerY_left);
+                }
+            });
+        });
+
+        // Right
+        miniCanvasAright.addEventListener('mouseleave', () => {
+            gsap.to({ pos: centerX_right }, {
+                duration: 0.5,
+                pos: centerX_right,
+                ease: getEase(),
+                onUpdate() {
+                    drawArrowFromRight(this.targets()[0].pos);
+                }
+            });
+        });
+
+        // Bottom
+        miniCanvasAbottom.addEventListener('mouseleave', () => {
+            gsap.to({ pos: centerY_bottom }, {
+                duration: 0.5,
+                pos: centerY_bottom,
+                ease: getEase(),
+                onUpdate() {
+                    drawArrowFromBottom(this.targets()[0].pos);
+                }
+            });
+        });
+    }
+
+    // expose it globally
+    window.initMiniCanvasHandlers = initMiniCanvasHandlers;
+
+    // optionally auto-init on DOMContentLoaded here too:
+    // document.addEventListener('DOMContentLoaded', initMiniCanvasHandlers);
+
+})(window, document, gsap);
+
 function animateImage(condition) {
     const startX = parseInt(document.getElementById("imageStartX").value);
     const startY = parseInt(document.getElementById("imageStartY").value);
