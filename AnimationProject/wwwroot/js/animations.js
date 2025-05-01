@@ -559,7 +559,6 @@ function animateText(direction, condition, loopCount) {
     const inTime = parseFloat(selectedInSpeed) || 4;   // e.g. 4 seconds for all "in"
     const outTime = parseFloat(selectedOutSpeed) || 3;   // e.g. 3 seconds for all "out"
     const stayTime = parseFloat(selectedStaySpeed) || 6; // Overall stay time (applied globally if desired)
-
     // ----- TEXT ANIMATION SECTION -----
     // Pre-calculate final positions and offscreen positions.
     textObjects.forEach((obj) => {
@@ -809,7 +808,6 @@ function animateText(direction, condition, loopCount) {
 
         });
     }
-
     // ----- IMAGE ANIMATION SECTION -----
     // (A similar approach can be applied to images.)
     images.forEach((imgObj) => {
@@ -1570,13 +1568,13 @@ canvas.addEventListener("mousedown", function (e) {
 
     // Try to get a text object under the mouse.
     const obj = getTextObjectAt(mouseX, mouseY);
-
+    
     if (obj) {
         textObjects.forEach(o => o.selected = false);
         obj.selected = true;
         // Bring the selected object to the front.
-        textObjects.splice(textObjects.indexOf(obj), 1);
-        textObjects.push(obj);
+        //textObjects.splice(textObjects.indexOf(obj), 1);
+        //textObjects.push(obj);
         currentDrag = obj;
 
         // Now check if the mouse is over a resize handle for this object.
@@ -1729,7 +1727,7 @@ canvas.addEventListener("mousemove", function (e) {
             }
         }
     }
-
+    
     // --- Text Resizing Logic ---
     if (isResizing && currentSelectedText() && activeHandle) {
         const obj = currentSelectedText();
@@ -1798,7 +1796,7 @@ canvas.addEventListener("mousemove", function (e) {
 
         drawCanvas("Common");
     }
-
+    
     if (isDragging && currentSelectedText()) {
         const obj = currentSelectedText();
         obj.x = pos.x - dragOffset.x;
@@ -1921,7 +1919,7 @@ canvas.addEventListener("click", function (e) {
             break;
         }
     }
-
+   
     if (obj) {
         // Select text object and update UI
         textObjects.forEach(o => o.selected = false);
