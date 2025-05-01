@@ -48,13 +48,14 @@ let isDragging = false;
 let isResizing = false;
 let activeHandle = null;
 let dragOffset = { x: 0, y: 0 };
+let activeImageHandle = null;
 
 // Configuration constants.
 const padding = 5;         // Padding inside the bounding box
 const handleSize = 10;     // Resize handle square size (in pixels)
 const minWidth = 50;       // Minimum bounding width
 const minHeight = 30;      // Minimum bounding height
-
+const HANDLE_HIT_RADIUS = handleSize * 2; 
 /////////Image Section///////////////////
 let images = []; // Array to store image objects
 // Each image object: { img, src, x, y, width, height, scaleX, scaleY, selected }
@@ -155,36 +156,84 @@ function getObjectAt(x, y) {
 }
 // Returns which resize handle (if any) is under the given mouse position.
 // Handles are drawn at the corners of the bounding box (including padding).
-function getHandleUnderMouse(mouseX, mouseY, obj) {
-    // Calculate the outer bounding box including padding.
+//function getHandleUnderMouse(mouseX, mouseY, obj) {
+//    // Calculate the outer bounding box including padding.
+//    const boxX = obj.x - padding;
+//    const boxY = obj.y - padding;
+//    const boxWidth = obj.boundingWidth + 2 * padding;
+//    const boxHeight = obj.boundingHeight + 2 * padding;
+
+//    // Define eight handles: four corners and four midpoints.
+//    const handles = {
+//        "top-left": { x: boxX, y: boxY },
+//        "top-middle": { x: boxX + boxWidth / 2, y: boxY },
+//        "top-right": { x: boxX + boxWidth, y: boxY },
+//        "right-middle": { x: boxX + boxWidth, y: boxY + boxHeight / 2 },
+//        "bottom-right": { x: boxX + boxWidth, y: boxY + boxHeight },
+//        "bottom-middle": { x: boxX + boxWidth / 2, y: boxY + boxHeight },
+//        "bottom-left": { x: boxX, y: boxY + boxHeight },
+//        "left-middle": { x: boxX, y: boxY + boxHeight / 2 }
+//    };
+
+//    for (let key in handles) {
+//        const hx = handles[key].x;
+//        const hy = handles[key].y;
+//        if (Math.abs(mouseX - hx) <= handleSize && Math.abs(mouseY - hy) <= handleSize) {
+//            return key;
+//        }
+//    }
+//    return null;
+//}
+
+function getHandleUnderMouse(x, y, obj) {
     const boxX = obj.x - padding;
     const boxY = obj.y - padding;
-    const boxWidth = obj.boundingWidth + 2 * padding;
-    const boxHeight = obj.boundingHeight + 2 * padding;
+    const boxW = obj.boundingWidth + 2 * padding;
+    const boxH = obj.boundingHeight + 2 * padding;
 
-    // Define eight handles: four corners and four midpoints.
-    const handles = {
-        "top-left": { x: boxX, y: boxY },
-        "top-middle": { x: boxX + boxWidth / 2, y: boxY },
-        "top-right": { x: boxX + boxWidth, y: boxY },
-        "right-middle": { x: boxX + boxWidth, y: boxY + boxHeight / 2 },
-        "bottom-right": { x: boxX + boxWidth, y: boxY + boxHeight },
-        "bottom-middle": { x: boxX + boxWidth / 2, y: boxY + boxHeight },
-        "bottom-left": { x: boxX, y: boxY + boxHeight },
-        "left-middle": { x: boxX, y: boxY + boxHeight / 2 }
+    const points = {
+        "top-left": { cx: boxX, cy: boxY },
+        "top-middle": { cx: boxX + boxW / 2, cy: boxY },
+        "top-right": { cx: boxX + boxW, cy: boxY },
+        "right-middle": { cx: boxX + boxW, cy: boxY + boxH / 2 },
+        "bottom-right": { cx: boxX + boxW, cy: boxY + boxH },
+        "bottom-middle": { cx: boxX + boxW / 2, cy: boxY + boxH },
+        "bottom-left": { cx: boxX, cy: boxY + boxH },
+        "left-middle": { cx: boxX, cy: boxY + boxH / 2 }
     };
 
-    for (let key in handles) {
-        const hx = handles[key].x;
-        const hy = handles[key].y;
-        if (Math.abs(mouseX - hx) <= handleSize && Math.abs(mouseY - hy) <= handleSize) {
+    for (let key in points) {
+        const dx = x - points[key].cx;
+        const dy = y - points[key].cy;
+        if (dx * dx + dy * dy <= HANDLE_HIT_RADIUS * HANDLE_HIT_RADIUS) {
             return key;
         }
     }
     return null;
 }
+// same radius you’re using for hit-testing
+//const HANDLE_HIT_RADIUS = (handleSize || 5) * 3;
 
+/**
+ * Return an array of {x,y} points for the eight text handles.
+ */
+function getTextResizeHandles(obj) {
+    const boxX = obj.x - padding;
+    const boxY = obj.y - padding;
+    const boxW = obj.boundingWidth + 2 * padding;
+    const boxH = obj.boundingHeight + 2 * padding;
 
+    return [
+        { x: boxX, y: boxY }, // top‐left
+        //{ x: boxX + boxW / 2, y: boxY }, // top‐middle
+        { x: boxX + boxW, y: boxY }, // top‐right
+        //{ x: boxX + boxW, y: boxY + boxH / 2 }, // right‐middle
+        { x: boxX + boxW, y: boxY + boxH }, // bottom‐right
+       // { x: boxX + boxW / 2, y: boxY + boxH }, // bottom‐middle
+        { x: boxX, y: boxY + boxH }, // bottom‐left
+       // { x: boxX, y: boxY + boxH / 2 }  // left‐middle
+    ];
+}
 
 let selectedForContextMenu = null;
 let selectedType = null; // "text" or "image"
@@ -329,20 +378,41 @@ function drawCanvas(condition) {
                 const boxHeight = obj.boundingHeight + 2 * padding;
                 drawRoundedRect(ctx, boxX, boxY, boxWidth, boxHeight, 5);
 
-                // Draw eight handles: four corners and four midpoints.
-                const handles = [
-                    { x: boxX, y: boxY }, // top-left
-                    { x: boxX + boxWidth / 2, y: boxY }, // top-middle
-                    { x: boxX + boxWidth, y: boxY }, // top-right
-                    { x: boxX + boxWidth, y: boxY + boxHeight / 2 }, // right-middle
-                    { x: boxX + boxWidth, y: boxY + boxHeight }, // bottom-right
-                    { x: boxX + boxWidth / 2, y: boxY + boxHeight }, // bottom-middle
-                    { x: boxX, y: boxY + boxHeight }, // bottom-left
-                    { x: boxX, y: boxY + boxHeight / 2 }  // left-middle
-                ];
+                //// Draw eight handles: four corners and four midpoints.
+                //const handles = [
+                //    { x: boxX, y: boxY }, // top-left
+                //    { x: boxX + boxWidth / 2, y: boxY }, // top-middle
+                //    { x: boxX + boxWidth, y: boxY }, // top-right
+                //    { x: boxX + boxWidth, y: boxY + boxHeight / 2 }, // right-middle
+                //    { x: boxX + boxWidth, y: boxY + boxHeight }, // bottom-right
+                //    { x: boxX + boxWidth / 2, y: boxY + boxHeight }, // bottom-middle
+                //    { x: boxX, y: boxY + boxHeight }, // bottom-left
+                //    { x: boxX, y: boxY + boxHeight / 2 }  // left-middle
+                //];
+                //ctx.fillStyle = "#FF7F50";
+                //handles.forEach(handle => {
+                //    ctx.fillRect(handle.x - handleSize / 2, handle.y - handleSize / 2, handleSize, handleSize);
+                //});
+
+                const handles = getTextResizeHandles(obj);
                 ctx.fillStyle = "#FF7F50";
-                handles.forEach(handle => {
-                    ctx.fillRect(handle.x - handleSize / 2, handle.y - handleSize / 2, handleSize, handleSize);
+
+                // draw _visual_ handles with the same radius as hit-area
+                //handles.forEach(pt => {
+                //    ctx.beginPath();
+                //    ctx.arc(pt.x, pt.y, HANDLE_HIT_RADIUS, 0, Math.PI * 2);
+                //    ctx.fill();
+                //});
+                const VISUAL_HANDLE_SIZE = 8;
+
+               // ctx.fillStyle = "#FF7F50";
+                handles.forEach(pt => {
+                    ctx.fillRect(
+                        pt.x - VISUAL_HANDLE_SIZE / 2,
+                        pt.y - VISUAL_HANDLE_SIZE / 2,
+                        VISUAL_HANDLE_SIZE,
+                        VISUAL_HANDLE_SIZE
+                    );
                 });
             }
 
