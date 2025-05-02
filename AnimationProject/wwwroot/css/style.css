@@ -528,9 +528,8 @@ ul.TextStyle li a.Roboto{ font-family: 'Roboto'; font-weight: bold; font-size: 3
     font-size: 13px;
     color: #979393;
     position: absolute;
-    bottom: -16px;
+    bottom: -5px;
     left: 16px;
-    -*=-09873 
 }
 /*.alignment-img ul{ margin: 0px 0px 0px -8px; }*/
 .alignment-img ul li{list-style-type:none; float:left;}
@@ -999,11 +998,11 @@ body {
     display: flex;
     flex-wrap: wrap;
     margin-top: 10px;
-    min-height: 432px;
+    min-height: 60vh;
 }
 
 .my_img_gal {
-    min-height: 430.7px;
+    min-height: 59.6vh;
 }
 
 .gallery img {
@@ -1057,7 +1056,7 @@ body {
     gap: 8px;
     flex-wrap: wrap;
     overflow-y: hidden;
-    min-height: 432px;
+    min-height: 59.8vh;
 }
 
     .temp_gallery img {
@@ -1160,4 +1159,17 @@ body {
 
 #texture_box {
     display: block;
+}
+@media (min-width: 1900px) {
+    .gallery {
+        min-height: 72vh;
+    }
+
+    .temp_gallery {
+        min-height: 71.8vh;
+    }
+
+    .my_img_gal {
+        min-height: 71.8vh;
+    }
 }
