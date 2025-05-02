@@ -1052,17 +1052,19 @@ body {
 }
 
 .temp_gallery {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
     overflow-y: hidden;
     min-height: 59.8vh;
 }
+.temp_inside {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
 
-    .temp_gallery img {
-        width: auto;
-        height: 147px;
-    }
+.temp_gallery img {
+    width: auto;
+    height: 147px;
+}
 
 .gallery_head {
     font-size: 18px;
