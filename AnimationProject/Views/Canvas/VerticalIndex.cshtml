@@ -31,6 +31,7 @@
             color: #333;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             transition: box-shadow 0.3s ease, transform 0.3s ease;
+           z-index: 100;
         }
 
             #textEditor:focus {
@@ -495,6 +496,7 @@
     <script>
         function opengl()
          {
+             document.getElementById("modeButton").innerText = "Graphic Mode";
           $("#opengl_popup").toggle();
           if(document.getElementById("fontstyle_popup").style.display == "block"){
                 $("#fontstyle_popup").hide();
@@ -525,6 +527,7 @@
         }
         function opentl()
          {
+             document.getElementById("modeButton").innerText = "Animation Mode";
             if(document.getElementById("opengl_popup").style.display == "block"){
                 $("#opengl_popup").hide();
             }
@@ -532,6 +535,17 @@
           $(".right-sec-two").toggle();
           $(".right-sec-one").toggle();
          }
+          function opentlClose()
+         {
+             document.getElementById("modeButton").innerText = "Graphic Mode";
+            if(document.getElementById("opengl_popup").style.display == "block"){
+                $("#opengl_popup").hide();
+            }
+          $("#fontstyle_popup").toggle();
+          $(".right-sec-two").toggle();
+          $(".right-sec-one").toggle();
+         }
+         
 
          // tab open
                 function switchTab(tabElement, tabName) {
@@ -696,9 +710,8 @@
     </nav>
 
     <!-- Modal for preview board design-->
-    <div class="play_modal_body">
-
-        <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="play_modal_body" style="display:none;">
+        <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true" >
             <div class="modal-dialog">
                 <div class="modal-content">
 
@@ -707,9 +720,9 @@
                     <div class="modal-body">
                         <canvas id="myCanvasElement"
                                 class="clsmyCanvas"
-                                width="377"
+                                width="340"
                                 height="670"
-                                style="background: lightgray; display: block; width: 377px; height: 670px; position: relative;">
+                                style="background: lightgray; display: block; width: 340px; height: 670px; position: relative;">
                         </canvas>
 
                     </div>
@@ -728,7 +741,7 @@
 
                     <div class="modal-body">
                         @* <img src="~/images/banner.png" alt="Placeholder Image"> *@
-                        <canvas id="myCanvasElementDownload" class="clsmyCanvas" width="377" height="670" style="background: lightgray; position: relative;"></canvas>
+                        <canvas id="myCanvasElementDownload" class="clsmyCanvas" width="350" height="670" style="background: lightgray; position: relative;"></canvas>
                     </div>
 
                 </div>

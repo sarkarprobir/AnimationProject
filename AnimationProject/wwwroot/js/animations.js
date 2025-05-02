@@ -33,7 +33,11 @@ const textColor = "black";
 const defaultFontSize = 35;
 const defaultFontFamily = "Arial";
 const defaultTextColor = "black";
-
+const RECT_HEIGHT_ADJUST = 15;
+const RECT_WIDTH_ADJUST = 4;
+let AfterDrag_ObjectSize = null;
+// corner names must match your resize logic
+const CORNER_NAMES = ["top-left", "top-right", "bottom-right", "bottom-left"];
 // Array to hold our text objects
 // Each text object will have: text, x, y, selected, editing
 let textObjects = [];
@@ -184,33 +188,46 @@ function getObjectAt(x, y) {
 //    }
 //    return null;
 //}
-
 function getHandleUnderMouse(x, y, obj) {
-    const boxX = obj.x - padding;
-    const boxY = obj.y - padding;
-    const boxW = obj.boundingWidth + 2 * padding;
-    const boxH = obj.boundingHeight + 2 * padding;
+    // get exactly the same points you draw
+    const handles = getTextResizeHandles(obj);
 
-    const points = {
-        "top-left": { cx: boxX, cy: boxY },
-        "top-middle": { cx: boxX + boxW / 2, cy: boxY },
-        "top-right": { cx: boxX + boxW, cy: boxY },
-        "right-middle": { cx: boxX + boxW, cy: boxY + boxH / 2 },
-        "bottom-right": { cx: boxX + boxW, cy: boxY + boxH },
-        "bottom-middle": { cx: boxX + boxW / 2, cy: boxY + boxH },
-        "bottom-left": { cx: boxX, cy: boxY + boxH },
-        "left-middle": { cx: boxX, cy: boxY + boxH / 2 }
-    };
-
-    for (let key in points) {
-        const dx = x - points[key].cx;
-        const dy = y - points[key].cy;
+    for (let i = 0; i < handles.length; i++) {
+        const pt = handles[i];
+        const dx = x - pt.x;
+        const dy = y - pt.y;
         if (dx * dx + dy * dy <= HANDLE_HIT_RADIUS * HANDLE_HIT_RADIUS) {
-            return key;
+            return CORNER_NAMES[i];
         }
     }
     return null;
 }
+//function getHandleUnderMouse(x, y, obj) {
+//    const boxX = obj.x - padding;
+//    const boxY = obj.y - padding;
+//    const boxW = obj.boundingWidth + 2 * padding;
+//    const boxH = obj.boundingHeight + 2 * padding;
+
+//    const points = {
+//        "top-left": { cx: boxX, cy: boxY },
+//        "top-middle": { cx: boxX + boxW / 2, cy: boxY },
+//        "top-right": { cx: boxX + boxW, cy: boxY },
+//        "right-middle": { cx: boxX + boxW, cy: boxY + boxH / 2 },
+//        "bottom-right": { cx: boxX + boxW, cy: boxY + boxH },
+//        "bottom-middle": { cx: boxX + boxW / 2, cy: boxY + boxH },
+//        "bottom-left": { cx: boxX, cy: boxY + boxH },
+//        "left-middle": { cx: boxX, cy: boxY + boxH / 2 }
+//    };
+
+//    for (let key in points) {
+//        const dx = x - points[key].cx;
+//        const dy = y - points[key].cy;
+//        if (dx * dx + dy * dy <= HANDLE_HIT_RADIUS * HANDLE_HIT_RADIUS) {
+//            return key;
+//        }
+//    }
+//    return null;
+//}
 // same radius you’re using for hit-testing
 //const HANDLE_HIT_RADIUS = (handleSize || 5) * 3;
 
@@ -220,8 +237,8 @@ function getHandleUnderMouse(x, y, obj) {
 function getTextResizeHandles(obj) {
     const boxX = obj.x - padding;
     const boxY = obj.y - padding;
-    const boxW = obj.boundingWidth + 2 * padding;
-    const boxH = obj.boundingHeight + 2 * padding;
+    const boxW = obj.boundingWidth + 2 * padding - RECT_WIDTH_ADJUST;
+    const boxH = obj.boundingHeight + 2 * padding - RECT_HEIGHT_ADJUST;
 
     return [
         { x: boxX, y: boxY }, // top‐left
@@ -366,6 +383,7 @@ function drawCanvas(condition) {
         textObjects.forEach(obj => {
             ctx.save();
             // If selected, draw the bounding box and handles.
+          
             if (obj.selected) {
                 // Constrain the box if it goes beyond canvas boundaries.
                 if (obj.x < 0) obj.x = 0;
@@ -374,35 +392,14 @@ function drawCanvas(condition) {
                 }
                 const boxX = obj.x - padding;
                 const boxY = obj.y - padding;
-                const boxWidth = obj.boundingWidth + 2 * padding;
-                const boxHeight = obj.boundingHeight + 2 * padding;
+                const boxWidth = obj.boundingWidth + 2 * padding - RECT_WIDTH_ADJUST;
+                //const boxHeight = obj.boundingHeight + 2 * padding;
+                const boxHeight = obj.boundingHeight + 2 * padding - RECT_HEIGHT_ADJUST;
                 drawRoundedRect(ctx, boxX, boxY, boxWidth, boxHeight, 5);
-
-                //// Draw eight handles: four corners and four midpoints.
-                //const handles = [
-                //    { x: boxX, y: boxY }, // top-left
-                //    { x: boxX + boxWidth / 2, y: boxY }, // top-middle
-                //    { x: boxX + boxWidth, y: boxY }, // top-right
-                //    { x: boxX + boxWidth, y: boxY + boxHeight / 2 }, // right-middle
-                //    { x: boxX + boxWidth, y: boxY + boxHeight }, // bottom-right
-                //    { x: boxX + boxWidth / 2, y: boxY + boxHeight }, // bottom-middle
-                //    { x: boxX, y: boxY + boxHeight }, // bottom-left
-                //    { x: boxX, y: boxY + boxHeight / 2 }  // left-middle
-                //];
-                //ctx.fillStyle = "#FF7F50";
-                //handles.forEach(handle => {
-                //    ctx.fillRect(handle.x - handleSize / 2, handle.y - handleSize / 2, handleSize, handleSize);
-                //});
 
                 const handles = getTextResizeHandles(obj);
                 ctx.fillStyle = "#FF7F50";
 
-                // draw _visual_ handles with the same radius as hit-area
-                //handles.forEach(pt => {
-                //    ctx.beginPath();
-                //    ctx.arc(pt.x, pt.y, HANDLE_HIT_RADIUS, 0, Math.PI * 2);
-                //    ctx.fill();
-                //});
                 const VISUAL_HANDLE_SIZE = 8;
 
                // ctx.fillStyle = "#FF7F50";
@@ -1631,7 +1628,7 @@ function addDefaultText() {
         fontFamily: "Arial",     // Default font family
         textColor: "#000000",    // Default text color (black)
         textAlign: "left",        // Default text alignment
-        fontSize: 35
+        fontSize: 30
     };
     // Set the canvas font for accurate measurement.
     ctx.font = `${newObj.fontSize}px ${newObj.fontFamily}`;
@@ -1943,7 +1940,7 @@ canvas.addEventListener("mousemove", function (e) {
                 }
                 break;
         }
-
+        AfterDrag_ObjectSize = adjustFontSizeToFitBox(obj);
         if (obj.boundingWidth < widestLine) obj.boundingWidth = widestLine;
         if (obj.boundingHeight < textHeight) obj.boundingHeight = textHeight;
 
@@ -2147,80 +2144,135 @@ canvasContainer.addEventListener("dblclick", function (e) {
 
         // Finish editing when Enter is pressed (unless using Shift+Enter for a new line) or on blur.
         function finishEditing() {
-            // Get the edited text from the textarea.
+       
             let editedText = textEditor.value;
             obj.editing = false;
             textEditor.style.display = "none";
 
             const ctx = canvas.getContext("2d");
 
-            // Start with the object's current font size.
-            let fontSize = obj.fontSize;
+            // 1) Lock in the box width you already have:
+            const initialBoxWidth = obj.boundingWidth;
+            const maxTextWidth = initialBoxWidth - 2 * padding;
+
+            // 2) Start with the box's current font size:
+            let fontSize = obj.fontSize;//AfterDrag_ObjectSize ?? obj.fontSize;
             ctx.font = `${fontSize}px ${obj.fontFamily}`;
 
-            // Define a margin so that the box will not cross the canvas right edge.
-            const canvasMargin = 20;
-            // Available width is from the object's x to the canvas right edge minus margin.
-            const availableWidth = canvas.width - obj.x - canvasMargin;
-            // Maximum text width inside the box (subtracting horizontal padding).
-            const maxWidth = availableWidth - 2 * padding;
-
-            // If the pasted text does not contain newlines, try to auto-wrap it.
-            let lines;
-            if (editedText.indexOf("\n") === -1) {
-                lines = wrapText(ctx, editedText, maxWidth);
-                // If only one line is produced and it exceeds maxWidth, decrease font size.
-                while (lines.length === 1 && ctx.measureText(editedText).width > maxWidth && fontSize > 5) {
+            // 3) If text is one line and too wide, shrink font until it fits:
+            if (!editedText.includes("\n")) {
+                let width = ctx.measureText(editedText).width;
+                while (width > maxTextWidth && fontSize > 5) {
                     fontSize--;
                     ctx.font = `${fontSize}px ${obj.fontFamily}`;
-                    lines = wrapText(ctx, editedText, maxWidth);
+                    width = ctx.measureText(editedText).width;
                 }
+                // wrap after we have the final font size
+                var lines = wrapText(ctx, editedText, maxTextWidth);
             } else {
-                // If newlines exist, split by newline.
-                lines = editedText.split("\n");
-                // Even then, if the combined text (as one line) is too wide, decrease font size.
-                if (ctx.measureText(editedText.replace(/\n/g, " ")).width > maxWidth) {
-                    while (ctx.measureText(editedText.replace(/\n/g, " ")).width > maxWidth && fontSize > 5) {
-                        fontSize--;
-                        ctx.font = `${fontSize}px ${obj.fontFamily}`;
-                    }
-                }
+                // multiline edit: split then wrap each line to max width
+                const rawLines = editedText.split("\n");
+                let linesAcc = [];
+                rawLines.forEach(ln => {
+                    linesAcc.push(...wrapText(ctx, ln, maxTextWidth));
+                });
+                var lines = linesAcc;
             }
 
-            // Update object's font size.
+            // 4) Update fontSize on the object
             obj.fontSize = fontSize;
-            // Force multiline by joining wrapped lines if more than one line was produced.
-            if (lines.length > 1) {
-                editedText = lines.join("\n");
-            }
 
-            // Recalculate bounding dimensions based on the multiline content.
-            let maxLineWidth = 0;
-            lines.forEach(line => {
-                const w = ctx.measureText(line).width;
-                if (w > maxLineWidth) {
-                    maxLineWidth = w;
-                }
-            });
+            // 5) Compute new box height based on wrapped lines
             const lineHeight = fontSize * 1.2;
-            const totalTextHeight = lines.length * lineHeight;
+            const newTextHeight = lines.length * lineHeight;
+            obj.boundingHeight = newTextHeight + 2 * padding;
 
-            // Extra padding (you can adjust these values).
-            const extraWidth = 12;
-            const extraHeight = 10;
+            // 6) Save the (possibly wrapped) text back into the object
+            obj.text = lines.join("\n");
 
-            // Ensure the new bounding width does not exceed available width.
-            obj.boundingWidth = Math.min(maxLineWidth + extraWidth, availableWidth);
-            obj.boundingHeight = totalTextHeight + extraHeight;
+            // 7) Finally redraw
+            drawCanvas('Common');
 
-            // Save the (now multiline) text.
-            obj.text = editedText;
-
-            drawCanvas('Common'); // Redraw canvas with updated text and bounding box.
-
+            // Remove listeners
             textEditor.removeEventListener("keydown", onKeyDown);
             textEditor.removeEventListener("blur", finishEditing);
         }
+
+        //function finishEditing() {
+        //    // Get the edited text from the textarea.
+        //    let editedText = textEditor.value;
+        //    obj.editing = false;
+        //    textEditor.style.display = "none";
+
+        //    const ctx = canvas.getContext("2d");
+
+        //    // Start with the object's current font size.
+        //    let fontSize = AfterDrag_ObjectSize ?? obj.fontSize;
+        //    ctx.font = `${fontSize}px ${obj.fontFamily}`;
+
+        //    // Define a margin so that the box will not cross the canvas right edge.
+        //    const canvasMargin = 20;
+        //    // Available width is from the object's x to the canvas right edge minus margin.
+        //    const availableWidth = canvas.width - obj.x - canvasMargin;
+        //    // Maximum text width inside the box (subtracting horizontal padding).
+        //    const maxWidth = availableWidth - 2 * padding;
+
+        //    // If the pasted text does not contain newlines, try to auto-wrap it.
+        //    let lines;
+        //    if (editedText.indexOf("\n") === -1) {
+        //        lines = wrapText(ctx, editedText, maxWidth);
+        //        // If only one line is produced and it exceeds maxWidth, decrease font size.
+        //        while (lines.length === 1 && ctx.measureText(editedText).width > maxWidth && fontSize > 5) {
+        //            fontSize--;
+        //            ctx.font = `${fontSize}px ${obj.fontFamily}`;
+        //            lines = wrapText(ctx, editedText, maxWidth);
+        //        }
+        //    } else {
+        //        // If newlines exist, split by newline.
+        //        lines = editedText.split("\n");
+        //        // Even then, if the combined text (as one line) is too wide, decrease font size.
+        //        if (ctx.measureText(editedText.replace(/\n/g, " ")).width > maxWidth) {
+        //            while (ctx.measureText(editedText.replace(/\n/g, " ")).width > maxWidth && fontSize > 5) {
+        //                fontSize--;
+        //                ctx.font = `${fontSize}px ${obj.fontFamily}`;
+        //            }
+        //        }
+        //    }
+
+        //    // Update object's font size.
+        //    obj.fontSize = fontSize;
+        //    // Force multiline by joining wrapped lines if more than one line was produced.
+        //    if (lines.length > 1) {
+        //        editedText = lines.join("\n");
+        //    }
+
+        //    // Recalculate bounding dimensions based on the multiline content.
+        //    let maxLineWidth = 0;
+        //    lines.forEach(line => {
+        //        const w = ctx.measureText(line).width;
+        //        if (w > maxLineWidth) {
+        //            maxLineWidth = w;
+        //        }
+        //    });
+        //    const lineHeight = fontSize * 1.2;
+        //    const totalTextHeight = lines.length * lineHeight;
+
+        //    // Extra padding (you can adjust these values).
+        //    const extraWidth = 12;
+        //    const extraHeight = 10;
+
+        //    // Ensure the new bounding width does not exceed available width.
+        //    obj.boundingWidth = Math.min(maxLineWidth + extraWidth, availableWidth);
+        //    obj.boundingHeight = totalTextHeight + extraHeight;
+
+        //    // Save the (now multiline) text.
+        //    obj.text = editedText;
+
+        //    drawCanvas('Common'); // Redraw canvas with updated text and bounding box.
+
+        //    textEditor.removeEventListener("keydown", onKeyDown);
+        //    textEditor.removeEventListener("blur", finishEditing);
+        //}
 
         function onKeyDown(e) {
             if (e.key === "Enter" && !e.shiftKey) {
@@ -2419,6 +2471,7 @@ function hideBack() {
     if (popup) {
         popup.style.display = "none";
     }
+    document.getElementById("modeButton").innerText = "Graphic Mode";
 }
 
 function ChangeAllBackgroundColor() {
