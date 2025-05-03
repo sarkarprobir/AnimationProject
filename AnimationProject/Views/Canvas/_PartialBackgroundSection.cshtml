@@ -17,6 +17,51 @@
         }
   
 </script> *@
+<script>
+        $( document ).ready(function() {
+        // Function to get URL parameter
+                        function getUrlParameter(name) {
+                            const urlParams = new URLSearchParams(window.location.search);
+                            return urlParams.get(name);
+                        }
+
+                        // Get the ID from URL
+                        const id = getUrlParameter('id');
+
+                        // Check if parameter exists
+                        if(id) {
+                            // Call your initialization function with the ID
+                           setCanvasColor();
+                        }
+    });
+    function rgbStringToHex(rgb) {
+             // extract the three numbers
+             const [r, g, b] = rgb
+               .match(/\d+/g)               // ["42","50","50"]
+               .map(num => parseInt(num));  // [ 42, 50, 50 ]
+
+             // convert each to 2‑digit hex
+             const hex = [r, g, b]
+               .map(n => n.toString(16).padStart(2, '0'))
+               .join('');                   // "2a3232"
+
+             return `#${hex}`;              // "#2a3232"
+            }
+            function setCanvasColor()
+            {
+              const rgb = $("#hdnBackgroundSpecificColor").val();
+                let hex ="#ffffff";
+               if(rgb.includes('#'))
+               {
+                   hex=rgb;
+               }
+               if(rgb !==null && rgb !=='' && rgb !==undefined &&  !rgb.includes('#') )
+               {
+                     hex = rgbStringToHex(rgb);
+               }
+              $("#favBackgroundSpecificcolor").val(hex);
+             }
+</script>
 <div class="d-flex justify-content-between mb-3">
     <p class="gallery_head m-0">Background</p>
     <!-- <div class="tab cross">x</div> -->
