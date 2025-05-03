@@ -2521,7 +2521,7 @@ function RemoveBackgroundImage() {
     drawCanvas('Common'); // Redraw the canvas without the background image.
 
 }
-function clearCanvas() {
+function clearCanvasOld() {
     const canvas = document.getElementById("myCanvas");
     const ctx = canvas.getContext("2d");
     canvas.bgImage = null;
@@ -2533,6 +2533,30 @@ function clearCanvas() {
     images = [];
     textObjects = [];
     //canvas.clear()
+}
+function clearCanvas() {
+    const canvas = document.getElementById("myCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // 1) Drop any background image reference
+    canvas.bgImage = null;
+
+    // 2) Clear the existing pixels
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 3) Paint a solid white background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 4) Reset your animation timeline / state
+    gsap.globalTimeline.clear();
+
+    // 5) Clear your data arrays
+    images = [];
+    textObjects = [];
+
+    // (No need for canvas.width = canvas.width hack unless you
+    //  intentionally want to reset state such as transforms.)
 }
 
 
