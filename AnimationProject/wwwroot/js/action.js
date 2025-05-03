@@ -641,7 +641,7 @@ async function GetDesignBoardByIdForPublish() {
                 console.log("jsonArray:", jsonArray);
                 loadJsonFile();
             }
-            setTimeout(() => { GetDesignBoardByIdForDownload(''); }, 25000);
+            setTimeout(() => { GetDesignBoardByIdForDownload('');}, 25000);
            // HideLoader();
         } catch (e) {
             console.log("catch", e);
