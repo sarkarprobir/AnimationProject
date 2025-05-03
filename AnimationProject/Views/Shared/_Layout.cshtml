@@ -56,12 +56,21 @@
     @*---------------------------page loader------------------*@
     <div class="page-loaderdiv" style="display:none" id="divloader">
         <div class="page-loader"> 
-             @* <i class="fa fa-cog fa-5x fa-spin" aria-hidden="true" style="color:black"></i>  *@
+            
             <span class="loader"></span>
         </div>
     </div>
-    <div>
-        
+    <div class="page-loaderdiv" style="display:none" id="preploader">
+        <div class="page-loader  d-flex justify-content-center align-items-center flex-column">
+            <p>Preparing for publish...</p>
+            <span class="loader"></span>
+        </div>
+    </div>
+    <div class="page-loaderdiv" style="display:none" id="transloader">
+        <div class="page-loader d-flex justify-content-center align-items-center flex-column">
+            <p>Transfering file to server...</p>
+            <span class="loader"></span>
+        </div>
     </div>
     @*-----------------------page loader End----------------------------*@
     @*---------------------------Message Popup------------------*@
