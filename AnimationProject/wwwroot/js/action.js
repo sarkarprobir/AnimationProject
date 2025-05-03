@@ -661,7 +661,7 @@ async function GetDesignBoardByIdForDownload(condition) {
                 DesignBoardId: id
             };
            
-           // ShowLoader();
+            ShowLoader();
             //ShowLoader();
             // Await the ajax call which returns a promise (jQuery 3+)
             const result = await $.ajax({

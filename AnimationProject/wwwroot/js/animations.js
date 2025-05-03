@@ -7,7 +7,7 @@ let selectedInSpeed = null;
 let selectedStaySpeed = null;
 let selectedOutSpeed = null;
 
-let animationMode = "linear";
+let animationMode = "delaylinear";
 //document.getElementById('alinear').classList.add('active_effect');
 //const stream = canvas.captureStream(7); // Capture at 30 fps
 //const recorder = new MediaRecorder(stream);
