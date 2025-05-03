@@ -469,6 +469,34 @@
                         if(id) {
                             // Call your initialization function with the ID
                             GetDesignBoardById(id);
+
+                                 const canvas      = document.getElementById("myCanvas");
+                                  const contextMenu = document.getElementById("contextMenu");
+
+                                  canvas.addEventListener("contextmenu", function(e) {
+                                    e.preventDefault(); // Prevent default browser context menu
+
+                                    const rect    = canvas.getBoundingClientRect();
+                                    const offsetX = e.clientX - rect.left;
+                                    const offsetY = e.clientY - rect.top;
+
+                                    // adjust these as needed to get the menu exactly where you want
+                                    const adjustX = 280;
+                                    const adjustY = 64;
+
+                                    const found = getObjectAtcontextmenu(offsetX, offsetY);
+                                    if (found) {
+                                      selectedForContextMenu = found.obj;
+                                      selectedType           = found.type;
+
+                                      // position & show your custom menu
+                                      contextMenu.style.left    = (offsetX + adjustX) + "px";
+                                      contextMenu.style.top     = (offsetY + adjustY) + "px";
+                                      contextMenu.style.display = "block";
+                                    } else {
+                                      contextMenu.style.display = "none";
+                                    }
+                                  });
                         }
 
          const params = new URLSearchParams(window.location.search);
