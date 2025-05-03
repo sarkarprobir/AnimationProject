@@ -634,7 +634,7 @@ async function GetDesignBoardByIdForPublish() {
                         jsonObj = {}; // fallback to an empty object if parsing fails
                     }
                     // Ensure default values for effect and direction
-                    jsonObj.effect = item.effect || "bounce";
+                    jsonObj.effect = item.effect || "delaylinear";
                     jsonObj.direction = item.direction || "left";
                     return jsonObj;
                 });
@@ -683,14 +683,14 @@ async function GetDesignBoardByIdForDownload(condition) {
                         jsonObj = {}; // fallback to an empty object if parsing fails
                     }
                     // Ensure default values for effect and direction
-                    jsonObj.effect = item.effect || "bounce";
+                    jsonObj.effect = item.effect || "delaylinear";
                     jsonObj.direction = item.direction || "left";
                     return jsonObj;
                 });
                 console.log("jsonArray:", jsonArray);
                 loadJsonFileForDownload();
             }
-            HideLoader();
+            //HideLoader();
         } catch (e) {
             console.log("catch", e);
             HideLoader();
@@ -713,7 +713,7 @@ function loadJsonFileForDownload() {
     currentIndexForDownload = 0; // Reset index when button is clicked
     loadNextJsonForDownload();   // Start loading the first JSON object
     setTimeout(() => {
-        recorderForDownload.stop();
+        recorderForDownload.stop(); HideLoader();
     }, 25000);
 }
 
