@@ -689,45 +689,66 @@
     </script>
 
     <script>
-    (function(){
-      const canvas    = document.getElementById('myCanvas');
-      const container = document.getElementById('canvasContainer');
-      const ctx       = canvas.getContext('2d');
-      const dpr       = window.devicePixelRatio || 1;
+            (function(){
+          const canvas    = document.getElementById('myCanvas');
+          const container = document.getElementById('canvasContainer');
+          const ctx       = canvas.getContext('2d');
+          const dpr       = window.devicePixelRatio || 1;
+          
+          //──────────────────────────────────────────────────────────
+          // STATE: these will be set dynamically on first resize
+          let DESIGN_W, DESIGN_H;
+          let scaleX = 1, scaleY = 1;
+          let firstRun = true;
+          //──────────────────────────────────────────────────────────
 
-      // change these to taste:
-      const widthPct     = 0.32;   // 32% of container width
-      const aspectW      = 9;      // aspect-ratio numerator
-      const aspectH      = 16;     // aspect-ratio denominator
+          function resizeCanvas() {
+              console.log("resizeCanvas");
+            // 1) Figure out how big the canvas *looks* on the page (CSS px)
+            const containerW = container.clientWidth;
+            const cssW       = containerW * 0.32;          // e.g. 32% of container
+            const cssH       = cssW * (16/9);              // your chosen aspect
 
-      function resizeCanvas() {
-        // 1) compute CSS display width & height
-        const containerW      = container.clientWidth;
-        const cssWidth        = containerW * widthPct;
-        const cssHeight       = cssWidth * (aspectH / aspectW);
+            canvas.style.width  = cssW + 'px';
+            canvas.style.height = cssH + 'px';
 
-        // 2) apply to the canvas style
-        canvas.style.width   = `${cssWidth}px`;
-        canvas.style.height  = `${cssHeight}px`;
+            // 2) Resize the internal buffer for HiDPI
+            const bufW = Math.round(cssW * dpr);
+            const bufH = Math.round(cssH * dpr);
+            if (canvas.width !== bufW || canvas.height !== bufH) {
+              canvas.width  = bufW;
+              canvas.height = bufH;
+            }
 
-        // 3) size the drawing buffer for HiDPI
-        const bufW = Math.round(cssWidth  * dpr);
-        const bufH = Math.round(cssHeight * dpr);
-        if (canvas.width !== bufW || canvas.height !== bufH) {
-          canvas.width  = bufW;
-          canvas.height = bufH;
-        }
+            // 3) Compute the *actual* drawing‐space size in CSS pixels
+            const screenW = canvas.width  / dpr;
+            const screenH = canvas.height / dpr;
 
-        // 4) make 1 unit === 1 CSS-pixel
-        ctx.resetTransform();
-        ctx.scale(dpr, dpr);
-        
-      }
-      window.resizeCanvas = resizeCanvas;
-      window.addEventListener('resize', resizeCanvas);
-      window.addEventListener('DOMContentLoaded', resizeCanvas);
-     
-    })();
+            // 4) On very first run, “lock in” your design resolution
+            if (firstRun) {
+              DESIGN_W  = screenW;
+              DESIGN_H  = screenH;
+              firstRun  = false;
+              console.log(`Captured design size: ${DESIGN_W}×${DESIGN_H}`);
+            }
+
+            // 5) Now compute how much to scale your design → screen
+            scaleX = screenW / DESIGN_W;
+            scaleY = screenH / DESIGN_H;
+
+            // 6) Reset any old transforms, then apply:
+            //   a) dpr for HiDPI (1 unit → 1 CSS px)
+            //   b) design→screen scale
+            ctx.resetTransform();
+            ctx.scale(dpr, dpr);
+            ctx.scale(scaleX, scaleY);
+          }
+
+          // expose & hook up
+          window.resizeCanvas = resizeCanvas;
+          window.addEventListener('resize',  resizeCanvas);
+          window.addEventListener('DOMContentLoaded', resizeCanvas);
+        })();
     </script>
 
 }
@@ -752,9 +773,9 @@
                     <div class="modal-body">
                         <canvas id="myCanvasElement"
                                 class="clsmyCanvas"
-                                width="340"
-                                height="670"
-                                style="background: lightgray; display: block; width: 340px; height: 670px; position: relative;">
+                                width="380"
+                                height="680"
+                                style="background: lightgray; display: block; width: 380px; height: 680px; position: relative;">
                         </canvas>
 
                     </div>
@@ -773,7 +794,7 @@
 
                     <div class="modal-body">
                         @* <img src="~/images/banner.png" alt="Placeholder Image"> *@
-                        <canvas id="myCanvasElementDownload" class="clsmyCanvas" width="350" height="670" style="background: lightgray; position: relative;"></canvas>
+                        <canvas id="myCanvasElementDownload" class="clsmyCanvas" width="380" height="680" style="background: lightgray; position: relative;"></canvas>
                     </div>
 
                 </div>
