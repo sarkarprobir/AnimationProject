@@ -335,40 +335,56 @@ function SelectionOfEffectandDirection(activeSlide) {
     resizeCanvas();
 }
 
+// ──────────────────────────────────────────────────────────────────────
+// 1) SAVE: record everything as relative % of the canvas
+// ──────────────────────────────────────────────────────────────────────
 function saveCanvasData() {
-    // Retrieve the canvas background color. If not set, default to white.
-     canvasBgColor = canvas.style.backgroundColor || "#ffffff";
-    // Retrieve the background image source if available.
+    const dpr = window.devicePixelRatio || 1;
+
+    // current “logical” canvas size in CSS‑pixels
+    const screenW = canvas.width / dpr;
+    const screenH = canvas.height / dpr;
+
+    // background
+    const canvasBgColor = canvas.style.backgroundColor || "#ffffff";
     const canvasBgImage = canvas.bgImage ? canvas.bgImage.src : "";
 
     const data = {
-        canvasBgColor: canvasBgColor,  // Background color of the canvas.
-        canvasBgImage: canvasBgImage,  // Background image source URL.
+        canvasBgColor,
+        canvasBgImage,
         slideEffect: $("#hdnTextAnimationType").val(),
-        slideDedirection:$("#hdnslideDedirection").val(),
-        text: textObjects.map(obj => ({
-            text: obj.text,
-            x: obj.x,
-            y: obj.y,
-            boundingWidth: obj.boundingWidth,
-            boundingHeight: obj.boundingHeight,
-            fontSize: obj.fontSize,
-            fontFamily: obj.fontFamily,
-            textColor: obj.textColor,
-            textAlign: obj.textAlign,
-            opacity: obj.opacity
-        })),
-        images: images.map(imgObj => ({
-            // Save the updated SVG markup if it exists, otherwise the src.
-            src: imgObj.svgData || imgObj.src,
-            x: imgObj.x,
-            y: imgObj.y,
-            width: imgObj.width,
-            height: imgObj.height,
-            scaleX: imgObj.scaleX || 1,
-            scaleY: imgObj.scaleY || 1,
-            opacity: imgObj.opacity
-        }))
+        slideDedirection: $("#hdnslideDedirection").val(),
+
+        // store text blocks as percentages + their static style
+        text: textObjects.map(obj => {
+            return {
+                text: obj.text,
+                x: obj.x / screenW,
+                y: obj.y / screenH,
+                boundingWidth: obj.boundingWidth / screenW,
+                boundingHeight: obj.boundingHeight / screenH,
+                fontSize: obj.fontSize,
+                fontFamily: obj.fontFamily,
+                textColor: obj.textColor,
+                textAlign: obj.textAlign,
+                opacity: obj.opacity
+            };
+        }),
+
+        // store images likewise
+        images: images.map(imgObj => {
+            // actual displayed width/height after per‑object scale:
+            const dispW = (imgObj.width * (imgObj.scaleX || 1));
+            const dispH = (imgObj.height * (imgObj.scaleY || 1));
+            return {
+                src: imgObj.svgData || imgObj.src,
+                x: imgObj.x / screenW,
+                y: imgObj.y / screenH,
+                width: dispW / screenW,
+                height: dispH / screenH,
+                opacity: imgObj.opacity
+            };
+        })
     };
 
     return JSON.stringify(data, null, 2);
@@ -498,25 +514,38 @@ function RedirectToVerticalPageDirect() {
 }
 // Restore the canvas from your JSON data
 function loadCanvasFromJson(jsonData, condition) {
-    // Clear the canvas first.
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // If no JSON data, simply call drawCanvas with default settings.
+
     if (!jsonData) {
         drawCanvas(condition);
         return;
     }
 
     try {
-        // Parse the JSON string.
-        var data = JSON.parse(jsonData);
-        // Set the canvas background color.
+        const dpr = window.devicePixelRatio || 1;
+        const screenW = canvas.width / dpr;
+        const screenH = canvas.height / dpr;
+
+        // const data = JSON.parse(jsonData);
+        let data;
+        // If jsonData is a string, parse it; otherwise assume it's an object.
+        if (typeof jsonData === "string") {
+            try {
+                data = JSON.parse(jsonData);
+            } catch (e) {
+                console.error("Error parsing canvas JSON:", e);
+                drawCanvas(condition);
+                return;
+            }
+        } else {
+            data = jsonData;
+        }
+
         canvasBgColor = data.canvasBgColor || "#ffffff";
         $("#hdnBackgroundSpecificColor").val(canvasBgColor);
-        // Fill the canvas with the background color.
-        //ctx.fillStyle = canvasBgColor;
-        //ctx.fillRect(0, 0, canvas.width, canvas.height);
         canvas.style.backgroundColor = canvasBgColor;
-        // Load the background image, if provided.
+
+        // Load background image if present
         if (data.canvasBgImage) {
             canvas.bgImage = new Image();
             canvas.bgImage.src = data.canvasBgImage;
@@ -524,85 +553,101 @@ function loadCanvasFromJson(jsonData, condition) {
             canvas.bgImage = null;
         }
 
-        // Process text objects.
-        textObjects = data.text || [];
+        // Restore and convert text
+        textObjects = (data.text || []).map(obj => ({
+            text: obj.text,
+            x: obj.x * screenW,
+            y: obj.y * screenH,
+            boundingWidth: obj.boundingWidth * screenW,
+            boundingHeight: obj.boundingHeight * screenH,
+            fontSize: obj.fontSize,
+            fontFamily: obj.fontFamily,
+            textColor: obj.textColor,
+            textAlign: obj.textAlign,
+            opacity: obj.opacity,
+            selected: false
+        }));
 
-        // Process image objects.
-        images = []; // Reset images array
-        var imageLoadCount = 0;
-        var totalImages = (data.images ? data.images.length : 0);
+        // Restore images
+        images = [];
+        let imageLoadCount = 0;
+        const totalImages = (data.images ? data.images.length : 0);
 
-        // A helper function to check if all images are loaded.
         function checkAllImagesLoaded() {
-            // If there is a background image, wait for it as well.
-            var bgLoaded = true;
-            if (canvas.bgImage) {
-                bgLoaded = canvas.bgImage.complete;
-            }
+            const bgLoaded = !canvas.bgImage || canvas.bgImage.complete;
             if (imageLoadCount >= totalImages && bgLoaded) {
-                // Once all images are loaded, call drawCanvas.
                 drawCanvas(condition);
             }
         }
 
-        // Process each image in the JSON.
         if (data.images && data.images.length) {
             data.images.forEach(function (imgObj) {
-                // Clone the image object data.
-                var newImgObj = Object.assign({}, imgObj);
-                // Create an HTMLImageElement for this image.
-                var imgElement = new Image();
-                // Check if the source is inline SVG (starts with '<') 
-                // or a URL.
+                const newImgObj = {
+                    x: imgObj.x * screenW,
+                    y: imgObj.y * screenH,
+                    width: imgObj.width * screenW,
+                    height: imgObj.height * screenH,
+                    opacity: imgObj.opacity || 1,
+                    scaleX: 1, // Add scale if your selection logic uses it
+                    scaleY: 1,
+                    selected: false
+                };
+
+
+                const imgElement = new Image();
+                imgElement.crossOrigin = "anonymous";
+
                 if (imgObj.src.trim().charAt(0) === "<") {
-                    // Create a blob URL for the inline SVG.
-                    var blob = new Blob([imgObj.src], { type: "image/svg+xml" });
+                    const blob = new Blob([imgObj.src], { type: "image/svg+xml" });
                     imgElement.src = URL.createObjectURL(blob);
                 } else {
                     imgElement.src = imgObj.src;
                 }
-                // Assign the loaded image to a new property.
-                newImgObj.img = imgElement;
 
-                // When the image loads, increment our counter.
                 imgElement.onload = function () {
-                    imageLoadCount++;
-                    checkAllImagesLoaded();
-                };
-                imgElement.onerror = function () {
-                    console.error("Error loading image", imgObj.src);
+                    const newImgObj = {
+                        x: imgObj.x * screenW,
+                        y: imgObj.y * screenH,
+                        width: imgObj.width * screenW,
+                        height: imgObj.height * screenH,
+                        opacity: imgObj.opacity || 1,
+                        scaleX: 1,
+                        scaleY: 1,
+                        selected: false,
+                        img: imgElement,
+                        src: imgObj.src, // ✅ store original src
+                        svgData: (imgObj.src.trim().charAt(0) === "<") ? imgObj.src : undefined // ✅ keep svgData if applicable
+                    };
+                    images.push(newImgObj);
                     imageLoadCount++;
                     checkAllImagesLoaded();
                 };
 
-                images.push(newImgObj);
+    imgElement.onerror = function () {
+        console.error("Error loading image", imgObj.src);
+        imageLoadCount++;
+        checkAllImagesLoaded();
+    };
             });
         } else {
-            // No images in JSON.
             checkAllImagesLoaded();
         }
-      
-        // If there is a background image, set up its onload.
+
         if (canvas.bgImage) {
-            canvas.bgImage.onload = function () {
-                checkAllImagesLoaded();
-            };
+            canvas.bgImage.onload = checkAllImagesLoaded;
             canvas.bgImage.onerror = function () {
-                console.error("Error loading canvas background image", data.canvasBgImage);
-                // If error, nullify background image.
+                console.error("Error loading background image:", data.canvasBgImage);
                 canvas.bgImage = null;
                 checkAllImagesLoaded();
             };
-        } else {
-            // No background image; check immediately.
-            checkAllImagesLoaded();
         }
+
     } catch (e) {
         console.error("Error parsing canvas JSON:", e);
-        // In case of an error, draw with current values.
         drawCanvas(condition);
     }
 }
+
 
 
 async function GetDesignBoardByIdForPublish() {
@@ -722,13 +767,13 @@ function loadNextJson() {
         const state = jsonArray[currentIndex];
 
         // Draw the current state into the fixed canvas.
-        loadCanvasFromJsonForPublish(state, 'Common');
+         loadCanvasFromJsonForPublish(state, 'Common');
+        //loadCanvasFromJson(state, 'Common');
         console.log("Canvas State Loaded:", state);
 
         // Now trigger the animation using the state's direction and effect.
         // You can modify applyAnimations to also use the effect if needed.
         applyAnimationsforPublish(state.effect,state.direction, 'applyAnimations');
-
         currentIndex++; // Move to the next JSON object
 
         // Load next JSON after a delay (adjust the delay as needed)
@@ -742,7 +787,8 @@ function loadNextJsonForDownload() {
         const state = jsonArray[currentIndexForDownload];
 
         // Draw the current state into the fixed canvas.
-        loadCanvasFromJsonForDownload(state, 'Common');
+         loadCanvasFromJsonForDownload(state, 'Common');
+        //loadCanvasFromJson(state, 'Common');
         console.log("Canvas State Loaded:", state);
 
         // Now trigger the animation using the state's direction and effect.
@@ -1137,7 +1183,132 @@ function loadCanvasFromJsonForDownload(jsonData, condition) {
     }
 }
 
+function drawCanvasForDownload(condition) {
+    // 1) Clear & background
+    ctxElement.clearRect(0, 0, canvas.width, canvas.height);
+    const bgColor = $("#hdnBackgroundSpecificColor").val().trim();
+    if (bgColor) {
+        ctxElement.fillStyle = bgColor;
+        ctxElement.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    if (canvas.bgImage && canvas.bgImage.complete) {
+        ctxElement.drawImage(canvas.bgImage, 0, 0, canvas.width, canvas.height);
+    }
 
+    // 2) Draw images just like drawCanvas()
+    if (images && images.length) {
+        images.forEach(imgObj => {
+            if (!imgObj.img) return;  // skip if not loaded
+
+            // a) image itself
+            ctxElement.save();
+            ctxElement.globalAlpha = imgObj.opacity || 1;
+            ctxElement.drawImage(
+                imgObj.img,
+                imgObj.x,
+                imgObj.y,
+                imgObj.width * (imgObj.scaleX || 1),
+                imgObj.height * (imgObj.scaleY || 1)
+            );
+            ctxElement.restore();
+
+            // b) selection outline & handles
+            if (imgObj.selected) {
+                const dispW = imgObj.width * (imgObj.scaleX || 1);
+                const dispH = imgObj.height * (imgObj.scaleY || 1);
+
+                ctxElement.save();
+                ctxElement.strokeStyle = "blue";
+                ctxElement.lineWidth = 2;
+                ctxElement.strokeRect(imgObj.x, imgObj.y, dispW, dispH);
+
+                const handles = getImageResizeHandles(imgObj);
+                ctxElement.fillStyle = "red";
+                handles.forEach(h => {
+                    ctxElement.fillRect(
+                        h.x - handleSize / 2,
+                        h.y - handleSize / 2,
+                        handleSize,
+                        handleSize
+                    );
+                });
+                ctxElement.restore();
+            }
+        });
+    }
+
+    // 3) Draw text exactly as in drawCanvas()
+    function paintText(obj) {
+        // a) selection box + 8 handles
+        if (obj.selected) {
+            if (obj.x < 0) obj.x = 0;
+            if (obj.x + obj.boundingWidth > canvas.width) {
+                obj.boundingWidth = canvas.width - obj.x;
+            }
+            const boxX = obj.x - padding;
+            const boxY = obj.y - padding;
+            const boxW = obj.boundingWidth + 2 * padding;
+            const boxH = obj.boundingHeight + 2 * padding;
+
+            ctxElement.save();
+            ctxElement.fillStyle = "#FF7F50";
+            const pts = [
+                { x: boxX, y: boxY },
+                { x: boxX + boxW / 2, y: boxY },
+                { x: boxX + boxW, y: boxY },
+                { x: boxX + boxW, y: boxY + boxH / 2 },
+                { x: boxX + boxW, y: boxY + boxH },
+                { x: boxX + boxW / 2, y: boxY + boxH },
+                { x: boxX, y: boxY + boxH },
+                { x: boxX, y: boxY + boxH / 2 }
+            ];
+            pts.forEach(pt => {
+                ctxElement.fillRect(
+                    pt.x - handleSize / 2,
+                    pt.y - handleSize / 2,
+                    handleSize,
+                    handleSize
+                );
+            });
+            ctxElement.restore();
+        }
+
+        // b) actual text
+        ctxElement.save();
+        ctxElement.globalAlpha = obj.opacity || 1;
+        ctxElement.font = `${obj.fontSize}px ${obj.fontFamily}`;
+        ctxElement.fillStyle = obj.textColor;
+        ctxElement.textBaseline = "top";
+
+        const maxW = obj.boundingWidth - 2 * padding;
+        const lines = obj.text.includes("\n")
+            ? obj.text.split("\n")
+            : wrapText(ctxElement, obj.text, maxW);
+        const lineH = obj.fontSize * 1.2;
+        const maxLines = Math.floor((obj.boundingHeight - 2 * padding) / lineH);
+        const startY = obj.y + padding;
+
+        lines.slice(0, maxLines).forEach((line, i) => {
+            const lw = ctxElement.measureText(line).width;
+            let tx = obj.x + padding;
+            if (obj.textAlign === "center") tx = obj.x + (obj.boundingWidth - lw) / 2;
+            if (obj.textAlign === "right") tx = obj.x + obj.boundingWidth - lw - padding;
+            ctxElement.fillText(line, tx, startY + i * lineH);
+        });
+        ctxElement.restore();
+    }
+
+    if (condition === "Common" || condition === "ChangeStyle") {
+        textObjects.forEach(paintText);
+    }
+
+    if (condition === "applyAnimations") {
+        textObjects.forEach(paintText);
+    }
+
+    // 4) Reset alpha
+    ctxElement.globalAlpha = 1;
+}
 function drawCanvasPublish(condition) {
     ctxElement.clearRect(0, 0, canvas.width, canvas.height); // Clear entire canvas
     const bgColor = $("#hdnBackgroundSpecificColor").val();
@@ -1295,7 +1466,7 @@ function drawCanvasPublish(condition) {
     ctxElement.globalAlpha = 1;
     ctxElement.restore();
 }
-function drawCanvasForDownload(condition) {
+function drawCanvasForDownloadOld(condition) {
     ctxElementForDownload.clearRect(0, 0, canvasForDownload.width, canvasForDownload.height); // Clear entire canvas
     const bgColor = $("#hdnBackgroundSpecificColor").val();
     if (bgColor && bgColor.trim() !== "") {
