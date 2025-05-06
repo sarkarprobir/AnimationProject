@@ -793,7 +793,7 @@ function loadNextJsonForDownload() {
 
         // Now trigger the animation using the state's direction and effect.
         // You can modify applyAnimations to also use the effect if needed.
-        applyAnimationsforDownload(state.effect, state.direction, 'applyAnimations');
+        applyAnimationsforDownload(state.effect, state.direction, 'applyAnimations', state);
 
         currentIndexForDownload++; // Move to the next JSON object
 
@@ -832,9 +832,9 @@ recorder.onstop = () => {
     // Call the upload function with the blob and folder ID (if any)
     uploadVideo(blob, existingFolderId,  currentIndex);
 };
-function applyAnimationsforDownload(animationType, direction, conditionValue) {
+function applyAnimationsforDownload(animationType, direction, conditionValue, state) {
     drawCanvasForDownload(conditionValue);
-    animateTextForDownload(animationType, direction, conditionValue, parseInt($("#hdnlLoopControl").val()) || 1);
+    animateTextForDownload(animationType, direction, conditionValue, parseInt($("#hdnlLoopControl").val()) || 1, state);
 }
 recorderForDownload.ondataavailable = (e) => chunksForDownload.push(e.data);
 // Example usage inside your MediaRecorder's onstop callback
@@ -1088,6 +1088,110 @@ function loadCanvasFromJsonForPublish(jsonData, condition) {
     }
 }
 function loadCanvasFromJsonForDownload(jsonData, condition) {
+    ctxElementForDownload.clearRect(0, 0, canvasForDownload.width, canvasForDownload.height);
+    try {
+        const dpr = window.devicePixelRatio || 1;
+        const screenW = canvasForDownload.width / dpr;
+        const screenH = canvasForDownload.height / dpr;
+
+        // const data = JSON.parse(jsonData);
+        let data;
+        // If jsonData is a string, parse it; otherwise assume it's an object.
+        if (typeof jsonData === "string") {
+            try {
+                data = JSON.parse(jsonData);
+            } catch (e) {
+                console.error("Error parsing canvas JSON:", e);
+                drawCanvasForDownload(condition);
+                return;
+            }
+        } else {
+            data = jsonData;
+        }
+
+        canvasBgColor = data.canvasBgColor || "#ffffff";
+        $("#hdnBackgroundSpecificColor").val(canvasBgColor);
+        canvasForDownload.style.backgroundColor = canvasBgColor;
+
+        // Load background image if present
+        if (data.canvasBgImage) {
+            canvasForDownload.bgImage = new Image();
+            canvasForDownload.bgImage.src = data.canvasBgImage;
+        } else {
+            canvasForDownload.bgImage = null;
+        }
+
+        // Restore and convert text
+        textObjects = (data.text || []).map(obj => ({
+            text: obj.text,
+            x: obj.x * screenW,
+            y: obj.y * screenH,
+            boundingWidth: obj.boundingWidth * screenW,
+            boundingHeight: obj.boundingHeight * screenH,
+            fontSize: obj.fontSize,
+            fontFamily: obj.fontFamily,
+            textColor: obj.textColor,
+            textAlign: obj.textAlign,
+            opacity: obj.opacity,
+            selected: false
+        }));
+
+        // Restore images
+        images = [];
+        let imageLoadCount = 0;
+        const totalImages = (data.images ? data.images.length : 0);
+
+        function checkAllImagesLoadedForDownload() {
+            const bgLoaded = !canvasForDownload.bgImage || canvasForDownload.bgImage.complete;
+            if (imageLoadCount >= totalImages && bgLoaded) {
+                drawCanvasForDownload(condition);
+            }
+        }
+
+        // Process each image in the JSON.
+        if (data.images && data.images.length) {
+            data.images.forEach(function (imgObj) {
+                var newImgObj = Object.assign({}, imgObj);
+                var imgElement = new Image();
+                if (imgObj.src.trim().charAt(0) === "<") {
+                    var blob = new Blob([imgObj.src], { type: "image/svg+xml" });
+                    imgElement.src = URL.createObjectURL(blob);
+                } else {
+                    imgElement.src = imgObj.src;
+                }
+                newImgObj.img = imgElement;
+
+                imgElement.onload = function () {
+                    imageLoadCount++;
+                    checkAllImagesLoadedForDownload();
+                };
+                imgElement.onerror = function () {
+                    console.error("Error loading image", imgObj.src);
+                    imageLoadCount++;
+                    checkAllImagesLoadedForDownload();
+                };
+
+                images.push(newImgObj);
+            });
+        } else {
+            checkAllImagesLoadedForDownload();
+        }
+
+        if (canvasForDownload.bgImage) {
+            canvasForDownload.bgImage.onload = checkAllImagesLoadedForDownload;
+            canvasForDownload.bgImage.onerror = function () {
+                console.error("Error loading background image:", data.canvasBgImage);
+                canvasForDownload.bgImage = null;
+                checkAllImagesLoadedForDownload();
+            };
+        }
+
+    } catch (e) {
+        console.error("Error parsing canvas JSON:", e);
+        drawCanvasForDownload(condition);
+    }
+}
+function loadCanvasFromJsonForDownloadOld(jsonData, condition) {
     // Clear the canvas first.
     ctxElementForDownload.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -1182,8 +1286,223 @@ function loadCanvasFromJsonForDownload(jsonData, condition) {
         checkAllImagesLoadedForDownload();
     }
 }
+function drawCanvasForDownloadNewOld(condition) {
+    // shorthand
+    const cw = canvasForDownload.width,
+        ch = canvasForDownload.height,
+        ctx = ctxElementForDownload;
 
+    // 1) clear & background
+    ctx.clearRect(0, 0, cw, ch);
+    const bgColor = document.getElementById('hdnBackgroundSpecificColor').value.trim();
+    if (bgColor) {
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, cw, ch);
+    }
+    if (canvasForDownload.bgImage && canvasForDownload.bgImage.complete) {
+        ctx.drawImage(canvasForDownload.bgImage, 0, 0, cw, ch);
+    }
+
+    // 2) draw all images at their pixel coords
+    images.forEach(imgObj => {
+        if (!imgObj.img) return;        // maybe still loading?
+        ctx.globalAlpha = imgObj.opacity || 1;
+        ctx.drawImage(
+            imgObj.img,
+            imgObj.x,                  // already in px from loadCanvasFromJsonForDownload
+            imgObj.y,
+            imgObj.width,
+            imgObj.height
+        );
+    });
+    ctx.globalAlpha = 1;
+
+    // 3) draw your text exactly as you were
+    if (['Common', 'ChangeStyle', 'applyAnimations'].includes(condition)) {
+        textObjects.forEach(obj => {
+            ctx.globalAlpha = obj.opacity || 1;
+            ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+            ctx.fillStyle = obj.textColor;
+            ctx.textBaseline = 'top';
+
+            // wrap or split on \n
+            const maxW = obj.boundingWidth - 2 * padding;
+            const lines = obj.text.includes('\n')
+                ? obj.text.split('\n')
+                : wrapText(ctx, obj.text, maxW);
+
+            const lineH = obj.fontSize * 1.2;
+            const startY = obj.y + padding;
+            lines.slice(0, Math.floor((obj.boundingHeight - 2 * padding) / lineH))
+                .forEach((line, i) => {
+                    const lw = ctx.measureText(line).width;
+                    let tx = obj.x + padding;
+                    if (obj.textAlign === 'center') tx = obj.x + (obj.boundingWidth - lw) / 2;
+                    if (obj.textAlign === 'right') tx = obj.x + obj.boundingWidth - lw - padding;
+                    ctx.fillText(line, tx, startY + i * lineH);
+                });
+            ctx.globalAlpha = 1;
+        });
+    }
+}
 function drawCanvasForDownload(condition) {
+    ctxElementForDownload.clearRect(0, 0, canvasForDownload.width, canvasForDownload.height); // Clear entire canvas
+    const bgColor = $("#hdnBackgroundSpecificColor").val();
+    if (bgColor && bgColor.trim() !== "") {
+        ctxElementForDownload.fillStyle = bgColor;
+        ctxElementForDownload.fillRect(0, 0, canvasForDownload.width, canvasForDownload.height);
+    }
+
+    // Draw background image if available.
+    if (canvasForDownload.bgImage) {
+        ctxElementForDownload.drawImage(canvasForDownload.bgImage, 0, 0, canvasForDownload.width, canvasForDownload.height);
+    }
+    console.log(images);
+    // --- Draw multiple images from the images array ---
+    if (images && images.length) {
+        images.forEach(imgObj => {
+            ctxElementForDownload.save();
+            ctxElementForDownload.globalAlpha = imgObj.opacity || 1;
+            const scaleX = imgObj.scaleX || 1;
+            const scaleY = imgObj.scaleY || 1;
+            ctxElementForDownload.translate(imgObj.x, imgObj.y);
+            ctxElementForDownload.scale(scaleX, scaleY);
+            // Draw the image at (0,0) because translation has already been applied.
+            ctxElementForDownload.drawImage(imgObj.img, 0, 0, imgObj.width, imgObj.height);
+            ctxElementForDownload.restore();
+
+            // If this image is selected, draw a border and four resize handles.
+            if (imgObj.selected) {
+                ctxElementForDownload.save();
+                ctxElementForDownload.strokeStyle = "blue";
+                ctxElementForDownload.lineWidth = 2;
+                const dispW = imgObj.width * scaleX;
+                const dispH = imgObj.height * scaleY;
+                ctxElementForDownload.strokeRect(imgObj.x, imgObj.y, dispW, dispH);
+                // Draw handles at the four corners
+                const handles = getImageResizeHandles(imgObj); // Make sure this function uses your dynamic dimensions
+                ctxElementForDownload.fillStyle = "red";
+                handles.forEach(handle => {
+                    ctxElementForDownload.fillRect(handle.x - handleSize / 2, handle.y - handleSize / 2, handleSize, handleSize);
+                });
+                ctxElementForDownload.restore();
+            }
+        });
+    }
+
+    ctxElementForDownload.save();
+    ctxElementForDownload.globalAlpha = textPosition.opacity || 1; // Apply text opacity
+
+    if (condition === 'Common' || condition === 'ChangeStyle') {
+        textObjects.forEach(obj => {
+            ctxElementForDownload.save();
+            // If selected, draw the bounding box and handles.
+            if (obj.selected) {
+                // Constrain the box if it goes beyond canvas boundaries.
+                if (obj.x < 0) obj.x = 0;
+                if (obj.x + obj.boundingWidth > canvasForDownload.width) {
+                    obj.boundingWidth = canvasForDownload.width - obj.x;
+                }
+                const boxX = obj.x - padding;
+                const boxY = obj.y - padding;
+                const boxWidth = obj.boundingWidth + 2 * padding;
+                const boxHeight = obj.boundingHeight + 2 * padding;
+                //drawRoundedRect(ctxElement, boxX, boxY, boxWidth, boxHeight, 5);
+
+                // Draw eight handles: four corners and four midpoints.
+                const handles = [
+                    { x: boxX, y: boxY }, // top-left
+                    { x: boxX + boxWidth / 2, y: boxY }, // top-middle
+                    { x: boxX + boxWidth, y: boxY }, // top-right
+                    { x: boxX + boxWidth, y: boxY + boxHeight / 2 }, // right-middle
+                    { x: boxX + boxWidth, y: boxY + boxHeight }, // bottom-right
+                    { x: boxX + boxWidth / 2, y: boxY + boxHeight }, // bottom-middle
+                    { x: boxX, y: boxY + boxHeight }, // bottom-left
+                    { x: boxX, y: boxY + boxHeight / 2 }  // left-middle
+                ];
+                ctxElementForDownload.fillStyle = "#FF7F50";
+                handles.forEach(handle => {
+                    ctxElementForDownload.fillRect(handle.x - handleSize / 2, handle.y - handleSize / 2, handleSize, handleSize);
+                });
+            }
+
+            // Set text properties.
+            ctxElementForDownload.font = `${obj.fontSize}px ${obj.fontFamily}`;
+            ctxElementForDownload.fillStyle = obj.textColor;
+            ctxElementForDownload.textBaseline = "top";
+
+            // Determine the maximum text width for wrapping.
+            const maxTextWidth = obj.boundingWidth - 2 * padding;
+            let lines;
+            // If the text contains newline characters, use them; otherwise, wrap.
+            if (obj.text.indexOf("\n") !== -1) {
+                lines = obj.text.split("\n");
+            } else {
+                lines = wrapText(ctxElementForDownload, obj.text, maxTextWidth);
+            }
+            const lineHeight = obj.fontSize * 1.2;
+            const availableHeight = obj.boundingHeight - 2 * padding;
+            const maxLines = Math.floor(availableHeight / lineHeight);
+            const startY = obj.y + padding;
+
+            // Draw each line with the correct horizontal offset based on alignment.
+            for (let i = 0; i < Math.min(lines.length, maxLines); i++) {
+                const line = lines[i];
+                const lineWidth = ctxElementForDownload.measureText(line).width;
+                let offsetX;
+                if (obj.textAlign === "center") {
+                    offsetX = obj.x + (obj.boundingWidth - lineWidth) / 2;
+                } else if (obj.textAlign === "right") {
+                    offsetX = obj.x + obj.boundingWidth - lineWidth - padding;
+                } else { // left alignment
+                    offsetX = obj.x + padding;
+                }
+                ctxElementForDownload.fillText(line, offsetX, startY + i * lineHeight);
+            }
+            ctxElementForDownload.restore();
+        });
+    }
+
+    if (condition === 'applyAnimations') {
+        textObjects.forEach(obj => {
+            ctxElementForDownload.save();
+            ctxElementForDownload.font = `${obj.fontSize}px ${obj.fontFamily}`;
+            ctxElementForDownload.fillStyle = obj.textColor;
+            ctxElementForDownload.textBaseline = "top";
+
+            const maxTextWidth = obj.boundingWidth - 2 * padding;
+            let lines;
+            if (obj.text.indexOf("\n") !== -1) {
+                lines = obj.text.split("\n");
+            } else {
+                lines = wrapText(ctxElementForDownload, obj.text, maxTextWidth);
+            }
+            const lineHeight = obj.fontSize * 1.2;
+            const availableHeight = obj.boundingHeight - 2 * padding;
+            const maxLines = Math.floor(availableHeight / lineHeight);
+            const startY = obj.y + padding;
+
+            for (let i = 0; i < Math.min(lines.length, maxLines); i++) {
+                const line = lines[i];
+                const lineWidth = ctxElementForDownload.measureText(line).width;
+                let offsetX;
+                if (obj.textAlign === "center") {
+                    offsetX = obj.x + (obj.boundingWidth - lineWidth) / 2;
+                } else if (obj.textAlign === "right") {
+                    offsetX = obj.x + obj.boundingWidth - lineWidth - padding;
+                } else {
+                    offsetX = obj.x + padding;
+                }
+                ctxElementForDownload.fillText(line, offsetX, startY + i * lineHeight);
+            }
+            ctxElementForDownload.restore();
+        });
+    }
+
+    ctxElementForDownload.globalAlpha = 1;
+    ctxElementForDownload.restore();
+}
+function drawCanvasForDownloadNONO(condition) {
     // 1) Clear & background
     ctxElement.clearRect(0, 0, canvas.width, canvas.height);
     const bgColor = $("#hdnBackgroundSpecificColor").val().trim();
@@ -2076,13 +2395,13 @@ function animateTextForPublish(animationType, direction, condition, loopCount) {
         });
     }
 }
-function animateTextForDownload(animationType, direction, condition, loopCount) {
+function animateTextForDownload(animationType, direction, condition, loopCount, state) {
 
     // Global timing settings (from your selected speeds).
     const inTime = parseFloat(selectedInSpeed) || 4;   // e.g. 4 seconds for all "in"
-    const outTime = parseFloat(selectedOutSpeed) || 3;   // e.g. 3 seconds for all "out"
+    const outTime = parseFloat(selectedOutSpeed) || 4;   // e.g. 3 seconds for all "out"
     const stayTime = parseFloat(selectedStaySpeed) || 6; // Overall stay time (applied globally if desired)
-
+    
     // ----- TEXT ANIMATION SECTION -----
     // Pre-calculate final positions and offscreen positions.
     textObjects.forEach((obj) => {
@@ -2136,7 +2455,6 @@ function animateTextForDownload(animationType, direction, condition, loopCount) 
 
         const individualTweenText = 0.15 * scaleInText;
         const individualTweenOutText = 0.15 * scaleOutText;
-
         let tlText = gsap.timeline({
             repeat: loopCount - 1,
             onUpdate: () => drawCanvasForDownload(condition)
@@ -2144,76 +2462,56 @@ function animateTextForDownload(animationType, direction, condition, loopCount) 
 
         // --- Text IN ---
         tlText.to(textObjects, {
-            x: (i, target) => target.finalX,
-            y: (i, target) => target.finalY,
+            x: (i, t) => t.finalX,
+            y: (i, t) => t.finalY,
             duration: individualTweenText,
             ease: "power1.in",
-            stagger: individualTweenText * .70,
+            stagger: individualTweenText * 0.7,
             onUpdate: () => drawCanvasForDownload(condition)
         });
 
-
-
-        // --- Image IN ---
-        images.forEach((imgObj) => {
-            tlText.to(imgObj, {
-                x: (i, target) => target.finalX,
-                y: (i, target) => target.finalY,
-                duration: individualTweenText,
-                ease: "power1.in",
-                stagger: individualTweenText * .70,
-                onUpdate: () => drawCanvasForDownload(condition)
-            });
+        // --- Image IN ***
+        // (Replace your images.forEach(...) here with this single tween)
+        tlText.to(images, {
+            x: img => img.finalX,
+            y: img => img.finalY,
+            duration: individualTweenText,
+            ease: "power1.in",
+            stagger: individualTweenText * 0.7,
+            onUpdate: () => drawCanvasForDownload(condition)
         });
 
         // --- Stay Time ---
         tlText.to({}, { duration: stayTime, ease: "none" });
 
-        // --- Image OUT (First!) ---
-        [...images].reverse().forEach((imgObj) => {
-            tlText.to(imgObj, {
-                //x: imgObj.exitX,
-                //y: imgObj.exitY,
-                x: (i, target) => target.exitX,
-                y: (i, target) => target.exitY,
-                duration: individualTweenOutText,
-                ease: "power1.out",
-                stagger: individualTweenOutText * 0.70,
-                onUpdate: () => drawCanvasForDownload(condition)
-            });
-        });
-
-        // --- Text OUT (After Image) ---
-        tlText.to([...textObjects].reverse(), {
-            x: (i, target) => target.exitX,
-            y: (i, target) => target.exitY,
+        // --- Image OUT ---
+        tlText.to([...images].reverse(), {
+            x: img => img.exitX,
+            y: img => img.exitY,
             duration: individualTweenOutText,
             ease: "power1.out",
-            stagger: individualTweenOutText * .70,
+            stagger: individualTweenOutText * 0.7,
             onUpdate: () => drawCanvasForDownload(condition)
         });
 
-        //// --- Reset text to final position only (leave image off-screen) ---
-        //tlText.set([...textObjects, ...images], {
-        //    x: (i, target) => target.finalX,
-        //    y: (i, target) => target.finalY,
-        //    duration: 0,
-        //    onUpdate: () => drawCanvas(condition)
-        //});
-        tlText.eventCallback("onComplete", () => {
-            images.forEach(img => {
-                img.x = img.finalX;
-                img.y = img.finalY;
-            });
-            textObjects.forEach(txt => {
-                txt.x = txt.finalX;
-                txt.y = txt.finalY;
-            });
-
-            drawCanvasForDownload(condition); // Force redraw
+        // --- Text OUT ---
+        tlText.to([...textObjects].reverse(), {
+            x: (i, t) => t.exitX,
+            y: (i, t) => t.exitY,
+            duration: individualTweenOutText,
+            ease: "power1.out",
+            stagger: individualTweenOutText * 0.7,
+            onUpdate: () => drawCanvasForDownload(condition)
         });
 
+        tlText.eventCallback("onComplete", () => {
+            // reset positions
+            images.forEach(img => { img.x = img.finalX; img.y = img.finalY; });
+            textObjects.forEach(txt => { txt.x = txt.finalX; txt.y = txt.finalY; });
+            drawCanvasForDownload(condition);
+        });
     }
+
 
 
     else if (animationType === "linear" || animationType === "zoom" ||
