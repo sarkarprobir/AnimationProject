@@ -54,10 +54,11 @@ footer {
 }
 /*modal design*/
 .saving_modal {
-    height: 125px !important;
+    height: fit-content !important;
+    border-radius: 5px !important;
 }
 .user-editable-modal .modal.fade .modal-dialog {
-    transform: translate(0, -125px) !important;
+    transform: translate(0, -145px) !important;
 }
 .ok_button {
     background-color: #4e43e1 !important;

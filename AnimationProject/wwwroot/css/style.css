@@ -722,7 +722,7 @@ svg:hover {
     left: 0;
 }
 .padding-control-withmsgdivstyle {
-    padding: 11px 15px 11px 45px;
+/*    padding: 11px 15px 11px 45px;*/
     /*height: 100px;*/
     position: relative;
     font-weight: 600;
@@ -733,9 +733,19 @@ svg:hover {
     background-color: #e0f2e5;
     word-break: break-all;
 }
+.error-msg {
+    background-color: #ff000021;
+}
+.warning-msg {
+    background-color: #f1f2e0;
+}
+.info-msg {
+    background-color: #0957d829;
+}
 .alert-icons-label {
+    display: contents;
     height: 40px;
-    position: absolute;
+    /*    position: absolute;*/
     top: 0;
     margin-bottom: 0;
     background: #dadada;
@@ -747,8 +757,20 @@ svg:hover {
 }
 .success-fa-color {
     color: #007823;
-    font-size: 30px;
-    padding: 5.5px 2px;
+}
+.error-fa-color {
+    color: red;
+}
+.warning-fa-color {
+    color: darkgoldenrod;
+}
+.info-fa-color{
+    color: darkblue
+}
+.icon-size {
+    font-size: 42px;
+    padding: 0;
+    margin-bottom: 11px;
 }
 .generic-datamodal .modal-content {
     border-radius: 0;
@@ -780,16 +802,16 @@ svg:hover {
 }
 .btn-save {
     color: #fff;
-    background-color: #337ab7;
-    border-color: #2e6da4;
+    background-color: #4e43e1;
+    border-color: transparent;
 }
 .min-w-80px {
     min-width: 80px;
 }
 .btn-save:hover {
     color: #fff;
-    background-color: #286090;
-    border-color: #204d74;
+    background-color: #4038b5;
+    border-color: transparent;
 }
 
 .btn-save.focus, .btn-save:focus {
@@ -1198,4 +1220,10 @@ body {
     95%,100% {
         transform: rotate(840deg)
     }
+}
+.msg-styles {
+    padding: 7px;
+    width: 100%;
+    text-align: center;
+    border-radius: 4px;
 }
