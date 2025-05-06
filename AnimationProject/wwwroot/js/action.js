@@ -1345,7 +1345,7 @@ function drawCanvasForDownloadNewOld(condition) {
         });
     }
 }
-function drawCanvasForDownload(condition) {
+function drawCanvasForDownloadActualOld(condition) {
     ctxElementForDownload.clearRect(0, 0, canvasForDownload.width, canvasForDownload.height); // Clear entire canvas
     const bgColor = $("#hdnBackgroundSpecificColor").val();
     if (bgColor && bgColor.trim() !== "") {
@@ -1502,6 +1502,79 @@ function drawCanvasForDownload(condition) {
     ctxElementForDownload.globalAlpha = 1;
     ctxElementForDownload.restore();
 }
+function drawCanvasForDownload(condition) {
+    const ctx = ctxElementForDownload;
+    const dpr = window.devicePixelRatio || 1;
+
+    // 1) Reset transforms so 1 unit = 1 CSS‑pixel
+    ctx.resetTransform();
+    ctx.scale(dpr, dpr);
+
+    // Canvas size in CSS‑pixels
+    const cw = canvasForDownload.width / dpr;
+    const ch = canvasForDownload.height / dpr;
+
+    // 2) Clear + background
+    ctx.clearRect(0, 0, cw, ch);
+    const bg = document.getElementById('hdnBackgroundSpecificColor').value.trim();
+    if (bg) {
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, cw, ch);
+    }
+    if (canvasForDownload.bgImage && canvasForDownload.bgImage.complete) {
+        ctx.drawImage(canvasForDownload.bgImage, 0, 0, cw, ch);
+    }
+
+    // 3) Draw images from percentage → pixel
+    images.forEach(imgObj => {
+        if (!imgObj.img) return;   // still loading?
+        const xPx = imgObj.x * cw;
+        const yPx = imgObj.y * ch;
+        const wPx = imgObj.width * cw;
+        const hPx = imgObj.height * ch;
+        ctx.globalAlpha = imgObj.opacity ?? 1;
+        ctx.drawImage(imgObj.img, xPx, yPx, wPx, hPx);
+    });
+    ctx.globalAlpha = 1;
+
+    // 4) Draw text exactly as in your normal drawCanvas,
+    //    but percentage → pixel for x, y, boundingWidth/Height
+    if (['Common', 'ChangeStyle', 'applyAnimations'].includes(condition)) {
+        textObjects.forEach(obj => {
+            const xPx = obj.x * cw;
+            const yPx = obj.y * ch;
+            const boxWpx = obj.boundingWidth * cw;
+            const boxHpx = obj.boundingHeight * ch;
+
+            // (Optional) draw selection handles here, same percent→pixel logic
+
+            // actual text
+            ctx.globalAlpha = obj.opacity ?? 1;
+            ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+            ctx.fillStyle = obj.textColor;
+            ctx.textBaseline = 'top';
+
+            // wrapping
+            const maxW = boxWpx - 2 * padding;
+            const lines = obj.text.includes('\n')
+                ? obj.text.split('\n')
+                : wrapText(ctx, obj.text, maxW);
+            const lineH = obj.fontSize * 1.2;
+            const maxLn = Math.floor((boxHpx - 2 * padding) / lineH);
+            const baseY = yPx + padding;
+
+            lines.slice(0, maxLn).forEach((line, i) => {
+                const lw = ctx.measureText(line).width;
+                let tx = xPx + padding;
+                if (obj.textAlign === 'center') tx = xPx + (boxWpx - lw) / 2;
+                if (obj.textAlign === 'right') tx = xPx + boxWpx - lw - padding;
+                ctx.fillText(line, tx, baseY + i * lineH);
+            });
+        });
+    }
+}
+
+
 function drawCanvasForDownloadNONO(condition) {
     // 1) Clear & background
     ctxElement.clearRect(0, 0, canvas.width, canvas.height);
