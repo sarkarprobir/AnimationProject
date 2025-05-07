@@ -1014,7 +1014,7 @@ function uploadImage(blob, existingFolderId = 'new') {
 }
 function animateText(direction, condition, loopCount) {
     const animationType = document.getElementById("hdnTextAnimationType").value;
-
+   
     // Global timing settings (from your selected speeds).
     const inTime = parseFloat(selectedInSpeed) || 4;   // e.g. 4 seconds for all "in"
     const outTime = parseFloat(selectedOutSpeed) || 3;   // e.g. 3 seconds for all "out"
