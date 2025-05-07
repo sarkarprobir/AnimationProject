@@ -56,28 +56,37 @@
     @*---------------------------page loader------------------*@
     <div class="page-loaderdiv" style="display:none" id="divloader">
         <div class="page-loader"> 
-             @* <i class="fa fa-cog fa-5x fa-spin" aria-hidden="true" style="color:black"></i>  *@
+            
             <span class="loader"></span>
         </div>
     </div>
-    <div>
-        
+    <div class="page-loaderdiv" style="display:none" id="preploader">
+        <div class="page-loader  d-flex justify-content-center align-items-center flex-column">
+            <p>Preparing for publish...</p>
+            <span class="loader"></span>
+        </div>
+    </div>
+    <div class="page-loaderdiv" style="display:none" id="transloader">
+        <div class="page-loader d-flex justify-content-center align-items-center flex-column">
+            <p>Transfering file to server...</p>
+            <span class="loader"></span>
+        </div>
     </div>
     @*-----------------------page loader End----------------------------*@
     @*---------------------------Message Popup------------------*@
     <div class="user-editable-modal ">
-        <div class="modal fade" id="popUpAlerts" role="dialog" style="opacity: 1; background: rgba(0, 0, 0, 0.3); z-index: 9999;">
+        <div class="modal fade" id="popUpAlerts" role="dialog" style="opacity: 1; background: rgb(36 7 136 / 49%); z-index: 9999;">
             <div class="modal-dialog">
                 <div class="modal-content alert-modalcontent saving_modal">
-                    <div class="modal-body bordernone">
+                    <div class="modal-body p-2 bordernone">
                         <div class="">
                             <div class="">
                                 <div id="pMessageShow">
                                 </div>
                                 <div class="clearfix"></div>
-                                <div class="mt-3 text-center" id="dvButtonShow">
+                                <div class="mt-2 text-center" id="dvButtonShow">
                                 </div>
-                                <div class="mt-2 text-end" id="dvButtonShowok">
+                                <div class="text-end" id="dvButtonShowok">
                                 </div>
                             </div>
                         </div>

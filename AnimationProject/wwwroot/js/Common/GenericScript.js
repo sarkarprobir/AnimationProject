@@ -60,6 +60,19 @@ function ShowLoader() {
     $('#divloader').show();
 }
 
+function ShowLoaderPreparingForPublish() {
+    $('#preploader').show();
+}
+function HideLoaderPreparingForPublish() {
+    $('#preploader').hide();
+}
+function ShowLoaderTransferFile() {
+    $('#transloader').show();
+}
+
+function HideLoaderTransferFile() {
+    $('#transloader').hide();
+}
 function isNumberKey(evt) {
     var charCode = (evt.which) ? evt.which : event.keyCode
 
