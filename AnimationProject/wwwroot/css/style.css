@@ -727,9 +727,9 @@ svg:hover {
     position: relative;
     font-weight: 600;
     font-size: 13px;
-    color: #6d6d6d;
+    color: #000;
 }
-.sucess-msg {
+/*.sucess-msg {
     background-color: #e0f2e5;
     word-break: break-all;
 }
@@ -741,7 +741,7 @@ svg:hover {
 }
 .info-msg {
     background-color: #0957d829;
-}
+}*/
 .alert-icons-label {
     display: contents;
     height: 40px;
@@ -770,7 +770,7 @@ svg:hover {
 .icon-size {
     font-size: 42px;
     padding: 0;
-    margin-bottom: 11px;
+    margin-bottom: 5px;
 }
 .generic-datamodal .modal-content {
     border-radius: 0;

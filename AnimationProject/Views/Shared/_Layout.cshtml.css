@@ -59,6 +59,7 @@ footer {
 }
 .user-editable-modal .modal.fade .modal-dialog {
     transform: translate(0, -145px) !important;
+    width: 18rem;
 }
 .ok_button {
     background-color: #4e43e1 !important;
