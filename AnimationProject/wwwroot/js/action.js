@@ -769,7 +769,6 @@ function loadNextJson() {
         // Draw the current state into the fixed canvas.
          loadCanvasFromJsonForPublish(state, 'Common');
         //loadCanvasFromJson(state, 'Common');
-        console.log("Canvas State Loaded:", state);
 
         // Now trigger the animation using the state's direction and effect.
         // You can modify applyAnimations to also use the effect if needed.
@@ -1286,235 +1285,12 @@ function loadCanvasFromJsonForDownloadOld(jsonData, condition) {
         checkAllImagesLoadedForDownload();
     }
 }
-function drawCanvasForDownloadNewOld(condition) {
-    // shorthand
-    const cw = canvasForDownload.width,
-        ch = canvasForDownload.height,
-        ctx = ctxElementForDownload;
-
-    // 1) clear & background
-    ctx.clearRect(0, 0, cw, ch);
-    const bgColor = document.getElementById('hdnBackgroundSpecificColor').value.trim();
-    if (bgColor) {
-        ctx.fillStyle = bgColor;
-        ctx.fillRect(0, 0, cw, ch);
-    }
-    if (canvasForDownload.bgImage && canvasForDownload.bgImage.complete) {
-        ctx.drawImage(canvasForDownload.bgImage, 0, 0, cw, ch);
-    }
-
-    // 2) draw all images at their pixel coords
-    images.forEach(imgObj => {
-        if (!imgObj.img) return;        // maybe still loading?
-        ctx.globalAlpha = imgObj.opacity || 1;
-        ctx.drawImage(
-            imgObj.img,
-            imgObj.x,                  // already in px from loadCanvasFromJsonForDownload
-            imgObj.y,
-            imgObj.width,
-            imgObj.height
-        );
-    });
-    ctx.globalAlpha = 1;
-
-    // 3) draw your text exactly as you were
-    if (['Common', 'ChangeStyle', 'applyAnimations'].includes(condition)) {
-        textObjects.forEach(obj => {
-            ctx.globalAlpha = obj.opacity || 1;
-            ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-            ctx.fillStyle = obj.textColor;
-            ctx.textBaseline = 'top';
-
-            // wrap or split on \n
-            const maxW = obj.boundingWidth - 2 * padding;
-            const lines = obj.text.includes('\n')
-                ? obj.text.split('\n')
-                : wrapText(ctx, obj.text, maxW);
-
-            const lineH = obj.fontSize * 1.2;
-            const startY = obj.y + padding;
-            lines.slice(0, Math.floor((obj.boundingHeight - 2 * padding) / lineH))
-                .forEach((line, i) => {
-                    const lw = ctx.measureText(line).width;
-                    let tx = obj.x + padding;
-                    if (obj.textAlign === 'center') tx = obj.x + (obj.boundingWidth - lw) / 2;
-                    if (obj.textAlign === 'right') tx = obj.x + obj.boundingWidth - lw - padding;
-                    ctx.fillText(line, tx, startY + i * lineH);
-                });
-            ctx.globalAlpha = 1;
-        });
-    }
-}
-function drawCanvasForDownloadActualOld(condition) {
-    ctxElementForDownload.clearRect(0, 0, canvasForDownload.width, canvasForDownload.height); // Clear entire canvas
-    const bgColor = $("#hdnBackgroundSpecificColor").val();
-    if (bgColor && bgColor.trim() !== "") {
-        ctxElementForDownload.fillStyle = bgColor;
-        ctxElementForDownload.fillRect(0, 0, canvasForDownload.width, canvasForDownload.height);
-    }
-
-    // Draw background image if available.
-    if (canvasForDownload.bgImage) {
-        ctxElementForDownload.drawImage(canvasForDownload.bgImage, 0, 0, canvasForDownload.width, canvasForDownload.height);
-    }
-    console.log(images);
-    // --- Draw multiple images from the images array ---
-    if (images && images.length) {
-        images.forEach(imgObj => {
-            ctxElementForDownload.save();
-            ctxElementForDownload.globalAlpha = imgObj.opacity || 1;
-            const scaleX = imgObj.scaleX || 1;
-            const scaleY = imgObj.scaleY || 1;
-            ctxElementForDownload.translate(imgObj.x, imgObj.y);
-            ctxElementForDownload.scale(scaleX, scaleY);
-            // Draw the image at (0,0) because translation has already been applied.
-            ctxElementForDownload.drawImage(imgObj.img, 0, 0, imgObj.width, imgObj.height);
-            ctxElementForDownload.restore();
-
-            // If this image is selected, draw a border and four resize handles.
-            if (imgObj.selected) {
-                ctxElementForDownload.save();
-                ctxElementForDownload.strokeStyle = "blue";
-                ctxElementForDownload.lineWidth = 2;
-                const dispW = imgObj.width * scaleX;
-                const dispH = imgObj.height * scaleY;
-                ctxElementForDownload.strokeRect(imgObj.x, imgObj.y, dispW, dispH);
-                // Draw handles at the four corners
-                const handles = getImageResizeHandles(imgObj); // Make sure this function uses your dynamic dimensions
-                ctxElementForDownload.fillStyle = "red";
-                handles.forEach(handle => {
-                    ctxElementForDownload.fillRect(handle.x - handleSize / 2, handle.y - handleSize / 2, handleSize, handleSize);
-                });
-                ctxElementForDownload.restore();
-            }
-        });
-    }
-
-    ctxElementForDownload.save();
-    ctxElementForDownload.globalAlpha = textPosition.opacity || 1; // Apply text opacity
-
-    if (condition === 'Common' || condition === 'ChangeStyle') {
-        textObjects.forEach(obj => {
-            ctxElementForDownload.save();
-            // If selected, draw the bounding box and handles.
-            if (obj.selected) {
-                // Constrain the box if it goes beyond canvas boundaries.
-                if (obj.x < 0) obj.x = 0;
-                if (obj.x + obj.boundingWidth > canvasForDownload.width) {
-                    obj.boundingWidth = canvasForDownload.width - obj.x;
-                }
-                const boxX = obj.x - padding;
-                const boxY = obj.y - padding;
-                const boxWidth = obj.boundingWidth + 2 * padding;
-                const boxHeight = obj.boundingHeight + 2 * padding;
-                //drawRoundedRect(ctxElement, boxX, boxY, boxWidth, boxHeight, 5);
-
-                // Draw eight handles: four corners and four midpoints.
-                const handles = [
-                    { x: boxX, y: boxY }, // top-left
-                    { x: boxX + boxWidth / 2, y: boxY }, // top-middle
-                    { x: boxX + boxWidth, y: boxY }, // top-right
-                    { x: boxX + boxWidth, y: boxY + boxHeight / 2 }, // right-middle
-                    { x: boxX + boxWidth, y: boxY + boxHeight }, // bottom-right
-                    { x: boxX + boxWidth / 2, y: boxY + boxHeight }, // bottom-middle
-                    { x: boxX, y: boxY + boxHeight }, // bottom-left
-                    { x: boxX, y: boxY + boxHeight / 2 }  // left-middle
-                ];
-                ctxElementForDownload.fillStyle = "#FF7F50";
-                handles.forEach(handle => {
-                    ctxElementForDownload.fillRect(handle.x - handleSize / 2, handle.y - handleSize / 2, handleSize, handleSize);
-                });
-            }
-
-            // Set text properties.
-            ctxElementForDownload.font = `${obj.fontSize}px ${obj.fontFamily}`;
-            ctxElementForDownload.fillStyle = obj.textColor;
-            ctxElementForDownload.textBaseline = "top";
-
-            // Determine the maximum text width for wrapping.
-            const maxTextWidth = obj.boundingWidth - 2 * padding;
-            let lines;
-            // If the text contains newline characters, use them; otherwise, wrap.
-            if (obj.text.indexOf("\n") !== -1) {
-                lines = obj.text.split("\n");
-            } else {
-                lines = wrapText(ctxElementForDownload, obj.text, maxTextWidth);
-            }
-            const lineHeight = obj.fontSize * 1.2;
-            const availableHeight = obj.boundingHeight - 2 * padding;
-            const maxLines = Math.floor(availableHeight / lineHeight);
-            const startY = obj.y + padding;
-
-            // Draw each line with the correct horizontal offset based on alignment.
-            for (let i = 0; i < Math.min(lines.length, maxLines); i++) {
-                const line = lines[i];
-                const lineWidth = ctxElementForDownload.measureText(line).width;
-                let offsetX;
-                if (obj.textAlign === "center") {
-                    offsetX = obj.x + (obj.boundingWidth - lineWidth) / 2;
-                } else if (obj.textAlign === "right") {
-                    offsetX = obj.x + obj.boundingWidth - lineWidth - padding;
-                } else { // left alignment
-                    offsetX = obj.x + padding;
-                }
-                ctxElementForDownload.fillText(line, offsetX, startY + i * lineHeight);
-            }
-            ctxElementForDownload.restore();
-        });
-    }
-
-    if (condition === 'applyAnimations') {
-        textObjects.forEach(obj => {
-            ctxElementForDownload.save();
-            ctxElementForDownload.font = `${obj.fontSize}px ${obj.fontFamily}`;
-            ctxElementForDownload.fillStyle = obj.textColor;
-            ctxElementForDownload.textBaseline = "top";
-
-            const maxTextWidth = obj.boundingWidth - 2 * padding;
-            let lines;
-            if (obj.text.indexOf("\n") !== -1) {
-                lines = obj.text.split("\n");
-            } else {
-                lines = wrapText(ctxElementForDownload, obj.text, maxTextWidth);
-            }
-            const lineHeight = obj.fontSize * 1.2;
-            const availableHeight = obj.boundingHeight - 2 * padding;
-            const maxLines = Math.floor(availableHeight / lineHeight);
-            const startY = obj.y + padding;
-
-            for (let i = 0; i < Math.min(lines.length, maxLines); i++) {
-                const line = lines[i];
-                const lineWidth = ctxElementForDownload.measureText(line).width;
-                let offsetX;
-                if (obj.textAlign === "center") {
-                    offsetX = obj.x + (obj.boundingWidth - lineWidth) / 2;
-                } else if (obj.textAlign === "right") {
-                    offsetX = obj.x + obj.boundingWidth - lineWidth - padding;
-                } else {
-                    offsetX = obj.x + padding;
-                }
-                ctxElementForDownload.fillText(line, offsetX, startY + i * lineHeight);
-            }
-            ctxElementForDownload.restore();
-        });
-    }
-
-    ctxElementForDownload.globalAlpha = 1;
-    ctxElementForDownload.restore();
-}
 function drawCanvasForDownload(condition) {
     const ctx = ctxElementForDownload;
-    const dpr = window.devicePixelRatio || 1;
+    const cw = canvasForDownload.width;
+    const ch = canvasForDownload.height;
 
-    // 1) Reset transforms so 1 unit = 1 CSS‑pixel
-    ctx.resetTransform();
-    ctx.scale(dpr, dpr);
-
-    // Canvas size in CSS‑pixels
-    const cw = canvasForDownload.width / dpr;
-    const ch = canvasForDownload.height / dpr;
-
-    // 2) Clear + background
+    // ── 1) clear & background ──
     ctx.clearRect(0, 0, cw, ch);
     const bg = document.getElementById('hdnBackgroundSpecificColor').value.trim();
     if (bg) {
@@ -1525,182 +1301,52 @@ function drawCanvasForDownload(condition) {
         ctx.drawImage(canvasForDownload.bgImage, 0, 0, cw, ch);
     }
 
-    // 3) Draw images from percentage → pixel
+    // ── 2) draw images ──
     images.forEach(imgObj => {
-        if (!imgObj.img) return;   // still loading?
-        const xPx = imgObj.x * cw;
-        const yPx = imgObj.y * ch;
-        const wPx = imgObj.width * cw;
-        const hPx = imgObj.height * ch;
+        if (!imgObj.img) return;  // skip if still loading
+
+        // convert your fractional x/y/width/height back to pixels
+        const xPx = (typeof imgObj.x === 'number' ? imgObj.x : imgObj.finalX) * cw;
+        const yPx = (typeof imgObj.y === 'number' ? imgObj.y : imgObj.finalY) * ch;
+        const wPx = imgObj.width * cw * (imgObj.scaleX || 1);
+        const hPx = imgObj.height * ch * (imgObj.scaleY || 1);
+
         ctx.globalAlpha = imgObj.opacity ?? 1;
         ctx.drawImage(imgObj.img, xPx, yPx, wPx, hPx);
     });
     ctx.globalAlpha = 1;
 
-    // 4) Draw text exactly as in your normal drawCanvas,
-    //    but percentage → pixel for x, y, boundingWidth/Height
+    // ── 3) draw text ── (exactly as your main drawCanvas does)
     if (['Common', 'ChangeStyle', 'applyAnimations'].includes(condition)) {
         textObjects.forEach(obj => {
-            const xPx = obj.x * cw;
-            const yPx = obj.y * ch;
-            const boxWpx = obj.boundingWidth * cw;
-            const boxHpx = obj.boundingHeight * ch;
-
-            // (Optional) draw selection handles here, same percent→pixel logic
-
-            // actual text
             ctx.globalAlpha = obj.opacity ?? 1;
             ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
             ctx.fillStyle = obj.textColor;
             ctx.textBaseline = 'top';
 
-            // wrapping
-            const maxW = boxWpx - 2 * padding;
+            const maxW = obj.boundingWidth - 2 * padding;
             const lines = obj.text.includes('\n')
                 ? obj.text.split('\n')
                 : wrapText(ctx, obj.text, maxW);
             const lineH = obj.fontSize * 1.2;
-            const maxLn = Math.floor((boxHpx - 2 * padding) / lineH);
-            const baseY = yPx + padding;
+            const maxL = Math.floor((obj.boundingHeight - 2 * padding) / lineH);
+            const startY = obj.y + padding;
 
-            lines.slice(0, maxLn).forEach((line, i) => {
-                const lw = ctx.measureText(line).width;
-                let tx = xPx + padding;
-                if (obj.textAlign === 'center') tx = xPx + (boxWpx - lw) / 2;
-                if (obj.textAlign === 'right') tx = xPx + boxWpx - lw - padding;
-                ctx.fillText(line, tx, baseY + i * lineH);
+            lines.slice(0, maxL).forEach((ln, i) => {
+                const lw = ctx.measureText(ln).width;
+                let tx = obj.x + padding;
+                if (obj.textAlign === 'center') tx = obj.x + (obj.boundingWidth - lw) / 2;
+                if (obj.textAlign === 'right') tx = obj.x + obj.boundingWidth - lw - padding;
+                ctx.fillText(ln, tx, startY + i * lineH);
             });
+
+            ctx.globalAlpha = 1;
         });
     }
 }
 
 
-function drawCanvasForDownloadNONO(condition) {
-    // 1) Clear & background
-    ctxElement.clearRect(0, 0, canvas.width, canvas.height);
-    const bgColor = $("#hdnBackgroundSpecificColor").val().trim();
-    if (bgColor) {
-        ctxElement.fillStyle = bgColor;
-        ctxElement.fillRect(0, 0, canvas.width, canvas.height);
-    }
-    if (canvas.bgImage && canvas.bgImage.complete) {
-        ctxElement.drawImage(canvas.bgImage, 0, 0, canvas.width, canvas.height);
-    }
 
-    // 2) Draw images just like drawCanvas()
-    if (images && images.length) {
-        images.forEach(imgObj => {
-            if (!imgObj.img) return;  // skip if not loaded
-
-            // a) image itself
-            ctxElement.save();
-            ctxElement.globalAlpha = imgObj.opacity || 1;
-            ctxElement.drawImage(
-                imgObj.img,
-                imgObj.x,
-                imgObj.y,
-                imgObj.width * (imgObj.scaleX || 1),
-                imgObj.height * (imgObj.scaleY || 1)
-            );
-            ctxElement.restore();
-
-            // b) selection outline & handles
-            if (imgObj.selected) {
-                const dispW = imgObj.width * (imgObj.scaleX || 1);
-                const dispH = imgObj.height * (imgObj.scaleY || 1);
-
-                ctxElement.save();
-                ctxElement.strokeStyle = "blue";
-                ctxElement.lineWidth = 2;
-                ctxElement.strokeRect(imgObj.x, imgObj.y, dispW, dispH);
-
-                const handles = getImageResizeHandles(imgObj);
-                ctxElement.fillStyle = "red";
-                handles.forEach(h => {
-                    ctxElement.fillRect(
-                        h.x - handleSize / 2,
-                        h.y - handleSize / 2,
-                        handleSize,
-                        handleSize
-                    );
-                });
-                ctxElement.restore();
-            }
-        });
-    }
-
-    // 3) Draw text exactly as in drawCanvas()
-    function paintText(obj) {
-        // a) selection box + 8 handles
-        if (obj.selected) {
-            if (obj.x < 0) obj.x = 0;
-            if (obj.x + obj.boundingWidth > canvas.width) {
-                obj.boundingWidth = canvas.width - obj.x;
-            }
-            const boxX = obj.x - padding;
-            const boxY = obj.y - padding;
-            const boxW = obj.boundingWidth + 2 * padding;
-            const boxH = obj.boundingHeight + 2 * padding;
-
-            ctxElement.save();
-            ctxElement.fillStyle = "#FF7F50";
-            const pts = [
-                { x: boxX, y: boxY },
-                { x: boxX + boxW / 2, y: boxY },
-                { x: boxX + boxW, y: boxY },
-                { x: boxX + boxW, y: boxY + boxH / 2 },
-                { x: boxX + boxW, y: boxY + boxH },
-                { x: boxX + boxW / 2, y: boxY + boxH },
-                { x: boxX, y: boxY + boxH },
-                { x: boxX, y: boxY + boxH / 2 }
-            ];
-            pts.forEach(pt => {
-                ctxElement.fillRect(
-                    pt.x - handleSize / 2,
-                    pt.y - handleSize / 2,
-                    handleSize,
-                    handleSize
-                );
-            });
-            ctxElement.restore();
-        }
-
-        // b) actual text
-        ctxElement.save();
-        ctxElement.globalAlpha = obj.opacity || 1;
-        ctxElement.font = `${obj.fontSize}px ${obj.fontFamily}`;
-        ctxElement.fillStyle = obj.textColor;
-        ctxElement.textBaseline = "top";
-
-        const maxW = obj.boundingWidth - 2 * padding;
-        const lines = obj.text.includes("\n")
-            ? obj.text.split("\n")
-            : wrapText(ctxElement, obj.text, maxW);
-        const lineH = obj.fontSize * 1.2;
-        const maxLines = Math.floor((obj.boundingHeight - 2 * padding) / lineH);
-        const startY = obj.y + padding;
-
-        lines.slice(0, maxLines).forEach((line, i) => {
-            const lw = ctxElement.measureText(line).width;
-            let tx = obj.x + padding;
-            if (obj.textAlign === "center") tx = obj.x + (obj.boundingWidth - lw) / 2;
-            if (obj.textAlign === "right") tx = obj.x + obj.boundingWidth - lw - padding;
-            ctxElement.fillText(line, tx, startY + i * lineH);
-        });
-        ctxElement.restore();
-    }
-
-    if (condition === "Common" || condition === "ChangeStyle") {
-        textObjects.forEach(paintText);
-    }
-
-    if (condition === "applyAnimations") {
-        textObjects.forEach(paintText);
-    }
-
-    // 4) Reset alpha
-    ctxElement.globalAlpha = 1;
-}
 function drawCanvasPublish(condition) {
     ctxElement.clearRect(0, 0, canvas.width, canvas.height); // Clear entire canvas
     const bgColor = $("#hdnBackgroundSpecificColor").val();
@@ -2542,7 +2188,7 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
             stagger: individualTweenText * 0.7,
             onUpdate: () => drawCanvasForDownload(condition)
         });
-
+        console.log("animateTextForDownload", images);
         // --- Image IN ***
         // (Replace your images.forEach(...) here with this single tween)
         tlText.to(images, {

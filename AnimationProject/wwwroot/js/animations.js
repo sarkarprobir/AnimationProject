@@ -1087,7 +1087,7 @@ function animateText(direction, condition, loopCount) {
             onUpdate: () => drawCanvas(condition)
         });
 
-
+        console.log("animateText", images);
 
         // --- Image IN ---
         images.forEach((imgObj) => {
