@@ -3177,29 +3177,56 @@ function CreateLeftSectionhtml() {
         console.log("catch", e);
     }
 }
+//function CreateRightSectionhtml() {
+//    try {
+//        $.ajax({
+//            url: baseURL + "Canvas/CreateRightSectionhtml",
+//            type: "POST",
+//            dataType: "html",
+//            success: function (result) {
+//                $("#divpanelright").html(result);
+//                // Now safe to access elements from the partial
+//                document.getElementById('lblSpeed').textContent = "4 Sec";
+//                document.getElementById('lblSeconds').textContent = "6 Sec";
+//                document.getElementById('lblOutSpeed').textContent = "4 Sec";
+//                document.getElementById('lblLoop').textContent = "1 time";
+
+//            },
+//            error: function () {
+//            }
+//        })
+
+//    } catch (e) {
+//        console.log("catch", e);
+//    }
+//}
 function CreateRightSectionhtml() {
-    try {
+    return new Promise((resolve, reject) => {
         $.ajax({
             url: baseURL + "Canvas/CreateRightSectionhtml",
             type: "POST",
-            dataType: "html",
-            success: function (result) {
+            dataType: "html"
+        })
+            .done(result => {
+                // 1) Inject the partial
                 $("#divpanelright").html(result);
-                // Now safe to access elements from the partial
+
+                // 2) Now it’s safe to wire up your controls
                 document.getElementById('lblSpeed').textContent = "4 Sec";
                 document.getElementById('lblSeconds').textContent = "6 Sec";
                 document.getElementById('lblOutSpeed').textContent = "4 Sec";
                 document.getElementById('lblLoop').textContent = "1 time";
 
-            },
-            error: function () {
-            }
-        })
-
-    } catch (e) {
-        console.log("catch", e);
-    }
+                // 3) Resolve so callers can chain .then()
+                resolve();
+            })
+            .fail((jqXHR, textStatus, errorThrown) => {
+                console.error("Failed to load right section:", textStatus, errorThrown);
+                reject(errorThrown);
+            });
+    });
 }
+
 function wireSpeedDropdown() {
     const ddl = document.getElementById('ddlSpeedControl');
     if (!ddl) {

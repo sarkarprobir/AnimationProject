@@ -482,11 +482,15 @@ function GetDesignBoardById(id) {
                     // For example, load slide 1's JSON data if available:
                     // Load first slide if available
                     if (verticalSlide1) {
-                        try {
-                            loadCanvasFromJson(verticalSlide1, 'Common');
-                        } catch (error) {
-                            console.error('Error loading slide 1:', error);
-                        }
+                        // wait for fonts to finish loading before we draw:
+                        document.fonts.ready
+                            .then(() => {
+                                loadCanvasFromJson(verticalSlide1, 'Common');
+                            })
+                            .catch((err) => {
+                                console.warn("Fonts failed to load, drawing anyway:", err);
+                                loadCanvasFromJson(verticalSlide1, 'Common');
+                            });
                     }
                 }
             }
@@ -517,7 +521,9 @@ function loadCanvasFromJson(jsonData, condition) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (!jsonData) {
-        drawCanvas(condition);
+        document.fonts.ready.then(() => {
+            drawCanvas(condition);
+        });
         return;
     }
 
@@ -534,7 +540,9 @@ function loadCanvasFromJson(jsonData, condition) {
                 data = JSON.parse(jsonData);
             } catch (e) {
                 console.error("Error parsing canvas JSON:", e);
-                drawCanvas(condition);
+                document.fonts.ready.then(() => {
+                    drawCanvas(condition);
+                });
                 return;
             }
         } else {
@@ -576,7 +584,35 @@ function loadCanvasFromJson(jsonData, condition) {
         function checkAllImagesLoaded() {
             const bgLoaded = !canvas.bgImage || canvas.bgImage.complete;
             if (imageLoadCount >= totalImages && bgLoaded) {
-                drawCanvas(condition);
+                document.fonts.ready.then(() => {
+                    // after you’ve populated textObjects from your JSON but before your first draw…
+                    const loadFontPromises = [];
+
+                    // for every text object, queue the font you need
+                    textObjects.forEach(o => {
+                        const spec = `${o.fontSize}px ${o.fontFamily}`;
+                        loadFontPromises.push(document.fonts.load(spec));
+                    });
+
+                    // once _all_ those fonts have finished downloading:
+                    Promise.all(loadFontPromises)
+                        .then(() => {
+                            // safe to draw with your real font, no fallback this time
+                            drawCanvas('Common');
+                        })
+                        .catch((err) => {
+                            console.warn("Some fonts failed to load, drawing anyway:", err);
+                            drawCanvas('Common');
+                        });
+                    //drawCanvas(condition);
+                    //const rect = canvas.getBoundingClientRect();
+                    //// pick somewhere inside your first textObject:
+                    //if (textObjects[0]) {
+                    //    const cx = rect.left + textObjects[0].x + textObjects[0].boundingWidth / 2;
+                    //    const cy = rect.top + textObjects[0].y + textObjects[0].boundingHeight / 2;
+                    //    canvas.dispatchEvent(new MouseEvent('click', { clientX: cx, clientY: cy }));
+                    //}
+                });
             }
         }
 
