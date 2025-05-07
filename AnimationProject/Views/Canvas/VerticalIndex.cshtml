@@ -506,6 +506,80 @@
           const bsModal = new bootstrap.Modal(modalEl);
           bsModal.show();
         }
+       // });
+
+
+
+
+
+          
+        //   const canvas = document.getElementById('myCanvas');
+        //   const ctx    = canvas.getContext('2d');
+
+        //   canvas.addEventListener('click', function (e) {
+        //         const rect = canvas.getBoundingClientRect();
+        // const mouseX = e.clientX - rect.left;
+        // const mouseY = e.clientY - rect.top;
+        // const pos = { x: mouseX, y: mouseY };
+
+        // const obj = getTextObjectAt(mouseX, mouseY);
+        // let imageFound = false;
+        // let imgObj = null;
+
+        // // Check if an image is clicked
+        // for (let i = images.length - 1; i >= 0; i--) {
+        //     if (isMouseOverImage(images[i], pos)) {
+        //         imgObj = images[i];
+        //         imageFound = true;
+        //         break;
+        //     }
+        // }
+
+        // if (obj) {
+        //     // Select text object and update UI
+        //     textObjects.forEach(o => o.selected = false);
+        //     obj.selected = true;
+
+        //     $("#favcolor").val(obj.textColor);
+        //     $("#fontstyle_popup").css("display", "block");
+        //     $(".right-sec-two").css("display", "block");
+        //     $(".right-sec-one").css("display", "none");
+        //     document.getElementById("modeButton").innerText = "Animation Mode";
+        // } else if (imageFound) {
+        //     // Select image and update UI
+        //     images.forEach(img => img.selected = false);
+        //     imgObj.selected = true;
+        //     $("#fontstyle_popup").css("display", "block");
+        //     $(".right-sec-two").css("display", "block");
+        //     $(".right-sec-one").css("display", "none");
+        //     document.getElementById("modeButton").innerText = "Animation Mode";
+        // } else {
+        //     // Deselect all if clicking on empty canvas
+        //     textObjects.forEach(o => o.selected = false);
+        //     images.forEach(img => img.selected = false);
+
+        //     //$("#fontstyle_popup").css("display", "none");
+        //     //$(".right-sec-two").css("display", "none");
+        //     //$(".right-sec-one").css("display", "block");
+        //     //document.getElementById("modeButton").innerText = "Graphic Mode";
+        // }
+
+        //    drawCanvas('Common'); // Redraw to update selection changes
+        //   });
+
+        //   // —and here’s the trick to force a 2nd draw once your web‐fonts are actually available—
+        //   // you **must** wait for the font‐loading API (or at least a short timeout)
+        //   // otherwise canvas “bakes in” its first draw with the fallback font.
+        //   document.fonts
+        //     .ready
+        //     .then(() => {
+        //       // after *all* font‑face fonts have loaded, do one more draw
+        //       drawCanvas('Common');
+        //     })
+        //     .catch(() => {
+        //       // in case the Font Loading API isn’t supported, fall back to a small delay
+        //       setTimeout(() => drawCanvas('Common'), 100);
+        //     });
         });
     </script>
 
