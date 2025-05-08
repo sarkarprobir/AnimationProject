@@ -733,6 +733,22 @@ async function GetDesignBoardByIdForPublish() {
         MessageShow('', 'Before Publish Must Save Board', 'error');
     }
 }
+function showDownloadPanel() {
+    const main = document.getElementById('canvasMainContainerDownload');
+    const container = document.getElementById('canvasContainerDownload');
+    main.classList.remove('hidden');
+    container.classList.remove('hidden');
+
+    resizeCanvas_d();
+}
+function hideDownloadPanel() {
+    const main = document.getElementById('canvasMainContainerDownload');
+    const container = document.getElementById('canvasContainerDownload');
+
+    // add the “hidden” class back
+    main.classList.add('hidden');
+    container.classList.add('hidden');
+}
 async function GetDesignBoardByIdForDownload(condition) {
     publishDownloadcondition = condition;
     var id = $('#hdnDesignBoardId').val(); // get GUID value
@@ -743,6 +759,7 @@ async function GetDesignBoardByIdForDownload(condition) {
             };
            
             ShowLoader();
+            showDownloadPanel();
             //ShowLoader();
             // Await the ajax call which returns a promise (jQuery 3+)
             const result = await $.ajax({
@@ -954,6 +971,7 @@ function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
                     success: function (slideResult) {
                         // triggerAutorefresh();
                         //Need to remove as this is temporary
+                        hideDownloadPanel();
                         HideLoader();
                         const targetUrl = window.location.origin + "/Canvas/VScreen1/1";
                         window.open(targetUrl, "_blank");
