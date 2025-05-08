@@ -26,6 +26,7 @@
         background: #fff;
         color: #000;
         font-family: "Nunito Sans", sans-serif;
+        font-size: 14px;
     }
 
     .navbar {
@@ -261,6 +262,31 @@
     .footer-content{
         padding: 80px 0;
     }
+
+    .option-column{
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+    }
+
+    .option-box-inner{
+        width: 63vw;
+    }
+    .templates_options{
+        text-decoration: none;
+        color: #000;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .option-box-outer {
+        padding-bottom: 65px;
+        padding-top: 15px;
+        box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+        display: flex;
+        justify-content: center;
+        transition: all 0.4s ease;
+    }
 </style>
 
 <!-- Navbar -->
@@ -271,14 +297,7 @@
             <a class="navbar-brand" href="#">AniBoard</a>
             <ul class="navbar-nav flex-row ms-4">
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle"
-                       href="#"
-                       role="button"
-                       data-bs-toggle="dropdown">Templates</a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#">Template 1</a></li>
-                        <li><a class="dropdown-item" href="#">Template 2</a></li>
-                    </ul>
+                    <a class="nav-link" id="hoverTarget">Templates  <i class="fa-solid fa-chevron-down"></i></a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#">Pricing</a>
@@ -296,6 +315,43 @@
         </div>
     </div>
 </nav>
+
+<!-- Hover options Section -->
+<div class="option-box-outer" id="hoverBox" style="display:none;">
+    <div class="option-box-inner">
+    <div class="row">
+        <div class="col-md-2">
+            <a class="templates_options" href="#">Latest</a>
+        </div>    
+        <div class="col-md-2 option-column">
+            <a class="templates_options" href="#">Bank</a>
+            <a class="templates_options" href="#">Schools/Collages</a>
+            <a class="templates_options" href="#">Hotels</a>
+            
+            
+        </div>
+        <div class="col-md-2 option-column">
+            <a class="templates_options" href="#">Corporate</a>
+            <a class="templates_options" href="#">Retail</a>
+            <a class="templates_options" href="#">Sports</a>
+        </div>
+        <div class="col-md-2 option-column">
+            <a class="templates_options" href="#">Entertainment</a>
+            <a class="templates_options" href="#">Resturant</a>
+            <a class="templates_options" href="#">Healthcare</a>
+        </div> 
+        <div class="col-md-2 option-column">
+            <a class="templates_options" href="#">Car Repair</a>
+            <a class="templates_options" href="#">Salon</a>
+            <a class="templates_options" href="#">Boutique</a>
+        </div>
+        <div class="col-md-2 option-column">
+            <a class="templates_options" href="#">Pet Shop</a>
+            <a class="templates_options" href="#">Real Estate</a>
+        </div>
+    </div>
+    </div>
+</div>
 
 <!-- Hero Section -->
 <div class="container mt-3">
@@ -463,3 +519,16 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+        const target = document.getElementById('hoverTarget');
+    const box = document.getElementById('hoverBox');
+
+    target.addEventListener('mouseenter', () => {
+      box.style.display = 'flex';
+    });
+
+    target.addEventListener('mouseleave', () => {
+      box.style.display = 'none';
+    });
+
+</script>
