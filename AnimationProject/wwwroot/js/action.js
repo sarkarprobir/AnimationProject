@@ -794,7 +794,7 @@ function loadJsonFileForDownload() {
     currentIndexForDownload = 0; // Reset index when button is clicked
     loadNextJsonForDownload();   // Start loading the first JSON object
     setTimeout(() => {
-        recorderForDownload.stop(); HideLoader();
+        recorderForDownload.stop(); //HideLoader();
     }, 25000);
 }
 
@@ -954,6 +954,7 @@ function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
                     success: function (slideResult) {
                         // triggerAutorefresh();
                         //Need to remove as this is temporary
+                        HideLoader();
                         const targetUrl = window.location.origin + "/Canvas/VScreen1/1";
                         window.open(targetUrl, "_blank");
                     },
