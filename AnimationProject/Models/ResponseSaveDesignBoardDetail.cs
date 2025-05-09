@@ -34,6 +34,13 @@ namespace AnimationProject.Models
         public string AnimationVideoPath { get; set; }
         public string SlideType { get; set; }
     }
+    public class ResponseGetDesignBoardAll
+    {
+        public Guid DesignBoardId { get; set; }
+        public string DesignBoardName { get; set; }
+        public string SlideType { get; set; }
+        public List<DesignBoardDetailsList> DesignBoardDetailsList { get; set; }
+    }
     public class ResponseGetDesignBoardById
     {
         public Guid DesignBoardId { get; set; }

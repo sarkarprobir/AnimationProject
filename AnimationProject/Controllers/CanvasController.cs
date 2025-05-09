@@ -144,7 +144,7 @@ namespace AnimationProject.Controllers
             return PartialView("_PartialRightSection");
         }
         
-        public async Task<IActionResult> Boards()
+        public async Task<IActionResult> BoardsNew()
         {
             //if (!_checkSession.IsSession()) return Ok("login");
             var response = new Response<List<ResponseGetDesignBoard>>();
@@ -280,6 +280,38 @@ namespace AnimationProject.Controllers
                 return Json("NO");
             }
 
+        }
+       
+        public async Task<IActionResult> Boards()
+        {
+            ////if (!_checkSession.IsSession()) return Ok("login");
+            //var response = new Response<ResponseGetDesignBoardById>();
+            //try
+            //{
+            //    var getDesignBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetDesignBoardDetailsById", JsonConvert.SerializeObject(request), user.token);
+            //    response = JsonConvert.DeserializeObject<Response<ResponseGetDesignBoardById>>(getDesignBoard);
+            //    return Json(response.Data);
+            //}
+            //catch (Exception ex)
+            //{
+            //    log.Info("***GetDesignBoardDetailsById*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+            //    return Json("NO");
+            //}
+            var response = new Response<List<ResponseGetDesignBoardAll>>();
+            RequestGetDesignBoard request = new RequestGetDesignBoard();
+            try
+            {
+                request.CustomerId = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
+                request.CompanyId = Guid.Parse("F174A15A-76B7-4E19-BE4B-4E240983DE55");
+                var saveDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetDesignBoardDetailsAll", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<List<ResponseGetDesignBoardAll>>>(saveDesignSlideBoard);
+                return View("Boards", response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***GetDesignBoardDetailsAll*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return View("Boards", null);
+            }
         }
         [HttpPost]
         public async Task<IActionResult> UpdateDesignDesignBoardDetailsImagePath(RequestDesignBoardDetailsImagePath request)
