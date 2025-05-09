@@ -1,4 +1,4 @@
-﻿@model  List<AnimationProject.Models.ResponseGetDesignBoard>
+﻿@model List<AnimationProject.Models.ResponseGetDesignBoardAll>
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @* <script src="~/js/action.js?v=@Configuration["AppSettings:FilesVersion"]"></script> *@
 @* <script src="~/js/animation_min.js"></script> *@
@@ -306,42 +306,61 @@ rel="stylesheet">
                 <div class="row d-flex row-gap-4">
                     @if (Model != null && Model.Count>0)
                     {
-                        int i = 1;
+                        int idx = 1;
+
                         @foreach (var item in Model)
                         {
                             if (item.SlideType == "Vertical")
                             {
                                 <div class="col-md-4">
-                                    @* <img class="board_verti" src="@item.GifImagePath" alt="Alternate Text" /> *@
-                                    @* <canvas id="@("boardCanvas_" + i)" class="board_verti" width="167" height="250"></canvas> *@
-                                    <video class="miniPlayer board_verti" controls width="300" height="200" muted playsinline>
-                                        <source class="videoSource" src="@Url.Content(item.AnimationVideoPath)" type="video/mp4">
-                                    </video>
+                                    <div id="carousel_@idx"
+                                         class="carousel slide board_verti"
+                                         data-bs-ride="false" @* don’t auto-start *@
+                                         data-bs-interval="2000">
+                                        @* 2s per slide when running *@
 
+                                        <div class="carousel-inner">
+                                            @for (int j = 0; j < (item.DesignBoardDetailsList?.Count ?? 0); j++)
+                                            {
+                                                var detail = item.DesignBoardDetailsList[j];
+                                                <div class="carousel-item @(j == 0 ? "active" : "")">
+                                                    <img src="@Url.Content(detail.AnimationImagePath)"
+                                                         class="d-block w-100"
+                                                         alt="@detail.SlideName" />
+                                                </div>
+                                            }
+                                        </div>
 
+                                        <button class="carousel-control-prev" type="button"
+                                                data-bs-target="#carousel_@idx"
+                                                data-bs-slide="prev">
+                                            <span class="carousel-control-prev-icon"></span>
+                                            <span class="visually-hidden">Previous</span>
+                                        </button>
+                                        <button class="carousel-control-next" type="button"
+                                                data-bs-target="#carousel_@idx"
+                                                data-bs-slide="next">
+                                            <span class="carousel-control-next-icon"></span>
+                                            <span class="visually-hidden">Next</span>
+                                        </button>
+                                    </div>
 
                                     <div class="d-flex justify-content-center gap-4 mt-1">
-                                       
                                         <b title="@item.DesignBoardName">
-                                            @(item.DesignBoardName.Length > 10 ?
-                                                item.DesignBoardName.Substring(0, 10) + "..." :
-                                                item.DesignBoardName)
-
-                                            @if (item.AnimationVideoPath == "")
-                                            {
-                                                <i class="bi bi-info-circle" style="color: red; cursor: pointer;" title="Please preview the board to view here"></i>
-                                            }
+                                            @(item.DesignBoardName.Length > 10
+                                                ? item.DesignBoardName.Substring(0, 10) + "…"
+                                                : item.DesignBoardName)
                                         </b>
-                                        
                                     </div>
                                     <div class="d-flex justify-content-center gap-4 mt-2">
-                                        <a class="board_button" onclick="RedirectToVerticalPage('@item.DesignBoardId')">Edit</a>
+                                        <a class="board_button"
+                                           onclick="RedirectToVerticalPage('@item.DesignBoardId')">Edit</a>
                                         <a class="board_button" href="#">Duplicate</a>
                                     </div>
                                 </div>
-                                i++;
+                                idx++;
                             }
-                        }
+                            }
                     }
                 </div>
             </div>
@@ -359,6 +378,14 @@ rel="stylesheet">
             </div>
 
             <div class="modal-body">
+                <!-- Vertical Option -->
+                <div class="option-box d-flex justify-content-between align-items-center mb-0" id="vertical-option">
+                    <div class="d-flex align-items-center">
+                        <div class="portrait-icon"></div>
+                        <span class="vertical_option">Vertical / Portrait</span>
+                    </div>
+                    <span>1080x1920</span>
+                </div>
                 <!-- Horizontal Option -->
                 <div class="option-box d-flex justify-content-between align-items-center" id="horizontal-option">
                     <div class="d-flex align-items-center">
@@ -368,14 +395,7 @@ rel="stylesheet">
                     <span>1920x1080</span>
                 </div>
 
-                <!-- Vertical Option -->
-                <div class="option-box d-flex justify-content-between align-items-center mb-0" id="vertical-option">
-                    <div class="d-flex align-items-center">
-                        <div class="portrait-icon"></div>
-                        <span class="vertical_option">Vertical / Portrait</span>
-                    </div>
-                    <span>1080x1920</span>
-                </div>
+               
             </div>
 
             <div class="modal-footer pt-0">
@@ -452,4 +472,20 @@ rel="stylesheet">
             });
         });
 </script>
+    <script>
+        // For each .board_verti carousel, create a Bootstrap Carousel instance,
+        // pause it, and wire up hover to cycle/pause THAT carousel only.
+        document.querySelectorAll('.board_verti').forEach(function(el) {
+          // init carousel API with the data-bs-interval you set (2000ms)
+          var carousel = bootstrap.Carousel.getOrCreateInstance(el);
+          carousel.pause();
+
+          el.addEventListener('mouseenter', function() {
+            carousel.cycle();
+          });
+          el.addEventListener('mouseleave', function() {
+            carousel.pause();
+          });
+        });
+    </script>
 }
