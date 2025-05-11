@@ -517,174 +517,133 @@ function RedirectToVerticalPageDirect() {
     window.location = `${baseURL}Canvas/VerticalIndex`;
 }
 // Restore the canvas from your JSON data
-function loadCanvasFromJson(jsonData, condition) {
+// Modified loadCanvasFromJson with auto-fit (finishEditing) integration
+function loadCanvasFromJson(jsonData, condition = 'Common') {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+    currentCondition = condition;
     if (!jsonData) {
-        document.fonts.ready.then(() => {
-            drawCanvas(condition);
-        });
+        document.fonts.ready.then(() => drawCanvas(condition));
         return;
     }
 
-    try {
-        const dpr = window.devicePixelRatio || 1;
-        const screenW = canvas.width / dpr;
-        const screenH = canvas.height / dpr;
+    // parse JSON
+    let data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+    slideData = data;
 
-        // const data = JSON.parse(jsonData);
-        let data;
-        // If jsonData is a string, parse it; otherwise assume it's an object.
-        if (typeof jsonData === "string") {
-            try {
-                data = JSON.parse(jsonData);
-            } catch (e) {
-                console.error("Error parsing canvas JSON:", e);
-                document.fonts.ready.then(() => {
-                    drawCanvas(condition);
-                });
-                return;
-            }
-        } else {
-            data = jsonData;
-        }
+    // set background color
+    canvasBgColor = data.canvasBgColor || '#ffffff';
+    document.getElementById('hdnBackgroundSpecificColor').value = canvasBgColor;
+    canvas.style.backgroundColor = canvasBgColor;
 
-        canvasBgColor = data.canvasBgColor || "#ffffff";
-        $("#hdnBackgroundSpecificColor").val(canvasBgColor);
-        canvas.style.backgroundColor = canvasBgColor;
-
-        // Load background image if present
-        if (data.canvasBgImage) {
-            canvas.bgImage = new Image();
-            canvas.bgImage.src = data.canvasBgImage;
-        } else {
-            canvas.bgImage = null;
-        }
-
-        // Restore and convert text
-        textObjects = (data.text || []).map(obj => ({
-            text: obj.text,
-            x: obj.x * screenW,
-            y: obj.y * screenH,
-            boundingWidth: obj.boundingWidth * screenW,
-            boundingHeight: obj.boundingHeight * screenH,
-            fontSize: obj.fontSize,
-            fontFamily: obj.fontFamily,
-            textColor: obj.textColor,
-            textAlign: obj.textAlign,
-            opacity: obj.opacity,
-            selected: false
-        }));
-
-        // Restore images
-        images = [];
-        let imageLoadCount = 0;
-        const totalImages = (data.images ? data.images.length : 0);
-
-        function checkAllImagesLoaded() {
-            const bgLoaded = !canvas.bgImage || canvas.bgImage.complete;
-            if (imageLoadCount >= totalImages && bgLoaded) {
-                document.fonts.ready.then(() => {
-                    // after you’ve populated textObjects from your JSON but before your first draw…
-                    const loadFontPromises = [];
-
-                    // for every text object, queue the font you need
-                    textObjects.forEach(o => {
-                        const spec = `${o.fontSize}px ${o.fontFamily}`;
-                        loadFontPromises.push(document.fonts.load(spec));
-                    });
-
-                    // once _all_ those fonts have finished downloading:
-                    Promise.all(loadFontPromises)
-                        .then(() => {
-                            // safe to draw with your real font, no fallback this time
-                            drawCanvas('Common');
-                        })
-                        .catch((err) => {
-                            console.warn("Some fonts failed to load, drawing anyway:", err);
-                            drawCanvas('Common');
-                        });
-                    //drawCanvas(condition);
-                    //const rect = canvas.getBoundingClientRect();
-                    //// pick somewhere inside your first textObject:
-                    //if (textObjects[0]) {
-                    //    const cx = rect.left + textObjects[0].x + textObjects[0].boundingWidth / 2;
-                    //    const cy = rect.top + textObjects[0].y + textObjects[0].boundingHeight / 2;
-                    //    canvas.dispatchEvent(new MouseEvent('click', { clientX: cx, clientY: cy }));
-                    //}
-                });
-            }
-        }
-
-        if (data.images && data.images.length) {
-            data.images.forEach(function (imgObj) {
-                const newImgObj = {
-                    x: imgObj.x * screenW,
-                    y: imgObj.y * screenH,
-                    width: imgObj.width * screenW,
-                    height: imgObj.height * screenH,
-                    opacity: imgObj.opacity || 1,
-                    scaleX: 1, // Add scale if your selection logic uses it
-                    scaleY: 1,
-                    selected: false
-                };
-
-
-                const imgElement = new Image();
-                imgElement.crossOrigin = "anonymous";
-
-                if (imgObj.src.trim().charAt(0) === "<") {
-                    const blob = new Blob([imgObj.src], { type: "image/svg+xml" });
-                    imgElement.src = URL.createObjectURL(blob);
-                } else {
-                    imgElement.src = imgObj.src;
-                }
-
-                imgElement.onload = function () {
-                    const newImgObj = {
-                        x: imgObj.x * screenW,
-                        y: imgObj.y * screenH,
-                        width: imgObj.width * screenW,
-                        height: imgObj.height * screenH,
-                        opacity: imgObj.opacity || 1,
-                        scaleX: 1,
-                        scaleY: 1,
-                        selected: false,
-                        img: imgElement,
-                        src: imgObj.src, // ✅ store original src
-                        svgData: (imgObj.src.trim().charAt(0) === "<") ? imgObj.src : undefined // ✅ keep svgData if applicable
-                    };
-                    images.push(newImgObj);
-                    imageLoadCount++;
-                    checkAllImagesLoaded();
-                };
-
-    imgElement.onerror = function () {
-        console.error("Error loading image", imgObj.src);
-        imageLoadCount++;
-        checkAllImagesLoaded();
-    };
-            });
-        } else {
-            checkAllImagesLoaded();
-        }
-
-        if (canvas.bgImage) {
-            canvas.bgImage.onload = checkAllImagesLoaded;
-            canvas.bgImage.onerror = function () {
-                console.error("Error loading background image:", data.canvasBgImage);
-                canvas.bgImage = null;
-                checkAllImagesLoaded();
-            };
-        }
-
-    } catch (e) {
-        console.error("Error parsing canvas JSON:", e);
-        drawCanvas(condition);
+    // preload background image
+    if (data.canvasBgImage) {
+        slideData._bgImg = new Image();
+        slideData._bgImg.crossOrigin = 'anonymous';
+        slideData._bgImg.src = data.canvasBgImage;
+    } else {
+        slideData._bgImg = null;
     }
+
+    // convert & store text objects
+    const dpr = window.devicePixelRatio || 1;
+    const screenW = canvas.width / dpr;
+    const screenH = canvas.height / dpr;
+    textObjects = (data.text || []).map(obj => ({
+        text: obj.text,
+        x: obj.x * screenW,
+        y: obj.y * screenH,
+        boundingWidth: obj.boundingWidth * screenW,
+        boundingHeight: obj.boundingHeight * screenH,
+        fontSize: obj.fontSize,
+        fontFamily: obj.fontFamily,
+        textColor: obj.textColor,
+        textAlign: obj.textAlign,
+        opacity: obj.opacity,
+        selected: false
+    }));
+
+    // preload images
+    images = (data.images || []).map(imgObj => {
+        const o = { ...imgObj };
+        o.x *= screenW; o.y *= screenH;
+        o.width *= screenW; o.height *= screenH;
+        o.selected = false;
+        o.img = new Image();
+        o.img.crossOrigin = 'anonymous';
+        o.img.src = imgObj.src;
+        o.img.onload = () => drawCanvas(condition);
+        o.img.onerror = () => drawCanvas(condition);
+        return o;
+    });
+
+    // preload fonts
+    const fontPromises = textObjects.map(o =>
+        document.fonts.load(`${o.fontSize}px ${o.fontFamily}`)
+    );
+
+    // when fonts loaded, auto-fit each text then draw
+    Promise.all(fontPromises)
+        .finally(() => {
+            // finishEditing logic: shrink & wrap text to fit box
+            textObjects.forEach(obj => {
+                autoFitText(obj, padding);
+            });
+            drawCanvas(condition);
+        });
 }
 
+// helper: shrink font and wrap text to fit bounding box
+function autoFitText(obj, padding) {
+    const ctx2 = canvas.getContext('2d');
+    const maxW = obj.boundingWidth - 2 * padding;
+    let fs = obj.fontSize;
+    ctx2.font = `${fs}px ${obj.fontFamily}`;
+    let raw = obj.text.replace(/\r/g, '');
+    let lines;
+    if (!raw.includes('\n')) {
+        let w = ctx2.measureText(raw).width;
+        while (w > maxW && fs > 6) {
+            fs--;
+            ctx2.font = `${fs}px ${obj.fontFamily}`;
+            w = ctx2.measureText(raw).width;
+        }
+        lines = wrapText(ctx2, raw, maxW);
+    } else {
+        lines = [];
+        raw.split('\n').forEach(line => {
+            lines.push(...wrapText(ctx2, line, maxW));
+        });
+    }
+    obj.fontSize = fs;
+    obj.text = lines.join('\n');
+    obj.boundingHeight = lines.length * fs * 1.2 + 2 * padding;
+}
 
+function autoFitTextForDownload(obj, padding) {
+    const ctx2 = canvasForDownload.getContext('2d');
+    const maxW = obj.boundingWidth - 2 * padding;
+    let fs = obj.fontSize;
+    ctx2.font = `${fs}px ${obj.fontFamily}`;
+    let raw = obj.text.replace(/\r/g, '');
+    let lines;
+    if (!raw.includes('\n')) {
+        let w = ctx2.measureText(raw).width;
+        while (w > maxW && fs > 6) {
+            fs--;
+            ctx2.font = `${fs}px ${obj.fontFamily}`;
+            w = ctx2.measureText(raw).width;
+        }
+        lines = wrapText(ctx2, raw, maxW);
+    } else {
+        lines = [];
+        raw.split('\n').forEach(line => {
+            lines.push(...wrapText(ctx2, line, maxW));
+        });
+    }
+    obj.fontSize = fs;
+    obj.text = lines.join('\n');
+    obj.boundingHeight = lines.length * fs * 1.2 + 2 * padding;
+}
 
 async function GetDesignBoardByIdForPublish() {
     var id = $('#hdnDesignBoardId').val(); // get GUID value
@@ -1141,7 +1100,96 @@ function loadCanvasFromJsonForPublish(jsonData, condition) {
         checkAllImagesLoadedPublish();
     }
 }
-function loadCanvasFromJsonForDownload(jsonData, condition) {
+// Modified loadCanvasFromJsonForDownload with auto-fit integration
+// Modified loadCanvasFromJsonForDownload with auto-fit support
+// Simplified loadCanvasFromJsonForDownload: always use passed JSON object
+// Simplified loadCanvasFromJsonForDownload: always use passed JSON object
+// Simplified loadCanvasFromJsonForDownload: always use passed JSON object
+// Simplified loadCanvasFromJsonForDownload: always use passed JSON object
+function loadCanvasFromJsonForDownload(jsonData, condition = 'Common') {
+    // clear download canvas
+    ctxElementForDownload.clearRect(0, 0, canvasForDownload.width, canvasForDownload.height);
+    currentConditionForDownload = condition;
+
+    if (!jsonData) {
+        document.fonts.ready.then(() => drawCanvasForDownload(condition));
+        return;
+    }
+
+    // parse JSON (single slide)
+    const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+    slideDataForDownload = data;    // compute screen dims
+    const dpr = window.devicePixelRatio || 1;
+    const screenW = canvasForDownload.width / dpr;
+    const screenH = canvasForDownload.height / dpr;
+
+    // build textObjectsForDownload
+    const textObjectsForDownload = (data.text || []).map(o => ({
+        text: o.text,
+        x: o.x * screenW,
+        y: o.y * screenH,
+        boundingWidth: o.boundingWidth * screenW,
+        boundingHeight: o.boundingHeight * screenH,
+        fontSize: o.fontSize,
+        fontFamily: o.fontFamily,
+        textColor: o.textColor,
+        textAlign: o.textAlign,
+        opacity: o.opacity,
+        selected: false
+    }));
+
+    // build imagesForDownload
+    const imagesForDownload = (data.images || []).map(o => {
+        const obj = { ...o };
+        obj.x = o.x * screenW;
+        obj.y = o.y * screenH;
+        obj.width = o.width * screenW;
+        obj.height = o.height * screenH;
+        obj.selected = false;
+        obj.img = new Image();
+        obj.img.crossOrigin = 'anonymous';
+        obj.img.onload = () => drawCanvasForDownload(condition);
+        obj.img.onerror = () => drawCanvasForDownload(condition);
+        obj.img.src = o.src;
+        return obj;
+    });
+
+    // mirror into globals used by drawCanvasForDownload
+    textObjects = textObjectsForDownload;
+    images = imagesForDownload;
+
+    // set background color
+    const bg = data.canvasBgColor || '#ffffff';
+    document.getElementById('hdnBackgroundSpecificColor').value = bg;
+    canvasForDownload.style.backgroundColor = bg;
+
+    // preload and draw background image
+    if (data.canvasBgImage) {
+        canvasForDownload._bgImg = new Image();
+        canvasForDownload._bgImg.crossOrigin = 'anonymous';
+        canvasForDownload._bgImg.onload = () => drawCanvasForDownload(condition);
+        canvasForDownload._bgImg.onerror = () => drawCanvasForDownload(condition);
+        canvasForDownload._bgImg.src = data.canvasBgImage;
+    } else {
+        canvasForDownload._bgImg = null;
+    }
+
+    // preload fonts and auto-fit text
+    const fontPromises = textObjects.map(o =>
+        document.fonts.load(`${o.fontSize}px ${o.fontFamily}`)
+    );
+    Promise.all(fontPromises).finally(() => {
+        textObjects.forEach(obj => autoFitText(obj, padding));
+        drawCanvasForDownload(condition);
+    });
+}
+
+
+
+
+
+
+function loadCanvasFromJsonForDownload1(jsonData, condition) {
     ctxElementForDownload.clearRect(0, 0, canvasForDownload.width, canvasForDownload.height);
     try {
         const dpr = window.devicePixelRatio || 1;
@@ -1397,7 +1445,11 @@ function drawCanvasForDownload(condition) {
         ctxElementForDownload.globalAlpha = imgObj.opacity || 1;
         ctxElementForDownload.translate(x, y);
         ctxElementForDownload.scale(imgObj.scaleX || 1, imgObj.scaleY || 1);
-        ctxElementForDownload.drawImage(imgObj.img, 0, 0, imgObj.width, imgObj.height);
+        try {
+            ctxElementForDownload.drawImage(imgObj.img, 0, 0, imgObj.width, imgObj.height);
+        } catch (e) {
+
+        }
         ctxElementForDownload.restore();
     });
 

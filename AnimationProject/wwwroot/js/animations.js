@@ -583,7 +583,12 @@ function drawCanvas(condition) {
         ctx.globalAlpha = imgObj.opacity || 1;
         ctx.translate(x, y);
         ctx.scale(imgObj.scaleX || 1, imgObj.scaleY || 1);
-        ctx.drawImage(imgObj.img, 0, 0, imgObj.width, imgObj.height);
+        try {
+            ctx.drawImage(imgObj.img, 0, 0, imgObj.width, imgObj.height);
+        } catch (e) {
+
+        }
+        
         ctx.restore();
     });
 
