@@ -285,7 +285,7 @@
         box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
         display: flex;
         justify-content: center;
-        transition: all 0.4s ease;
+        transition: max-height 0.4s ease, opacity 0.4s ease, transform 0.4s ease;
     }
 </style>
 
@@ -354,7 +354,7 @@
 </div>
 
 <!-- Hero Section -->
-<div class="container mt-3">
+<div class="container mt-3" id="main_hero">
     <section class="hero">
         <div class="hero-text">
             <h1>Bring Your<br />Screen to Life!</h1>
@@ -520,15 +520,48 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-        const target = document.getElementById('hoverTarget');
-    const box = document.getElementById('hoverBox');
+    // const target = document.getElementById('hoverTarget');
+    // const box = document.getElementById('hoverBox');
 
+    // target.addEventListener('mouseenter', () => {
+    //   box.style.display = 'flex';
+    // });
+
+    // target.addEventListener('mouseleave', () => {
+    //   box.style.display = 'none';
+    // });
+    const target = document.getElementById('hoverTarget');
+    const box = document.getElementById('hoverBox');
+    const hero = document.getElementById('main_hero');
+    let hideTimeout;
+
+    // Show box when hovering over the trigger
     target.addEventListener('mouseenter', () => {
+      clearTimeout(hideTimeout);
       box.style.display = 'flex';
     });
 
+    // Start a delayed hide when leaving the trigger
     target.addEventListener('mouseleave', () => {
-      box.style.display = 'none';
+      hideTimeout = setTimeout(() => {
+        if (!box.matches(':hover')) {
+          box.style.display = 'none';
+        }
+      }, 200); // Slight delay to allow moving into the box
     });
+
+    // Cancel hiding if mouse enters the box
+    box.addEventListener('mouseenter', () => {
+      clearTimeout(hideTimeout);
+      box.style.display = 'flex';
+      hero.style.display = 'none';
+    });
+
+    // Hide the box when mouse leaves the box
+    box.addEventListener('mouseleave', () => {
+      box.style.display = 'none';
+      hero.style.display = 'flex';
+    });
+
 
 </script>

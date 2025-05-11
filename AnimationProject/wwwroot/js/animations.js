@@ -1941,7 +1941,8 @@ function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imag
         //}, 4000);
     }
     else {
-        alert('Please select Text Animation')
+        //alert('Please select Text Animation')
+        MessageShow('', 'Please select Text Animation', 'error');
     }
 
 }
