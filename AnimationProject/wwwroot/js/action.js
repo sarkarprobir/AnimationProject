@@ -1994,7 +1994,7 @@ function animateTextForPublish(animationType, direction, condition, loopCount) {
     // Global timing settings (from your selected speeds).
     const inTime = parseFloat(selectedInSpeed) || 4;   // e.g. 4 seconds for all "in"
     const outTime = parseFloat(selectedOutSpeed) || 3;   // e.g. 3 seconds for all "out"
-    const stayTime = parseFloat(selectedStaySpeed) || 6; // Overall stay time (applied globally if desired)
+    const stayTime = parseFloat(selectedStaySpeed) || 4; // Overall stay time (applied globally if desired)
 
     // ----- TEXT ANIMATION SECTION -----
     // Pre-calculate final positions and offscreen positions.
@@ -2447,7 +2447,7 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
     // Global timing settings (from your selected speeds).
     const inTime = parseFloat(selectedInSpeed) || 4;   // e.g. 4 seconds for all "in"
     const outTime = parseFloat(selectedOutSpeed) || 3;   // e.g. 3 seconds for all "out"
-    const stayTime = parseFloat(selectedStaySpeed) || 6; // Overall stay time (applied globally if desired)
+    const stayTime = parseFloat(selectedStaySpeed) || 4; // Overall stay time (applied globally if desired)
     // ----- TEXT ANIMATION SECTION -----
     // Pre-calculate final positions and offscreen positions.
     textObjects.forEach((obj) => {

@@ -75,7 +75,7 @@ function CreateRightSectionHorizontalhtml() {
                 $("#divpanelrightH").html(result);
                 // Now safe to access elements from the partial
                 document.getElementById('lblSpeed').textContent = "4 Sec";
-                document.getElementById('lblSeconds').textContent = "6 Sec";
+                document.getElementById('lblSeconds').textContent = "3 Sec";
                 document.getElementById('lblOutSpeed').textContent = "4 Sec";
                 document.getElementById('lblLoop').textContent = "1 time";
 
