@@ -1937,7 +1937,7 @@ function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imag
     }
     else {
         //alert('Please select Text Animation')
-        MessageShow('', 'Please select Text Animation', 'error');
+        MessageShow('', 'Please select text Animation', 'error');
     }
 
 }
