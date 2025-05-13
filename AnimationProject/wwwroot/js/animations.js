@@ -38,7 +38,7 @@ const RECT_HEIGHT_ADJUST = 15;
 const RECT_WIDTH_ADJUST = 4;
 let AfterDrag_ObjectSize = null;
 // corner names must match your resize logic
-const CORNER_NAMES = ["top-left", "top-right", "bottom-right", "bottom-left"];
+const CORNER_NAMES = ["top-left", "top-right", "bottom-right", "bottom-left", "right-middle", "left-middle", "bottom-middle", "top-middle"];
 // Array to hold our text objects
 // Each text object will have: text, x, y, selected, editing
 let textObjects = [];
@@ -1023,7 +1023,7 @@ function animateText(direction, condition, loopCount) {
     // Global timing settings (from your selected speeds).
     const inTime = parseFloat(selectedInSpeed) || 4;   // e.g. 4 seconds for all "in"
     const outTime = parseFloat(selectedOutSpeed) || 3;   // e.g. 3 seconds for all "out"
-    const stayTime = parseFloat(selectedStaySpeed) || 6; // Overall stay time (applied globally if desired)
+    const stayTime = parseFloat(selectedStaySpeed) || 4; // Overall stay time (applied globally if desired)
     // ----- TEXT ANIMATION SECTION -----
     // Pre-calculate final positions and offscreen positions.
     textObjects.forEach((obj) => {
@@ -2276,7 +2276,6 @@ canvas.addEventListener("mousemove", function (e) {
             }
         }
     }
-    
     // --- Text Resizing Logic ---
     if (isResizing && currentSelectedText() && activeHandle) {
         const obj = currentSelectedText();
@@ -2345,7 +2344,7 @@ canvas.addEventListener("mousemove", function (e) {
 
         drawCanvas("Common");
     }
-    
+
     if (isDragging && currentSelectedText()) {
         const obj = currentSelectedText();
         obj.x = pos.x - dragOffset.x;
@@ -3219,7 +3218,7 @@ function CreateRightSectionhtml() {
 
                 // 2) Now it’s safe to wire up your controls
                 document.getElementById('lblSpeed').textContent = "4 Sec";
-                document.getElementById('lblSeconds').textContent = "6 Sec";
+                document.getElementById('lblSeconds').textContent = "3 Sec";
                 document.getElementById('lblOutSpeed').textContent = "4 Sec";
                 document.getElementById('lblLoop').textContent = "1 time";
 

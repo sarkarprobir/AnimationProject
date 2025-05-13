@@ -518,7 +518,7 @@ function RedirectToVerticalPageDirect() {
 }
 // Restore the canvas from your JSON data
 // Modified loadCanvasFromJson with auto-fit (finishEditing) integration
-function loadCanvasFromJson(jsonData, condition = 'Common') {
+function loadCanvasFromJson1(jsonData, condition = 'Common') {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     currentCondition = condition;
     if (!jsonData) {
@@ -591,6 +591,118 @@ function loadCanvasFromJson(jsonData, condition = 'Common') {
             drawCanvas(condition);
         });
 }
+function loadCanvasFromJson(jsonData, condition = 'Common') {
+    // Clear existing canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    currentCondition = condition;
+
+    // If no JSON data, wait for fonts then draw default
+    if (!jsonData) {
+        document.fonts.ready.then(() => drawCanvas(condition));
+        return;
+    }
+
+    // Parse JSON data
+    const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+    slideData = data;
+
+    // Set background color
+    canvasBgColor = data.canvasBgColor || '#ffffff';
+    document.getElementById('hdnBackgroundSpecificColor').value = canvasBgColor;
+    canvas.style.backgroundColor = canvasBgColor;
+
+    // Preload background image if provided
+    if (data.canvasBgImage) {
+        slideData._bgImg = new Image();
+        slideData._bgImg.crossOrigin = 'anonymous';
+        slideData._bgImg.src = data.canvasBgImage;
+    } else {
+        slideData._bgImg = null;
+    }
+
+    // Compute actual display size of the canvas
+    const rect = canvas.getBoundingClientRect();
+    const screenW = rect.width;
+    const screenH = rect.height;
+
+    // Convert & store text objects, adjust for manual breaks and clamp within canvas
+    textObjects = (data.text || []).map(obj => {
+        const bw_norm = obj.boundingWidth * screenW;
+        const bh_norm = obj.boundingHeight * screenH;
+        const fontPx = obj.fontSize;
+        const lineH = fontPx * 1.2;
+
+        // Split on manual \n
+        const manualLines = obj.text.split("\n");
+        const hasManual = manualLines.length > 1;
+
+        // Compute required height
+        const neededHeight = hasManual
+            ? (manualLines.length * lineH + 2 * padding)
+            : bh_norm;
+        const finalHeight = Math.max(bh_norm, neededHeight);
+        const finalWidth = bw_norm;
+
+        // Compute initial Y
+        let ty = obj.y * screenH;
+
+        // If content overflows bottom edge, clamp up
+        if (ty + finalHeight + padding > screenH) {
+            ty = screenH - finalHeight - padding;
+        }
+
+        return {
+            text: obj.text,
+            x: obj.x * screenW,
+            y: ty,
+            boundingWidth: finalWidth,
+            boundingHeight: finalHeight,
+            fontSize: fontPx,
+            fontFamily: obj.fontFamily,
+            textColor: obj.textColor,
+            textAlign: obj.textAlign,
+            opacity: obj.opacity || 1,
+            selected: false,
+            _hasManualBreaks: hasManual
+        };
+    });
+
+    // Preload images (unchanged)
+    images = (data.images || []).map(imgObj => {
+        const o = { ...imgObj };
+        o.x *= screenW;
+        o.y *= screenH;
+        o.width *= screenW;
+        o.height *= screenH;
+        o.selected = false;
+        o.img = new Image();
+        o.img.crossOrigin = 'anonymous';
+        o.img.src = imgObj.src;
+        o.img.onload = () => drawCanvas(condition);
+        o.img.onerror = () => drawCanvas(condition);
+        return o;
+    });
+
+    // Preload fonts and draw
+    const fontPromises = textObjects.map(o =>
+        document.fonts.load(`${o.fontSize}px ${o.fontFamily}`)
+    );
+
+    Promise.all(fontPromises).finally(() => {
+        // Only auto-fit for those without manual breaks
+        textObjects.forEach(obj => {
+            if (!obj._hasManualBreaks) {
+                autoFitText(obj, padding);
+            }
+        });
+        drawCanvas(condition);
+    });
+}
+
+
+
+
+
 
 // helper: shrink font and wrap text to fit bounding box
 function autoFitText(obj, padding) {
@@ -1106,7 +1218,7 @@ function loadCanvasFromJsonForPublish(jsonData, condition) {
 // Simplified loadCanvasFromJsonForDownload: always use passed JSON object
 // Simplified loadCanvasFromJsonForDownload: always use passed JSON object
 // Simplified loadCanvasFromJsonForDownload: always use passed JSON object
-function loadCanvasFromJsonForDownload(jsonData, condition = 'Common') {
+function loadCanvasFromJsonForDownload1(jsonData, condition = 'Common') {
     // clear download canvas
     ctxElementForDownload.clearRect(0, 0, canvasForDownload.width, canvasForDownload.height);
     currentConditionForDownload = condition;
@@ -1184,128 +1296,118 @@ function loadCanvasFromJsonForDownload(jsonData, condition = 'Common') {
     });
 }
 
-
-
-
-
-
-function loadCanvasFromJsonForDownload1(jsonData, condition) {
+function loadCanvasFromJsonForDownload(jsonData, condition = 'Common') {
+    // Clear download canvas
     ctxElementForDownload.clearRect(0, 0, canvasForDownload.width, canvasForDownload.height);
-    try {
-        const dpr = window.devicePixelRatio || 1;
-        const screenW = canvasForDownload.width / dpr;
-        const screenH = canvasForDownload.height / dpr;
+    currentConditionForDownload = condition;
 
-        // const data = JSON.parse(jsonData);
-        let data;
-        // If jsonData is a string, parse it; otherwise assume it's an object.
-        if (typeof jsonData === "string") {
-            try {
-                data = JSON.parse(jsonData);
-            } catch (e) {
-                console.error("Error parsing canvas JSON:", e);
-                drawCanvasForDownload(condition);
-                return;
-            }
-        } else {
-            data = jsonData;
+    // No data: wait for fonts then draw
+    if (!jsonData) {
+        document.fonts.ready.then(() => drawCanvasForDownload(condition));
+        return;
+    }
+
+    // Parse JSON
+    const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+    slideDataForDownload = data;
+
+    // Compute actual display size (CSS pixels)
+    const rect = canvasForDownload.getBoundingClientRect();
+    const screenW = rect.width;
+    const screenH = rect.height;
+
+    // Build text objects, adjust for manual line breaks and clamp at bottom
+    const textObjectsForDownload = (data.text || []).map(obj => {
+        const bw = obj.boundingWidth * screenW;
+        const bh = obj.boundingHeight * screenH;
+        const fontPx = obj.fontSize;
+        const lineH = fontPx * 1.2;
+
+        // Manual split
+        const lines = obj.text.split("\n");
+        const hasManual = lines.length > 1;
+
+        // Compute needed height
+        const neededH = hasManual
+            ? (lines.length * lineH + 2 * padding)
+            : bh;
+        const finalH = Math.max(bh, neededH);
+        const finalW = bw;
+
+        // Initial Y position
+        let ty = obj.y * screenH;
+        // Clamp to bottom if overflowing
+        if (ty + finalH + padding > screenH) {
+            ty = screenH - finalH - padding;
         }
 
-        canvasBgColor = data.canvasBgColor || "#ffffff";
-        $("#hdnBackgroundSpecificColor").val(canvasBgColor);
-        canvasForDownload.style.backgroundColor = canvasBgColor;
-
-        // Load background image if present
-        if (data.canvasBgImage) {
-            canvasForDownload.bgImage = new Image();
-            canvasForDownload.bgImage.src = data.canvasBgImage;
-        } else {
-            canvasForDownload.bgImage = null;
-        }
-
-        // Restore and convert text
-        textObjects = (data.text || []).map(obj => ({
+        return {
             text: obj.text,
             x: obj.x * screenW,
-            y: obj.y * screenH,
-            boundingWidth: obj.boundingWidth * screenW,
-            boundingHeight: obj.boundingHeight * screenH,
-            fontSize: obj.fontSize,
+            y: ty,
+            boundingWidth: finalW,
+            boundingHeight: finalH,
+            fontSize: fontPx,
             fontFamily: obj.fontFamily,
             textColor: obj.textColor,
             textAlign: obj.textAlign,
-            opacity: obj.opacity,
-            selected: false
-        }));
+            opacity: obj.opacity || 1,
+            selected: false,
+            _hasManualBreaks: hasManual
+        };
+    });
 
-        // Restore images
-        images = [];
-        let imageLoadCount = 0;
-        const totalImages = (data.images ? data.images.length : 0);
+    // Build images
+    const imagesForDownload = (data.images || []).map(o => {
+        const obj = { ...o };
+        obj.x = o.x * screenW;
+        obj.y = o.y * screenH;
+        obj.width = o.width * screenW;
+        obj.height = o.height * screenH;
+        obj.selected = false;
+        obj.img = new Image();
+        obj.img.crossOrigin = 'anonymous';
+        obj.img.onload = () => drawCanvasForDownload(condition);
+        obj.img.onerror = () => drawCanvasForDownload(condition);
+        obj.img.src = o.src;
+        return obj;
+    });
 
-        function checkAllImagesLoadedForDownload() {
-            const bgLoaded = !canvasForDownload.bgImage || canvasForDownload.bgImage.complete;
-            if (imageLoadCount >= totalImages && bgLoaded) {
-                drawCanvasForDownload(condition);
-            }
-        }
+    // Mirror into globals and set background
+    textObjects = textObjectsForDownload;
+    images = imagesForDownload;
+    const bg = data.canvasBgColor || '#ffffff';
+    document.getElementById('hdnBackgroundSpecificColor').value = bg;
+    canvasForDownload.style.backgroundColor = bg;
 
-        // Process each image in the JSON.
-        if (data.images && data.images.length) {
-            data.images.forEach(function (imgObj) {
-                var newImgObj = Object.assign({}, imgObj);
-                var imgElement = new Image();
-                if (imgObj.src.trim().charAt(0) === "<") {
-                    var blob = new Blob([imgObj.src], { type: "image/svg+xml" });
-                    imgElement.src = URL.createObjectURL(blob);
-                } else {
-                    imgElement.src = imgObj.src;
-                }
-
-                // Convert % values to pixels
-                newImgObj.x = imgObj.x * screenW;
-                newImgObj.y = imgObj.y * screenH;
-                newImgObj.width = imgObj.width * screenW;
-                newImgObj.height = imgObj.height * screenH;
-
-                // If used in GSAP or exit animation, convert exit/final values as well
-                newImgObj.finalX = (imgObj.finalX ?? imgObj.x) * screenW;
-                newImgObj.finalY = (imgObj.finalY ?? imgObj.y) * screenH;
-                newImgObj.exitX = (imgObj.exitX ?? imgObj.x) * screenW;
-                newImgObj.exitY = (imgObj.exitY ?? imgObj.y) * screenH;
-
-                newImgObj.img = imgElement;
-
-                imgElement.onload = function () {
-                    imageLoadCount++;
-                    checkAllImagesLoadedForDownload();
-                };
-                imgElement.onerror = function () {
-                    console.error("Error loading image", imgObj.src);
-                    imageLoadCount++;
-                    checkAllImagesLoadedForDownload();
-                };
-
-                images.push(newImgObj);
-            });
-        } else {
-            checkAllImagesLoadedForDownload();
-        }
-
-        if (canvasForDownload.bgImage) {
-            canvasForDownload.bgImage.onload = checkAllImagesLoadedForDownload;
-            canvasForDownload.bgImage.onerror = function () {
-                console.error("Error loading background image:", data.canvasBgImage);
-                canvasForDownload.bgImage = null;
-                checkAllImagesLoadedForDownload();
-            };
-        }
-
-    } catch (e) {
-        console.error("Error parsing canvas JSON:", e);
-        drawCanvasForDownload(condition);
+    // Preload background image if any
+    if (data.canvasBgImage) {
+        canvasForDownload._bgImg = new Image();
+        canvasForDownload._bgImg.crossOrigin = 'anonymous';
+        canvasForDownload._bgImg.onload = () => drawCanvasForDownload(condition);
+        canvasForDownload._bgImg.onerror = () => drawCanvasForDownload(condition);
+        canvasForDownload._bgImg.src = data.canvasBgImage;
+    } else {
+        canvasForDownload._bgImg = null;
     }
+
+    // Load fonts, auto-fit (skip manual breaks), then draw
+    const fontPromises = textObjects.map(o =>
+        document.fonts.load(`${o.fontSize}px ${o.fontFamily}`)
+    );
+    Promise.all(fontPromises).finally(() => {
+        textObjects.forEach(obj => {
+            if (!obj._hasManualBreaks) {
+                autoFitText(obj, padding);
+            }
+        });
+        drawCanvasForDownload(condition);
+    });
 }
+
+
+
+
 function loadCanvasFromJsonForDownloadOld(jsonData, condition) {
     // Clear the canvas first.
     ctxElementForDownload.clearRect(0, 0, canvas.width, canvas.height);
@@ -1892,7 +1994,7 @@ function animateTextForPublish(animationType, direction, condition, loopCount) {
     // Global timing settings (from your selected speeds).
     const inTime = parseFloat(selectedInSpeed) || 4;   // e.g. 4 seconds for all "in"
     const outTime = parseFloat(selectedOutSpeed) || 3;   // e.g. 3 seconds for all "out"
-    const stayTime = parseFloat(selectedStaySpeed) || 6; // Overall stay time (applied globally if desired)
+    const stayTime = parseFloat(selectedStaySpeed) || 4; // Overall stay time (applied globally if desired)
 
     // ----- TEXT ANIMATION SECTION -----
     // Pre-calculate final positions and offscreen positions.
@@ -2345,7 +2447,7 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
     // Global timing settings (from your selected speeds).
     const inTime = parseFloat(selectedInSpeed) || 4;   // e.g. 4 seconds for all "in"
     const outTime = parseFloat(selectedOutSpeed) || 3;   // e.g. 3 seconds for all "out"
-    const stayTime = parseFloat(selectedStaySpeed) || 6; // Overall stay time (applied globally if desired)
+    const stayTime = parseFloat(selectedStaySpeed) || 4; // Overall stay time (applied globally if desired)
     // ----- TEXT ANIMATION SECTION -----
     // Pre-calculate final positions and offscreen positions.
     textObjects.forEach((obj) => {
