@@ -2500,12 +2500,12 @@ canvasContainer.addEventListener("dblclick", function (e) {
         textEditor.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.3)";
 
         // Set the current text and show the editor.
-        textEditor.value = obj.text;
+        textEditor.value = obj.text.replace(/\\n/g, "\n");
         textEditor.style.display = "block";
         textEditor.focus();
 
         // Finish editing when Enter is pressed (unless using Shift+Enter for a new line) or on blur.
-        function finishEditing() {
+        function finishEditing1() {
        
             let editedText = textEditor.value.replace(/\\n/g, '\n');
             obj.editing = false;
@@ -2559,17 +2559,50 @@ canvasContainer.addEventListener("dblclick", function (e) {
             textEditor.removeEventListener("keydown", onKeyDown);
             textEditor.removeEventListener("blur", finishEditing);
         }
+        function finishEditing() {
+            const editedText = textEditor.value;
+            obj.editing = false;
+            textEditor.style.display = "none";
 
+            const ctx = canvas.getContext("2d");
+            const initialBoxWidth = obj.boundingWidth;
+            const maxTextWidth = initialBoxWidth - 2 * padding;
+            let fontSize = obj.fontSize;
+            ctx.font = `${fontSize}px ${obj.fontFamily}`;
+
+            // wrap on any real new-line
+            let lines;
+            if (!editedText.includes("\n")) {
+                let w = ctx.measureText(editedText).width;
+                while (w > maxTextWidth && fontSize > 15) {
+                    fontSize--;
+                    ctx.font = `${fontSize}px ${obj.fontFamily}`;
+                    w = ctx.measureText(editedText).width;
+                }
+                lines = wrapText(ctx, editedText, maxTextWidth);
+            } else {
+                lines = editedText.split("\n")
+                    .flatMap(ln => wrapText(ctx, ln, maxTextWidth));
+            }
+
+            obj.fontSize = fontSize;
+            const lineH = fontSize * 1.2;
+            obj.boundingHeight = lines.length * lineH + 2 * padding;
+            obj.text = lines.join("\n");
+
+            drawCanvas('Common');
+            textEditor.removeEventListener("blur", finishEditing);
+        }
         
 
-        function onKeyDown(e) {
-            if (e.key === "Enter" && !e.shiftKey) {
-                finishEditing();
-            }
-        }
+        //function onKeyDown(e) {
+        //    if (e.key === "Enter" && !e.shiftKey) {
+        //        finishEditing();
+        //    }
+        //}
 
 
-        textEditor.addEventListener("keydown", onKeyDown);
+       // textEditor.addEventListener("keydown", onKeyDown);
         textEditor.addEventListener("blur", finishEditing);
     }
 });
@@ -2585,11 +2618,11 @@ textEditor.addEventListener("blur", function () {
     }
 });
 
-textEditor.addEventListener("keydown", function (e) {
-    if (e.key === "Enter") {
-        textEditor.blur();
-    }
-});
+//textEditor.addEventListener("keydown", function (e) {
+//    if (e.key === "Enter") {
+//        textEditor.blur();
+//    }
+//});
 
 
 
