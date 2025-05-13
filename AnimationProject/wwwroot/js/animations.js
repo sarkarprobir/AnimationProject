@@ -197,20 +197,34 @@ function getObjectAt(x, y) {
 //    }
 //    return null;
 //}
-function getHandleUnderMouse(x, y, obj) {
-    // get exactly the same points you draw
-    const handles = getTextResizeHandles(obj);
+function getHandleUnderMouse(mx, my, obj) {
+    const { x: ox, y: oy, boundingWidth: w, boundingHeight: h } = obj;
+    const half = handleSize / 2;
 
-    for (let i = 0; i < handles.length; i++) {
-        const pt = handles[i];
-        const dx = x - pt.x;
-        const dy = y - pt.y;
-        if (dx * dx + dy * dy <= HANDLE_HIT_RADIUS * HANDLE_HIT_RADIUS) {
-            return CORNER_NAMES[i];
+    // define all 8 points in design‐space
+    const pts = [
+        { name: "top-left", x: ox, y: oy },
+        { name: "top-middle", x: ox + w / 2, y: oy },
+        { name: "top-right", x: ox + w, y: oy },
+        { name: "right-middle", x: ox + w, y: oy + h / 2 },
+        { name: "bottom-right", x: ox + w, y: oy + h },
+        { name: "bottom-middle", x: ox + w / 2, y: oy + h },
+        { name: "bottom-left", x: ox, y: oy + h },
+        { name: "left-middle", x: ox, y: oy + h / 2 }
+    ];
+
+    // see if mx,my (in design coords) is within half‐size of any handle
+    for (let pt of pts) {
+        if (
+            mx >= pt.x - half && mx <= pt.x + half &&
+            my >= pt.y - half && my <= pt.y + half
+        ) {
+            return pt.name;
         }
     }
     return null;
 }
+
 //function getHandleUnderMouse(x, y, obj) {
 //    const boxX = obj.x - padding;
 //    const boxY = obj.y - padding;
@@ -665,6 +679,7 @@ function drawCanvas(condition) {
     });
 
     // 5b) Text selections
+    // 5b) Text selections (with 8 handles)
     toPixelSpace(() => {
         textObjects.forEach(obj => {
             if (!obj.selected) return;
@@ -674,7 +689,7 @@ function drawCanvas(condition) {
             const wPx = obj.boundingWidth * scaleX;
             const hPx = obj.boundingHeight * scaleY;
 
-            // rounded‑rect
+            // draw rounded‐rect around text
             drawRoundedRect(
                 ctx,
                 xPx - padding * scaleX,
@@ -684,20 +699,26 @@ function drawCanvas(condition) {
                 5 * scaleX
             );
 
-            // corner handles
+            // all 8 handles: corners + midpoints
             ctx.fillStyle = "#FF7F50";
-            const strokeW = 3;
-            const halfStroke = strokeW / 2;
-            const liftY = 2;   // tweak this to nudge up/down
-            const hs = [
-                { x: xPx + halfStroke, y: yPx + halfStroke - liftY },
-                { x: xPx + wPx - halfStroke, y: yPx + halfStroke - liftY },
-                { x: xPx + halfStroke, y: yPx + hPx - halfStroke - liftY },
-                { x: xPx + wPx - halfStroke, y: yPx + hPx - halfStroke - liftY }
+            const halfW = handleSize / 2;
+            const liftY = 2;   // tweak Y offset if needed
+
+            const handlePoints = [
+                // corners
+                { x: xPx, y: yPx },        // top-left
+                { x: xPx + wPx, y: yPx },        // top-right
+                { x: xPx, y: yPx + hPx },  // bottom-left
+                { x: xPx + wPx, y: yPx + hPx },  // bottom-right
+                // midpoints
+               // { x: xPx + wPx / 2, y: yPx },        // top-middle
+                //{ x: xPx + wPx / 2, y: yPx + hPx },  // bottom-middle
+                { x: xPx, y: yPx + hPx / 2 }, // left-middle
+                { x: xPx + wPx, y: yPx + hPx / 2 }  // right-middle
             ];
-            const halfH = handleSize / 2;
-            hs.forEach(pt => {
-                ctx.fillRect(pt.x - halfH, pt.y - halfH, handleSize, handleSize);
+
+            handlePoints.forEach(pt => {
+                ctx.fillRect(pt.x - halfW, pt.y - halfW - liftY, handleSize, handleSize);
             });
         });
     });
@@ -2251,54 +2272,109 @@ function adjustFontSizeToFitBox(obj) {
 canvas.addEventListener("mousemove", function (e) {
     const pos = getMousePos(canvas, e);
 
-    // 1) TEXT RESIZE (diagonal corner only)
+    // --- 1) TEXT RESIZE & DRAG ---
     if (isResizingText && activeText && activeTextHandle) {
         const obj = activeText;
         const oldL = obj.x, oldT = obj.y;
         const oldW = obj.boundingWidth, oldH = obj.boundingHeight;
-        let dx, dy;
+        const oldR = oldL + oldW;
 
-        // determine dx,dy from fixed corner
         switch (activeTextHandle) {
+            // ─── Corners: diagonal uniform scale ───────────────────────
             case 'bottom-right':
-                dx = pos.x - oldL; dy = pos.y - oldT; break;
             case 'bottom-left':
-                dx = oldL + oldW - pos.x; dy = pos.y - oldT; break;
             case 'top-right':
-                dx = pos.x - oldL; dy = oldT + oldH - pos.y; break;
-            case 'top-left':
-                dx = oldL + oldW - pos.x; dy = oldT + oldH - pos.y; break;
-            default:
-                dx = dy = 0;
+            case 'top-left': {
+                let dx, dy;
+                if (activeTextHandle === 'bottom-right') {
+                    dx = pos.x - oldL; dy = pos.y - oldT;
+                } else if (activeTextHandle === 'bottom-left') {
+                    dx = oldW - (pos.x - oldL); dy = pos.y - oldT;
+                } else if (activeTextHandle === 'top-right') {
+                    dx = pos.x - oldL; dy = oldH - (pos.y - oldT);
+                } else { // top-left
+                    dx = oldW - (pos.x - oldL);
+                    dy = oldH - (pos.y - oldT);
+                }
+                let scale = Math.min(dx / oldW, dy / oldH);
+                const minScale = 5 / Math.max(oldW, oldH);
+                scale = Math.max(scale, minScale);
+
+                const newW = oldW * scale, newH = oldH * scale;
+                if (activeTextHandle === 'bottom-right') {
+                    obj.boundingWidth = newW;
+                    obj.boundingHeight = newH;
+                } else if (activeTextHandle === 'bottom-left') {
+                    obj.x = oldL + oldW - newW;
+                    obj.boundingWidth = newW;
+                    obj.boundingHeight = newH;
+                } else if (activeTextHandle === 'top-right') {
+                    obj.y = oldT + oldH - newH;
+                    obj.boundingWidth = newW;
+                    obj.boundingHeight = newH;
+                } else { // top-left
+                    obj.x = oldL + oldW - newW;
+                    obj.y = oldT + oldH - newH;
+                    obj.boundingWidth = newW;
+                    obj.boundingHeight = newH;
+                }
+
+                // reflow text and adjust font
+                obj.fontSize = adjustFontSizeToFitBox(obj);
+                // optional: re-wrap and adjust height after font change
+                break;
+            }
+
+            // ─── Middle horizontal: resize width + rewrap ──────────────
+           case 'right-middle': {
+    const ctx = canvas.getContext("2d");
+    ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+    const minWidth = getMinTextWidth(ctx, obj.text.replace(/\n/g, ''));
+
+    const newW = pos.x - oldL;
+    if (newW >= minWidth) {
+        obj.boundingWidth = newW;
+
+        const lines = wrapText(ctx, obj.text.replace(/\n/g, ''), newW - 2 * padding);
+        const lineHeight = obj.fontSize * 1.2;
+        obj.boundingHeight = lines.length * lineHeight + 2 * padding;
+    }
+    break;
+}
+
+case 'left-middle': {
+    const ctx = canvas.getContext("2d");
+    ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+    const minWidth = getMinTextWidth(ctx, obj.text.replace(/\n/g, ''));
+
+    const oldR = oldL + oldW;
+    const newW = oldR - pos.x;
+    if (newW >= minWidth) {
+        obj.x = pos.x;
+        obj.boundingWidth = newW;
+
+        const lines = wrapText(ctx, obj.text.replace(/\n/g, ''), newW - 2 * padding);
+        const lineHeight = obj.fontSize * 1.2;
+        obj.boundingHeight = lines.length * lineHeight + 2 * padding;
+    }
+    break;
+}
+
+
+
+            // ─── Vertical middle: no-op (or add logic) ────────────────
+            case 'top-middle':
+            case 'bottom-middle':
+                // nothing
+                break;
         }
 
-        let scale = Math.min(dx / oldW, dy / oldH);
-        const minScale = 5 / Math.max(oldW, oldH);
-        scale = Math.max(scale, minScale);
-
-        const newW = oldW * scale, newH = oldH * scale;
-        // reposition for left/top handles
-        switch (activeTextHandle) {
-            case 'bottom-right':
-                obj.boundingWidth = newW; obj.boundingHeight = newH; break;
-            case 'bottom-left':
-                obj.x = oldL + oldW - newW;
-                obj.boundingWidth = newW; obj.boundingHeight = newH; break;
-            case 'top-right':
-                obj.y = oldT + oldH - newH;
-                obj.boundingWidth = newW; obj.boundingHeight = newH; break;
-            case 'top-left':
-                obj.x = oldL + oldW - newW;
-                obj.y = oldT + oldH - newH;
-                obj.boundingWidth = newW; obj.boundingHeight = newH; break;
-        }
-
-        obj.fontSize = adjustFontSizeToFitBox(obj);
         drawCanvas('Common');
-        return;
+        return; // skip drag + image logic
     }
 
-    // 2) TEXT DRAG
+
+    // --- 2) TEXT DRAG ───────────────────────────────────────────────
     if (isDraggingText && activeText) {
         activeText.x = pos.x - dragOffsetText.x;
         activeText.y = pos.y - dragOffsetText.y;
@@ -2306,14 +2382,14 @@ canvas.addEventListener("mousemove", function (e) {
         return;
     }
 
-    // --- Image Drag ---
+    // --- 3) IMAGE DRAG ─────────────────────────────────────────────
     if (isDraggingImage && activeImage) {
         activeImage.x = pos.x - dragOffsetImage.x;
         activeImage.y = pos.y - dragOffsetImage.y;
         drawCanvas("Common");
     }
 
-    // --- Image Resize (unchanged) ---
+    // --- 4) IMAGE RESIZE ───────────────────────────────────────────
     if (isResizingImage && activeImage && activeImageHandle) {
         let newWidth, newHeight;
         switch (activeImageHandle) {
@@ -2344,6 +2420,16 @@ canvas.addEventListener("mousemove", function (e) {
     }
 });
 
+
+function getMinTextWidth(ctx, text) {
+    const words = text.split(/\s+/);
+    let maxWidth = 0;
+    for (let word of words) {
+        const width = ctx.measureText(word).width;
+        if (width > maxWidth) maxWidth = width;
+    }
+    return maxWidth + 2 * padding; // add padding so word fits inside box
+}
 
 function getHandleUnderMouseForImage(imgObj, pos) {
     const handles = getImageResizeHandles(imgObj); // returns an array of handles with {name, x, y}
@@ -2505,60 +2591,7 @@ canvasContainer.addEventListener("dblclick", function (e) {
         textEditor.focus();
 
         // Finish editing when Enter is pressed (unless using Shift+Enter for a new line) or on blur.
-        function finishEditing1() {
        
-            let editedText = textEditor.value.replace(/\\n/g, '\n');
-            obj.editing = false;
-            textEditor.style.display = "none";
-
-            const ctx = canvas.getContext("2d");
-
-            // 1) Lock in the box width you already have:
-            const initialBoxWidth = obj.boundingWidth;
-            const maxTextWidth = initialBoxWidth - 2 * padding;
-
-            // 2) Start with the box's current font size:
-            let fontSize = obj.fontSize;//AfterDrag_ObjectSize ?? obj.fontSize;
-            ctx.font = `${fontSize}px ${obj.fontFamily}`;
-
-            // 3) If text is one line and too wide, shrink font until it fits:
-            if (!editedText.includes("\n")) {
-                let width = ctx.measureText(editedText).width;
-                while (width > maxTextWidth && fontSize > 15) {
-                    fontSize--;
-                    ctx.font = `${fontSize}px ${obj.fontFamily}`;
-                    width = ctx.measureText(editedText).width;
-                }
-                // wrap after we have the final font size
-                var lines = wrapText(ctx, editedText, maxTextWidth);
-            } else {
-                // multiline edit: split then wrap each line to max width
-                const rawLines = editedText.split("\n");
-                let linesAcc = [];
-                rawLines.forEach(ln => {
-                    linesAcc.push(...wrapText(ctx, ln, maxTextWidth));
-                });
-                var lines = linesAcc;
-            }
-
-            // 4) Update fontSize on the object
-            obj.fontSize = fontSize;
-
-            // 5) Compute new box height based on wrapped lines
-            const lineHeight = fontSize * 1.2;
-            const newTextHeight = lines.length * lineHeight;
-            obj.boundingHeight = newTextHeight + 2 * padding;
-
-            // 6) Save the (possibly wrapped) text back into the object
-            obj.text = lines.join("\n");
-
-            // 7) Finally redraw
-            drawCanvas('Common');
-
-            // Remove listeners
-            textEditor.removeEventListener("keydown", onKeyDown);
-            textEditor.removeEventListener("blur", finishEditing);
-        }
         function finishEditing() {
             const editedText = textEditor.value;
             obj.editing = false;
