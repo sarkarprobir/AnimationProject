@@ -14,6 +14,14 @@ let animationMode = "delaylinear";
 //const recorder = new MediaRecorder(stream);
 //const chunks = [];
 
+
+let activeText,      // the text object under manipulation
+    isDraggingText = false,
+    isResizingText = false,
+    activeTextHandle,
+    dragOffsetText = { x: 0, y: 0 };
+
+
 let scrollTop = 0;
 let image = null;
 let recordedChunks = [];
@@ -2112,82 +2120,85 @@ canvas.addEventListener("mousedown", function (e) {
     const mouseY = e.clientY - rect.top;
     const pos = { x: mouseX, y: mouseY };
 
-    // If the text editor is active, ignore this event.
+    // ignore if editing
     if (document.activeElement === textEditor) return;
 
-    // Try to get a text object under the mouse.
-    const obj = getTextObjectAt(mouseX, mouseY);
-    
-    if (obj) {
+    const txt = getTextObjectAt(mouseX, mouseY);
+    if (txt) {
+        // select this text object
         textObjects.forEach(o => o.selected = false);
-        obj.selected = true;
-        // Bring the selected object to the front.
-        //textObjects.splice(textObjects.indexOf(obj), 1);
-        //textObjects.push(obj);
-        currentDrag = obj;
+        txt.selected = true;
+        activeText = txt;
 
-        // Now check if the mouse is over a resize handle for this object.
-        const handle = getHandleUnderMouse(pos.x, pos.y, obj);
-        if (handle) {
-            isResizing = true;
-            activeHandle = handle;
-        } else if (isInsideBox(pos.x, pos.y, obj)) {
-            isDragging = true;
-            dragOffset.x = pos.x - obj.x;
-            dragOffset.y = pos.y - obj.y;
+        // did we click a corner handle?
+        const th = getHandleUnderMouse(pos.x, pos.y, txt);
+        if (th) {
+            isResizingText = true;
+            activeTextHandle = th;
+            e.preventDefault();
+            drawCanvas('Common');
+            return;  // skip image logic entirely
         }
-    } else {
-        // Check for images under the mouse
-        let imageFound = false;
-        for (let i = images.length - 1; i >= 0; i--) {
-            let imgObj = images[i];
-            // Check if mouse is over any resize handle of this image.
-            let handle = getHandleUnderMouseForImage(imgObj, pos);
-            if (handle) {
-                images.forEach(img => img.selected = false);
-                imgObj.selected = true;
-                activeImage = imgObj;
-                isResizingImage = true;
-                activeImageHandle = handle;
-                imageFound = true;
-                break;
-            }
-            // Otherwise, check if mouse is over the image.
-            if (isMouseOverImage(imgObj, pos)) {
-                images.forEach(img => img.selected = false);
-                imgObj.selected = true;
-                activeImage = imgObj;
-                isDraggingImage = true;
-                dragOffsetImage.x = pos.x - imgObj.x;
-                dragOffsetImage.y = pos.y - imgObj.y;
-                imageFound = true;
-                if (activeImage && activeImage.src && activeImage.src.endsWith('.svg')) {
-                    enableFillColorDiv();
-                    enableStrockColorDiv()
-                }
-                else {
-                    disableFillColorDiv();
-                    disableStrockColorDiv()
-                }
-                break;
-            }
+
+        // otherwise if inside box, start a drag
+        if (isInsideBox(pos.x, pos.y, txt)) {
+            isDraggingText = true;
+            dragOffsetText.x = pos.x - txt.x;
+            dragOffsetText.y = pos.y - txt.y;
+            e.preventDefault();
+            drawCanvas('Common');
+            return;  // skip image logic
         }
-        if (!imageFound) {
-            // Deselect both text objects and images if nothing is found.
-            textObjects.forEach(o => o.selected = false);
+    }
+
+    // 2) IMAGE logic (exactly as before)
+    let imageFound = false;
+    for (let i = images.length - 1; i >= 0; i--) {
+        const imgObj = images[i];
+        // resize?
+        const ih = getHandleUnderMouseForImage(imgObj, pos);
+        if (ih) {
             images.forEach(img => img.selected = false);
-            currentDrag = null;
-            activeImage = null;
-            //enableFillColorDiv();
-            //enableStrockColorDiv()
-            disableFillColorDiv();
-            disableStrockColorDiv()
+            imgObj.selected = true;
+            activeImage = imgObj;
+            isResizingImage = true;
+            activeImageHandle = ih;
+            imageFound = true;
+            break;
         }
+        // drag?
+        if (isMouseOverImage(imgObj, pos)) {
+            images.forEach(img => img.selected = false);
+            imgObj.selected = true;
+            activeImage = imgObj;
+            isDraggingImage = true;
+            dragOffsetImage.x = pos.x - imgObj.x;
+            dragOffsetImage.y = pos.y - imgObj.y;
+            imageFound = true;
+            if (imgObj.src && imgObj.src.endsWith('.svg')) {
+                enableFillColorDiv();
+                enableStrockColorDiv();
+            } else {
+                disableFillColorDiv();
+                disableStrockColorDiv();
+            }
+            break;
+        }
+    }
+
+    if (!imageFound) {
+        // clear selection
+        textObjects.forEach(o => o.selected = false);
+        images.forEach(img => img.selected = false);
+        activeImage = null;
+        disableFillColorDiv();
+        disableStrockColorDiv();
     }
 
     e.preventDefault();
     drawCanvas('Common');
 });
+
 
 function disableFillColorDiv() {
     const divfillColor = document.getElementById("divFillColor");
@@ -2227,141 +2238,84 @@ function adjustFontSizeToFitBox(obj) {
     let maxFontSize = Math.floor(availableHeight); // maximum based on height
     for (let fs = maxFontSize; fs >= 5; fs--) {
         ctx.font = `${fs}px ${obj.fontFamily}`;
-        let lines = wrapText(ctx, obj.text, availableWidth);
+        let lines = wrapText(ctx, obj.text.replace(/\\n/g, '\n'), availableWidth);
         const lineHeight = fs * 1.2;
         if (lines.length * lineHeight <= availableHeight) {
             return fs;
         }
     }
-    return 5; // fallback minimum
+    return 15; // fallback minimum
 }
 
 
 canvas.addEventListener("mousemove", function (e) {
     const pos = getMousePos(canvas, e);
 
-    // --- Text Object Cursor Handling ---
-    if (currentSelectedText()) {
-        const handle = getHandleUnderMouse(pos.x, pos.y, currentSelectedText());
-        if (handle) {
-            canvas.style.cursor = "nwse-resize";
-        } else if (isInsideBox(pos.x, pos.y, currentSelectedText())) {
-            canvas.style.cursor = "move";
-        } else {
-            canvas.style.cursor = "default";
-        }
-    } else {
-        // --- Image Object Cursor Handling ---
-        let imageHandle = null;
-        // Check if mouse is over any image's resize handle
-        for (let imgObj of images) {
-            imageHandle = getHandleUnderMouseForImage(imgObj, pos);
-            if (imageHandle) break;
-        }
-        if (imageHandle) {
-            canvas.style.cursor = "nwse-resize";
-        } else {
-            // Check if mouse is over any image area (if not dragging/resizing)
-            let overImage = false;
-            for (let imgObj of images) {
-                if (isMouseOverImage(imgObj, pos)) {
-                    overImage = true;
-                    break;
-                }
-            }
-            if (overImage && !isDraggingImage && !isResizingImage) {
-                canvas.style.cursor = "move";
-            } else {
-                canvas.style.cursor = "default";
-            }
-        }
-    }
-    // --- Text Resizing Logic ---
-    if (isResizing && currentSelectedText() && activeHandle) {
-        const obj = currentSelectedText();
-        const oldLeft = obj.x;
-        const oldTop = obj.y;
-        const oldRight = obj.x + obj.boundingWidth;
-        const oldBottom = obj.y + obj.boundingHeight;
+    // 1) TEXT RESIZE (diagonal corner only)
+    if (isResizingText && activeText && activeTextHandle) {
+        const obj = activeText;
+        const oldL = obj.x, oldT = obj.y;
+        const oldW = obj.boundingWidth, oldH = obj.boundingHeight;
+        let dx, dy;
 
-        ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-        const maxTextWidth = obj.boundingWidth - 2 * padding;
-        let lines = wrapText(ctx, obj.text, maxTextWidth);
-        let widestLine = Math.max(...lines.map(line => ctx.measureText(line).width)) + 2 * padding;
-        let textHeight = lines.length * obj.fontSize * 1.2 + 2 * padding;
-
-        switch (activeHandle) {
-            case "top-left":
-                obj.x = pos.x;
-                obj.y = pos.y;
-                obj.boundingWidth = oldRight - pos.x;
-                obj.boundingHeight = oldBottom - pos.y;
-                obj.fontSize = adjustFontSizeToFitBox(obj);
-                break;
-            case "top-middle":
-                if (oldBottom - pos.y >= textHeight) {
-                    obj.y = pos.y;
-                    obj.boundingHeight = oldBottom - pos.y;
-                }
-                break;
-            case "top-right":
-                obj.y = pos.y;
-                obj.boundingWidth = pos.x - oldLeft;
-                obj.boundingHeight = oldBottom - pos.y;
-                obj.fontSize = adjustFontSizeToFitBox(obj);
-                break;
-            case "right-middle":
-                if (pos.x - oldLeft >= widestLine) {
-                    obj.boundingWidth = pos.x - oldLeft;
-                }
-                break;
-            case "bottom-right":
-                obj.boundingWidth = pos.x - oldLeft;
-                obj.boundingHeight = pos.y - oldTop;
-                obj.fontSize = adjustFontSizeToFitBox(obj);
-                break;
-            case "bottom-middle":
-                if (pos.y - oldTop >= textHeight) {
-                    obj.boundingHeight = pos.y - oldTop;
-                }
-                break;
-            case "bottom-left":
-                obj.x = pos.x;
-                obj.boundingWidth = oldRight - pos.x;
-                obj.boundingHeight = pos.y - oldTop;
-                obj.fontSize = adjustFontSizeToFitBox(obj);
-                break;
-            case "left-middle":
-                if (oldRight - pos.x >= widestLine) {
-                    obj.x = pos.x;
-                    obj.boundingWidth = oldRight - pos.x;
-                }
-                break;
+        // determine dx,dy from fixed corner
+        switch (activeTextHandle) {
+            case 'bottom-right':
+                dx = pos.x - oldL; dy = pos.y - oldT; break;
+            case 'bottom-left':
+                dx = oldL + oldW - pos.x; dy = pos.y - oldT; break;
+            case 'top-right':
+                dx = pos.x - oldL; dy = oldT + oldH - pos.y; break;
+            case 'top-left':
+                dx = oldL + oldW - pos.x; dy = oldT + oldH - pos.y; break;
+            default:
+                dx = dy = 0;
         }
-        AfterDrag_ObjectSize = adjustFontSizeToFitBox(obj);
-        if (obj.boundingWidth < widestLine) obj.boundingWidth = widestLine;
-        if (obj.boundingHeight < textHeight) obj.boundingHeight = textHeight;
 
-        drawCanvas("Common");
+        let scale = Math.min(dx / oldW, dy / oldH);
+        const minScale = 5 / Math.max(oldW, oldH);
+        scale = Math.max(scale, minScale);
+
+        const newW = oldW * scale, newH = oldH * scale;
+        // reposition for left/top handles
+        switch (activeTextHandle) {
+            case 'bottom-right':
+                obj.boundingWidth = newW; obj.boundingHeight = newH; break;
+            case 'bottom-left':
+                obj.x = oldL + oldW - newW;
+                obj.boundingWidth = newW; obj.boundingHeight = newH; break;
+            case 'top-right':
+                obj.y = oldT + oldH - newH;
+                obj.boundingWidth = newW; obj.boundingHeight = newH; break;
+            case 'top-left':
+                obj.x = oldL + oldW - newW;
+                obj.y = oldT + oldH - newH;
+                obj.boundingWidth = newW; obj.boundingHeight = newH; break;
+        }
+
+        obj.fontSize = adjustFontSizeToFitBox(obj);
+        drawCanvas('Common');
+        return;
     }
 
-    if (isDragging && currentSelectedText()) {
-        const obj = currentSelectedText();
-        obj.x = pos.x - dragOffset.x;
-        obj.y = pos.y - dragOffset.y;
-        drawCanvas("Common");
+    // 2) TEXT DRAG
+    if (isDraggingText && activeText) {
+        activeText.x = pos.x - dragOffsetText.x;
+        activeText.y = pos.y - dragOffsetText.y;
+        drawCanvas('Common');
+        return;
     }
 
-    // --- Image Drag/Resize Logic ---
+    // --- Image Drag ---
     if (isDraggingImage && activeImage) {
         activeImage.x = pos.x - dragOffsetImage.x;
         activeImage.y = pos.y - dragOffsetImage.y;
         drawCanvas("Common");
     }
 
+    // --- Image Resize (unchanged) ---
     if (isResizingImage && activeImage && activeImageHandle) {
         let newWidth, newHeight;
-
         switch (activeImageHandle) {
             case "top-left":
                 newWidth = activeImage.width * activeImage.scaleX + (activeImage.x - pos.x);
@@ -2384,13 +2338,13 @@ canvas.addEventListener("mousemove", function (e) {
                 newHeight = pos.y - activeImage.y;
                 break;
         }
-
         if (newWidth > MIN_SIZE) activeImage.scaleX = newWidth / activeImage.width;
         if (newHeight > MIN_SIZE) activeImage.scaleY = newHeight / activeImage.height;
-
         drawCanvas("Common");
     }
 });
+
+
 function getHandleUnderMouseForImage(imgObj, pos) {
     const handles = getImageResizeHandles(imgObj); // returns an array of handles with {name, x, y}
     for (let h of handles) {
@@ -2407,7 +2361,6 @@ function getHandleUnderMouseForImage(imgObj, pos) {
 
 
 
-
 canvas.addEventListener("mouseup", function () {
     currentDrag = null;
     isResizing = false;
@@ -2416,6 +2369,11 @@ canvas.addEventListener("mouseup", function () {
 
     isDraggingImage = false;
     isResizingImage = false;
+
+    isResizingText = false;
+    isDraggingText = false;
+    activeTextHandle = null;
+    activeText = null;
 });
 
 canvas.addEventListener("mouseleave", function () {
@@ -2549,7 +2507,7 @@ canvasContainer.addEventListener("dblclick", function (e) {
         // Finish editing when Enter is pressed (unless using Shift+Enter for a new line) or on blur.
         function finishEditing() {
        
-            let editedText = textEditor.value;
+            let editedText = textEditor.value.replace(/\\n/g, '\n');
             obj.editing = false;
             textEditor.style.display = "none";
 
@@ -2566,7 +2524,7 @@ canvasContainer.addEventListener("dblclick", function (e) {
             // 3) If text is one line and too wide, shrink font until it fits:
             if (!editedText.includes("\n")) {
                 let width = ctx.measureText(editedText).width;
-                while (width > maxTextWidth && fontSize > 5) {
+                while (width > maxTextWidth && fontSize > 15) {
                     fontSize--;
                     ctx.font = `${fontSize}px ${obj.fontFamily}`;
                     width = ctx.measureText(editedText).width;
