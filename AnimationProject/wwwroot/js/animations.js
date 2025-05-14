@@ -85,24 +85,29 @@ let activeImage = null;
 // Utility: Returns an object (text or image) if the (x,y) falls within its bounding box.
 
 function wrapText(ctx, text, maxWidth) {
-    const words = text.split(" ");
-    const lines = [];
-    let currentLine = words[0];
+    if (ctx.measureText(text).width <= maxWidth) {
+        return [text];
+    }
 
-    for (let i = 1; i < words.length; i++) {
-        const word = words[i];
-        const testLine = currentLine + " " + word;
+    // fallback to character wrapping
+    const lines = [];
+    let currentLine = "";
+
+    for (let char of text) {
+        const testLine = currentLine + char;
         const testWidth = ctx.measureText(testLine).width;
         if (testWidth < maxWidth) {
             currentLine = testLine;
         } else {
-            lines.push(currentLine);
-            currentLine = word;
+            if (currentLine) lines.push(currentLine);
+            currentLine = char;
         }
     }
-    lines.push(currentLine);
+
+    if (currentLine) lines.push(currentLine);
     return lines;
 }
+
 function getMousePos(canvas, evt) {
     const rect = canvas.getBoundingClientRect();
     return {
@@ -627,9 +632,18 @@ function drawCanvas(condition) {
             const x = obj.x;
             const y = obj.y;
             const maxW = obj.boundingWidth - 2 * padding;
-            const lines = obj.text.includes("\n")
-                ? obj.text.split("\n")
-                : wrapText(ctx, obj.text, maxW);
+            //const lines = obj.text.includes("\n")
+            //    ? obj.text.split("\n")
+            //    : wrapText(ctx, obj.text, maxW);
+            let lines;
+            if (obj.boundingWidth < obj.fontSize) {
+                // Force character-by-character vertical layout
+                lines = obj.text.split(''); // Each char on its own line
+            } else {
+                lines = obj.text.includes("\n")
+                    ? obj.text.split("\n")
+                    : wrapText(ctx, obj.text, maxW); // your existing word wrap
+            }
             const lineH = obj.fontSize * 1.2;
             const maxLines = Math.floor((obj.boundingHeight - 2 * padding) / lineH);
             const startY = y + padding;
@@ -2338,6 +2352,8 @@ canvas.addEventListener("mousemove", function (e) {
             case 'bottom-left':
             case 'top-right':
             case 'top-left': {
+                const ctx = canvas.getContext("2d");
+
                 let dx, dy;
                 if (activeTextHandle === 'bottom-right') {
                     dx = pos.x - oldL; dy = pos.y - oldT;
@@ -2349,11 +2365,27 @@ canvas.addEventListener("mousemove", function (e) {
                     dx = oldW - (pos.x - oldL);
                     dy = oldH - (pos.y - oldT);
                 }
+
                 let scale = Math.min(dx / oldW, dy / oldH);
-                const minScale = 5 / Math.max(oldW, oldH);
+
+                const minFontSize = 10;
+                const minScale = minFontSize / obj.fontSize;
                 scale = Math.max(scale, minScale);
 
-                const newW = oldW * scale, newH = oldH * scale;
+                const newFontSize = obj.fontSize * scale;
+
+                // Recalculate min bounding box based on new font size
+                ctx.font = `${newFontSize}px ${obj.fontFamily}`;
+                const lines = wrapText(ctx, obj.text.replace(/\n/g, ''), Infinity);
+                const lineHeight = newFontSize * 1.2;
+                const minHeight = lines.length * lineHeight + 2 * padding;
+
+                // Find longest word or character to get minWidth
+                const minWidth = getMinTextWidth(ctx, obj.text.replace(/\n/g, ''));
+
+                const newW = Math.max(oldW * scale, minWidth);
+                const newH = Math.max(oldH * scale, minHeight);
+
                 if (activeTextHandle === 'bottom-right') {
                     obj.boundingWidth = newW;
                     obj.boundingHeight = newH;
@@ -2372,46 +2404,50 @@ canvas.addEventListener("mousemove", function (e) {
                     obj.boundingHeight = newH;
                 }
 
-                // reflow text and adjust font
-                obj.fontSize = adjustFontSizeToFitBox(obj);
-                // optional: re-wrap and adjust height after font change
+                obj.fontSize = newFontSize;
                 break;
             }
 
+
+
+
+
             // ─── Middle horizontal: resize width + rewrap ──────────────
            case 'right-middle': {
-    const ctx = canvas.getContext("2d");
-    ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-    const minWidth = getMinTextWidth(ctx, obj.text.replace(/\n/g, ''));
+                const ctx = canvas.getContext("2d");
+                ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+                const minWidth = getMinCharWidth(ctx, obj.text.replace(/\n/g, ''));
 
-    const newW = pos.x - oldL;
-    if (newW >= minWidth) {
-        obj.boundingWidth = newW;
+                const newW = pos.x - oldL;
+                if (newW >= minWidth) {
+                    obj.boundingWidth = newW;
 
-        const lines = wrapText(ctx, obj.text.replace(/\n/g, ''), newW - 2 * padding);
-        const lineHeight = obj.fontSize * 1.2;
-        obj.boundingHeight = lines.length * lineHeight + 2 * padding;
-    }
-    break;
+                    const lines = wrapText(ctx, obj.text.replace(/\n/g, ''), newW - 2 * padding);
+                    const lineHeight = obj.fontSize * 1.2;
+                    obj.boundingHeight = lines.length * lineHeight + 2 * padding;
+                }
+                break;
 }
 
-case 'left-middle': {
-    const ctx = canvas.getContext("2d");
-    ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-    const minWidth = getMinTextWidth(ctx, obj.text.replace(/\n/g, ''));
+            case 'left-middle': {
+                const ctx = canvas.getContext("2d");
+                ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
 
-    const oldR = oldL + oldW;
-    const newW = oldR - pos.x;
-    if (newW >= minWidth) {
-        obj.x = pos.x;
-        obj.boundingWidth = newW;
+                const minWidth = getMinCharWidth(ctx, obj.text.replace(/\n/g, ''));
 
-        const lines = wrapText(ctx, obj.text.replace(/\n/g, ''), newW - 2 * padding);
-        const lineHeight = obj.fontSize * 1.2;
-        obj.boundingHeight = lines.length * lineHeight + 2 * padding;
-    }
-    break;
-}
+                const oldR = oldL + oldW;
+                const newW = oldR - pos.x;
+
+                if (newW >= minWidth) {
+                    obj.x = pos.x;
+                    obj.boundingWidth = newW;
+
+                    const lines = wrapText(ctx, obj.text.replace(/\n/g, ''), newW - 2 * padding);
+                    const lineHeight = obj.fontSize * 1.2;
+                    obj.boundingHeight = lines.length * lineHeight + 2 * padding;
+                }
+                break;
+            }
 
 
 
@@ -2473,15 +2509,25 @@ case 'left-middle': {
     }
 });
 
-
 function getMinTextWidth(ctx, text) {
-    const words = text.split(/\s+/);
-    let maxWidth = 0;
-    for (let word of words) {
-        const width = ctx.measureText(word).width;
-        if (width > maxWidth) maxWidth = width;
+    let minWidth = 0;
+
+    // Use individual characters to avoid line-break surprises
+    for (const ch of text) {
+        const width = ctx.measureText(ch).width;
+        if (width > minWidth) minWidth = width;
     }
-    return maxWidth + 2 * padding; // add padding so word fits inside box
+
+    return minWidth + 2 * padding; // include padding
+}
+
+function getMinCharWidth(ctx, text) {
+    let maxCharWidth = 0;
+    for (let char of text) {
+        const width = ctx.measureText(char).width;
+        if (width > maxCharWidth) maxCharWidth = width;
+    }
+    return maxCharWidth + 2 * padding;
 }
 
 function getHandleUnderMouseForImageOld(imgObj, pos) {
