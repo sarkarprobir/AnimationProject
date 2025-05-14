@@ -13,8 +13,8 @@ let animationMode = "delaylinear";
 //const stream = canvas.captureStream(7); // Capture at 30 fps
 //const recorder = new MediaRecorder(stream);
 //const chunks = [];
-
-
+const HANDLE_SIZE = 12;
+const HANDLE_HITAREA = 20;
 let activeText,      // the text object under manipulation
     isDraggingText = false,
     isResizingText = false,
@@ -2104,27 +2104,45 @@ function getTextObjectAt(x, y) {
     return null;
 }
 // Returns an array of handle positions for a given image object
-function getImageResizeHandles(imageObj) {
-    const w = imageObj.width * imageObj.scaleX;
-    const h = imageObj.height * imageObj.scaleY;
+
+// 2) Your existing handle generator stays the same:
+function getImageResizeHandles(img) {
+    const sx = img.scaleX || 1, sy = img.scaleY || 1;
+    const w = img.width * sx, h = img.height * sy;
+    const x0 = img.x, y0 = img.y;
+    const x1 = x0 + w, y1 = y0 + h;
+
+    // **these are the exact corner points** in design space
     return [
-        { name: "top-left", x: imageObj.x, y: imageObj.y },
-        { name: "top-right", x: imageObj.x + w, y: imageObj.y },
-        { name: "bottom-left", x: imageObj.x, y: imageObj.y + h },
-        { name: "bottom-right", x: imageObj.x + w, y: imageObj.y + h }
+        { name: "top-left", x: x0, y: y0 },
+        { name: "top-right", x: x1, y: y0 },
+        { name: "bottom-left", x: x0, y: y1 },
+        { name: "bottom-right", x: x1, y: y1 },
     ];
 }
+
+// 3) Swap in this smoother hit‑test:
 function getHandleUnderMouseForImage(imgObj, pos) {
     const handles = getImageResizeHandles(imgObj);
+
     for (let h of handles) {
-        if (Math.abs(pos.x - h.x) < handleSize && Math.abs(pos.y - h.y) < handleSize) {
+        // handle center in design space:
+        const cx = h.x + HANDLE_SIZE / 2;
+        const cy = h.y + HANDLE_SIZE / 2;
+
+        // if mouse is within a circle of radius HANDLE_HIT_RADIUS
+        const dx = pos.x - cx;
+        const dy = pos.y - cy;
+        if (dx * dx + dy * dy <= HANDLE_HIT_RADIUS * HANDLE_HIT_RADIUS) {
             return h.name;
         }
     }
     return null;
 }
+
+
 // Check if the mouse is over an image (returns the image object or null)
-function isMouseOverImage(imageObj, pos) {
+function isMouseOverImageOld(imageObj, pos) {
     const w = imageObj.width * imageObj.scaleX;
     const h = imageObj.height * imageObj.scaleY;
     return (
@@ -2134,91 +2152,126 @@ function isMouseOverImage(imageObj, pos) {
         pos.y <= imageObj.y + h
     );
 }
+function isMouseOverImage(imgObj, pos) {
+    const sx = (typeof imgObj.scaleX === 'number') ? imgObj.scaleX : 1;
+    const sy = (typeof imgObj.scaleY === 'number') ? imgObj.scaleY : 1;
+    const w = imgObj.width * sx;
+    const h = imgObj.height * sy;
 
+    return (
+        pos.x >= imgObj.x &&
+        pos.x <= imgObj.x + w &&
+        pos.y >= imgObj.y &&
+        pos.y <= imgObj.y + h
+    );
+}
 canvas.addEventListener("mousedown", function (e) {
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     const pos = { x: mouseX, y: mouseY };
 
-    // ignore if editing
+    // 0) if typing in the text editor, ignore
     if (document.activeElement === textEditor) return;
 
-    const txt = getTextObjectAt(mouseX, mouseY);
-    if (txt) {
-        // select this text object
-        textObjects.forEach(o => o.selected = false);
-        txt.selected = true;
-        activeText = txt;
-
-        // did we click a corner handle?
-        const th = getHandleUnderMouse(pos.x, pos.y, txt);
-        if (th) {
-            isResizingText = true;
-            activeTextHandle = th;
-            e.preventDefault();
-            drawCanvas('Common');
-            return;  // skip image logic entirely
-        }
-
-        // otherwise if inside box, start a drag
-        if (isInsideBox(pos.x, pos.y, txt)) {
-            isDraggingText = true;
-            dragOffsetText.x = pos.x - txt.x;
-            dragOffsetText.y = pos.y - txt.y;
-            e.preventDefault();
-            drawCanvas('Common');
-            return;  // skip image logic
-        }
-    }
-
-    // 2) IMAGE logic (exactly as before)
-    let imageFound = false;
+    // 1) IMAGE body‐click → drag
     for (let i = images.length - 1; i >= 0; i--) {
-        const imgObj = images[i];
-        // resize?
-        const ih = getHandleUnderMouseForImage(imgObj, pos);
-        if (ih) {
-            images.forEach(img => img.selected = false);
-            imgObj.selected = true;
-            activeImage = imgObj;
-            isResizingImage = true;
-            activeImageHandle = ih;
-            imageFound = true;
-            break;
-        }
-        // drag?
-        if (isMouseOverImage(imgObj, pos)) {
-            images.forEach(img => img.selected = false);
-            imgObj.selected = true;
-            activeImage = imgObj;
+        const img = images[i];
+        // use the SAME w/h/fallback logic as your handles
+        const sx = (typeof img.scaleX === 'number') ? img.scaleX : 1;
+        const sy = (typeof img.scaleY === 'number') ? img.scaleY : 1;
+        const w = img.width * sx;
+        const h = img.height * sy;
+        if (
+            pos.x >= img.x && pos.x <= img.x + w &&
+            pos.y >= img.y && pos.y <= img.y + h
+        ) {
+            // select image, clear text
+            textObjects.forEach(o => o.selected = false);
+            activeText = null;
+
+            images.forEach(i2 => i2.selected = false);
+            img.selected = true;
+            activeImage = img;
             isDraggingImage = true;
-            dragOffsetImage.x = pos.x - imgObj.x;
-            dragOffsetImage.y = pos.y - imgObj.y;
-            imageFound = true;
-            if (imgObj.src && imgObj.src.endsWith('.svg')) {
+            dragOffsetImage.x = pos.x - img.x;
+            dragOffsetImage.y = pos.y - img.y;
+
+            // svg controls
+            if (img.src?.endsWith('.svg')) {
                 enableFillColorDiv();
                 enableStrockColorDiv();
             } else {
                 disableFillColorDiv();
                 disableStrockColorDiv();
             }
-            break;
+
+            e.preventDefault();
+            drawCanvas('Common');
+            return;
         }
     }
 
-    if (!imageFound) {
-        // clear selection
-        textObjects.forEach(o => o.selected = false);
-        images.forEach(img => img.selected = false);
-        activeImage = null;
-        disableFillColorDiv();
-        disableStrockColorDiv();
+    // 2) IMAGE handle‐click → resize
+    for (let i = images.length - 1; i >= 0; i--) {
+        const img = images[i];
+        const ih = getHandleUnderMouseForImage(img, pos);
+        if (ih) {
+            // select image, clear text
+            textObjects.forEach(o => o.selected = false);
+            activeText = null;
+
+            images.forEach(i2 => i2.selected = false);
+            img.selected = true;
+            activeImage = img;
+            isResizingImage = true;
+            activeImageHandle = ih;
+
+            e.preventDefault();
+            drawCanvas('Common');
+            return;
+        }
     }
+
+    // 3) TEXT logic (unchanged)
+    const txt = getTextObjectAt(pos.x, pos.y);
+    if (txt) {
+        textObjects.forEach(o => o.selected = false);
+        txt.selected = true;
+        activeText = txt;
+
+        const th = getHandleUnderMouse(pos.x, pos.y, txt);
+        if (th) {
+            isResizingText = true;
+            activeTextHandle = th;
+            e.preventDefault();
+            drawCanvas('Common');
+            return;
+        }
+        if (isInsideBox(pos.x, pos.y, txt)) {
+            isDraggingText = true;
+            dragOffsetText.x = pos.x - txt.x;
+            dragOffsetText.y = pos.y - txt.y;
+            e.preventDefault();
+            drawCanvas('Common');
+            return;
+        }
+    }
+
+    // 4) nothing matched → clear all
+    textObjects.forEach(o => o.selected = false);
+    images.forEach(i2 => i2.selected = false);
+    activeText = null;
+    activeImage = null;
+    disableFillColorDiv();
+    disableStrockColorDiv();
 
     e.preventDefault();
     drawCanvas('Common');
 });
+
+
+
 
 
 function disableFillColorDiv() {
@@ -2431,7 +2484,7 @@ function getMinTextWidth(ctx, text) {
     return maxWidth + 2 * padding; // add padding so word fits inside box
 }
 
-function getHandleUnderMouseForImage(imgObj, pos) {
+function getHandleUnderMouseForImageOld(imgObj, pos) {
     const handles = getImageResizeHandles(imgObj); // returns an array of handles with {name, x, y}
     for (let h of handles) {
         if (
