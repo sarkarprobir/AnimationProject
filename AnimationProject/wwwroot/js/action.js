@@ -921,7 +921,7 @@ function loadNextJsonForDownload() {
         currentIndexForDownload++; // Move to the next JSON object
 
         // Load next JSON after a delay (adjust the delay as needed)
-        setTimeout(loadNextJsonForDownload, 5000);
+        setTimeout(loadNextJsonForDownload, 7000);
     } else {
         console.log("All JSON objects loaded.");
     }
