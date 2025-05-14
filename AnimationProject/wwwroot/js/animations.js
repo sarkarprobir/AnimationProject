@@ -20,7 +20,8 @@ let activeText,      // the text object under manipulation
     isResizingText = false,
     activeTextHandle,
     dragOffsetText = { x: 0, y: 0 };
-
+const fillInput = document.getElementById('favFillcolor');
+const strokeInput = document.getElementById('favStrockcolor');
 
 let scrollTop = 0;
 let image = null;
@@ -1065,8 +1066,8 @@ function animateText(direction, condition, loopCount) {
    
     // Global timing settings (from your selected speeds).
     const inTime = parseFloat(selectedInSpeed) || 4;   // e.g. 4 seconds for all "in"
-    const outTime = parseFloat(selectedOutSpeed) || 3;   // e.g. 3 seconds for all "out"
-    const stayTime = parseFloat(selectedStaySpeed) || 4; // Overall stay time (applied globally if desired)
+    const outTime = parseFloat(selectedOutSpeed) || 4;   // e.g. 3 seconds for all "out"
+    const stayTime = parseFloat(selectedStaySpeed) || 3; // Overall stay time (applied globally if desired)
     // ----- TEXT ANIMATION SECTION -----
     // Pre-calculate final positions and offscreen positions.
     textObjects.forEach((obj) => {
@@ -2210,15 +2211,16 @@ canvas.addEventListener("mousedown", function (e) {
             isDraggingImage = true;
             dragOffsetImage.x = pos.x - img.x;
             dragOffsetImage.y = pos.y - img.y;
-
-            // svg controls
-            if (img.src?.endsWith('.svg')) {
-                enableFillColorDiv();
-                enableStrockColorDiv();
-            } else {
-                disableFillColorDiv();
-                disableStrockColorDiv();
-            }
+            enableFillColorDiv();
+            enableStrockColorDiv();
+            //// svg controls
+            //if (img.src?.endsWith('.svg')) {
+            //    enableFillColorDiv();
+            //    enableStrockColorDiv();
+            //} else {
+            //    disableFillColorDiv();
+            //    disableStrockColorDiv();
+            //}
 
             e.preventDefault();
             drawCanvas('Common');
@@ -2277,8 +2279,8 @@ canvas.addEventListener("mousedown", function (e) {
     images.forEach(i2 => i2.selected = false);
     activeText = null;
     activeImage = null;
-    disableFillColorDiv();
-    disableStrockColorDiv();
+    //disableFillColorDiv();
+    //disableStrockColorDiv();
 
     e.preventDefault();
     drawCanvas('Common');
@@ -2769,15 +2771,20 @@ function ChangeColor() {
     }
     drawCanvas('ChangeStyle');
 }
+
 function ChangeFillColor() {
-    const fillColorPicker = document.getElementById("favFillcolor");
-    $("#hdnfillColor").val(fillColorPicker.value);
-    updateSelectedImageColors($("#hdnfillColor").val(), $("#hdnStrockColor").val());
+    if (activeImage) {
+        const fillColorPicker = document.getElementById("favFillcolor");
+        $("#hdnfillColor").val(fillColorPicker.value);
+        updateSelectedImageColors($("#hdnfillColor").val(), $("#hdnStrockColor").val());
+    }
 }
 function ChangeStrockColor() {
-    const strockColorPicker = document.getElementById("favStrockcolor");
-    $("#hdnStrockColor").val(strockColorPicker.value);
-    updateSelectedImageColors($("#hdnfillColor").val(), $("#hdnStrockColor").val());
+    if (activeImage) {
+        const strockColorPicker = document.getElementById("favStrockcolor");
+        $("#hdnStrockColor").val(strockColorPicker.value);
+        updateSelectedImageColors($("#hdnfillColor").val(), $("#hdnStrockColor").val());
+    }
 }
 function TabShowHide(type) {
     if (type === 'In') {
@@ -2876,7 +2883,7 @@ canvas.addEventListener("drop", function (e) {
 });
 
 
-function updateSelectedImageColors(newFill, newStroke) {
+function updateSelectedImageColorsOld(newFill, newStroke) {
     if (activeImage && activeImage.src && activeImage.src.endsWith('.svg')) {
         if (activeImage.originalSVG) {
             applySvgColorChanges(activeImage.originalSVG);
@@ -2890,8 +2897,176 @@ function updateSelectedImageColors(newFill, newStroke) {
                 .catch(err => console.error("Error fetching SVG:", err));
         }
     }
+}
+canvas.on('selection:created', e => {
+    if (e.target && e.target.src?.endsWith('.svg')) {
+        activeImage = e.target;
+    }
+});
+canvas.on('selection:updated', e => {
+    if (e.target && e.target.src?.endsWith('.svg')) {
+        activeImage = e.target;
+    }
+});
+function updateSelectedImageColors(newFill, newStroke) {
+    // 1) sanity‑check: do we have an SVG network URL?
+    const svgUrl = activeImage.originalSrc || activeImage.src;
+    if (!activeImage || !svgUrl?.endsWith('.svg') || !activeImage.img) {
+        console.warn("activeImage is not an SVG image");
+        return;
+    }
 
-    function applySvgColorChanges(svgText) {
+    // 2) store the network URL once
+    if (!activeImage.originalSrc) {
+        activeImage.originalSrc = activeImage.src;
+    }
+
+    // 3) remember its displayed size
+    const origW = activeImage.width;
+    const origH = activeImage.height;
+
+    // 4) core SVG patcher
+    function patchSvg(svgText) {
+        const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+
+        // update <style> block
+        const styleEl = doc.querySelector("style");
+        if (styleEl) {
+            styleEl.textContent = styleEl.textContent
+                .replace(/fill:[^;]+;/g, `fill:${newFill};`)
+                .replace(/stroke:[^;]+;/g, `stroke:${newStroke};`);
+        }
+
+        // update inline fill/stroke on every element
+        doc.querySelectorAll("*").forEach(el => {
+            if (newFill) el.setAttribute("fill", newFill);
+            if (newStroke) el.setAttribute("stroke", newStroke);
+        });
+
+        return new XMLSerializer().serializeToString(doc);
+    }
+
+    // 5) redraw into the existing <img> on the canvas
+    //function redraw(updatedSvg) {
+    //    const dataUri = "data:image/svg+xml;charset=utf-8,"
+    //        + encodeURIComponent(updatedSvg);
+
+    //    const imgEl = activeImage.img;
+    //    imgEl.onload = () => {
+    //        // restore size & re‑draw your canvas
+    //        activeImage.width = origW;
+    //        activeImage.height = origH;
+    //        drawCanvas('Common');    // your custom full‐canvas render function
+    //    };
+    //    imgEl.src = dataUri;   // swap in the recolored SVG
+    //}
+    function redraw(updatedSvg) {
+        const dataUri = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(updatedSvg);
+        const imgEl = activeImage.img;
+
+        imgEl.onload = () => {
+            // restore display size
+            activeImage.width = origW;
+            activeImage.height = origH;
+            // **important**: update your model’s src
+            activeImage.src = dataUri;
+            // now redraw the canvas
+            drawCanvas('Common');
+        };
+
+        // swap the image URL
+        imgEl.src = dataUri;
+    }
+
+    // 6) fetch & cache original SVG once, then always patch+redraw
+    if (activeImage.originalSVG) {
+        redraw(patchSvg(activeImage.originalSVG));
+    } else {
+        fetch(svgUrl)
+            .then(res => res.text())
+            .then(svgText => {
+                activeImage.originalSVG = svgText;   // cache raw SVG
+                redraw(patchSvg(svgText));           // apply first recolor
+            })
+            .catch(err => console.error("Error fetching SVG:", err));
+    }
+}
+
+function updateSelectedImageColorsOld(newFill, newStroke) {
+    // 1) sanity check
+    if (
+        !activeImage ||
+        !activeImage.src?.endsWith(".svg") ||
+        !activeImage.img        // your HTMLImageElement
+    ) {
+        console.warn("activeImage is not an SVG image on canvas");
+        return;
+    }
+
+    // remember its displayed size
+    const origW = activeImage.width;
+    const origH = activeImage.height;
+
+    // parse + patch the raw SVG text
+    function patchSvg(svgText) {
+        const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+
+        // update <style> block if present
+        const styleEl = doc.querySelector("style");
+        if (styleEl) {
+            styleEl.textContent = styleEl.textContent
+                .replace(/fill:[^;]+;/g, `fill:${newFill};`)
+                .replace(/stroke:[^;]+;/g, `stroke:${newStroke};`);
+        }
+        // update inline fill/stroke on every element
+        doc.querySelectorAll("*").forEach(el => {
+            if (newFill) el.setAttribute("fill", newFill);
+            if (newStroke) el.setAttribute("stroke", newStroke);
+        });
+
+        return new XMLSerializer().serializeToString(doc);
+    }
+
+    // swap in the recolored SVG as a data‑uri on the same <img>
+    function redraw(updatedSvg) {
+        const dataUri =
+            "data:image/svg+xml;charset=utf-8," +
+            encodeURIComponent(updatedSvg);
+
+        const imgEl = activeImage.img;
+        imgEl.onload = () => {
+            // restore the canvas‐object’s width/height
+            activeImage.width = origW;
+            activeImage.height = origH;
+            // finally, re‑draw your entire canvas:
+            drawCanvas('Common');
+        };
+        // swap the source (this triggers imgEl.onload)
+        imgEl.src = dataUri;
+        // keep your model in sync
+        activeImage.src = dataUri;
+    }
+
+    // fetch & cache the original SVG once
+    if (activeImage.originalSVG) {
+        redraw(patchSvg(activeImage.originalSVG));
+    } else {
+        fetch(activeImage.src)
+            .then(res => res.text())
+            .then(svgText => {
+                activeImage.originalSVG = svgText;    // cache it
+                redraw(patchSvg(svgText));            // apply your first recolor
+            })
+            .catch(err => console.error("Error fetching SVG:", err));
+    }
+}
+
+
+
+
+
+
+    function applySvgColorChangesOld(svgText) {
         // Update fill attributes
         let updatedSvg = svgText.replace(/fill="[^"]*"/gi, `fill="${newFill}"`);
         // Update stroke attributes (if exists, replace; if not, insert stroke attribute)
@@ -2916,8 +3091,30 @@ function updateSelectedImageColors(newFill, newStroke) {
         };
         updatedImg.src = newUrl;
     }
-}
 
+function applySvgColorChanges(svgText, newFill, newStroke) {
+    // parse it
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgText, "image/svg+xml");
+
+    // 1a) update any <style> rules
+    const styleEl = doc.querySelector("style");
+    if (styleEl) {
+        // replace all fill:…; and stroke:…; in the CSS
+        styleEl.textContent = styleEl.textContent
+            .replace(/fill:[^;]+;/g, `fill:${newFill};`)
+            .replace(/stroke:[^;]+;/g, `stroke:${newStroke};`);
+    }
+
+    // 1b) update inline attributes on every element
+    doc.querySelectorAll("*").forEach(el => {
+        if (newFill) el.setAttribute("fill", newFill);
+        if (newStroke) el.setAttribute("stroke", newStroke);
+    });
+
+    // serialize back to a string
+    return new XMLSerializer().serializeToString(doc);
+}
 const backgroundColorPicker = document.getElementById("favBackgroundcolor");
 function hideBack() {
     const popup = document.getElementById("background_popup");
