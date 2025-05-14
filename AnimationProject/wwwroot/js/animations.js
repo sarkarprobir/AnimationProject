@@ -2898,16 +2898,35 @@ function updateSelectedImageColorsOld(newFill, newStroke) {
         }
     }
 }
-canvas.on('selection:created', e => {
-    if (e.target && e.target.src?.endsWith('.svg')) {
-        activeImage = e.target;
+//canvas.on('selection:created', e => {
+//    if (e.target && e.target.src?.endsWith('.svg')) {
+//        activeImage = e.target;
+//    }
+//});
+//canvas.on('selection:updated', e => {
+//    if (e.target && e.target.src?.endsWith('.svg')) {
+//        activeImage = e.target;
+//    }
+//});
+
+function handleSvgSelection(e) {
+    if (e.selected && e.selected.length > 0) {
+        const target = e.selected[0];
+        if (target && target.src?.endsWith('.svg')) {
+            activeImage = target;
+        }
     }
-});
-canvas.on('selection:updated', e => {
-    if (e.target && e.target.src?.endsWith('.svg')) {
-        activeImage = e.target;
-    }
-});
+}
+
+// Only bind if canvas supports .on (i.e. Fabric.js is in use)
+if (canvas && typeof canvas.on === 'function') {
+    canvas.on('selection:created', handleSvgSelection);
+    canvas.on('selection:updated', handleSvgSelection);
+
+    canvas.on('selection:cleared', () => {
+        activeImage = null;
+    });
+}
 function updateSelectedImageColors(newFill, newStroke) {
     // 1) sanity‑check: do we have an SVG network URL?
     const svgUrl = activeImage.originalSrc || activeImage.src;
