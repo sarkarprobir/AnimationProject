@@ -2414,39 +2414,39 @@ canvas.addEventListener("mousemove", function (e) {
 
             // ─── Middle horizontal: resize width + rewrap ──────────────
            case 'right-middle': {
-                const ctx = canvas.getContext("2d");
-                ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-                const minWidth = getMinCharWidth(ctx, obj.text.replace(/\n/g, ''));
+                //const ctx = canvas.getContext("2d");
+                //ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+                //const minWidth = getMinCharWidth(ctx, obj.text.replace(/\n/g, ''));
 
-                const newW = pos.x - oldL;
-                if (newW >= minWidth) {
-                    obj.boundingWidth = newW;
+                //const newW = pos.x - oldL;
+                //if (newW >= minWidth) {
+                //    obj.boundingWidth = newW;
 
-                    const lines = wrapText(ctx, obj.text.replace(/\n/g, ''), newW - 2 * padding);
-                    const lineHeight = obj.fontSize * 1.2;
-                    obj.boundingHeight = lines.length * lineHeight + 2 * padding;
-                }
-                break;
+                //    const lines = wrapText(ctx, obj.text.replace(/\n/g, ''), newW - 2 * padding);
+                //    const lineHeight = obj.fontSize * 1.2;
+                //    obj.boundingHeight = lines.length * lineHeight + 2 * padding;
+                //}
+                //break;
 }
 
             case 'left-middle': {
-                const ctx = canvas.getContext("2d");
-                ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+                //const ctx = canvas.getContext("2d");
+                //ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
 
-                const minWidth = getMinCharWidth(ctx, obj.text.replace(/\n/g, ''));
+                //const minWidth = getMinCharWidth(ctx, obj.text.replace(/\n/g, ''));
 
-                const oldR = oldL + oldW;
-                const newW = oldR - pos.x;
+                //const oldR = oldL + oldW;
+                //const newW = oldR - pos.x;
 
-                if (newW >= minWidth) {
-                    obj.x = pos.x;
-                    obj.boundingWidth = newW;
+                //if (newW >= minWidth) {
+                //    obj.x = pos.x;
+                //    obj.boundingWidth = newW;
 
-                    const lines = wrapText(ctx, obj.text.replace(/\n/g, ''), newW - 2 * padding);
-                    const lineHeight = obj.fontSize * 1.2;
-                    obj.boundingHeight = lines.length * lineHeight + 2 * padding;
-                }
-                break;
+                //    const lines = wrapText(ctx, obj.text.replace(/\n/g, ''), newW - 2 * padding);
+                //    const lineHeight = obj.fontSize * 1.2;
+                //    obj.boundingHeight = lines.length * lineHeight + 2 * padding;
+                //}
+                //break;
             }
 
 
