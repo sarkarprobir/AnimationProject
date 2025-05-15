@@ -921,7 +921,7 @@ function loadNextJsonForDownload() {
         currentIndexForDownload++; // Move to the next JSON object
 
         // Load next JSON after a delay (adjust the delay as needed)
-        setTimeout(loadNextJsonForDownload, 5000);
+        setTimeout(loadNextJsonForDownload, 7000);
     } else {
         console.log("All JSON objects loaded.");
     }
@@ -1993,8 +1993,8 @@ function animateTextForPublish(animationType, direction, condition, loopCount) {
 
     // Global timing settings (from your selected speeds).
     const inTime = parseFloat(selectedInSpeed) || 4;   // e.g. 4 seconds for all "in"
-    const outTime = parseFloat(selectedOutSpeed) || 3;   // e.g. 3 seconds for all "out"
-    const stayTime = parseFloat(selectedStaySpeed) || 4; // Overall stay time (applied globally if desired)
+    const outTime = parseFloat(selectedOutSpeed) || 4;   // e.g. 3 seconds for all "out"
+    const stayTime = parseFloat(selectedStaySpeed) || 3; // Overall stay time (applied globally if desired)
 
     // ----- TEXT ANIMATION SECTION -----
     // Pre-calculate final positions and offscreen positions.
@@ -2446,8 +2446,8 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
     
     // Global timing settings (from your selected speeds).
     const inTime = parseFloat(selectedInSpeed) || 4;   // e.g. 4 seconds for all "in"
-    const outTime = parseFloat(selectedOutSpeed) || 3;   // e.g. 3 seconds for all "out"
-    const stayTime = parseFloat(selectedStaySpeed) || 4; // Overall stay time (applied globally if desired)
+    const outTime = parseFloat(selectedOutSpeed) || 4;   // e.g. 3 seconds for all "out"
+    const stayTime = parseFloat(selectedStaySpeed) || 3; // Overall stay time (applied globally if desired)
     // ----- TEXT ANIMATION SECTION -----
     // Pre-calculate final positions and offscreen positions.
     textObjects.forEach((obj) => {
@@ -2503,6 +2503,19 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
 
         let tlText = gsap.timeline({
             repeat: loopCount - 1,
+            repeatDelay: 0,               // make sure there's no extra delay between loops
+            onRepeat: () => {
+                // reset _every_ object to its offscreen start position:
+                images.forEach(img => {
+                    img.x = img.startX;       // <-- store these earlier, alongside finalX
+                    img.y = img.startY;
+                });
+                textObjects.forEach(txt => {
+                    txt.x = txt.startX;
+                    txt.y = txt.startY;
+                });
+                drawCanvasForDownload(condition);
+            },
             onUpdate: () => drawCanvasForDownload(condition)
         });
 

@@ -13,6 +13,15 @@ let animationMode = "delaylinear";
 //const stream = canvas.captureStream(7); // Capture at 30 fps
 //const recorder = new MediaRecorder(stream);
 //const chunks = [];
+const HANDLE_SIZE = 12;
+const HANDLE_HITAREA = 20;
+let activeText,      // the text object under manipulation
+    isDraggingText = false,
+    isResizingText = false,
+    activeTextHandle,
+    dragOffsetText = { x: 0, y: 0 };
+const fillInput = document.getElementById('favFillcolor');
+const strokeInput = document.getElementById('favStrockcolor');
 
 let scrollTop = 0;
 let image = null;
@@ -77,24 +86,29 @@ let activeImage = null;
 // Utility: Returns an object (text or image) if the (x,y) falls within its bounding box.
 
 function wrapText(ctx, text, maxWidth) {
-    const words = text.split(" ");
-    const lines = [];
-    let currentLine = words[0];
+    if (ctx.measureText(text).width <= maxWidth) {
+        return [text];
+    }
 
-    for (let i = 1; i < words.length; i++) {
-        const word = words[i];
-        const testLine = currentLine + " " + word;
+    // fallback to character wrapping
+    const lines = [];
+    let currentLine = "";
+
+    for (let char of text) {
+        const testLine = currentLine + char;
         const testWidth = ctx.measureText(testLine).width;
         if (testWidth < maxWidth) {
             currentLine = testLine;
         } else {
-            lines.push(currentLine);
-            currentLine = word;
+            if (currentLine) lines.push(currentLine);
+            currentLine = char;
         }
     }
-    lines.push(currentLine);
+
+    if (currentLine) lines.push(currentLine);
     return lines;
 }
+
 function getMousePos(canvas, evt) {
     const rect = canvas.getBoundingClientRect();
     return {
@@ -189,20 +203,34 @@ function getObjectAt(x, y) {
 //    }
 //    return null;
 //}
-function getHandleUnderMouse(x, y, obj) {
-    // get exactly the same points you draw
-    const handles = getTextResizeHandles(obj);
+function getHandleUnderMouse(mx, my, obj) {
+    const { x: ox, y: oy, boundingWidth: w, boundingHeight: h } = obj;
+    const half = handleSize / 2;
 
-    for (let i = 0; i < handles.length; i++) {
-        const pt = handles[i];
-        const dx = x - pt.x;
-        const dy = y - pt.y;
-        if (dx * dx + dy * dy <= HANDLE_HIT_RADIUS * HANDLE_HIT_RADIUS) {
-            return CORNER_NAMES[i];
+    // define all 8 points in design‐space
+    const pts = [
+        { name: "top-left", x: ox, y: oy },
+        { name: "top-middle", x: ox + w / 2, y: oy },
+        { name: "top-right", x: ox + w, y: oy },
+        { name: "right-middle", x: ox + w, y: oy + h / 2 },
+        { name: "bottom-right", x: ox + w, y: oy + h },
+        { name: "bottom-middle", x: ox + w / 2, y: oy + h },
+        { name: "bottom-left", x: ox, y: oy + h },
+        { name: "left-middle", x: ox, y: oy + h / 2 }
+    ];
+
+    // see if mx,my (in design coords) is within half‐size of any handle
+    for (let pt of pts) {
+        if (
+            mx >= pt.x - half && mx <= pt.x + half &&
+            my >= pt.y - half && my <= pt.y + half
+        ) {
+            return pt.name;
         }
     }
     return null;
 }
+
 //function getHandleUnderMouse(x, y, obj) {
 //    const boxX = obj.x - padding;
 //    const boxY = obj.y - padding;
@@ -605,9 +633,18 @@ function drawCanvas(condition) {
             const x = obj.x;
             const y = obj.y;
             const maxW = obj.boundingWidth - 2 * padding;
-            const lines = obj.text.includes("\n")
-                ? obj.text.split("\n")
-                : wrapText(ctx, obj.text, maxW);
+            //const lines = obj.text.includes("\n")
+            //    ? obj.text.split("\n")
+            //    : wrapText(ctx, obj.text, maxW);
+            let lines;
+            if (obj.boundingWidth < obj.fontSize) {
+                // Force character-by-character vertical layout
+                lines = obj.text.split(''); // Each char on its own line
+            } else {
+                lines = obj.text.includes("\n")
+                    ? obj.text.split("\n")
+                    : wrapText(ctx, obj.text, maxW); // your existing word wrap
+            }
             const lineH = obj.fontSize * 1.2;
             const maxLines = Math.floor((obj.boundingHeight - 2 * padding) / lineH);
             const startY = y + padding;
@@ -657,6 +694,7 @@ function drawCanvas(condition) {
     });
 
     // 5b) Text selections
+    // 5b) Text selections (with 8 handles)
     toPixelSpace(() => {
         textObjects.forEach(obj => {
             if (!obj.selected) return;
@@ -666,7 +704,7 @@ function drawCanvas(condition) {
             const wPx = obj.boundingWidth * scaleX;
             const hPx = obj.boundingHeight * scaleY;
 
-            // rounded‑rect
+            // draw rounded‐rect around text
             drawRoundedRect(
                 ctx,
                 xPx - padding * scaleX,
@@ -676,20 +714,26 @@ function drawCanvas(condition) {
                 5 * scaleX
             );
 
-            // corner handles
+            // all 8 handles: corners + midpoints
             ctx.fillStyle = "#FF7F50";
-            const strokeW = 3;
-            const halfStroke = strokeW / 2;
-            const liftY = 2;   // tweak this to nudge up/down
-            const hs = [
-                { x: xPx + halfStroke, y: yPx + halfStroke - liftY },
-                { x: xPx + wPx - halfStroke, y: yPx + halfStroke - liftY },
-                { x: xPx + halfStroke, y: yPx + hPx - halfStroke - liftY },
-                { x: xPx + wPx - halfStroke, y: yPx + hPx - halfStroke - liftY }
+            const halfW = handleSize / 2;
+            const liftY = 2;   // tweak Y offset if needed
+
+            const handlePoints = [
+                // corners
+                { x: xPx, y: yPx },        // top-left
+                { x: xPx + wPx, y: yPx },        // top-right
+                { x: xPx, y: yPx + hPx },  // bottom-left
+                { x: xPx + wPx, y: yPx + hPx },  // bottom-right
+                // midpoints
+               // { x: xPx + wPx / 2, y: yPx },        // top-middle
+                //{ x: xPx + wPx / 2, y: yPx + hPx },  // bottom-middle
+                { x: xPx, y: yPx + hPx / 2 }, // left-middle
+                { x: xPx + wPx, y: yPx + hPx / 2 }  // right-middle
             ];
-            const halfH = handleSize / 2;
-            hs.forEach(pt => {
-                ctx.fillRect(pt.x - halfH, pt.y - halfH, handleSize, handleSize);
+
+            handlePoints.forEach(pt => {
+                ctx.fillRect(pt.x - halfW, pt.y - halfW - liftY, handleSize, handleSize);
             });
         });
     });
@@ -1022,8 +1066,8 @@ function animateText(direction, condition, loopCount) {
    
     // Global timing settings (from your selected speeds).
     const inTime = parseFloat(selectedInSpeed) || 4;   // e.g. 4 seconds for all "in"
-    const outTime = parseFloat(selectedOutSpeed) || 3;   // e.g. 3 seconds for all "out"
-    const stayTime = parseFloat(selectedStaySpeed) || 4; // Overall stay time (applied globally if desired)
+    const outTime = parseFloat(selectedOutSpeed) || 4;   // e.g. 3 seconds for all "out"
+    const stayTime = parseFloat(selectedStaySpeed) || 3; // Overall stay time (applied globally if desired)
     // ----- TEXT ANIMATION SECTION -----
     // Pre-calculate final positions and offscreen positions.
     textObjects.forEach((obj) => {
@@ -2018,8 +2062,8 @@ function startVideoCapture() {
 function addDefaultText() {
     const newObj = {
         text: "Default Text",
-        x: 50,
-        y: 100,
+        x: 117,
+        y: 300,
         //boundingWidth: 200,
         //boundingHeight: 60,
         selected: false,
@@ -2075,27 +2119,45 @@ function getTextObjectAt(x, y) {
     return null;
 }
 // Returns an array of handle positions for a given image object
-function getImageResizeHandles(imageObj) {
-    const w = imageObj.width * imageObj.scaleX;
-    const h = imageObj.height * imageObj.scaleY;
+
+// 2) Your existing handle generator stays the same:
+function getImageResizeHandles(img) {
+    const sx = img.scaleX || 1, sy = img.scaleY || 1;
+    const w = img.width * sx, h = img.height * sy;
+    const x0 = img.x, y0 = img.y;
+    const x1 = x0 + w, y1 = y0 + h;
+
+    // **these are the exact corner points** in design space
     return [
-        { name: "top-left", x: imageObj.x, y: imageObj.y },
-        { name: "top-right", x: imageObj.x + w, y: imageObj.y },
-        { name: "bottom-left", x: imageObj.x, y: imageObj.y + h },
-        { name: "bottom-right", x: imageObj.x + w, y: imageObj.y + h }
+        { name: "top-left", x: x0, y: y0 },
+        { name: "top-right", x: x1, y: y0 },
+        { name: "bottom-left", x: x0, y: y1 },
+        { name: "bottom-right", x: x1, y: y1 },
     ];
 }
+
+// 3) Swap in this smoother hit‑test:
 function getHandleUnderMouseForImage(imgObj, pos) {
     const handles = getImageResizeHandles(imgObj);
+
     for (let h of handles) {
-        if (Math.abs(pos.x - h.x) < handleSize && Math.abs(pos.y - h.y) < handleSize) {
+        // handle center in design space:
+        const cx = h.x + HANDLE_SIZE / 2;
+        const cy = h.y + HANDLE_SIZE / 2;
+
+        // if mouse is within a circle of radius HANDLE_HIT_RADIUS
+        const dx = pos.x - cx;
+        const dy = pos.y - cy;
+        if (dx * dx + dy * dy <= HANDLE_HIT_RADIUS * HANDLE_HIT_RADIUS) {
             return h.name;
         }
     }
     return null;
 }
+
+
 // Check if the mouse is over an image (returns the image object or null)
-function isMouseOverImage(imageObj, pos) {
+function isMouseOverImageOld(imageObj, pos) {
     const w = imageObj.width * imageObj.scaleX;
     const h = imageObj.height * imageObj.scaleY;
     return (
@@ -2105,89 +2167,128 @@ function isMouseOverImage(imageObj, pos) {
         pos.y <= imageObj.y + h
     );
 }
+function isMouseOverImage(imgObj, pos) {
+    const sx = (typeof imgObj.scaleX === 'number') ? imgObj.scaleX : 1;
+    const sy = (typeof imgObj.scaleY === 'number') ? imgObj.scaleY : 1;
+    const w = imgObj.width * sx;
+    const h = imgObj.height * sy;
 
+    return (
+        pos.x >= imgObj.x &&
+        pos.x <= imgObj.x + w &&
+        pos.y >= imgObj.y &&
+        pos.y <= imgObj.y + h
+    );
+}
 canvas.addEventListener("mousedown", function (e) {
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     const pos = { x: mouseX, y: mouseY };
 
-    // If the text editor is active, ignore this event.
+    // 0) if typing in the text editor, ignore
     if (document.activeElement === textEditor) return;
 
-    // Try to get a text object under the mouse.
-    const obj = getTextObjectAt(mouseX, mouseY);
-    
-    if (obj) {
-        textObjects.forEach(o => o.selected = false);
-        obj.selected = true;
-        // Bring the selected object to the front.
-        //textObjects.splice(textObjects.indexOf(obj), 1);
-        //textObjects.push(obj);
-        currentDrag = obj;
-
-        // Now check if the mouse is over a resize handle for this object.
-        const handle = getHandleUnderMouse(pos.x, pos.y, obj);
-        if (handle) {
-            isResizing = true;
-            activeHandle = handle;
-        } else if (isInsideBox(pos.x, pos.y, obj)) {
-            isDragging = true;
-            dragOffset.x = pos.x - obj.x;
-            dragOffset.y = pos.y - obj.y;
-        }
-    } else {
-        // Check for images under the mouse
-        let imageFound = false;
-        for (let i = images.length - 1; i >= 0; i--) {
-            let imgObj = images[i];
-            // Check if mouse is over any resize handle of this image.
-            let handle = getHandleUnderMouseForImage(imgObj, pos);
-            if (handle) {
-                images.forEach(img => img.selected = false);
-                imgObj.selected = true;
-                activeImage = imgObj;
-                isResizingImage = true;
-                activeImageHandle = handle;
-                imageFound = true;
-                break;
-            }
-            // Otherwise, check if mouse is over the image.
-            if (isMouseOverImage(imgObj, pos)) {
-                images.forEach(img => img.selected = false);
-                imgObj.selected = true;
-                activeImage = imgObj;
-                isDraggingImage = true;
-                dragOffsetImage.x = pos.x - imgObj.x;
-                dragOffsetImage.y = pos.y - imgObj.y;
-                imageFound = true;
-                if (activeImage && activeImage.src && activeImage.src.endsWith('.svg')) {
-                    enableFillColorDiv();
-                    enableStrockColorDiv()
-                }
-                else {
-                    disableFillColorDiv();
-                    disableStrockColorDiv()
-                }
-                break;
-            }
-        }
-        if (!imageFound) {
-            // Deselect both text objects and images if nothing is found.
+    // 1) IMAGE body‐click → drag
+    for (let i = images.length - 1; i >= 0; i--) {
+        const img = images[i];
+        // use the SAME w/h/fallback logic as your handles
+        const sx = (typeof img.scaleX === 'number') ? img.scaleX : 1;
+        const sy = (typeof img.scaleY === 'number') ? img.scaleY : 1;
+        const w = img.width * sx;
+        const h = img.height * sy;
+        if (
+            pos.x >= img.x && pos.x <= img.x + w &&
+            pos.y >= img.y && pos.y <= img.y + h
+        ) {
+            // select image, clear text
             textObjects.forEach(o => o.selected = false);
-            images.forEach(img => img.selected = false);
-            currentDrag = null;
-            activeImage = null;
-            //enableFillColorDiv();
-            //enableStrockColorDiv()
-            disableFillColorDiv();
-            disableStrockColorDiv()
+            activeText = null;
+
+            images.forEach(i2 => i2.selected = false);
+            img.selected = true;
+            activeImage = img;
+            isDraggingImage = true;
+            dragOffsetImage.x = pos.x - img.x;
+            dragOffsetImage.y = pos.y - img.y;
+            enableFillColorDiv();
+            enableStrockColorDiv();
+            //// svg controls
+            //if (img.src?.endsWith('.svg')) {
+            //    enableFillColorDiv();
+            //    enableStrockColorDiv();
+            //} else {
+            //    disableFillColorDiv();
+            //    disableStrockColorDiv();
+            //}
+
+            e.preventDefault();
+            drawCanvas('Common');
+            return;
         }
     }
+
+    // 2) IMAGE handle‐click → resize
+    for (let i = images.length - 1; i >= 0; i--) {
+        const img = images[i];
+        const ih = getHandleUnderMouseForImage(img, pos);
+        if (ih) {
+            // select image, clear text
+            textObjects.forEach(o => o.selected = false);
+            activeText = null;
+
+            images.forEach(i2 => i2.selected = false);
+            img.selected = true;
+            activeImage = img;
+            isResizingImage = true;
+            activeImageHandle = ih;
+
+            e.preventDefault();
+            drawCanvas('Common');
+            return;
+        }
+    }
+
+    // 3) TEXT logic (unchanged)
+    const txt = getTextObjectAt(pos.x, pos.y);
+    if (txt) {
+        textObjects.forEach(o => o.selected = false);
+        txt.selected = true;
+        activeText = txt;
+
+        const th = getHandleUnderMouse(pos.x, pos.y, txt);
+        if (th) {
+            isResizingText = true;
+            activeTextHandle = th;
+            e.preventDefault();
+            drawCanvas('Common');
+            return;
+        }
+        if (isInsideBox(pos.x, pos.y, txt)) {
+            isDraggingText = true;
+            dragOffsetText.x = pos.x - txt.x;
+            dragOffsetText.y = pos.y - txt.y;
+            e.preventDefault();
+            drawCanvas('Common');
+            return;
+        }
+    }
+
+    // 4) nothing matched → clear all
+    textObjects.forEach(o => o.selected = false);
+    images.forEach(i2 => i2.selected = false);
+    activeText = null;
+    activeImage = null;
+    //disableFillColorDiv();
+    //disableStrockColorDiv();
 
     e.preventDefault();
     drawCanvas('Common');
 });
+
+
+
+
 
 function disableFillColorDiv() {
     const divfillColor = document.getElementById("divFillColor");
@@ -2227,141 +2328,161 @@ function adjustFontSizeToFitBox(obj) {
     let maxFontSize = Math.floor(availableHeight); // maximum based on height
     for (let fs = maxFontSize; fs >= 5; fs--) {
         ctx.font = `${fs}px ${obj.fontFamily}`;
-        let lines = wrapText(ctx, obj.text, availableWidth);
+        let lines = wrapText(ctx, obj.text.replace(/\\n/g, '\n'), availableWidth);
         const lineHeight = fs * 1.2;
         if (lines.length * lineHeight <= availableHeight) {
             return fs;
         }
     }
-    return 5; // fallback minimum
+    return 15; // fallback minimum
 }
 
 
 canvas.addEventListener("mousemove", function (e) {
     const pos = getMousePos(canvas, e);
 
-    // --- Text Object Cursor Handling ---
-    if (currentSelectedText()) {
-        const handle = getHandleUnderMouse(pos.x, pos.y, currentSelectedText());
-        if (handle) {
-            canvas.style.cursor = "nwse-resize";
-        } else if (isInsideBox(pos.x, pos.y, currentSelectedText())) {
-            canvas.style.cursor = "move";
-        } else {
-            canvas.style.cursor = "default";
-        }
-    } else {
-        // --- Image Object Cursor Handling ---
-        let imageHandle = null;
-        // Check if mouse is over any image's resize handle
-        for (let imgObj of images) {
-            imageHandle = getHandleUnderMouseForImage(imgObj, pos);
-            if (imageHandle) break;
-        }
-        if (imageHandle) {
-            canvas.style.cursor = "nwse-resize";
-        } else {
-            // Check if mouse is over any image area (if not dragging/resizing)
-            let overImage = false;
-            for (let imgObj of images) {
-                if (isMouseOverImage(imgObj, pos)) {
-                    overImage = true;
-                    break;
+    // --- 1) TEXT RESIZE & DRAG ---
+    if (isResizingText && activeText && activeTextHandle) {
+        const obj = activeText;
+        const oldL = obj.x, oldT = obj.y;
+        const oldW = obj.boundingWidth, oldH = obj.boundingHeight;
+        const oldR = oldL + oldW;
+
+        switch (activeTextHandle) {
+            // ─── Corners: diagonal uniform scale ───────────────────────
+            case 'bottom-right':
+            case 'bottom-left':
+            case 'top-right':
+            case 'top-left': {
+                const ctx = canvas.getContext("2d");
+
+                let dx, dy;
+                if (activeTextHandle === 'bottom-right') {
+                    dx = pos.x - oldL; dy = pos.y - oldT;
+                } else if (activeTextHandle === 'bottom-left') {
+                    dx = oldW - (pos.x - oldL); dy = pos.y - oldT;
+                } else if (activeTextHandle === 'top-right') {
+                    dx = pos.x - oldL; dy = oldH - (pos.y - oldT);
+                } else { // top-left
+                    dx = oldW - (pos.x - oldL);
+                    dy = oldH - (pos.y - oldT);
                 }
+
+                let scale = Math.min(dx / oldW, dy / oldH);
+
+                const minFontSize = 10;
+                const minScale = minFontSize / obj.fontSize;
+                scale = Math.max(scale, minScale);
+
+                const newFontSize = obj.fontSize * scale;
+
+                // Recalculate min bounding box based on new font size
+                ctx.font = `${newFontSize}px ${obj.fontFamily}`;
+                const lines = wrapText(ctx, obj.text.replace(/\n/g, ''), Infinity);
+                const lineHeight = newFontSize * 1.2;
+                const minHeight = lines.length * lineHeight + 2 * padding;
+
+                // Find longest word or character to get minWidth
+                const minWidth = getMinTextWidth(ctx, obj.text.replace(/\n/g, ''));
+
+                const newW = Math.max(oldW * scale, minWidth);
+                const newH = Math.max(oldH * scale, minHeight);
+
+                if (activeTextHandle === 'bottom-right') {
+                    obj.boundingWidth = newW;
+                    obj.boundingHeight = newH;
+                } else if (activeTextHandle === 'bottom-left') {
+                    obj.x = oldL + oldW - newW;
+                    obj.boundingWidth = newW;
+                    obj.boundingHeight = newH;
+                } else if (activeTextHandle === 'top-right') {
+                    obj.y = oldT + oldH - newH;
+                    obj.boundingWidth = newW;
+                    obj.boundingHeight = newH;
+                } else { // top-left
+                    obj.x = oldL + oldW - newW;
+                    obj.y = oldT + oldH - newH;
+                    obj.boundingWidth = newW;
+                    obj.boundingHeight = newH;
+                }
+
+                obj.fontSize = newFontSize;
+                break;
             }
-            if (overImage && !isDraggingImage && !isResizingImage) {
-                canvas.style.cursor = "move";
-            } else {
-                canvas.style.cursor = "default";
+
+
+
+
+
+            // ─── Middle horizontal: resize width + rewrap ──────────────
+           case 'right-middle': {
+                //const ctx = canvas.getContext("2d");
+                //ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+                //const minWidth = getMinCharWidth(ctx, obj.text.replace(/\n/g, ''));
+
+                //const newW = pos.x - oldL;
+                //if (newW >= minWidth) {
+                //    obj.boundingWidth = newW;
+
+                //    const lines = wrapText(ctx, obj.text.replace(/\n/g, ''), newW - 2 * padding);
+                //    const lineHeight = obj.fontSize * 1.2;
+                //    obj.boundingHeight = lines.length * lineHeight + 2 * padding;
+                //}
+                //break;
+}
+
+            case 'left-middle': {
+                //const ctx = canvas.getContext("2d");
+                //ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+
+                //const minWidth = getMinCharWidth(ctx, obj.text.replace(/\n/g, ''));
+
+                //const oldR = oldL + oldW;
+                //const newW = oldR - pos.x;
+
+                //if (newW >= minWidth) {
+                //    obj.x = pos.x;
+                //    obj.boundingWidth = newW;
+
+                //    const lines = wrapText(ctx, obj.text.replace(/\n/g, ''), newW - 2 * padding);
+                //    const lineHeight = obj.fontSize * 1.2;
+                //    obj.boundingHeight = lines.length * lineHeight + 2 * padding;
+                //}
+                //break;
             }
-        }
-    }
-    // --- Text Resizing Logic ---
-    if (isResizing && currentSelectedText() && activeHandle) {
-        const obj = currentSelectedText();
-        const oldLeft = obj.x;
-        const oldTop = obj.y;
-        const oldRight = obj.x + obj.boundingWidth;
-        const oldBottom = obj.y + obj.boundingHeight;
 
-        ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-        const maxTextWidth = obj.boundingWidth - 2 * padding;
-        let lines = wrapText(ctx, obj.text, maxTextWidth);
-        let widestLine = Math.max(...lines.map(line => ctx.measureText(line).width)) + 2 * padding;
-        let textHeight = lines.length * obj.fontSize * 1.2 + 2 * padding;
 
-        switch (activeHandle) {
-            case "top-left":
-                obj.x = pos.x;
-                obj.y = pos.y;
-                obj.boundingWidth = oldRight - pos.x;
-                obj.boundingHeight = oldBottom - pos.y;
-                obj.fontSize = adjustFontSizeToFitBox(obj);
-                break;
-            case "top-middle":
-                if (oldBottom - pos.y >= textHeight) {
-                    obj.y = pos.y;
-                    obj.boundingHeight = oldBottom - pos.y;
-                }
-                break;
-            case "top-right":
-                obj.y = pos.y;
-                obj.boundingWidth = pos.x - oldLeft;
-                obj.boundingHeight = oldBottom - pos.y;
-                obj.fontSize = adjustFontSizeToFitBox(obj);
-                break;
-            case "right-middle":
-                if (pos.x - oldLeft >= widestLine) {
-                    obj.boundingWidth = pos.x - oldLeft;
-                }
-                break;
-            case "bottom-right":
-                obj.boundingWidth = pos.x - oldLeft;
-                obj.boundingHeight = pos.y - oldTop;
-                obj.fontSize = adjustFontSizeToFitBox(obj);
-                break;
-            case "bottom-middle":
-                if (pos.y - oldTop >= textHeight) {
-                    obj.boundingHeight = pos.y - oldTop;
-                }
-                break;
-            case "bottom-left":
-                obj.x = pos.x;
-                obj.boundingWidth = oldRight - pos.x;
-                obj.boundingHeight = pos.y - oldTop;
-                obj.fontSize = adjustFontSizeToFitBox(obj);
-                break;
-            case "left-middle":
-                if (oldRight - pos.x >= widestLine) {
-                    obj.x = pos.x;
-                    obj.boundingWidth = oldRight - pos.x;
-                }
+
+            // ─── Vertical middle: no-op (or add logic) ────────────────
+            case 'top-middle':
+            case 'bottom-middle':
+                // nothing
                 break;
         }
-        AfterDrag_ObjectSize = adjustFontSizeToFitBox(obj);
-        if (obj.boundingWidth < widestLine) obj.boundingWidth = widestLine;
-        if (obj.boundingHeight < textHeight) obj.boundingHeight = textHeight;
 
-        drawCanvas("Common");
+        drawCanvas('Common');
+        return; // skip drag + image logic
     }
 
-    if (isDragging && currentSelectedText()) {
-        const obj = currentSelectedText();
-        obj.x = pos.x - dragOffset.x;
-        obj.y = pos.y - dragOffset.y;
-        drawCanvas("Common");
+
+    // --- 2) TEXT DRAG ───────────────────────────────────────────────
+    if (isDraggingText && activeText) {
+        activeText.x = pos.x - dragOffsetText.x;
+        activeText.y = pos.y - dragOffsetText.y;
+        drawCanvas('Common');
+        return;
     }
 
-    // --- Image Drag/Resize Logic ---
+    // --- 3) IMAGE DRAG ─────────────────────────────────────────────
     if (isDraggingImage && activeImage) {
         activeImage.x = pos.x - dragOffsetImage.x;
         activeImage.y = pos.y - dragOffsetImage.y;
         drawCanvas("Common");
     }
 
+    // --- 4) IMAGE RESIZE ───────────────────────────────────────────
     if (isResizingImage && activeImage && activeImageHandle) {
         let newWidth, newHeight;
-
         switch (activeImageHandle) {
             case "top-left":
                 newWidth = activeImage.width * activeImage.scaleX + (activeImage.x - pos.x);
@@ -2384,14 +2505,34 @@ canvas.addEventListener("mousemove", function (e) {
                 newHeight = pos.y - activeImage.y;
                 break;
         }
-
         if (newWidth > MIN_SIZE) activeImage.scaleX = newWidth / activeImage.width;
         if (newHeight > MIN_SIZE) activeImage.scaleY = newHeight / activeImage.height;
-
         drawCanvas("Common");
     }
 });
-function getHandleUnderMouseForImage(imgObj, pos) {
+
+function getMinTextWidth(ctx, text) {
+    let minWidth = 0;
+
+    // Use individual characters to avoid line-break surprises
+    for (const ch of text) {
+        const width = ctx.measureText(ch).width;
+        if (width > minWidth) minWidth = width;
+    }
+
+    return minWidth + 2 * padding; // include padding
+}
+
+function getMinCharWidth(ctx, text) {
+    let maxCharWidth = 0;
+    for (let char of text) {
+        const width = ctx.measureText(char).width;
+        if (width > maxCharWidth) maxCharWidth = width;
+    }
+    return maxCharWidth + 2 * padding;
+}
+
+function getHandleUnderMouseForImageOld(imgObj, pos) {
     const handles = getImageResizeHandles(imgObj); // returns an array of handles with {name, x, y}
     for (let h of handles) {
         if (
@@ -2407,7 +2548,6 @@ function getHandleUnderMouseForImage(imgObj, pos) {
 
 
 
-
 canvas.addEventListener("mouseup", function () {
     currentDrag = null;
     isResizing = false;
@@ -2416,6 +2556,11 @@ canvas.addEventListener("mouseup", function () {
 
     isDraggingImage = false;
     isResizingImage = false;
+
+    isResizingText = false;
+    isDraggingText = false;
+    activeTextHandle = null;
+    activeText = null;
 });
 
 canvas.addEventListener("mouseleave", function () {
@@ -2542,76 +2687,101 @@ canvasContainer.addEventListener("dblclick", function (e) {
         textEditor.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.3)";
 
         // Set the current text and show the editor.
-        textEditor.value = obj.text;
+        textEditor.value = obj.text.replace(/\\n/g, "\n");
         textEditor.style.display = "block";
         textEditor.focus();
 
         // Finish editing when Enter is pressed (unless using Shift+Enter for a new line) or on blur.
-        function finishEditing() {
        
-            let editedText = textEditor.value;
+        function finishEditing1() {
+            const editedText = textEditor.value;
             obj.editing = false;
             textEditor.style.display = "none";
 
             const ctx = canvas.getContext("2d");
-
-            // 1) Lock in the box width you already have:
             const initialBoxWidth = obj.boundingWidth;
             const maxTextWidth = initialBoxWidth - 2 * padding;
-
-            // 2) Start with the box's current font size:
-            let fontSize = obj.fontSize;//AfterDrag_ObjectSize ?? obj.fontSize;
+            let fontSize = obj.fontSize;
             ctx.font = `${fontSize}px ${obj.fontFamily}`;
 
-            // 3) If text is one line and too wide, shrink font until it fits:
+            // wrap on any real new-line
+            let lines;
             if (!editedText.includes("\n")) {
-                let width = ctx.measureText(editedText).width;
-                while (width > maxTextWidth && fontSize > 5) {
+                let w = ctx.measureText(editedText).width;
+                while (w > maxTextWidth && fontSize > 15) {
                     fontSize--;
                     ctx.font = `${fontSize}px ${obj.fontFamily}`;
-                    width = ctx.measureText(editedText).width;
+                    w = ctx.measureText(editedText).width;
                 }
-                // wrap after we have the final font size
-                var lines = wrapText(ctx, editedText, maxTextWidth);
+                lines = wrapText(ctx, editedText, maxTextWidth);
             } else {
-                // multiline edit: split then wrap each line to max width
-                const rawLines = editedText.split("\n");
-                let linesAcc = [];
-                rawLines.forEach(ln => {
-                    linesAcc.push(...wrapText(ctx, ln, maxTextWidth));
-                });
-                var lines = linesAcc;
+                lines = editedText.split("\n")
+                    .flatMap(ln => wrapText(ctx, ln, maxTextWidth));
             }
 
-            // 4) Update fontSize on the object
             obj.fontSize = fontSize;
-
-            // 5) Compute new box height based on wrapped lines
-            const lineHeight = fontSize * 1.2;
-            const newTextHeight = lines.length * lineHeight;
-            obj.boundingHeight = newTextHeight + 2 * padding;
-
-            // 6) Save the (possibly wrapped) text back into the object
+            const lineH = fontSize * 1.2;
+            obj.boundingHeight = lines.length * lineH + 2 * padding;
             obj.text = lines.join("\n");
 
-            // 7) Finally redraw
             drawCanvas('Common');
+            textEditor.removeEventListener("blur", finishEditing);
+        }
+        function finishEditing() {
+            const editedText = textEditor.value;
+            obj.editing = false;
+            textEditor.style.display = "none";
 
-            // Remove listeners
-            textEditor.removeEventListener("keydown", onKeyDown);
+            const ctx = canvas.getContext("2d");
+            const initialBoxWidth = obj.boundingWidth;
+            const maxTextWidth = initialBoxWidth - 2 * padding;
+            let fontSize = obj.fontSize;
+            ctx.font = `${fontSize}px ${obj.fontFamily}`;
+
+            // wrap on any real new-line
+            let lines;
+            if (!editedText.includes("\n")) {
+                let w = ctx.measureText(editedText).width;
+                while (w > maxTextWidth && fontSize > 15) {
+                    fontSize--;
+                    ctx.font = `${fontSize}px ${obj.fontFamily}`;
+                    w = ctx.measureText(editedText).width;
+                }
+                lines = wrapText(ctx, editedText, maxTextWidth);
+            } else {
+                lines = editedText
+                    .split("\n")
+                    .flatMap(ln => wrapText(ctx, ln, maxTextWidth));
+            }
+
+            // update fontSize & text
+            obj.fontSize = fontSize;
+            obj.text = lines.join("\n");
+
+            // —— NEW: recompute width to fit the text —— 
+            // measure each line and take the max
+            const lineWidths = lines.map(line => ctx.measureText(line).width);
+            const textBlockWidth = Math.max(...lineWidths);
+            // add padding on both sides
+            obj.boundingWidth = textBlockWidth + 2 * padding;
+
+            // recompute height
+            const lineH = fontSize * 1.2;
+            obj.boundingHeight = lines.length * lineH + 2 * padding;
+
+            drawCanvas('Common');
             textEditor.removeEventListener("blur", finishEditing);
         }
 
-        
 
-        function onKeyDown(e) {
-            if (e.key === "Enter" && !e.shiftKey) {
-                finishEditing();
-            }
-        }
+        //function onKeyDown(e) {
+        //    if (e.key === "Enter" && !e.shiftKey) {
+        //        finishEditing();
+        //    }
+        //}
 
 
-        textEditor.addEventListener("keydown", onKeyDown);
+       // textEditor.addEventListener("keydown", onKeyDown);
         textEditor.addEventListener("blur", finishEditing);
     }
 });
@@ -2627,11 +2797,11 @@ textEditor.addEventListener("blur", function () {
     }
 });
 
-textEditor.addEventListener("keydown", function (e) {
-    if (e.key === "Enter") {
-        textEditor.blur();
-    }
-});
+//textEditor.addEventListener("keydown", function (e) {
+//    if (e.key === "Enter") {
+//        textEditor.blur();
+//    }
+//});
 
 
 
@@ -2646,15 +2816,20 @@ function ChangeColor() {
     }
     drawCanvas('ChangeStyle');
 }
+
 function ChangeFillColor() {
-    const fillColorPicker = document.getElementById("favFillcolor");
-    $("#hdnfillColor").val(fillColorPicker.value);
-    updateSelectedImageColors($("#hdnfillColor").val(), $("#hdnStrockColor").val());
+    if (activeImage) {
+        const fillColorPicker = document.getElementById("favFillcolor");
+        $("#hdnfillColor").val(fillColorPicker.value);
+        updateSelectedImageColors($("#hdnfillColor").val(), $("#hdnStrockColor").val());
+    }
 }
 function ChangeStrockColor() {
-    const strockColorPicker = document.getElementById("favStrockcolor");
-    $("#hdnStrockColor").val(strockColorPicker.value);
-    updateSelectedImageColors($("#hdnfillColor").val(), $("#hdnStrockColor").val());
+    if (activeImage) {
+        const strockColorPicker = document.getElementById("favStrockcolor");
+        $("#hdnStrockColor").val(strockColorPicker.value);
+        updateSelectedImageColors($("#hdnfillColor").val(), $("#hdnStrockColor").val());
+    }
 }
 function TabShowHide(type) {
     if (type === 'In') {
@@ -2753,7 +2928,7 @@ canvas.addEventListener("drop", function (e) {
 });
 
 
-function updateSelectedImageColors(newFill, newStroke) {
+function updateSelectedImageColorsOld(newFill, newStroke) {
     if (activeImage && activeImage.src && activeImage.src.endsWith('.svg')) {
         if (activeImage.originalSVG) {
             applySvgColorChanges(activeImage.originalSVG);
@@ -2767,8 +2942,201 @@ function updateSelectedImageColors(newFill, newStroke) {
                 .catch(err => console.error("Error fetching SVG:", err));
         }
     }
+}
+//canvas.on('selection:created', e => {
+//    if (e.target && e.target.src?.endsWith('.svg')) {
+//        activeImage = e.target;
+//    }
+//});
+//canvas.on('selection:updated', e => {
+//    if (e.target && e.target.src?.endsWith('.svg')) {
+//        activeImage = e.target;
+//    }
+//});
 
-    function applySvgColorChanges(svgText) {
+function handleSvgSelection(e) {
+    if (e.selected && e.selected.length > 0) {
+        const target = e.selected[0];
+        if (target && target.src?.endsWith('.svg')) {
+            activeImage = target;
+        }
+    }
+}
+
+// Only bind if canvas supports .on (i.e. Fabric.js is in use)
+if (canvas && typeof canvas.on === 'function') {
+    canvas.on('selection:created', handleSvgSelection);
+    canvas.on('selection:updated', handleSvgSelection);
+
+    canvas.on('selection:cleared', () => {
+        activeImage = null;
+    });
+}
+function updateSelectedImageColors(newFill, newStroke) {
+    // 1) sanity‑check: do we have an SVG network URL?
+    const svgUrl = activeImage.originalSrc || activeImage.src;
+    //if (!activeImage || !svgUrl?.endsWith('.svg') || !activeImage.img) {
+    //    console.warn("activeImage is not an SVG image");
+    //    return;
+    //}
+    const isSvgFile = svgUrl.toLowerCase().endsWith('.svg');
+    const isDataSvg = svgUrl.startsWith('data:image/svg+xml');
+    if (!activeImage || (!isSvgFile && !isDataSvg) || !activeImage.img) {
+        console.warn("activeImage is not an SVG image");
+        return;
+    }
+
+    // 2) store the network URL once
+    if (!activeImage.originalSrc) {
+        activeImage.originalSrc = activeImage.src;
+    }
+
+    // 3) remember its displayed size
+    const origW = activeImage.width;
+    const origH = activeImage.height;
+
+    // 4) core SVG patcher
+    function patchSvg(svgText) {
+        const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+
+        // update <style> block
+        const styleEl = doc.querySelector("style");
+        if (styleEl) {
+            styleEl.textContent = styleEl.textContent
+                .replace(/fill:[^;]+;/g, `fill:${newFill};`)
+                .replace(/stroke:[^;]+;/g, `stroke:${newStroke};`);
+        }
+
+        // update inline fill/stroke on every element
+        doc.querySelectorAll("*").forEach(el => {
+            if (newFill) el.setAttribute("fill", newFill);
+            if (newStroke) el.setAttribute("stroke", newStroke);
+        });
+
+        return new XMLSerializer().serializeToString(doc);
+    }
+
+    // 5) redraw into the existing <img> on the canvas
+    //function redraw(updatedSvg) {
+    //    const dataUri = "data:image/svg+xml;charset=utf-8,"
+    //        + encodeURIComponent(updatedSvg);
+
+    //    const imgEl = activeImage.img;
+    //    imgEl.onload = () => {
+    //        // restore size & re‑draw your canvas
+    //        activeImage.width = origW;
+    //        activeImage.height = origH;
+    //        drawCanvas('Common');    // your custom full‐canvas render function
+    //    };
+    //    imgEl.src = dataUri;   // swap in the recolored SVG
+    //}
+    function redraw(updatedSvg) {
+        const dataUri = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(updatedSvg);
+        const imgEl = activeImage.img;
+
+        imgEl.onload = () => {
+            // restore display size
+            activeImage.width = origW;
+            activeImage.height = origH;
+            // **important**: update your model’s src
+            activeImage.src = dataUri;
+            // now redraw the canvas
+            drawCanvas('Common');
+        };
+
+        // swap the image URL
+        imgEl.src = dataUri;
+    }
+
+    // 6) fetch & cache original SVG once, then always patch+redraw
+    if (activeImage.originalSVG) {
+        redraw(patchSvg(activeImage.originalSVG));
+    } else {
+        fetch(svgUrl)
+            .then(res => res.text())
+            .then(svgText => {
+                activeImage.originalSVG = svgText;   // cache raw SVG
+                redraw(patchSvg(svgText));           // apply first recolor
+            })
+            .catch(err => console.error("Error fetching SVG:", err));
+    }
+}
+
+function updateSelectedImageColorsOld(newFill, newStroke) {
+    // 1) sanity check
+    if (
+        !activeImage ||
+        !activeImage.src?.endsWith(".svg") ||
+        !activeImage.img        // your HTMLImageElement
+    ) {
+        console.warn("activeImage is not an SVG image on canvas");
+        return;
+    }
+
+    // remember its displayed size
+    const origW = activeImage.width;
+    const origH = activeImage.height;
+
+    // parse + patch the raw SVG text
+    function patchSvg(svgText) {
+        const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+
+        // update <style> block if present
+        const styleEl = doc.querySelector("style");
+        if (styleEl) {
+            styleEl.textContent = styleEl.textContent
+                .replace(/fill:[^;]+;/g, `fill:${newFill};`)
+                .replace(/stroke:[^;]+;/g, `stroke:${newStroke};`);
+        }
+        // update inline fill/stroke on every element
+        doc.querySelectorAll("*").forEach(el => {
+            if (newFill) el.setAttribute("fill", newFill);
+            if (newStroke) el.setAttribute("stroke", newStroke);
+        });
+
+        return new XMLSerializer().serializeToString(doc);
+    }
+
+    // swap in the recolored SVG as a data‑uri on the same <img>
+    function redraw(updatedSvg) {
+        const dataUri =
+            "data:image/svg+xml;charset=utf-8," +
+            encodeURIComponent(updatedSvg);
+
+        const imgEl = activeImage.img;
+        imgEl.onload = () => {
+            // restore the canvas‐object’s width/height
+            activeImage.width = origW;
+            activeImage.height = origH;
+            // finally, re‑draw your entire canvas:
+            drawCanvas('Common');
+        };
+        // swap the source (this triggers imgEl.onload)
+        imgEl.src = dataUri;
+        // keep your model in sync
+        activeImage.src = dataUri;
+    }
+
+    // fetch & cache the original SVG once
+    if (activeImage.originalSVG) {
+        redraw(patchSvg(activeImage.originalSVG));
+    } else {
+        fetch(activeImage.src)
+            .then(res => res.text())
+            .then(svgText => {
+                activeImage.originalSVG = svgText;    // cache it
+                redraw(patchSvg(svgText));            // apply your first recolor
+            })
+            .catch(err => console.error("Error fetching SVG:", err));
+    }
+}
+
+
+
+
+
+
+    function applySvgColorChangesOld(svgText) {
         // Update fill attributes
         let updatedSvg = svgText.replace(/fill="[^"]*"/gi, `fill="${newFill}"`);
         // Update stroke attributes (if exists, replace; if not, insert stroke attribute)
@@ -2793,8 +3161,30 @@ function updateSelectedImageColors(newFill, newStroke) {
         };
         updatedImg.src = newUrl;
     }
-}
 
+function applySvgColorChanges(svgText, newFill, newStroke) {
+    // parse it
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgText, "image/svg+xml");
+
+    // 1a) update any <style> rules
+    const styleEl = doc.querySelector("style");
+    if (styleEl) {
+        // replace all fill:…; and stroke:…; in the CSS
+        styleEl.textContent = styleEl.textContent
+            .replace(/fill:[^;]+;/g, `fill:${newFill};`)
+            .replace(/stroke:[^;]+;/g, `stroke:${newStroke};`);
+    }
+
+    // 1b) update inline attributes on every element
+    doc.querySelectorAll("*").forEach(el => {
+        if (newFill) el.setAttribute("fill", newFill);
+        if (newStroke) el.setAttribute("stroke", newStroke);
+    });
+
+    // serialize back to a string
+    return new XMLSerializer().serializeToString(doc);
+}
 const backgroundColorPicker = document.getElementById("favBackgroundcolor");
 function hideBack() {
     const popup = document.getElementById("background_popup");
