@@ -2062,8 +2062,8 @@ function startVideoCapture() {
 function addDefaultText() {
     const newObj = {
         text: "Default Text",
-        x: 50,
-        y: 100,
+        x: 117,
+        y: 300,
         //boundingWidth: 200,
         //boundingHeight: 60,
         selected: false,
@@ -2975,7 +2975,13 @@ if (canvas && typeof canvas.on === 'function') {
 function updateSelectedImageColors(newFill, newStroke) {
     // 1) sanity‑check: do we have an SVG network URL?
     const svgUrl = activeImage.originalSrc || activeImage.src;
-    if (!activeImage || !svgUrl?.endsWith('.svg') || !activeImage.img) {
+    //if (!activeImage || !svgUrl?.endsWith('.svg') || !activeImage.img) {
+    //    console.warn("activeImage is not an SVG image");
+    //    return;
+    //}
+    const isSvgFile = svgUrl.toLowerCase().endsWith('.svg');
+    const isDataSvg = svgUrl.startsWith('data:image/svg+xml');
+    if (!activeImage || (!isSvgFile && !isDataSvg) || !activeImage.img) {
         console.warn("activeImage is not an SVG image");
         return;
     }
