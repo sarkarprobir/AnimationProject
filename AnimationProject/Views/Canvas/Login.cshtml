@@ -23,6 +23,7 @@
 <script src='https://code.jquery.com/jquery-3.2.1.slim.min.js'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js'></script>
 <script src="~/js/wow.min.js"></script>
+
 <style>
     /* Reset default styles */
     * {
@@ -88,6 +89,29 @@
             background-color: #3e2ee0;
             color: #fff !important;
         }
+    /*modal design*/
+    .saving_modal {
+        height: fit-content !important;
+        border-radius: 5px !important;
+    }
+
+    .user-editable-modal .modal.fade .modal-dialog {
+        transform: translate(0, -175px) !important;
+        width: 18rem;
+    }
+
+    .ok_button {
+        background-color: #4e43e1 !important;
+    }
+
+    .btn-save {
+        color: #fff;
+        background-color: #4e43e1;
+        border-color: transparent;
+        width: 80px;
+        border-radius: 5px;
+        font-size: 14px;
+    }
 
 </style>
 <script>
@@ -117,7 +141,8 @@
              window.location.href = window.location.origin+ '/Canvas/VerticalIndex?openModal=true';
             // You can redirect or perform other actions here
         } else {
-            alert("Invalid credentials!");
+            // alert("Invalid credentials!");
+             MessageShow('', 'Invalid credentials!', 'error');
             // Clear password field for retry
             document.getElementById('passwordInput').value = '';
         }
@@ -134,3 +159,26 @@
         <button type="button" onclick="validateCredentials();"  class="btn">Continue</button>
     </div>
 </div>
+
+<div class="user-editable-modal ">
+    <div class="modal fade" id="popUpAlerts" role="dialog" style="opacity: 1; background: rgb(36 7 136 / 49%); z-index: 9999;">
+        <div class="modal-dialog">
+            <div class="modal-content alert-modalcontent saving_modal">
+                <div class="modal-body bordernone">
+                    <div class="">
+                        <div class="">
+                            <div id="pMessageShow">
+                            </div>
+                            <div class="clearfix"></div>
+                            <div class="mt-2 text-center" id="dvButtonShow">
+                            </div>
+                            <div class="text-center" id="dvButtonShowok">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="~/js/Common/AlertMessage.js"></script>
