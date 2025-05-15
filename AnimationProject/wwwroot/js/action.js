@@ -2503,6 +2503,19 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
 
         let tlText = gsap.timeline({
             repeat: loopCount - 1,
+            repeatDelay: 0,               // make sure there's no extra delay between loops
+            onRepeat: () => {
+                // reset _every_ object to its offscreen start position:
+                images.forEach(img => {
+                    img.x = img.startX;       // <-- store these earlier, alongside finalX
+                    img.y = img.startY;
+                });
+                textObjects.forEach(txt => {
+                    txt.x = txt.startX;
+                    txt.y = txt.startY;
+                });
+                drawCanvasForDownload(condition);
+            },
             onUpdate: () => drawCanvasForDownload(condition)
         });
 
