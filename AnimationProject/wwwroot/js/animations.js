@@ -2063,7 +2063,7 @@ function addDefaultText() {
     const newObj = {
         text: "Default Text",
         x: 117,
-        y: 300,
+        y: 100,
         //boundingWidth: 200,
         //boundingHeight: 60,
         selected: false,
