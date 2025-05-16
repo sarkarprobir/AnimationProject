@@ -2094,6 +2094,7 @@ function addDefaultText() {
     newObj.selected = true;
     textObjects.push(newObj);
     drawCanvas('Common');
+    $("#opengl_popup").hide();
 }
 
 // Utility: Check if point (x, y) is within the bounding box of a text object
@@ -2339,6 +2340,7 @@ function adjustFontSizeToFitBox(obj) {
 
 
 canvas.addEventListener("mousemove", function (e) {
+   
     const pos = getMousePos(canvas, e);
 
     // --- 1) TEXT RESIZE & DRAG ---
@@ -2347,7 +2349,6 @@ canvas.addEventListener("mousemove", function (e) {
         const oldL = obj.x, oldT = obj.y;
         const oldW = obj.boundingWidth, oldH = obj.boundingHeight;
         const oldR = oldL + oldW;
-
         switch (activeTextHandle) {
             // ─── Corners: diagonal uniform scale ───────────────────────
             case 'bottom-right':
@@ -2547,8 +2548,33 @@ function getHandleUnderMouseForImageOld(imgObj, pos) {
 
 
 
+function onBoxResizeEnd(obj) {
+    const ctx = canvas.getContext('2d');
+    const padding = obj.padding || 10;
+    const fontSize = obj.fontSize;
+    ctx.font = `${fontSize}px ${obj.fontFamily}`;
+
+    // Use the text you already committed
+    const lines = obj.text.split('\n');
+
+    // Measure how big that text block is now
+    const blockW = Math.max(...lines.map(l => ctx.measureText(l).width));
+    const blockH = lines.length * fontSize * 1.2;
+
+    // Snap the box to exactly wrap that text
+    obj.boundingWidth = blockW + 2 * padding;
+    obj.boundingHeight = blockH + 2 * padding;
+
+    // And put it back on screen
+    drawCanvas('Common');
+}
 
 canvas.addEventListener("mouseup", function () {
+    if (isResizingText && activeText && activeTextHandle) {
+        onBoxResizeEnd(activeText);
+    }
+
+
     currentDrag = null;
     isResizing = false;
     isDragging = false;
@@ -2690,88 +2716,15 @@ canvasContainer.addEventListener("dblclick", function (e) {
         textEditor.value = obj.text.replace(/\\n/g, "\n");
         textEditor.style.display = "block";
         textEditor.focus();
+        //canvas.focus();
+        //textEditor.setSelectionRange(0, 0);
+        setTimeout(() => {
+            textEditor.setSelectionRange(0, 0);
+        }, 1000);
 
         // Finish editing when Enter is pressed (unless using Shift+Enter for a new line) or on blur.
        
-        function finishEditing1() {
-            const editedText = textEditor.value;
-            obj.editing = false;
-            textEditor.style.display = "none";
 
-            const ctx = canvas.getContext("2d");
-            const initialBoxWidth = obj.boundingWidth;
-            const maxTextWidth = initialBoxWidth - 2 * padding;
-            let fontSize = obj.fontSize;
-            ctx.font = `${fontSize}px ${obj.fontFamily}`;
-
-            // wrap on any real new-line
-            let lines;
-            if (!editedText.includes("\n")) {
-                let w = ctx.measureText(editedText).width;
-                while (w > maxTextWidth && fontSize > 15) {
-                    fontSize--;
-                    ctx.font = `${fontSize}px ${obj.fontFamily}`;
-                    w = ctx.measureText(editedText).width;
-                }
-                lines = wrapText(ctx, editedText, maxTextWidth);
-            } else {
-                lines = editedText.split("\n")
-                    .flatMap(ln => wrapText(ctx, ln, maxTextWidth));
-            }
-
-            obj.fontSize = fontSize;
-            const lineH = fontSize * 1.2;
-            obj.boundingHeight = lines.length * lineH + 2 * padding;
-            obj.text = lines.join("\n");
-
-            drawCanvas('Common');
-            textEditor.removeEventListener("blur", finishEditing);
-        }
-        function finishEditing2() {
-            const editedText = textEditor.value;
-            obj.editing = false;
-            textEditor.style.display = "none";
-
-            const ctx = canvas.getContext("2d");
-            const initialBoxWidth = obj.boundingWidth;
-            const maxTextWidth = initialBoxWidth - 2 * padding;
-            let fontSize = obj.fontSize;
-            ctx.font = `${fontSize}px ${obj.fontFamily}`;
-
-            // wrap on any real new-line
-            let lines;
-            if (!editedText.includes("\n")) {
-                let w = ctx.measureText(editedText).width;
-                while (w > maxTextWidth && fontSize > 15) {
-                    fontSize--;
-                    ctx.font = `${fontSize}px ${obj.fontFamily}`;
-                    w = ctx.measureText(editedText).width;
-                }
-                lines = wrapText(ctx, editedText, maxTextWidth);
-            } else {
-                lines = editedText
-                    .split("\n")
-                    .flatMap(ln => wrapText(ctx, ln, maxTextWidth));
-            }
-
-            // update fontSize & text
-            obj.fontSize = fontSize;
-            obj.text = lines.join("\n");
-
-            // —— NEW: recompute width to fit the text —— 
-            // measure each line and take the max
-            const lineWidths = lines.map(line => ctx.measureText(line).width);
-            const textBlockWidth = Math.max(...lineWidths);
-            // add padding on both sides
-            obj.boundingWidth = textBlockWidth + 2 * padding;
-
-            // recompute height
-            const lineH = fontSize * 1.2;
-            obj.boundingHeight = lines.length * lineH + 2 * padding;
-
-            drawCanvas('Common');
-            textEditor.removeEventListener("blur", finishEditing);
-        }
         function finishEditing() {
             const editedText = textEditor.value;
             obj.editing = false;
