@@ -2720,7 +2720,7 @@ canvasContainer.addEventListener("dblclick", function (e) {
         //textEditor.setSelectionRange(0, 0);
         setTimeout(() => {
             textEditor.setSelectionRange(0, 0);
-        }, 1000);
+        }, 2000);
 
         // Finish editing when Enter is pressed (unless using Shift+Enter for a new line) or on blur.
        
