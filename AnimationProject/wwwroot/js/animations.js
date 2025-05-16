@@ -2063,7 +2063,7 @@ function addDefaultText() {
     const newObj = {
         text: "Default Text",
         x: 117,
-        y: 300,
+        y: 100,
         //boundingWidth: 200,
         //boundingHeight: 60,
         selected: false,
@@ -2727,7 +2727,7 @@ canvasContainer.addEventListener("dblclick", function (e) {
             drawCanvas('Common');
             textEditor.removeEventListener("blur", finishEditing);
         }
-        function finishEditing() {
+        function finishEditing2() {
             const editedText = textEditor.value;
             obj.editing = false;
             textEditor.style.display = "none";
@@ -2768,6 +2768,34 @@ canvasContainer.addEventListener("dblclick", function (e) {
             // recompute height
             const lineH = fontSize * 1.2;
             obj.boundingHeight = lines.length * lineH + 2 * padding;
+
+            drawCanvas('Common');
+            textEditor.removeEventListener("blur", finishEditing);
+        }
+        function finishEditing() {
+            const editedText = textEditor.value;
+            obj.editing = false;
+            textEditor.style.display = "none";
+
+            const ctx = canvas.getContext("2d");
+            const padding = obj.padding || 10; // default padding if not set on obj
+            const fontSize = obj.fontSize;
+            ctx.font = `${fontSize}px ${obj.fontFamily}`;
+
+            // Split text only on explicit newlines; no wrapping or font resizing
+            const lines = editedText.split("\n");
+
+            // Update obj properties
+            obj.text = lines.join("\n");
+
+            // Recompute bounding box width based on longest line
+            const lineWidths = lines.map(line => ctx.measureText(line).width);
+            const maxLineWidth = Math.max(...lineWidths, 0);
+            obj.boundingWidth = maxLineWidth + 2 * padding;
+
+            // Recompute bounding box height based on line count
+            const lineHeight = fontSize * 1.2;
+            obj.boundingHeight = lines.length * lineHeight + 2 * padding;
 
             drawCanvas('Common');
             textEditor.removeEventListener("blur", finishEditing);
