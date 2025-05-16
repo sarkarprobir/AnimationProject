@@ -2548,9 +2548,9 @@ function getHandleUnderMouseForImageOld(imgObj, pos) {
 
 
 
-function onBoxResizeEnd(obj) {
+function onBoxResizeEndOld(obj) {
     const ctx = canvas.getContext('2d');
-    const padding = obj.padding || 10;
+    const padding = obj.padding || 5;
     const fontSize = obj.fontSize;
     ctx.font = `${fontSize}px ${obj.fontFamily}`;
 
@@ -2568,6 +2568,41 @@ function onBoxResizeEnd(obj) {
     // And put it back on screen
     drawCanvas('Common');
 }
+function onBoxResizeEnd(obj) {
+    const ctx = canvas.getContext('2d');
+    const padding = obj.padding || 5;
+
+    // Compute the inner box dimensions we want the text to fill:
+    const maxW = obj.boundingWidth - 2 * padding;
+    const maxH = obj.boundingHeight - 2 * padding;
+
+    // Break text into lines, and start from the current fontSize:
+    const lines = obj.text.split('\n');
+    let fontSize = obj.fontSize;
+
+    // Growth loop: bump fontSize until we hit one of the limits:
+    while (true) {
+        ctx.font = `${fontSize + 1}px ${obj.fontFamily}`;
+
+        // measure what the text block would be at fontSize+1
+        const blockW = Math.max(...lines.map(l => ctx.measureText(l).width));
+        const blockH = lines.length * (fontSize + 1) * 1.2;
+
+        // if it still fits in both dimensions, accept it and keep going:
+        if (blockW <= maxW && blockH <= maxH) {
+            fontSize++;
+        } else {
+            break;
+        }
+    }
+
+    // Commit the larger font
+    obj.fontSize = fontSize;
+
+    // Re‑draw; box stays the same size, text grows to fill it:
+    drawCanvas('Common');
+}
+
 
 canvas.addEventListener("mouseup", function () {
     if (isResizingText && activeText && activeTextHandle) {
