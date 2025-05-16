@@ -2572,36 +2572,44 @@ function onBoxResizeEnd(obj) {
     const ctx = canvas.getContext('2d');
     const padding = obj.padding || 5;
 
-    // Compute the inner box dimensions we want the text to fill:
+    // Inner size the text should fit into:
     const maxW = obj.boundingWidth - 2 * padding;
     const maxH = obj.boundingHeight - 2 * padding;
 
-    // Break text into lines, and start from the current fontSize:
     const lines = obj.text.split('\n');
     let fontSize = obj.fontSize;
 
-    // Growth loop: bump fontSize until we hit one of the limits:
+    // Helper to measure the block at a given size
+    function measure(fs) {
+        ctx.font = `${fs}px ${obj.fontFamily}`;
+        const w = Math.max(...lines.map(l => ctx.measureText(l).width));
+        const h = lines.length * fs * 1.2;
+        return { w, h };
+    }
+
+    // First, if it’s too big, shrink down:
+    let { w: blockW, h: blockH } = measure(fontSize);
+    while ((blockW > maxW || blockH > maxH) && fontSize > 1) {
+        fontSize--;
+        ({ w: blockW, h: blockH } = measure(fontSize));
+    }
+
+    // Then, if it’s too small, grow up:
+    let next;
     while (true) {
-        ctx.font = `${fontSize + 1}px ${obj.fontFamily}`;
-
-        // measure what the text block would be at fontSize+1
-        const blockW = Math.max(...lines.map(l => ctx.measureText(l).width));
-        const blockH = lines.length * (fontSize + 1) * 1.2;
-
-        // if it still fits in both dimensions, accept it and keep going:
-        if (blockW <= maxW && blockH <= maxH) {
+        next = measure(fontSize + 1);
+        if (next.w <= maxW && next.h <= maxH) {
             fontSize++;
         } else {
             break;
         }
     }
 
-    // Commit the larger font
+    // Commit and redraw
     obj.fontSize = fontSize;
-
-    // Re‑draw; box stays the same size, text grows to fill it:
     drawCanvas('Common');
 }
+
 
 
 canvas.addEventListener("mouseup", function () {
