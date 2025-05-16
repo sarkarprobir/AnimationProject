@@ -2577,18 +2577,20 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
         //    duration: 0,
         //    onUpdate: () => drawCanvas(condition)
         //});
-        tlText.eventCallback("onComplete", () => {
-            images.forEach(img => {
-                img.x = img.finalX;
-                img.y = img.finalY;
-            });
-            textObjects.forEach(txt => {
-                txt.x = txt.finalX;
-                txt.y = txt.finalY;
-            });
 
-            drawCanvasForDownload(condition); // Force redraw
-        });
+        //This is the portion where it stay after animation on screen
+        //////tlText.eventCallback("onComplete", () => {
+        //////    images.forEach(img => {
+        //////        img.x = img.finalX;
+        //////        img.y = img.finalY;
+        //////    });
+        //////    textObjects.forEach(txt => {
+        //////        txt.x = txt.finalX;
+        //////        txt.y = txt.finalY;
+        //////    });
+
+        //////    drawCanvasForDownload(condition); // Force redraw
+        //////});
 
     }
 
