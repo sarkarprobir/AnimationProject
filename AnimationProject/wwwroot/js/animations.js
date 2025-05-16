@@ -2649,6 +2649,7 @@ canvas.addEventListener("click", function (e) {
         $(".right-sec-two").css("display", "block");
         $(".right-sec-one").css("display", "none");
         document.getElementById("modeButton").innerText = "Animation Mode";
+        $("#opengl_popup").hide();
     } else if (imageFound) {
         // Select image and update UI
         images.forEach(img => img.selected = false);
@@ -2657,6 +2658,7 @@ canvas.addEventListener("click", function (e) {
         $(".right-sec-two").css("display", "block");
         $(".right-sec-one").css("display", "none");
         document.getElementById("modeButton").innerText = "Animation Mode";
+        $("#opengl_popup").hide();
     } else {
         // Deselect all if clicking on empty canvas
         textObjects.forEach(o => o.selected = false);
