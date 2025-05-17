@@ -453,7 +453,8 @@ rel="stylesheet">
             } else if (selectedOption === "vertical") {
                 window.location.href = "/Canvas/VerticalIndex"; // Redirect to vertical page
             } else {
-                alert("Please select an option before proceeding!");
+                // alert("Please select an option before proceeding!");
+                MessageShow('', 'Please select an option before proceeding!', 'error');
             }
         });
 
