@@ -881,9 +881,9 @@ function loadJsonFileForDownload() {
     recorderForDownload.start();
     currentIndexForDownload = 0; // Reset index when button is clicked
     loadNextJsonForDownload();   // Start loading the first JSON object
-    setTimeout(() => {
-        recorderForDownload.stop(); //HideLoader();
-    }, 25000);
+    //setTimeout(() => {
+    //    recorderForDownload.stop(); //HideLoader();
+    //}, 30000);
 }
 
 function loadNextJson() {
@@ -920,10 +920,16 @@ function loadNextJsonForDownload() {
 
         currentIndexForDownload++; // Move to the next JSON object
 
-        // Load next JSON after a delay (adjust the delay as needed)
-        setTimeout(loadNextJsonForDownload, 7000);
+        // Load next JSON after a delay (adjust the delay as needed) + parseFloat(selectedOutSpeed) || 4
+        const inTime = parseFloat(selectedInSpeed) || 4;
+        const stayTime = parseFloat(selectedStaySpeed) || 3;
+        const outTime = parseFloat(selectedStaySpeed) || 4;
+        const slideExecutionTime = inTime + 1 + outTime;//stayTime +
+
+        setTimeout(loadNextJsonForDownload, slideExecutionTime*1000 || 7000);
     } else {
         console.log("All JSON objects loaded.");
+        recorderForDownload.stop(); //HideLoader();
     }
 }
 
@@ -1046,6 +1052,7 @@ function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
                         HideLoader();
                         const targetUrl = window.location.origin + "/Canvas/VScreen1/1";
                         window.open(targetUrl, "_blank");
+                        RedirectToVerticalPageWithQueryString();
                     },
                     error: function (data) {
                         console.log("error in saving Image " + activeSlide);
@@ -1272,7 +1279,7 @@ function loadCanvasFromJsonForDownload1(jsonData, condition = 'Common') {
 
     // set background color
     const bg = data.canvasBgColor || '#ffffff';
-    document.getElementById('hdnBackgroundSpecificColor').value = bg;
+    document.getElementById('hdnBackgroundSpecificColorDownload').value = bg;
     canvasForDownload.style.backgroundColor = bg;
 
     // preload and draw background image
@@ -1377,7 +1384,7 @@ function loadCanvasFromJsonForDownload(jsonData, condition = 'Common') {
     textObjects = textObjectsForDownload;
     images = imagesForDownload;
     const bg = data.canvasBgColor || '#ffffff';
-    document.getElementById('hdnBackgroundSpecificColor').value = bg;
+    document.getElementById('hdnBackgroundSpecificColorDownload').value = bg;
     canvasForDownload.style.backgroundColor = bg;
 
     // Preload background image if any
@@ -1390,6 +1397,7 @@ function loadCanvasFromJsonForDownload(jsonData, condition = 'Common') {
     } else {
         canvasForDownload._bgImg = null;
     }
+
 
     // Load fonts, auto-fit (skip manual breaks), then draw
     const fontPromises = textObjects.map(o =>
@@ -1514,15 +1522,18 @@ function drawCanvasForDownload(condition) {
 
     // 2) Clear & draw background (in design units)
     ctxElementForDownload.clearRect(0, 0, designW, designH);
-    const bgColor = document.getElementById('hdnBackgroundSpecificColor').value.trim();
+     const bgColor = document.getElementById('hdnBackgroundSpecificColorDownload').value.trim();
+    //const bgColor = data.canvasBgColor;
     if (bgColor) {
         ctxElementForDownload.fillStyle = bgColor;
         ctxElementForDownload.fillRect(0, 0, designW, designH);
     }
-    if (canvasForDownload.bgImage) {
-        ctxElementForDownload.drawImage(canvasForDownload.bgImage, 0, 0, designW, designH);
+    //if (canvasForDownload.bgImage) {
+    //    ctxElementForDownload.drawImage(canvasForDownload.bgImage, 0, 0, designW, designH);
+    //}
+    if (canvasForDownload._bgImg) {
+        ctxElementForDownload.drawImage(canvasForDownload._bgImg, 0, 0, designW, designH);
     }
-
     // 3) Draw images (lazy‑load + design units)
     images.forEach(imgObj => {
         // design→screen position & size
@@ -2495,8 +2506,8 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
         const nominalPerObj = .50;
         const countText = textObjects.length;
 
-        const scaleInText = inTime / (countText * nominalPerObj);
-        const scaleOutText = outTime / (countText * nominalPerObj);
+        const scaleInText = inTime;//      / (countText * nominalPerObj);
+        const scaleOutText = outTime; //   /  (countText * nominalPerObj);
 
         const individualTweenText = 0.15 * scaleInText;
         const individualTweenOutText = 0.15 * scaleOutText;

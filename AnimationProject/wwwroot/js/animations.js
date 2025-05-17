@@ -1113,10 +1113,15 @@ function animateText(direction, condition, loopCount) {
 
     if (animationType === "delaylinear") {
         const nominalPerObj = .50;
-        const countText = textObjects.length;
+        let countText = textObjects.length;
+        //if (countText == 1) {
+        //    countText += images.length;
+        //}
 
-        const scaleInText = inTime / (countText * nominalPerObj);
-        const scaleOutText = outTime / (countText * nominalPerObj);
+        //const scaleInText = inTime / (countText * nominalPerObj);
+        //const scaleOutText = outTime / (countText * nominalPerObj);
+        const scaleInText = inTime ;
+        const scaleOutText = outTime;
 
         const individualTweenText = 0.15 * scaleInText;
         const individualTweenOutText = 0.15 * scaleOutText;
@@ -2062,7 +2067,7 @@ function startVideoCapture() {
 function addDefaultText() {
     const newObj = {
         text: "Default Text",
-        x: 117,
+        x: 105,
         y: 100,
         //boundingWidth: 200,
         //boundingHeight: 60,
@@ -2874,7 +2879,7 @@ function TabShowHide(type) {
         $("#dunkles").css("display", "block");
     }
 }
-// Listen for clicks on the dropdown menu.
+ //Listen for clicks on the dropdown menu.
 //document.getElementById('ddlSpeedControl').addEventListener('click', function (event) {
 //    if (event.target.matches('a.dropdown-item')) {
 //        // Retrieve the 'value' attribute from the clicked dropdown item.
@@ -2882,6 +2887,7 @@ function TabShowHide(type) {
 //        document.getElementById('lblSpeed').textContent = event.target.textContent;
 //    }
 //});
+
 
 //document.getElementById('ddlSecondsControl').addEventListener('click', function (event) {
 //    if (event.target.matches('a.dropdown-item')) {
@@ -3656,7 +3662,7 @@ function wireSpeedDropdown() {
     }
     ddl.addEventListener('click', function (event) {
         if (event.target.matches('a.dropdown-item')) {
-            const selectedInSpeed = event.target.getAttribute('value');
+            selectedInSpeed = event.target.getAttribute('value');
             document.getElementById('lblSpeed').textContent = event.target.textContent;
 
         }
@@ -3670,7 +3676,7 @@ function wireSecondsDropdown() {
     }
     ddl.addEventListener('click', function (event) {
         if (event.target.matches('a.dropdown-item')) {
-            const val = event.target.getAttribute('value');
+            selectedStaySpeed = event.target.getAttribute('value');
             document.getElementById('lblSeconds').textContent = event.target.textContent;
             // store val if you need it: selectedStaySpeed = val;
         }
