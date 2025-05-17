@@ -4,8 +4,8 @@
 <div class="col-md-3 d-flex align-items-center gap-3">
     <a class="logo ms-2" href="javascript:history.back()"> <img src="~/images/icons/icon-left-arrow.png" alt="Logo" alt="Logo"></a>
     <ul class="top-left-icon d-flex align-items-center gap-2">
-        <li>
-            <a href="javascript:void(0)"> <img id="toggle_img" src="~/images/icons/ico-pattren.svg" title="Pattren" alt="pattren" width="20"></a>
+        <li id="toggle_img">
+            <a href="javascript:void(0)"> <img  src="~/images/icons/ico-pattren.svg" title="Pattren" alt="pattren" width="20"></a>
         </li>
         <li onclick="addDefaultText();opentl();">
             <a href="javascript:void(0)"> <img  src="~/images/icons/icon-text.png" title="Text" alt="text" width="17"></a>
@@ -16,13 +16,13 @@
         <li>
             <a href="javascript:void(0)"> <img src="~/images/icons/ico-shapes-masking.svg" title="Masking" alt="Masking" width="17"></a>
         </li>
-        <li>
+        <li onclick="opengl()">
             <a href="javascript:void(0)">
-                <img onclick="opengl()" src="~/images/icons/icon_gallery.svg" title="Gallery" alt="Gallery" width="20">
+                <img  src="~/images/icons/icon_gallery.svg" title="Gallery" alt="Gallery" width="20">
             </a>
         </li>
-        <li>
-            <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#exampleModal">
+        <li data-bs-toggle="modal" data-bs-target="#exampleModal">
+            <a href="javascript:void(0)" >
                 <img src="~/images/icons/plus.png" title="Create" alt="Create_Board" width="18">
             </a>
         </li>

@@ -280,7 +280,7 @@
 </div>
 
 <!-- Modal Structure -->
-<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade layout_modal" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content p-3">
             <div class="modal-header">
@@ -333,7 +333,8 @@
             } else if (selectedOption === "vertical") {
                 window.location.href = "/Canvas/VerticalIndex"; // Redirect to vertical page
             } else {
-                alert("Please select an option before proceeding!");
+                // alert("Please select an option before proceeding!");
+                MessageShow('', 'Please select an option before proceeding!', 'error');
             }
         });
 
