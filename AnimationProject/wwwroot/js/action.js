@@ -211,7 +211,7 @@ function SaveDesignBoard() {
                    
 
                     MessageShow('RedirectToVerticalPageWithQueryString()', 'Design Board saved successfully!', 'success');
-                    $("#hdnBackgroundSpecificColor").val("rgba(255, 255, 255, 0.95)");
+                   // $("#hdnBackgroundSpecificColor").val("rgba(255, 255, 255, 0.95)");
                 }
                 HideLoader();
             },
