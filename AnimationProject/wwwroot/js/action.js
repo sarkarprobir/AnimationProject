@@ -211,6 +211,7 @@ function SaveDesignBoard() {
                    
 
                     MessageShow('RedirectToVerticalPageWithQueryString()', 'Design Board saved successfully!', 'success');
+                    $("#hdnBackgroundSpecificColor").val("rgba(255, 255, 255, 0.95)");
                 }
                 HideLoader();
             },
@@ -250,7 +251,6 @@ function saveCurrentSlide() {
         (!stateObj.text || stateObj.text.length === 0) &&
         (!stateObj.images || stateObj.images.length === 0)
     );
-
     // Only update the slide if the state isn't blank.
     if (!isBlankState) {
         if (activeSlide === 1) {
@@ -265,8 +265,9 @@ function saveCurrentSlide() {
 function SaveDesignBoardSlide(newSlideNumber) {
     // Save the current slide state (if it's not blank).
     saveCurrentSlide();
-    // Update the active slide number.
-    activeSlide = newSlideNumber;
+
+   
+   
 
     // Create a helper to get a deep copy of a JSON string.
     function getDeepCopy(jsonStr) {
@@ -277,7 +278,8 @@ function SaveDesignBoardSlide(newSlideNumber) {
             return jsonStr;
         }
     }
-
+    // Update the active slide number.
+     activeSlide = newSlideNumber;
     // Load the saved state for the new active slide using your loadCanvasFromJson function.
     if (activeSlide === 1 && verticalSlide1) {
         // Pass a deep copy so the original remains intact.
@@ -340,18 +342,17 @@ function SelectionOfEffectandDirection(activeSlide) {
 // ──────────────────────────────────────────────────────────────────────
 function saveCanvasData() {
     const dpr = window.devicePixelRatio || 1;
-
     // current “logical” canvas size in CSS‑pixels
     const screenW = canvas.width / dpr;
     const screenH = canvas.height / dpr;
 
     // background
     const canvasBgColor = canvas.style.backgroundColor || "#ffffff";
-    const canvasBgImage = canvas.bgImage ? canvas.bgImage.src : "";
+    const canvasBgImage = canvas._bgImg ? canvas._bgImg.src : "";
 
     const data = {
-        canvasBgColor,
-        canvasBgImage,
+        canvasBgColor: canvasBgColor,
+        canvasBgImage: canvasBgImage,
         slideEffect: $("#hdnTextAnimationType").val(),
         slideDedirection: $("#hdnslideDedirection").val(),
 
@@ -413,7 +414,6 @@ function GetDesignBoardById(id) {
                     [verticalSlide1, verticalSlide2, verticalSlide3] = result.designBoardDetailsList
                         .slice(0, 3)
                         .map(item => item?.jsonFile || null);
-
                     // Update hidden fields with safety checks
                     const setHiddenField = (index, selector) => {
                         const value = result.designBoardDetailsList[index]?.designBoardDetailsId || '';
@@ -595,7 +595,7 @@ function loadCanvasFromJson(jsonData, condition = 'Common') {
     // Clear existing canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     currentCondition = condition;
-
+    
     // If no JSON data, wait for fonts then draw default
     if (!jsonData) {
         document.fonts.ready.then(() => drawCanvas(condition));
@@ -611,14 +611,23 @@ function loadCanvasFromJson(jsonData, condition = 'Common') {
     document.getElementById('hdnBackgroundSpecificColor').value = canvasBgColor;
     canvas.style.backgroundColor = canvasBgColor;
 
+    //// Preload background image if provided
+    //if (data.canvasBgImage) {
+    //    slideData._bgImg = new Image();
+    //    slideData._bgImg.crossOrigin = 'anonymous';
+    //    slideData._bgImg.src = data.canvasBgImage;
+    //} else {
+    //    slideData._bgImg = null;
+    //}
     // Preload background image if provided
     if (data.canvasBgImage) {
-        slideData._bgImg = new Image();
-        slideData._bgImg.crossOrigin = 'anonymous';
-        slideData._bgImg.src = data.canvasBgImage;
+        canvas._bgImg = new Image();
+        canvas._bgImg.crossOrigin = 'anonymous';
+        canvas._bgImg.src = data.canvasBgImage;
     } else {
-        slideData._bgImg = null;
+        canvas._bgImg = null;
     }
+    
 
     // Compute actual display size of the canvas
     const rect = canvas.getBoundingClientRect();
