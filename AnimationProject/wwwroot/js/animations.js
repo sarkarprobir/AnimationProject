@@ -2768,11 +2768,11 @@ canvasContainer.addEventListener("dblclick", function (e) {
         textEditor.value = obj.text.replace(/\\n/g, "\n");
         textEditor.style.display = "block";
         textEditor.focus();
-        //canvas.focus();
-        //textEditor.setSelectionRange(0, 0);
-        setTimeout(() => {
-            textEditor.setSelectionRange(0, 0);
-        }, 2000);
+        //requestAnimationFrame(() => {
+        //    textEditor.setSelectionRange(0, 0);
+        //});
+        setTimeout(() => textEditor.setSelectionRange(0, 0), 0);
+     
 
         // Finish editing when Enter is pressed (unless using Shift+Enter for a new line) or on blur.
        
