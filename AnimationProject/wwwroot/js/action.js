@@ -518,79 +518,7 @@ function RedirectToVerticalPageDirect() {
 }
 // Restore the canvas from your JSON data
 // Modified loadCanvasFromJson with auto-fit (finishEditing) integration
-function loadCanvasFromJson1(jsonData, condition = 'Common') {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    currentCondition = condition;
-    if (!jsonData) {
-        document.fonts.ready.then(() => drawCanvas(condition));
-        return;
-    }
 
-    // parse JSON
-    let data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
-    slideData = data;
-
-    // set background color
-    canvasBgColor = data.canvasBgColor || '#ffffff';
-    document.getElementById('hdnBackgroundSpecificColor').value = canvasBgColor;
-    canvas.style.backgroundColor = canvasBgColor;
-
-    // preload background image
-    if (data.canvasBgImage) {
-        slideData._bgImg = new Image();
-        slideData._bgImg.crossOrigin = 'anonymous';
-        slideData._bgImg.src = data.canvasBgImage;
-    } else {
-        slideData._bgImg = null;
-    }
-
-    // convert & store text objects
-    const dpr = window.devicePixelRatio || 1;
-    const screenW = canvas.width / dpr;
-    const screenH = canvas.height / dpr;
-    textObjects = (data.text || []).map(obj => ({
-        text: obj.text,
-        x: obj.x * screenW,
-        y: obj.y * screenH,
-        boundingWidth: obj.boundingWidth * screenW,
-        boundingHeight: obj.boundingHeight * screenH,
-        fontSize: obj.fontSize,
-        fontFamily: obj.fontFamily,
-        textColor: obj.textColor,
-        textAlign: obj.textAlign,
-        opacity: obj.opacity,
-        selected: false
-    }));
-
-    // preload images
-    images = (data.images || []).map(imgObj => {
-        const o = { ...imgObj };
-        o.x *= screenW; o.y *= screenH;
-        o.width *= screenW; o.height *= screenH;
-        o.selected = false;
-        o.img = new Image();
-        o.img.crossOrigin = 'anonymous';
-        o.img.src = imgObj.src;
-        o.img.onload = () => drawCanvas(condition);
-        o.img.onerror = () => drawCanvas(condition);
-        return o;
-    });
-
-    // preload fonts
-    const fontPromises = textObjects.map(o =>
-        document.fonts.load(`${o.fontSize}px ${o.fontFamily}`)
-    );
-
-    // when fonts loaded, auto-fit each text then draw
-    Promise.all(fontPromises)
-        .finally(() => {
-            // finishEditing logic: shrink & wrap text to fit box
-            textObjects.forEach(obj => {
-                autoFitText(obj, padding);
-            });
-            drawCanvas(condition);
-        });
-}
 function loadCanvasFromJson(jsonData, condition = 'Common') {
     // Clear existing canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -627,7 +555,18 @@ function loadCanvasFromJson(jsonData, condition = 'Common') {
     } else {
         canvas._bgImg = null;
     }
-    
+
+    //const fontPromises = (data.text || []).map(obj =>
+    //    document.fonts.load(`${obj.fontSize}px ${obj.fontFamily}`)
+    //);
+    //Promise.all(fontPromises)
+    //    .then(() => {
+    //        console.warn('Font failed to load:', fontPromises);
+    //    })
+    //    .catch(err => {
+    //        console.warn('Font failed to load:', err);
+           
+    //    });
 
     // Compute actual display size of the canvas
     const rect = canvas.getBoundingClientRect();
@@ -694,8 +633,12 @@ function loadCanvasFromJson(jsonData, condition = 'Common') {
 
     // Preload fonts and draw
     const fontPromises = textObjects.map(o =>
-        document.fonts.load(`${o.fontSize}px ${o.fontFamily}`)
+        setTimeout(() => {
+            document.fonts.load(`${o.fontSize}px ${o.fontFamily}`)
+        },1000)
+        
     );
+
 
     Promise.all(fontPromises).finally(() => {
         // Only auto-fit for those without manual breaks
