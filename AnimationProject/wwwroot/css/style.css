@@ -398,7 +398,7 @@ ul.top-left-icon li {
     z-index: 9;
     padding: 20px;
     position: absolute;
-    left: 260px;
+    left: 0px;
     top: 4px;
     border-right: none;
     overflow: hidden;
@@ -502,7 +502,7 @@ ul.speed-list li:hover{background:#f5f5f5; border-radius:6px; cursor:pointer;}
 
 .collapse.show-texteditor {
     position: absolute;
-    left: 0px;
+    left: 260px;
     top: 0px;
     bottom: 0px;
     background-color: transparent;
