@@ -583,10 +583,12 @@ function drawCanvas(condition) {
         ctx.fillStyle = bgColor;
         ctx.fillRect(0, 0, designW, designH);
     }
-    if (canvas.bgImage) {
-        ctx.drawImage(canvas.bgImage, 0, 0, designW, designH);
+    //if (canvas.bgImage) {
+    //    ctx.drawImage(canvas.bgImage, 0, 0, designW, designH);
+    //}
+    if (canvas._bgImg) {
+        ctx.drawImage(canvas._bgImg, 0, 0, designW, designH);
     }
-
     // 3) Draw images (lazy‑load + design units)
     images.forEach(imgObj => {
         // design→screen position & size
@@ -1113,10 +1115,15 @@ function animateText(direction, condition, loopCount) {
 
     if (animationType === "delaylinear") {
         const nominalPerObj = .50;
-        const countText = textObjects.length;
+        let countText = textObjects.length;
+        //if (countText == 1) {
+        //    countText += images.length;
+        //}
 
-        const scaleInText = inTime / (countText * nominalPerObj);
-        const scaleOutText = outTime / (countText * nominalPerObj);
+        //const scaleInText = inTime / (countText * nominalPerObj);
+        //const scaleOutText = outTime / (countText * nominalPerObj);
+        const scaleInText = inTime ;
+        const scaleOutText = outTime;
 
         const individualTweenText = 0.15 * scaleInText;
         const individualTweenOutText = 0.15 * scaleOutText;
@@ -2062,7 +2069,7 @@ function startVideoCapture() {
 function addDefaultText() {
     const newObj = {
         text: "Default Text",
-        x: 117,
+        x: 105,
         y: 100,
         //boundingWidth: 200,
         //boundingHeight: 60,
@@ -2761,11 +2768,11 @@ canvasContainer.addEventListener("dblclick", function (e) {
         textEditor.value = obj.text.replace(/\\n/g, "\n");
         textEditor.style.display = "block";
         textEditor.focus();
-        //canvas.focus();
-        //textEditor.setSelectionRange(0, 0);
-        setTimeout(() => {
-            textEditor.setSelectionRange(0, 0);
-        }, 2000);
+        //requestAnimationFrame(() => {
+        //    textEditor.setSelectionRange(0, 0);
+        //});
+        setTimeout(() => textEditor.setSelectionRange(0, 0), 0);
+     
 
         // Finish editing when Enter is pressed (unless using Shift+Enter for a new line) or on blur.
        
@@ -2874,7 +2881,7 @@ function TabShowHide(type) {
         $("#dunkles").css("display", "block");
     }
 }
-// Listen for clicks on the dropdown menu.
+ //Listen for clicks on the dropdown menu.
 //document.getElementById('ddlSpeedControl').addEventListener('click', function (event) {
 //    if (event.target.matches('a.dropdown-item')) {
 //        // Retrieve the 'value' attribute from the clicked dropdown item.
@@ -2882,6 +2889,7 @@ function TabShowHide(type) {
 //        document.getElementById('lblSpeed').textContent = event.target.textContent;
 //    }
 //});
+
 
 //document.getElementById('ddlSecondsControl').addEventListener('click', function (event) {
 //    if (event.target.matches('a.dropdown-item')) {
@@ -3256,21 +3264,22 @@ function setCanvasBackgroundImage(imageSrc) {
         // Draw the image so that it fills the entire canvas.
         ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
         // Optionally, you can store the background image info for later use.
-        canvas.bgImage = bgImage;
+        canvas._bgImg = bgImage;
     };
     bgImage.src = imageSrc;
     $("#hdnBackgroundImage").val(imageSrc);
     $('#chkRemoveBackground').prop('checked', true);
+    $("#hdnBackgroundSpecificColor").val("rgba(255, 255, 255, 0.95)");
 }
 function RemoveBackgroundImage() {
-    canvas.bgImage = null;
+    canvas._bgImg = null;
     drawCanvas('Common'); // Redraw the canvas without the background image.
 
 }
 function clearCanvasOld() {
     const canvas = document.getElementById("myCanvas");
     const ctx = canvas.getContext("2d");
-    canvas.bgImage = null;
+    canvas._bgImg = null;
     // Clear the entire canvas
     ctx.fillStyle = "#ffffff"; // Your desired background color
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -3285,7 +3294,7 @@ function clearCanvas() {
     const ctx = canvas.getContext("2d");
 
     // 1) Drop any background image reference
-    canvas.bgImage = null;
+    canvas._bgImg = null;
 
     // 2) Clear the existing pixels
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -3656,7 +3665,7 @@ function wireSpeedDropdown() {
     }
     ddl.addEventListener('click', function (event) {
         if (event.target.matches('a.dropdown-item')) {
-            const selectedInSpeed = event.target.getAttribute('value');
+            selectedInSpeed = event.target.getAttribute('value');
             document.getElementById('lblSpeed').textContent = event.target.textContent;
 
         }
@@ -3670,7 +3679,7 @@ function wireSecondsDropdown() {
     }
     ddl.addEventListener('click', function (event) {
         if (event.target.matches('a.dropdown-item')) {
-            const val = event.target.getAttribute('value');
+            selectedStaySpeed = event.target.getAttribute('value');
             document.getElementById('lblSeconds').textContent = event.target.textContent;
             // store val if you need it: selectedStaySpeed = val;
         }
