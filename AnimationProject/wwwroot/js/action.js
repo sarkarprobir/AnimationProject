@@ -518,8 +518,28 @@ function RedirectToVerticalPageDirect() {
 }
 // Restore the canvas from your JSON data
 // Modified loadCanvasFromJson with auto-fit (finishEditing) integration
+/* Font initialization helper */
+function ensureFontsInitialized() {
+    if (!window.__allFontsReady) {
+        const families = [
+            'Arial', 'Anton', 'Bebas Neue', 'monstro', 'Montserrat', 'neto', 'Pacifico', 'Roboto'
+        ];
+        window.__fontFamilyPromises = families.map(fam => {
+            console.log(`vertical Preloading font family: ${fam}`);
+            return document.fonts.load(`1em ${fam}`);
+        });
+        window.__allFontsReady = Promise.all(window.__fontFamilyPromises)
+            .then(() => console.log('All font families loaded'))
+            .catch(err => console.warn('Error loading fonts:', err));
+    }
+    return window.__allFontsReady;
+}
 
-function loadCanvasFromJson(jsonData, condition = 'Common') {
+async function loadCanvasFromJson(jsonData, condition = 'Common') {
+    // Ensure fonts are ready (on first draw or SPA redraws)
+    // Wait for all font families to finish loading (first time or SPA)
+    //await window.__allFontsReady;
+    await ensureFontsInitialized();
     // Clear existing canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     currentCondition = condition;
@@ -633,10 +653,7 @@ function loadCanvasFromJson(jsonData, condition = 'Common') {
 
     // Preload fonts and draw
     const fontPromises = textObjects.map(o =>
-        setTimeout(() => {
-            document.fonts.load(`${o.fontSize}px ${o.fontFamily}`)
-        },1000)
-        
+        document.fonts.load(`${o.fontSize}px ${o.fontFamily}`)
     );
 
 
@@ -647,7 +664,9 @@ function loadCanvasFromJson(jsonData, condition = 'Common') {
                 autoFitText(obj, padding);
             }
         });
+        console.log('drawCanvas calling after Promise');
         drawCanvas(condition);
+       // resizeCanvas();
     });
 }
 
