@@ -390,7 +390,25 @@ ul.top-left-icon li {
     top: 0;
     border-right: none;
 }
-.panel-left-gallery h2{font-family: "Nunito Sans", serif;   font-size: var(--font-size18); font-weight: bold;}
+.panel-left-fonts {
+    width: 75%;
+    min-height: 685px;
+    height: 93vh;
+    background: #f9f9f9;
+    z-index: 9;
+    padding: 20px;
+    position: absolute;
+    left: 260px;
+    top: 4px;
+    border-right: none;
+    overflow: hidden;
+}
+
+.panel-left-gallery h2 {
+    font-family: "Nunito Sans", serif;
+    font-size: var(--font-size18);
+    font-weight: bold;
+}
 /*.gl-box{width:100%; height:100%;}*/
 .gallery-search-right button{border:0px;  position:absolute; right:6px; top:5px; background:transparent;}
 .gallery-search-right .form-search{border:2px solid #ddd; padding:5px 0px 5px 5px; float:right;}
@@ -487,7 +505,7 @@ ul.speed-list li:hover{background:#f5f5f5; border-radius:6px; cursor:pointer;}
     left: 0px;
     top: 0px;
     bottom: 0px;
-    background: #fff;
+    background-color: transparent;
     width: 260px;
 /*    z-index: 1;*/
     border-radius: 0;
@@ -513,14 +531,19 @@ ul.TextStyle li {list-style-type:none; float:left; width:100%; margin-bottom:10p
  ul.TextStyle li a:hover{color:#fff; background:#4e43e1}
  
  /*font-face css*/
-ul.TextStyle li a.arial{font-size:35px;}
-ul.TextStyle li a.anton{font-family: 'Anton'; font-weight: normal; font-style: normal; font-size: 35px;}
-ul.TextStyle li a.bebes{ font-family: 'Bebas Neue'; font-weight: normal; font-style: normal; font-size: 35px;}
-ul.TextStyle li a.monstro{ font-family: "Monstro"; font-style: normal; font-size: 35px;}
-ul.TextStyle li a.Montserrat{ font-family: 'Montserrat'; font-style: normal; font-size: 35px;} 
-ul.TextStyle li a.neto{ font-family: 'Noto Sans'; font-weight: normal; font-style: normal; font-size: 35px;}
-ul.TextStyle li a.pacifico{ font-family: 'Pacifico'; font-weight: normal; font-style: normal; font-size: 35px;}
-ul.TextStyle li a.Roboto{ font-family: 'Roboto'; font-weight: bold; font-size: 35px;}
+    ul.TextStyle li a {
+        font-size: 28px;
+    }
+    ul.TextStyle li a.arial {
+        font-family: 'Arial', sans-serif;
+    }
+ul.TextStyle li a.anton{font-family: 'Anton'; font-weight: normal; font-style: normal; }
+ul.TextStyle li a.bebes{ font-family: 'Bebas Neue'; font-weight: normal; font-style: normal;}
+ul.TextStyle li a.monstro{ font-family: "Monstro"; font-style: normal;}
+ul.TextStyle li a.Montserrat{ font-family: 'Montserrat'; font-style: normal;} 
+ul.TextStyle li a.neto{ font-family: 'Noto Sans'; font-weight: normal; font-style: normal;}
+ul.TextStyle li a.pacifico{ font-family: 'Pacifico'; font-weight: normal; font-style: normal;}
+ul.TextStyle li a.Roboto{ font-family: 'Roboto'; font-weight: bold;}
 
 .middle-resulation {
     width: 100px;
@@ -980,6 +1003,7 @@ body {
     font-size: 14px;
     border: 1px solid transparent;
     border-radius: 3px !important;
+    background-color: transparent;
 }
 
     .tab:hover {
@@ -1195,6 +1219,9 @@ body {
 
     .my_img_gal {
         min-height: 71.8vh;
+    }
+    .panel-left-fonts {
+        height: 95.7vh;
     }
 }
 .loader {
