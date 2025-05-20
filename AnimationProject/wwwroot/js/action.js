@@ -17,12 +17,12 @@ let publishDownloadcondition = '';
 
 const options = {
     mimeType: 'video/webm; codecs=vp9',
-    videoBitsPerSecond: 5000000  // 5 Mbps; adjust as needed
+    videoBitsPerSecond: 10_000_000  // 10 Mbps; adjust as needed
 };
 let currentIndexForDownload = 0;
 const canvasForDownload = document.getElementById("myCanvasElementDownload");
 const ctxElementForDownload = canvasForDownload.getContext("2d");
-const streamForDownload = canvasForDownload.captureStream(30); // Capture at 30 fps
+const streamForDownload = canvasForDownload.captureStream(120); // Capture at 120 fps
 const recorderForDownload = new MediaRecorder(streamForDownload, options);
 const chunksForDownload = [];
 //canvasForDownload.width = 1080;
