@@ -391,7 +391,7 @@ ul.top-left-icon li {
     border-right: none;
 }
 .panel-left-fonts {
-    width: 75%;
+    width: 100%;
     min-height: 685px;
     height: 93vh;
     background: #f9f9f9;
@@ -506,7 +506,7 @@ ul.speed-list li:hover{background:#f5f5f5; border-radius:6px; cursor:pointer;}
     top: 0px;
     bottom: 0px;
     background-color: transparent;
-    width: 260px;
+    width: 191px;
 /*    z-index: 1;*/
     border-radius: 0;
     box-shadow: none;
