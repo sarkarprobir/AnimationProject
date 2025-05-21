@@ -618,6 +618,7 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
         if (ty + finalHeight + padding > screenH) {
             ty = screenH - finalHeight - padding;
         }
+        
 
         return {
             text: obj.text,
@@ -660,9 +661,10 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
     Promise.all(fontPromises).finally(() => {
         // Only auto-fit for those without manual breaks
         textObjects.forEach(obj => {
-            if (!obj._hasManualBreaks) {
-                autoFitText(obj, padding);
-            }
+            //if (!obj._hasManualBreaks) {
+            //    autoFitTextNew(obj, padding);
+            //}
+            autoFitTextNew(obj, padding);
         });
         console.log('drawCanvas calling after Promise');
         drawCanvas(condition);
@@ -671,7 +673,58 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
 }
 
 
+function autoFitTextNew(obj, padding = 5) {
+    const ctx2 = canvas.getContext('2d');
+    const maxW = obj.boundingWidth - 2 * padding;
+    const maxH = obj.boundingHeight - 2 * padding;
 
+    // Your designer’s raw text, split on real newlines:
+    const rawLines = obj.text.replace(/\r/g, '').split('\n');
+
+    // Given font-size fs, wrap every rawLine to fit maxW, return the full array of wrapped lines:
+    function wrapAllLines(fs) {
+        ctx2.font = `${fs}px ${obj.fontFamily}`;
+        return rawLines.flatMap(line => wrapText(ctx2, line, maxW));
+    }
+
+    // Given fs, compute block dims for the wrapped lines at that size:
+    function measure(fs) {
+        const lines = wrapAllLines(fs);
+        const widths = lines.map(l => ctx2.measureText(l).width);
+        const blockW = Math.max(...widths, 0);
+        const lineH = fs * 1.2;
+        const blockH = lines.length * lineH;
+        return { blockW, blockH, lines };
+    }
+
+    // 1) start at designer fontSize
+    let fs = Math.floor(obj.fontSize);
+    let { blockW, blockH, lines } = measure(fs);
+
+    // 2) shrink while too big
+    while ((blockW > maxW || blockH > maxH) && fs > 1) {
+        fs--;
+        ({ blockW, blockH, lines } = measure(fs));
+    }
+
+    // 3) grow while it still fits
+    while (true) {
+        const next = measure(fs + 1);
+        if (next.blockW <= maxW && next.blockH <= maxH) {
+            fs++;
+            blockW = next.blockW;
+            blockH = next.blockH;
+            lines = next.lines;
+        } else {
+            break;
+        }
+    }
+
+    // 4) commit: final fs + its wrapped lines + new boundingHeight
+    obj.fontSize = fs;
+    obj._wrappedLines = lines;
+    obj.boundingHeight = lines.length * fs * 1.2 + 2 * padding;
+}
 
 
 

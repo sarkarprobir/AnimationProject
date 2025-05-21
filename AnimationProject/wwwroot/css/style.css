@@ -537,13 +537,13 @@ ul.TextStyle li {list-style-type:none; float:left; width:100%; margin-bottom:10p
     ul.TextStyle li a.arial {
         font-family: 'Arial', sans-serif;
     }
-ul.TextStyle li a.anton{font-family: 'Anton'; font-weight: normal; font-style: normal; }
-ul.TextStyle li a.bebes{ font-family: 'Bebas Neue'; font-weight: normal; font-style: normal;}
+ul.TextStyle li a.anton{font-family: "Anton", sans-serif; font-weight: normal; font-style: normal; }
+ul.TextStyle li a.bebes{ font-family: "Bebas Neue", sans-serif; font-weight: normal; font-style: normal;}
 ul.TextStyle li a.monstro{ font-family: "Monstro"; font-style: normal;}
-ul.TextStyle li a.Montserrat{ font-family: 'Montserrat'; font-style: normal;} 
+ul.TextStyle li a.Montserrat{ font-family: "Montserrat", sans-serif; font-style: normal;} 
 ul.TextStyle li a.neto{ font-family: 'Noto Sans'; font-weight: normal; font-style: normal;}
-ul.TextStyle li a.pacifico{ font-family: 'Pacifico'; font-weight: normal; font-style: normal;}
-ul.TextStyle li a.Roboto{ font-family: 'Roboto'; font-weight: bold;}
+ul.TextStyle li a.pacifico{ font-family: "Pacifico", cursive; font-weight: normal; font-style: normal;}
+ul.TextStyle li a.Roboto{ font-family: "Roboto", sans-serif; font-weight: bold;}
 
 .middle-resulation {
     width: 100px;
