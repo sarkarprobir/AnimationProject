@@ -67,16 +67,16 @@ function MessageShow(clickfunction, message, msgType) {
         //msgType = error, success, warning
         var msgHtml = '';
         if (msgType.toLowerCase() == 'error') {
-            msgHtml = msgHtml + '<div class="padding-control-withmsgdivstyle d-flex flex-column align-items-center"><div class="alert-icons-label error-sm-bg"><i class="fa fa-times-circle error-fa-color icon-size"></i></div><div class="error-msg msg-styles">' + message + '</div></div>';
+            msgHtml = msgHtml + '<div class="padding-control-withmsgdivstyle d-flex flex-column align-items-center"><div class="alert-icons-label error-sm-bg"><img class="msg-img" src="../../images/cancel.png" /></div><div class="error-msg msg-styles">' + message + '</div></div>';
         }
         else if (msgType.toLowerCase() == 'success') {
-            msgHtml = msgHtml + '<div class="padding-control-withmsgdivstyle d-flex flex-column align-items-center"><div class="alert-icons-label success-sm-bg"><i class="fa fa-check-circle success-fa-color icon-size"></i></div><div class="sucess-msg msg-styles">' + message + '</div></div>';
+            msgHtml = msgHtml + '<div class="padding-control-withmsgdivstyle d-flex flex-column align-items-center"><div class="alert-icons-label success-sm-bg"><img class="msg-img" src="../../images/checked.png" /></div><div class="sucess-msg msg-styles">' + message + '</div></div>';
         }
         else if (msgType.toLowerCase() == 'warning') {
-            msgHtml = msgHtml + '<div class="padding-control-withmsgdivstyle d-flex flex-column align-items-center"><div class="alert-icons-label warning-sm-bg"><i class="fa fa-exclamation-triangle warning-fa-color icon-size"></i></div><div class="warning-msg msg-styles">' + message + '</div></div>';
+            msgHtml = msgHtml + '<div class="padding-control-withmsgdivstyle d-flex flex-column align-items-center"><div class="alert-icons-label warning-sm-bg"><img class="msg-img" src="../../images/complain.png" /></div><div class="warning-msg msg-styles">' + message + '</div></div>';
         }
         else {
-            msgHtml = msgHtml + '<div class="padding-control-withmsgdivstyle d-flex flex-column align-items-center"><div class="alert-icons-label info-sm-bg"><i class="fa fa-info-circle info-fa-color icon-size"></i></div><div class="info-msg msg-styles">' + message + '</div></div>';
+            msgHtml = msgHtml + '<div class="padding-control-withmsgdivstyle d-flex flex-column align-items-center"><div class="alert-icons-label info-sm-bg"><img class="msg-img" src="../../images/info.png" /></div><div class="info-msg msg-styles">' + message + '</div></div>';
         }
 
         var dvButtonHtml = '';
