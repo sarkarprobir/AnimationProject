@@ -723,7 +723,7 @@ function autoFitTextNew(obj, padding = 5) {
     // 4) commit: final fs + its wrapped lines + new boundingHeight
     obj.fontSize = fs;
     obj._wrappedLines = lines;
-    obj.boundingHeight = lines.length * fs * 1.2 + 2 * padding;
+    obj.boundingHeight = lines.length * fs * 1.5 + 2 * padding;
 }
 
 
@@ -1431,13 +1431,14 @@ function loadCanvasFromJsonForDownload1(jsonData, condition = 'Common') {
     Promise.all(fontPromises).finally(() => {
         textObjects.forEach(obj => {
             //if (!obj._hasManualBreaks) {
-            //    autoFitTextNew(obj, padding);
+            //    autoFitText(obj, padding);
             //}
             autoFitTextNewDownload(obj, padding);
         });
         drawCanvasForDownload(condition);
     });
 }
+
 
 function autoFitTextNewDownload(obj, padding = 5) {
     const ctx2 = canvasForDownload.getContext('2d');
@@ -1588,7 +1589,89 @@ function loadCanvasFromJsonForDownloadOld(jsonData, condition) {
         checkAllImagesLoadedForDownload();
     }
 }
+
+
 function drawCanvasForDownload(condition) {
+    // 1) Reset transforms and scale for high-DPI
+    resizeCanvas_d();
+    // inside: ctxElementForDownload.resetTransform(); ctxElementForDownload.scale(dpr, dpr); ctxElementForDownload.scale(scaleX, scaleY);
+    const dpr = window.devicePixelRatio || 1;
+    // Full pixel dimensions of download canvas
+    const downloadW = canvasForDownload.width;
+    const downloadH = canvasForDownload.height;
+    // Design-space dimensions (if needed)
+    const designW = downloadW / dpr / scaleX;
+    const designH = downloadH / dpr / scaleY;
+
+    // 2) Clear & draw background
+    ctxElementForDownload.clearRect(0, 0, downloadW, downloadH);
+    const bgColor = document.getElementById('hdnBackgroundSpecificColorDownload').value.trim();
+    if (bgColor) {
+        ctxElementForDownload.fillStyle = bgColor;
+        ctxElementForDownload.fillRect(0, 0, downloadW, downloadH);
+    }
+    if (canvasForDownload._bgImg) {
+        ctxElementForDownload.drawImage(canvasForDownload._bgImg, 0, 0, downloadW, downloadH);
+    }
+
+    // 3) Draw images (pixel coords)
+    images.forEach(imgObj => {
+        if (!imgObj.img) {
+            const tmp = new Image();
+            tmp.crossOrigin = 'anonymous';
+            tmp.onload = () => { imgObj.img = tmp; drawCanvasForDownload(condition); };
+            tmp.src = imgObj.svgData || imgObj.src;
+            return;
+        }
+        ctxElementForDownload.save();
+        ctxElementForDownload.globalAlpha = imgObj.opacity || 1;
+        ctxElementForDownload.translate(imgObj.x, imgObj.y);
+        ctxElementForDownload.scale(imgObj.scaleX || 1, imgObj.scaleY || 1);
+        ctxElementForDownload.drawImage(imgObj.img, 0, 0, imgObj.width, imgObj.height);
+        ctxElementForDownload.restore();
+    });
+
+    // 4) Draw text blocks (pixel coords)
+    if (['Common', 'ChangeStyle', 'applyAnimations'].includes(condition)) {
+        const paddingPx = padding; // assume in px
+        textObjects.forEach(obj => {
+            ctxElementForDownload.save();
+            ctxElementForDownload.globalAlpha = obj.opacity || 1;
+
+            // Use fitted fontSize (pixels) and wrapped lines
+            const fs = obj.fontSize;
+            ctxElementForDownload.font = `${fs}px ${obj.fontFamily}`;
+            ctxElementForDownload.fillStyle = obj.textColor;
+            ctxElementForDownload.textBaseline = 'top';
+
+            // Positions are already in pixels
+            const px = obj.x;
+            const py = obj.y;
+            const boxW = obj.boundingWidth;
+            const boxH = obj.boundingHeight;
+
+            const lines = obj._wrappedLines || obj.text.replace(/\r/g, '').split('\n');
+            const lineH = fs * 1.2;
+            const maxLines = Math.floor((boxH - 2 * paddingPx) / lineH);
+            const startY = py + paddingPx;
+
+            lines.slice(0, maxLines).forEach((line, i) => {
+                // horizontal alignment
+                let tx = px + paddingPx;
+                const lw = ctxElementForDownload.measureText(line).width;
+                if (obj.textAlign === 'center') {
+                    tx = px + (boxW - lw) / 2;
+                } else if (obj.textAlign === 'right') {
+                    tx = px + boxW - lw - paddingPx;
+                }
+                ctxElementForDownload.fillText(line, tx, startY + i * lineH);
+            });
+            ctxElementForDownload.restore();
+        });
+    }
+}
+
+function drawCanvasForDownloadNewOld(condition) {
     // 1) Refresh CTM: design→screen
     resizeCanvas_d();               // must set ctx.resetTransform(); ctx.scale(dpr,dpr); ctx.scale(scaleX,scaleY);
     const dpr = window.devicePixelRatio || 1;

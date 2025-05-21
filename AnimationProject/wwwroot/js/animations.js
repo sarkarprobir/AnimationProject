@@ -65,7 +65,7 @@ let dragOffset = { x: 0, y: 0 };
 let activeImageHandle = null;
 
 // Configuration constants.
-const padding = 5;         // Padding inside the bounding box
+const padding =5;         // Padding inside the bounding box
 const handleSize = 10;     // Resize handle square size (in pixels)
 const minWidth = 50;       // Minimum bounding width
 const minHeight = 30;      // Minimum bounding height
