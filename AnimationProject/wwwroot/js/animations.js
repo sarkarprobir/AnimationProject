@@ -3726,3 +3726,9 @@ function wireLoopDropdown() {
     });
 }
 
+function handleThumbClick(clickedElement) {
+    const items = document.querySelectorAll('.menuboard-vertical-thum');
+
+    items.forEach(el => el.classList.remove('active_border'));
+    clickedElement.classList.add('active_border');
+}
