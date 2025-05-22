@@ -723,7 +723,10 @@ function autoFitTextNew(obj, padding = 5) {
     // 4) commit: final fs + its wrapped lines + new boundingHeight
     obj.fontSize = fs;
     obj._wrappedLines = lines;
-    obj.boundingHeight = lines.length * fs * 1.5 + 2 * padding;
+    // obj.boundingHeight = lines.length * fs * 1.3 + 2 * padding;
+    const measuredWidths = lines.map(l => ctx2.measureText(l).width);
+    obj.boundingWidth = Math.max(...measuredWidths, 0) + 2 * padding;
+
 }
 
 
@@ -1490,7 +1493,9 @@ function autoFitTextNewDownload(obj, padding = 5) {
     // 4) commit: final fs + its wrapped lines + new boundingHeight
     obj.fontSize = fs;
     obj._wrappedLines = lines;
-    obj.boundingHeight = lines.length * fs * 1.2 + 2 * padding;
+    //obj.boundingHeight = lines.length * fs * 1.2 + 2 * padding;
+    const measuredWidths = lines.map(l => ctx2.measureText(l).width);
+    obj.boundingWidth = Math.max(...measuredWidths, 0) + 2 * padding;
 }
 
 
