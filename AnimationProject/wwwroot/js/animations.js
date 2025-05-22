@@ -579,9 +579,11 @@ function drawCanvas(condition) {
     // 2) Clear & draw background (in design units)
     ctx.clearRect(0, 0, designW, designH);
     const bgColor = document.getElementById('hdnBackgroundSpecificColor').value.trim();
+    console.log('Start drawCanvas ===>bgColor', bgColor);
     if (bgColor) {
         ctx.fillStyle = bgColor;
         ctx.fillRect(0, 0, designW, designH);
+        console.log('End drawCanvas ===>bgColor', bgColor);
     }
     //if (canvas.bgImage) {
     //    ctx.drawImage(canvas.bgImage, 0, 0, designW, designH);
@@ -3243,9 +3245,10 @@ function ChangeSpecificBackgroundColor(controlid) {
     drawCanvas('Common'); // Redraw the canvas without the background image.
     setCanvasBackground(controlid, backgroundSpecificColorPicker.value);
 }
-function setCanvasBackground(canvasId, color) {
+function setCanvasBackgroundOld(canvasId, color) {
     /* document.getElementById(canvasId).style.backgroundColor = color;*/
     ctx.fillStyle = color;
+   // ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 function setAllCanvasesBackground(selector, color) {
     const canvases = document.querySelectorAll(selector);

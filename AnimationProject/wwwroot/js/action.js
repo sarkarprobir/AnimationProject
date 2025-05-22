@@ -62,7 +62,7 @@ function SaveDesignBoard() {
 
                 // Prepare a default id constant to check new vs. update
                 var defaultId = '00000000-0000-0000-0000-000000000000';
-                var defaultEffect = 'bounce';
+                var defaultEffect = 'delaylinear';
                 var defaultDirection = 'left';
                 var defaultAnimationVideoPath = '';
                 var defaultAnimationImagePath = '';
@@ -115,7 +115,7 @@ function SaveDesignBoard() {
                                 if (!img.complete) {
                                     img.onload = () => {
                                         loadedCount++;
-                                        if (loadedCount === images.length) captureCanvas();
+                                        if (loadedCount === images.length) captureSlide(activeSlide, slideResult);
                                     };
                                     img.onerror = () => {
                                         console.warn("Failed to load image:", img.src);
@@ -126,7 +126,7 @@ function SaveDesignBoard() {
                                 }
                             });
 
-                            if (loadedCount === images.length) captureCanvas(); // If all images are already loaded
+                                if (loadedCount === images.length) captureSlide(activeSlide, slideResult); // If all images are already loaded
 
                             function captureCanvas() {
                                 canvas.toBlob((blob) => {
@@ -246,6 +246,73 @@ function SaveDesignBoard() {
         console.log("catch", e);
         HideLoader();
     }
+}
+async function captureSlide(activeSlide, slideResult) {
+    const canvas = document.getElementById("myCanvas");
+    const ctx = canvas.getContext("2d");
+    console.log('before call captureSlide : activeSlide==>', activeSlide);
+    // 1) Update your canvas one last time:
+    drawCanvas("Common");
+    console.log('End call captureSlide : activeSlide==>');
+    // 2) Wait for any <img> or <svg> in the DOM to be fully loaded:
+    const imgs = Array.from(document.querySelectorAll("img, svg"));
+    await Promise.all(imgs.map(el => {
+        if (el.complete) return Promise.resolve();
+        return new Promise(res => {
+            el.onload = () => res();
+            el.onerror = () => {
+                console.warn("Image failed to load before capture:", el.src);
+                res();
+            };
+        });
+    }));
+
+    // 3) Wait for the next paint so the drawCanvas changes actually hit the GPU/composite:
+    await new Promise(requestAnimationFrame);
+
+    // 4) Now safely snapshot the canvas:
+    canvas.toBlob(async blob => {
+        if (!blob) {
+            console.error("Canvas capture failed: empty blob");
+            return;
+        }
+
+        // upload the blob
+        const formData = new FormData();
+        formData.append("image", blob, "canvas.png");
+        formData.append("folderId", slideResult.result || "new");
+
+        try {
+            const resp = await fetch(baseURL + "video/save-image", {
+                method: "POST", body: formData
+            });
+            const data = await resp.json();
+            console.log("Image saved:", data);
+
+            // build absolute URL and cache-bust
+            const imgUrl = new URL(data.filePath, window.location.origin);
+            imgUrl.searchParams.set("t", Date.now());
+
+            // update your hidden field & thumbnail
+            $(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`)
+                .val(data.filePath);
+            $(`#imageVertical${activeSlide}`)
+                .attr("src", imgUrl.toString());
+
+            // finally persist the path in your DB
+            await $.ajax({
+                url: baseURL + "Canvas/UpdateDesignDesignBoardDetailsImagePath",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    DesignBoardDetailsId: slideResult.result,
+                    ImagePath: data.filePath
+                }
+            });
+        } catch (err) {
+            console.error("Error saving or updating image:", err);
+        }
+    }, "image/png");
 }
 
 function RedirectToVerticalPageWithQueryString() {
