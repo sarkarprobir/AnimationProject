@@ -149,11 +149,33 @@ function SaveDesignBoard() {
                                         .then(response => response.json())
                                         .then(data => {
                                             console.log('Image saved successfully:', data);
-                                            // Update hidden input field with the saved file path
-                                            $(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`).val('');
-                                            $(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`).val(data.filePath);
-                                            const imageVerticalControl = $(`#imageVertical${activeSlide}`);
-                                            imageVerticalControl.attr('src', `${data.filePath}&t=${new Date().getTime()}`);
+
+                                            // 1) build an absolute URL from whatever your server gave you:
+                                            const imgUrl = new URL(data.filePath, window.location.origin);
+
+                                            // 2) stomp on the "t" search-param with a fresh timestamp:
+                                            imgUrl.searchParams.set("t", Date.now());
+
+                                            // 3) update your hidden input if you need to keep the raw path around:
+                                            $(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`)
+                                                .val(data.filePath);
+                                            console.log('Image saved successfully:', imgUrl.toString());
+                                            // 4) swap in the new src immediately:
+                                            $(`#imageVertical${activeSlide}`)
+                                                .off("error")                       // clear any old handlers
+                                                .on("error", () => console.error("image failed to load:", imgUrl))
+                                                .attr("src", imgUrl.toString());
+                                           
+
+
+
+
+                                            //// Update hidden input field with the saved file path
+                                            //$(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`).val('');
+                                            //$(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`).val(data.filePath);
+                                            //const imageVerticalControl = $(`#imageVertical${activeSlide}`);
+                                            //imageVerticalControl.attr('src', `${data.filePath}&t=${new Date().getTime()}`);
+
 
 
 
@@ -525,7 +547,7 @@ function ensureFontsInitialized() {
             'Arial', 'Anton', 'Bebas Neue', 'monstro', 'Montserrat', 'neto', 'Pacifico', 'Roboto'
         ];
         window.__fontFamilyPromises = families.map(fam => {
-            console.log(`vertical Preloading font family: ${fam}`);
+           // console.log(`vertical Preloading font family: ${fam}`);
             return document.fonts.load(`1em ${fam}`);
         });
         window.__allFontsReady = Promise.all(window.__fontFamilyPromises)
