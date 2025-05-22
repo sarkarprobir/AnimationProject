@@ -653,6 +653,9 @@ svg:hover {
     padding:4px;
     height:158px;
 }
+    .panel-vertical-scroll .menuboard-vertical-thum:hover {
+        border: 2px solid #4e43e191;
+    }
 .panel-left .H-link{ color:#000; text-decoration:none; padding:8px 14px; float:right; margin-left:10px;font-size: var(--font-size14); border:1px solid transparent; border-radius:6px;}
 .panel-left .V-link{ color:#000; text-decoration:none; padding:8px 14px; float:right; margin-left:10px;font-size: var(--font-size14);border:1px solid transparent; border-radius:6px;}
 .panel-left .V-link:hover, .panel-left .H-link:hover{border:1px solid #ddd;}
