@@ -149,7 +149,7 @@ function SaveDesignBoard() {
                 // Optionally, reset the main design board hidden field here or later, based on your flow.
                 // $("#hdnDesignBoardId").val(defaultId);
 
-                HideLoader();
+               // HideLoader();
 
                 // Check for login response or success message as needed.
                 if (result === "login") {
@@ -234,7 +234,7 @@ async function captureSlide(activeSlide, slideResult) {
                     ImagePath: data.filePath
                 },
                 success: function (response) {
-                    HideLoader();
+                   
                     MessageShow('RedirectToVerticalPageWithQueryString()', 'Design Board saved successfully!', 'success');
                 },
                 error: function (xhr, status, error) {
@@ -254,7 +254,7 @@ async function captureSlide(activeSlide, slideResult) {
 function RedirectToVerticalPageWithQueryString() {
     // Get the GUID from the hidden field
     var boardId = $("#hdnDesignBoardId").val();
-
+    HideLoader();
     window.location = `${baseURL}Canvas/VerticalIndex?id=${boardId}`;
 }
 function saveCurrentSlide() {
