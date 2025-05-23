@@ -579,9 +579,11 @@ function drawCanvas(condition) {
     // 2) Clear & draw background (in design units)
     ctx.clearRect(0, 0, designW, designH);
     const bgColor = document.getElementById('hdnBackgroundSpecificColor').value.trim();
+    console.log('Start drawCanvas ===>bgColor', bgColor);
     if (bgColor) {
         ctx.fillStyle = bgColor;
         ctx.fillRect(0, 0, designW, designH);
+        console.log('End drawCanvas ===>bgColor', bgColor);
     }
     //if (canvas.bgImage) {
     //    ctx.drawImage(canvas.bgImage, 0, 0, designW, designH);
@@ -2066,10 +2068,10 @@ function startVideoCapture() {
 }
 
 // Add a new text object with default text
-function addDefaultText() {
+function addDefaultTextOld() {
     const newObj = {
         text: "Default Text",
-        x: 105,
+        x: 92,
         y: 100,
         //boundingWidth: 200,
         //boundingHeight: 60,
@@ -2098,6 +2100,40 @@ function addDefaultText() {
 
     // Deselect all, then add and select the new object
     textObjects.forEach(obj => obj.selected = false);
+    newObj.selected = true;
+    textObjects.push(newObj);
+    drawCanvas('Common');
+    $("#opengl_popup").hide();
+}
+function addDefaultText() {
+    const newObj = {
+        text: "Default Text",
+        x: 92,
+        y: 100,
+        selected: false,
+        editing: false,
+        fontFamily: "Arial",
+        textColor: "#000000",
+        textAlign: "left",
+        fontSize: 30
+    };
+
+    // measure
+    ctx.font = `${newObj.fontSize}px ${newObj.fontFamily}`;
+    const metrics = ctx.measureText(newObj.text);
+    const width = metrics.width;
+    const ascent = metrics.actualBoundingBoxAscent || newObj.fontSize * 0.8;
+    const descent = metrics.actualBoundingBoxDescent || newObj.fontSize * 0.2;
+    const height = ascent + descent;
+
+    // tiny padding
+    const offsetX = 17;
+    const offsetY = 20;
+    newObj.boundingWidth = width + offsetX;
+    newObj.boundingHeight = height + offsetY;
+
+    // add to canvas
+    textObjects.forEach(o => o.selected = false);
     newObj.selected = true;
     textObjects.push(newObj);
     drawCanvas('Common');
@@ -3243,9 +3279,10 @@ function ChangeSpecificBackgroundColor(controlid) {
     drawCanvas('Common'); // Redraw the canvas without the background image.
     setCanvasBackground(controlid, backgroundSpecificColorPicker.value);
 }
-function setCanvasBackground(canvasId, color) {
+function setCanvasBackgroundOld(canvasId, color) {
     /* document.getElementById(canvasId).style.backgroundColor = color;*/
     ctx.fillStyle = color;
+   // ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 function setAllCanvasesBackground(selector, color) {
     const canvases = document.querySelectorAll(selector);

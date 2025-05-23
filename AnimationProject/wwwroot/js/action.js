@@ -62,7 +62,7 @@ function SaveDesignBoard() {
 
                 // Prepare a default id constant to check new vs. update
                 var defaultId = '00000000-0000-0000-0000-000000000000';
-                var defaultEffect = 'bounce';
+                var defaultEffect = 'delaylinear';
                 var defaultDirection = 'left';
                 var defaultAnimationVideoPath = '';
                 var defaultAnimationImagePath = '';
@@ -115,7 +115,7 @@ function SaveDesignBoard() {
                                 if (!img.complete) {
                                     img.onload = () => {
                                         loadedCount++;
-                                        if (loadedCount === images.length) captureCanvas();
+                                        if (loadedCount === images.length) captureSlide(activeSlide, slideResult);
                                     };
                                     img.onerror = () => {
                                         console.warn("Failed to load image:", img.src);
@@ -126,59 +126,8 @@ function SaveDesignBoard() {
                                 }
                             });
 
-                            if (loadedCount === images.length) captureCanvas(); // If all images are already loaded
+                                if (loadedCount === images.length) captureSlide(activeSlide, slideResult); // If all images are already loaded
 
-                            function captureCanvas() {
-                                canvas.toBlob((blob) => {
-                                    if (!blob) {
-                                        console.error("Canvas capture failed");
-                                        return;
-                                    }
-
-                                    // Determine edit/save mode
-                                    const existingFolderId = slideResult.result || 'new';
-                                    /*uploadImage(blob, existingFolderId);*/
-                                    const formData = new FormData();
-                                    formData.append('image', blob, 'canvas.png'); // Save as canvas.png
-                                    formData.append('folderId', existingFolderId);
-
-                                    fetch(baseURL + "video/save-image", {  // Adjust API endpoint as needed
-                                        method: 'POST',
-                                        body: formData
-                                    })
-                                        .then(response => response.json())
-                                        .then(data => {
-                                            console.log('Image saved successfully:', data);
-                                            // Update hidden input field with the saved file path
-                                            $(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`).val('');
-                                            $(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`).val(data.filePath);
-                                            const imageVerticalControl = $(`#imageVertical${activeSlide}`);
-                                            imageVerticalControl.attr('src', `${data.filePath}&t=${new Date().getTime()}`);
-
-
-
-                                            var dataImagePath = {
-                                                DesignBoardDetailsId: slideResult.result,
-                                                ImagePath: data.filePath
-                                            };
-
-                                            $.ajax({
-                                                url: baseURL + "Canvas/UpdateDesignDesignBoardDetailsImagePath",
-                                                type: "POST",
-                                                dataType: "json",
-                                                data: dataImagePath,
-                                                success: function (slideResult) {
-                                                },
-                                                error: function (data) {
-                                                    console.log("error in saving Image " + activeSlide);
-                                                }
-                                            });
-                                        })
-                                        .catch(error => {
-                                            console.error('Error saving image:', error);
-                                        });
-                                }, "image/png");
-                            }
                         }
                         },
                         error: function (data) {
@@ -210,10 +159,10 @@ function SaveDesignBoard() {
                 if (result !== null) {
                    
 
-                    MessageShow('RedirectToVerticalPageWithQueryString()', 'Design Board saved successfully!', 'success');
+                   // MessageShow('RedirectToVerticalPageWithQueryString()', 'Design Board saved successfully!', 'success');
                    // $("#hdnBackgroundSpecificColor").val("rgba(255, 255, 255, 0.95)");
                 }
-                HideLoader();
+               // HideLoader();
             },
             error: function (data) {
                 console.log("error", data);
@@ -224,6 +173,82 @@ function SaveDesignBoard() {
         console.log("catch", e);
         HideLoader();
     }
+}
+async function captureSlide(activeSlide, slideResult) {
+    const canvas = document.getElementById("myCanvas");
+    const ctx = canvas.getContext("2d");
+    // 1) Update your canvas one last time:
+    drawCanvas("Common");
+    // 2) Wait for any <img> or <svg> in the DOM to be fully loaded:
+    const imgs = Array.from(document.querySelectorAll("img, svg"));
+    await Promise.all(imgs.map(el => {
+        if (el.complete) return Promise.resolve();
+        return new Promise(res => {
+            el.onload = () => res();
+            el.onerror = () => {
+                console.warn("Image failed to load before capture:", el.src);
+                res();
+            };
+        });
+    }));
+
+    // 3) Wait for the next paint so the drawCanvas changes actually hit the GPU/composite:
+    await new Promise(requestAnimationFrame);
+
+    // 4) Now safely snapshot the canvas:
+    canvas.toBlob(async blob => {
+        if (!blob) {
+            console.error("Canvas capture failed: empty blob");
+            return;
+        }
+
+        // upload the blob
+        const formData = new FormData();
+        formData.append("image", blob, "canvas.png");
+        formData.append("folderId", slideResult.result || "new");
+
+        try {
+            const resp = await fetch(baseURL + "video/save-image", {
+                method: "POST", body: formData
+            });
+            const data = await resp.json();
+            console.log("Image saved:", data);
+
+            // build absolute URL and cache-bust
+            const imgUrl = new URL(data.filePath, window.location.origin);
+            imgUrl.searchParams.set("t", Date.now());
+
+            // update your hidden field & thumbnail
+            $(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`)
+                .val(data.filePath);
+            $(`#imageVertical${activeSlide}`)
+                .attr("src", imgUrl.toString());
+
+            // finally persist the path in your DB
+            await $.ajax({
+                url: baseURL + "Canvas/UpdateDesignDesignBoardDetailsImagePath",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    DesignBoardDetailsId: slideResult.result,
+                    ImagePath: data.filePath
+                },
+                success: function (response) {
+                    HideLoader();
+                    MessageShow('RedirectToVerticalPageWithQueryString()', 'Design Board saved successfully!', 'success');
+                },
+                error: function (xhr, status, error) {
+                    HideLoader();
+                    console.error("Failed to update image path:", error);
+                    MessageShow(null, 'Failed to save Design Board.', 'error');
+                }
+            });
+
+        } catch (err) {
+            console.error("Error saving or updating image:", err);
+            HideLoader();
+        }
+    }, "image/png");
 }
 
 function RedirectToVerticalPageWithQueryString() {
@@ -525,7 +550,7 @@ function ensureFontsInitialized() {
             'Arial', 'Anton', 'Bebas Neue', 'monstro', 'Montserrat', 'neto', 'Pacifico', 'Roboto'
         ];
         window.__fontFamilyPromises = families.map(fam => {
-            console.log(`vertical Preloading font family: ${fam}`);
+           // console.log(`vertical Preloading font family: ${fam}`);
             return document.fonts.load(`1em ${fam}`);
         });
         window.__allFontsReady = Promise.all(window.__fontFamilyPromises)
@@ -723,7 +748,10 @@ function autoFitTextNew(obj, padding = 5) {
     // 4) commit: final fs + its wrapped lines + new boundingHeight
     obj.fontSize = fs;
     obj._wrappedLines = lines;
-    obj.boundingHeight = lines.length * fs * 1.5 + 2 * padding;
+    // obj.boundingHeight = lines.length * fs * 1.3 + 2 * padding;
+    const measuredWidths = lines.map(l => ctx2.measureText(l).width);
+    obj.boundingWidth = Math.max(...measuredWidths, 0) + 2 * padding;
+
 }
 
 
@@ -1490,7 +1518,9 @@ function autoFitTextNewDownload(obj, padding = 5) {
     // 4) commit: final fs + its wrapped lines + new boundingHeight
     obj.fontSize = fs;
     obj._wrappedLines = lines;
-    obj.boundingHeight = lines.length * fs * 1.2 + 2 * padding;
+    //obj.boundingHeight = lines.length * fs * 1.2 + 2 * padding;
+    const measuredWidths = lines.map(l => ctx2.measureText(l).width);
+    obj.boundingWidth = Math.max(...measuredWidths, 0) + 2 * padding;
 }
 
 
