@@ -128,79 +128,6 @@ function SaveDesignBoard() {
 
                                 if (loadedCount === images.length) captureSlide(activeSlide, slideResult); // If all images are already loaded
 
-                            function captureCanvas() {
-                                canvas.toBlob((blob) => {
-                                    if (!blob) {
-                                        console.error("Canvas capture failed");
-                                        return;
-                                    }
-
-                                    // Determine edit/save mode
-                                    const existingFolderId = slideResult.result || 'new';
-                                    /*uploadImage(blob, existingFolderId);*/
-                                    const formData = new FormData();
-                                    formData.append('image', blob, 'canvas.png'); // Save as canvas.png
-                                    formData.append('folderId', existingFolderId);
-
-                                    fetch(baseURL + "video/save-image", {  // Adjust API endpoint as needed
-                                        method: 'POST',
-                                        body: formData
-                                    })
-                                        .then(response => response.json())
-                                        .then(data => {
-                                            console.log('Image saved successfully:', data);
-
-                                            // 1) build an absolute URL from whatever your server gave you:
-                                            const imgUrl = new URL(data.filePath, window.location.origin);
-
-                                            // 2) stomp on the "t" search-param with a fresh timestamp:
-                                            imgUrl.searchParams.set("t", Date.now());
-
-                                            // 3) update your hidden input if you need to keep the raw path around:
-                                            $(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`)
-                                                .val(data.filePath);
-                                            console.log('Image saved successfully:', imgUrl.toString());
-                                            // 4) swap in the new src immediately:
-                                            $(`#imageVertical${activeSlide}`)
-                                                .off("error")                       // clear any old handlers
-                                                .on("error", () => console.error("image failed to load:", imgUrl))
-                                                .attr("src", imgUrl.toString());
-                                           
-
-
-
-
-                                            //// Update hidden input field with the saved file path
-                                            //$(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`).val('');
-                                            //$(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`).val(data.filePath);
-                                            //const imageVerticalControl = $(`#imageVertical${activeSlide}`);
-                                            //imageVerticalControl.attr('src', `${data.filePath}&t=${new Date().getTime()}`);
-
-
-
-
-                                            var dataImagePath = {
-                                                DesignBoardDetailsId: slideResult.result,
-                                                ImagePath: data.filePath
-                                            };
-
-                                            $.ajax({
-                                                url: baseURL + "Canvas/UpdateDesignDesignBoardDetailsImagePath",
-                                                type: "POST",
-                                                dataType: "json",
-                                                data: dataImagePath,
-                                                success: function (slideResult) {
-                                                },
-                                                error: function (data) {
-                                                    console.log("error in saving Image " + activeSlide);
-                                                }
-                                            });
-                                        })
-                                        .catch(error => {
-                                            console.error('Error saving image:', error);
-                                        });
-                                }, "image/png");
-                            }
                         }
                         },
                         error: function (data) {
@@ -232,10 +159,10 @@ function SaveDesignBoard() {
                 if (result !== null) {
                    
 
-                    MessageShow('RedirectToVerticalPageWithQueryString()', 'Design Board saved successfully!', 'success');
+                   // MessageShow('RedirectToVerticalPageWithQueryString()', 'Design Board saved successfully!', 'success');
                    // $("#hdnBackgroundSpecificColor").val("rgba(255, 255, 255, 0.95)");
                 }
-                HideLoader();
+               // HideLoader();
             },
             error: function (data) {
                 console.log("error", data);
@@ -250,10 +177,8 @@ function SaveDesignBoard() {
 async function captureSlide(activeSlide, slideResult) {
     const canvas = document.getElementById("myCanvas");
     const ctx = canvas.getContext("2d");
-    console.log('before call captureSlide : activeSlide==>', activeSlide);
     // 1) Update your canvas one last time:
     drawCanvas("Common");
-    console.log('End call captureSlide : activeSlide==>');
     // 2) Wait for any <img> or <svg> in the DOM to be fully loaded:
     const imgs = Array.from(document.querySelectorAll("img, svg"));
     await Promise.all(imgs.map(el => {
@@ -307,10 +232,21 @@ async function captureSlide(activeSlide, slideResult) {
                 data: {
                     DesignBoardDetailsId: slideResult.result,
                     ImagePath: data.filePath
+                },
+                success: function (response) {
+                    HideLoader();
+                    MessageShow('RedirectToVerticalPageWithQueryString()', 'Design Board saved successfully!', 'success');
+                },
+                error: function (xhr, status, error) {
+                    HideLoader();
+                    console.error("Failed to update image path:", error);
+                    MessageShow(null, 'Failed to save Design Board.', 'error');
                 }
             });
+
         } catch (err) {
             console.error("Error saving or updating image:", err);
+            HideLoader();
         }
     }, "image/png");
 }
