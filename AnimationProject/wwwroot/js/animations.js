@@ -2965,39 +2965,90 @@ document.querySelectorAll("#imageContainer img").forEach(img => {
     });
 });
 
-// Allow dropping on canvas
-canvas.addEventListener("dragover", function (e) {
+//// Allow dropping on canvas
+//canvas.addEventListener("dragover", function (e) {
+//    e.preventDefault();
+//});
+canvas.addEventListener('dragover', e => {
     e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
 });
-
 // When an image is dropped onto the canvas, add it to our images array
-canvas.addEventListener("drop", function (e) {
+////canvas.addEventListener("drop", function (e) {
+////    e.preventDefault();
+////    const src = e.dataTransfer.getData("text/plain");
+////    if (src) {
+////        // Create a new image object
+////        const img = new Image();
+////        img.src = src;
+////        img.onload = function () {
+////            // Default position is drop position; default size is half the natural size
+////            const newImgObj = {
+////                img: img,
+////                src: src, // keep the src path
+////                x: e.offsetX,
+////                y: e.offsetY,
+////                width: img.width / 4,
+////                height: img.height / 4,
+////                scaleX: 1,
+////                scaleY: 1,
+////                selected: false
+////            };
+////            images.push(newImgObj);
+////            drawCanvas('Common');
+////        };
+////    }
+////});
+canvas.addEventListener('drop', e => {
     e.preventDefault();
-    const src = e.dataTransfer.getData("text/plain");
-    if (src) {
-        // Create a new image object
-        const img = new Image();
-        img.src = src;
-        img.onload = function () {
-            // Default position is drop position; default size is half the natural size
-            const newImgObj = {
-                img: img,
-                src: src, // keep the src path
-                x: e.offsetX,
-                y: e.offsetY,
-                width: img.width / 4,
-                height: img.height / 4,
-                scaleX: 1,
-                scaleY: 1,
-                selected: false
-            };
-            images.push(newImgObj);
-            drawCanvas('Common');
-        };
+
+    let src = "";
+
+    // 1) Preferred: a real URI (e.g. dragging from another site)
+    // try text/uri-list first (for standards-compliant browsers)
+    if (e.dataTransfer.types.includes('text/uri-list')) {
+        src = e.dataTransfer.getData('text/uri-list').trim();
     }
+    // fallback: if plain text *looks* like an http URL
+    else {
+        const plain = e.dataTransfer.getData('text/plain').trim();
+        if (/^https?:\/\//i.test(plain)) {
+            src = plain;
+        }
+    }
+
+    // 2) If that fails, check for File objects (drag from Finder or Explorer)
+    if (!src && e.dataTransfer.files.length > 0) {
+        const file = e.dataTransfer.files[0];
+        if (file.type.startsWith('image/')) {
+            src = URL.createObjectURL(file);
+        }
+    }
+
+    // 3) Nothing valid? bail out
+    if (!src) return;
+
+    // 4) Finally load & push into your images array
+    const img = new Image();
+    img.onload = () => {
+        images.push({
+            img,
+            src,
+            x: e.offsetX,
+            y: e.offsetY,
+            width: img.naturalWidth / 4,
+            height: img.naturalHeight / 4,
+            scaleX: 1,
+            scaleY: 1,
+            opacity: 1,
+            selected: false
+        });
+        drawCanvas('Common');
+        // If you want, you can revoke object URLs later:
+        // if (src.startsWith('blob:')) URL.revokeObjectURL(src);
+    };
+    img.src = src;
 });
-
-
 function updateSelectedImageColorsOld(newFill, newStroke) {
     if (activeImage && activeImage.src && activeImage.src.endsWith('.svg')) {
         if (activeImage.originalSVG) {
