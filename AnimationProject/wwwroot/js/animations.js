@@ -2128,7 +2128,7 @@ function addDefaultText() {
 
     // tiny padding
     const offsetX = 20;
-    const offsetY = 22;
+    const offsetY = 25;
     newObj.boundingWidth = width + offsetX;
     newObj.boundingHeight = height + offsetY;
 
