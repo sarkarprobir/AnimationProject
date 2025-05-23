@@ -1272,3 +1272,17 @@ body {
     box-shadow: rgba(136, 165, 191, 0.48) 6px 2px 16px 0px, rgba(255, 255, 255, 0.8) -6px -2px 16px 0px;
     
 }
+.spacing_title {
+    font-size: 14px;
+    font-weight: 500;
+}
+.spacing_button{
+    font-size: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    color: #000;
+}
+.spacing_buttons{
+    width: 45px;
+}
