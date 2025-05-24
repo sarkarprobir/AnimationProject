@@ -393,7 +393,8 @@ function saveCanvasData() {
                 fontFamily: obj.fontFamily,
                 textColor: obj.textColor,
                 textAlign: obj.textAlign,
-                opacity: obj.opacity
+                opacity: obj.opacity,
+                lineSpacing: obj.lineSpacing
             };
         }),
 
@@ -657,7 +658,11 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
             textAlign: obj.textAlign,
             opacity: obj.opacity || 1,
             selected: false,
-            _hasManualBreaks: hasManual
+            _hasManualBreaks: hasManual,
+            // ← RIGHT HERE: hydrate or default lineSpacing
+            lineSpacing: (typeof obj.lineSpacing === 'number')
+                ? obj.lineSpacing
+                : obj.fontSize * 1.2,
         };
     });
 
@@ -1271,11 +1276,7 @@ function loadCanvasFromJsonForPublish(jsonData, condition) {
         checkAllImagesLoadedPublish();
     }
 }
-// Modified loadCanvasFromJsonForDownload with auto-fit integration
-// Modified loadCanvasFromJsonForDownload with auto-fit support
-// Simplified loadCanvasFromJsonForDownload: always use passed JSON object
-// Simplified loadCanvasFromJsonForDownload: always use passed JSON object
-// Simplified loadCanvasFromJsonForDownload: always use passed JSON object
+
 // Simplified loadCanvasFromJsonForDownload: always use passed JSON object
 function loadCanvasFromJsonForDownload1(jsonData, condition = 'Common') {
     // clear download canvas
@@ -1413,7 +1414,11 @@ function loadCanvasFromJsonForDownload1(jsonData, condition = 'Common') {
             textAlign: obj.textAlign,
             opacity: obj.opacity || 1,
             selected: false,
-            _hasManualBreaks: hasManual
+            _hasManualBreaks: hasManual,
+            // ← RIGHT HERE: hydrate or default lineSpacing
+            lineSpacing: (typeof obj.lineSpacing === 'number')
+                ? obj.lineSpacing
+                : obj.fontSize * 1.2,
         };
     });
 
@@ -1679,11 +1684,31 @@ function drawCanvasForDownload(condition) {
             const py = obj.y;
             const boxW = obj.boundingWidth;
             const boxH = obj.boundingHeight;
+            const maxW = obj.boundingWidth - 2 * paddingPx;
+           
+            let lines;
+            if (obj.text.includes('\n')) {
+                lines = obj.text.split('\n');
+            } else {
+                lines = wrapText(ctx, obj.text, maxW);
+            }
 
-            const lines = obj._wrappedLines || obj.text.replace(/\r/g, '').split('\n');
-            const lineH = fs * 1.2;
-            const maxLines = Math.floor((boxH - 2 * paddingPx) / lineH);
-            const startY = py + paddingPx;
+            // 2) Compute lineHeight from the factor
+            const lineH = obj.lineSpacing * obj.fontSize;
+
+          
+
+            // 3) If it’s multi-line, grow/shrink your box to fit exactly:
+            if (lines.length > 1) {
+                obj.boundingHeight = lines.length * lineH + 2 * padding;
+            }
+
+            // 4) Now figure out how many of those lines actually fit (even though
+            //    in multi-line we just resized to fit all, this keeps your clipping logic intact):
+            const availableHeight = obj.boundingHeight - 2 * padding;
+            const maxLines = Math.floor(availableHeight / lineH);
+            const startY = obj.y + padding;
+
 
             lines.slice(0, maxLines).forEach((line, i) => {
                 // horizontal alignment
