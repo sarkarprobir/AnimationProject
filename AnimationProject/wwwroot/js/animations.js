@@ -1060,7 +1060,7 @@ function ChangeStyle() {
 //    }
 //    drawCanvas('ChangeStyle');
 //}
-function ChangeAlignStyle(value) {
+function ChangeAlignStyleOLD(value) {
     // Update the alignment control value.
     $("#textAlign").val(value);
     const newAlign = document.getElementById("textAlign").value; // "left", "center", or "right"
@@ -1104,6 +1104,27 @@ function ChangeAlignStyle(value) {
     }
     drawCanvas("ChangeStyle");
 }
+
+function ChangeAlignStyle(value) {
+    // 1) Store the new alignment on your control
+    $("#textAlign").val(value);
+    const newAlign = $("#textAlign").val(); // "left", "center", or "right"
+
+    // 2) Find your selected text object
+    const obj = textObjects.find(o => o.selected);
+    if (!obj) return;
+
+    // 3) Only set the alignment—don't recompute width or move x
+    obj.textAlign = newAlign;
+
+    // 4) Cap the box to the canvas bounds if you like:
+    const maxAllowedW = canvas.width - obj.x;
+    obj.boundingWidth = Math.min(obj.boundingWidth, maxAllowedW);
+
+    // 5) Redraw
+    drawCanvas("ChangeStyle");
+}
+
 
 
 
