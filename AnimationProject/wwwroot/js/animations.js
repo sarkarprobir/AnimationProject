@@ -585,16 +585,50 @@ function getLinesFor(obj) {
 
 
 // 2) Adjust line spacing for the *selected* text object
-function changeLineSpacing(deltaPx) {
+//function changeLineSpacing(deltaPx) {
 
+//    const obj = textObjects.find(o => o.selected);
+//    if (!obj) return;
+
+//    // bump the factor, but don’t let it go below, say, 1.0 (100%)
+//    obj.lineSpacing = Math.max(.20, obj.lineSpacing + deltaPx);
+
+//    drawCanvas('Common');
+//}
+function changeLineSpacing(deltaFactor) {
     const obj = textObjects.find(o => o.selected);
     if (!obj) return;
 
-    // bump the factor, but don’t let it go below, say, 1.0 (100%)
-    obj.lineSpacing = Math.max(1, obj.lineSpacing + deltaPx);
+    // 1) Update spacing factor (allow down to 0.2× for overlap)
+    if (deltaFactor < 0) {
+        obj.lineSpacing = Math.max(0.2, obj.lineSpacing + deltaFactor);
+    } else {
+        obj.lineSpacing = obj.lineSpacing + deltaFactor;
+    }
 
+    // 2) Recompute the height the text *would* need at this spacing
+    //const lines = obj.text.split('\n');
+    //const lineH = obj.lineSpacing * obj.fontSize;
+    //const neededH = lines.length * lineH + 2 * padding;
+
+    //// 3) **Only on “+”** do we grow the box to fit; on “–” we leave it alone
+    //if (deltaFactor > 0) {
+    //    obj.boundingHeight = Math.max(obj.boundingHeight, neededH);
+    //}
+    //else {
+    //    obj.boundingHeight = obj.boundingHeight+100;
+    //}
+    // else: on overlap, do NOT touch boundingHeight
+
+    //// 4) Redraw
+   
     drawCanvas('Common');
 }
+
+
+
+
+
 
 
 function drawCanvas(condition) {
@@ -683,6 +717,12 @@ function drawCanvas(condition) {
             if (lines.length > 1) {
                 obj.boundingHeight = lines.length * lineH + 2 * pad;
             }
+            // 3) If multi-line, resize the box only if text height is larger
+            //if (lines.length > 1) {
+            //    const textHeight = lines.length * lineH + 2 * pad;
+            //    obj.boundingHeight = textHeight+80;
+               
+            //}
 
             // 4) Clip to however many lines fit (mostly for overflow)
             const availableHeight = obj.boundingHeight - 2 * pad;
