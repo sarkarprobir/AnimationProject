@@ -1700,7 +1700,7 @@ function drawCanvasForDownload(condition) {
 
             // 3) If it’s multi-line, grow/shrink your box to fit exactly:
             if (lines.length > 1) {
-                obj.boundingHeight = lines.length * lineH + 2 * padding + 80;// this 80 is for round box make little expend as Line Spacing
+                obj.boundingHeight = lines.length * lineH + 2 * padding ;// this 80 is for round box make little expend as Line Spacing
             }
 
             // 4) Now figure out how many of those lines actually fit (even though
