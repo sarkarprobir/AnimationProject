@@ -1710,17 +1710,29 @@ function drawCanvasForDownload(condition) {
             const startY = obj.y + padding;
 
 
+
+            // 5) Draw each line at the computed spacing
             lines.slice(0, maxLines).forEach((line, i) => {
-                // horizontal alignment
-                let tx = px + paddingPx;
                 const lw = ctxElementForDownload.measureText(line).width;
-                if (obj.textAlign === 'center') {
-                    tx = px + (boxW - lw) / 2;
-                } else if (obj.textAlign === 'right') {
-                    tx = px + boxW - lw - paddingPx;
-                }
-                ctxElementForDownload.fillText(line, tx, startY + i * lineH);
+                let offsetX = px + paddingPx;
+                if (obj.textAlign === 'center') offsetX = px + (obj.boundingWidth - lw) / 2;
+                if (obj.textAlign === 'right') offsetX = px + obj.boundingWidth - lw - paddingPx;
+
+                ctxElementForDownload.fillText(line, offsetX, startY + i * lineH);
             });
+
+
+            //lines.slice(0, maxLines).forEach((line, i) => {
+            //    // horizontal alignment
+            //    let tx = px + paddingPx;
+            //    const lw = ctxElementForDownload.measureText(line).width;
+            //    if (obj.textAlign === 'center') {
+            //        tx = px + (boxW - lw) / 2;
+            //    } else if (obj.textAlign === 'right') {
+            //        tx = px + boxW - lw - paddingPx;
+            //    }
+            //    ctxElementForDownload.fillText(line, tx, startY + i * lineH);
+            //});
             ctxElementForDownload.restore();
         });
     }
