@@ -1243,40 +1243,40 @@ function animateText(direction, condition, loopCount) {
             });
         });
 
-        // --- Stay Time ---
-        tlText.to({}, { duration: stayTime, ease: "none" });
+        //// --- Stay Time ---
+        //tlText.to({}, { duration: stayTime, ease: "none" });
 
-        // --- Image OUT (First!) ---
-        [...images].reverse().forEach((imgObj) => {
-            tlText.to(imgObj, {
-                //x: imgObj.exitX,
-                //y: imgObj.exitY,
-                x: (i, target) => target.exitX,
-                y: (i, target) => target.exitY,
-                duration: individualTweenOutText,
-                ease: "power1.out",
-                stagger: individualTweenOutText * 0.70,
-                onUpdate: () => drawCanvas(condition)
-            });
-        });
+        //// --- Image OUT (First!) ---
+        //[...images].reverse().forEach((imgObj) => {
+        //    tlText.to(imgObj, {
+        //        //x: imgObj.exitX,
+        //        //y: imgObj.exitY,
+        //        x: (i, target) => target.exitX,
+        //        y: (i, target) => target.exitY,
+        //        duration: individualTweenOutText,
+        //        ease: "power1.out",
+        //        stagger: individualTweenOutText * 0.70,
+        //        onUpdate: () => drawCanvas(condition)
+        //    });
+        //});
 
-        // --- Text OUT (After Image) ---
-        tlText.to([...textObjects].reverse(), {
-            x: (i, target) => target.exitX,
-            y: (i, target) => target.exitY,
-            duration: individualTweenOutText,
-            ease: "power1.out",
-            stagger: individualTweenOutText * .70,
-            onUpdate: () => drawCanvas(condition)
-        });
-
-        //// --- Reset text to final position only (leave image off-screen) ---
-        //tlText.set([...textObjects, ...images], {
-        //    x: (i, target) => target.finalX,
-        //    y: (i, target) => target.finalY,
-        //    duration: 0,
+        //// --- Text OUT (After Image) ---
+        //tlText.to([...textObjects].reverse(), {
+        //    x: (i, target) => target.exitX,
+        //    y: (i, target) => target.exitY,
+        //    duration: individualTweenOutText,
+        //    ease: "power1.out",
+        //    stagger: individualTweenOutText * .70,
         //    onUpdate: () => drawCanvas(condition)
         //});
+
+        //// --- Reset text to final position only (leave image off-screen) ---
+        tlText.set([...textObjects, ...images], {
+            x: (i, target) => target.finalX,
+            y: (i, target) => target.finalY,
+            duration: 0,
+            onUpdate: () => drawCanvas(condition)
+        });
         tlText.eventCallback("onComplete", () => {
             images.forEach(img => {
                 img.x = img.finalX;
