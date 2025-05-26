@@ -639,7 +639,7 @@ function drawCanvas(condition) {
     // compute “design‐space” dimensions for clearing
     const designW = canvas.width / dpr / scaleX;
     const designH = canvas.height / dpr / scaleY;
-
+    
     // 2) Clear & draw background (in design units)
     ctx.clearRect(0, 0, designW, designH);
     const bgColor = document.getElementById('hdnBackgroundSpecificColor').value.trim();
