@@ -1151,7 +1151,14 @@ function uploadImage(blob, existingFolderId = 'new') {
 }
 function animateText(direction, condition, loopCount) {
     const animationType = document.getElementById("hdnTextAnimationType").value;
-   
+
+    let tabType = $("#hdnTabType").val();
+
+    // default to "In" if it’s null, undefined, or just an empty string
+    if (!tabType) {
+        tabType = "In";
+    }
+
     // Global timing settings (from your selected speeds).
     const inTime = parseFloat(selectedInSpeed) || 4;   // e.g. 4 seconds for all "in"
     const outTime = parseFloat(selectedOutSpeed) || 4;   // e.g. 3 seconds for all "out"
@@ -1218,22 +1225,9 @@ function animateText(direction, condition, loopCount) {
             repeat: loopCount - 1,
             onUpdate: () => drawCanvas(condition)
         });
-
-        // --- Text IN ---
-        tlText.to(textObjects, {
-            x: (i, target) => target.finalX,
-            y: (i, target) => target.finalY,
-            duration: individualTweenText,
-            ease: "power1.in",
-            stagger: individualTweenText * .70,
-            onUpdate: () => drawCanvas(condition)
-        });
-
-        console.log("animateText", images);
-
-        // --- Image IN ---
-        images.forEach((imgObj) => {
-            tlText.to(imgObj, {
+        if (tabType == "In" || tabType == "Out") {
+            // --- Text IN ---
+            tlText.to(textObjects, {
                 x: (i, target) => target.finalX,
                 y: (i, target) => target.finalY,
                 duration: individualTweenText,
@@ -1241,35 +1235,51 @@ function animateText(direction, condition, loopCount) {
                 stagger: individualTweenText * .70,
                 onUpdate: () => drawCanvas(condition)
             });
-        });
 
-        //// --- Stay Time ---
-        //tlText.to({}, { duration: stayTime, ease: "none" });
+            console.log("animateText", images);
 
-        //// --- Image OUT (First!) ---
-        //[...images].reverse().forEach((imgObj) => {
-        //    tlText.to(imgObj, {
-        //        //x: imgObj.exitX,
-        //        //y: imgObj.exitY,
-        //        x: (i, target) => target.exitX,
-        //        y: (i, target) => target.exitY,
-        //        duration: individualTweenOutText,
-        //        ease: "power1.out",
-        //        stagger: individualTweenOutText * 0.70,
-        //        onUpdate: () => drawCanvas(condition)
-        //    });
-        //});
+            // --- Image IN ---
+            images.forEach((imgObj) => {
+                tlText.to(imgObj, {
+                    x: (i, target) => target.finalX,
+                    y: (i, target) => target.finalY,
+                    duration: individualTweenText,
+                    ease: "power1.in",
+                    stagger: individualTweenText * .70,
+                    onUpdate: () => drawCanvas(condition)
+                });
+            });
+        }
+         if (tabType == "Stay" || tabType == "Out") {
+            // --- Stay Time ---
+            tlText.to({}, { duration: stayTime, ease: "none" });
+        }
+         if (tabType == "Out") {
+            
+            // --- Image OUT (First!) ---
+            [...images].reverse().forEach((imgObj) => {
+                tlText.to(imgObj, {
+                    //x: imgObj.exitX,
+                    //y: imgObj.exitY,
+                    x: (i, target) => target.exitX,
+                    y: (i, target) => target.exitY,
+                    duration: individualTweenOutText,
+                    ease: "power1.out",
+                    stagger: individualTweenOutText * 0.70,
+                    onUpdate: () => drawCanvas(condition)
+                });
+            });
 
-        //// --- Text OUT (After Image) ---
-        //tlText.to([...textObjects].reverse(), {
-        //    x: (i, target) => target.exitX,
-        //    y: (i, target) => target.exitY,
-        //    duration: individualTweenOutText,
-        //    ease: "power1.out",
-        //    stagger: individualTweenOutText * .70,
-        //    onUpdate: () => drawCanvas(condition)
-        //});
-
+            // --- Text OUT (After Image) ---
+            tlText.to([...textObjects].reverse(), {
+                x: (i, target) => target.exitX,
+                y: (i, target) => target.exitY,
+                duration: individualTweenOutText,
+                ease: "power1.out",
+                stagger: individualTweenOutText * .70,
+                onUpdate: () => drawCanvas(condition)
+            });
+        }
         //// --- Reset text to final position only (leave image off-screen) ---
         tlText.set([...textObjects, ...images], {
             x: (i, target) => target.finalX,
@@ -2336,7 +2346,32 @@ canvas.addEventListener("mousedown", function (e) {
     // 0) if typing in the text editor, ignore
     if (document.activeElement === textEditor) return;
 
-    // 1) IMAGE body‐click → drag
+    // 1) TEXT logic (unchanged)
+    const txt = getTextObjectAt(pos.x, pos.y);
+    if (txt) {
+        textObjects.forEach(o => o.selected = false);
+        txt.selected = true;
+        activeText = txt;
+
+        const th = getHandleUnderMouse(pos.x, pos.y, txt);
+        if (th) {
+            isResizingText = true;
+            activeTextHandle = th;
+            e.preventDefault();
+            drawCanvas('Common');
+            return;
+        }
+        if (isInsideBox(pos.x, pos.y, txt)) {
+            isDraggingText = true;
+            dragOffsetText.x = pos.x - txt.x;
+            dragOffsetText.y = pos.y - txt.y;
+            e.preventDefault();
+            drawCanvas('Common');
+            return;
+        }
+    }
+
+    // 2) IMAGE body‐click → drag
     for (let i = images.length - 1; i >= 0; i--) {
         const img = images[i];
         // use the SAME w/h/fallback logic as your handles
@@ -2375,7 +2410,7 @@ canvas.addEventListener("mousedown", function (e) {
         }
     }
 
-    // 2) IMAGE handle‐click → resize
+    // 3) IMAGE handle‐click → resize
     for (let i = images.length - 1; i >= 0; i--) {
         const img = images[i];
         const ih = getHandleUnderMouseForImage(img, pos);
@@ -2396,30 +2431,7 @@ canvas.addEventListener("mousedown", function (e) {
         }
     }
 
-    // 3) TEXT logic (unchanged)
-    const txt = getTextObjectAt(pos.x, pos.y);
-    if (txt) {
-        textObjects.forEach(o => o.selected = false);
-        txt.selected = true;
-        activeText = txt;
-
-        const th = getHandleUnderMouse(pos.x, pos.y, txt);
-        if (th) {
-            isResizingText = true;
-            activeTextHandle = th;
-            e.preventDefault();
-            drawCanvas('Common');
-            return;
-        }
-        if (isInsideBox(pos.x, pos.y, txt)) {
-            isDraggingText = true;
-            dragOffsetText.x = pos.x - txt.x;
-            dragOffsetText.y = pos.y - txt.y;
-            e.preventDefault();
-            drawCanvas('Common');
-            return;
-        }
-    }
+    
 
     // 4) nothing matched → clear all
     textObjects.forEach(o => o.selected = false);
@@ -2839,6 +2851,7 @@ canvas.addEventListener("click", function (e) {
         $(".right-sec-one").css("display", "none");
         document.getElementById("modeButton").innerText = "Animation Mode";
         $("#opengl_popup").hide();
+        images.forEach(img => img.selected = false);
     } else if (imageFound) {
         // Select image and update UI
         images.forEach(img => img.selected = false);
@@ -2848,6 +2861,7 @@ canvas.addEventListener("click", function (e) {
         $(".right-sec-one").css("display", "none");
         document.getElementById("modeButton").innerText = "Animation Mode";
         $("#opengl_popup").hide();
+        textObjects.forEach(o => o.selected = false);
     } else {
         // Deselect all if clicking on empty canvas
         textObjects.forEach(o => o.selected = false);
@@ -3005,16 +3019,19 @@ function ChangeStrockColor() {
 }
 function TabShowHide(type) {
     if (type === 'In') {
+        $("#hdnTabType").val('In');
         $("#marzen").css("display", "block");
         $("#rauchbier").css("display", "none");
         $("#dunkles").css("display", "none");
     }
     else if (type === 'Stay') {
+        $("#hdnTabType").val('Stay');
         $("#marzen").css("display", "none");
         $("#rauchbier").css("display", "block");
         $("#dunkles").css("display", "none");
     }
     else if (type === 'Out') {
+        $("#hdnTabType").val('Out');
         $("#marzen").css("display", "none");
         $("#rauchbier").css("display", "none");
         $("#dunkles").css("display", "block");
