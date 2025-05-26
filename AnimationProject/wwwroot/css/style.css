@@ -387,7 +387,7 @@ ul.top-left-icon li {
     padding: 20px;
     position: absolute;
     left: 0px;
-    top: 0;
+    top: 3px;
     border-right: none;
 }
 .panel-left-fonts {
@@ -527,7 +527,7 @@ ul.speed-list li:hover{background:#f5f5f5; border-radius:6px; cursor:pointer;}
 */
 ul.TextStyle{ margin:0px;}
 ul.TextStyle li {list-style-type:none; float:left; width:100%; margin-bottom:10px;}
- ul.TextStyle li a{color:#000; padding:0px 14px; float: left; text-decoration:none;}
+ ul.TextStyle li a{color:#000; padding:0px 14px; float: left; text-decoration:none; cursor: pointer;}
  ul.TextStyle li a:hover{color:#fff; background:#4e43e1}
  
  /*font-face css*/
@@ -1018,6 +1018,7 @@ body {
 
 .cross:hover {
     color: red;
+    border: 1px solid transparent !important;
 }
 
 .tab.active {
@@ -1038,10 +1039,11 @@ body {
     display: flex;
 }
 
-    .search-box input {
-        flex: 1;
-        padding: 3px 5px;
-    }
+.search-box input {
+    flex: 1;
+    padding: 3px 5px;
+    font-size: 14px;
+}
 
 .gallery {
     display: flex;
@@ -1167,7 +1169,7 @@ body {
 }
 
 #close_button {
-    border: 0px solid #ddd;
+    border: 1px solid transparent;
     float: right;
     background: transparent;
     font-weight: bold;
@@ -1191,9 +1193,12 @@ body {
 }
 
 .texture_images {
-    min-height: 469px;
+    max-height: fit-content;
+    width: 193px;
 }
-
+.texture_top_cont {
+    min-height: 480px;
+}
 .texture_palette {
     width: 30px;
     height: 30px;
@@ -1213,18 +1218,24 @@ body {
 }
 @media (min-width: 1900px) {
     .gallery {
-        min-height: 72vh;
+        min-height: 70vh;
     }
 
     .temp_gallery {
-        min-height: 71.8vh;
+        min-height: 69.8vh;
     }
 
     .my_img_gal {
-        min-height: 71.8vh;
+        min-height: 69.4vh;
     }
     .panel-left-fonts {
-        height: 95.7vh;
+        height: 95vh;
+    }
+    .texture_top_cont {
+        min-height: 695px;
+    }
+    #background_popup{
+        width: 279px;
     }
 }
 .loader {
