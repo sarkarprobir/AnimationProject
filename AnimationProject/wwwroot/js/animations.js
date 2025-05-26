@@ -30,6 +30,8 @@ let text = $("#textInput").val();
 let textPosition = { x: 100, y: 100, opacity: 1, content: text, }; // Default start position
 let imagePosition = { x: 100, y: 20, scaleX: 1, scaleY: 1, opacity: 1, }; // Default start position
 
+const FACTOR_INCREMENT = 0.1;
+
 /////this is for add multiple text
 const textEditor = document.getElementById("textEditor");
 const addTextBtn = document.getElementById("addTextBtn");
@@ -83,7 +85,7 @@ let isResizingImage = false;
 let activeImage = null;
 
 ////This is for delete text///////////////////
-// Utility: Returns an object (text or image) if the (x,y) falls within its bounding box.
+// Utility: Returns an object (text or image) if the (x,y) falls within its bounding box."
 
 function wrapText(ctx, text, maxWidth) {
     if (ctx.measureText(text).width <= maxWidth) {
@@ -461,7 +463,7 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
 //        textObjects.forEach(obj => {
 //            ctx.save();
 //            // If selected, draw the bounding box and handles.
-          
+
 //            if (obj.selected) {
 //                // Constrain the box if it goes beyond canvas boundaries.
 //                if (obj.x < 0) obj.x = 0;
@@ -567,6 +569,68 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
 //    ctx.globalAlpha = 1;
 //    ctx.restore();
 //}
+
+function getLinesFor(obj) {
+    ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+    const maxW = obj.boundingWidth - 2 * padding;
+
+    if (obj.boundingWidth < obj.fontSize) {
+        return obj.text.split('');
+    }
+    if (obj.text.includes('\n')) {
+        return obj.text.split('\n');
+    }
+    return wrapText(ctx, obj.text, maxW);
+}
+
+
+// 2) Adjust line spacing for the *selected* text object
+//function changeLineSpacing(deltaPx) {
+
+//    const obj = textObjects.find(o => o.selected);
+//    if (!obj) return;
+
+//    // bump the factor, but don’t let it go below, say, 1.0 (100%)
+//    obj.lineSpacing = Math.max(.20, obj.lineSpacing + deltaPx);
+
+//    drawCanvas('Common');
+//}
+function changeLineSpacing(deltaFactor) {
+    const obj = textObjects.find(o => o.selected);
+    if (!obj) return;
+
+    // 1) Update spacing factor (allow down to 0.2× for overlap)
+    if (deltaFactor < 0) {
+        obj.lineSpacing = Math.max(0.2, obj.lineSpacing + deltaFactor);
+    } else {
+        obj.lineSpacing = obj.lineSpacing + deltaFactor;
+    }
+
+    // 2) Recompute the height the text *would* need at this spacing
+    //const lines = obj.text.split('\n');
+    //const lineH = obj.lineSpacing * obj.fontSize;
+    //const neededH = lines.length * lineH + 2 * padding;
+
+    //// 3) **Only on “+”** do we grow the box to fit; on “–” we leave it alone
+    //if (deltaFactor > 0) {
+    //    obj.boundingHeight = Math.max(obj.boundingHeight, neededH);
+    //}
+    //else {
+    //    obj.boundingHeight = obj.boundingHeight+100;
+    //}
+    // else: on overlap, do NOT touch boundingHeight
+
+    //// 4) Redraw
+   
+    drawCanvas('Common');
+}
+
+
+
+
+
+
+
 function drawCanvas(condition) {
     // 1) Refresh CTM: design→screen
     resizeCanvas();               // must set ctx.resetTransform(); ctx.scale(dpr,dpr); ctx.scale(scaleX,scaleY);
@@ -579,11 +643,11 @@ function drawCanvas(condition) {
     // 2) Clear & draw background (in design units)
     ctx.clearRect(0, 0, designW, designH);
     const bgColor = document.getElementById('hdnBackgroundSpecificColor').value.trim();
-    console.log('Start drawCanvas ===>bgColor', bgColor);
+   
     if (bgColor) {
         ctx.fillStyle = bgColor;
         ctx.fillRect(0, 0, designW, designH);
-        console.log('End drawCanvas ===>bgColor', bgColor);
+        
     }
     //if (canvas.bgImage) {
     //    ctx.drawImage(canvas.bgImage, 0, 0, designW, designH);
@@ -633,36 +697,51 @@ function drawCanvas(condition) {
             ctx.fillStyle = obj.textColor;
             ctx.textBaseline = "top";
 
-            // wrap or split on \n
             const x = obj.x;
             const y = obj.y;
-            const maxW = obj.boundingWidth - 2 * padding;
-            //const lines = obj.text.includes("\n")
-            //    ? obj.text.split("\n")
-            //    : wrapText(ctx, obj.text, maxW);
-            let lines;
-            if (obj.boundingWidth < obj.fontSize) {
-                // Force character-by-character vertical layout
-                lines = obj.text.split(''); // Each char on its own line
-            } else {
-                lines = obj.text.includes("\n")
-                    ? obj.text.split("\n")
-                    : wrapText(ctx, obj.text, maxW); // your existing word wrap
-            }
-            const lineH = obj.fontSize * 1.2;
-            const maxLines = Math.floor((obj.boundingHeight - 2 * padding) / lineH);
-            const startY = y + padding;
+            const pad = padding;
+            const maxW = obj.boundingWidth - 2 * pad;
 
+            // 1) Break only on explicit newlines, otherwise wrap on words
+            let lines;
+            if (obj.text.includes('\n')) {
+                lines = obj.text.split('\n');
+            } else {
+                lines = wrapText(ctx, obj.text, maxW);
+            }
+
+            // 2) Compute lineHeight from the factor
+            const lineH = obj.lineSpacing * obj.fontSize;
+
+            // 3) If multi-line, resize the box to fit exactly
+            if (lines.length > 1) {
+                obj.boundingHeight = lines.length * lineH + 2 * pad;
+            }
+            // 3) If multi-line, resize the box only if text height is larger
+            //if (lines.length > 1) {
+            //    const textHeight = lines.length * lineH + 2 * pad;
+            //    obj.boundingHeight = textHeight+80;
+               
+            //}
+
+            // 4) Clip to however many lines fit (mostly for overflow)
+            const availableHeight = obj.boundingHeight - 2 * pad;
+            const maxLines = Math.floor(availableHeight / lineH);
+            const startY = y + pad;
+
+            // 5) Draw each line at the computed spacing
             lines.slice(0, maxLines).forEach((line, i) => {
                 const lw = ctx.measureText(line).width;
-                let tx = x + padding;
-                if (obj.textAlign === "center") tx = x + (obj.boundingWidth - lw) / 2;
-                if (obj.textAlign === "right") tx = x + obj.boundingWidth - lw - padding;
-                ctx.fillText(line, tx, startY + i * lineH);
+                let offsetX = x + pad;
+                if (obj.textAlign === 'center') offsetX = x + (obj.boundingWidth - lw) / 2;
+                if (obj.textAlign === 'right') offsetX = x + obj.boundingWidth - lw - pad;
+
+                ctx.fillText(line, offsetX, startY + i * lineH);
             });
             ctx.restore();
         });
     }
+
 
     // 5) Overlay selection UI *in raw pixel space*  
     function toPixelSpace(fn) {
@@ -981,7 +1060,7 @@ function ChangeStyle() {
 //    }
 //    drawCanvas('ChangeStyle');
 //}
-function ChangeAlignStyle(value) {
+function ChangeAlignStyleOLD(value) {
     // Update the alignment control value.
     $("#textAlign").val(value);
     const newAlign = document.getElementById("textAlign").value; // "left", "center", or "right"
@@ -1025,6 +1104,27 @@ function ChangeAlignStyle(value) {
     }
     drawCanvas("ChangeStyle");
 }
+
+function ChangeAlignStyle(value) {
+    // 1) Store the new alignment on your control
+    $("#textAlign").val(value);
+    const newAlign = $("#textAlign").val(); // "left", "center", or "right"
+
+    // 2) Find your selected text object
+    const obj = textObjects.find(o => o.selected);
+    if (!obj) return;
+
+    // 3) Only set the alignment—don't recompute width or move x
+    obj.textAlign = newAlign;
+
+    // 4) Cap the box to the canvas bounds if you like:
+    const maxAllowedW = canvas.width - obj.x;
+    obj.boundingWidth = Math.min(obj.boundingWidth, maxAllowedW);
+
+    // 5) Redraw
+    drawCanvas("ChangeStyle");
+}
+
 
 
 
@@ -2106,8 +2206,14 @@ function addDefaultTextOld() {
     $("#opengl_popup").hide();
 }
 function addDefaultText() {
+    const fs = 30;
+    const factor = 1.2;        // 120% of fontSize
+
+    const text = "Default Text";
+
+    // 1) Create with defaults
     const newObj = {
-        text: "Default Text",
+        text,
         x: 92,
         y: 100,
         selected: false,
@@ -2115,30 +2221,43 @@ function addDefaultText() {
         fontFamily: "Arial",
         textColor: "#000000",
         textAlign: "left",
-        fontSize: 30
+        fontSize: fs,
+
+        // store only the factor
+        lineSpacing: factor,
+
+        // bounding box placeholders—will be set below
+        boundingWidth: 0,
+        boundingHeight: 0
     };
 
-    // measure
+    // 2) Measure it
     ctx.font = `${newObj.fontSize}px ${newObj.fontFamily}`;
-    const metrics = ctx.measureText(newObj.text);
+    const metrics = ctx.measureText(text);
     const width = metrics.width;
-    const ascent = metrics.actualBoundingBoxAscent || newObj.fontSize * 0.8;
-    const descent = metrics.actualBoundingBoxDescent || newObj.fontSize * 0.2;
+    const ascent = metrics.actualBoundingBoxAscent || fs * 0.8;
+    const descent = metrics.actualBoundingBoxDescent || fs * 0.2;
     const height = ascent + descent;
 
-    // tiny padding
+    // 3) Tiny padding around
     const offsetX = 20;
     const offsetY = 25;
+
+    // 4) Assign your bounding dimensions
     newObj.boundingWidth = width + offsetX;
     newObj.boundingHeight = height + offsetY;
 
-    // add to canvas
+    // 5) Make it the only selected object
     textObjects.forEach(o => o.selected = false);
     newObj.selected = true;
     textObjects.push(newObj);
+
+    // 6) Redraw
     drawCanvas('Common');
     $("#opengl_popup").hide();
 }
+
+
 
 // Utility: Check if point (x, y) is within the bounding box of a text object
 function isWithinText(obj, x, y) {
@@ -2615,29 +2734,29 @@ function onBoxResizeEnd(obj) {
     const ctx = canvas.getContext('2d');
     const padding = obj.padding || 5;
 
-    // Inner size the text should fit into:
     const maxW = obj.boundingWidth - 2 * padding;
     const maxH = obj.boundingHeight - 2 * padding;
 
     const lines = obj.text.split('\n');
     let fontSize = obj.fontSize;
+    const lineSpacing = obj.lineSpacing ?? fontSize * 1.2; // fallback if not set
 
-    // Helper to measure the block at a given size
+    // Updated measure to use lineSpacing
     function measure(fs) {
         ctx.font = `${fs}px ${obj.fontFamily}`;
         const w = Math.max(...lines.map(l => ctx.measureText(l).width));
-        const h = lines.length * fs * 1.2;
+        const h = (lines.length - 1) * lineSpacing + fs; // fs is height of first line
         return { w, h };
     }
 
-    // First, if it’s too big, shrink down:
+    // Shrink if too big
     let { w: blockW, h: blockH } = measure(fontSize);
     while ((blockW > maxW || blockH > maxH) && fontSize > 1) {
         fontSize--;
         ({ w: blockW, h: blockH } = measure(fontSize));
     }
 
-    // Then, if it’s too small, grow up:
+    // Grow if too small
     let next;
     while (true) {
         next = measure(fontSize + 1);
@@ -2648,10 +2767,10 @@ function onBoxResizeEnd(obj) {
         }
     }
 
-    // Commit and redraw
     obj.fontSize = fontSize;
     drawCanvas('Common');
 }
+
 
 
 
@@ -2965,39 +3084,90 @@ document.querySelectorAll("#imageContainer img").forEach(img => {
     });
 });
 
-// Allow dropping on canvas
-canvas.addEventListener("dragover", function (e) {
+//// Allow dropping on canvas
+//canvas.addEventListener("dragover", function (e) {
+//    e.preventDefault();
+//});
+canvas.addEventListener('dragover', e => {
     e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
 });
-
 // When an image is dropped onto the canvas, add it to our images array
-canvas.addEventListener("drop", function (e) {
+////canvas.addEventListener("drop", function (e) {
+////    e.preventDefault();
+////    const src = e.dataTransfer.getData("text/plain");
+////    if (src) {
+////        // Create a new image object
+////        const img = new Image();
+////        img.src = src;
+////        img.onload = function () {
+////            // Default position is drop position; default size is half the natural size
+////            const newImgObj = {
+////                img: img,
+////                src: src, // keep the src path
+////                x: e.offsetX,
+////                y: e.offsetY,
+////                width: img.width / 4,
+////                height: img.height / 4,
+////                scaleX: 1,
+////                scaleY: 1,
+////                selected: false
+////            };
+////            images.push(newImgObj);
+////            drawCanvas('Common');
+////        };
+////    }
+////});
+canvas.addEventListener('drop', e => {
     e.preventDefault();
-    const src = e.dataTransfer.getData("text/plain");
-    if (src) {
-        // Create a new image object
-        const img = new Image();
-        img.src = src;
-        img.onload = function () {
-            // Default position is drop position; default size is half the natural size
-            const newImgObj = {
-                img: img,
-                src: src, // keep the src path
-                x: e.offsetX,
-                y: e.offsetY,
-                width: img.width / 4,
-                height: img.height / 4,
-                scaleX: 1,
-                scaleY: 1,
-                selected: false
-            };
-            images.push(newImgObj);
-            drawCanvas('Common');
-        };
+
+    let src = "";
+
+    // 1) Preferred: a real URI (e.g. dragging from another site)
+    // try text/uri-list first (for standards-compliant browsers)
+    if (e.dataTransfer.types.includes('text/uri-list')) {
+        src = e.dataTransfer.getData('text/uri-list').trim();
     }
+    // fallback: if plain text *looks* like an http URL
+    else {
+        const plain = e.dataTransfer.getData('text/plain').trim();
+        if (/^https?:\/\//i.test(plain)) {
+            src = plain;
+        }
+    }
+
+    // 2) If that fails, check for File objects (drag from Finder or Explorer)
+    if (!src && e.dataTransfer.files.length > 0) {
+        const file = e.dataTransfer.files[0];
+        if (file.type.startsWith('image/')) {
+            src = URL.createObjectURL(file);
+        }
+    }
+
+    // 3) Nothing valid? bail out
+    if (!src) return;
+
+    // 4) Finally load & push into your images array
+    const img = new Image();
+    img.onload = () => {
+        images.push({
+            img,
+            src,
+            x: e.offsetX,
+            y: e.offsetY,
+            width: img.naturalWidth / 4,
+            height: img.naturalHeight / 4,
+            scaleX: 1,
+            scaleY: 1,
+            opacity: 1,
+            selected: false
+        });
+        drawCanvas('Common');
+        // If you want, you can revoke object URLs later:
+        // if (src.startsWith('blob:')) URL.revokeObjectURL(src);
+    };
+    img.src = src;
 });
-
-
 function updateSelectedImageColorsOld(newFill, newStroke) {
     if (activeImage && activeImage.src && activeImage.src.endsWith('.svg')) {
         if (activeImage.originalSVG) {
