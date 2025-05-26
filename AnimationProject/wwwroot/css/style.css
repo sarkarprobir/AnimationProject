@@ -1248,14 +1248,14 @@ body {
     animation: skLinRotate 1s ease-in-out infinite alternate;
 }
 
-    .loader:after {
-        content: "";
-        position: absolute;
-        inset: 5px;
-        border-radius: 50%;
-        border: 5px solid transparent;
-        border-top-color: #ff3d00;
-    }
+.loader:after {
+    content: "";
+    position: absolute;
+    inset: 5px;
+    border-radius: 50%;
+    border: 5px solid transparent;
+    border-top-color: #ff3d00;
+}
 
 @keyframes skLinRotate {
     95%,100% {
