@@ -606,22 +606,6 @@ function changeLineSpacing(deltaFactor) {
         obj.lineSpacing = obj.lineSpacing + deltaFactor;
     }
 
-    // 2) Recompute the height the text *would* need at this spacing
-    //const lines = obj.text.split('\n');
-    //const lineH = obj.lineSpacing * obj.fontSize;
-    //const neededH = lines.length * lineH + 2 * padding;
-
-    //// 3) **Only on “+”** do we grow the box to fit; on “–” we leave it alone
-    //if (deltaFactor > 0) {
-    //    obj.boundingHeight = Math.max(obj.boundingHeight, neededH);
-    //}
-    //else {
-    //    obj.boundingHeight = obj.boundingHeight+100;
-    //}
-    // else: on overlap, do NOT touch boundingHeight
-
-    //// 4) Redraw
-   
     drawCanvas('Common');
 }
 

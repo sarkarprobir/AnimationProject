@@ -1774,7 +1774,7 @@ function drawCanvasForDownload(condition) {
             const img = new Image();
             img.onload = () => {
                 imgObj.img = img;
-                drawCanvas(condition);
+                drawCanvasForDownload(condition);
             };
             img.src = imgObj.svgData || imgObj.src;
             return;
@@ -1808,45 +1808,85 @@ function drawCanvasForDownload(condition) {
             const pad = padding;
             const maxW = obj.boundingWidth - 2 * pad;
 
-            // 1) Break only on explicit newlines, otherwise wrap on words
+            //// split or wrap
+            //const lines = obj.text.includes('\n')
+            //    ? obj.text.split('\n')
+            //    : wrapText(ctxElementForDownload, obj.text, maxW);
+            const raw = obj.text;
             let lines;
-            if (obj.text.includes('\n')) {
-                lines = obj.text.split('\n');
+            if (raw.includes('\n')) {
+                lines = raw.split('\n');
             } else {
-                lines = wrapText(ctxElementForDownload, obj.text, maxW);
+                const fullW = ctxElementForDownload.measureText(raw).width;
+                const maxW = obj.boundingWidth * designW - 2 * padding;
+                if (!raw.includes(' ') && fullW <= maxW) {
+                    // single “word” that actually fits: keep it one line
+                    lines = [raw];
+                } else {
+                    // otherwise do your normal word-wrap
+                    lines = wrapText(ctxElementForDownload, raw, maxW);
+                }
             }
 
-            // 2) Compute lineHeight from the factor
-            const lineH = obj.lineSpacing * obj.fontSize;
+            // line height in px
+            const fs = obj.fontSize;
+            const lineH = obj.lineSpacing * fs;
 
-            // 3) If multi-line, resize the box to fit exactly
-            if (lines.length > 1) {
-                obj.boundingHeight = lines.length * lineH + 2 * pad;
-            }
-            // 3) If multi-line, resize the box only if text height is larger
-            //if (lines.length > 1) {
-            //    const textHeight = lines.length * lineH + 2 * pad;
-            //    obj.boundingHeight = textHeight+80;
+            // measure true ink-width
+            let maxLineW = 0;
+            lines.forEach(line => {
+                const m = ctxElementForDownload.measureText(line);
+                const glyphW = (m.actualBoundingBoxLeft != null && m.actualBoundingBoxRight != null)
+                    ? m.actualBoundingBoxLeft + m.actualBoundingBoxRight
+                    : m.width;
+                maxLineW = Math.max(maxLineW, glyphW);
+            });
 
-            //}
+            // compute overlap buffer *only* if spacing < 1
+            const overlap = Math.max(0, 1 - obj.lineSpacing);
+            const extraPerLine = overlap * fs;
 
-            // 4) Clip to however many lines fit (mostly for overflow)
-            const availableHeight = obj.boundingHeight - 2 * pad;
-            const maxLines = Math.floor(availableHeight / lineH);
+            // base box size in px (always include any overlap buffer)
+            const totalTextH = lines.length * lineH;
+            const baseWpx = maxLineW + 2 * pad + extraPerLine;
+            const baseHpx = totalTextH + 2 * pad + extraPerLine;
+
+            // extra margin *only* when lineSpacing < 1
+            const extraMarginFraction = 0.6;            // tweak this as % of font
+            const extraMargin = obj.lineSpacing < 1
+                ? fs * extraMarginFraction
+                : 0;
+
+            // final box size
+            const boxWpx = Math.ceil(baseWpx + extraMargin);
+            const boxHpx = Math.ceil(baseHpx + extraMargin);
+
+            // overwrite props
+            obj.boundingWidth = boxWpx;
+            obj.boundingHeight = boxHpx;
+
+            // clipping & drawing
+            const maxLines = Math.floor((boxHpx - 2 * pad) / lineH);
             const startY = y + pad;
 
-            // 5) Draw each line at the computed spacing
             lines.slice(0, maxLines).forEach((line, i) => {
                 const lw = ctxElementForDownload.measureText(line).width;
                 let offsetX = x + pad;
-                if (obj.textAlign === 'center') offsetX = x + (obj.boundingWidth - lw) / 2;
-                if (obj.textAlign === 'right') offsetX = x + obj.boundingWidth - lw - pad;
-
+                if (obj.textAlign === 'center') {
+                    offsetX = x + (boxWpx - lw) / 2;
+                } else if (obj.textAlign === 'right') {
+                    offsetX = x + boxWpx - lw - pad;
+                }
                 ctxElementForDownload.fillText(line, offsetX, startY + i * lineH);
             });
+
             ctxElementForDownload.restore();
         });
     }
+
+
+
+    
 
 
     // 5) Overlay selection UI *in raw pixel space*  
