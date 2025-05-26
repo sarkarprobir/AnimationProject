@@ -315,11 +315,11 @@
 
                         <section id="dunkles" class="tab-panel">
 
-                            <div class="accordion" style=" position: relative;
-                            left: 0px;
-                            top: 0;
-                            margin-bottom: 26px;
-                            width: 100%;">
+                            <div class="accordion" style="position: relative;
+                                left: 0px;
+                                top: 0;
+                                margin-bottom: 26px;
+                                width: 100%;">
 
                                 <div class="answer-group">
                                     <p class="collapsed" data-toggle="collapse" data-target="#collapse-6" aria-expanded="true" aria-controls="collapse-1">
@@ -333,7 +333,6 @@
                                                 <li>6 Sec</li>
                                                 <li>8 Sec</li>
                                                 <li>10 Sec</li>
-
                                             </ul>
                                             <div class="clear"></div>
                                         </div>
@@ -403,12 +402,7 @@
                             <li>
                                 <a href="javascript:void(0)"> <img src="~/images/icons/icon-align-right.png" title="Alignright" alt="Icon-alignleft"></a>
                             </li>
-                            <li>
-                            </li>
-                            <li>
-                            </li>
                         </ul>
-
                     </div>
                 </div>
 
@@ -655,11 +649,10 @@
         <link href="~/css/style.css" rel="stylesheet">
         <link href="~/css/canvas.css" rel="stylesheet">
         <link href="~/css/responsive.css" rel="stylesheet">
-    <script src='https://code.jquery.com/jquery-3.2.1.slim.min.js'></script>
-   @*  <script src='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js'></script> *@
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js'></script>
-    <script src="~/js/wow.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src='https://code.jquery.com/jquery-3.2.1.slim.min.js'></script>
+        <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js'></script>
+        <script src="~/js/wow.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
                     document.querySelectorAll('.H-link, .V-link').forEach(link => {
               link.addEventListener('click', () => {
@@ -691,49 +684,49 @@
               $(".right-sec-one").toggle();
              }
         </script>
-    <!-- JavaScript for Handling Selection and Redirection -->
-    <script>
-        let selectedOption = ""; // Variable to store the selected board type
+        <!-- JavaScript for Handling Selection and Redirection -->
+        <script>
+            let selectedOption = ""; // Variable to store the selected board type
 
-        document.getElementById("horizontal-option").addEventListener("click", function () {
-            selectedOption = "horizontal";
-            highlightSelection("horizontal-option");
-        });
+            document.getElementById("horizontal-option").addEventListener("click", function () {
+                selectedOption = "horizontal";
+                highlightSelection("horizontal-option");
+            });
 
-        document.getElementById("vertical-option").addEventListener("click", function () {
-            selectedOption = "vertical";
-            highlightSelection("vertical-option");
-        });
+            document.getElementById("vertical-option").addEventListener("click", function () {
+                selectedOption = "vertical";
+                highlightSelection("vertical-option");
+            });
 
-        document.getElementById("create-button").addEventListener("click", function () {
-            if (selectedOption === "horizontal") {
-                window.location.href = "/"; // Redirect to horizontal page
-            } else if (selectedOption === "vertical") {
-                window.location.href = "/Canvas/VerticalIndex"; // Redirect to vertical page
-            } else {
-                // alert("Please select an option before proceeding!");
-                MessageShow('', 'Please select an option before proceeding!', 'error');
-            }
-        });
+            document.getElementById("create-button").addEventListener("click", function () {
+                if (selectedOption === "horizontal") {
+                    window.location.href = "/"; // Redirect to horizontal page
+                } else if (selectedOption === "vertical") {
+                    window.location.href = "/Canvas/VerticalIndex"; // Redirect to vertical page
+                } else {
+                    // alert("Please select an option before proceeding!");
+                    MessageShow('', 'Please select an option before proceeding!', 'error');
+                }
+            });
 
         // Function to highlight selected option
-        function highlightSelection(selectedId) {
-            document.getElementById("horizontal-option").classList.remove("selected");
-            document.getElementById("vertical-option").classList.remove("selected");
-            document.getElementById(selectedId).classList.add("selected");
-        }
+            function highlightSelection(selectedId) {
+                document.getElementById("horizontal-option").classList.remove("selected");
+                document.getElementById("vertical-option").classList.remove("selected");
+                document.getElementById(selectedId).classList.add("selected");
+            }
 
-        document.addEventListener('DOMContentLoaded', function () {
-          document.querySelectorAll('.panel-vertical-scroll .menuboard-vertical-thum')
-            .forEach(item => {
-              item.addEventListener('click', function () {
-                this.classList.toggle('active');
-              });
+            document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.panel-vertical-scroll .menuboard-vertical-thum')
+                .forEach(item => {
+                item.addEventListener('click', function () {
+                    this.classList.toggle('active');
+                });
+                });
             });
-        });
 
 
-    </script>
+        </script>
 
         }
 
