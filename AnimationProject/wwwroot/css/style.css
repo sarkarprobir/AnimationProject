@@ -944,6 +944,7 @@ svg:hover {
     color: white;
     border: none;
     padding: 9px 40px;
+    border-radius: 3px;
 }
 
     .create-btn:hover {
@@ -1331,5 +1332,5 @@ body {
         z-index: -1;
     }
 .b_rad4 {
-    border-radius: 4px !important;
+    border-radius: 3px !important;
 }
