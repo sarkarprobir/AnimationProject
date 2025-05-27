@@ -1,6 +1,7 @@
 ﻿@{
     Layout = null;
 }
+
 <div class="col-md-3 d-flex align-items-center gap-3 p-0">
     <a class="logo ms-2" href="javascript:history.back()"> <img src="~/images/icons/icon-left-arrow.png" alt="Logo" alt="Logo"></a>
     <ul class="top-left-icon d-flex align-items-center gap-2">
@@ -10,12 +11,12 @@
         <li onclick="addDefaultText();opentl();">
             <a href="javascript:void(0)"> <img  src="~/images/icons/icon-text.png" title="Text" alt="text" width="17"></a>
         </li>
-        <li>
+        <li id="shapeToggleBtn" onclick="toggleShapePopup();">
             <a href="javascript:void(0)"> <img src="~/images/icons/icon_circle.svg" title="Circle" alt="circle" width="16"></a>
         </li>
-        <li>
+        @* <li>
             <a href="javascript:void(0)"> <img src="~/images/icons/ico-shapes-masking.svg" title="Masking" alt="Masking" width="17"></a>
-        </li>
+        </li> *@
         <li onclick="opengl()">
             <a href="javascript:void(0)">
                 <img  src="~/images/icons/icon_gallery.svg" title="Gallery" alt="Gallery" width="20">
@@ -82,3 +83,46 @@
 
     </ul>
 </div>
+<div id="shapePopup" class="shape-popup">
+   <div class="d-flex flex-wrap justify-content-center align-items-center h-100">
+
+    <div>
+    <svg class="shape_svg" width="40" height="10" xmlns="http://www.w3.org/2000/svg">
+        <line x1="5" y1="5" x2="35" y2="5" stroke="black" stroke-width="2" stroke-linecap="round" />
+    </svg>
+    </div>
+
+    <div>
+    <svg class="shape_svg" width="40" height="30" xmlns="http://www.w3.org/2000/svg">
+        <rect x="5" y="5" width="30" height="20" stroke="black" stroke-width="2" fill="none" />
+    </svg>
+    </div>
+
+    <div>
+    <svg class="shape_svg" width="40" height="40" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="20" cy="20" r="15" stroke="black" stroke-width="2" fill="none" />
+    </svg>
+    </div>
+
+    <div>
+    <svg class="shape_svg" width="40" height="35" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="20,5 35,30 5,30" stroke="black" stroke-width="2" fill="none" />
+    </svg>
+    </div>
+
+    <div>
+    <svg class="shape_svg" width="40" height="40" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="20,5 35,15 35,30 20,40 5,30 5,15" stroke="black" stroke-width="2" fill="none" />
+    </svg>
+    </div>
+
+    <div>
+    <svg class="shape_svg" width="40" height="40" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="M12 21s-6.5-5.5-9-9c-1.5-2-1.5-5 1-6.5 2.5-1.5 4.5.5 5.5 1.5 1-1 3-3 5.5-1.5s2.5 4.5 1 6.5c-2.5 3.5-9 9-9 9z"
+              stroke="black" stroke-width="2" fill="none" />
+    </svg>
+    </div>
+
+   </div>
+</div>
+
