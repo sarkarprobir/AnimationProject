@@ -944,6 +944,7 @@ svg:hover {
     color: white;
     border: none;
     padding: 9px 40px;
+    border-radius: 3px;
 }
 
     .create-btn:hover {
