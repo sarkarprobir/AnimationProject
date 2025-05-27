@@ -409,7 +409,8 @@ function saveCanvasData() {
                 y: imgObj.y / screenH,
                 width: dispW / screenW,
                 height: dispH / screenH,
-                opacity: imgObj.opacity
+                opacity: imgObj.opacity,
+                noAnim: imgObj.noAnim
             };
         })
     };
@@ -679,6 +680,7 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
         o.img.src = imgObj.src;
         o.img.onload = () => drawCanvas(condition);
         o.img.onerror = () => drawCanvas(condition);
+        o.noAnim = imgObj.noAnim;
         return o;
     });
 

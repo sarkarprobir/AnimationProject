@@ -613,7 +613,14 @@ function changeLineSpacing(deltaFactor) {
 
 
 
-
+function drawImageOnCanvas(img) {
+    ctx.save();
+    ctx.globalAlpha = img.opacity ?? 1;
+    ctx.translate(img.x, img.y);
+    ctx.scale(img.scaleX ?? 1, img.scaleY ?? 1);
+    ctx.drawImage(img.img, 0, 0, img.width, img.height);
+    ctx.restore();
+}
 
 function drawCanvas(condition) {
     // 1) Refresh CTM: design→screen
@@ -671,6 +678,7 @@ function drawCanvas(condition) {
         
         ctx.restore();
     });
+ 
 
     // 4) Draw text (in design units)
     if (['Common', 'ChangeStyle', 'applyAnimations'].includes(condition)) {
@@ -1207,100 +1215,109 @@ function animateText(direction, condition, loopCount) {
     });
 
     if (animationType === "delaylinear") {
-        const nominalPerObj = .50;
-        let countText = textObjects.length;
-        //if (countText == 1) {
-        //    countText += images.length;
-        //}
-
-        //const scaleInText = inTime / (countText * nominalPerObj);
-        //const scaleOutText = outTime / (countText * nominalPerObj);
-        const scaleInText = inTime ;
+        const nominalPerObj = 0.50;
+        const scaleInText = inTime;
         const scaleOutText = outTime;
-
-        const individualTweenText = 0.15 * scaleInText;
-        const individualTweenOutText = 0.15 * scaleOutText;
+        const individualTweenIn = 0.15 * scaleInText;
+        const individualTweenOut = 0.15 * scaleOutText;
 
         let tlText = gsap.timeline({
             repeat: loopCount - 1,
-            onUpdate: () => drawCanvas(condition)
+            onUpdate: () => drawCanvas(condition),
+            onStart: () => drawCanvas(condition),
         });
+
+        // ── 0) Immediately pin all noAnim images at their final coords ──
+        images
+            .filter(img => img.noAnim)
+            .forEach(imgObj => {
+                tlText.set(imgObj, {
+                    x: imgObj.x,
+                    y: imgObj.y,
+                    opacity: imgObj.opacity ?? 1
+                }, 0); // place at time = 0
+            });
+
         if (tabType == "In" || tabType == "Out") {
-            // --- Text IN ---
+            // ── Text IN ──
             tlText.to(textObjects, {
                 x: (i, target) => target.finalX,
                 y: (i, target) => target.finalY,
-                duration: individualTweenText,
+                duration: individualTweenIn,
                 ease: "power1.in",
-                stagger: individualTweenText * .70,
+                stagger: individualTweenIn * 0.70,
                 onUpdate: () => drawCanvas(condition)
-            });
+            }, 0);
 
-            console.log("animateText", images);
-
-            // --- Image IN ---
-            images.forEach((imgObj) => {
-                tlText.to(imgObj, {
-                    x: (i, target) => target.finalX,
-                    y: (i, target) => target.finalY,
-                    duration: individualTweenText,
-                    ease: "power1.in",
-                    stagger: individualTweenText * .70,
-                    onUpdate: () => drawCanvas(condition)
+            // ── Image IN (skip noAnim) ──
+            images
+                .filter(img => !img.noAnim)
+                .forEach(imgObj => {
+                    tlText.to(imgObj, {
+                        x: (i, target) => target.finalX,
+                        y: (i, target) => target.finalY,
+                        duration: individualTweenIn,
+                        ease: "power1.in",
+                        stagger: individualTweenIn * 0.70,
+                        onUpdate: () => drawCanvas(condition)
+                    }, 0);
                 });
+        }
+
+        if (tabType == "Stay" || tabType == "Out") {
+            // ── Stay time ──
+            tlText.to({}, {
+                duration: stayTime,
+                ease: "none"
             });
         }
-         if (tabType == "Stay" || tabType == "Out") {
-            // --- Stay Time ---
-            tlText.to({}, { duration: stayTime, ease: "none" });
-        }
-         if (tabType == "Out") {
-            
-            // --- Image OUT (First!) ---
-            [...images].reverse().forEach((imgObj) => {
-                tlText.to(imgObj, {
-                    //x: imgObj.exitX,
-                    //y: imgObj.exitY,
-                    x: (i, target) => target.exitX,
-                    y: (i, target) => target.exitY,
-                    duration: individualTweenOutText,
-                    ease: "power1.out",
-                    stagger: individualTweenOutText * 0.70,
-                    onUpdate: () => drawCanvas(condition)
-                });
-            });
 
-            // --- Text OUT (After Image) ---
+        if (tabType == "Out") {
+            // ── Image OUT first (skip noAnim) ──
+            [...images].reverse()
+                .filter(img => !img.noAnim)
+                .forEach(imgObj => {
+                    tlText.to(imgObj, {
+                        x: (i, target) => target.exitX,
+                        y: (i, target) => target.exitY,
+                        duration: individualTweenOut,
+                        ease: "power1.out",
+                        stagger: individualTweenOut * 0.70,
+                        onUpdate: () => drawCanvas(condition)
+                    });
+                });
+
+            // ── Text OUT ──
             tlText.to([...textObjects].reverse(), {
                 x: (i, target) => target.exitX,
                 y: (i, target) => target.exitY,
-                duration: individualTweenOutText,
+                duration: individualTweenOut,
                 ease: "power1.out",
-                stagger: individualTweenOutText * .70,
+                stagger: individualTweenOut * 0.70,
                 onUpdate: () => drawCanvas(condition)
             });
         }
-        //// --- Reset text to final position only (leave image off-screen) ---
+
+        // ── At the end, reset everyone to their finalX/finalY ──
         tlText.set([...textObjects, ...images], {
             x: (i, target) => target.finalX,
-            y: (i, target) => target.finalY,
-            duration: 0,
-            onUpdate: () => drawCanvas(condition)
+            y: (i, target) => target.finalY
         });
+
         tlText.eventCallback("onComplete", () => {
             images.forEach(img => {
                 img.x = img.finalX;
                 img.y = img.finalY;
+                img.opacity = img.opacity ?? 1;
             });
             textObjects.forEach(txt => {
                 txt.x = txt.finalX;
                 txt.y = txt.finalY;
             });
-
-            drawCanvas(condition); // Force redraw
+            drawCanvas(condition);
         });
-
     }
+
 
 
     else if (animationType === "linear" || animationType === "zoom" ||
@@ -2836,6 +2853,12 @@ canvas.addEventListener("click", function (e) {
         if (isMouseOverImage(images[i], pos)) {
             imgObj = images[i];
             imageFound = true;
+            if (imgObj.noAnim) {
+                $("#noAnimCheckbox").prop("checked", true);
+            }
+            else {
+                $("#noAnimCheckbox").prop("checked", false);
+            }
             break;
         }
     }
@@ -2862,6 +2885,8 @@ canvas.addEventListener("click", function (e) {
         document.getElementById("modeButton").innerText = "Animation Mode";
         $("#opengl_popup").hide();
         textObjects.forEach(o => o.selected = false);
+       
+        
     } else {
         // Deselect all if clicking on empty canvas
         textObjects.forEach(o => o.selected = false);
@@ -2876,6 +2901,17 @@ canvas.addEventListener("click", function (e) {
     drawCanvas('Common'); // Redraw to update selection changes
 });
 
+function ImagePropertySet() {
+    const noAnimCheckbox = document.getElementById('noAnimCheckbox');
+    const isChecked = noAnimCheckbox.checked;
+    // Find the currently selected image(s)
+    images.forEach(imgObj => {
+        if (imgObj.selected) {
+            imgObj.noAnim = isChecked;
+            SaveDesignBoard();
+        }
+    });
+}
 canvasContainer.addEventListener("dblclick", function (e) {
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
@@ -3161,7 +3197,8 @@ canvas.addEventListener('drop', e => {
             scaleX: 1,
             scaleY: 1,
             opacity: 1,
-            selected: false
+            selected: false,
+            noAnim: false
         });
         drawCanvas('Common');
         // If you want, you can revoke object URLs later:
