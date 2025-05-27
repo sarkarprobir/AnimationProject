@@ -285,10 +285,16 @@
       });
     });
 </script>
+<script>
+    $(document).ready(function(){
+    TabShowHide('In');
+    });
+</script>
 
 <div class="right-sec-one">
     <div class="headtext">Board Animation</div>
     <div class="tabset">
+        <input type="hidden" id="hdnTabType" />
         <!-- Tab 1 -->
         <input type="radio" name="tabset" id="tab1" onclick="TabShowHide('In')" aria-controls="marzen" checked>
         <label style="margin-left:0px;" for="tab1">In</label>
@@ -503,7 +509,7 @@
                 <h2>Effects</h2>
                 <ul class="right-listone d-flex gap-3 mb-4">
                     <li>
-                        <a href="javascript:void(0)"> <img src="~/images/icons/icon-effict.png" alt="pattren"></a>
+                        <a href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear')"> <img src="~/images/icons/icon-effict.png" alt="pattren"></a>
 
                         <div class="clear"></div>
                     </li>
@@ -519,7 +525,7 @@
 
                 <ul class="right-listone d-flex justify-content-between">
                     <li>
-                        <a href="javascript:void(0)"> <img src="~/images/icons/icon-lr.png" alt="pattren"></a>
+                        <a href="javascript:void(0)"> <img src="~/images/icons/icon-lr.png" onclick="setCoordinate(this,'left',100,20,50,50);" alt="pattren"></a>
 
                         <div class="clear"></div>
                     </li>
@@ -638,6 +644,17 @@
             <div class="d-flex justify-content-between spacing_buttons">
                 <a class="spacing_button" onclick="changeLineSpacing(-FACTOR_INCREMENT)">-</a>
                 <a class="spacing_button" onclick="changeLineSpacing(FACTOR_INCREMENT)">+</a>
+            </div>
+        </div>
+    </div>
+    <div class="mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <p class="spacing_title m-0">
+                Disable animation on selected image
+            </p>
+            <div class="d-flex justify-content-between spacing_buttons">
+                <input type="checkbox" id="noAnimCheckbox" onchange="ImagePropertySet()" />
+
             </div>
         </div>
     </div>
