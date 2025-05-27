@@ -1250,16 +1250,44 @@ function animateText(direction, condition, loopCount) {
                 }, 0); // place at time = 0
             });
 
+
+
+        // ── 0) Immediately pin all noAnim text elements at their final coords ──
+        textObjects
+            .filter(txt => txt.noAnim)
+            .forEach(txtObj => {
+                tlText.set(txtObj, {
+                    x: txtObj.finalX,
+                    y: txtObj.finalY,
+                    opacity: txtObj.opacity ?? 1
+                }, 0); // place at time = 0
+            });
+
+
+
         if (tabType == "In" || tabType == "Out") {
             // ── Text IN ──
-            tlText.to(textObjects, {
-                x: (i, target) => target.finalX,
-                y: (i, target) => target.finalY,
-                duration: individualTweenIn,
-                ease: "power1.in",
-                stagger: individualTweenIn * 0.70,
-                onUpdate: () => drawCanvas(condition)
-            }, 0);
+            //tlText.to(textObjects, {
+            //    x: (i, target) => target.finalX,
+            //    y: (i, target) => target.finalY,
+            //    duration: individualTweenIn,
+            //    ease: "power1.in",
+            //    stagger: individualTweenIn * 0.70,
+            //    onUpdate: () => drawCanvas(condition)
+            //}, 0);
+            // ── animate all textObjects that DO animate ──
+            textObjects
+                .filter(txt => !txt.noAnim)
+                .forEach(txtObj => {
+                    tlText.to(txtObj, {
+                        x: (i, target) => target.finalX,
+                        y: (i, target) => target.finalY,
+                        duration: individualTweenIn,    // matching your images
+                        ease: "power1.in",
+                        stagger: individualTweenIn * 0.70,
+                        onUpdate: () => drawCanvas(condition)
+                    }, 0);
+                });
 
             // ── Image IN (skip noAnim) ──
             images
@@ -1268,7 +1296,7 @@ function animateText(direction, condition, loopCount) {
                     tlText.to(imgObj, {
                         x: (i, target) => target.finalX,
                         y: (i, target) => target.finalY,
-                        duration: individualTweenIn*.100,
+                        duration: individualTweenIn,
                         ease: "power1.in",
                         stagger: individualTweenIn * 0.70,
                         onUpdate: () => drawCanvas(condition)
@@ -1292,22 +1320,35 @@ function animateText(direction, condition, loopCount) {
                     tlText.to(imgObj, {
                         x: (i, target) => target.exitX,
                         y: (i, target) => target.exitY,
-                        duration: individualTweenOut * .100,
+                        duration: individualTweenOut ,
                         ease: "power1.out",
                         stagger: individualTweenOut * 0.70,
                         onUpdate: () => drawCanvas(condition)
                     });
                 });
 
-            // ── Text OUT ──
-            tlText.to([...textObjects].reverse(), {
-                x: (i, target) => target.exitX,
-                y: (i, target) => target.exitY,
-                duration: individualTweenOut,
-                ease: "power1.out",
-                stagger: individualTweenOut * 0.70,
-                onUpdate: () => drawCanvas(condition)
-            });
+            //// ── Text OUT ──
+            //tlText.to([...textObjects].reverse(), {
+            //    x: (i, target) => target.exitX,
+            //    y: (i, target) => target.exitY,
+            //    duration: individualTweenOut,
+            //    ease: "power1.out",
+            //    stagger: individualTweenOut * 0.70,
+            //    onUpdate: () => drawCanvas(condition)
+            //});
+            // ── Text OUT (skip noAnim) ──
+            [...textObjects].reverse()
+                .filter(txt => !txt.noAnim)
+                .forEach(txtObj => {
+                    tlText.to(txtObj, {
+                        x: (i, target) => target.exitX,
+                        y: (i, target) => target.exitY,
+                        duration: individualTweenOut,
+                        ease: "power1.out",
+                        stagger: individualTweenOut * 0.70,
+                        onUpdate: () => drawCanvas(condition)
+                    });
+                });
         }
 
         // ── At the end, reset everyone to their finalX/finalY ──
@@ -2251,7 +2292,8 @@ function addDefaultText() {
 
         // bounding box placeholders—will be set below
         boundingWidth: 0,
-        boundingHeight: 0
+        boundingHeight: 0,
+        noAnim: false
     };
 
     // 2) Measure it
@@ -2854,6 +2896,7 @@ canvas.addEventListener("click", function (e) {
     let imageFound = false;
     let imgObj = null;
 
+    
     // Check if an image is clicked
     for (let i = images.length - 1; i >= 0; i--) {
         if (isMouseOverImage(images[i], pos)) {
@@ -2881,6 +2924,14 @@ canvas.addEventListener("click", function (e) {
         document.getElementById("modeButton").innerText = "Animation Mode";
         $("#opengl_popup").hide();
         images.forEach(img => img.selected = false);
+
+        if (obj.noAnim) {
+            $("#noAnimCheckbox").prop("checked", true);
+        }
+        else {
+            $("#noAnimCheckbox").prop("checked", false);
+        }
+
     } else if (imageFound) {
         // Select image and update UI
         images.forEach(img => img.selected = false);
@@ -2914,6 +2965,13 @@ function ImagePropertySet() {
     images.forEach(imgObj => {
         if (imgObj.selected) {
             imgObj.noAnim = isChecked;
+            SaveDesignBoard();
+        }
+    });
+    // Find the currently selected text(s)
+    textObjects.forEach(txtObj => {
+        if (txtObj.selected) {
+            txtObj.noAnim = isChecked;
             SaveDesignBoard();
         }
     });
@@ -3984,17 +4042,17 @@ function handleThumbClick(clickedElement) {
     clickedElement.classList.add('active_border');
 }
 
-function toggleShapePopup() {
-    const popup = document.getElementById('shapePopup');
-    popup.style.display = (popup.style.display === 'block') ? 'none' : 'block';
-}
+//function toggleShapePopup() {
+//    const popup = document.getElementById('shapePopup');
+//    popup.style.display = (popup.style.display === 'block') ? 'none' : 'block';
+//}
 
-// Optional: click outside to close
-document.addEventListener('click', function (event) {
-    const popup = document.getElementById('shapePopup');
-    const button = document.getElementById('shapeToggleBtn');
+//// Optional: click outside to close
+//document.addEventListener('click', function (event) {
+//    const popup = document.getElementById('shapePopup');
+//    const button = document.getElementById('shapeToggleBtn');
 
-    if (!popup.contains(event.target) && !button.contains(event.target)) {
-        popup.style.display = 'none';
-    }
-});
+//    if (!popup.contains(event.target) && !button.contains(event.target)) {
+//        popup.style.display = 'none';
+//    }
+//});

@@ -394,7 +394,8 @@ function saveCanvasData() {
                 textColor: obj.textColor,
                 textAlign: obj.textAlign,
                 opacity: obj.opacity,
-                lineSpacing: obj.lineSpacing
+                lineSpacing: obj.lineSpacing,
+                noAnim: obj.noAnim
             };
         }),
 
@@ -664,6 +665,7 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
             lineSpacing: (typeof obj.lineSpacing === 'number')
                 ? obj.lineSpacing
                 : obj.fontSize * 1.2,
+            noAnim : obj.noAnim,
         };
     });
 
@@ -1421,6 +1423,7 @@ function loadCanvasFromJsonForDownload1(jsonData, condition = 'Common') {
             lineSpacing: (typeof obj.lineSpacing === 'number')
                 ? obj.lineSpacing
                 : obj.fontSize * 1.2,
+            noAnim : obj.noAnim,
         };
     });
 
@@ -2819,14 +2822,30 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
     });
 
     if (animationType === "delaylinear") {
-        const nominalPerObj = .50;
-        const countText = textObjects.length;
+        //const nominalPerObj = .50;
+        //const countText = textObjects.length;
 
-        const scaleInText = inTime;//      / (countText * nominalPerObj);
-        const scaleOutText = outTime; //   /  (countText * nominalPerObj);
+        //const scaleInText = inTime;//      / (countText * nominalPerObj);
+        //const scaleOutText = outTime; //   /  (countText * nominalPerObj);
 
-        const individualTweenText = 0.15 * scaleInText;
-        const individualTweenOutText = 0.15 * scaleOutText;
+        //const individualTweenText = 0.15 * scaleInText;
+        //const individualTweenOutText = 0.15 * scaleOutText;
+        const nominalPerObj = 0.50;
+        let countText = textObjects.length;
+        if (countText == 1) {
+            countText += images.length;
+        }
+        else
+            countText += images.length;
+
+        const scaleInText = inTime / (countText * nominalPerObj);
+        const scaleOutText = outTime / (countText * nominalPerObj);
+
+
+        //const scaleInText = inTime;
+        //const scaleOutText = outTime;
+        const individualTweenText = 0.35 * scaleInText;
+        const individualTweenOutText = 0.35 * scaleOutText;
 
 
 
@@ -2860,15 +2879,41 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
                 }, 0); // place at time = 0
             });
 
+        // ── 0) Immediately pin all noAnim text elements at their final coords ──
+        textObjects
+            .filter(txt => txt.noAnim)
+            .forEach(txtObj => {
+                tlText.set(txtObj, {
+                    x: txtObj.finalX,
+                    y: txtObj.finalY,
+                    opacity: txtObj.opacity ?? 1
+                }, 0); // place at time = 0
+            });
+
+
+
         // --- Text IN ---
-        tlText.to(textObjects, {
-            x: (i, target) => target.finalX,
-            y: (i, target) => target.finalY,
-            duration: individualTweenText,
-            ease: "power1.in",
-            stagger: individualTweenText * .70,
-            onUpdate: () => drawCanvasForDownload(condition)
-        });
+        //tlText.to(textObjects, {
+        //    x: (i, target) => target.finalX,
+        //    y: (i, target) => target.finalY,
+        //    duration: individualTweenText,
+        //    ease: "power1.in",
+        //    stagger: individualTweenText * .70,
+        //    onUpdate: () => drawCanvasForDownload(condition)
+        //});
+        // ── Text IN (skip noAnim) ──
+        textObjects
+            .filter(txt => !txt.noAnim)
+            .forEach(txtObj => {
+                tlText.to(txtObj, {
+                    x: (i, target) => target.finalX,
+                    y: (i, target) => target.finalY,
+                    duration: individualTweenText,
+                    ease: "power1.in",
+                    stagger: individualTweenText * 0.70,
+                    onUpdate: () => drawCanvasForDownload(condition)
+                }, 0);
+            });
 
         console.log("animateText download", images);
 
@@ -2931,14 +2976,30 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
         //});
 
         // --- Text OUT (After Image) ---
-        tlText.to([...textObjects].reverse(), {
-            x: (i, target) => target.exitX,
-            y: (i, target) => target.exitY,
-            duration: individualTweenOutText,
-            ease: "power1.out",
-            stagger: individualTweenOutText * .70,
-            onUpdate: () => drawCanvasForDownload(condition)
-        });
+        //tlText.to([...textObjects].reverse(), {
+        //    x: (i, target) => target.exitX,
+        //    y: (i, target) => target.exitY,
+        //    duration: individualTweenOutText,
+        //    ease: "power1.out",
+        //    stagger: individualTweenOutText * .70,
+        //    onUpdate: () => drawCanvasForDownload(condition)
+        //});
+
+        // ── Text OUT (skip noAnim) ──
+        [...textObjects].reverse()
+            .filter(txt => !txt.noAnim)
+            .forEach(txtObj => {
+                tlText.to(txtObj, {
+                    x: (i, target) => target.exitX,
+                    y: (i, target) => target.exitY,
+                    duration: individualTweenOutText,
+                    ease: "power1.out",
+                    stagger: individualTweenOutText * 0.70,
+                    onUpdate: () => drawCanvasForDownload(condition)
+                });
+            });
+
+
 
         //// --- Reset text to final position only (leave image off-screen) ---
         //tlText.set([...textObjects, ...images], {
