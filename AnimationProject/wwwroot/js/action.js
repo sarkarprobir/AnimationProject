@@ -2828,6 +2828,9 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
         const individualTweenText = 0.15 * scaleInText;
         const individualTweenOutText = 0.15 * scaleOutText;
 
+
+
+
         let tlText = gsap.timeline({
             repeat: loopCount - 1,
             repeatDelay: 0,               // make sure there's no extra delay between loops
@@ -2846,6 +2849,17 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
             onUpdate: () => drawCanvasForDownload(condition)
         });
 
+        // ── 0) Immediately pin all noAnim images at their final coords ──
+        images
+            .filter(img => img.noAnim)
+            .forEach(imgObj => {
+                tlText.set(imgObj, {
+                    x: imgObj.x,
+                    y: imgObj.y,
+                    opacity: imgObj.opacity ?? 1
+                }, 0); // place at time = 0
+            });
+
         // --- Text IN ---
         tlText.to(textObjects, {
             x: (i, target) => target.finalX,
@@ -2857,6 +2871,21 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
         });
 
         console.log("animateText download", images);
+
+        // ── Image IN (skip noAnim) ──
+        images
+            .filter(img => !img.noAnim)
+            .forEach(imgObj => {
+                tlText.to(imgObj, {
+                    x: (i, target) => target.finalX,
+                    y: (i, target) => target.finalY,
+                    duration: individualTweenText,
+                    ease: "power1.in",
+                    stagger: individualTweenText * 0.70,
+                    onUpdate: () => drawCanvasForDownload(condition)
+                }, 0);
+            });
+
 
         // --- Image IN ---
         images.forEach((imgObj) => {
@@ -2873,19 +2902,33 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
         // --- Stay Time ---
         tlText.to({}, { duration: stayTime, ease: "none" });
 
-        // --- Image OUT (First!) ---
-        [...images].reverse().forEach((imgObj) => {
-            tlText.to(imgObj, {
-                //x: imgObj.exitX,
-                //y: imgObj.exitY,
-                x: (i, target) => target.exitX,
-                y: (i, target) => target.exitY,
-                duration: individualTweenOutText,
-                ease: "power1.out",
-                stagger: individualTweenOutText * 0.70,
-                onUpdate: () => drawCanvasForDownload(condition)
+        // ── Image OUT first (skip noAnim) ──
+        [...images].reverse()
+            .filter(img => !img.noAnim)
+            .forEach(imgObj => {
+                tlText.to(imgObj, {
+                    x: (i, target) => target.exitX,
+                    y: (i, target) => target.exitY,
+                    duration: individualTweenOutText,
+                    ease: "power1.out",
+                    stagger: individualTweenOutText * 0.70,
+                    onUpdate: () => drawCanvasForDownload(condition)
+                });
             });
-        });
+
+        //// --- Image OUT (First!) ---
+        //[...images].reverse().forEach((imgObj) => {
+        //    tlText.to(imgObj, {
+        //        //x: imgObj.exitX,
+        //        //y: imgObj.exitY,
+        //        x: (i, target) => target.exitX,
+        //        y: (i, target) => target.exitY,
+        //        duration: individualTweenOutText,
+        //        ease: "power1.out",
+        //        stagger: individualTweenOutText * 0.70,
+        //        onUpdate: () => drawCanvasForDownload(condition)
+        //    });
+        //});
 
         // --- Text OUT (After Image) ---
         tlText.to([...textObjects].reverse(), {
