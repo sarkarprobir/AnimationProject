@@ -1334,3 +1334,7 @@ body {
 .b_rad4 {
     border-radius: 3px !important;
 }
+.checkbox_input {
+    width: 20px;
+    height: 20px;
+}
