@@ -2360,7 +2360,7 @@ canvas.addEventListener("mousedown", function (e) {
     const mouseY = e.clientY - rect.top;
     const pos = { x: mouseX, y: mouseY };
 
-    // 0) if typing in the text editor, ignore
+    // 0) If typing in the text editor, ignore
     if (document.activeElement === textEditor) return;
 
     // 1) TEXT logic (unchanged)
@@ -2388,54 +2388,16 @@ canvas.addEventListener("mousedown", function (e) {
         }
     }
 
-    // 2) IMAGE body‐click → drag
-    for (let i = images.length - 1; i >= 0; i--) {
-        const img = images[i];
-        // use the SAME w/h/fallback logic as your handles
-        const sx = (typeof img.scaleX === 'number') ? img.scaleX : 1;
-        const sy = (typeof img.scaleY === 'number') ? img.scaleY : 1;
-        const w = img.width * sx;
-        const h = img.height * sy;
-        if (
-            pos.x >= img.x && pos.x <= img.x + w &&
-            pos.y >= img.y && pos.y <= img.y + h
-        ) {
-            // select image, clear text
-            textObjects.forEach(o => o.selected = false);
-            activeText = null;
-
-            images.forEach(i2 => i2.selected = false);
-            img.selected = true;
-            activeImage = img;
-            isDraggingImage = true;
-            dragOffsetImage.x = pos.x - img.x;
-            dragOffsetImage.y = pos.y - img.y;
-            enableFillColorDiv();
-            enableStrockColorDiv();
-            //// svg controls
-            //if (img.src?.endsWith('.svg')) {
-            //    enableFillColorDiv();
-            //    enableStrockColorDiv();
-            //} else {
-            //    disableFillColorDiv();
-            //    disableStrockColorDiv();
-            //}
-
-            e.preventDefault();
-            drawCanvas('Common');
-            return;
-        }
-    }
-
-    // 3) IMAGE handle‐click → resize
+    // 2) IMAGE handle‐click → resize  (check handles *first*)
     for (let i = images.length - 1; i >= 0; i--) {
         const img = images[i];
         const ih = getHandleUnderMouseForImage(img, pos);
         if (ih) {
-            // select image, clear text
+            // clear text selection
             textObjects.forEach(o => o.selected = false);
             activeText = null;
 
+            // select this image
             images.forEach(i2 => i2.selected = false);
             img.selected = true;
             activeImage = img;
@@ -2448,19 +2410,51 @@ canvas.addEventListener("mousedown", function (e) {
         }
     }
 
-    
+    // 3) IMAGE body‐click → drag
+    for (let i = images.length - 1; i >= 0; i--) {
+        const img = images[i];
+        // use the same scale logic as your handles
+        const sx = (typeof img.scaleX === 'number') ? img.scaleX : 1;
+        const sy = (typeof img.scaleY === 'number') ? img.scaleY : 1;
+        const w = img.width * sx;
+        const h = img.height * sy;
+
+        if (
+            pos.x >= img.x && pos.x <= img.x + w &&
+            pos.y >= img.y && pos.y <= img.y + h
+        ) {
+            // clear text selection
+            textObjects.forEach(o => o.selected = false);
+            activeText = null;
+
+            // select this image
+            images.forEach(i2 => i2.selected = false);
+            img.selected = true;
+            activeImage = img;
+            isDraggingImage = true;
+            dragOffsetImage.x = pos.x - img.x;
+            dragOffsetImage.y = pos.y - img.y;
+            enableFillColorDiv();
+            enableStrockColorDiv();
+
+            e.preventDefault();
+            drawCanvas('Common');
+            return;
+        }
+    }
 
     // 4) nothing matched → clear all
     textObjects.forEach(o => o.selected = false);
     images.forEach(i2 => i2.selected = false);
     activeText = null;
     activeImage = null;
-    //disableFillColorDiv();
-    //disableStrockColorDiv();
+    // disableFillColorDiv();
+    // disableStrockColorDiv();
 
     e.preventDefault();
     drawCanvas('Common');
 });
+
 
 
 
