@@ -1216,10 +1216,22 @@ function animateText(direction, condition, loopCount) {
 
     if (animationType === "delaylinear") {
         const nominalPerObj = 0.50;
-        const scaleInText = inTime;
-        const scaleOutText = outTime;
-        const individualTweenIn = 0.15 * scaleInText;
-        const individualTweenOut = 0.15 * scaleOutText;
+
+        let countText = textObjects.length;
+        if (countText == 1) {
+            countText += images.length;
+        }
+        else
+            countText += images.length;
+
+        const scaleInText = inTime / (countText * nominalPerObj);
+        const scaleOutText = outTime / (countText * nominalPerObj);
+
+
+        //const scaleInText = inTime;
+        //const scaleOutText = outTime;
+        const individualTweenIn = 0.35 * scaleInText;
+        const individualTweenOut = 0.35 * scaleOutText;
 
         let tlText = gsap.timeline({
             repeat: loopCount - 1,
@@ -1256,7 +1268,7 @@ function animateText(direction, condition, loopCount) {
                     tlText.to(imgObj, {
                         x: (i, target) => target.finalX,
                         y: (i, target) => target.finalY,
-                        duration: individualTweenIn,
+                        duration: individualTweenIn*.100,
                         ease: "power1.in",
                         stagger: individualTweenIn * 0.70,
                         onUpdate: () => drawCanvas(condition)
@@ -1280,7 +1292,7 @@ function animateText(direction, condition, loopCount) {
                     tlText.to(imgObj, {
                         x: (i, target) => target.exitX,
                         y: (i, target) => target.exitY,
-                        duration: individualTweenOut,
+                        duration: individualTweenOut * .100,
                         ease: "power1.out",
                         stagger: individualTweenOut * 0.70,
                         onUpdate: () => drawCanvas(condition)
