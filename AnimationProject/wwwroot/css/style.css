@@ -128,7 +128,7 @@ p.collapsed{    font-size: var(--font-size14);}
 .panel-left ul li p{margin:0px 0px 10px 0px;}
     .panel-left ul li .sd-btn-right {
         float: right;
-        border: 2px solid #ddd;
+        border: none;
         border-radius: 6px;
         background: transparent;
         padding: 3px 11px;
@@ -635,9 +635,17 @@ svg {
 svg:hover {
   fill: red!important;
 }
+.shape_svg {
+    width: 50px;
+    height: 50px;
+    display:flex;
+    justify-content: center;
+    align-items: center;
+}
 .Strock-Line select, .FontSize select {
     border: 0px;
-    width: 52px;font-size: var(--font-size14);
+    width: 52px;
+    font-size: var(--font-size14);
 }
 .Strock-Line label, .opasity label, .Strock label, .fillcolor label, .FontSize label {font-size: var(--font-size14);}
 
@@ -1296,4 +1304,32 @@ body {
 }
 .spacing_buttons{
     width: 45px;
+}
+/*shapes css*/
+.shape-popup {
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    box-shadow: rgba(0, 0, 0, 0.07) 0px 1px 1px, rgba(0, 0, 0, 0.07) 0px 2px 2px, rgba(0, 0, 0, 0.07) 0px 4px 4px, rgba(0, 0, 0, 0.07) 0px 8px 8px, rgba(0, 0, 0, 0.07) 0px 16px 16px;
+    width: 200px;
+    height: 153px;
+    padding: 15px;
+    position: absolute;
+    top: 56px;
+    left: 90px;
+    display: none;
+}
+    .shape-popup::before {
+        content: "";
+        position: absolute;
+        left: 48px;
+        top: -6px;
+        width: 12px;
+        height: 12px;
+        background-color: #f5f5f5;
+        transform: rotate(136deg);
+        /*        box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;*/
+        z-index: -1;
+    }
+.b_rad4 {
+    border-radius: 4px !important;
 }

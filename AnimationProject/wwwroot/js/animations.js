@@ -3939,3 +3939,18 @@ function handleThumbClick(clickedElement) {
     items.forEach(el => el.classList.remove('active_border'));
     clickedElement.classList.add('active_border');
 }
+
+function toggleShapePopup() {
+    const popup = document.getElementById('shapePopup');
+    popup.style.display = (popup.style.display === 'block') ? 'none' : 'block';
+}
+
+// Optional: click outside to close
+document.addEventListener('click', function (event) {
+    const popup = document.getElementById('shapePopup');
+    const button = document.getElementById('shapeToggleBtn');
+
+    if (!popup.contains(event.target) && !button.contains(event.target)) {
+        popup.style.display = 'none';
+    }
+});
