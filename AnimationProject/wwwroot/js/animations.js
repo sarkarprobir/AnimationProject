@@ -1215,7 +1215,7 @@ function animateText(direction, condition, loopCount) {
     });
 
     if (animationType === "delaylinear") {
-        const nominalPerObj = 0.50;
+        const nominalPerObj = 0.25;
 
         let countText = textObjects.length;
         if (countText == 1) {
@@ -1230,8 +1230,8 @@ function animateText(direction, condition, loopCount) {
 
         //const scaleInText = inTime;
         //const scaleOutText = outTime;
-        const individualTweenIn = 0.35 * scaleInText;
-        const individualTweenOut = 0.35 * scaleOutText;
+        const individualTweenIn = 0.25 * scaleInText;
+        const individualTweenOut = 0.25 * scaleOutText;
 
         let tlText = gsap.timeline({
             repeat: loopCount - 1,
@@ -2142,7 +2142,12 @@ function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imag
 
     textObjects.forEach(o => o.selected = false);
     images.forEach(img => img.selected = false);
-    if ($("#hdnTextAnimationType").val() !== "") {
+    if ($("#hdnTextAnimationType").val() == "") {
+        $("#hdnTextAnimationType").val('delaylinear');
+        animationMode = "delaylinear";
+        $("#hdnEffectSlide1").val('delaylinear');
+    }
+
         document.getElementById("imageStartX").value = imageStartX;
         document.getElementById("imageStartY").value = imageStartY;
         document.getElementById("imageEndX").value = imageEndX;
@@ -2157,12 +2162,12 @@ function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imag
         //    recorder.stop();
         //}, 4000);
     }
-    else {
-        //alert('Please select Text Animation')
-        MessageShow('', 'Please select text Animation', 'error');
-    }
+    //else {
+    //    //alert('Please select Text Animation')
+    //    MessageShow('', 'Please select text Animation', 'error');
+    //}
 
-}
+//}
 
 
 

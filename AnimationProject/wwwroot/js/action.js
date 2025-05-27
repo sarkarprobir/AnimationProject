@@ -2830,7 +2830,7 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
 
         //const individualTweenText = 0.15 * scaleInText;
         //const individualTweenOutText = 0.15 * scaleOutText;
-        const nominalPerObj = 0.50;
+        const nominalPerObj = 0.25;
         let countText = textObjects.length;
         if (countText == 1) {
             countText += images.length;
@@ -2844,8 +2844,8 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
 
         //const scaleInText = inTime;
         //const scaleOutText = outTime;
-        const individualTweenText = 0.35 * scaleInText;
-        const individualTweenOutText = 0.35 * scaleOutText;
+        const individualTweenText = 0.25 * scaleInText;
+        const individualTweenOutText = 0.25 * scaleOutText;
 
 
 
