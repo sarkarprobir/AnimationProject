@@ -2966,7 +2966,7 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
             y: (i, target) => target.finalY,
             duration: individualTweenText,
             ease: "power1.in",
-            stagger: individualTweenText * 0.1,    // <-- each item starts .2×duration after the last
+            stagger: individualTweenText * 1,    // <-- each item starts .2×duration after the last
             onUpdate: () => drawCanvasForDownload(condition)
         }, 0);
 
@@ -3008,7 +3008,7 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
             y: (i, target) => target.exitY,
             duration: individualTweenOutText,
             ease: "power1.out",
-            stagger: individualTweenOutText * 0.10,   // each item delayed 70% of the tween after the previous
+            stagger: individualTweenOutText * 1,   // each item delayed 70% of the tween after the previous
             onUpdate: () => drawCanvasForDownload(condition)
         });
 
