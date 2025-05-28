@@ -3369,16 +3369,32 @@ canvas.addEventListener('drop', e => {
     // 3) Nothing valid? bail out
     if (!src) return;
 
-    // 4) Finally load & push into your images array
     const img = new Image();
     img.onload = () => {
+        // maximum dimension on drop
+        const MAX_DIM = 200;
+
+        // compute ratio so the longest side is MAX_DIM
+        const ratio = img.width > img.height
+            ? MAX_DIM / img.width
+            : MAX_DIM / img.height;
+
+        // never upscale small images
+        const scale = Math.min(ratio, 1);
+
+        // new “design-space” dimensions
+        const newWidth = img.width * scale;
+        const newHeight = img.height * scale;
+
         images.push({
             img,
             src,
             x: e.offsetX,
             y: e.offsetY,
-            width: img.width,
-            height: img.height,
+            // assign downsized values here:
+            width: newWidth,
+            height: newHeight,
+            // keep these at 1 so drawCanvas draws at exactly width×height:
             scaleX: 1,
             scaleY: 1,
             opacity: 1,
@@ -3386,8 +3402,6 @@ canvas.addEventListener('drop', e => {
             noAnim: false
         });
         drawCanvas('Common');
-        // If you want, you can revoke object URLs later:
-        // if (src.startsWith('blob:')) URL.revokeObjectURL(src);
     };
     img.src = src;
 });
