@@ -1250,113 +1250,99 @@ function animateText(direction, condition, loopCount) {
     });
 
     if (animationType === "delaylinear") {
-        const itemsToAnimate = images
-            .filter(i => !i.noAnim)
-            .concat(textObjects.filter(t => !t.noAnim));
+        // 1) Collect animatable items
+        const allItems = [
+            ...images.filter(i => !i.noAnim),
+            ...textObjects.filter(t => !t.noAnim)
+        ];
 
-        const nominalPerObj = .50;
-        let countText = itemsToAnimate.length;
-        //if (countText == 1) {
-        //    countText += images.length;
-        //}
+        // 2) Bucket into units by groupId
+        const groupMap = new Map();
+        const units = [];
 
-        //const scaleInText = inTime / (countText * nominalPerObj);
-        //const scaleOutText = outTime / (countText * nominalPerObj);
+        allItems.forEach(item => {
+            const gid = item.groupId;
+            if (gid != null) {
+                // add to its group bucket
+                if (!groupMap.has(gid)) {
+                    groupMap.set(gid, []);
+                    units.push(groupMap.get(gid));
+                }
+                groupMap.get(gid).push(item);
+            } else {
+                // no groupId → its own unit
+                units.push([item]);
+            }
+        });
+
+        // 3) Compute timings
         const scaleInText = inTime;
         const scaleOutText = outTime;
-
         const individualTweenIn = 0.15 * scaleInText;
         const individualTweenOut = 0.15 * scaleOutText;
+        const staggerIn = individualTweenIn;   // full duration between groups
+        const staggerOut = individualTweenOut;
 
-
-       
-
-
-
-        let tlText = gsap.timeline({
+        // 4) Build timeline
+        const tlText = gsap.timeline({
             repeat: loopCount - 1,
             onUpdate: () => drawCanvas(condition),
             onStart: () => drawCanvas(condition),
         });
 
-        // ── 0) Immediately pin all noAnim images at their final coords ──
-        images
-            .filter(img => img.noAnim)
-            .forEach(imgObj => {
-                tlText.set(imgObj, {
-                    x: imgObj.x,
-                    y: imgObj.y,
-                    opacity: imgObj.opacity ?? 1
-                }, 0); // place at time = 0
-            });
+        // Pin noAnim items
+        images.filter(i => i.noAnim).forEach(imgObj => {
+            tlText.set(imgObj, { x: imgObj.x, y: imgObj.y, opacity: imgObj.opacity ?? 1 }, 0);
+        });
+        textObjects.filter(t => t.noAnim).forEach(txtObj => {
+            tlText.set(txtObj, { x: txtObj.finalX, y: txtObj.finalY, opacity: txtObj.opacity ?? 1 }, 0);
+        });
 
-
-
-        // ── 0) Immediately pin all noAnim text elements at their final coords ──
-        textObjects
-            .filter(txt => txt.noAnim)
-            .forEach(txtObj => {
-                tlText.set(txtObj, {
-                    x: txtObj.finalX,
-                    y: txtObj.finalY,
-                    opacity: txtObj.opacity ?? 1
-                }, 0); // place at time = 0
-            });
-
-
-
-        if (tabType == "In" || tabType == "Out") {
-            // ── Text IN ──
-           
-            tlText.to(itemsToAnimate, {
-                x: (i, target) => target.finalX,
-                y: (i, target) => target.finalY,
-                duration: individualTweenIn,
-                ease: "power1.in",
-                stagger: individualTweenIn * 1,    // <-- each item starts .2×duration after the last
-                onUpdate: () => drawCanvas(condition)
-            }, 0);
-        }
-
-        if (tabType == "Stay" || tabType == "Out") {
-            // ── Stay time ──
-            tlText.to({}, {
-                duration: stayTime,
-                ease: "none"
+        // ── IN ──
+        if (tabType === "In" || tabType === "Out") {
+            units.forEach((unit, idx) => {
+                tlText.to(unit, {
+                    x: (i, target) => target.finalX,
+                    y: (i, target) => target.finalY,
+                    duration: individualTweenIn,
+                    ease: "power1.in",
+                    onUpdate: () => drawCanvas(condition)
+                }, idx * staggerIn);
             });
         }
 
-        if (tabType == "Out") {
-            
-            tlText.to(itemsToAnimate, {
-                x: (i, target) => target.exitX,
-                y: (i, target) => target.exitY,
-                duration: individualTweenOut,
-                ease: "power1.out",
-                stagger: individualTweenOut * 1,   // each item delayed 70% of the tween after the previous
-                onUpdate: () => drawCanvas(condition)
+        // ── STAY ──
+        if (tabType === "Stay" || tabType === "Out") {
+            tlText.to({}, { duration: stayTime, ease: "none" });
+        }
+
+        // ── OUT ──
+        if (tabType === "Out") {
+            units.forEach((unit, idx) => {
+                tlText.to(unit, {
+                    x: (i, target) => target.exitX,
+                    y: (i, target) => target.exitY,
+                    duration: individualTweenOut,
+                    ease: "power1.out",
+                    onUpdate: () => drawCanvas(condition)
+                }, (units.length * staggerIn) + idx * staggerOut);
+                // we offset out-sequence by total in-sequence duration
             });
         }
 
-        // ── At the end, reset everyone to their finalX/finalY ──
+        // ── RESET ──
         tlText.set([...textObjects, ...images], {
             x: (i, target) => target.finalX,
             y: (i, target) => target.finalY
         });
 
         tlText.eventCallback("onComplete", () => {
-            images.forEach(img => {
-                img.x = img.finalX;
-                img.y = img.finalY;
-                img.opacity = img.opacity ?? 1;
-            });
-            textObjects.forEach(txt => {
-                txt.x = txt.finalX;
-                txt.y = txt.finalY;
-            });
+            images.forEach(img => { img.x = img.finalX; img.y = img.finalY; img.opacity = img.opacity ?? 1; });
+            textObjects.forEach(txt => { txt.x = txt.finalX; txt.y = txt.finalY; });
             drawCanvas(condition);
         });
     }
+
 
 
 
