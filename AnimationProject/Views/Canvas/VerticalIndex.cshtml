@@ -443,7 +443,12 @@
         .inside_wrapper{
             height: fit-content !important;
         }
-        
+
+        .context-options{
+            text-align: left;
+            font-size: 14px;
+            font-family: "Nunito", sans-serif;
+        }
     </style>
     <script>
             $(document).ready(function(){
@@ -1079,7 +1084,12 @@
                             <!-- Custom context menu for deletion -->
                             <div id="contextMenu">
                                 <ul>
-                                    <li id="deleteOption">Delete</li>
+                                    <li class="context-options">Copy</li>
+                                    <li class="context-options">Paste</li>
+                                    <li class="context-options">Duplicate</li>
+                                    <li class="context-options">Bring Front</li>
+                                    <li class="context-options">Send Back</li>
+                                    <li class="context-options" id="deleteOption">Delete</l>
                                 </ul>
                             </div>
                     <p class="middle-resulation">Final Output 1080x1920</p>
