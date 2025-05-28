@@ -2,7 +2,7 @@
  
 :root {
  /*================font-size================*/
-  --font-size14: 13px;
+  --font-size14: 14px;
   --font-size18: 18px;
   
 /*=============border-radius*===============*/
@@ -58,13 +58,13 @@ Body {
 	padding: 20px 15px 20px 25px;
 }
  .panel-right .headtext{ 
-     font-size:13px;  
-     font-weight: 600 !important; 
-     background:var(--secondColor);
+    font-size: var(--font-size18);  
+    font-weight: 700 !important; 
+    background: var(--secondColor);
     font-weight: normal;
     margin-bottom: 20px; 
-    width:100%; 
-    margin-bottom:20px;
+    width: 100%; 
+    margin-bottom: 20px;
 }
 p.collapsed{    font-size: var(--font-size14);}
 
@@ -98,13 +98,13 @@ p.collapsed{    font-size: var(--font-size14);}
     right: 18px;
 }
 .Graphic-More {
-    width: 122px;
+    width: 128px;
     border: 0px;
     margin-left: 15px;
     padding: 7px 12px;
     border-radius: var(--border-radius6);
     color: #000;
-    font-size: var(--font-size14);
+    font-size: 14px;
 }
 .Graphic-More.active{ 
     background:#000; 
@@ -165,7 +165,7 @@ ul.right-listone li {
     ul.right-listone li a {
         margin-bottom: 0;
         border: 2px solid transparent;
-        border-radius: 8px;
+        border-radius: 6px;
         float: left;
         text-align: center;
         font-size: 13px;
@@ -287,7 +287,7 @@ ul.right-listone{padding:0px; margin:0px; width: 100%;
     cursor: pointer;
     font-weight: 600;
     border-radius: var(--border-radius6);
-    font-size: var(--font-size14);
+    font-size: 14px;
     margin-right: 6px;
     border: 2px solid #ccc;
     width: 63px;
@@ -891,7 +891,7 @@ svg:hover {
 
 .modal-content {
     height: 315px !important;
-    border-radius: 0 !important;
+    border-radius: 3px !important;
 }
 
 .modal-title {
@@ -912,6 +912,8 @@ svg:hover {
     padding: 14px;
     margin-bottom: 15px;
     cursor: pointer;
+    border-radius: 3px;
+    font-size: var(--font-size14);
 }
 
     .option-box:hover {
@@ -1067,7 +1069,8 @@ body {
 
 .gallery img {
     width: 110px;
-    height: 110px;
+    max-height: 110px;
+    height: auto;
     object-fit: contain;
 }
 
@@ -1080,8 +1083,7 @@ body {
     .pagination span {
         margin: 0 9px;
         cursor: pointer;
-        font-size: 14px;
-        right-listone
+        font-size: 13px;
     }
 
 .shapes_drop {
@@ -1127,12 +1129,12 @@ body {
 }
 
 .gallery_head {
-    font-size: 18px;
+    font-size: var(--font-size18);
     font-weight: 700;
 }
 
 .gallery_type {
-    font-size: 15px;
+    font-size: 14px;
 }
 /* file upload css */
 .custom-file-input {
@@ -1149,7 +1151,7 @@ body {
         background-color: #e6f4ea;
         padding: 5px;
         cursor: pointer;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: bold;
         color: #333;
         margin-bottom: 0 !important;
@@ -1158,7 +1160,7 @@ body {
     .custom-file-input span {
         flex: 1;
         padding: 5px;
-        font-size: 14px;
+        font-size: 13px;
         color: #888;
         background-color: #f9f9f9;
     }
@@ -1197,8 +1199,8 @@ body {
 }
 
 .texture_img {
-    width: 75px;
-    height: 75px;
+    width: 85px;
+    height: 85px;
 }
 
 .texture_images {
@@ -1213,7 +1215,7 @@ body {
     height: 30px;
     padding: 0;
     border: 2px solid #000000 !important;
-    border-radius: 7px;
+    border-radius: 3px;
     overflow: hidden;
 }
 
@@ -1294,7 +1296,7 @@ body {
 }
 .spacing_title {
     font-size: 14px;
-    font-weight: 500;
+/*    font-weight: 500;*/
 }
 .spacing_button{
     font-size: 25px;
@@ -1335,6 +1337,7 @@ body {
     border-radius: 3px !important;
 }
 .checkbox_input {
-    width: 20px;
-    height: 20px;
+    width: 28px;
+    height: 29px;
+    border-radius: 3px;
 }
