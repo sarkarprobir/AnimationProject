@@ -3,7 +3,7 @@
 }
 <script>
         const arrowImage = new Image();
-    arrowImage.src = "/images/icons/icon-lr.png";
+    arrowImage.src = "/images/icons/right arrow(thin).svg";
 
     function getEase() {
         return animationMode === "bounce" ? "bounce.out" : "linear";
@@ -384,68 +384,68 @@
                     <h2>In</h2>
                     <ul class="right-listone d-flex justify-content-between align-items-center" id="uldirection">
                         <li>
-                            <div class="btn-canvas-container" style="width: 50px; height: 50px;">
+                            <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                                 <!-- hide the <a> by default -->
                                 <a id="aleft" href="javascript:void(0)"
-                                   style="display: none; width:100%; height:100%;">
-                                    <img src="/images/icons/icon-lr.png" alt="Left to Center"
-                                         style="width:100%; height:100%;">
+                                   style=" width:100%; height:100%;">
+                                    <img src="/images/icons/right arrow(thick).svg" alt="Left to Center"
+                                      >
                                 </a>
-                                <!-- show the canvas by default -->
+                                @* <!-- show the canvas by default -->
                                 <canvas onclick="setCoordinate(this,'left',100,20,50,50)"
                                         id="miniCanvas_aleft" class="miniCanvas"
                                         width="50" height="50"
-                                        style="display: block;"></canvas>
+                                        style="display: block;"></canvas> *@
                             </div>
                             <div class="clear"></div>
                         </li>
                         <li>
-                            <div class="btn-canvas-container" style="width: 50px; height: 50px;">
+                            <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                                 <!-- hide the <a> by default -->
                                 <a id="aright" href="javascript:void(0)"
-                                   style="display: none; width:100%; height:100%;">
-                                    <img src="/images/icons/icon-rl.png" alt="Right to Center"
-                                         style="width:100%; height:100%;">
+                                   style=" width:100%; height:100%;">
+                                    <img src="/images/icons/right arrow(thick).svg" alt="Left to Center"
+                                         style=" transform: rotate(180deg);">
                                 </a>
-                                <!-- show the canvas by default -->
+                                @* <!-- show the canvas by default -->
                                 <canvas onclick="setCoordinate(this,'right',400,0,50,50)"
                                         id="miniCanvas_aright" class="miniCanvas"
                                         width="50" height="50"
-                                        style="display: block;"></canvas>
+                                        style="display: block;"></canvas> *@
                             </div>
                             <div class="clear"></div>
                         </li>
 
                         <li>
-                            <div class="btn-canvas-container" style="width: 50px; height: 50px;">
+                            <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                                 <!-- hide the <a> by default -->
                                 <a id="abottom" href="javascript:void(0)"
-                                   style="display: none; width:100%; height:100%;">
-                                    <img src="/images/icons/icon-bt.png" alt="Bottom to Center"
-                                         style="width:100%; height:100%;">
+                                   style=" width:100%; height:100%;">
+                                    <img src="/images/icons/right arrow(thick).svg" alt="Left to Center"
+                                         style=" transform: rotate(270deg);">
                                 </a>
-                                <!-- show the canvas by default -->
+                                @* <!-- show the canvas by default -->
                                 <canvas onclick="setCoordinate(this,'bottom',800,0,50,50)"
                                         id="miniCanvas_abottom" class="miniCanvas"
                                         width="50" height="50"
-                                        style="display: block;"></canvas>
+                                        style="display: block;"></canvas> *@
                             </div>
                             <div class="clear"></div>
                         </li>
 
                         <li>
-                            <div class="btn-canvas-container" style="width: 50px; height: 50px;">
+                            <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                                 <!-- hide the <a> by default -->
                                 <a id="atop" href="javascript:void(0)"
-                                   style="display: none; width:100%; height:100%;">
-                                    <img src="/images/icons/icon-tb.png" alt="Top to Center"
-                                         style="width:100%; height:100%;">
+                                   style=" width:100%; height:100%;">
+                                    <img src="/images/icons/right arrow(thick).svg" alt="Left to Center"
+                                         style=" transform: rotate(90deg);">
                                 </a>
-                                <!-- show the canvas by default -->
+                                @* <!-- show the canvas by default -->
                                 <canvas onclick="setCoordinate(this,'top',400,0,50,50)"
                                         id="miniCanvas_atop" class="miniCanvas"
                                         width="50" height="50"
-                                        style="display: block;"></canvas>
+                                        style="display: block;"></canvas> *@
                             </div>
                             <div class="clear"></div>
                         </li>
@@ -785,12 +785,17 @@
                 </div>
 
                 <div class="gallery">
-                    <div class="d-flex flex-wrap justify-content-between gap-4 inside_wrapper">
+                    <div class="d-flex flex-wrap inside_wrapper" style="gap: 54px;">
                     <img src="~/images/Gallery-img/man.png" />
                     <img src="~/images/Gallery-img/bag.png" />
                     <img src="~/images/Gallery-img/circle shape1.svg" />
                     <img src="~/images/Gallery-img/shape1.svg" />
                     <img src="~/images/Gallery-img/apple_watch.png" />
+                    <img src="~/images/Gallery-img/Square.svg" />
+                    <img src="~/images/Gallery-img/rounded square.svg" />
+                    <img src="~/images/Gallery-img/rounded rectangle.svg" />
+                    <img src="~/images/Gallery-img/rectangle.svg" />
+                    <img src="~/images/Gallery-img/abstract.svg" />
                    @*    <img src="~/images/Gallery-img/circle600.svg" />
                         <img src="~/images/Gallery-img/circle600.svg" /> *@
                     </div>
