@@ -11,6 +11,10 @@ const dpr = window.devicePixelRatio || 1;
 let animationMode = "delaylinear";
 let selectedItems = [];
 
+let isDraggingGroup = false;
+let groupDragStart = null;
+let groupStarts = []; // { obj, x, y }[]
+
 //document.getElementById('alinear').classList.add('active_effect');
 //const stream = canvas.captureStream(7); // Capture at 30 fps
 //const recorder = new MediaRecorder(stream);
@@ -824,7 +828,25 @@ function drawCanvas(condition) {
             });
         });
     });
+    //// 5) Draw selection outlines for all selected items
+    //ctx.save();
+    //ctx.strokeStyle = 'blue';
+    //ctx.lineWidth = 1 / scaleX;  // keep line width consistent in design units
+    //ctx.setLineDash([4 / scaleX, 2 / scaleX]); // dashed outline
 
+    //// outline selected images
+    //images.filter(img => img.selected).forEach(img => {
+    //    const w = img.width * (img.scaleX || 1);
+    //    const h = img.height * (img.scaleY || 1);
+    //    ctx.strokeRect(img.x, img.y, w, h);
+    //});
+
+    //// outline selected text boxes
+    //textObjects.filter(txt => txt.selected).forEach(txt => {
+    //    ctx.strokeRect(txt.x, txt.y, txt.boundingWidth, txt.boundingHeight);
+    //});
+
+    ctx.restore();
     // 6) reset alpha
     ctx.globalAlpha = 1;
 }
@@ -2444,18 +2466,75 @@ canvas.addEventListener("mousedown", function (e) {
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     const pos = { x: mouseX, y: mouseY };
+    const shift = e.shiftKey;
 
     // 0) If typing in the text editor, ignore
     if (document.activeElement === textEditor) return;
 
-    // 1) TEXT logic (unchanged)
-    const txt = getTextObjectAt(pos.x, pos.y);
-    if (txt) {
-        textObjects.forEach(o => o.selected = false);
-        txt.selected = true;
-        activeText = txt;
+    // helper to find top‐most image
+    function findImageAt(pt) {
+        for (let i = images.length - 1; i >= 0; i--) {
+            const img = images[i];
+            const sx = img.scaleX ?? 1, sy = img.scaleY ?? 1;
+            const w = img.width * sx, h = img.height * sy;
+            if (
+                pt.x >= img.x && pt.x <= img.x + w &&
+                pt.y >= img.y && pt.y <= img.y + h
+            ) {
+                return img;
+            }
+        }
+        return null;
+    }
 
-        const th = getHandleUnderMouse(pos.x, pos.y, txt);
+    // 1) Shift+click toggles selection (as before)
+    if (shift) {
+        const txtHit = getTextObjectAt(mouseX, mouseY);
+        if (txtHit) {
+            txtHit.selected = !txtHit.selected;
+            activeText = txtHit.selected ? txtHit : activeText;
+            activeImage = null;
+            drawCanvas('Common');
+            return;
+        }
+        const imgHit = findImageAt(pos);
+        if (imgHit) {
+            imgHit.selected = !imgHit.selected;
+            activeImage = imgHit.selected ? imgHit : activeImage;
+            activeText = null;
+            drawCanvas('Common');
+            return;
+        }
+        return; // clicking empty with Shift does nothing
+    }
+
+    // 2) GROUP-DRAG detection: clicked on already-selected item?
+    const txtHit = getTextObjectAt(mouseX, mouseY);
+    const imgHit = findImageAt(pos);
+    if ((txtHit && txtHit.selected) || (imgHit && imgHit.selected)) {
+        // Begin group drag of all selected
+        isDraggingGroup = true;
+        groupDragStart = { x: e.clientX, y: e.clientY };
+        groupStarts = [];
+        textObjects.filter(o => o.selected)
+            .forEach(o => groupStarts.push({ obj: o, x: o.x, y: o.y }));
+        images.filter(i => i.selected)
+            .forEach(i => groupStarts.push({ obj: i, x: i.x, y: i.y }));
+        e.preventDefault();
+        return;
+    }
+
+    // 3) NO-SHIFT single-select: clear all then hit-test
+    textObjects.forEach(o => o.selected = false);
+    images.forEach(i => i.selected = false);
+    activeText = null;
+    activeImage = null;
+
+    // 3a) TEXT hit‐test for resize/drag
+    if (txtHit) {
+        txtHit.selected = true;
+        activeText = txtHit;
+        const th = getHandleUnderMouse(pos.x, pos.y, txtHit);
         if (th) {
             isResizingText = true;
             activeTextHandle = th;
@@ -2463,82 +2542,50 @@ canvas.addEventListener("mousedown", function (e) {
             drawCanvas('Common');
             return;
         }
-        if (isInsideBox(pos.x, pos.y, txt)) {
+        if (isInsideBox(pos.x, pos.y, txtHit)) {
             isDraggingText = true;
-            dragOffsetText.x = pos.x - txt.x;
-            dragOffsetText.y = pos.y - txt.y;
+            dragOffsetText.x = pos.x - txtHit.x;
+            dragOffsetText.y = pos.y - txtHit.y;
             e.preventDefault();
             drawCanvas('Common');
             return;
         }
     }
 
-    // 2) IMAGE handle‐click → resize  (check handles *first*)
+    // 3b) IMAGE resize‐handle
     for (let i = images.length - 1; i >= 0; i--) {
         const img = images[i];
         const ih = getHandleUnderMouseForImage(img, pos);
         if (ih) {
-            // clear text selection
-            textObjects.forEach(o => o.selected = false);
-            activeText = null;
-
-            // select this image
-            images.forEach(i2 => i2.selected = false);
             img.selected = true;
             activeImage = img;
             isResizingImage = true;
             activeImageHandle = ih;
-
             e.preventDefault();
             drawCanvas('Common');
             return;
         }
     }
 
-    // 3) IMAGE body‐click → drag
-    for (let i = images.length - 1; i >= 0; i--) {
-        const img = images[i];
-        // use the same scale logic as your handles
-        const sx = (typeof img.scaleX === 'number') ? img.scaleX : 1;
-        const sy = (typeof img.scaleY === 'number') ? img.scaleY : 1;
-        const w = img.width * sx;
-        const h = img.height * sy;
-
-        if (
-            pos.x >= img.x && pos.x <= img.x + w &&
-            pos.y >= img.y && pos.y <= img.y + h
-        ) {
-            // clear text selection
-            textObjects.forEach(o => o.selected = false);
-            activeText = null;
-
-            // select this image
-            images.forEach(i2 => i2.selected = false);
-            img.selected = true;
-            activeImage = img;
-            isDraggingImage = true;
-            dragOffsetImage.x = pos.x - img.x;
-            dragOffsetImage.y = pos.y - img.y;
-            enableFillColorDiv();
-            enableStrockColorDiv();
-
-            e.preventDefault();
-            drawCanvas('Common');
-            return;
-        }
+    // 3c) IMAGE body‐drag
+    if (imgHit) {
+        imgHit.selected = true;
+        activeImage = imgHit;
+        isDraggingImage = true;
+        dragOffsetImage.x = pos.x - imgHit.x;
+        dragOffsetImage.y = pos.y - imgHit.y;
+        enableFillColorDiv();
+        enableStrockColorDiv();
+        e.preventDefault();
+        drawCanvas('Common');
+        return;
     }
 
-    // 4) nothing matched → clear all
-    textObjects.forEach(o => o.selected = false);
-    images.forEach(i2 => i2.selected = false);
-    activeText = null;
-    activeImage = null;
-    // disableFillColorDiv();
-    // disableStrockColorDiv();
-
-    e.preventDefault();
+    // 4) empty space click
     drawCanvas('Common');
 });
+
+
 
 
 
@@ -2596,6 +2643,18 @@ function adjustFontSizeToFitBox(obj) {
 canvas.addEventListener("mousemove", function (e) {
    
     const pos = getMousePos(canvas, e);
+
+    // ── 0) GROUP DRAG ───────────────────────────────────────────────
+    if (isDraggingGroup) {
+        const dx = e.clientX - groupDragStart.x;
+        const dy = e.clientY - groupDragStart.y;
+        groupStarts.forEach(({ obj, x, y }) => {
+            obj.x = x + dx;
+            obj.y = y + dy;
+        });
+        drawCanvas('Common');
+        return;
+    }
 
     // --- 1) TEXT RESIZE & DRAG ---
     if (isResizingText && activeText && activeTextHandle) {
@@ -2760,9 +2819,12 @@ canvas.addEventListener("mousemove", function (e) {
                 newHeight = pos.y - activeImage.y;
                 break;
         }
-        if (newWidth > MIN_SIZE) activeImage.scaleX = newWidth / activeImage.width;
-        if (newHeight > MIN_SIZE) activeImage.scaleY = newHeight / activeImage.height;
+        // allow full squish, but keep at least 1% of original size
+        activeImage.scaleX = Math.max(newWidth / activeImage.width, 0.01);
+        activeImage.scaleY = Math.max(newHeight / activeImage.height, 0.01);
+
         drawCanvas("Common");
+        return;
     }
 });
 
@@ -2870,7 +2932,9 @@ canvas.addEventListener("mouseup", function () {
     if (isResizingText && activeText && activeTextHandle) {
         onBoxResizeEnd(activeText);
     }
-
+    isDraggingGroup = false;
+    groupDragStart = null;
+    groupStarts = [];
 
     currentDrag = null;
     isResizing = false;
@@ -2895,6 +2959,27 @@ canvas.addEventListener("mouseleave", function () {
     isDraggingImage = false;
     isResizingImage = false;
 });
+//canvas.addEventListener("mouseup", function (e) {
+//    // only finish a resize if we actually were resizing
+//    if (isResizingText && activeText && activeTextHandle) {
+//        onBoxResizeEnd(activeText);
+//    }
+
+//    // clear _drag_ and _resize_ state only:
+//    currentDrag = null;
+//    isResizing = false;
+//    isDragging = false;
+//    activeHandle = null;
+//    isDraggingImage = false;
+//    isResizingImage = false;
+
+//    // *DO NOT* clear activeText / activeImage or their .selected flags here!
+//    // activeText = null;
+//    // activeImage = null;
+
+//    drawCanvas('Common');
+//});
+
 
 function currentSelectedText() {
     return textObjects.find(obj => obj.selected);
@@ -2918,76 +3003,111 @@ function isInsideBox(mouseX, mouseY, obj) {
 
 //});
 canvas.addEventListener("click", function (e) {
+    // 0) If shift is held, we’ve already toggled selection in mousedown—skip click logic
+    if (e.shiftKey) return;
+
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     const pos = { x: mouseX, y: mouseY };
+    const shift = false; // we already know Shift is not held here
 
-    const obj = getTextObjectAt(mouseX, mouseY);
-    let imageFound = false;
-    let imgObj = null;
+    // helpers: (shift is false, so these always clear)
+    const clearText = () => textObjects.forEach(o => o.selected = false);
+    const clearImages = () => images.forEach(img => img.selected = false);
 
-    
-    // Check if an image is clicked
+    // find top‐most text under cursor
+    const txt = getTextObjectAt(mouseX, mouseY);
+
+    // find top‐most image under cursor
+    let imgFound = null;
     for (let i = images.length - 1; i >= 0; i--) {
         if (isMouseOverImage(images[i], pos)) {
-            imgObj = images[i];
-            imageFound = true;
-            if (imgObj.noAnim) {
-                $("#noAnimCheckbox").prop("checked", true);
-            }
-            else {
-                $("#noAnimCheckbox").prop("checked", false);
-            }
+            imgFound = images[i];
             break;
         }
     }
-   
-    if (obj) {
-        // Select text object and update UI
-        textObjects.forEach(o => o.selected = false);
-        obj.selected = true;
 
-        $("#favcolor").val(obj.textColor);
-        $("#fontstyle_popup").css("display", "block");
-        $(".right-sec-two").css("display", "block");
-        $(".right-sec-one").css("display", "none");
+    if (txt) {
+        // — TEXT clicked (no Shift) —
+        clearText();
+        clearImages();
+
+        txt.selected = true;
+        activeText = txt;
+        activeImage = null;
+
+        // update UI for this text
+        $("#favcolor").val(txt.textColor);
+        $("#noAnimCheckbox").prop("checked", !!txt.noAnim);
+        $("#fontstyle_popup").show();
+        $(".right-sec-two").show();
+        $(".right-sec-one").hide();
         document.getElementById("modeButton").innerText = "Animation Mode";
         $("#opengl_popup").hide();
-        images.forEach(img => img.selected = false);
+    }
+    else if (imgFound) {
+        // — IMAGE clicked (no Shift) —
+        clearText();
+        clearImages();
 
-        if (obj.noAnim) {
-            $("#noAnimCheckbox").prop("checked", true);
-        }
-        else {
-            $("#noAnimCheckbox").prop("checked", false);
-        }
+        imgFound.selected = true;
+        activeImage = imgFound;
+        activeText = null;
 
-    } else if (imageFound) {
-        // Select image and update UI
-        images.forEach(img => img.selected = false);
-        imgObj.selected = true;
-        $("#fontstyle_popup").css("display", "block");
-        $(".right-sec-two").css("display", "block");
-        $(".right-sec-one").css("display", "none");
+        // update UI for this image
+        $("#noAnimCheckbox").prop("checked", !!imgFound.noAnim);
+        $("#fontstyle_popup").show();
+        $(".right-sec-two").show();
+        $(".right-sec-one").hide();
         document.getElementById("modeButton").innerText = "Animation Mode";
         $("#opengl_popup").hide();
-        textObjects.forEach(o => o.selected = false);
-       
-        
-    } else {
-        // Deselect all if clicking on empty canvas
-        textObjects.forEach(o => o.selected = false);
-        images.forEach(img => img.selected = false);
-
-        //$("#fontstyle_popup").css("display", "none");
-        //$(".right-sec-two").css("display", "none");
-        //$(".right-sec-one").css("display", "block");
-        //document.getElementById("modeButton").innerText = "Graphic Mode";
+    }
+    else {
+        // — clicked empty space —
+        clearText();
+        clearImages();
+        activeText = null;
+        activeImage = null;
+        // optionally hide panels here
     }
 
-    drawCanvas('Common'); // Redraw to update selection changes
+    drawCanvas('Common');
 });
+
+// Arrow-key nudge: move all selected items by the arrow direction
+document.addEventListener('keydown', function (e) {
+    // only when the canvas is “active”—you can tighten this to a focused flag if you like
+    const arrowKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+    if (!arrowKeys.includes(e.key)) return;
+
+    e.preventDefault();
+    // how many pixels per tap? +Shift for larger step
+    const step = e.shiftKey ? 10 : 1;
+    let dx = 0, dy = 0;
+    switch (e.key) {
+        case 'ArrowUp': dy = -step; break;
+        case 'ArrowDown': dy = step; break;
+        case 'ArrowLeft': dx = -step; break;
+        case 'ArrowRight': dx = step; break;
+    }
+
+    // move each selected text
+    textObjects.filter(o => o.selected).forEach(o => {
+        o.x += dx;
+        o.y += dy;
+    });
+
+    // move each selected image
+    images.filter(i => i.selected).forEach(i => {
+        i.x += dx;
+        i.y += dy;
+    });
+
+    // redraw with updated positions
+    drawCanvas('Common');
+});
+
 
 function ImagePropertySet() {
     const noAnimCheckbox = document.getElementById('noAnimCheckbox');
@@ -3279,16 +3399,32 @@ canvas.addEventListener('drop', e => {
     // 3) Nothing valid? bail out
     if (!src) return;
 
-    // 4) Finally load & push into your images array
     const img = new Image();
     img.onload = () => {
+        // maximum dimension on drop
+        const MAX_DIM = 200;
+
+        // compute ratio so the longest side is MAX_DIM
+        const ratio = img.width > img.height
+            ? MAX_DIM / img.width
+            : MAX_DIM / img.height;
+
+        // never upscale small images
+        const scale = Math.min(ratio, 1);
+
+        // new “design-space” dimensions
+        const newWidth = img.width * scale;
+        const newHeight = img.height * scale;
+
         images.push({
             img,
             src,
             x: e.offsetX,
             y: e.offsetY,
-            width: img.width,
-            height: img.height,
+            // assign downsized values here:
+            width: newWidth,
+            height: newHeight,
+            // keep these at 1 so drawCanvas draws at exactly width×height:
             scaleX: 1,
             scaleY: 1,
             opacity: 1,
@@ -3296,8 +3432,6 @@ canvas.addEventListener('drop', e => {
             noAnim: false
         });
         drawCanvas('Common');
-        // If you want, you can revoke object URLs later:
-        // if (src.startsWith('blob:')) URL.revokeObjectURL(src);
     };
     img.src = src;
 });
