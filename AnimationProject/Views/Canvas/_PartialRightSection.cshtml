@@ -1,7 +1,7 @@
 ﻿@{
     Layout = null;
 }
-<script>
+@* <script>
         const arrowImage = new Image();
     arrowImage.src = "/images/icons/right arrow(thin).svg";
 
@@ -284,7 +284,7 @@
         });
       });
     });
-</script>
+</script> *@
 <script>
     $(document).ready(function(){
     TabShowHide('In');
@@ -696,7 +696,16 @@
 			</div>
         </div>
     </div>
-
+      <div class="mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <p class="spacing_title m-0">
+                Group
+            </p>
+            <div class="d-flex justify-content-end spacing_buttons">
+                <input type="checkbox" id="groupCheckbox" class="checkbox_input" onchange="GroupPropertySet()" />
+            </div>
+        </div>
+    </div>
     @* <div class="col-md-12 mb-2"> *@
     @*     <div class="row Strock-Line my-4"> *@
     @*         <div class="col-md-6 "> *@
