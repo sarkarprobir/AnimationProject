@@ -3552,7 +3552,8 @@ function ChangeSpecificBackgroundColor(controlid) {
     const backgroundSpecificColorPicker = document.getElementById("favBackgroundSpecificcolor");
     $("#hdnBackgroundSpecificColor").val(backgroundSpecificColorPicker.value);
     //RemoveBackgroundImage
-    canvas.bgImage = null;
+    canvas._bgImg = null;
+    canvas.style.backgroundImage = 'none';
     drawCanvas('Common'); // Redraw the canvas without the background image.
     setCanvasBackground(controlid, backgroundSpecificColorPicker.value);
 }
