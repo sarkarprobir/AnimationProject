@@ -824,7 +824,25 @@ function drawCanvas(condition) {
             });
         });
     });
+    //// 5) Draw selection outlines for all selected items
+    //ctx.save();
+    //ctx.strokeStyle = 'blue';
+    //ctx.lineWidth = 1 / scaleX;  // keep line width consistent in design units
+    //ctx.setLineDash([4 / scaleX, 2 / scaleX]); // dashed outline
 
+    //// outline selected images
+    //images.filter(img => img.selected).forEach(img => {
+    //    const w = img.width * (img.scaleX || 1);
+    //    const h = img.height * (img.scaleY || 1);
+    //    ctx.strokeRect(img.x, img.y, w, h);
+    //});
+
+    //// outline selected text boxes
+    //textObjects.filter(txt => txt.selected).forEach(txt => {
+    //    ctx.strokeRect(txt.x, txt.y, txt.boundingWidth, txt.boundingHeight);
+    //});
+
+    ctx.restore();
     // 6) reset alpha
     ctx.globalAlpha = 1;
 }
@@ -2444,17 +2462,63 @@ canvas.addEventListener("mousedown", function (e) {
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     const pos = { x: mouseX, y: mouseY };
+    const shift = e.shiftKey;
 
     // 0) If typing in the text editor, ignore
     if (document.activeElement === textEditor) return;
 
-    // 1) TEXT logic (unchanged)
+    // helper to find top‐most image
+    function findImageAt(pos) {
+        for (let i = images.length - 1; i >= 0; i--) {
+            const img = images[i];
+            const sx = img.scaleX ?? 1, sy = img.scaleY ?? 1;
+            const w = img.width * sx, h = img.height * sy;
+            if (
+                pos.x >= img.x && pos.x <= img.x + w &&
+                pos.y >= img.y && pos.y <= img.y + h
+            ) {
+                return img;
+            }
+        }
+        return null;
+    }
+
+    // FIRST: if Shift is held, just toggle selection and bail
+    if (shift) {
+        const txt = getTextObjectAt(mouseX, mouseY);
+        if (txt) {
+            txt.selected = !txt.selected;
+            activeText = txt.selected ? txt : activeText;
+            activeImage = null;
+            drawCanvas('Common');
+            return;
+        }
+        const img = findImageAt(pos);
+        if (img) {
+            img.selected = !img.selected;
+            activeImage = img.selected ? img : activeImage;
+            activeText = null;
+            drawCanvas('Common');
+            return;
+        }
+        // clicking empty space with Shift should do nothing
+        return;
+    }
+
+    // NO-SHIFT: clear everything before selecting new
+    textObjects.forEach(o => o.selected = false);
+    images.forEach(i => i.selected = false);
+    activeText = null;
+    activeImage = null;
+
+    // 1) TEXT hit‐test
     const txt = getTextObjectAt(pos.x, pos.y);
     if (txt) {
-        textObjects.forEach(o => o.selected = false);
+        // select this text
         txt.selected = true;
         activeText = txt;
 
+        // check for resize‐handle
         const th = getHandleUnderMouse(pos.x, pos.y, txt);
         if (th) {
             isResizingText = true;
@@ -2463,6 +2527,7 @@ canvas.addEventListener("mousedown", function (e) {
             drawCanvas('Common');
             return;
         }
+        // else begin dragging text
         if (isInsideBox(pos.x, pos.y, txt)) {
             isDraggingText = true;
             dragOffsetText.x = pos.x - txt.x;
@@ -2473,72 +2538,41 @@ canvas.addEventListener("mousedown", function (e) {
         }
     }
 
-    // 2) IMAGE handle‐click → resize  (check handles *first*)
+    // 2) IMAGE resize‐handle
     for (let i = images.length - 1; i >= 0; i--) {
         const img = images[i];
         const ih = getHandleUnderMouseForImage(img, pos);
         if (ih) {
-            // clear text selection
-            textObjects.forEach(o => o.selected = false);
-            activeText = null;
-
-            // select this image
-            images.forEach(i2 => i2.selected = false);
             img.selected = true;
             activeImage = img;
             isResizingImage = true;
             activeImageHandle = ih;
-
             e.preventDefault();
             drawCanvas('Common');
             return;
         }
     }
 
-    // 3) IMAGE body‐click → drag
-    for (let i = images.length - 1; i >= 0; i--) {
-        const img = images[i];
-        // use the same scale logic as your handles
-        const sx = (typeof img.scaleX === 'number') ? img.scaleX : 1;
-        const sy = (typeof img.scaleY === 'number') ? img.scaleY : 1;
-        const w = img.width * sx;
-        const h = img.height * sy;
-
-        if (
-            pos.x >= img.x && pos.x <= img.x + w &&
-            pos.y >= img.y && pos.y <= img.y + h
-        ) {
-            // clear text selection
-            textObjects.forEach(o => o.selected = false);
-            activeText = null;
-
-            // select this image
-            images.forEach(i2 => i2.selected = false);
-            img.selected = true;
-            activeImage = img;
-            isDraggingImage = true;
-            dragOffsetImage.x = pos.x - img.x;
-            dragOffsetImage.y = pos.y - img.y;
-            enableFillColorDiv();
-            enableStrockColorDiv();
-
-            e.preventDefault();
-            drawCanvas('Common');
-            return;
-        }
+    // 3) IMAGE body‐drag
+    const img = findImageAt(pos);
+    if (img) {
+        img.selected = true;
+        activeImage = img;
+        isDraggingImage = true;
+        dragOffsetImage.x = pos.x - img.x;
+        dragOffsetImage.y = pos.y - img.y;
+        enableFillColorDiv();
+        enableStrockColorDiv();
+        e.preventDefault();
+        drawCanvas('Common');
+        return;
     }
 
-    // 4) nothing matched → clear all
-    textObjects.forEach(o => o.selected = false);
-    images.forEach(i2 => i2.selected = false);
-    activeText = null;
-    activeImage = null;
-    // disableFillColorDiv();
-    // disableStrockColorDiv();
-
-    e.preventDefault();
+    // 4) clicked empty space (no Shift) — nothing more to do
     drawCanvas('Common');
 });
+
+
 
 
 
@@ -2895,6 +2929,27 @@ canvas.addEventListener("mouseleave", function () {
     isDraggingImage = false;
     isResizingImage = false;
 });
+canvas.addEventListener("mouseup", function (e) {
+    // only finish a resize if we actually were resizing
+    if (isResizingText && activeText && activeTextHandle) {
+        onBoxResizeEnd(activeText);
+    }
+
+    // clear _drag_ and _resize_ state only:
+    currentDrag = null;
+    isResizing = false;
+    isDragging = false;
+    activeHandle = null;
+    isDraggingImage = false;
+    isResizingImage = false;
+
+    // *DO NOT* clear activeText / activeImage or their .selected flags here!
+    // activeText = null;
+    // activeImage = null;
+
+    drawCanvas('Common');
+});
+
 
 function currentSelectedText() {
     return textObjects.find(obj => obj.selected);
@@ -2918,76 +2973,111 @@ function isInsideBox(mouseX, mouseY, obj) {
 
 //});
 canvas.addEventListener("click", function (e) {
+    // 0) If shift is held, we’ve already toggled selection in mousedown—skip click logic
+    if (e.shiftKey) return;
+
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     const pos = { x: mouseX, y: mouseY };
+    const shift = false; // we already know Shift is not held here
 
-    const obj = getTextObjectAt(mouseX, mouseY);
-    let imageFound = false;
-    let imgObj = null;
+    // helpers: (shift is false, so these always clear)
+    const clearText = () => textObjects.forEach(o => o.selected = false);
+    const clearImages = () => images.forEach(img => img.selected = false);
 
-    
-    // Check if an image is clicked
+    // find top‐most text under cursor
+    const txt = getTextObjectAt(mouseX, mouseY);
+
+    // find top‐most image under cursor
+    let imgFound = null;
     for (let i = images.length - 1; i >= 0; i--) {
         if (isMouseOverImage(images[i], pos)) {
-            imgObj = images[i];
-            imageFound = true;
-            if (imgObj.noAnim) {
-                $("#noAnimCheckbox").prop("checked", true);
-            }
-            else {
-                $("#noAnimCheckbox").prop("checked", false);
-            }
+            imgFound = images[i];
             break;
         }
     }
-   
-    if (obj) {
-        // Select text object and update UI
-        textObjects.forEach(o => o.selected = false);
-        obj.selected = true;
 
-        $("#favcolor").val(obj.textColor);
-        $("#fontstyle_popup").css("display", "block");
-        $(".right-sec-two").css("display", "block");
-        $(".right-sec-one").css("display", "none");
+    if (txt) {
+        // — TEXT clicked (no Shift) —
+        clearText();
+        clearImages();
+
+        txt.selected = true;
+        activeText = txt;
+        activeImage = null;
+
+        // update UI for this text
+        $("#favcolor").val(txt.textColor);
+        $("#noAnimCheckbox").prop("checked", !!txt.noAnim);
+        $("#fontstyle_popup").show();
+        $(".right-sec-two").show();
+        $(".right-sec-one").hide();
         document.getElementById("modeButton").innerText = "Animation Mode";
         $("#opengl_popup").hide();
-        images.forEach(img => img.selected = false);
+    }
+    else if (imgFound) {
+        // — IMAGE clicked (no Shift) —
+        clearText();
+        clearImages();
 
-        if (obj.noAnim) {
-            $("#noAnimCheckbox").prop("checked", true);
-        }
-        else {
-            $("#noAnimCheckbox").prop("checked", false);
-        }
+        imgFound.selected = true;
+        activeImage = imgFound;
+        activeText = null;
 
-    } else if (imageFound) {
-        // Select image and update UI
-        images.forEach(img => img.selected = false);
-        imgObj.selected = true;
-        $("#fontstyle_popup").css("display", "block");
-        $(".right-sec-two").css("display", "block");
-        $(".right-sec-one").css("display", "none");
+        // update UI for this image
+        $("#noAnimCheckbox").prop("checked", !!imgFound.noAnim);
+        $("#fontstyle_popup").show();
+        $(".right-sec-two").show();
+        $(".right-sec-one").hide();
         document.getElementById("modeButton").innerText = "Animation Mode";
         $("#opengl_popup").hide();
-        textObjects.forEach(o => o.selected = false);
-       
-        
-    } else {
-        // Deselect all if clicking on empty canvas
-        textObjects.forEach(o => o.selected = false);
-        images.forEach(img => img.selected = false);
-
-        //$("#fontstyle_popup").css("display", "none");
-        //$(".right-sec-two").css("display", "none");
-        //$(".right-sec-one").css("display", "block");
-        //document.getElementById("modeButton").innerText = "Graphic Mode";
+    }
+    else {
+        // — clicked empty space —
+        clearText();
+        clearImages();
+        activeText = null;
+        activeImage = null;
+        // optionally hide panels here
     }
 
-    drawCanvas('Common'); // Redraw to update selection changes
+    drawCanvas('Common');
 });
+
+// Arrow-key nudge: move all selected items by the arrow direction
+document.addEventListener('keydown', function (e) {
+    // only when the canvas is “active”—you can tighten this to a focused flag if you like
+    const arrowKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+    if (!arrowKeys.includes(e.key)) return;
+
+    e.preventDefault();
+    // how many pixels per tap? +Shift for larger step
+    const step = e.shiftKey ? 10 : 1;
+    let dx = 0, dy = 0;
+    switch (e.key) {
+        case 'ArrowUp': dy = -step; break;
+        case 'ArrowDown': dy = step; break;
+        case 'ArrowLeft': dx = -step; break;
+        case 'ArrowRight': dx = step; break;
+    }
+
+    // move each selected text
+    textObjects.filter(o => o.selected).forEach(o => {
+        o.x += dx;
+        o.y += dy;
+    });
+
+    // move each selected image
+    images.filter(i => i.selected).forEach(i => {
+        i.x += dx;
+        i.y += dy;
+    });
+
+    // redraw with updated positions
+    drawCanvas('Common');
+});
+
 
 function ImagePropertySet() {
     const noAnimCheckbox = document.getElementById('noAnimCheckbox');
