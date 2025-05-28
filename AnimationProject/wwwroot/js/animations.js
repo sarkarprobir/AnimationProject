@@ -2819,9 +2819,12 @@ canvas.addEventListener("mousemove", function (e) {
                 newHeight = pos.y - activeImage.y;
                 break;
         }
-        if (newWidth > MIN_SIZE) activeImage.scaleX = newWidth / activeImage.width;
-        if (newHeight > MIN_SIZE) activeImage.scaleY = newHeight / activeImage.height;
+        // allow full squish, but keep at least 1% of original size
+        activeImage.scaleX = Math.max(newWidth / activeImage.width, 0.01);
+        activeImage.scaleY = Math.max(newHeight / activeImage.height, 0.01);
+
         drawCanvas("Common");
+        return;
     }
 });
 
