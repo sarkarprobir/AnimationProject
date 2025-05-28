@@ -1312,7 +1312,7 @@ function animateText(direction, condition, loopCount) {
                 y: (i, target) => target.finalY,
                 duration: individualTweenIn,
                 ease: "power1.in",
-                stagger: individualTweenIn * 0.2,    // <-- each item starts .2×duration after the last
+                stagger: individualTweenIn * 0.1,    // <-- each item starts .2×duration after the last
                 onUpdate: () => drawCanvas(condition)
             }, 0);
         }
@@ -1360,7 +1360,7 @@ function animateText(direction, condition, loopCount) {
                 y: (i, target) => target.exitY,
                 duration: individualTweenOut,
                 ease: "power1.out",
-                stagger: individualTweenOut * 0.20,   // each item delayed 70% of the tween after the previous
+                stagger: individualTweenOut * 0.10,   // each item delayed 70% of the tween after the previous
                 onUpdate: () => drawCanvas(condition)
             });
         }
