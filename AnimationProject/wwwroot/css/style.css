@@ -1010,7 +1010,7 @@ body {
 .tabs {
     display: flex;
     justify-content: space-between;
-    width: 47%;
+    width: 50%;
 }
 
 .tab {
