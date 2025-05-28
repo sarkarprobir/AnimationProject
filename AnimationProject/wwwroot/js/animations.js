@@ -1215,23 +1215,28 @@ function animateText(direction, condition, loopCount) {
     });
 
     if (animationType === "delaylinear") {
-        const nominalPerObj = 0.25;
+        const itemsToAnimate = images
+            .filter(i => !i.noAnim)
+            .concat(textObjects.filter(t => !t.noAnim));
 
-        let countText = textObjects.length;
-        if (countText == 1) {
-            countText += images.length;
-        }
-        else
-            countText += images.length;
+        const nominalPerObj = .50;
+        let countText = itemsToAnimate.length;
+        //if (countText == 1) {
+        //    countText += images.length;
+        //}
 
-        const scaleInText = inTime / (countText * nominalPerObj);
-        const scaleOutText = outTime / (countText * nominalPerObj);
+        //const scaleInText = inTime / (countText * nominalPerObj);
+        //const scaleOutText = outTime / (countText * nominalPerObj);
+        const scaleInText = inTime;
+        const scaleOutText = outTime;
+
+        const individualTweenIn = 0.15 * scaleInText;
+        const individualTweenOut = 0.15 * scaleOutText;
 
 
-        //const scaleInText = inTime;
-        //const scaleOutText = outTime;
-        const individualTweenIn = 0.25 * scaleInText;
-        const individualTweenOut = 0.25 * scaleOutText;
+       
+
+
 
         let tlText = gsap.timeline({
             repeat: loopCount - 1,
@@ -1276,32 +1281,40 @@ function animateText(direction, condition, loopCount) {
             //    onUpdate: () => drawCanvas(condition)
             //}, 0);
             // ── animate all textObjects that DO animate ──
-            textObjects
-                .filter(txt => !txt.noAnim)
-                .forEach(txtObj => {
-                    tlText.to(txtObj, {
-                        x: (i, target) => target.finalX,
-                        y: (i, target) => target.finalY,
-                        duration: individualTweenIn,    // matching your images
-                        ease: "power1.in",
-                        stagger: individualTweenIn * 0.70,
-                        onUpdate: () => drawCanvas(condition)
-                    }, 0);
-                });
+            //textObjects
+            //    .filter(txt => !txt.noAnim)
+            //    .forEach(txtObj => {
+            //        tlText.to(txtObj, {
+            //            x: (i, target) => target.finalX,
+            //            y: (i, target) => target.finalY,
+            //            duration: individualTweenIn,    // matching your images
+            //            ease: "power1.in",
+            //            stagger: individualTweenIn * 0.20,
+            //            onUpdate: () => drawCanvas(condition)
+            //        }, 0);
+            //    });
 
-            // ── Image IN (skip noAnim) ──
-            images
-                .filter(img => !img.noAnim)
-                .forEach(imgObj => {
-                    tlText.to(imgObj, {
-                        x: (i, target) => target.finalX,
-                        y: (i, target) => target.finalY,
-                        duration: individualTweenIn,
-                        ease: "power1.in",
-                        stagger: individualTweenIn * 0.70,
-                        onUpdate: () => drawCanvas(condition)
-                    }, 0);
-                });
+            //// ── Image IN (skip noAnim) ──
+            //images
+            //    .filter(img => !img.noAnim)
+            //    .forEach(imgObj => {
+            //        tlText.to(imgObj, {
+            //            x: (i, target) => target.finalX,
+            //            y: (i, target) => target.finalY,
+            //            duration: individualTweenIn,
+            //            ease: "power1.in",
+            //            stagger: individualTweenIn * 0.20,
+            //            onUpdate: () => drawCanvas(condition)
+            //        }, 0);
+            //    });
+            tlText.to(itemsToAnimate, {
+                x: (i, target) => target.finalX,
+                y: (i, target) => target.finalY,
+                duration: individualTweenIn,
+                ease: "power1.in",
+                stagger: individualTweenIn * 0.2,    // <-- each item starts .2×duration after the last
+                onUpdate: () => drawCanvas(condition)
+            }, 0);
         }
 
         if (tabType == "Stay" || tabType == "Out") {
@@ -1314,41 +1327,42 @@ function animateText(direction, condition, loopCount) {
 
         if (tabType == "Out") {
             // ── Image OUT first (skip noAnim) ──
-            [...images].reverse()
-                .filter(img => !img.noAnim)
-                .forEach(imgObj => {
-                    tlText.to(imgObj, {
-                        x: (i, target) => target.exitX,
-                        y: (i, target) => target.exitY,
-                        duration: individualTweenOut ,
-                        ease: "power1.out",
-                        stagger: individualTweenOut * 0.70,
-                        onUpdate: () => drawCanvas(condition)
-                    });
-                });
+            //[...images].reverse()
+            //    .filter(img => !img.noAnim)
+            //    .forEach(imgObj => {
+            //        tlText.to(imgObj, {
+            //            x: (i, target) => target.exitX,
+            //            y: (i, target) => target.exitY,
+            //            duration: individualTweenOut ,
+            //            ease: "power1.out",
+            //            stagger: individualTweenOut * 0.70,
+            //            onUpdate: () => drawCanvas(condition)
+            //        });
+            //    });
 
-            //// ── Text OUT ──
-            //tlText.to([...textObjects].reverse(), {
-            //    x: (i, target) => target.exitX,
-            //    y: (i, target) => target.exitY,
-            //    duration: individualTweenOut,
-            //    ease: "power1.out",
-            //    stagger: individualTweenOut * 0.70,
-            //    onUpdate: () => drawCanvas(condition)
-            //});
-            // ── Text OUT (skip noAnim) ──
-            [...textObjects].reverse()
-                .filter(txt => !txt.noAnim)
-                .forEach(txtObj => {
-                    tlText.to(txtObj, {
-                        x: (i, target) => target.exitX,
-                        y: (i, target) => target.exitY,
-                        duration: individualTweenOut,
-                        ease: "power1.out",
-                        stagger: individualTweenOut * 0.70,
-                        onUpdate: () => drawCanvas(condition)
-                    });
-                });
+
+            //// ── Text OUT (skip noAnim) ──
+            //[...textObjects].reverse()
+            //    .filter(txt => !txt.noAnim)
+            //    .forEach(txtObj => {
+            //        tlText.to(txtObj, {
+            //            x: (i, target) => target.exitX,
+            //            y: (i, target) => target.exitY,
+            //            duration: individualTweenOut,
+            //            ease: "power1.out",
+            //            stagger: individualTweenOut * 0.70,
+            //            onUpdate: () => drawCanvas(condition)
+            //        });
+            //    });
+
+            tlText.to(itemsToAnimate, {
+                x: (i, target) => target.exitX,
+                y: (i, target) => target.exitY,
+                duration: individualTweenOut,
+                ease: "power1.out",
+                stagger: individualTweenOut * 0.20,   // each item delayed 70% of the tween after the previous
+                onUpdate: () => drawCanvas(condition)
+            });
         }
 
         // ── At the end, reset everyone to their finalX/finalY ──
