@@ -11,6 +11,10 @@ const dpr = window.devicePixelRatio || 1;
 let animationMode = "delaylinear";
 let selectedItems = [];
 
+let isDraggingGroup = false;
+let groupDragStart = null;
+let groupStarts = []; // { obj, x, y }[]
+
 //document.getElementById('alinear').classList.add('active_effect');
 //const stream = canvas.captureStream(7); // Capture at 30 fps
 //const recorder = new MediaRecorder(stream);
@@ -2468,14 +2472,14 @@ canvas.addEventListener("mousedown", function (e) {
     if (document.activeElement === textEditor) return;
 
     // helper to find top‐most image
-    function findImageAt(pos) {
+    function findImageAt(pt) {
         for (let i = images.length - 1; i >= 0; i--) {
             const img = images[i];
             const sx = img.scaleX ?? 1, sy = img.scaleY ?? 1;
             const w = img.width * sx, h = img.height * sy;
             if (
-                pos.x >= img.x && pos.x <= img.x + w &&
-                pos.y >= img.y && pos.y <= img.y + h
+                pt.x >= img.x && pt.x <= img.x + w &&
+                pt.y >= img.y && pt.y <= img.y + h
             ) {
                 return img;
             }
@@ -2483,43 +2487,54 @@ canvas.addEventListener("mousedown", function (e) {
         return null;
     }
 
-    // FIRST: if Shift is held, just toggle selection and bail
+    // 1) Shift+click toggles selection (as before)
     if (shift) {
-        const txt = getTextObjectAt(mouseX, mouseY);
-        if (txt) {
-            txt.selected = !txt.selected;
-            activeText = txt.selected ? txt : activeText;
+        const txtHit = getTextObjectAt(mouseX, mouseY);
+        if (txtHit) {
+            txtHit.selected = !txtHit.selected;
+            activeText = txtHit.selected ? txtHit : activeText;
             activeImage = null;
             drawCanvas('Common');
             return;
         }
-        const img = findImageAt(pos);
-        if (img) {
-            img.selected = !img.selected;
-            activeImage = img.selected ? img : activeImage;
+        const imgHit = findImageAt(pos);
+        if (imgHit) {
+            imgHit.selected = !imgHit.selected;
+            activeImage = imgHit.selected ? imgHit : activeImage;
             activeText = null;
             drawCanvas('Common');
             return;
         }
-        // clicking empty space with Shift should do nothing
+        return; // clicking empty with Shift does nothing
+    }
+
+    // 2) GROUP-DRAG detection: clicked on already-selected item?
+    const txtHit = getTextObjectAt(mouseX, mouseY);
+    const imgHit = findImageAt(pos);
+    if ((txtHit && txtHit.selected) || (imgHit && imgHit.selected)) {
+        // Begin group drag of all selected
+        isDraggingGroup = true;
+        groupDragStart = { x: e.clientX, y: e.clientY };
+        groupStarts = [];
+        textObjects.filter(o => o.selected)
+            .forEach(o => groupStarts.push({ obj: o, x: o.x, y: o.y }));
+        images.filter(i => i.selected)
+            .forEach(i => groupStarts.push({ obj: i, x: i.x, y: i.y }));
+        e.preventDefault();
         return;
     }
 
-    // NO-SHIFT: clear everything before selecting new
+    // 3) NO-SHIFT single-select: clear all then hit-test
     textObjects.forEach(o => o.selected = false);
     images.forEach(i => i.selected = false);
     activeText = null;
     activeImage = null;
 
-    // 1) TEXT hit‐test
-    const txt = getTextObjectAt(pos.x, pos.y);
-    if (txt) {
-        // select this text
-        txt.selected = true;
-        activeText = txt;
-
-        // check for resize‐handle
-        const th = getHandleUnderMouse(pos.x, pos.y, txt);
+    // 3a) TEXT hit‐test for resize/drag
+    if (txtHit) {
+        txtHit.selected = true;
+        activeText = txtHit;
+        const th = getHandleUnderMouse(pos.x, pos.y, txtHit);
         if (th) {
             isResizingText = true;
             activeTextHandle = th;
@@ -2527,18 +2542,17 @@ canvas.addEventListener("mousedown", function (e) {
             drawCanvas('Common');
             return;
         }
-        // else begin dragging text
-        if (isInsideBox(pos.x, pos.y, txt)) {
+        if (isInsideBox(pos.x, pos.y, txtHit)) {
             isDraggingText = true;
-            dragOffsetText.x = pos.x - txt.x;
-            dragOffsetText.y = pos.y - txt.y;
+            dragOffsetText.x = pos.x - txtHit.x;
+            dragOffsetText.y = pos.y - txtHit.y;
             e.preventDefault();
             drawCanvas('Common');
             return;
         }
     }
 
-    // 2) IMAGE resize‐handle
+    // 3b) IMAGE resize‐handle
     for (let i = images.length - 1; i >= 0; i--) {
         const img = images[i];
         const ih = getHandleUnderMouseForImage(img, pos);
@@ -2553,14 +2567,13 @@ canvas.addEventListener("mousedown", function (e) {
         }
     }
 
-    // 3) IMAGE body‐drag
-    const img = findImageAt(pos);
-    if (img) {
-        img.selected = true;
-        activeImage = img;
+    // 3c) IMAGE body‐drag
+    if (imgHit) {
+        imgHit.selected = true;
+        activeImage = imgHit;
         isDraggingImage = true;
-        dragOffsetImage.x = pos.x - img.x;
-        dragOffsetImage.y = pos.y - img.y;
+        dragOffsetImage.x = pos.x - imgHit.x;
+        dragOffsetImage.y = pos.y - imgHit.y;
         enableFillColorDiv();
         enableStrockColorDiv();
         e.preventDefault();
@@ -2568,7 +2581,7 @@ canvas.addEventListener("mousedown", function (e) {
         return;
     }
 
-    // 4) clicked empty space (no Shift) — nothing more to do
+    // 4) empty space click
     drawCanvas('Common');
 });
 
@@ -2630,6 +2643,18 @@ function adjustFontSizeToFitBox(obj) {
 canvas.addEventListener("mousemove", function (e) {
    
     const pos = getMousePos(canvas, e);
+
+    // ── 0) GROUP DRAG ───────────────────────────────────────────────
+    if (isDraggingGroup) {
+        const dx = e.clientX - groupDragStart.x;
+        const dy = e.clientY - groupDragStart.y;
+        groupStarts.forEach(({ obj, x, y }) => {
+            obj.x = x + dx;
+            obj.y = y + dy;
+        });
+        drawCanvas('Common');
+        return;
+    }
 
     // --- 1) TEXT RESIZE & DRAG ---
     if (isResizingText && activeText && activeTextHandle) {
@@ -2904,7 +2929,9 @@ canvas.addEventListener("mouseup", function () {
     if (isResizingText && activeText && activeTextHandle) {
         onBoxResizeEnd(activeText);
     }
-
+    isDraggingGroup = false;
+    groupDragStart = null;
+    groupStarts = [];
 
     currentDrag = null;
     isResizing = false;
@@ -2929,26 +2956,26 @@ canvas.addEventListener("mouseleave", function () {
     isDraggingImage = false;
     isResizingImage = false;
 });
-canvas.addEventListener("mouseup", function (e) {
-    // only finish a resize if we actually were resizing
-    if (isResizingText && activeText && activeTextHandle) {
-        onBoxResizeEnd(activeText);
-    }
+//canvas.addEventListener("mouseup", function (e) {
+//    // only finish a resize if we actually were resizing
+//    if (isResizingText && activeText && activeTextHandle) {
+//        onBoxResizeEnd(activeText);
+//    }
 
-    // clear _drag_ and _resize_ state only:
-    currentDrag = null;
-    isResizing = false;
-    isDragging = false;
-    activeHandle = null;
-    isDraggingImage = false;
-    isResizingImage = false;
+//    // clear _drag_ and _resize_ state only:
+//    currentDrag = null;
+//    isResizing = false;
+//    isDragging = false;
+//    activeHandle = null;
+//    isDraggingImage = false;
+//    isResizingImage = false;
 
-    // *DO NOT* clear activeText / activeImage or their .selected flags here!
-    // activeText = null;
-    // activeImage = null;
+//    // *DO NOT* clear activeText / activeImage or their .selected flags here!
+//    // activeText = null;
+//    // activeImage = null;
 
-    drawCanvas('Common');
-});
+//    drawCanvas('Common');
+//});
 
 
 function currentSelectedText() {
