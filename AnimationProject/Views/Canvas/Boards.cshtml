@@ -172,12 +172,35 @@
         box-shadow: none;
         background-color: transparent;
         position: absolute;
-        top: 0;
-        right: 0;
+        top: 5px;
+        right: 9px;
     }
 
     .board_info_btn:hover{
         color: red !important;
+    }
+
+    .board_info_card{
+        width: 380px !important;
+        position: relative !important;
+        border-radius: 3px !important;
+        font-size: 14px;
+    }
+
+    .link_board{
+        position: relative;
+        border-radius: 3px !important;
+        border: 1.5px solid lightgrey !important;
+        margin-left: 22px !important;
+    }
+
+    .link-form {
+        background-color: transparent !important;
+    }
+    .copy-button{
+        position: absolute !important;
+        top: 0;
+        right: 0;
     }
 </style>
 
@@ -381,7 +404,7 @@ rel="stylesheet">
                                            onclick="RedirectToVerticalPage('@item.DesignBoardId')">Edit</a>
                                         <a class="board_button" href="#">Duplicate</a>
                                     </div>
-                                    <div class="d-flex justify-content-center mt-2">
+                                    <div class="board_info_dots d-flex justify-content-center mt-2">
                                         <div class="board_info_icon d-flex justify-content-center">
                                             <i class="fa-solid fa-ellipsis"></i>
                                         </div>
@@ -400,38 +423,33 @@ rel="stylesheet">
 </div>
 
 <!--  board_info -->
-<div class="card shadow-sm p-4 d-none" style="width: 380px; position: relative; border-radius: 12px;">
+<div class="board_info_card card p-4 d-none">
     <!-- Close Button -->
     <button type="button" class="board_info_btn" aria-label="Close">x</button>
 
-    <div class="mb-3">
-        <div class="d-flex justify-content-between">
-            <span><strong>File</strong></span>
-            <span>:</span>
+    <div class="mb-4"> 
+        <div class="d-flex gap-4 mb-1">
+            <span><strong>File</strong> <span style="margin-left: 51px;">:</span> </span>
             <span class="ms-2 fw-bold">Sunday Adboard v01</span>
         </div>
 
-        <div class="d-flex justify-content-between">
-            <span><strong>Size</strong></span>
-            <span>:</span>
+        <div class="d-flex gap-4 mb-1">
+            <span><strong>Size</strong> <span style="margin-left: 48px;">:</span></span>
             <span class="ms-2">1080x1920</span>
         </div>
 
-        <div class="d-flex justify-content-between">
-            <span><strong>Created</strong></span>
-            <span>:</span>
+        <div class="d-flex gap-4 mb-1">
+            <span><strong>Created</strong> <span style="margin-left: 23.1px;">:</span> </span>
             <span class="ms-2">28 May 2025</span>
         </div>
 
-        <div class="d-flex justify-content-between">
-            <span><strong>Modified</strong></span>
-            <span>:</span>
+        <div class="d-flex gap-4 mb-1">
+            <span><strong>Modified</strong> <span style="margin-left: 18px;">:</span> </span>
             <span class="ms-2">29 May 2025</span>
         </div>
 
-        <div class="d-flex justify-content-between">
-            <span><strong>Expiration</strong></span>
-            <span>:</span>
+        <div class="d-flex gap-4 mb-1">
+            <span><strong>Expiration</strong> <span style="margin-left: 9px;">:</span> </span>
             <span class="ms-2 text-danger">28 May 2026</span>
         </div>
     </div>
@@ -439,11 +457,11 @@ rel="stylesheet">
     <!-- Link Box -->
     <div class="d-flex align-items-center">
         <span><strong>Link</strong></span>
-        <span class="mx-2">:</span>
-        <div class="input-group">
-            <input type="text" class="form-control form-control-sm" value="https://aniboard.com/v20560" readonly>
-            <button class="btn btn-outline-secondary btn-sm" type="button">
-                📋
+        <span style="margin-left: 51px;">:</span>
+        <div class="input-group link_board">
+            <input type="text" class="form-control form-control-sm link-form" value="https://aniboard.com/v20560" readonly>
+            <button class="btn copy-button" type="button">
+                <i class="fa-regular fa-copy"></i>
             </button>
         </div>
     </div>
