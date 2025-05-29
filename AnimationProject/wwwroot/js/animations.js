@@ -10,7 +10,8 @@ let scaleX = 1, scaleY = 1;
 const dpr = window.devicePixelRatio || 1;
 let animationMode = "delaylinear";
 let selectedItems = [];
-
+let nextGroupId = 1;
+let textResizeStart = null;
 let isDraggingGroup = false;
 let groupDragStart = null;
 let groupStarts = []; // { obj, x, y }[]
@@ -830,23 +831,23 @@ function drawCanvas(condition) {
     });
     //// 5) Draw selection outlines for all selected items
     //ctx.save();
-    //ctx.strokeStyle = 'blue';
-    //ctx.lineWidth = 1 / scaleX;  // keep line width consistent in design units
-    //ctx.setLineDash([4 / scaleX, 2 / scaleX]); // dashed outline
+    //ctx.strokeStyle = 'green';
+    //ctx.lineWidth = 1 / scaleX;
+    //ctx.setLineDash([4 / scaleX, 2 / scaleX]);
 
-    //// outline selected images
-    //images.filter(img => img.selected).forEach(img => {
+    //// outline grouped images
+    //images.filter(img => img.groupId != null).forEach(img => {
     //    const w = img.width * (img.scaleX || 1);
     //    const h = img.height * (img.scaleY || 1);
     //    ctx.strokeRect(img.x, img.y, w, h);
     //});
 
-    //// outline selected text boxes
-    //textObjects.filter(txt => txt.selected).forEach(txt => {
+    //// outline grouped text boxes
+    //textObjects.filter(txt => txt.groupId != null).forEach(txt => {
     //    ctx.strokeRect(txt.x, txt.y, txt.boundingWidth, txt.boundingHeight);
     //});
 
-    ctx.restore();
+   // ctx.restore();
     // 6) reset alpha
     ctx.globalAlpha = 1;
 }
@@ -1249,175 +1250,99 @@ function animateText(direction, condition, loopCount) {
     });
 
     if (animationType === "delaylinear") {
-        const itemsToAnimate = images
-            .filter(i => !i.noAnim)
-            .concat(textObjects.filter(t => !t.noAnim));
+        // 1) Collect animatable items
+        const allItems = [
+            ...images.filter(i => !i.noAnim),
+            ...textObjects.filter(t => !t.noAnim)
+        ];
 
-        const nominalPerObj = .50;
-        let countText = itemsToAnimate.length;
-        //if (countText == 1) {
-        //    countText += images.length;
-        //}
+        // 2) Bucket into units by groupId
+        const groupMap = new Map();
+        const units = [];
 
-        //const scaleInText = inTime / (countText * nominalPerObj);
-        //const scaleOutText = outTime / (countText * nominalPerObj);
+        allItems.forEach(item => {
+            const gid = item.groupId;
+            if (gid != null) {
+                // add to its group bucket
+                if (!groupMap.has(gid)) {
+                    groupMap.set(gid, []);
+                    units.push(groupMap.get(gid));
+                }
+                groupMap.get(gid).push(item);
+            } else {
+                // no groupId → its own unit
+                units.push([item]);
+            }
+        });
+
+        // 3) Compute timings
         const scaleInText = inTime;
         const scaleOutText = outTime;
-
         const individualTweenIn = 0.15 * scaleInText;
         const individualTweenOut = 0.15 * scaleOutText;
+        const staggerIn = individualTweenIn;   // full duration between groups
+        const staggerOut = individualTweenOut;
 
-
-       
-
-
-
-        let tlText = gsap.timeline({
+        // 4) Build timeline
+        const tlText = gsap.timeline({
             repeat: loopCount - 1,
             onUpdate: () => drawCanvas(condition),
             onStart: () => drawCanvas(condition),
         });
 
-        // ── 0) Immediately pin all noAnim images at their final coords ──
-        images
-            .filter(img => img.noAnim)
-            .forEach(imgObj => {
-                tlText.set(imgObj, {
-                    x: imgObj.x,
-                    y: imgObj.y,
-                    opacity: imgObj.opacity ?? 1
-                }, 0); // place at time = 0
-            });
+        // Pin noAnim items
+        images.filter(i => i.noAnim).forEach(imgObj => {
+            tlText.set(imgObj, { x: imgObj.x, y: imgObj.y, opacity: imgObj.opacity ?? 1 }, 0);
+        });
+        textObjects.filter(t => t.noAnim).forEach(txtObj => {
+            tlText.set(txtObj, { x: txtObj.finalX, y: txtObj.finalY, opacity: txtObj.opacity ?? 1 }, 0);
+        });
 
-
-
-        // ── 0) Immediately pin all noAnim text elements at their final coords ──
-        textObjects
-            .filter(txt => txt.noAnim)
-            .forEach(txtObj => {
-                tlText.set(txtObj, {
-                    x: txtObj.finalX,
-                    y: txtObj.finalY,
-                    opacity: txtObj.opacity ?? 1
-                }, 0); // place at time = 0
-            });
-
-
-
-        if (tabType == "In" || tabType == "Out") {
-            // ── Text IN ──
-            //tlText.to(textObjects, {
-            //    x: (i, target) => target.finalX,
-            //    y: (i, target) => target.finalY,
-            //    duration: individualTweenIn,
-            //    ease: "power1.in",
-            //    stagger: individualTweenIn * 0.70,
-            //    onUpdate: () => drawCanvas(condition)
-            //}, 0);
-            // ── animate all textObjects that DO animate ──
-            //textObjects
-            //    .filter(txt => !txt.noAnim)
-            //    .forEach(txtObj => {
-            //        tlText.to(txtObj, {
-            //            x: (i, target) => target.finalX,
-            //            y: (i, target) => target.finalY,
-            //            duration: individualTweenIn,    // matching your images
-            //            ease: "power1.in",
-            //            stagger: individualTweenIn * 0.20,
-            //            onUpdate: () => drawCanvas(condition)
-            //        }, 0);
-            //    });
-
-            //// ── Image IN (skip noAnim) ──
-            //images
-            //    .filter(img => !img.noAnim)
-            //    .forEach(imgObj => {
-            //        tlText.to(imgObj, {
-            //            x: (i, target) => target.finalX,
-            //            y: (i, target) => target.finalY,
-            //            duration: individualTweenIn,
-            //            ease: "power1.in",
-            //            stagger: individualTweenIn * 0.20,
-            //            onUpdate: () => drawCanvas(condition)
-            //        }, 0);
-            //    });
-            tlText.to(itemsToAnimate, {
-                x: (i, target) => target.finalX,
-                y: (i, target) => target.finalY,
-                duration: individualTweenIn,
-                ease: "power1.in",
-                stagger: individualTweenIn * 1,    // <-- each item starts .2×duration after the last
-                onUpdate: () => drawCanvas(condition)
-            }, 0);
-        }
-
-        if (tabType == "Stay" || tabType == "Out") {
-            // ── Stay time ──
-            tlText.to({}, {
-                duration: stayTime,
-                ease: "none"
+        // ── IN ──
+        if (tabType === "In" || tabType === "Out") {
+            units.forEach((unit, idx) => {
+                tlText.to(unit, {
+                    x: (i, target) => target.finalX,
+                    y: (i, target) => target.finalY,
+                    duration: individualTweenIn,
+                    ease: "power1.in",
+                    onUpdate: () => drawCanvas(condition)
+                }, idx * staggerIn);
             });
         }
 
-        if (tabType == "Out") {
-            // ── Image OUT first (skip noAnim) ──
-            //[...images].reverse()
-            //    .filter(img => !img.noAnim)
-            //    .forEach(imgObj => {
-            //        tlText.to(imgObj, {
-            //            x: (i, target) => target.exitX,
-            //            y: (i, target) => target.exitY,
-            //            duration: individualTweenOut ,
-            //            ease: "power1.out",
-            //            stagger: individualTweenOut * 0.70,
-            //            onUpdate: () => drawCanvas(condition)
-            //        });
-            //    });
+        // ── STAY ──
+        if (tabType === "Stay" || tabType === "Out") {
+            tlText.to({}, { duration: stayTime, ease: "none" });
+        }
 
-
-            //// ── Text OUT (skip noAnim) ──
-            //[...textObjects].reverse()
-            //    .filter(txt => !txt.noAnim)
-            //    .forEach(txtObj => {
-            //        tlText.to(txtObj, {
-            //            x: (i, target) => target.exitX,
-            //            y: (i, target) => target.exitY,
-            //            duration: individualTweenOut,
-            //            ease: "power1.out",
-            //            stagger: individualTweenOut * 0.70,
-            //            onUpdate: () => drawCanvas(condition)
-            //        });
-            //    });
-
-            tlText.to(itemsToAnimate, {
-                x: (i, target) => target.exitX,
-                y: (i, target) => target.exitY,
-                duration: individualTweenOut,
-                ease: "power1.out",
-                stagger: individualTweenOut * 1,   // each item delayed 70% of the tween after the previous
-                onUpdate: () => drawCanvas(condition)
+        // ── OUT ──
+        if (tabType === "Out") {
+            units.forEach((unit, idx) => {
+                tlText.to(unit, {
+                    x: (i, target) => target.exitX,
+                    y: (i, target) => target.exitY,
+                    duration: individualTweenOut,
+                    ease: "power1.out",
+                    onUpdate: () => drawCanvas(condition)
+                }, (units.length * staggerIn) + idx * staggerOut);
+                // we offset out-sequence by total in-sequence duration
             });
         }
 
-        // ── At the end, reset everyone to their finalX/finalY ──
+        // ── RESET ──
         tlText.set([...textObjects, ...images], {
             x: (i, target) => target.finalX,
             y: (i, target) => target.finalY
         });
 
         tlText.eventCallback("onComplete", () => {
-            images.forEach(img => {
-                img.x = img.finalX;
-                img.y = img.finalY;
-                img.opacity = img.opacity ?? 1;
-            });
-            textObjects.forEach(txt => {
-                txt.x = txt.finalX;
-                txt.y = txt.finalY;
-            });
+            images.forEach(img => { img.x = img.finalX; img.y = img.finalY; img.opacity = img.opacity ?? 1; });
+            textObjects.forEach(txt => { txt.x = txt.finalX; txt.y = txt.finalY; });
             drawCanvas(condition);
         });
     }
+
 
 
 
@@ -2346,7 +2271,8 @@ function addDefaultText() {
         // bounding box placeholders—will be set below
         boundingWidth: 0,
         boundingHeight: 0,
-        noAnim: false
+        noAnim: false,
+        groupId: null
     };
 
     // 2) Measure it
@@ -2468,10 +2394,8 @@ canvas.addEventListener("mousedown", function (e) {
     const pos = { x: mouseX, y: mouseY };
     const shift = e.shiftKey;
 
-    // 0) If typing in the text editor, ignore
     if (document.activeElement === textEditor) return;
 
-    // helper to find top‐most image
     function findImageAt(pt) {
         for (let i = images.length - 1; i >= 0; i--) {
             const img = images[i];
@@ -2480,16 +2404,16 @@ canvas.addEventListener("mousedown", function (e) {
             if (
                 pt.x >= img.x && pt.x <= img.x + w &&
                 pt.y >= img.y && pt.y <= img.y + h
-            ) {
-                return img;
-            }
+            ) return img;
         }
         return null;
     }
 
-    // 1) Shift+click toggles selection (as before)
+    const txtHit = getTextObjectAt(pos.x, pos.y);
+    const imgHit = findImageAt(pos);
+
+    // 1) Shift+click toggles selection
     if (shift) {
-        const txtHit = getTextObjectAt(mouseX, mouseY);
         if (txtHit) {
             txtHit.selected = !txtHit.selected;
             activeText = txtHit.selected ? txtHit : activeText;
@@ -2497,7 +2421,6 @@ canvas.addEventListener("mousedown", function (e) {
             drawCanvas('Common');
             return;
         }
-        const imgHit = findImageAt(pos);
         if (imgHit) {
             imgHit.selected = !imgHit.selected;
             activeImage = imgHit.selected ? imgHit : activeImage;
@@ -2505,14 +2428,33 @@ canvas.addEventListener("mousedown", function (e) {
             drawCanvas('Common');
             return;
         }
-        return; // clicking empty with Shift does nothing
+        return;
     }
 
-    // 2) GROUP-DRAG detection: clicked on already-selected item?
-    const txtHit = getTextObjectAt(mouseX, mouseY);
-    const imgHit = findImageAt(pos);
+    // 2) TEXT: check for resize handle FIRST (before group-drag)
+    if (txtHit && txtHit.selected) {
+        const th = getHandleUnderMouse(pos.x, pos.y, txtHit);
+        if (th) {
+            isResizingText = true;
+            activeText = txtHit;
+            activeTextHandle = th;
+            textResizeStart = {
+                mouseX: e.clientX,
+                mouseY: e.clientY,
+                origX: txtHit.x,
+                origY: txtHit.y,
+                origW: txtHit.boundingWidth,
+                origH: txtHit.boundingHeight,
+                origFont: txtHit.fontSize
+            };
+            e.preventDefault();
+            drawCanvas('Common');
+            return;
+        }
+    }
+
+    // 3) GROUP-DRAG for already-selected text or image
     if ((txtHit && txtHit.selected) || (imgHit && imgHit.selected)) {
-        // Begin group drag of all selected
         isDraggingGroup = true;
         groupDragStart = { x: e.clientX, y: e.clientY };
         groupStarts = [];
@@ -2524,13 +2466,13 @@ canvas.addEventListener("mousedown", function (e) {
         return;
     }
 
-    // 3) NO-SHIFT single-select: clear all then hit-test
+    // 4) Reset selection for single-select logic
     textObjects.forEach(o => o.selected = false);
     images.forEach(i => i.selected = false);
     activeText = null;
     activeImage = null;
 
-    // 3a) TEXT hit‐test for resize/drag
+    // 5) TEXT single-select and resize/drag
     if (txtHit) {
         txtHit.selected = true;
         activeText = txtHit;
@@ -2538,6 +2480,15 @@ canvas.addEventListener("mousedown", function (e) {
         if (th) {
             isResizingText = true;
             activeTextHandle = th;
+            textResizeStart = {
+                mouseX: e.clientX,
+                mouseY: e.clientY,
+                origX: txtHit.x,
+                origY: txtHit.y,
+                origW: txtHit.boundingWidth,
+                origH: txtHit.boundingHeight,
+                origFont: txtHit.fontSize
+            };
             e.preventDefault();
             drawCanvas('Common');
             return;
@@ -2552,11 +2503,14 @@ canvas.addEventListener("mousedown", function (e) {
         }
     }
 
-    // 3b) IMAGE resize‐handle
+    // 6) IMAGE resize via handle
     for (let i = images.length - 1; i >= 0; i--) {
         const img = images[i];
         const ih = getHandleUnderMouseForImage(img, pos);
         if (ih) {
+            textObjects.forEach(o => o.selected = false);
+            images.forEach(i2 => i2.selected = false);
+            activeText = null;
             img.selected = true;
             activeImage = img;
             isResizingImage = true;
@@ -2567,8 +2521,11 @@ canvas.addEventListener("mousedown", function (e) {
         }
     }
 
-    // 3c) IMAGE body‐drag
+    // 7) IMAGE body click → drag
     if (imgHit) {
+        textObjects.forEach(o => o.selected = false);
+        images.forEach(i2 => i2.selected = false);
+        activeText = null;
         imgHit.selected = true;
         activeImage = imgHit;
         isDraggingImage = true;
@@ -2581,9 +2538,15 @@ canvas.addEventListener("mousedown", function (e) {
         return;
     }
 
-    // 4) empty space click
+    // 8) Clicked empty space → deselect all
+    textObjects.forEach(o => o.selected = false);
+    images.forEach(i2 => i2.selected = false);
+    activeText = null;
+    activeImage = null;
+    e.preventDefault();
     drawCanvas('Common');
 });
+
 
 
 
@@ -2959,26 +2922,7 @@ canvas.addEventListener("mouseleave", function () {
     isDraggingImage = false;
     isResizingImage = false;
 });
-//canvas.addEventListener("mouseup", function (e) {
-//    // only finish a resize if we actually were resizing
-//    if (isResizingText && activeText && activeTextHandle) {
-//        onBoxResizeEnd(activeText);
-//    }
 
-//    // clear _drag_ and _resize_ state only:
-//    currentDrag = null;
-//    isResizing = false;
-//    isDragging = false;
-//    activeHandle = null;
-//    isDraggingImage = false;
-//    isResizingImage = false;
-
-//    // *DO NOT* clear activeText / activeImage or their .selected flags here!
-//    // activeText = null;
-//    // activeImage = null;
-
-//    drawCanvas('Common');
-//});
 
 
 function currentSelectedText() {
@@ -3002,61 +2946,159 @@ function isInsideBox(mouseX, mouseY, obj) {
 //    drawCanvas('Common');
 
 //});
+//////canvas.addEventListener("click", function (e) {
+//////    // 0) If shift is held, we’ve already toggled selection in mousedown—skip click logic
+//////    if (e.shiftKey) return;
+
+//////    const rect = canvas.getBoundingClientRect();
+//////    const mouseX = e.clientX - rect.left;
+//////    const mouseY = e.clientY - rect.top;
+//////    const pos = { x: mouseX, y: mouseY };
+//////    const shift = false; // we already know Shift is not held here
+
+//////    // helpers: (shift is false, so these always clear)
+//////    const clearText = () => textObjects.forEach(o => o.selected = false);
+//////    const clearImages = () => images.forEach(img => img.selected = false);
+
+//////    // find top‐most text under cursor
+//////    const txt = getTextObjectAt(mouseX, mouseY);
+
+//////    // find top‐most image under cursor
+//////    let imgFound = null;
+//////    for (let i = images.length - 1; i >= 0; i--) {
+//////        if (isMouseOverImage(images[i], pos)) {
+//////            imgFound = images[i];
+//////            break;
+//////        }
+//////    }
+
+//////    if (txt) {
+//////        // — TEXT clicked (no Shift) —
+//////        clearText();
+//////        clearImages();
+
+//////        txt.selected = true;
+//////        activeText = txt;
+//////        activeImage = null;
+
+//////        // update UI for this text
+//////        $("#favcolor").val(txt.textColor);
+//////        $("#noAnimCheckbox").prop("checked", !!txt.noAnim);
+//////        $("#fontstyle_popup").show();
+//////        $(".right-sec-two").show();
+//////        $(".right-sec-one").hide();
+//////        document.getElementById("modeButton").innerText = "Animation Mode";
+//////        $("#opengl_popup").hide();
+//////    }
+//////    else if (imgFound) {
+//////        // — IMAGE clicked (no Shift) —
+//////        clearText();
+//////        clearImages();
+
+//////        imgFound.selected = true;
+//////        activeImage = imgFound;
+//////        activeText = null;
+
+//////        // update UI for this image
+//////        $("#noAnimCheckbox").prop("checked", !!imgFound.noAnim);
+//////        $("#fontstyle_popup").show();
+//////        $(".right-sec-two").show();
+//////        $(".right-sec-one").hide();
+//////        document.getElementById("modeButton").innerText = "Animation Mode";
+//////        $("#opengl_popup").hide();
+//////    }
+//////    else {
+//////        // — clicked empty space —
+//////        clearText();
+//////        clearImages();
+//////        activeText = null;
+//////        activeImage = null;
+//////        // optionally hide panels here
+//////    }
+
+//////    drawCanvas('Common');
+//////});
 canvas.addEventListener("click", function (e) {
-    // 0) If shift is held, we’ve already toggled selection in mousedown—skip click logic
+    // ignore shift here
     if (e.shiftKey) return;
 
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     const pos = { x: mouseX, y: mouseY };
-    const shift = false; // we already know Shift is not held here
 
-    // helpers: (shift is false, so these always clear)
+    // helpers to clear selection
     const clearText = () => textObjects.forEach(o => o.selected = false);
-    const clearImages = () => images.forEach(img => img.selected = false);
+    const clearImages = () => images.forEach(i => i.selected = false);
 
-    // find top‐most text under cursor
-    const txt = getTextObjectAt(mouseX, mouseY);
-
-    // find top‐most image under cursor
-    let imgFound = null;
+    // find what was clicked
+    const txtHit = getTextObjectAt(mouseX, mouseY);
+    let imgHit = null;
     for (let i = images.length - 1; i >= 0; i--) {
         if (isMouseOverImage(images[i], pos)) {
-            imgFound = images[i];
+            imgHit = images[i];
             break;
         }
     }
 
-    if (txt) {
-        // — TEXT clicked (no Shift) —
-        clearText();
-        clearImages();
+    // always start fresh
+    clearText();
+    clearImages();
+    activeText = null;
+    activeImage = null;
 
-        txt.selected = true;
-        activeText = txt;
-        activeImage = null;
+    // helper to select a whole group
+    function selectGroup(id) {
+        textObjects.forEach(o => { if (o.groupId === id) o.selected = true; });
+        images.forEach(i => { if (i.groupId === id) i.selected = true; });
+    }
 
-        // update UI for this text
-        $("#favcolor").val(txt.textColor);
-        $("#noAnimCheckbox").prop("checked", !!txt.noAnim);
+    // update the groupCheckbox UI
+    const groupCheckbox = document.getElementById("groupCheckbox");
+    function updateCheckboxFor(id) {
+        if (id != null) {
+            groupCheckbox.checked = true;
+        } else {
+            groupCheckbox.checked = false;
+        }
+    }
+
+    if (txtHit) {
+        // TEXT clicked
+        txtHit.selected = true;
+        activeText = txtHit;
+
+        // if this text is grouped, select its entire group
+        if (txtHit.groupId != null) {
+            selectGroup(txtHit.groupId);
+            updateCheckboxFor(txtHit.groupId);
+        } else {
+            updateCheckboxFor(null);
+        }
+
+        // update UI panels...
+        $("#favcolor").val(txtHit.textColor);
+        $("#noAnimCheckbox").prop("checked", !!txtHit.noAnim);
         $("#fontstyle_popup").show();
         $(".right-sec-two").show();
         $(".right-sec-one").hide();
         document.getElementById("modeButton").innerText = "Animation Mode";
         $("#opengl_popup").hide();
     }
-    else if (imgFound) {
-        // — IMAGE clicked (no Shift) —
-        clearText();
-        clearImages();
+    else if (imgHit) {
+        // IMAGE clicked
+        imgHit.selected = true;
+        activeImage = imgHit;
 
-        imgFound.selected = true;
-        activeImage = imgFound;
-        activeText = null;
+        if (imgHit.groupId != null) {
+            selectGroup(imgHit.groupId);
+            updateCheckboxFor(imgHit.groupId);
+        } else {
+            updateCheckboxFor(null);
+        }
 
-        // update UI for this image
-        $("#noAnimCheckbox").prop("checked", !!imgFound.noAnim);
+        // update UI panels...
+        $("#noAnimCheckbox").prop("checked", !!imgHit.noAnim);
         $("#fontstyle_popup").show();
         $(".right-sec-two").show();
         $(".right-sec-one").hide();
@@ -3064,12 +3106,13 @@ canvas.addEventListener("click", function (e) {
         $("#opengl_popup").hide();
     }
     else {
-        // — clicked empty space —
-        clearText();
-        clearImages();
-        activeText = null;
-        activeImage = null;
-        // optionally hide panels here
+                // — clicked empty space —
+                clearText();
+                clearImages();
+                activeText = null;
+                activeImage = null;
+        // no group selected
+        updateCheckboxFor(null);
     }
 
     drawCanvas('Common');
@@ -3108,6 +3151,49 @@ document.addEventListener('keydown', function (e) {
     drawCanvas('Common');
 });
 
+function updateGroupCheckbox() {
+    const sel = [
+        ...images.filter(i => i.selected),
+        ...textObjects.filter(t => t.selected)
+    ];
+    if (sel.length === 0) {
+        groupCheckbox.checked = false;
+    } else {
+        const firstId = sel[0].groupId;
+        groupCheckbox.checked = firstId != null && sel.every(o => o.groupId === firstId);
+    }
+}
+function GroupPropertySet() {
+    const groupCheckbox = document.getElementById('groupCheckbox');
+    const isChecked = groupCheckbox.checked;
+    const selectedItems = [
+        ...images.filter(i => i.selected),
+        ...textObjects.filter(t => t.selected)
+    ];
+
+    if (selectedItems.length === 0) {
+        alert("No items selected to (un)group.");
+        groupCheckbox.checked = false;
+        return;
+    }
+
+    if (isChecked) {
+        const newGroupId = generateUUID();
+        const id = newGroupId;
+        selectedItems.forEach(obj => obj.groupId = id);
+    } else {
+        selectedItems.forEach(obj => obj.groupId = null);
+    }
+
+    SaveDesignBoard();
+    drawCanvas('Common');
+    updateGroupCheckbox();
+}
+function generateUUID() {
+    return 'xxxx-xxxx-4xxx'.replace(/[x]/g, c =>
+        (Math.random() * 16 | 0).toString(16)
+    );
+}
 
 function ImagePropertySet() {
     const noAnimCheckbox = document.getElementById('noAnimCheckbox');
@@ -3429,7 +3515,8 @@ canvas.addEventListener('drop', e => {
             scaleY: 1,
             opacity: 1,
             selected: false,
-            noAnim: false
+            noAnim: false,
+            groupId: null
         });
         drawCanvas('Common');
     };

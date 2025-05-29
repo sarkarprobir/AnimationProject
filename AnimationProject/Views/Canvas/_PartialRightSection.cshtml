@@ -1,7 +1,7 @@
 ﻿@{
     Layout = null;
 }
-<script>
+@* <script>
         const arrowImage = new Image();
     arrowImage.src = "/images/icons/right arrow(thin).svg";
 
@@ -284,7 +284,7 @@
         });
       });
     });
-</script>
+</script> *@
 <script>
     $(document).ready(function(){
     TabShowHide('In');
@@ -403,7 +403,7 @@
                                 <!-- hide the <a> by default -->
                                 <a id="aright" href="javascript:void(0)" onclick="setCoordinate(this,'right',400,0,50,50)"
                                    style=" width:100%; height:100%;">
-                                    <img src="/images/icons/right arrow.svg" alt="Left to Center"
+                                    <img src="/images/icons/right arrow.svg" alt="right to Center"
                                          style=" transform: rotate(180deg);">
                                 </a>
                                 @* <!-- show the canvas by default -->
@@ -421,7 +421,7 @@
                                 <a id="abottom" href="javascript:void(0)"
                                    onclick="setCoordinate(this,'bottom',800,0,50,50)"
                                    style=" width:100%; height:100%;">
-                                    <img src="/images/icons/right arrow.svg" alt="Left to Center"
+                                    <img src="/images/icons/right arrow.svg" alt="bottom to Center"
                                          style=" transform: rotate(270deg);">
                                 </a>
                                 @* <!-- show the canvas by default -->
@@ -438,7 +438,7 @@
                                 <!-- hide the <a> by default -->
                                 <a id="atop" href="javascript:void(0)" onclick="setCoordinate(this,'top',400,0,50,50)"
                                    style=" width:100%; height:100%;">
-                                    <img src="/images/icons/right arrow.svg" alt="Left to Center"
+                                    <img src="/images/icons/right arrow.svg" alt="top to Center"
                                          style=" transform: rotate(90deg);">
                                 </a>
                                 @* <!-- show the canvas by default -->
@@ -696,7 +696,16 @@
 			</div>
         </div>
     </div>
-
+      <div class="mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <p class="spacing_title m-0">
+                Group
+            </p>
+            <div class="d-flex justify-content-end spacing_buttons">
+                <input type="checkbox" id="groupCheckbox" class="checkbox_input" onchange="GroupPropertySet()" />
+            </div>
+        </div>
+    </div>
     @* <div class="col-md-12 mb-2"> *@
     @*     <div class="row Strock-Line my-4"> *@
     @*         <div class="col-md-6 "> *@

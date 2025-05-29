@@ -395,7 +395,8 @@ function saveCanvasData() {
                 textAlign: obj.textAlign,
                 opacity: obj.opacity,
                 lineSpacing: obj.lineSpacing,
-                noAnim: obj.noAnim
+                noAnim: obj.noAnim,
+                groupId: obj.groupId
             };
         }),
 
@@ -411,7 +412,8 @@ function saveCanvasData() {
                 width: dispW / screenW,
                 height: dispH / screenH,
                 opacity: imgObj.opacity,
-                noAnim: imgObj.noAnim
+                noAnim: imgObj.noAnim,
+                groupId: imgObj.groupId
             };
         })
     };
@@ -665,7 +667,8 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
             lineSpacing: (typeof obj.lineSpacing === 'number')
                 ? obj.lineSpacing
                 : obj.fontSize * 1.2,
-            noAnim : obj.noAnim,
+            noAnim: obj.noAnim,
+            groupId: obj.groupId,
         };
     });
 
@@ -683,6 +686,7 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
         o.img.onload = () => drawCanvas(condition);
         o.img.onerror = () => drawCanvas(condition);
         o.noAnim = imgObj.noAnim;
+        o.groupId = imgObj.groupId;
         return o;
     });
 
@@ -1423,7 +1427,8 @@ function loadCanvasFromJsonForDownload1(jsonData, condition = 'Common') {
             lineSpacing: (typeof obj.lineSpacing === 'number')
                 ? obj.lineSpacing
                 : obj.fontSize * 1.2,
-            noAnim : obj.noAnim,
+            noAnim: obj.noAnim,
+            groupId: obj.groupId
         };
     });
 
@@ -2822,219 +2827,82 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
     });
 
     if (animationType === "delaylinear") {
-        //const nominalPerObj = .50;
-        //const countText = textObjects.length;
+        // 1) Gather all animatable items
+        const allItems = [
+            ...images.filter(i => !i.noAnim),
+            ...textObjects.filter(t => !t.noAnim)
+        ];
 
-        //const scaleInText = inTime;//      / (countText * nominalPerObj);
-        //const scaleOutText = outTime; //   /  (countText * nominalPerObj);
+        // 2) Bucket into “units” by groupId
+        const groupMap = new Map();
+        const units = [];
 
-        //const individualTweenText = 0.15 * scaleInText;
-        //const individualTweenOutText = 0.15 * scaleOutText;
-        //const nominalPerObj = 0.25;
-        //let countText = textObjects.length;
-        //if (countText == 1) {
-        //    countText += images.length;
-        //}
-        //else
-        //    countText += images.length;
+        allItems.forEach(item => {
+            const gid = item.groupId;
+            if (gid != null) {
+                if (!groupMap.has(gid)) {
+                    groupMap.set(gid, []);
+                    units.push(groupMap.get(gid));
+                }
+                groupMap.get(gid).push(item);
+            } else {
+                units.push([item]);
+            }
+        });
 
-        //const scaleInText = inTime / (countText * nominalPerObj);
-        //const scaleOutText = outTime / (countText * nominalPerObj);
+        // 3) Timings
+        const scaleIn = inTime;
+        const scaleOut = outTime;
+        const tweenIn = 0.15 * scaleIn;
+        const tweenOut = 0.15 * scaleOut;
 
-
-        ////const scaleInText = inTime;
-        ////const scaleOutText = outTime;
-        //const individualTweenText = 0.25 * scaleInText;
-        //const individualTweenOutText = 0.25 * scaleOutText;
-
-        const itemsToAnimate = images
-            .filter(i => !i.noAnim)
-            .concat(textObjects.filter(t => !t.noAnim));
-
-        const nominalPerObj = .50;
-        let countText = itemsToAnimate.length;
-        //if (countText == 1) {
-        //    countText += images.length;
-        //}
-
-        //const scaleInText = inTime / (countText * nominalPerObj);
-        //const scaleOutText = outTime / (countText * nominalPerObj);
-        const scaleInText = inTime;
-        const scaleOutText = outTime;
-
-        const individualTweenText = 0.15 * scaleInText;
-        const individualTweenOutText = 0.15 * scaleOutText;
-
-
-
-
+        // 4) Build timeline
         let tlText = gsap.timeline({
             repeat: loopCount - 1,
-            repeatDelay: 0,               // make sure there's no extra delay between loops
+            repeatDelay: 0,
             onRepeat: () => {
-                // reset _every_ object to its offscreen start position:
-                images.forEach(img => {
-                    img.x = img.startX;       // <-- store these earlier, alongside finalX
-                    img.y = img.startY;
-                });
-                textObjects.forEach(txt => {
-                    txt.x = txt.startX;
-                    txt.y = txt.startY;
-                });
+                images.forEach(img => { img.x = img.startX; img.y = img.startY; });
+                textObjects.forEach(txt => { txt.x = txt.startX; txt.y = txt.startY; });
                 drawCanvasForDownload(condition);
             },
             onUpdate: () => drawCanvasForDownload(condition)
         });
 
-        // ── 0) Immediately pin all noAnim images at their final coords ──
-        images
-            .filter(img => img.noAnim)
-            .forEach(imgObj => {
-                tlText.set(imgObj, {
-                    x: imgObj.x,
-                    y: imgObj.y,
-                    opacity: imgObj.opacity ?? 1
-                }, 0); // place at time = 0
-            });
-
-        // ── 0) Immediately pin all noAnim text elements at their final coords ──
-        textObjects
-            .filter(txt => txt.noAnim)
-            .forEach(txtObj => {
-                tlText.set(txtObj, {
-                    x: txtObj.finalX,
-                    y: txtObj.finalY,
-                    opacity: txtObj.opacity ?? 1
-                }, 0); // place at time = 0
-            });
-
-
-
-        // --- Text IN ---
-        //tlText.to(textObjects, {
-        //    x: (i, target) => target.finalX,
-        //    y: (i, target) => target.finalY,
-        //    duration: individualTweenText,
-        //    ease: "power1.in",
-        //    stagger: individualTweenText * .70,
-        //    onUpdate: () => drawCanvasForDownload(condition)
-        //});
-        // ── Text IN (skip noAnim) ──
-        //textObjects
-        //    .filter(txt => !txt.noAnim)
-        //    .forEach(txtObj => {
-        //        tlText.to(txtObj, {
-        //            x: (i, target) => target.finalX,
-        //            y: (i, target) => target.finalY,
-        //            duration: individualTweenText,
-        //            ease: "power1.in",
-        //            stagger: individualTweenText * 0.70,
-        //            onUpdate: () => drawCanvasForDownload(condition)
-        //        }, 0);
-        //    });
-
-        //console.log("animateText download", images);
-
-        //// ── Image IN (skip noAnim) ──
-        //images
-        //    .filter(img => !img.noAnim)
-        //    .forEach(imgObj => {
-        //        tlText.to(imgObj, {
-        //            x: (i, target) => target.finalX,
-        //            y: (i, target) => target.finalY,
-        //            duration: individualTweenText,
-        //            ease: "power1.in",
-        //            stagger: individualTweenText * 0.70,
-        //            onUpdate: () => drawCanvasForDownload(condition)
-        //        }, 0);
-        //    });
-
-
-        //// --- Image IN ---
-        //images.forEach((imgObj) => {
-        //    tlText.to(imgObj, {
-        //        x: (i, target) => target.finalX,
-        //        y: (i, target) => target.finalY,
-        //        duration: individualTweenText,
-        //        ease: "power1.in",
-        //        stagger: individualTweenText * .70,
-        //        onUpdate: () => drawCanvasForDownload(condition)
-        //    });
-        //});
-        tlText.to(itemsToAnimate, {
-            x: (i, target) => target.finalX,
-            y: (i, target) => target.finalY,
-            duration: individualTweenText,
-            ease: "power1.in",
-            stagger: individualTweenText * 1,    // <-- each item starts .2×duration after the last
-            onUpdate: () => drawCanvasForDownload(condition)
-        }, 0);
-
-        // --- Stay Time ---
-        tlText.to({}, { duration: stayTime, ease: "none" });
-
-        // ── Image OUT first (skip noAnim) ──
-        //[...images].reverse()
-        //    .filter(img => !img.noAnim)
-        //    .forEach(imgObj => {
-        //        tlText.to(imgObj, {
-        //            x: (i, target) => target.exitX,
-        //            y: (i, target) => target.exitY,
-        //            duration: individualTweenOutText,
-        //            ease: "power1.out",
-        //            stagger: individualTweenOutText * 0.70,
-        //            onUpdate: () => drawCanvasForDownload(condition)
-        //        });
-        //    });
-
-       
-
-        //// ── Text OUT (skip noAnim) ──
-        //[...textObjects].reverse()
-        //    .filter(txt => !txt.noAnim)
-        //    .forEach(txtObj => {
-        //        tlText.to(txtObj, {
-        //            x: (i, target) => target.exitX,
-        //            y: (i, target) => target.exitY,
-        //            duration: individualTweenOutText,
-        //            ease: "power1.out",
-        //            stagger: individualTweenOutText * 0.70,
-        //            onUpdate: () => drawCanvasForDownload(condition)
-        //        });
-        //    });
-
-        tlText.to(itemsToAnimate, {
-            x: (i, target) => target.exitX,
-            y: (i, target) => target.exitY,
-            duration: individualTweenOutText,
-            ease: "power1.out",
-            stagger: individualTweenOutText * 1,   // each item delayed 70% of the tween after the previous
-            onUpdate: () => drawCanvasForDownload(condition)
+        // Pin noAnim
+        images.filter(i => i.noAnim).forEach(img => {
+            tlText.set(img, { x: img.x, y: img.y, opacity: img.opacity ?? 1 }, 0);
+        });
+        textObjects.filter(t => t.noAnim).forEach(txt => {
+            tlText.set(txt, { x: txt.finalX, y: txt.finalY, opacity: txt.opacity ?? 1 }, 0);
         });
 
-        //// --- Reset text to final position only (leave image off-screen) ---
-        //tlText.set([...textObjects, ...images], {
-        //    x: (i, target) => target.finalX,
-        //    y: (i, target) => target.finalY,
-        //    duration: 0,
-        //    onUpdate: () => drawCanvas(condition)
-        //});
+        // --- IN: one tween per group/unit ---
+        units.forEach((unit, idx) => {
+            tlText.to(unit, {
+                x: (i, t) => t.finalX,
+                y: (i, t) => t.finalY,
+                duration: tweenIn,
+                ease: "power1.in",
+                onUpdate: () => drawCanvasForDownload(condition)
+            }, idx * tweenIn);
+        });
 
-        //This is the portion where it stay after animation on screen
-        //////tlText.eventCallback("onComplete", () => {
-        //////    images.forEach(img => {
-        //////        img.x = img.finalX;
-        //////        img.y = img.finalY;
-        //////    });
-        //////    textObjects.forEach(txt => {
-        //////        txt.x = txt.finalX;
-        //////        txt.y = txt.finalY;
-        //////    });
+        // --- STAY ---
+        tlText.to({}, { duration: stayTime, ease: "none" });
 
-        //////    drawCanvasForDownload(condition); // Force redraw
-        //////});
-
+        // --- OUT: offset start by total IN duration ---
+        const totalInDuration = units.length * tweenIn;
+        units.forEach((unit, idx) => {
+            tlText.to(unit, {
+                x: (i, t) => t.exitX,
+                y: (i, t) => t.exitY,
+                duration: tweenOut,
+                ease: "power1.out",
+                onUpdate: () => drawCanvasForDownload(condition)
+            }, totalInDuration + idx * tweenOut);
+        });
     }
+
 
 
     else if (animationType === "linear" || animationType === "zoom" ||
