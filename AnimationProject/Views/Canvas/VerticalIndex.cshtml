@@ -451,6 +451,32 @@
             font-size: 14px;
             font-family: "Nunito", sans-serif;
         }
+        /* toggle button css */
+        .toggle-container {
+            display: inline-flex;
+            background-color: #fff;
+            padding: 4px;
+            border-radius: 3px;
+        }
+
+        .toggle-btn {
+            padding: 7px 16px;
+            font-size: 14px;
+            font-family: var(--font-nunito);
+            font-weight: 400;
+            color: #000;
+            background-color: #fff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            width: 101px;
+        }
+
+            .toggle-btn.active {
+                background-color: black;
+                color: white;
+            }
+
     </style>
     <script>
             $(document).ready(function(){
@@ -655,6 +681,14 @@
         //       setTimeout(() => drawCanvas('Common'), 100);
         //     });
        // });
+        const buttons = document.querySelectorAll('.toggle-btn');
+
+        buttons.forEach(button => {
+          button.addEventListener('click', () => {
+            buttons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+          });
+        });
     </script>
 
 
@@ -1080,7 +1114,12 @@
         <div class="panel-middle d-flex align-items-center justify-content-center" id="canvasContainer">
                 
                     <div class="canvas-top-btn">
-                        <button id="modeButton" class="Graphic-More active" onclick="toggleMode();"></button>
+                        @* <button id="modeButton" class="Graphic-More active" onclick="toggleMode();"></button> *@
+                        <div class="toggle-container">
+                            <button class="toggle-btn active">Graphic</button>
+                            <button class="toggle-btn ">Animation</button>
+                        </div>
+
                     </div>
                     <canvas id="myCanvas" class="clsmyCanvas"></canvas>
                             <!-- Custom context menu for deletion -->
