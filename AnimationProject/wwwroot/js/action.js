@@ -989,7 +989,7 @@ function loadNextJsonForDownload() {
         const inTime = parseFloat(selectedInSpeed) || 4;
         const stayTime = parseFloat(selectedStaySpeed) || 3;
         const outTime = parseFloat(selectedStaySpeed) || 4;
-        const slideExecutionTime = inTime + 1 + outTime;//stayTime +
+        const slideExecutionTime = inTime + stayTime+3 + outTime;//stayTime +
 
         setTimeout(loadNextJsonForDownload, slideExecutionTime*1000 || 7000);
     } else {
@@ -2884,17 +2884,17 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
             }, idx * tweenIn);
         });
 
-        // calculate end of IN
-        const totalInDuration = units.length * tweenIn;
+        // compute when IN ends
+        const totalIn = units.length * tweenIn;
 
-        // --- STAY: schedule right after IN ---
+        // 2) STAY tween at end of IN
         tlText.to({}, {
             duration: stayTime,
             ease: "none"
-        }, totalInDuration);
+        }, totalIn);
 
-        // --- OUT: offset by IN + STAY ---
-        const outStart = totalInDuration + stayTime;
+        // 3) OUT tweens start after IN + STAY
+        const outStart = totalIn + stayTime;
         units.forEach((unit, idx) => {
             tlText.to(unit, {
                 x: (i, t) => t.exitX,
@@ -2905,6 +2905,7 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
             }, outStart + idx * tweenOut);
         });
     }
+    
 
 
 
