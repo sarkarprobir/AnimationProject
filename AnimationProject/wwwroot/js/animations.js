@@ -2392,73 +2392,47 @@ function isMouseOverImage(imgObj, pos) {
         pos.y <= imgObj.y + h
     );
 }
-canvas.addEventListener("mousedown", function (e) {
+let resizeState = null;
+canvas.addEventListener("mousedown", e => {
     const rect = canvas.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    const pos = { x: mouseX, y: mouseY };
+    const mouse = { x: e.clientX - rect.left, y: e.clientY - rect.top };
     const shift = e.shiftKey;
-
     if (document.activeElement === textEditor) return;
 
-    function findImageAt(pt) {
-        for (let i = images.length - 1; i >= 0; i--) {
-            const img = images[i];
-            const sx = img.scaleX ?? 1, sy = img.scaleY ?? 1;
-            const w = img.width * sx, h = img.height * sy;
-            if (
-                pt.x >= img.x && pt.x <= img.x + w &&
-                pt.y >= img.y && pt.y <= img.y + h
-            ) return img;
-        }
-        return null;
-    }
-
-    const txtHit = getTextObjectAt(pos.x, pos.y);
-    const imgHit = findImageAt(pos);
-
-    // 1) Shift+click toggles selection
+    // toggle multi-select
+    const txtHit = getTextObjectAt(mouse.x, mouse.y);
+    const imgHit = findImage(mouse);
     if (shift) {
-        if (txtHit) {
-            txtHit.selected = !txtHit.selected;
-            activeText = txtHit.selected ? txtHit : activeText;
-            activeImage = null;
-            drawCanvas('Common');
-            return;
-        }
-        if (imgHit) {
-            imgHit.selected = !imgHit.selected;
-            activeImage = imgHit.selected ? imgHit : activeImage;
-            activeText = null;
-            drawCanvas('Common');
-            return;
-        }
+        if (txtHit) return toggleSelect(txtHit);
+        if (imgHit) return toggleSelect(imgHit);
         return;
     }
 
-    // 2) TEXT: check for resize handle FIRST (before group-drag)
+    // detect resize handle on selected items (ignore middle handles)
+    let primary = null;
+    // text handle
     if (txtHit && txtHit.selected) {
-        const th = getHandleUnderMouse(pos.x, pos.y, txtHit);
-        if (th) {
-            isResizingText = true;
-            activeText = txtHit;
-            activeTextHandle = th;
-            textResizeStart = {
-                mouseX: e.clientX,
-                mouseY: e.clientY,
-                origX: txtHit.x,
-                origY: txtHit.y,
-                origW: txtHit.boundingWidth,
-                origH: txtHit.boundingHeight,
-                origFont: txtHit.fontSize
-            };
-            e.preventDefault();
-            drawCanvas('Common');
-            return;
+        const handle = getHandleUnderMouse(mouse.x, mouse.y, txtHit);
+        if (handle && !handle.includes('middle')) {
+            primary = { obj: txtHit, type: 'text' };
         }
     }
+    // image handle
+    if (!primary) {
+        for (let i = images.length - 1; i >= 0; i--) {
+            const img = images[i];
+            if (!img.selected) continue;
+            const handle = getHandleUnderMouseForImage(img, mouse);
+            if (handle) { primary = { obj: img, type: 'image' }; break; }
+        }
+    }
+    if (primary) {
+        startResize(primary.obj, primary.type, e);
+        e.preventDefault();
+        return;
+    }
 
-    // 3) GROUP-DRAG for already-selected text or image
+    // GROUP-DRAG for selected items
     if ((txtHit && txtHit.selected) || (imgHit && imgHit.selected)) {
         isDraggingGroup = true;
         groupDragStart = { x: e.clientX, y: e.clientY };
@@ -2471,86 +2445,272 @@ canvas.addEventListener("mousedown", function (e) {
         return;
     }
 
-    // 4) Reset selection for single-select logic
+    // single-select logic
+    // reset all
     textObjects.forEach(o => o.selected = false);
     images.forEach(i => i.selected = false);
-    activeText = null;
-    activeImage = null;
+    activeText = null; activeImage = null;
 
-    // 5) TEXT single-select and resize/drag
+    // text single-select & drag/resize
     if (txtHit) {
-        txtHit.selected = true;
-        activeText = txtHit;
-        const th = getHandleUnderMouse(pos.x, pos.y, txtHit);
-        if (th) {
+        txtHit.selected = true; activeText = txtHit;
+        const handle = getHandleUnderMouse(mouse.x, mouse.y, txtHit);
+        if (handle && !handle.includes('middle')) {
+            // single text resize
             isResizingText = true;
-            activeTextHandle = th;
+            activeTextHandle = handle;
             textResizeStart = {
-                mouseX: e.clientX,
-                mouseY: e.clientY,
-                origX: txtHit.x,
-                origY: txtHit.y,
-                origW: txtHit.boundingWidth,
-                origH: txtHit.boundingHeight,
+                mouseX: e.clientX, mouseY: e.clientY,
+                origX: txtHit.x, origY: txtHit.y,
+                origW: txtHit.boundingWidth, origH: txtHit.boundingHeight,
                 origFont: txtHit.fontSize
             };
-            e.preventDefault();
-            drawCanvas('Common');
-            return;
+            e.preventDefault(); drawCanvas('Common'); return;
         }
-        if (isInsideBox(pos.x, pos.y, txtHit)) {
+        if (isInsideBox(mouse.x, mouse.y, txtHit)) {
             isDraggingText = true;
-            dragOffsetText.x = pos.x - txtHit.x;
-            dragOffsetText.y = pos.y - txtHit.y;
-            e.preventDefault();
-            drawCanvas('Common');
-            return;
+            dragOffsetText.x = mouse.x - txtHit.x;
+            dragOffsetText.y = mouse.y - txtHit.y;
+            e.preventDefault(); drawCanvas('Common'); return;
         }
     }
 
-    // 6) IMAGE resize via handle
-    for (let i = images.length - 1; i >= 0; i--) {
-        const img = images[i];
-        const ih = getHandleUnderMouseForImage(img, pos);
-        if (ih) {
-            textObjects.forEach(o => o.selected = false);
-            images.forEach(i2 => i2.selected = false);
-            activeText = null;
-            img.selected = true;
-            activeImage = img;
-            isResizingImage = true;
-            activeImageHandle = ih;
-            e.preventDefault();
-            drawCanvas('Common');
-            return;
-        }
-    }
-
-    // 7) IMAGE body click → drag
+    // image single-select & drag
     if (imgHit) {
         textObjects.forEach(o => o.selected = false);
-        images.forEach(i2 => i2.selected = false);
-        activeText = null;
-        imgHit.selected = true;
-        activeImage = imgHit;
+        images.forEach(i => i.selected = false);
+        imgHit.selected = true; activeImage = imgHit;
         isDraggingImage = true;
-        dragOffsetImage.x = pos.x - imgHit.x;
-        dragOffsetImage.y = pos.y - imgHit.y;
-        enableFillColorDiv();
-        enableStrockColorDiv();
-        e.preventDefault();
-        drawCanvas('Common');
-        return;
+        dragOffsetImage.x = mouse.x - imgHit.x;
+        dragOffsetImage.y = mouse.y - imgHit.y;
+        enableFillColorDiv(); enableStrockColorDiv();
+        e.preventDefault(); drawCanvas('Common'); return;
     }
 
-    // 8) Clicked empty space → deselect all
+    // click empty -> deselect
     textObjects.forEach(o => o.selected = false);
-    images.forEach(i2 => i2.selected = false);
-    activeText = null;
-    activeImage = null;
-    e.preventDefault();
-    drawCanvas('Common');
+    images.forEach(i => i.selected = false);
+    activeText = null; activeImage = null;
+    e.preventDefault(); drawCanvas('Common');
 });
+
+// resize handlers
+function startResize(obj, type, e) {
+    resizeState = {
+        startMouseX: e.clientX,
+        startData: [...textObjects.filter(o => o.selected), ...images.filter(i => i.selected)].map(o => ({
+            obj: o,
+            x: o.x, y: o.y,
+            w: o.boundingWidth || (o.width * (o.scaleX || 1)),
+            h: o.boundingHeight || (o.height * (o.scaleY || 1)),
+            font: o.fontSize
+        })),
+        primaryStartW: (obj.boundingWidth || (obj.width * (obj.scaleX || 1)))
+    };
+    window.addEventListener('mousemove', resizeMove);
+    window.addEventListener('mouseup', resizeEnd);
+}
+
+function resizeMove(e) {
+    if (!resizeState) return;
+    const { startMouseX, startData, primaryStartW } = resizeState;
+    const delta = e.clientX - startMouseX;
+    const scalar = (primaryStartW + delta) / primaryStartW;
+
+    startData.forEach(data => {
+        const { obj, x, y, w, h, font } = data;
+        if (font != null) {
+            obj.fontSize = font * scalar;
+            obj.boundingWidth = w * scalar;
+            obj.boundingHeight = h * scalar;
+        } else {
+            obj.scaleX = (w * scalar) / obj.width;
+            obj.scaleY = (h * scalar) / obj.height;
+        }
+        obj.x = x; obj.y = y;
+    });
+    drawCanvas('Common');
+}
+
+function resizeEnd() {
+    window.removeEventListener('mousemove', resizeMove);
+    window.removeEventListener('mouseup', resizeEnd);
+    resizeState = null;// SaveDesignBoard();
+}
+
+function findImage(pt) {
+    for (let i = images.length - 1; i >= 0; i--) {
+        const img = images[i];
+        const sx = img.scaleX || 1, sy = img.scaleY || 1;
+        const w = img.width * sx, h = img.height * sy;
+        if (pt.x >= img.x && pt.x <= img.x + w && pt.y >= img.y && pt.y <= img.y + h) return img;
+    }
+    return null;
+}
+
+function toggleSelect(item) {
+    item.selected = !item.selected;
+    drawCanvas('Common');
+}
+//canvas.addEventListener("mousedown", function (e) {
+//    const rect = canvas.getBoundingClientRect();
+//    const mouseX = e.clientX - rect.left;
+//    const mouseY = e.clientY - rect.top;
+//    const pos = { x: mouseX, y: mouseY };
+//    const shift = e.shiftKey;
+
+//    if (document.activeElement === textEditor) return;
+
+//    function findImageAt(pt) {
+//        for (let i = images.length - 1; i >= 0; i--) {
+//            const img = images[i];
+//            const sx = img.scaleX ?? 1, sy = img.scaleY ?? 1;
+//            const w = img.width * sx, h = img.height * sy;
+//            if (
+//                pt.x >= img.x && pt.x <= img.x + w &&
+//                pt.y >= img.y && pt.y <= img.y + h
+//            ) return img;
+//        }
+//        return null;
+//    }
+
+//    const txtHit = getTextObjectAt(pos.x, pos.y);
+//    const imgHit = findImageAt(pos);
+
+//    // 1) Shift+click toggles selection
+//    if (shift) {
+//        if (txtHit) {
+//            txtHit.selected = !txtHit.selected;
+//            activeText = txtHit.selected ? txtHit : activeText;
+//            activeImage = null;
+//            drawCanvas('Common');
+//            return;
+//        }
+//        if (imgHit) {
+//            imgHit.selected = !imgHit.selected;
+//            activeImage = imgHit.selected ? imgHit : activeImage;
+//            activeText = null;
+//            drawCanvas('Common');
+//            return;
+//        }
+//        return;
+//    }
+
+//    // 2) TEXT: check for resize handle FIRST (before group-drag)
+//    if (txtHit && txtHit.selected) {
+//        const th = getHandleUnderMouse(pos.x, pos.y, txtHit);
+//        if (th) {
+//            isResizingText = true;
+//            activeText = txtHit;
+//            activeTextHandle = th;
+//            textResizeStart = {
+//                mouseX: e.clientX,
+//                mouseY: e.clientY,
+//                origX: txtHit.x,
+//                origY: txtHit.y,
+//                origW: txtHit.boundingWidth,
+//                origH: txtHit.boundingHeight,
+//                origFont: txtHit.fontSize
+//            };
+//            e.preventDefault();
+//            drawCanvas('Common');
+//            return;
+//        }
+//    }
+
+//    // 3) GROUP-DRAG for already-selected text or image
+//    if ((txtHit && txtHit.selected) || (imgHit && imgHit.selected)) {
+//        isDraggingGroup = true;
+//        groupDragStart = { x: e.clientX, y: e.clientY };
+//        groupStarts = [];
+//        textObjects.filter(o => o.selected)
+//            .forEach(o => groupStarts.push({ obj: o, x: o.x, y: o.y }));
+//        images.filter(i => i.selected)
+//            .forEach(i => groupStarts.push({ obj: i, x: i.x, y: i.y }));
+//        e.preventDefault();
+//        return;
+//    }
+
+//    // 4) Reset selection for single-select logic
+//    textObjects.forEach(o => o.selected = false);
+//    images.forEach(i => i.selected = false);
+//    activeText = null;
+//    activeImage = null;
+
+//    // 5) TEXT single-select and resize/drag
+//    if (txtHit) {
+//        txtHit.selected = true;
+//        activeText = txtHit;
+//        const th = getHandleUnderMouse(pos.x, pos.y, txtHit);
+//        if (th) {
+//            isResizingText = true;
+//            activeTextHandle = th;
+//            textResizeStart = {
+//                mouseX: e.clientX,
+//                mouseY: e.clientY,
+//                origX: txtHit.x,
+//                origY: txtHit.y,
+//                origW: txtHit.boundingWidth,
+//                origH: txtHit.boundingHeight,
+//                origFont: txtHit.fontSize
+//            };
+//            e.preventDefault();
+//            drawCanvas('Common');
+//            return;
+//        }
+//        if (isInsideBox(pos.x, pos.y, txtHit)) {
+//            isDraggingText = true;
+//            dragOffsetText.x = pos.x - txtHit.x;
+//            dragOffsetText.y = pos.y - txtHit.y;
+//            e.preventDefault();
+//            drawCanvas('Common');
+//            return;
+//        }
+//    }
+
+//    // 6) IMAGE resize via handle
+//    for (let i = images.length - 1; i >= 0; i--) {
+//        const img = images[i];
+//        const ih = getHandleUnderMouseForImage(img, pos);
+//        if (ih) {
+//            textObjects.forEach(o => o.selected = false);
+//            images.forEach(i2 => i2.selected = false);
+//            activeText = null;
+//            img.selected = true;
+//            activeImage = img;
+//            isResizingImage = true;
+//            activeImageHandle = ih;
+//            e.preventDefault();
+//            drawCanvas('Common');
+//            return;
+//        }
+//    }
+
+//    // 7) IMAGE body click → drag
+//    if (imgHit) {
+//        textObjects.forEach(o => o.selected = false);
+//        images.forEach(i2 => i2.selected = false);
+//        activeText = null;
+//        imgHit.selected = true;
+//        activeImage = imgHit;
+//        isDraggingImage = true;
+//        dragOffsetImage.x = pos.x - imgHit.x;
+//        dragOffsetImage.y = pos.y - imgHit.y;
+//        enableFillColorDiv();
+//        enableStrockColorDiv();
+//        e.preventDefault();
+//        drawCanvas('Common');
+//        return;
+//    }
+
+//    // 8) Clicked empty space → deselect all
+//    textObjects.forEach(o => o.selected = false);
+//    images.forEach(i2 => i2.selected = false);
+//    activeText = null;
+//    activeImage = null;
+//    e.preventDefault();
+//    drawCanvas('Common');
+//});
 
 
 
