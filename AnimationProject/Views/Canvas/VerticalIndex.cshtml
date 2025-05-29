@@ -497,7 +497,7 @@
           $("#hdnlLoopControl").val(1);
           $("#hdnfillColor").val('#42b3f5');
           $("#hdnStrockColor").val('#78f542');
-          document.getElementById("modeButton").innerText = "Graphic Mode";
+         // document.getElementById("modeButton").innerText = "Graphic Mode";
 
           // 4) Pull the `id` from the URL and initialize your canvas
           const params = new URLSearchParams(window.location.search);
@@ -710,7 +710,7 @@
     <script>
         function opengl()
          {
-          document.getElementById("modeButton").innerText = "Graphic Mode";
+         // document.getElementById("modeButton").innerText = "Graphic Mode";
           $("#opengl_popup").toggle();
           if(document.getElementById("fontstyle_popup").style.display == "block"){
                 $("#fontstyle_popup").hide();
@@ -722,7 +722,7 @@
 
     <script>
             function toggleMode() {
-            let button = document.getElementById("modeButton");
+           // let button = document.getElementById("modeButton");
 
             // Toggle visibility of elements
             if (document.getElementById("opengl_popup").style.display == "block") {
@@ -741,7 +741,7 @@
         }
         function opentl()
          {
-             document.getElementById("modeButton").innerText = "Animation Mode";
+            // document.getElementById("modeButton").innerText = "Animation Mode";
             if(document.getElementById("opengl_popup").style.display == "block"){
                 $("#opengl_popup").hide();
             }
@@ -751,7 +751,7 @@
          }
           function opentlClose()
          {
-             document.getElementById("modeButton").innerText = "Graphic Mode";
+             //document.getElementById("modeButton").innerText = "Graphic Mode";
             if(document.getElementById("opengl_popup").style.display == "block"){
                 $("#opengl_popup").hide();
             }
@@ -1114,9 +1114,13 @@
                 
                     <div class="canvas-top-btn">
                         @* <button id="modeButton" class="Graphic-More active" onclick="toggleMode();"></button> *@
-                        <div class="toggle-container">
+                       @*  <div class="toggle-container">
                             <button class="toggle-btn active">Graphic</button>
                             <button class="toggle-btn ">Animation</button>
+                        </div> *@
+                        <div class="toggle-container">
+                            <button class="toggle-btn" data-mode="graphic">Graphic</button>
+                    <button class="toggle-btn active" data-mode="animation">Animation</button>
                         </div>
 
                     </div>

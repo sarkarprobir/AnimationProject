@@ -989,7 +989,7 @@ function loadNextJsonForDownload() {
         const inTime = parseFloat(selectedInSpeed) || 4;
         const stayTime = parseFloat(selectedStaySpeed) || 3;
         const outTime = parseFloat(selectedStaySpeed) || 4;
-        const slideExecutionTime = inTime + 1 + outTime;//stayTime +
+        const slideExecutionTime = inTime + stayTime+3 + outTime;//stayTime +
 
         setTimeout(loadNextJsonForDownload, slideExecutionTime*1000 || 7000);
     } else {
@@ -2827,7 +2827,7 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
     });
 
     if (animationType === "delaylinear") {
-        // 1) Gather all animatable items
+        // 1) Gather animatable items
         const allItems = [
             ...images.filter(i => !i.noAnim),
             ...textObjects.filter(t => !t.noAnim)
@@ -2836,7 +2836,6 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
         // 2) Bucket into “units” by groupId
         const groupMap = new Map();
         const units = [];
-
         allItems.forEach(item => {
             const gid = item.groupId;
             if (gid != null) {
@@ -2851,13 +2850,11 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
         });
 
         // 3) Timings
-        const scaleIn = inTime;
-        const scaleOut = outTime;
-        const tweenIn = 0.15 * scaleIn;
-        const tweenOut = 0.15 * scaleOut;
+        const tweenIn = 0.15 * inTime;
+        const tweenOut = 0.15 * outTime;
 
         // 4) Build timeline
-        let tlText = gsap.timeline({
+        const tlText = gsap.timeline({
             repeat: loopCount - 1,
             repeatDelay: 0,
             onRepeat: () => {
@@ -2887,11 +2884,17 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
             }, idx * tweenIn);
         });
 
-        // --- STAY ---
-        tlText.to({}, { duration: stayTime, ease: "none" });
+        // compute when IN ends
+        const totalIn = units.length * tweenIn;
 
-        // --- OUT: offset start by total IN duration ---
-        const totalInDuration = units.length * tweenIn;
+        // 2) STAY tween at end of IN
+        tlText.to({}, {
+            duration: stayTime,
+            ease: "none"
+        }, totalIn);
+
+        // 3) OUT tweens start after IN + STAY
+        const outStart = totalIn + stayTime;
         units.forEach((unit, idx) => {
             tlText.to(unit, {
                 x: (i, t) => t.exitX,
@@ -2899,9 +2902,10 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
                 duration: tweenOut,
                 ease: "power1.out",
                 onUpdate: () => drawCanvasForDownload(condition)
-            }, totalInDuration + idx * tweenOut);
+            }, outStart + idx * tweenOut);
         });
     }
+    
 
 
 
@@ -3655,3 +3659,44 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
 function showPublishMessage() {
     MessageShow('', 'Please publish the board to preview here', 'error');
 }
+// call once on page-load
+function initModeToggle() {
+    const buttons = document.querySelectorAll('.toggle-container .toggle-btn');
+
+    function applyMode(mode) {
+        if (mode === 'graphic') {
+            document.getElementById('opengl_popup').style.display = 'none';
+            document.getElementById('fontstyle_popup').style.display = 'block';
+            document.querySelector('.right-sec-one').style.display = 'none';
+            document.querySelector('.right-sec-two').style.display = 'block';
+
+        } else {
+
+            document.getElementById('opengl_popup').style.display = 'none';
+            document.getElementById('fontstyle_popup').style.display = 'none';
+            document.querySelector('.right-sec-one').style.display = 'block';
+            document.querySelector('.right-sec-two').style.display = 'none';
+        }
+    }
+
+    buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // toggle active class
+            buttons.forEach(b => b.classList.toggle('active', b === btn));
+
+            // apply mode for the newly clicked button
+            applyMode(btn.dataset.mode);
+        });
+    });
+
+    // on load: find the one already marked .active
+    const defaultBtn = document.querySelector('.toggle-btn.active');
+    if (defaultBtn) {
+        applyMode(defaultBtn.dataset.mode);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', initModeToggle);
+
+//// initialize on DOM ready
+//document.addEventListener('DOMContentLoaded', initModeToggle);
