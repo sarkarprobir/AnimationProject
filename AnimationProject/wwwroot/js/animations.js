@@ -3226,20 +3226,38 @@ function generateUUID() {
 function ImagePropertySet() {
     const noAnimCheckbox = document.getElementById('noAnimCheckbox');
     const isChecked = noAnimCheckbox.checked;
-    // Find the currently selected image(s)
-    images.forEach(imgObj => {
-        if (imgObj.selected) {
-            imgObj.noAnim = isChecked;
-            SaveDesignBoard();
-        }
-    });
-    // Find the currently selected text(s)
-    textObjects.forEach(txtObj => {
-        if (txtObj.selected) {
-            txtObj.noAnim = isChecked;
-            SaveDesignBoard();
-        }
-    });
+    
+    // collect whatever is currently selected
+    const selectedImgs = images.filter(img => img.selected);
+    const selectedTexts = textObjects.filter(txt => txt.selected);
+    const selectedItems = [...selectedImgs, ...selectedTexts];
+
+    if (selectedItems.length === 0) {
+        // nothing selected → nothing to do
+        return;
+    }
+
+    // assume you only care about the first selected item's groupId
+    const { groupId } = selectedItems[0];
+
+    if (groupId) {
+        // Case 1: there _is_ a groupId → toggle every item in that group
+        images
+            .filter(img => img.groupId === groupId)
+            .forEach(img => { img.noAnim = isChecked; });
+
+        textObjects
+            .filter(txt => txt.groupId === groupId)
+            .forEach(txt => { txt.noAnim = isChecked; });
+    } else {
+        // Case 2: no groupId on the selected item(s) → only toggle exactly those selected
+        selectedItems.forEach(item => {
+            item.noAnim = isChecked;
+        });
+    }
+
+    // one save at the end
+    SaveDesignBoard();
 }
 canvasContainer.addEventListener("dblclick", function (e) {
     const rect = canvas.getBoundingClientRect();
