@@ -185,6 +185,8 @@
         position: relative !important;
         border-radius: 3px !important;
         font-size: 14px;
+        border: none !important;
+        box-shadow: rgba(9, 30, 66, 0.25) 0px 4px 8px -2px, rgba(9, 30, 66, 0.08) 0px 0px 0px 1px;
     }
 
     .link_board{
@@ -201,6 +203,19 @@
         position: absolute !important;
         top: 0;
         right: 0;
+    }
+
+    .arrow_info {
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-top: 10px solid #fff;
+        /* box-shadow: rgba(0, 0, 0, 0.16) 0px -3px 6px, rgba(0, 0, 0, 0.23) 0px -3px 6px; */
     }
 </style>
 
@@ -420,66 +435,57 @@ rel="stylesheet">
 
         </div>
     </div>
+
+    <!--  board_info -->
+    <div class="board_info_card card p-4 d-none">
+        <!-- Close Button -->
+        <button type="button" class="board_info_btn" aria-label="Close">x</button>
+
+        <div class="mb-4">
+            <div class="d-flex gap-4 mb-1">
+                <span><strong>File</strong> <span style="margin-left: 51px;">:</span> </span>
+                <span class="ms-2 fw-bold">Sunday Adboard v01</span>
+            </div>
+
+            <div class="d-flex gap-4 mb-1">
+                <span><strong>Size</strong> <span style="margin-left: 48px;">:</span></span>
+                <span class="ms-2">1080x1920</span>
+            </div>
+
+            <div class="d-flex gap-4 mb-1">
+                <span><strong>Created</strong> <span style="margin-left: 23.1px;">:</span> </span>
+                <span class="ms-2">28 May 2025</span>
+            </div>
+
+            <div class="d-flex gap-4 mb-1">
+                <span><strong>Modified</strong> <span style="margin-left: 18px;">:</span> </span>
+                <span class="ms-2">29 May 2025</span>
+            </div>
+
+            <div class="d-flex gap-4 mb-1">
+                <span><strong>Expiration</strong> <span style="margin-left: 9px;">:</span> </span>
+                <span class="ms-2 text-danger">28 May 2026</span>
+            </div>
+        </div>
+
+        <!-- Link Box -->
+        <div class="d-flex align-items-center">
+            <span><strong>Link</strong></span>
+            <span style="margin-left: 51px;">:</span>
+            <div class="input-group link_board">
+                <input type="text" class="form-control form-control-sm link-form" value="https://aniboard.com/v20560" readonly>
+                <button class="btn copy-button" type="button">
+                    <i class="fa-regular fa-copy"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom Arrow -->
+        <div class="arrow_info"></div>
+    <!-- board_info end -->
 </div>
 
-<!--  board_info -->
-<div class="board_info_card card p-4 d-none">
-    <!-- Close Button -->
-    <button type="button" class="board_info_btn" aria-label="Close">x</button>
 
-    <div class="mb-4"> 
-        <div class="d-flex gap-4 mb-1">
-            <span><strong>File</strong> <span style="margin-left: 51px;">:</span> </span>
-            <span class="ms-2 fw-bold">Sunday Adboard v01</span>
-        </div>
-
-        <div class="d-flex gap-4 mb-1">
-            <span><strong>Size</strong> <span style="margin-left: 48px;">:</span></span>
-            <span class="ms-2">1080x1920</span>
-        </div>
-
-        <div class="d-flex gap-4 mb-1">
-            <span><strong>Created</strong> <span style="margin-left: 23.1px;">:</span> </span>
-            <span class="ms-2">28 May 2025</span>
-        </div>
-
-        <div class="d-flex gap-4 mb-1">
-            <span><strong>Modified</strong> <span style="margin-left: 18px;">:</span> </span>
-            <span class="ms-2">29 May 2025</span>
-        </div>
-
-        <div class="d-flex gap-4 mb-1">
-            <span><strong>Expiration</strong> <span style="margin-left: 9px;">:</span> </span>
-            <span class="ms-2 text-danger">28 May 2026</span>
-        </div>
-    </div>
-
-    <!-- Link Box -->
-    <div class="d-flex align-items-center">
-        <span><strong>Link</strong></span>
-        <span style="margin-left: 51px;">:</span>
-        <div class="input-group link_board">
-            <input type="text" class="form-control form-control-sm link-form" value="https://aniboard.com/v20560" readonly>
-            <button class="btn copy-button" type="button">
-                <i class="fa-regular fa-copy"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- Bottom Arrow -->
-    <div style="
-    position: absolute;
-    bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-top: 10px solid white;
-    box-shadow: rgba(0, 0, 0, 0.16) 0px -3px 6px, rgba(0, 0, 0, 0.23) 0px -3px 6px;
-  "></div>
-</div>
 <!-- Modal Structure -->
 <div class="modal fade layout_modal" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" >
     <div class="modal-dialog">

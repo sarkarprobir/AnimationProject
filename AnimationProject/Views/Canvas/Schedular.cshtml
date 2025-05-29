@@ -273,7 +273,7 @@
         <div class="d-flex justify-content-between align-items-center mb-5">
             <h2 class="heading_acc">TV / Screen</h2>
             <div class="d-flex gap-3">
-                <button class="btn btn-primary my-button create_button b_rad4">+ Create New Aniboard</button>
+                <button class="btn btn-primary my-button create_button b_rad4" data-bs-toggle="modal" data-bs-target="#exampleModal">+ Create New Aniboard</button>
                 <button class="btn btn-secondary my-button browse_button b_rad4">Browse The Template</button>
             </div>
         </div>
@@ -472,9 +472,56 @@
        
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
 
         
     </div>
+
+
+<!-- Modal Structure -->
+<div class="modal fade layout_modal" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content p-3">
+            <div class="modal-header">
+                <h5 class="modal-title" id="aniBoardModalLabel">New AniBoard</h5>
+            </div>
+
+            <div class="modal-body">
+                <!-- Vertical Option -->
+                <div class="option-box d-flex justify-content-between align-items-center mb-2" id="vertical-option">
+                    <div class="d-flex align-items-center">
+                        <div class="portrait-icon"></div>
+                        <span class="vertical_option">Vertical / Portrait</span>
+                    </div>
+                    <span>1080x1920</span>
+                </div>
+                <!-- Horizontal Option -->
+                <div class="option-box d-flex justify-content-between align-items-center" id="horizontal-option">
+                    <div class="d-flex align-items-center">
+                        <div class="landscape-icon"></div>
+                        <span>Horizontal / Landscape</span>
+                    </div>
+                    <span>1920x1080</span>
+                </div>
+
+
+            </div>
+
+            <div class="modal-footer pt-0">
+                <button class="create-btn" id="create-button">Create</button>
+            </div>
+        </div>
+    </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const buttons = document.querySelectorAll('.tv_button');
+
+        buttons.forEach(button => {
+          button.addEventListener('click', () => {
+            buttons.forEach(btn => btn.classList.remove('selected-tv'));
+            button.classList.add('selected-tv');
+          });
+        });
+</script>

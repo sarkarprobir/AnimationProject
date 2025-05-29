@@ -366,8 +366,15 @@ ul.top-left-icon li {
 .top-left-icon li a{
 /*    padding:5px 10px 6px 10px;*/
 }
-.navbar ul.top-left-icon{float:left; margin:0px; padding:0px; margin-top: 0px;}
-.navbar .row{width:100%; --bs-gutter-x: 0rem !important;}
+.navbar ul.top-left-icon{
+    float:left; 
+    margin:0px; 
+    padding:0px; 
+}
+.navbar .row{
+    width:100%;
+    --bs-gutter-x: 0rem !important;
+}
 
 /*scroll Custom style*/
  ::-webkit-scrollbar {width:6px; :: -webkit-scrollbar background-color:transparent;border-radius: 10px;  background: transparent;}
@@ -1343,4 +1350,13 @@ body {
     width: 28px;
     height: 29px;
     border-radius: 3px;
+}
+/*switch css*/
+.form-switch .form-check-input {
+    width: 2.4em !important;
+    height: 1.4rem !important;
+    box-shadow: none !important;
+}
+.form-check-input:focus {
+    border-color: #a0a3a4;
 }
