@@ -1344,3 +1344,12 @@ body {
     height: 29px;
     border-radius: 3px;
 }
+.form-switch .form-check-input {
+    width: 2.4em !important;
+    height: 1.4rem !important;
+    box-shadow: none !important;
+}
+
+.form-check-input:focus {
+    border-color: #a0a3a4;
+}
