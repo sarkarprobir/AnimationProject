@@ -1356,7 +1356,24 @@ body {
     width: 2.4em !important;
     height: 1.4rem !important;
     box-shadow: none !important;
+    border-color: #acacac;
 }
-.form-check-input:focus {
-    border-color: #a0a3a4;
+.form-switch .form-check-input:focus {
+    border-color: #acacac;
+}
+.form-switch .form-check-input:checked {
+    background-color: #000;
+    border-color: #000;
+}
+/*text decoration buttons*/
+.text_decoration {
+    border: none;
+    background-color: #aaaaaa36;
+    width: 35px;
+    height: 35px;
+    border-radius: 3px;
+}
+.text_decoration:active, .text_decoration:focus {
+    color: #4e43e1;
+    background-color: #4e43e136;
 }
