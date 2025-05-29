@@ -3659,3 +3659,44 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
 function showPublishMessage() {
     MessageShow('', 'Please publish the board to preview here', 'error');
 }
+// call once on page-load
+function initModeToggle() {
+    const buttons = document.querySelectorAll('.toggle-container .toggle-btn');
+
+    function applyMode(mode) {
+        if (mode === 'graphic') {
+            document.getElementById('opengl_popup').style.display = 'none';
+            document.getElementById('fontstyle_popup').style.display = 'block';
+            document.querySelector('.right-sec-one').style.display = 'none';
+            document.querySelector('.right-sec-two').style.display = 'block';
+
+        } else {
+
+            document.getElementById('opengl_popup').style.display = 'none';
+            document.getElementById('fontstyle_popup').style.display = 'none';
+            document.querySelector('.right-sec-one').style.display = 'block';
+            document.querySelector('.right-sec-two').style.display = 'none';
+        }
+    }
+
+    buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // toggle active class
+            buttons.forEach(b => b.classList.toggle('active', b === btn));
+
+            // apply mode for the newly clicked button
+            applyMode(btn.dataset.mode);
+        });
+    });
+
+    // on load: find the one already marked .active
+    const defaultBtn = document.querySelector('.toggle-btn.active');
+    if (defaultBtn) {
+        applyMode(defaultBtn.dataset.mode);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', initModeToggle);
+
+//// initialize on DOM ready
+//document.addEventListener('DOMContentLoaded', initModeToggle);

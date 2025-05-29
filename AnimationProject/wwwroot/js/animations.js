@@ -2250,9 +2250,14 @@ function addDefaultTextOld() {
 function addDefaultText() {
     const fs = 30;
     const factor = 1.2;        // 120% of fontSize
-
+    const buttons = document.querySelectorAll('.toggle-btn');
+    const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]');
     const text = "Default Text";
+    // 2) Clear `active` from all
+    buttons.forEach(b => b.classList.remove('active'));
 
+    // 3) Activate only the Graphic button
+    graphicBtn.classList.add('active');
     // 1) Create with defaults
     const newObj = {
         text,
@@ -3022,6 +3027,13 @@ canvas.addEventListener("click", function (e) {
     // ignore shift here
     if (e.shiftKey) return;
 
+    const buttons = document.querySelectorAll('.toggle-btn');
+    const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]');
+
+   
+   
+
+
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
@@ -3082,8 +3094,13 @@ canvas.addEventListener("click", function (e) {
         $("#fontstyle_popup").show();
         $(".right-sec-two").show();
         $(".right-sec-one").hide();
-        document.getElementById("modeButton").innerText = "Animation Mode";
+        //document.getElementById("modeButton").innerText = "Animation Mode";
         $("#opengl_popup").hide();
+        // 2) Clear `active` from all
+        buttons.forEach(b => b.classList.remove('active'));
+
+        // 3) Activate only the Graphic button
+        graphicBtn.classList.add('active');
     }
     else if (imgHit) {
         // IMAGE clicked
@@ -3102,8 +3119,13 @@ canvas.addEventListener("click", function (e) {
         $("#fontstyle_popup").show();
         $(".right-sec-two").show();
         $(".right-sec-one").hide();
-        document.getElementById("modeButton").innerText = "Animation Mode";
+        //document.getElementById("modeButton").innerText = "Animation Mode";
         $("#opengl_popup").hide();
+        // 2) Clear `active` from all
+        buttons.forEach(b => b.classList.remove('active'));
+
+        // 3) Activate only the Graphic button
+        graphicBtn.classList.add('active');
     }
     else {
                 // — clicked empty space —
@@ -3113,6 +3135,12 @@ canvas.addEventListener("click", function (e) {
                 activeImage = null;
         // no group selected
         updateCheckboxFor(null);
+
+        // 2) Clear `active` from all
+        buttons.forEach(b => b.classList.remove('active'));
+
+        // 3) Activate only the Graphic button
+        graphicBtn.classList.add('active');
     }
 
     drawCanvas('Common');
@@ -3785,7 +3813,7 @@ function hideBack() {
     if (popup) {
         popup.style.display = "none";
     }
-    document.getElementById("modeButton").innerText = "Graphic Mode";
+   // document.getElementById("modeButton").innerText = "Graphic Mode";
 }
 
 function ChangeAllBackgroundColor() {
