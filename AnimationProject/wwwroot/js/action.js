@@ -2827,7 +2827,7 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
     });
 
     if (animationType === "delaylinear") {
-        // 1) Gather all animatable items
+        // 1) Gather animatable items
         const allItems = [
             ...images.filter(i => !i.noAnim),
             ...textObjects.filter(t => !t.noAnim)
@@ -2836,7 +2836,6 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
         // 2) Bucket into “units” by groupId
         const groupMap = new Map();
         const units = [];
-
         allItems.forEach(item => {
             const gid = item.groupId;
             if (gid != null) {
@@ -2851,13 +2850,11 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
         });
 
         // 3) Timings
-        const scaleIn = inTime;
-        const scaleOut = outTime;
-        const tweenIn = 0.15 * scaleIn;
-        const tweenOut = 0.15 * scaleOut;
+        const tweenIn = 0.15 * inTime;
+        const tweenOut = 0.15 * outTime;
 
         // 4) Build timeline
-        let tlText = gsap.timeline({
+        const tlText = gsap.timeline({
             repeat: loopCount - 1,
             repeatDelay: 0,
             onRepeat: () => {
@@ -2887,11 +2884,17 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
             }, idx * tweenIn);
         });
 
-        // --- STAY ---
-        tlText.to({}, { duration: stayTime, ease: "none" });
-
-        // --- OUT: offset start by total IN duration ---
+        // calculate end of IN
         const totalInDuration = units.length * tweenIn;
+
+        // --- STAY: schedule right after IN ---
+        tlText.to({}, {
+            duration: stayTime,
+            ease: "none"
+        }, totalInDuration);
+
+        // --- OUT: offset by IN + STAY ---
+        const outStart = totalInDuration + stayTime;
         units.forEach((unit, idx) => {
             tlText.to(unit, {
                 x: (i, t) => t.exitX,
@@ -2899,7 +2902,7 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
                 duration: tweenOut,
                 ease: "power1.out",
                 onUpdate: () => drawCanvasForDownload(condition)
-            }, totalInDuration + idx * tweenOut);
+            }, outStart + idx * tweenOut);
         });
     }
 
