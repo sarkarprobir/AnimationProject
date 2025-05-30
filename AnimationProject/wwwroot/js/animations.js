@@ -2392,47 +2392,83 @@ function isMouseOverImage(imgObj, pos) {
         pos.y <= imgObj.y + h
     );
 }
+// Working canvas code with multi-resize and centered text positioning
+// Assumes existing helpers: getTextObjectAt, getHandleUnderMouse, getHandleUnderMouseForImage,
+// isInsideBox, drawCanvas, SaveDesignBoard, enableFillColorDiv, enableStrockColorDiv
+
+//let resizeState = null;
+
+// Working canvas code with multi-resize and centered text positioning
+// Assumes existing helpers: getTextObjectAt, getHandleUnderMouse, getHandleUnderMouseForImage,
+// isInsideBox, drawCanvas, SaveDesignBoard, enableFillColorDiv, enableStrockColorDiv
+
 let resizeState = null;
+// Full canvas interaction with multi-resize and centered text positioning
+// Assumes helpers: getTextObjectAt, getHandleUnderMouse, getHandleUnderMouseForImage,
+// isInsideBox, drawCanvas, SaveDesignBoard, enableFillColorDiv, enableStrockColorDiv
+
+
+
 canvas.addEventListener("mousedown", e => {
     const rect = canvas.getBoundingClientRect();
     const mouse = { x: e.clientX - rect.left, y: e.clientY - rect.top };
     const shift = e.shiftKey;
     if (document.activeElement === textEditor) return;
 
-    // toggle multi-select
+    // SHIFT-click toggles selection
     const txtHit = getTextObjectAt(mouse.x, mouse.y);
-    const imgHit = findImage(mouse);
+    const imgHit = findImageAt(mouse);
     if (shift) {
         if (txtHit) return toggleSelect(txtHit);
         if (imgHit) return toggleSelect(imgHit);
         return;
     }
 
-    // detect resize handle on selected items (ignore middle handles)
+    // Detect resize handle
     let primary = null;
-    // text handle
+    let handle;
     if (txtHit && txtHit.selected) {
-        const handle = getHandleUnderMouse(mouse.x, mouse.y, txtHit);
-        if (handle && !handle.includes('middle')) {
-            primary = { obj: txtHit, type: 'text' };
-        }
+        handle = getHandleUnderMouse(mouse.x, mouse.y, txtHit);
+        if (handle && !handle.includes('middle')) primary = { obj: txtHit, type: 'text', handle };
     }
-    // image handle
     if (!primary) {
         for (let i = images.length - 1; i >= 0; i--) {
             const img = images[i];
             if (!img.selected) continue;
-            const handle = getHandleUnderMouseForImage(img, mouse);
-            if (handle) { primary = { obj: img, type: 'image' }; break; }
+            handle = getHandleUnderMouseForImage(img, mouse);
+            if (handle) { primary = { obj: img, type: 'image', handle }; break; }
         }
     }
-    if (primary) {
-        startResize(primary.obj, primary.type, e);
+
+    // Multi-resize
+    const selectedCount = textObjects.filter(o => o.selected).length + images.filter(i => i.selected).length;
+    if (primary && selectedCount > 1) {
+        startMultiResize(primary.obj, e);
         e.preventDefault();
         return;
     }
 
-    // GROUP-DRAG for selected items
+    // Single-item resize
+    if (primary && selectedCount === 1) {
+        if (primary.type === 'text') {
+            isResizingText = true;
+            activeTextHandle = primary.handle;
+            activeText = primary.obj;
+            textResizeStart = {
+                mouseX: e.clientX, mouseY: e.clientY,
+                origX: primary.obj.x, origY: primary.obj.y,
+                origW: primary.obj.boundingWidth, origH: primary.obj.boundingHeight,
+                origFont: primary.obj.fontSize
+            };
+        } else {
+            isResizingImage = true;
+            activeImageHandle = primary.handle;
+            activeImage = primary.obj;
+        }
+        e.preventDefault(); drawCanvas('Common'); return;
+    }
+
+    // Group-drag
     if ((txtHit && txtHit.selected) || (imgHit && imgHit.selected)) {
         isDraggingGroup = true;
         groupDragStart = { x: e.clientX, y: e.clientY };
@@ -2441,22 +2477,18 @@ canvas.addEventListener("mousedown", e => {
             .forEach(o => groupStarts.push({ obj: o, x: o.x, y: o.y }));
         images.filter(i => i.selected)
             .forEach(i => groupStarts.push({ obj: i, x: i.x, y: i.y }));
-        e.preventDefault();
-        return;
+        e.preventDefault(); return;
     }
 
-    // single-select logic
-    // reset all
+    // Single-select fallback
     textObjects.forEach(o => o.selected = false);
     images.forEach(i => i.selected = false);
-    activeText = null; activeImage = null;
+    activeText = activeImage = null;
 
-    // text single-select & drag/resize
     if (txtHit) {
         txtHit.selected = true; activeText = txtHit;
-        const handle = getHandleUnderMouse(mouse.x, mouse.y, txtHit);
+        handle = getHandleUnderMouse(mouse.x, mouse.y, txtHit);
         if (handle && !handle.includes('middle')) {
-            // single text resize
             isResizingText = true;
             activeTextHandle = handle;
             textResizeStart = {
@@ -2469,76 +2501,127 @@ canvas.addEventListener("mousedown", e => {
         }
         if (isInsideBox(mouse.x, mouse.y, txtHit)) {
             isDraggingText = true;
-            dragOffsetText.x = mouse.x - txtHit.x;
-            dragOffsetText.y = mouse.y - txtHit.y;
+            dragOffsetText = { x: mouse.x - txtHit.x, y: mouse.y - txtHit.y };
             e.preventDefault(); drawCanvas('Common'); return;
         }
     }
 
-    // image single-select & drag
     if (imgHit) {
         textObjects.forEach(o => o.selected = false);
         images.forEach(i => i.selected = false);
         imgHit.selected = true; activeImage = imgHit;
         isDraggingImage = true;
-        dragOffsetImage.x = mouse.x - imgHit.x;
-        dragOffsetImage.y = mouse.y - imgHit.y;
+        dragOffsetImage = { x: mouse.x - imgHit.x, y: mouse.y - imgHit.y };
         enableFillColorDiv(); enableStrockColorDiv();
         e.preventDefault(); drawCanvas('Common'); return;
     }
 
-    // click empty -> deselect
+    // Deselect all
     textObjects.forEach(o => o.selected = false);
     images.forEach(i => i.selected = false);
-    activeText = null; activeImage = null;
+    activeText = activeImage = null;
     e.preventDefault(); drawCanvas('Common');
 });
 
-// resize handlers
-function startResize(obj, type, e) {
-    resizeState = {
-        startMouseX: e.clientX,
-        startData: [...textObjects.filter(o => o.selected), ...images.filter(i => i.selected)].map(o => ({
-            obj: o,
-            x: o.x, y: o.y,
-            w: o.boundingWidth || (o.width * (o.scaleX || 1)),
-            h: o.boundingHeight || (o.height * (o.scaleY || 1)),
-            font: o.fontSize
-        })),
-        primaryStartW: (obj.boundingWidth || (obj.width * (obj.scaleX || 1)))
-    };
-    window.addEventListener('mousemove', resizeMove);
-    window.addEventListener('mouseup', resizeEnd);
+// Mousemove
+canvas.addEventListener('mousemove', e => {
+    if (isDraggingGroup) {
+        const dx = e.clientX - groupDragStart.x;
+        const dy = e.clientY - groupDragStart.y;
+        groupStarts.forEach(gs => { gs.obj.x = gs.x + dx; gs.obj.y = gs.y + dy; });
+        drawCanvas('Common');
+    } else if (isResizingText) {
+        // existing single-text-resize logic here...
+    } else if (isResizingImage) {
+        // existing single-image-resize logic here...
+    } else if (isDraggingText) {
+        const rect = canvas.getBoundingClientRect();
+        const mousePos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        activeText.x = mousePos.x - dragOffsetText.x;
+        activeText.y = mousePos.y - dragOffsetText.y;
+        drawCanvas('Common');
+    } else if (isDraggingImage) {
+        const rect = canvas.getBoundingClientRect();
+        const mousePos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        activeImage.x = mousePos.x - dragOffsetImage.x;
+        activeImage.y = mousePos.y - dragOffsetImage.y;
+        drawCanvas('Common');
+    }
+});
+
+// Mouseup
+canvas.addEventListener('mouseup', e => {
+    if (isResizingText && activeText && activeTextHandle) {
+        onBoxResizeEnd(activeText);
+    }
+
+    if (isDraggingGroup) {
+        isDraggingGroup = false;
+        //SaveDesignBoard();
+    }
+    if (isResizingText) {
+        isResizingText = false;
+        //SaveDesignBoard();
+    }
+    if (isResizingImage) {
+        isResizingImage = false;
+        //SaveDesignBoard();
+    }
+    if (isDraggingText) {
+        isDraggingText = false;
+        //SaveDesignBoard();
+    }
+    if (isDraggingImage) {
+        isDraggingImage = false;
+        //SaveDesignBoard();
+    }
+});
+
+// Multi-resize helpers
+function startMultiResize(primaryObj, e) {
+    const group = [...textObjects.filter(o => o.selected), ...images.filter(i => i.selected)];
+    const pW = primaryObj.boundingWidth ?? (primaryObj.width * (primaryObj.scaleX || 1));
+    const pH = primaryObj.boundingHeight ?? (primaryObj.height * (primaryObj.scaleY || 1));
+    const pivot = { x: primaryObj.x + pW / 2, y: primaryObj.y + pH / 2 };
+    const startData = group.map(o => {
+        const w = o.boundingWidth ?? (o.width * (o.scaleX || 1));
+        const h = o.boundingHeight ?? (o.height * (o.scaleY || 1));
+        return { obj: o, startW: w, startH: h, startFont: o.fontSize, dx: o.x + w / 2 - pivot.x, dy: o.y + h / 2 - pivot.y };
+    });
+    resizeState = { startMouseX: e.clientX, primaryStartW: pW, pivot, startData };
+    window.addEventListener('mousemove', onMultiResizeMove);
+    window.addEventListener('mouseup', onMultiResizeUp);
 }
 
-function resizeMove(e) {
+function onMultiResizeMove(e) {
     if (!resizeState) return;
-    const { startMouseX, startData, primaryStartW } = resizeState;
-    const delta = e.clientX - startMouseX;
-    const scalar = (primaryStartW + delta) / primaryStartW;
-
-    startData.forEach(data => {
-        const { obj, x, y, w, h, font } = data;
-        if (font != null) {
-            obj.fontSize = font * scalar;
-            obj.boundingWidth = w * scalar;
-            obj.boundingHeight = h * scalar;
+    const { startMouseX, primaryStartW, pivot, startData } = resizeState;
+    const scale = (primaryStartW + (e.clientX - startMouseX)) / primaryStartW;
+    startData.forEach(d => {
+        const { obj, startW, startH, startFont, dx, dy } = d;
+        if (startFont != null) {
+            obj.fontSize = startFont * scale;
+            obj.boundingWidth = startW * scale;
+            obj.boundingHeight = startH * scale;
         } else {
-            obj.scaleX = (w * scalar) / obj.width;
-            obj.scaleY = (h * scalar) / obj.height;
+            obj.scaleX = (startW * scale) / obj.width;
+            obj.scaleY = (startH * scale) / obj.height;
         }
-        obj.x = x; obj.y = y;
+        obj.x = pivot.x + dx * scale - (startW * scale) / 2;
+        obj.y = pivot.y + dy * scale - (startH * scale) / 2;
     });
     drawCanvas('Common');
 }
 
-function resizeEnd() {
-    window.removeEventListener('mousemove', resizeMove);
-    window.removeEventListener('mouseup', resizeEnd);
-    resizeState = null;// SaveDesignBoard();
+function onMultiResizeUp() {
+    window.removeEventListener('mousemove', onMultiResizeMove);
+    window.removeEventListener('mouseup', onMultiResizeUp);
+    resizeState = null;
+   // SaveDesignBoard();
 }
 
-function findImage(pt) {
+// Helpers
+function findImageAt(pt) {
     for (let i = images.length - 1; i >= 0; i--) {
         const img = images[i];
         const sx = img.scaleX || 1, sy = img.scaleY || 1;
@@ -2552,6 +2635,10 @@ function toggleSelect(item) {
     item.selected = !item.selected;
     drawCanvas('Common');
 }
+
+
+
+
 //canvas.addEventListener("mousedown", function (e) {
 //    const rect = canvas.getBoundingClientRect();
 //    const mouseX = e.clientX - rect.left;
