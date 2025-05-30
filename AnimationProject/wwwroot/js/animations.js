@@ -223,31 +223,30 @@ function getObjectAt(x, y) {
 //    }
 //    return null;
 //}
-function getHandleUnderMouse(mx, my, obj) {
-    const { x: ox, y: oy, boundingWidth: w, boundingHeight: h } = obj;
-    const half = handleSize / 2;
+// Enhanced handle detection for text with tolerance
+function getHandleUnderMouse(x, y, obj) {
+    const tol = 15;  // same cornerTolerance
+    const center = {
+        x: obj.x + obj.boundingWidth / 2,
+        y: obj.y + obj.boundingHeight / 2
+    };
+    // Transform into unrotated box space
+    const pt = rotatePoint(x, y, center.x, center.y, -obj.rotation);
+    const x0 = obj.x, y0 = obj.y;
+    const x1 = x0 + obj.boundingWidth, y1 = y0 + obj.boundingHeight;
 
-    // define all 8 points in design‐space
-    const pts = [
-        { name: "top-left", x: ox, y: oy },
-        { name: "top-middle", x: ox + w / 2, y: oy },
-        { name: "top-right", x: ox + w, y: oy },
-        { name: "right-middle", x: ox + w, y: oy + h / 2 },
-        { name: "bottom-right", x: ox + w, y: oy + h },
-        { name: "bottom-middle", x: ox + w / 2, y: oy + h },
-        { name: "bottom-left", x: ox, y: oy + h },
-        { name: "left-middle", x: ox, y: oy + h / 2 }
-    ];
+    // Corners
+    if (Math.hypot(pt.x - x0, pt.y - y0) < tol) return 'top-left';
+    if (Math.hypot(pt.x - x1, pt.y - y0) < tol) return 'top-right';
+    if (Math.hypot(pt.x - x0, pt.y - y1) < tol) return 'bottom-left';
+    if (Math.hypot(pt.x - x1, pt.y - y1) < tol) return 'bottom-right';
 
-    // see if mx,my (in design coords) is within half‐size of any handle
-    for (let pt of pts) {
-        if (
-            mx >= pt.x - half && mx <= pt.x + half &&
-            my >= pt.y - half && my <= pt.y + half
-        ) {
-            return pt.name;
-        }
-    }
+    // (optional) Middle edges if you want
+    if (Math.abs(pt.x - x0) < tol && pt.y > y0 + tol && pt.y < y1 - tol) return 'left-middle';
+    if (Math.abs(pt.x - x1) < tol && pt.y > y0 + tol && pt.y < y1 - tol) return 'right-middle';
+    if (Math.abs(pt.y - y0) < tol && pt.x > x0 + tol && pt.x < x1 - tol) return 'top-middle';
+    if (Math.abs(pt.y - y1) < tol && pt.x > x0 + tol && pt.x < x1 - tol) return 'bottom-middle';
+
     return null;
 }
 
@@ -641,38 +640,34 @@ function drawImageOnCanvas(img) {
 }
 
 function drawCanvas(condition) {
-    // 1) Refresh CTM: design→screen
-    resizeCanvas();               // must set ctx.resetTransform(); ctx.scale(dpr,dpr); ctx.scale(scaleX,scaleY);
+    resizeCanvas();
     const dpr = window.devicePixelRatio || 1;
 
-    // compute “design‐space” dimensions for clearing
     const designW = canvas.width / dpr / scaleX;
     const designH = canvas.height / dpr / scaleY;
-    
-    // 2) Clear & draw background (in design units)
+
     ctx.clearRect(0, 0, designW, designH);
     const bgColor = document.getElementById('hdnBackgroundSpecificColor').value.trim();
-   
+
     if (bgColor) {
         ctx.fillStyle = bgColor;
         ctx.fillRect(0, 0, designW, designH);
-        
     }
-    //if (canvas.bgImage) {
-    //    ctx.drawImage(canvas.bgImage, 0, 0, designW, designH);
-    //}
+
     if (canvas._bgImg) {
         ctx.drawImage(canvas._bgImg, 0, 0, designW, designH);
     }
-    // 3) Draw images (lazy‑load + design units)
+
+    // === Draw Images with Rotation ===
     images.forEach(imgObj => {
-        // design→screen position & size
         const x = imgObj.x;
         const y = imgObj.y;
-        const w = imgObj.width * (imgObj.scaleX || 1);
-        const h = imgObj.height * (imgObj.scaleY || 1);
+        const scaleX = imgObj.scaleX || 1;
+        const scaleY = imgObj.scaleY || 1;
+        const w = imgObj.width * scaleX;
+        const h = imgObj.height * scaleY;
+        const rotation = (imgObj.rotation || 0) * Math.PI / 180;
 
-        // lazy-load if this imgObj has no <img> yet
         if (!imgObj.img) {
             const img = new Image();
             img.onload = () => {
@@ -683,22 +678,18 @@ function drawCanvas(condition) {
             return;
         }
 
-        // draw in design space
         ctx.save();
         ctx.globalAlpha = imgObj.opacity || 1;
-        ctx.translate(x, y);
-        ctx.scale(imgObj.scaleX || 1, imgObj.scaleY || 1);
-        try {
-            ctx.drawImage(imgObj.img, 0, 0, imgObj.width, imgObj.height);
-        } catch (e) {
 
-        }
-        
+        ctx.translate(x + w / 2, y + h / 2);
+        ctx.rotate(rotation);
+        ctx.scale(scaleX, scaleY);
+        ctx.drawImage(imgObj.img, -imgObj.width / 2, -imgObj.height / 2, imgObj.width, imgObj.height);
+
         ctx.restore();
     });
- 
 
-    // 4) Draw text (in design units)
+    // === Draw Text with Rotation ===
     if (['Common', 'ChangeStyle', 'applyAnimations'].includes(condition)) {
         textObjects.forEach(obj => {
             ctx.save();
@@ -711,83 +702,83 @@ function drawCanvas(condition) {
             const y = obj.y;
             const pad = padding;
             const maxW = obj.boundingWidth - 2 * pad;
+            const rotation = (obj.rotation || 0) * Math.PI / 180;
 
-            // 1) Break only on explicit newlines, otherwise wrap on words
-            let lines;
-            if (obj.text.includes('\n')) {
-                lines = obj.text.split('\n');
-            } else {
-                lines = wrapText(ctx, obj.text, maxW);
-            }
-
-            // 2) Compute lineHeight from the factor
+            let lines = obj.text.includes('\n') ? obj.text.split('\n') : wrapText(ctx, obj.text, maxW);
             const lineH = obj.lineSpacing * obj.fontSize;
 
-            // 3) If multi-line, resize the box to fit exactly
             if (lines.length > 1) {
                 obj.boundingHeight = lines.length * lineH + 2 * pad;
             }
-            // 3) If multi-line, resize the box only if text height is larger
-            //if (lines.length > 1) {
-            //    const textHeight = lines.length * lineH + 2 * pad;
-            //    obj.boundingHeight = textHeight+80;
-               
-            //}
 
-            // 4) Clip to however many lines fit (mostly for overflow)
             const availableHeight = obj.boundingHeight - 2 * pad;
             const maxLines = Math.floor(availableHeight / lineH);
-            const startY = y + pad;
 
-            // 5) Draw each line at the computed spacing
+            // Rotate around center of bounding box
+            ctx.translate(x + obj.boundingWidth / 2, y + obj.boundingHeight / 2);
+            ctx.rotate(rotation);
+
             lines.slice(0, maxLines).forEach((line, i) => {
                 const lw = ctx.measureText(line).width;
-                let offsetX = x + pad;
-                if (obj.textAlign === 'center') offsetX = x + (obj.boundingWidth - lw) / 2;
-                if (obj.textAlign === 'right') offsetX = x + obj.boundingWidth - lw - pad;
-
-                ctx.fillText(line, offsetX, startY + i * lineH);
+                let offsetX = -obj.boundingWidth / 2 + pad;
+                if (obj.textAlign === 'center') offsetX = -lw / 2;
+                if (obj.textAlign === 'right') offsetX = obj.boundingWidth / 2 - lw - pad;
+                const offsetY = -obj.boundingHeight / 2 + pad + i * lineH;
+                ctx.fillText(line, offsetX, offsetY);
             });
+
             ctx.restore();
         });
     }
 
-
-    // 5) Overlay selection UI *in raw pixel space*  
+    // === Selection Overlays ===
     function toPixelSpace(fn) {
         ctx.save();
-        ctx.resetTransform();    // drop design→screen CTM
-        ctx.scale(dpr, dpr);     // keep only HiDPI
+        ctx.resetTransform();
+        ctx.scale(dpr, dpr);
         fn();
         ctx.restore();
     }
 
-    // 5a) Image selections
+    // Image Selection
     toPixelSpace(() => {
         images.forEach(imgObj => {
-            if (!imgObj.selected) return;
-            // compute pixel coords from design coords
-            const xPx = imgObj.x * scaleX;
-            const yPx = imgObj.y * scaleY;
-            const wPx = imgObj.width * (imgObj.scaleX || 1) * scaleX;
-            const hPx = imgObj.height * (imgObj.scaleY || 1) * scaleY;
+            if (!imgObj.selected || !imgObj.img) return;
 
+            const scaleXImg = imgObj.scaleX || 1;
+            const scaleYImg = imgObj.scaleY || 1;
+            const wPx = imgObj.width * scaleXImg * scaleX;
+            const hPx = imgObj.height * scaleYImg * scaleY;
+
+            const xPx = (imgObj.x + imgObj.width * scaleXImg / 2) * scaleX;
+            const yPx = (imgObj.y + imgObj.height * scaleYImg / 2) * scaleY;
+            const rotation = (imgObj.rotation || 0) * Math.PI / 180;
+
+            ctx.save();
+            ctx.translate(xPx, yPx); // move to center of image
+            ctx.rotate(rotation);    // rotate canvas
             ctx.strokeStyle = "blue";
             ctx.lineWidth = 2;
-            ctx.strokeRect(xPx, yPx, wPx, hPx);
+            ctx.strokeRect(-wPx / 2, -hPx / 2, wPx, hPx); // draw rect centered
 
+            // Draw resize handles
             ctx.fillStyle = "red";
-            const hs = getImageResizeHandles(imgObj)
-                .map(pt => ({ x: pt.x * scaleX, y: pt.y * scaleY }));
             const halfH = handleSize / 2;
-            hs.forEach(pt => {
+            const corners = [
+                { x: -wPx / 2, y: -hPx / 2 },
+                { x: wPx / 2, y: -hPx / 2 },
+                { x: -wPx / 2, y: hPx / 2 },
+                { x: wPx / 2, y: hPx / 2 },
+            ];
+            corners.forEach(pt => {
                 ctx.fillRect(pt.x - halfH, pt.y - halfH, handleSize, handleSize);
             });
+
+            ctx.restore();
         });
     });
 
-    // 5b) Text selections
-    // 5b) Text selections (with 8 handles)
+    // Text Selection
     toPixelSpace(() => {
         textObjects.forEach(obj => {
             if (!obj.selected) return;
@@ -796,60 +787,43 @@ function drawCanvas(condition) {
             const yPx = obj.y * scaleY;
             const wPx = obj.boundingWidth * scaleX;
             const hPx = obj.boundingHeight * scaleY;
+            const rotation = (obj.rotation || 0) * Math.PI / 180;
 
-            // draw rounded‐rect around text
+            ctx.save();
+            ctx.translate(xPx + wPx / 2, yPx + hPx / 2); // center
+            ctx.rotate(rotation);
+
+            // draw rotated rounded rect (relative to center)
             drawRoundedRect(
                 ctx,
-                xPx - padding * scaleX,
-                yPx - padding * scaleY,
+                -wPx / 2 - padding * scaleX,
+                -hPx / 2 - padding * scaleY,
                 wPx + 2 * padding * scaleX - RECT_WIDTH_ADJUST * scaleX,
                 hPx + 2 * padding * scaleY - RECT_HEIGHT_ADJUST * scaleY,
                 5 * scaleX
             );
 
-            // all 8 handles: corners + midpoints
+            // draw rotated handles
             ctx.fillStyle = "#FF7F50";
             const halfW = handleSize / 2;
-            const liftY = 2;   // tweak Y offset if needed
-
+            const liftY = 2;
             const handlePoints = [
-                // corners
-                { x: xPx, y: yPx },        // top-left
-                { x: xPx + wPx, y: yPx },        // top-right
-                { x: xPx, y: yPx + hPx },  // bottom-left
-                { x: xPx + wPx, y: yPx + hPx },  // bottom-right
-                // midpoints
-               // { x: xPx + wPx / 2, y: yPx },        // top-middle
-                //{ x: xPx + wPx / 2, y: yPx + hPx },  // bottom-middle
-                { x: xPx, y: yPx + hPx / 2 }, // left-middle
-                { x: xPx + wPx, y: yPx + hPx / 2 }  // right-middle
+                { x: -wPx / 2, y: -hPx / 2 },
+                { x: wPx / 2, y: -hPx / 2 },
+                { x: -wPx / 2, y: hPx / 2 },
+                { x: wPx / 2, y: hPx / 2 },
+                { x: -wPx / 2, y: 0 },
+                { x: wPx / 2, y: 0 }
             ];
-
             handlePoints.forEach(pt => {
                 ctx.fillRect(pt.x - halfW, pt.y - halfW - liftY, handleSize, handleSize);
             });
+
+            ctx.restore();
         });
     });
-    //// 5) Draw selection outlines for all selected items
-    //ctx.save();
-    //ctx.strokeStyle = 'green';
-    //ctx.lineWidth = 1 / scaleX;
-    //ctx.setLineDash([4 / scaleX, 2 / scaleX]);
 
-    //// outline grouped images
-    //images.filter(img => img.groupId != null).forEach(img => {
-    //    const w = img.width * (img.scaleX || 1);
-    //    const h = img.height * (img.scaleY || 1);
-    //    ctx.strokeRect(img.x, img.y, w, h);
-    //});
 
-    //// outline grouped text boxes
-    //textObjects.filter(txt => txt.groupId != null).forEach(txt => {
-    //    ctx.strokeRect(txt.x, txt.y, txt.boundingWidth, txt.boundingHeight);
-    //});
-
-   // ctx.restore();
-    // 6) reset alpha
     ctx.globalAlpha = 1;
 }
 
@@ -2210,6 +2184,7 @@ function startVideoCapture() {
     }, 8000); // Record for 5 seconds (change as needed)
 }
 
+
 // Add a new text object with default text
 function addDefaultTextOld() {
     const newObj = {
@@ -2249,6 +2224,7 @@ function addDefaultTextOld() {
     $("#opengl_popup").hide();
 }
 function addDefaultText() {
+    images.forEach(img => img.selected = false);
     const fs = 30;
     const factor = 1.2;        // 120% of fontSize
     const buttons = document.querySelectorAll('.toggle-btn');
@@ -2278,7 +2254,8 @@ function addDefaultText() {
         boundingWidth: 0,
         boundingHeight: 0,
         noAnim: false,
-        groupId: null
+        groupId: null,
+        rotation:0
     };
 
     // 2) Measure it
@@ -2408,7 +2385,47 @@ function isMouseOverImage(imgObj, pos) {
 // Assumes helpers: getTextObjectAt, getHandleUnderMouse, getHandleUnderMouseForImage,
 // isInsideBox, drawCanvas, SaveDesignBoard, enableFillColorDiv, enableStrockColorDiv
 
+function rotateSelectedItems(degrees) {
+    const rad = degrees * Math.PI / 180;
 
+    // Update rotation for selected text
+    textObjects.forEach(obj => {
+        if (obj.selected) {
+            obj.rotation = rad;
+        }
+    });
+
+    // Update rotation for selected images
+    images.forEach(img => {
+        if (img.selected) {
+            img.rotation = rad;
+        }
+    });
+
+    drawCanvas('Common');
+}
+
+function isInsideRotatedBox(mouseX, mouseY, obj) {
+    const rotation = -(obj.rotation || 0) * Math.PI / 180;
+    const centerX = obj.x + obj.boundingWidth / 2;
+    const centerY = obj.y + obj.boundingHeight / 2;
+
+    // Translate mouse to object's center
+    const dx = mouseX - centerX;
+    const dy = mouseY - centerY;
+
+    // Rotate point back (undo rotation)
+    const localX = dx * Math.cos(rotation) - dy * Math.sin(rotation);
+    const localY = dx * Math.sin(rotation) + dy * Math.cos(rotation);
+
+    // Check if inside unrotated bounding box
+    return (
+        localX >= -obj.boundingWidth / 2 &&
+        localX <= obj.boundingWidth / 2 &&
+        localY >= -obj.boundingHeight / 2 &&
+        localY <= obj.boundingHeight / 2
+    );
+}
 
 canvas.addEventListener("mousedown", e => {
     const rect = canvas.getBoundingClientRect();
@@ -2416,16 +2433,15 @@ canvas.addEventListener("mousedown", e => {
     const shift = e.shiftKey;
     if (document.activeElement === textEditor) return;
 
-    // SHIFT-click toggles selection
-    const txtHit = getTextObjectAt(mouse.x, mouse.y);
+    const txtHit = textObjects.find(obj => isInsideRotatedBox(mouse.x, mouse.y, obj));
     const imgHit = findImageAt(mouse);
+
     if (shift) {
         if (txtHit) return toggleSelect(txtHit);
         if (imgHit) return toggleSelect(imgHit);
         return;
     }
 
-    // Detect resize handle
     let primary = null;
     let handle;
     if (txtHit && txtHit.selected) {
@@ -2441,7 +2457,6 @@ canvas.addEventListener("mousedown", e => {
         }
     }
 
-    // Multi-resize
     const selectedCount = textObjects.filter(o => o.selected).length + images.filter(i => i.selected).length;
     if (primary && selectedCount > 1) {
         startMultiResize(primary.obj, e);
@@ -2449,7 +2464,6 @@ canvas.addEventListener("mousedown", e => {
         return;
     }
 
-    // Single-item resize
     if (primary && selectedCount === 1) {
         if (primary.type === 'text') {
             isResizingText = true;
@@ -2469,7 +2483,6 @@ canvas.addEventListener("mousedown", e => {
         e.preventDefault(); drawCanvas('Common'); return;
     }
 
-    // Group-drag
     if ((txtHit && txtHit.selected) || (imgHit && imgHit.selected)) {
         isDraggingGroup = true;
         groupDragStart = { x: e.clientX, y: e.clientY };
@@ -2481,7 +2494,6 @@ canvas.addEventListener("mousedown", e => {
         e.preventDefault(); return;
     }
 
-    // Single-select fallback
     textObjects.forEach(o => o.selected = false);
     images.forEach(i => i.selected = false);
     activeText = activeImage = null;
@@ -2500,7 +2512,7 @@ canvas.addEventListener("mousedown", e => {
             };
             e.preventDefault(); drawCanvas('Common'); return;
         }
-        if (isInsideBox(mouse.x, mouse.y, txtHit)) {
+        if (isInsideRotatedBox(mouse.x, mouse.y, txtHit)) {
             isDraggingText = true;
             dragOffsetText = { x: mouse.x - txtHit.x, y: mouse.y - txtHit.y };
             e.preventDefault(); drawCanvas('Common'); return;
@@ -2517,37 +2529,10 @@ canvas.addEventListener("mousedown", e => {
         e.preventDefault(); drawCanvas('Common'); return;
     }
 
-    // Deselect all
     textObjects.forEach(o => o.selected = false);
     images.forEach(i => i.selected = false);
     activeText = activeImage = null;
     e.preventDefault(); drawCanvas('Common');
-});
-
-// Mousemove
-canvas.addEventListener('mousemove', e => {
-    if (isDraggingGroup) {
-        const dx = e.clientX - groupDragStart.x;
-        const dy = e.clientY - groupDragStart.y;
-        groupStarts.forEach(gs => { gs.obj.x = gs.x + dx; gs.obj.y = gs.y + dy; });
-        drawCanvas('Common');
-    } else if (isResizingText) {
-        // existing single-text-resize logic here...
-    } else if (isResizingImage) {
-        // existing single-image-resize logic here...
-    } else if (isDraggingText) {
-        const rect = canvas.getBoundingClientRect();
-        const mousePos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-        activeText.x = mousePos.x - dragOffsetText.x;
-        activeText.y = mousePos.y - dragOffsetText.y;
-        drawCanvas('Common');
-    } else if (isDraggingImage) {
-        const rect = canvas.getBoundingClientRect();
-        const mousePos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-        activeImage.x = mousePos.x - dragOffsetImage.x;
-        activeImage.y = mousePos.y - dragOffsetImage.y;
-        drawCanvas('Common');
-    }
 });
 
 // Mouseup
@@ -2857,10 +2842,68 @@ function adjustFontSizeToFitBox(obj) {
 
 
 canvas.addEventListener("mousemove", function (e) {
-   
     const pos = getMousePos(canvas, e);
+    let cursor = "default";
 
-    // ── 0) GROUP DRAG ───────────────────────────────────────────────
+    // Tolerance settings
+    const cornerTolerance = 25;      // increase corner hit area
+    const edgeTolerance = 15;        // reduce edge hit area
+    const verticalOffset = 5;        // shift edges slightly upward
+
+    // ── 0) TEXT HANDLE HOVER (corners first, then edges) ───────────
+    if (!isDraggingText && !isResizingText && activeText) {
+        const center = {
+            x: activeText.x + activeText.boundingWidth / 2,
+            y: activeText.y + activeText.boundingHeight / 2
+        };
+        // Convert to unrotated space
+        const pt = rotatePoint(pos.x, pos.y, center.x, center.y, -activeText.rotation);
+        const x0 = activeText.x;
+        const y0 = activeText.y + verticalOffset;
+        const x1 = x0 + activeText.boundingWidth;
+        const y1 = activeText.y + activeText.boundingHeight - verticalOffset;
+
+        // 1) Corner zones
+        const corners = [
+            { x: x0, y: y0, cursor: 'nwse-resize' },
+            { x: x1, y: y0, cursor: 'nesw-resize' },
+            { x: x0, y: y1, cursor: 'nesw-resize' },
+            { x: x1, y: y1, cursor: 'nwse-resize' }
+        ];
+        for (const c of corners) {
+            if (Math.hypot(pt.x - c.x, pt.y - c.y) < cornerTolerance) {
+                canvas.style.cursor = c.cursor;
+                return;
+            }
+        }
+
+        // 2) Edge zones (after corners)
+        // vertical edges (left/right)
+        if ((Math.abs(pt.x - x0) < edgeTolerance || Math.abs(pt.x - x1) < edgeTolerance) &&
+            pt.y > y0 + cornerTolerance && pt.y < y1 - cornerTolerance) {
+            canvas.style.cursor = 'ew-resize';
+            return;
+        }
+        // horizontal edges (top/bottom)
+        if ((Math.abs(pt.y - y0) < edgeTolerance || Math.abs(pt.y - y1) < edgeTolerance) &&
+            pt.x > x0 + cornerTolerance && pt.x < x1 - cornerTolerance) {
+            canvas.style.cursor = 'ns-resize';
+            return;
+        }
+    }
+
+    // ── 1) IMAGE HANDLE HOVER ───────────────────────────────────────
+    if (!isDraggingImage && !isResizingImage && activeImage) {
+        const imgHandle = getHandleUnderMouseForImage(activeImage, pos);
+        if (imgHandle) {
+            if (imgHandle === 'top-left' || imgHandle === 'bottom-right') cursor = 'nwse-resize';
+            if (imgHandle === 'top-right' || imgHandle === 'bottom-left') cursor = 'nesw-resize';
+            canvas.style.cursor = cursor;
+            return;
+        }
+    }
+
+    // ── 2) GROUP DRAG ───────────────────────────────────────────────
     if (isDraggingGroup) {
         const dx = e.clientX - groupDragStart.x;
         const dy = e.clientY - groupDragStart.y;
@@ -2869,180 +2912,132 @@ canvas.addEventListener("mousemove", function (e) {
             obj.y = y + dy;
         });
         drawCanvas('Common');
+        canvas.style.cursor = 'grabbing';
         return;
     }
 
-    // --- 1) TEXT RESIZE & DRAG ---
+
+    // ── 3) TEXT RESIZE & DRAG ────────────────────────────────────────
     if (isResizingText && activeText && activeTextHandle) {
         const obj = activeText;
+        const ctx = canvas.getContext('2d');
+        const center = { x: obj.x + obj.boundingWidth / 2, y: obj.y + obj.boundingHeight / 2 };
+        const pt = rotatePoint(pos.x, pos.y, center.x, center.y, -obj.rotation);
         const oldL = obj.x, oldT = obj.y;
         const oldW = obj.boundingWidth, oldH = obj.boundingHeight;
-        const oldR = oldL + oldW;
-        switch (activeTextHandle) {
-            // ─── Corners: diagonal uniform scale ───────────────────────
-            case 'bottom-right':
-            case 'bottom-left':
-            case 'top-right':
-            case 'top-left': {
-                const ctx = canvas.getContext("2d");
+        let dx, dy;
 
-                let dx, dy;
-                if (activeTextHandle === 'bottom-right') {
-                    dx = pos.x - oldL; dy = pos.y - oldT;
-                } else if (activeTextHandle === 'bottom-left') {
-                    dx = oldW - (pos.x - oldL); dy = pos.y - oldT;
-                } else if (activeTextHandle === 'top-right') {
-                    dx = pos.x - oldL; dy = oldH - (pos.y - oldT);
-                } else { // top-left
-                    dx = oldW - (pos.x - oldL);
-                    dy = oldH - (pos.y - oldT);
-                }
-
-                let scale = Math.min(dx / oldW, dy / oldH);
-
-                const minFontSize = 10;
-                const minScale = minFontSize / obj.fontSize;
-                scale = Math.max(scale, minScale);
-
-                const newFontSize = obj.fontSize * scale;
-
-                // Recalculate min bounding box based on new font size
-                ctx.font = `${newFontSize}px ${obj.fontFamily}`;
-                const lines = wrapText(ctx, obj.text.replace(/\n/g, ''), Infinity);
-                const lineHeight = newFontSize * 1.2;
-                const minHeight = lines.length * lineHeight + 2 * padding;
-
-                // Find longest word or character to get minWidth
-                const minWidth = getMinTextWidth(ctx, obj.text.replace(/\n/g, ''));
-
-                const newW = Math.max(oldW * scale, minWidth);
-                const newH = Math.max(oldH * scale, minHeight);
-
-                if (activeTextHandle === 'bottom-right') {
-                    obj.boundingWidth = newW;
-                    obj.boundingHeight = newH;
-                } else if (activeTextHandle === 'bottom-left') {
-                    obj.x = oldL + oldW - newW;
-                    obj.boundingWidth = newW;
-                    obj.boundingHeight = newH;
-                } else if (activeTextHandle === 'top-right') {
-                    obj.y = oldT + oldH - newH;
-                    obj.boundingWidth = newW;
-                    obj.boundingHeight = newH;
-                } else { // top-left
-                    obj.x = oldL + oldW - newW;
-                    obj.y = oldT + oldH - newH;
-                    obj.boundingWidth = newW;
-                    obj.boundingHeight = newH;
-                }
-
-                obj.fontSize = newFontSize;
-                break;
-            }
-
-
-
-
-
-            // ─── Middle horizontal: resize width + rewrap ──────────────
-           case 'right-middle': {
-                //const ctx = canvas.getContext("2d");
-                //ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-                //const minWidth = getMinCharWidth(ctx, obj.text.replace(/\n/g, ''));
-
-                //const newW = pos.x - oldL;
-                //if (newW >= minWidth) {
-                //    obj.boundingWidth = newW;
-
-                //    const lines = wrapText(ctx, obj.text.replace(/\n/g, ''), newW - 2 * padding);
-                //    const lineHeight = obj.fontSize * 1.2;
-                //    obj.boundingHeight = lines.length * lineHeight + 2 * padding;
-                //}
-                //break;
-}
-
-            case 'left-middle': {
-                //const ctx = canvas.getContext("2d");
-                //ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-
-                //const minWidth = getMinCharWidth(ctx, obj.text.replace(/\n/g, ''));
-
-                //const oldR = oldL + oldW;
-                //const newW = oldR - pos.x;
-
-                //if (newW >= minWidth) {
-                //    obj.x = pos.x;
-                //    obj.boundingWidth = newW;
-
-                //    const lines = wrapText(ctx, obj.text.replace(/\n/g, ''), newW - 2 * padding);
-                //    const lineHeight = obj.fontSize * 1.2;
-                //    obj.boundingHeight = lines.length * lineHeight + 2 * padding;
-                //}
-                //break;
-            }
-
-
-
-            // ─── Vertical middle: no-op (or add logic) ────────────────
-            case 'top-middle':
-            case 'bottom-middle':
-                // nothing
-                break;
+        // Determine corner logic
+        if (activeTextHandle === 'bottom-right') {
+            dx = pt.x - oldL; dy = pt.y - oldT; cursor = 'nwse-resize';
+        } else if (activeTextHandle === 'bottom-left') {
+            dx = (oldL + oldW) - pt.x; dy = pt.y - oldT; cursor = 'nesw-resize';
+        } else if (activeTextHandle === 'top-right') {
+            dx = pt.x - oldL; dy = (oldT + oldH) - pt.y; cursor = 'nesw-resize';
+        } else if (activeTextHandle === 'top-left') {
+            dx = (oldL + oldW) - pt.x; dy = (oldT + oldH) - pt.y; cursor = 'nwse-resize';
         }
+        let scale = Math.min(dx / oldW, dy / oldH);
+        const minScale = 10 / obj.fontSize;
+        scale = Math.max(scale, minScale);
+
+        // Apply scale
+        const newFontSize = obj.fontSize * scale;
+        ctx.font = `${newFontSize}px ${obj.fontFamily}`;
+        const lines = wrapText(ctx, obj.text.replace(/\n/g, ''), Infinity);
+        const lineHeight = newFontSize * obj.lineSpacing;
+        const minH = lines.length * lineHeight + 2 * padding;
+        const minW = getMinTextWidth(ctx, obj.text.replace(/\n/g, ''));
+        const newW = Math.max(oldW * scale, minW);
+        const newH = Math.max(oldH * scale, minH);
+
+        // Reposition for left/top handles
+        if (activeTextHandle.includes('left')) obj.x = oldL + oldW - newW;
+        if (activeTextHandle.includes('top')) obj.y = oldT + oldH - newH;
+        obj.boundingWidth = newW;
+        obj.boundingHeight = newH;
+        obj.fontSize = newFontSize;
 
         drawCanvas('Common');
-        return; // skip drag + image logic
-    }
-
-
-    // --- 2) TEXT DRAG ───────────────────────────────────────────────
-    if (isDraggingText && activeText) {
-        activeText.x = pos.x - dragOffsetText.x;
-        activeText.y = pos.y - dragOffsetText.y;
-        drawCanvas('Common');
+        canvas.style.cursor = cursor;
         return;
     }
 
-    // --- 3) IMAGE DRAG ─────────────────────────────────────────────
+    // ── 4) TEXT DRAG ────────────────────────────────────────────────
+    if (isDraggingText && activeText) {
+        const center = { x: activeText.x + activeText.boundingWidth / 2, y: activeText.y + activeText.boundingHeight / 2 };
+        const pt = rotatePoint(pos.x, pos.y, center.x, center.y, -activeText.rotation);
+        activeText.x = pt.x - dragOffsetText.x;
+        activeText.y = pt.y - dragOffsetText.y;
+        drawCanvas('Common');
+        canvas.style.cursor = 'grabbing';
+        return;
+    }
+
+    // ── 5) IMAGE DRAG ─────────────────────────────────────────────
     if (isDraggingImage && activeImage) {
         activeImage.x = pos.x - dragOffsetImage.x;
         activeImage.y = pos.y - dragOffsetImage.y;
-        drawCanvas("Common");
-    }
-
-    // --- 4) IMAGE RESIZE ───────────────────────────────────────────
-    if (isResizingImage && activeImage && activeImageHandle) {
-        let newWidth, newHeight;
-        switch (activeImageHandle) {
-            case "top-left":
-                newWidth = activeImage.width * activeImage.scaleX + (activeImage.x - pos.x);
-                newHeight = activeImage.height * activeImage.scaleY + (activeImage.y - pos.y);
-                activeImage.x = pos.x;
-                activeImage.y = pos.y;
-                break;
-            case "top-right":
-                newWidth = pos.x - activeImage.x;
-                newHeight = activeImage.height * activeImage.scaleY + (activeImage.y - pos.y);
-                activeImage.y = pos.y;
-                break;
-            case "bottom-left":
-                newWidth = activeImage.width * activeImage.scaleX + (activeImage.x - pos.x);
-                newHeight = pos.y - activeImage.y;
-                activeImage.x = pos.x;
-                break;
-            case "bottom-right":
-                newWidth = pos.x - activeImage.x;
-                newHeight = pos.y - activeImage.y;
-                break;
-        }
-        // allow full squish, but keep at least 1% of original size
-        activeImage.scaleX = Math.max(newWidth / activeImage.width, 0.01);
-        activeImage.scaleY = Math.max(newHeight / activeImage.height, 0.01);
-
-        drawCanvas("Common");
+        drawCanvas('Common');
+        canvas.style.cursor = 'grabbing';
         return;
     }
+
+    // ── 6) IMAGE RESIZE ───────────────────────────────────────────
+    if (isResizingImage && activeImage && activeImageHandle) {
+        const oldR = activeImage.x + activeImage.width * activeImage.scaleX;
+        const oldB = activeImage.y + activeImage.height * activeImage.scaleY;
+        let newW, newH;
+        if (activeImageHandle === 'bottom-right') {
+            newW = pos.x - activeImage.x;
+            newH = pos.y - activeImage.y;
+            cursor = 'nwse-resize';
+        } else if (activeImageHandle === 'bottom-left') {
+            newW = oldR - pos.x;
+            newH = pos.y - activeImage.y;
+            activeImage.x = pos.x;
+            cursor = 'nesw-resize';
+        } else if (activeImageHandle === 'top-right') {
+            newW = pos.x - activeImage.x;
+            newH = oldB - pos.y;
+            activeImage.y = pos.y;
+            cursor = 'nesw-resize';
+        } else if (activeImageHandle === 'top-left') {
+            newW = oldR - pos.x;
+            newH = oldB - pos.y;
+            activeImage.x = pos.x;
+            activeImage.y = pos.y;
+            cursor = 'nwse-resize';
+        }
+        activeImage.scaleX = Math.max(newW / activeImage.width, 0.01);
+        activeImage.scaleY = Math.max(newH / activeImage.height, 0.01);
+        drawCanvas('Common');
+        canvas.style.cursor = cursor;
+        return;
+    }
+
+    // ── 7) Hover Feedback (no action) ───────────────────────────────
+    if (!isDraggingText && !isResizingText && activeText) {
+        const center = { x: activeText.x + activeText.boundingWidth / 2, y: activeText.y + activeText.boundingHeight / 2 };
+        const pt = rotatePoint(pos.x, pos.y, center.x, center.y, -activeText.rotation);
+        if (pt.x >= activeText.x && pt.x <= activeText.x + activeText.boundingWidth && pt.y >= activeText.y && pt.y <= activeText.y + activeText.boundingHeight) {
+            cursor = 'grab';
+        }
+    }
+    if (!isDraggingImage && !isResizingImage && activeImage) {
+        const w = activeImage.width * activeImage.scaleX;
+        const h = activeImage.height * activeImage.scaleY;
+        if (pos.x >= activeImage.x && pos.x <= activeImage.x + w && pos.y >= activeImage.y && pos.y <= activeImage.y + h) {
+            cursor = 'grab';
+        }
+    }
+
+    canvas.style.cursor = cursor;
 });
+
+
+
+
 
 function getMinTextWidth(ctx, text) {
     let minWidth = 0;
@@ -3078,7 +3073,17 @@ function getHandleUnderMouseForImageOld(imgObj, pos) {
     return null;
 }
 
-
+function rotatePoint(px, py, cx, cy, angleInDegrees) {
+    const angle = angleInDegrees * Math.PI / 180;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    const dx = px - cx;
+    const dy = py - cy;
+    return {
+        x: cx + dx * cos - dy * sin,
+        y: cy + dx * sin + dy * cos
+    };
+}
 
 function onBoxResizeEndOld(obj) {
     const ctx = canvas.getContext('2d');
@@ -3810,7 +3815,8 @@ canvas.addEventListener('drop', e => {
             opacity: 1,
             selected: false,
             noAnim: false,
-            groupId: null
+            groupId: null,
+            rotation: 0
         });
         drawCanvas('Common');
     };

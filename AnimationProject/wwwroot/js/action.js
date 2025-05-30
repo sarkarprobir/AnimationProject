@@ -396,7 +396,8 @@ function saveCanvasData() {
                 opacity: obj.opacity,
                 lineSpacing: obj.lineSpacing,
                 noAnim: obj.noAnim,
-                groupId: obj.groupId
+                groupId: obj.groupId,
+                rotation: obj.rotation
             };
         }),
 
@@ -413,7 +414,8 @@ function saveCanvasData() {
                 height: dispH / screenH,
                 opacity: imgObj.opacity,
                 noAnim: imgObj.noAnim,
-                groupId: imgObj.groupId
+                groupId: imgObj.groupId,
+                rotation: imgObj.rotation
             };
         })
     };
@@ -669,6 +671,7 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
                 : obj.fontSize * 1.2,
             noAnim: obj.noAnim,
             groupId: obj.groupId,
+            rotation: obj.rotation,
         };
     });
 
@@ -687,6 +690,7 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
         o.img.onerror = () => drawCanvas(condition);
         o.noAnim = imgObj.noAnim;
         o.groupId = imgObj.groupId;
+        o.rotation = imgObj.rotation;
         return o;
     });
 
