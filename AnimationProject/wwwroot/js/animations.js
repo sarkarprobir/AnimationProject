@@ -15,6 +15,7 @@ let textResizeStart = null;
 let isDraggingGroup = false;
 let groupDragStart = null;
 let groupStarts = []; // { obj, x, y }[]
+let resizeState = null;
 
 //document.getElementById('alinear').classList.add('active_effect');
 //const stream = canvas.captureStream(7); // Capture at 30 fps
@@ -2402,7 +2403,7 @@ function isMouseOverImage(imgObj, pos) {
 // Assumes existing helpers: getTextObjectAt, getHandleUnderMouse, getHandleUnderMouseForImage,
 // isInsideBox, drawCanvas, SaveDesignBoard, enableFillColorDiv, enableStrockColorDiv
 
-let resizeState = null;
+
 // Full canvas interaction with multi-resize and centered text positioning
 // Assumes helpers: getTextObjectAt, getHandleUnderMouse, getHandleUnderMouseForImage,
 // isInsideBox, drawCanvas, SaveDesignBoard, enableFillColorDiv, enableStrockColorDiv
