@@ -17,6 +17,11 @@ let groupDragStart = null;
 let groupStarts = []; // { obj, x, y }[]
 let resizeState = null;
 
+let isRotating = false;
+let rotatingObject = null;
+let rotationStartAngle = 0;
+let rotationStartValue = 0;
+
 
 //document.getElementById('alinear').classList.add('active_effect');
 //const stream = canvas.captureStream(7); // Capture at 30 fps
@@ -429,164 +434,7 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
 
 
 
-//function drawCanvas(condition) {
-//    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear entire canvas
-//    const bgColor = $("#hdnBackgroundSpecificColor").val();
-//    if (bgColor && bgColor.trim() !== "") {
-//        ctx.fillStyle = bgColor;
-//        ctx.fillRect(0, 0, canvas.width, canvas.height);
-//    }
 
-//    // Draw background image if available.
-//    if (canvas.bgImage) {
-//        ctx.drawImage(canvas.bgImage, 0, 0, canvas.width, canvas.height);
-//    }
-
-//    // --- Draw multiple images from the images array ---
-//    if (images && images.length) {
-//        images.forEach(imgObj => {
-//            ctx.save();
-//            ctx.globalAlpha = imgObj.opacity || 1;
-//            const scaleX = imgObj.scaleX || 1;
-//            const scaleY = imgObj.scaleY || 1;
-//            ctx.translate(imgObj.x, imgObj.y);
-//            ctx.scale(scaleX, scaleY);
-//            // Draw the image at (0,0) because translation has already been applied.
-//            ctx.drawImage(imgObj.img, 0, 0, imgObj.width, imgObj.height);
-//            ctx.restore();
-
-//            // If this image is selected, draw a border and four resize handles.
-//            if (imgObj.selected) {
-//                ctx.save();
-//                ctx.strokeStyle = "blue";
-//                ctx.lineWidth = 2;
-//                const dispW = imgObj.width * scaleX;
-//                const dispH = imgObj.height * scaleY;
-//                ctx.strokeRect(imgObj.x, imgObj.y, dispW, dispH);
-//                // Draw handles at the four corners
-//                const handles = getImageResizeHandles(imgObj); // Make sure this function uses your dynamic dimensions
-//                ctx.fillStyle = "red";
-//                handles.forEach(handle => {
-//                    ctx.fillRect(handle.x - handleSize / 2, handle.y - handleSize / 2, handleSize, handleSize);
-//                });
-//                ctx.restore();
-//            }
-//        });
-//    }
-
-//    ctx.save();
-//    ctx.globalAlpha = textPosition.opacity || 1; // Apply text opacity
-
-//    if (condition === 'Common' || condition === 'ChangeStyle') {
-//        textObjects.forEach(obj => {
-//            ctx.save();
-//            // If selected, draw the bounding box and handles.
-
-//            if (obj.selected) {
-//                // Constrain the box if it goes beyond canvas boundaries.
-//                if (obj.x < 0) obj.x = 0;
-//                if (obj.x + obj.boundingWidth > canvas.width) {
-//                    obj.boundingWidth = canvas.width - obj.x;
-//                }
-//                const boxX = obj.x - padding;
-//                const boxY = obj.y - padding;
-//                const boxWidth = obj.boundingWidth + 2 * padding - RECT_WIDTH_ADJUST;
-//                //const boxHeight = obj.boundingHeight + 2 * padding;
-//                const boxHeight = obj.boundingHeight + 2 * padding - RECT_HEIGHT_ADJUST;
-//                drawRoundedRect(ctx, boxX, boxY, boxWidth, boxHeight, 5);
-
-//                const handles = getTextResizeHandles(obj);
-//                ctx.fillStyle = "#FF7F50";
-
-//                const VISUAL_HANDLE_SIZE = 8;
-
-//               // ctx.fillStyle = "#FF7F50";
-//                handles.forEach(pt => {
-//                    ctx.fillRect(
-//                        pt.x - VISUAL_HANDLE_SIZE / 2,
-//                        pt.y - VISUAL_HANDLE_SIZE / 2,
-//                        VISUAL_HANDLE_SIZE,
-//                        VISUAL_HANDLE_SIZE
-//                    );
-//                });
-//            }
-
-//            // Set text properties.
-//            ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-//            ctx.fillStyle = obj.textColor;
-//            ctx.textBaseline = "top";
-
-//            // Determine the maximum text width for wrapping.
-//            const maxTextWidth = obj.boundingWidth - 2 * padding;
-//            let lines;
-//            // If the text contains newline characters, use them; otherwise, wrap.
-//            if (obj.text.indexOf("\n") !== -1) {
-//                lines = obj.text.split("\n");
-//            } else {
-//                lines = wrapText(ctx, obj.text, maxTextWidth);
-//            }
-//            const lineHeight = obj.fontSize * 1.2;
-//            const availableHeight = obj.boundingHeight - 2 * padding;
-//            const maxLines = Math.floor(availableHeight / lineHeight);
-//            const startY = obj.y + padding;
-
-//            // Draw each line with the correct horizontal offset based on alignment.
-//            for (let i = 0; i < Math.min(lines.length, maxLines); i++) {
-//                const line = lines[i];
-//                const lineWidth = ctx.measureText(line).width;
-//                let offsetX;
-//                if (obj.textAlign === "center") {
-//                    offsetX = obj.x + (obj.boundingWidth - lineWidth) / 2;
-//                } else if (obj.textAlign === "right") {
-//                    offsetX = obj.x + obj.boundingWidth - lineWidth - padding;
-//                } else { // left alignment
-//                    offsetX = obj.x + padding;
-//                }
-//                ctx.fillText(line, offsetX, startY + i * lineHeight);
-//            }
-//            ctx.restore();
-//        });
-//    }
-
-//    if (condition === 'applyAnimations') {
-//        textObjects.forEach(obj => {
-//            ctx.save();
-//            ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-//            ctx.fillStyle = obj.textColor;
-//            ctx.textBaseline = "top";
-
-//            const maxTextWidth = obj.boundingWidth - 2 * padding;
-//            let lines;
-//            if (obj.text.indexOf("\n") !== -1) {
-//                lines = obj.text.split("\n");
-//            } else {
-//                lines = wrapText(ctx, obj.text, maxTextWidth);
-//            }
-//            const lineHeight = obj.fontSize * 1.2;
-//            const availableHeight = obj.boundingHeight - 2 * padding;
-//            const maxLines = Math.floor(availableHeight / lineHeight);
-//            const startY = obj.y + padding;
-
-//            for (let i = 0; i < Math.min(lines.length, maxLines); i++) {
-//                const line = lines[i];
-//                const lineWidth = ctx.measureText(line).width;
-//                let offsetX;
-//                if (obj.textAlign === "center") {
-//                    offsetX = obj.x + (obj.boundingWidth - lineWidth) / 2;
-//                } else if (obj.textAlign === "right") {
-//                    offsetX = obj.x + obj.boundingWidth - lineWidth - padding;
-//                } else {
-//                    offsetX = obj.x + padding;
-//                }
-//                ctx.fillText(line, offsetX, startY + i * lineHeight);
-//            }
-//            ctx.restore();
-//        });
-//    }
-
-//    ctx.globalAlpha = 1;
-//    ctx.restore();
-//}
 
 function getLinesFor(obj) {
     ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
@@ -668,6 +516,9 @@ function drawCanvas(condition) {
         const w = imgObj.width * scaleX;
         const h = imgObj.height * scaleY;
         const rotation = (imgObj.rotation || 0) * Math.PI / 180;
+        if (imgObj.selected) {
+            drawRotateHandle(imgObj);
+        }
 
         if (!imgObj.img) {
             const img = new Image();
@@ -698,6 +549,11 @@ function drawCanvas(condition) {
             ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
             ctx.fillStyle = obj.textColor;
             ctx.textBaseline = "top";
+
+            if (obj.selected) {
+                drawRotateHandle(obj);
+            }
+
 
             const x = obj.x;
             const y = obj.y;
@@ -2435,6 +2291,31 @@ canvas.addEventListener("mousedown", e => {
     const shift = e.shiftKey;
     if (document.activeElement === textEditor) return;
 
+   
+
+    //  Rotation handle check FIRST
+    let hitRotate = null;
+    [...textObjects, ...images].forEach(obj => {
+        if (!obj.selected || !obj._rotateHandle) return;
+        const h = obj._rotateHandle;
+        const dist = Math.hypot(mouse.x - h.x, mouse.y - h.y);
+        if (dist < h.radius) {
+            hitRotate = obj;
+        }
+    });
+
+    if (hitRotate) {
+        isRotating = true;
+        rotatingObject = hitRotate;
+        rotationStartAngle = Math.atan2(mouse.y - hitRotate.y, mouse.x - hitRotate.x);
+        rotationStartValue = hitRotate.rotation || 0;
+
+        e.preventDefault();
+        return;
+    }
+
+
+
     // Hit‐test rotated text and images
     const txtHit = textObjects.find(obj => isInsideRotatedBox(mouse.x, mouse.y, obj));
     const imgHit = findImageAt(mouse);
@@ -2582,9 +2463,71 @@ canvas.addEventListener("mousedown", e => {
     rotationValueDisplay.textContent = '0°';
     rotationBadge.textContent = '0';
 
+
+    
+
+
     e.preventDefault();
     drawCanvas('Common');
 });
+
+
+function drawRotateHandle(obj) {
+    const ctx = canvas.getContext('2d');
+    ctx.save();
+
+    const isText = obj.text !== undefined;
+    let handleX, handleY;
+
+    if (isText) {
+        // ── TEXT ROTATE HANDLE ──
+        const centerX = obj.x + obj.boundingWidth / 2;
+        const centerY = obj.y + obj.boundingHeight / 2;
+        const offset = 25;
+        const angle = (obj.rotation || 0) * Math.PI / 180;
+
+        handleX = centerX + offset * Math.sin(-angle);
+        handleY = centerY - obj.boundingHeight / 2 - offset * Math.cos(-angle);
+    } else {
+        // ── IMAGE ROTATE HANDLE ──
+        const scaleX = obj.scaleX || 1;
+        const scaleY = obj.scaleY || 1;
+        const w = obj.width * scaleX;
+        const h = obj.height * scaleY;
+
+        const centerX = obj.x + w / 2;
+        const centerY = obj.y + h / 2;
+
+        const angle = (obj.rotation || 0) * Math.PI / 180;
+        const offset = 35; // distance outside the image
+
+        // Find position above the image in rotated space
+        const topEdgeY = centerY - h / 2;
+        const rotatedOffsetX = offset * Math.sin(-angle);
+        const rotatedOffsetY = offset * Math.cos(-angle);
+
+        handleX = centerX + rotatedOffsetX;
+        handleY = topEdgeY - rotatedOffsetY;
+    }
+
+    // ── DRAW CIRCLE HANDLE ──
+    ctx.beginPath();
+    ctx.arc(handleX, handleY, 8, 0, Math.PI * 2);
+    ctx.fillStyle = '#15cf91';
+    ctx.fill();
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.restore();
+
+    // Store for hit detection
+    obj._rotateHandle = {
+        x: handleX,
+        y: handleY,
+        radius: 10
+    };
+}
 
 
 
@@ -2903,6 +2846,15 @@ canvas.addEventListener("mousemove", function (e) {
     const edgeTolerance = 15;        // reduce edge hit area
     const verticalOffset = 5;        // shift edges slightly upward
 
+    if (isRotating && rotatingObject) {
+        const angleNow = Math.atan2(pos.y - rotatingObject.y, pos.x - rotatingObject.x);
+        const delta = angleNow - rotationStartAngle;
+        const angleDeg = (rotationStartValue + delta * 180 / Math.PI) % 360;
+
+        updateRotation(Math.round(angleDeg));
+        return;
+    }
+
     // ── 0) TEXT HANDLE HOVER (corners first, then edges) ───────────
     if (!isDraggingText && !isResizingText && activeText) {
         const center = {
@@ -3199,7 +3151,18 @@ function onBoxResizeEnd(obj) {
     drawCanvas('Common');
 }
 
+function updateRotation(angle) {
+    angle = ((angle % 360) + 360) % 360; // normalize
+    if (rotationSlider) rotationSlider.value = angle;
+    if (rotationValueDisplay) rotationValueDisplay.textContent = angle + '°';
+    if (rotationBadge) rotationBadge.innerText = angle + '°';
 
+    [...textObjects, ...images].forEach(obj => {
+        if (obj.selected) obj.rotation = angle;
+    });
+
+    drawCanvas('Common');
+}
 
 
 canvas.addEventListener("mouseup", function () {
@@ -3222,6 +3185,10 @@ canvas.addEventListener("mouseup", function () {
     isDraggingText = false;
     activeTextHandle = null;
     activeText = null;
+
+    isRotating = false;
+    rotatingObject = null;
+
 });
 
 canvas.addEventListener("mouseleave", function () {

@@ -306,7 +306,7 @@
     rotationSlider.addEventListener('input', () => {
       
       const angle = clampAngle(rotationSlider.value);
-      rotationValueSpan.textContent = angle;
+      rotationValueSpan.textContent = angle+ '°';;
       rotationBadge.textContent = angle ;
 
       [...textObjects, ...images].forEach(obj => {
@@ -363,7 +363,7 @@
     // Sync rotation to slider, display, and objects
     function updateRotation(angle) {
       if (rotationSlider) rotationSlider.value = angle;
-      if (rotationValueSpan) rotationValueSpan.textContent = angle;
+      if (rotationValueSpan) rotationValueSpan.textContent = angle+ '°';;
 
       [...textObjects, ...images].forEach(obj => {
         if (obj.selected) obj.rotation = angle;
@@ -371,56 +371,6 @@
 
       drawCanvas?.('Common');
     }
-
-    // // 2) Badge (contenteditable) → Slider & selected objects
-    // rotationBadge.addEventListener('input', () => {
-    //   let raw = rotationBadge.innerText.replace(/[^\d]/g, '');
-
-    // if (raw === "") {
-    //   // If no digits remain, immediately reset to “0°”
-    //   rotationBadge.innerText = "0°";
-
-    //   // Sync slider and display to 0
-    //   rotationSlider.value = 0;
-    //   rotationValueSpan.textContent = '0°';
-    //   [...textObjects, ...images].forEach(obj => {
-    //     if (obj.selected) obj.rotation = 0;
-    //   });
-    //   drawCanvas('Common');
-
-    // } else {
-    //   // Otherwise clamp between 0 and 360, then append “°”
-    //   let angle = parseInt(raw, 10);
-    //   if (isNaN(angle)) angle = 0;
-    //   angle = Math.min(Math.max(angle, 0), 360);
-    //   rotationBadge.innerText = angle;
-
-    //   // Sync slider and selected objects
-    //   rotationSlider.value = angle;
-    //   rotationValueSpan.textContent = angle ;
-    //   [...textObjects, ...images].forEach(obj => {
-    //     if (obj.selected) obj.rotation = angle;
-    //   });
-    //   drawCanvas('Common');
-    // }
-
-    // // Move caret to end so further typing/backspace feels natural
-    // const range = document.createRange();
-    // const sel = window.getSelection();
-    // range.selectNodeContents(rotationBadge);
-    // range.collapse(false);
-    // sel.removeAllRanges();
-    // sel.addRange(range);
-    // });
-
-    // // 3) Prevent invalid keys, allow only digits, Backspace, Delete, Arrow keys
-    // rotationBadge.addEventListener('keydown', (e) => {
-    //    if ( !/[0-9]/.test(e.key) &&
-    //     e.key == 'Backspace' &&
-    //     e.key == 'Delete') {
-    //   e.preventDefault();
-    // }
-    // });
 
 </script>
 
