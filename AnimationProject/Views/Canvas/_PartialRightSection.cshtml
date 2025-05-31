@@ -291,35 +291,70 @@
     });
 </script>
 <script>
-        const rotationSlider = document.getElementById('rotationSlider');
-    const rotationValueDisplay = document.getElementById('rotationValue');
+       const rotationSlider    = document.getElementById('rotationSlider');
+    const rotationValueSpan = document.getElementById('rotationValue');
+    const rotationBadge     = document.getElementById('rotationBadge');
 
-    rotationSlider.addEventListener('input', function () {
-      const angle = parseInt(this.value, 10);
-      rotationValueDisplay.textContent = angle;
+    // Helper: clamp a number between 0 and 360
+    function clampAngle(v) {
+      let n = parseInt(v, 10);
+      if (isNaN(n)) n = 0;
+      return Math.min(Math.max(n, 0), 360);
+    }
 
-      // Apply rotation to all selected items (text or image)
+    // 1) Slider → Badge & selected objects
+    rotationSlider.addEventListener('input', () => {
+      const angle = clampAngle(rotationSlider.value);
+      rotationValueSpan.textContent = angle;
+      rotationBadge.textContent = angle + '°';
+
       [...textObjects, ...images].forEach(obj => {
-        if (obj.selected) {
-          obj.rotation = angle; // You can store this value for drawing
-        }
+        if (obj.selected) obj.rotation = angle;
       });
-
-      drawCanvas("Common");
+      drawCanvas('Common');
     });
-        rotationSlider.addEventListener('input', function () {
-        const angle = parseInt(this.value, 10);
-        rotationValueDisplay.textContent = angle;
 
-        [...textObjects, ...images].forEach(obj => {
-            if (obj.selected) {
-                obj.rotation = angle;
-            }
-        });
+    // 2) Badge (contenteditable) → Slider & selected objects
+    rotationBadge.addEventListener('input', () => {
+      // Remove any non‐digit characters (strip out “°” or letters)
+      let raw = rotationBadge.innerText.replace(/[^\d]/g, '');
+      let angle = clampAngle(raw);
 
-        drawCanvas("Common");
+      // Write back sanitized angle
+      rotationBadge.textContent = angle + '°';
+      rotationSlider.value = angle;
+      rotationValueSpan.textContent = angle;
+
+      [...textObjects, ...images].forEach(obj => {
+        if (obj.selected) obj.rotation = angle;
+      });
+      drawCanvas('Common');
+
+      // Move caret to end so typing feels natural
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.selectNodeContents(rotationBadge);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
     });
+
+    // 3) Prevent invalid keys, allow only digits, Backspace, Delete, Arrow keys
+    rotationBadge.addEventListener('keydown', (e) => {
+      if (
+        !/[0-9]/.test(e.key) &&
+        e.key !== 'Backspace' &&
+        e.key !== 'Delete' &&
+        e.key !== 'ArrowLeft' &&
+        e.key !== 'ArrowRight' &&
+        e.key !== 'Tab'
+      ) {
+        e.preventDefault();
+      }
+    });
+
 </script>
+
 <style>
     .form-range {
         width: 240px;
@@ -399,6 +434,17 @@
             border: 2px solid #fff;
             border-radius: 50%;
             cursor: pointer;
+        }
+    /* Optional: make the editable span look a bit nicer when focused */
+    #rotationBadge[contenteditable] {
+        padding: 0.15rem 0.5rem;
+        border-radius: 0.25rem;
+        outline: none;
+    }
+
+        #rotationBadge[contenteditable]:focus {
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+            background-color: #ffffff;
         }
 </style>
 
@@ -834,7 +880,10 @@
             <label for="rotationSlider" class="mb-0 fw-semibold">
                 Rotation: <span id="rotationValue">0</span>°
             </label>
-            <span class="badge bg-primary" id="rotationBadge">0°</span>
+            <span class="badge bg-primary text-white"
+                  id="rotationBadge"
+                  contenteditable="true"
+                  spellcheck="false">0°</span>
         </div>
         <input type="range" class="form-range" min="0" max="360" step="1" id="rotationSlider">
     </div>

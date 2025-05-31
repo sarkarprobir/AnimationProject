@@ -17,6 +17,7 @@ let groupDragStart = null;
 let groupStarts = []; // { obj, x, y }[]
 let resizeState = null;
 
+
 //document.getElementById('alinear').classList.add('active_effect');
 //const stream = canvas.captureStream(7); // Capture at 30 fps
 //const recorder = new MediaRecorder(stream);
@@ -2428,42 +2429,56 @@ function isInsideRotatedBox(mouseX, mouseY, obj) {
 }
 
 canvas.addEventListener("mousedown", e => {
+    const rotationValueDisplay = document.getElementById('rotationValue');
     const rect = canvas.getBoundingClientRect();
     const mouse = { x: e.clientX - rect.left, y: e.clientY - rect.top };
     const shift = e.shiftKey;
     if (document.activeElement === textEditor) return;
 
+    // Hit‐test rotated text and images
     const txtHit = textObjects.find(obj => isInsideRotatedBox(mouse.x, mouse.y, obj));
     const imgHit = findImageAt(mouse);
 
+    // SHIFT‐click toggles selection
     if (shift) {
         if (txtHit) return toggleSelect(txtHit);
         if (imgHit) return toggleSelect(imgHit);
         return;
     }
 
+    // Check if clicking on a resize handle of an already‐selected object
     let primary = null;
     let handle;
     if (txtHit && txtHit.selected) {
         handle = getHandleUnderMouse(mouse.x, mouse.y, txtHit);
-        if (handle && !handle.includes('middle')) primary = { obj: txtHit, type: 'text', handle };
+        if (handle && !handle.includes('middle')) {
+            primary = { obj: txtHit, type: 'text', handle };
+        }
     }
     if (!primary) {
         for (let i = images.length - 1; i >= 0; i--) {
             const img = images[i];
             if (!img.selected) continue;
             handle = getHandleUnderMouseForImage(img, mouse);
-            if (handle) { primary = { obj: img, type: 'image', handle }; break; }
+            if (handle) {
+                primary = { obj: img, type: 'image', handle };
+                break;
+            }
         }
     }
 
-    const selectedCount = textObjects.filter(o => o.selected).length + images.filter(i => i.selected).length;
+    // Count how many are selected
+    const selectedCount = textObjects.filter(o => o.selected).length
+        + images.filter(i => i.selected).length;
+
+    // If multi‐resize
     if (primary && selectedCount > 1) {
         startMultiResize(primary.obj, e);
         e.preventDefault();
         return;
     }
 
+    // If single‐item resize
     if (primary && selectedCount === 1) {
         if (primary.type === 'text') {
             isResizingText = true;
@@ -2480,9 +2495,12 @@ canvas.addEventListener("mousedown", e => {
             activeImageHandle = primary.handle;
             activeImage = primary.obj;
         }
-        e.preventDefault(); drawCanvas('Common'); return;
+        e.preventDefault();
+        drawCanvas('Common');
+        return;
     }
 
+    // If group‐drag (click on any selected obj)
     if ((txtHit && txtHit.selected) || (imgHit && imgHit.selected)) {
         isDraggingGroup = true;
         groupDragStart = { x: e.clientX, y: e.clientY };
@@ -2491,15 +2509,26 @@ canvas.addEventListener("mousedown", e => {
             .forEach(o => groupStarts.push({ obj: o, x: o.x, y: o.y }));
         images.filter(i => i.selected)
             .forEach(i => groupStarts.push({ obj: i, x: i.x, y: i.y }));
-        e.preventDefault(); return;
+        e.preventDefault();
+        return;
     }
 
+    // Deselect everything before a new selection
     textObjects.forEach(o => o.selected = false);
     images.forEach(i => i.selected = false);
     activeText = activeImage = null;
 
+    // If clicked a text object: select and possibly start resize/drag
     if (txtHit) {
-        txtHit.selected = true; activeText = txtHit;
+        txtHit.selected = true;
+        activeText = txtHit;
+
+        // Sync slider, value display, and badge to this text’s current rotation
+        const angle = txtHit.rotation || 0;
+        rotationSlider.value = angle;
+        rotationValueDisplay.textContent = angle + '°';
+        rotationBadge.textContent = angle + '°';
+
         handle = getHandleUnderMouse(mouse.x, mouse.y, txtHit);
         if (handle && !handle.includes('middle')) {
             isResizingText = true;
@@ -2510,30 +2539,54 @@ canvas.addEventListener("mousedown", e => {
                 origW: txtHit.boundingWidth, origH: txtHit.boundingHeight,
                 origFont: txtHit.fontSize
             };
-            e.preventDefault(); drawCanvas('Common'); return;
+            e.preventDefault();
+            drawCanvas('Common');
+            return;
         }
         if (isInsideRotatedBox(mouse.x, mouse.y, txtHit)) {
             isDraggingText = true;
             dragOffsetText = { x: mouse.x - txtHit.x, y: mouse.y - txtHit.y };
-            e.preventDefault(); drawCanvas('Common'); return;
+            e.preventDefault();
+            drawCanvas('Common');
+            return;
         }
     }
 
+    // If clicked an image object: select and start drag
     if (imgHit) {
+        // Clear text selection
         textObjects.forEach(o => o.selected = false);
         images.forEach(i => i.selected = false);
-        imgHit.selected = true; activeImage = imgHit;
+
+        imgHit.selected = true;
+        activeImage = imgHit;
+
+        // Sync slider, value display, and badge to this image’s current rotation
+        const angle = imgHit.rotation || 0;
+        rotationSlider.value = angle;
+        rotationValueDisplay.textContent = angle + '°';
+        rotationBadge.textContent = angle + '°';
+
         isDraggingImage = true;
         dragOffsetImage = { x: mouse.x - imgHit.x, y: mouse.y - imgHit.y };
-        enableFillColorDiv(); enableStrockColorDiv();
-        e.preventDefault(); drawCanvas('Common'); return;
+        enableFillColorDiv();
+        enableStrockColorDiv();
+
+        e.preventDefault();
+        drawCanvas('Common');
+        return;
     }
 
-    textObjects.forEach(o => o.selected = false);
-    images.forEach(i => i.selected = false);
-    activeText = activeImage = null;
-    e.preventDefault(); drawCanvas('Common');
+    // If click on empty space: clear slider, value display, and badge to 0°
+    rotationSlider.value = 0;
+    rotationValueDisplay.textContent = '0°';
+    rotationBadge.textContent = '0°';
+
+    e.preventDefault();
+    drawCanvas('Common');
 });
+
+
 
 // Mouseup
 canvas.addEventListener('mouseup', e => {
