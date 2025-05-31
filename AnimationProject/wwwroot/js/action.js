@@ -1432,7 +1432,8 @@ function loadCanvasFromJsonForDownload1(jsonData, condition = 'Common') {
                 ? obj.lineSpacing
                 : obj.fontSize * 1.2,
             noAnim: obj.noAnim,
-            groupId: obj.groupId
+            groupId: obj.groupId,
+            rotation: obj.rotation
         };
     });
 
@@ -1443,6 +1444,8 @@ function loadCanvasFromJsonForDownload1(jsonData, condition = 'Common') {
         obj.y = o.y * screenH;
         obj.width = o.width * screenW;
         obj.height = o.height * screenH;
+        // Default rotation to 0 if not provided
+        obj.rotation = (typeof o.rotation === 'number') ? o.rotation : 0;
         obj.selected = false;
         obj.img = new Image();
         obj.img.crossOrigin = 'anonymous';
@@ -1758,8 +1761,6 @@ function drawCanvasForDownload(condition) {
     // compute “design‐space” dimensions for clearing
     const designW = canvasForDownload.width / dpr / scaleX;
     const designH = canvasForDownload.height / dpr / scaleY;
-    console.log("actual designW", designW);
-    console.log("actual designH", designH);
     // 2) Clear & draw background (in design units)
     ctxElementForDownload.clearRect(0, 0, designW, designH);
     const bgColor = document.getElementById('hdnBackgroundSpecificColorDownload').value.trim();
@@ -1782,10 +1783,12 @@ function drawCanvasForDownload(condition) {
         const y = imgObj.y;
         const w = imgObj.width * (imgObj.scaleX || 1);
         const h = imgObj.height * (imgObj.scaleY || 1);
+        const rotation = (imgObj.rotation || 0) * Math.PI / 180; // radians
 
         // lazy-load if this imgObj has no <img> yet
         if (!imgObj.img) {
             const img = new Image();
+            img.crossOrigin = 'anonymous';
             img.onload = () => {
                 imgObj.img = img;
                 drawCanvasForDownload(condition);
@@ -1794,15 +1797,33 @@ function drawCanvasForDownload(condition) {
             return;
         }
 
-        // draw in design space
+
+        //// 3c) Draw with correct center‐pivot rotation:
         ctxElementForDownload.save();
         ctxElementForDownload.globalAlpha = imgObj.opacity || 1;
-        ctxElementForDownload.translate(x, y);
-        ctxElementForDownload.scale(imgObj.scaleX || 1, imgObj.scaleY || 1);
-        try {
-            ctxElementForDownload.drawImage(imgObj.img, 0, 0, imgObj.width, imgObj.height);
-        } catch (e) {
 
+        // 1) Move origin to the image’s center
+        const cx = x + w / 2;
+        const cy = y + h / 2;
+        ctxElementForDownload.translate(cx, cy);
+
+        // 2) Apply rotation about that center
+        ctxElementForDownload.rotate(rotation);
+
+        // 3) Apply scale (if any) in this rotated coordinate system
+        ctxElementForDownload.scale(imgObj.scaleX || 1, imgObj.scaleY || 1);
+        // 4) Draw the image so that its center is at (0,0):
+        //    since we translated to (cx, cy), drawing from (−w/2, −h/2) puts top‐left at the correct spot.
+        try {
+            ctxElementForDownload.drawImage(
+                imgObj.img,
+                - (imgObj.width / 2),    // −(original width)/2
+                - (imgObj.height / 2),   // −(original height)/2
+                imgObj.width,
+                imgObj.height
+            );
+        } catch (e) {
+            // silent if drawImage fails
         }
 
         ctxElementForDownload.restore();
@@ -1819,9 +1840,10 @@ function drawCanvasForDownload(condition) {
 
             const x = obj.x;
             const y = obj.y;
+           
             const pad = padding;
             const maxW = obj.boundingWidth - 2 * pad;
-
+            const rotation = (obj.rotation || 0) * Math.PI / 180;
             //// split or wrap
             //const lines = obj.text.includes('\n')
             //    ? obj.text.split('\n')
@@ -1856,6 +1878,8 @@ function drawCanvasForDownload(condition) {
                 maxLineW = Math.max(maxLineW, glyphW);
             });
 
+           
+
             // compute overlap buffer *only* if spacing < 1
             const overlap = Math.max(0, 1 - obj.lineSpacing);
             const extraPerLine = overlap * fs;
@@ -1878,6 +1902,14 @@ function drawCanvasForDownload(condition) {
             // overwrite props
             obj.boundingWidth = boxWpx;
             obj.boundingHeight = boxHpx;
+
+            const cx = x + boxWpx / 2;
+            const cy = y + boxHpx / 2;
+
+            // 4f) Translate → rotate around center
+            ctxElementForDownload.translate(cx, cy);
+            ctxElementForDownload.rotate(rotation);
+            ctxElementForDownload.translate(-cx, -cy);
 
             // clipping & drawing
             const maxLines = Math.floor((boxHpx - 2 * pad) / lineH);
