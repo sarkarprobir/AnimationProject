@@ -2486,8 +2486,8 @@ function drawRotateHandle(obj) {
         const offset = 25;
         const angle = (obj.rotation || 0) * Math.PI / 180;
 
-        handleX = centerX + offset * Math.sin(-angle);
-        handleY = centerY - obj.boundingHeight / 2 - offset * Math.cos(-angle);
+        handleX = centerX + offset * Math.sin(angle);  // <- removed negative sign
+        handleY = centerY - obj.boundingHeight / 2 - offset * Math.cos(angle); // <- removed negative sign
     } else {
         // ── IMAGE ROTATE HANDLE ──
         const scaleX = obj.scaleX || 1;
@@ -2503,8 +2503,8 @@ function drawRotateHandle(obj) {
 
         // Find position above the image in rotated space
         const topEdgeY = centerY - h / 2;
-        const rotatedOffsetX = offset * Math.sin(-angle);
-        const rotatedOffsetY = offset * Math.cos(-angle);
+        const rotatedOffsetX = offset * Math.sin(angle);  // <- removed negative sign
+        const rotatedOffsetY = offset * Math.cos(angle);  // <- removed negative sign
 
         handleX = centerX + rotatedOffsetX;
         handleY = topEdgeY - rotatedOffsetY;
@@ -2528,6 +2528,7 @@ function drawRotateHandle(obj) {
         radius: 10
     };
 }
+
 
 
 
@@ -2851,7 +2852,11 @@ canvas.addEventListener("mousemove", function (e) {
         const delta = angleNow - rotationStartAngle;
         const angleDeg = (rotationStartValue + delta * 180 / Math.PI) % 360;
 
-        updateRotation(Math.round(angleDeg));
+        const roundedAngle = Math.round(angleDeg);
+        updateRotation(roundedAngle);
+
+        // ✅ Live update of rotationBadge
+        rotationBadge.textContent = roundedAngle;
         return;
     }
 
@@ -3037,6 +3042,7 @@ canvas.addEventListener("mousemove", function (e) {
         }
     }
 
+
     canvas.style.cursor = cursor;
 });
 
@@ -3155,7 +3161,7 @@ function updateRotation(angle) {
     angle = ((angle % 360) + 360) % 360; // normalize
     if (rotationSlider) rotationSlider.value = angle;
     if (rotationValueDisplay) rotationValueDisplay.textContent = angle + '°';
-    if (rotationBadge) rotationBadge.innerText = angle + '°';
+    if (rotationBadge) rotationBadge.innerText = angle;
 
     [...textObjects, ...images].forEach(obj => {
         if (obj.selected) obj.rotation = angle;
