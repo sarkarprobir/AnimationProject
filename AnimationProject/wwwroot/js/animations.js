@@ -2527,7 +2527,7 @@ canvas.addEventListener("mousedown", e => {
         const angle = txtHit.rotation || 0;
         rotationSlider.value = angle;
         rotationValueDisplay.textContent = angle + '°';
-        rotationBadge.textContent = angle + '°';
+        rotationBadge.textContent = angle;
 
         handle = getHandleUnderMouse(mouse.x, mouse.y, txtHit);
         if (handle && !handle.includes('middle')) {
@@ -2565,7 +2565,7 @@ canvas.addEventListener("mousedown", e => {
         const angle = imgHit.rotation || 0;
         rotationSlider.value = angle;
         rotationValueDisplay.textContent = angle + '°';
-        rotationBadge.textContent = angle + '°';
+        rotationBadge.textContent = angle ;
 
         isDraggingImage = true;
         dragOffsetImage = { x: mouse.x - imgHit.x, y: mouse.y - imgHit.y };
@@ -2580,7 +2580,7 @@ canvas.addEventListener("mousedown", e => {
     // If click on empty space: clear slider, value display, and badge to 0°
     rotationSlider.value = 0;
     rotationValueDisplay.textContent = '0°';
-    rotationBadge.textContent = '0°';
+    rotationBadge.textContent = '0';
 
     e.preventDefault();
     drawCanvas('Common');
