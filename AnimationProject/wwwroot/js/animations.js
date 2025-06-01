@@ -2481,53 +2481,65 @@ function drawRotateHandle(obj) {
 
     if (isText) {
         // ── TEXT ROTATE HANDLE ──
+        // 1) Find center of text‐box:
         const centerX = obj.x + obj.boundingWidth / 2;
         const centerY = obj.y + obj.boundingHeight / 2;
-        const offset = 25;
-        const angle = (obj.rotation || 0) * Math.PI / 180;
 
-        handleX = centerX + offset * Math.sin(angle);  // <- removed negative sign
-        handleY = centerY - obj.boundingHeight / 2 - offset * Math.cos(angle); // <- removed negative sign
+        // 2) Compute rotation in radians and a fixed offset:
+        const angle = (obj.rotation || 0) * Math.PI / 180;
+        const offset = 25;                       // “extra distance” beyond the text edge
+        const halfH = obj.boundingHeight / 2;   // half the text’s height
+
+        // 3) Total distance from center to handle = halfH + offset:
+        const dist = halfH + offset;
+
+        // 4) Place “dist” away from center, in the current “up” direction:
+        handleX = centerX + dist * Math.sin(angle);
+        handleY = centerY - dist * Math.cos(angle);
+
     } else {
         // ── IMAGE ROTATE HANDLE ──
+        // 1) Compute scaled width/height and center:
         const scaleX = obj.scaleX || 1;
         const scaleY = obj.scaleY || 1;
-        const w = obj.width * scaleX;
-        const h = obj.height * scaleY;
+        const w = (obj.width || 0) * scaleX;
+        const h = (obj.height || 0) * scaleY;
 
         const centerX = obj.x + w / 2;
         const centerY = obj.y + h / 2;
 
+        // 2) Compute rotation in radians and a fixed offset:
         const angle = (obj.rotation || 0) * Math.PI / 180;
-        const offset = 35; // distance outside the image
+        const offset = 35;  // “extra distance” beyond the image’s top edge
+        const halfH = h / 2; // half the image’s height
 
-        // Find position above the image in rotated space
-        const topEdgeY = centerY - h / 2;
-        const rotatedOffsetX = offset * Math.sin(angle);  // <- removed negative sign
-        const rotatedOffsetY = offset * Math.cos(angle);  // <- removed negative sign
+        // 3) Total distance from center to handle = halfH + offset:
+        const dist = halfH + offset;
 
-        handleX = centerX + rotatedOffsetX;
-        handleY = topEdgeY - rotatedOffsetY;
+        // 4) Place “dist” away from center, in the current “up” direction:
+        handleX = centerX + dist * Math.sin(angle);
+        handleY = centerY - dist * Math.cos(angle);
     }
 
     // ── DRAW CIRCLE HANDLE ──
     ctx.beginPath();
     ctx.arc(handleX, handleY, 8, 0, Math.PI * 2);
     ctx.fillStyle = '#15cf91';
-    ctx.fill();
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 2;
+    ctx.fill();
     ctx.stroke();
 
     ctx.restore();
 
-    // Store for hit detection
+    // ── STORE FOR HIT‐TESTING ──
     obj._rotateHandle = {
         x: handleX,
         y: handleY,
         radius: 10
     };
 }
+
 
 
 
