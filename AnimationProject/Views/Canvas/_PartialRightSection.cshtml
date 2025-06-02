@@ -371,8 +371,17 @@
 
       drawCanvas?.('Common');
     }
+    // function for horizontal scroll in templates
+    function scrollCategories(offset) {
+      const container = document.getElementById("categoryScroll");
+      container.scrollBy({ left: offset, behavior: 'smooth' });
+    }
 
+    function hideElemennts() {
+      document.getElementById("elementsPopup").style.display = "none";
+    }
 </script>
+<
 
 <style>
     .form-range {
@@ -895,8 +904,8 @@
         </div>
     </div>
     <div class="slider-card">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <label for="rotationSlider" class="mb-0 fw-semibold">
+        <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+            <label for="rotationSlider" class="mb-0 fw-semibold slider_label">
                 Rotation: <span id="rotationValue">0</span>
             </label>
             <span class="badge bg-primary text-white"
@@ -947,8 +956,8 @@
 
 
         <div class="panel-left-gallery">
-            <div class="d-flex justify-content-between mb-3">
-                <p class="gallery_head m-0">Gallery</p>
+            <div class="d-flex justify-content-between">
+                <p class="gallery_head m-0">Templates</p>
                 <!-- <div class="tab cross">x</div> -->
                 <button class="btn-cross b-radius-6 tab cross"
                         type="button"
@@ -956,15 +965,15 @@
                     ✕
                 </button>
             </div>
-            <div class="tabs">
+            @* <div class="tabs">
                 <div class="tab active" onclick="switchTab(this, 'images')">Images</div>
                 <div class="tab" onclick="switchTab(this, 'my-images')">My Images</div>
                 <div class="tab" onclick="switchTab(this, 'templates')">Templates</div>
 
 
-            </div>
+            </div> *@
             <!-- images tab -->
-            <div id="images" class="left_content active">
+            <div class="left_content active">
                 <div class="d-flex justify-content-between gap-3">
                     <!-- search box -->
                     <div class="search-box w-50">
@@ -987,15 +996,35 @@
                 @*     </ul> *@
                 @* </div> *@
 
-                <div class="shapes_tabs my-3 d-flex justify-content-between w-75">
-                    <a href="#">Photo</a>
+                <div class="shapes_tabs my-3 w-100">
+                    @* <a href="#">Photo</a>
                     <a href="#">Shapes</a>
                     <a href="#">Icons</a>
                     <a href="#">Patterns</a>
-                    <a href="#">Animation</a>
+                    <a href="#">Animation</a> *@
+                    <div class="d-flex align-items-center">
+                        <button class="arrow-btn me-2" onclick="scrollCategories(-150)">
+                            <i class="fa-solid fa-less-than"></i>
+                        </button>
+
+                        <div id="categoryScroll" class="category-scroll flex-grow-1">
+                            <a class="category-item">Banks</a>
+                            <a class="category-item">Schools</a>
+                            <a class="category-item">Salon</a>
+                            <a class="category-item">Hotels</a>
+                            <a class="category-item">Corporate</a>
+                            <a class="category-item">Retail</a>
+                            <a class="category-item">Sports</a>
+                            <a class="category-item">Petshop</a>
+                        </div>
+
+                        <button class="arrow-btn ms-2" onclick="scrollCategories(150)">
+                            <i class="fa-solid fa-greater-than"></i>
+                        </button>
+                    </div>
                 </div>
 
-                <div class="gallery">
+                @* <div class="gallery">
                     <div class="d-flex flex-wrap inside_wrapper" style="gap: 54px;">
                     <img src="~/images/Gallery-img/man.png" />
                     <img src="~/images/Gallery-img/bag.png" />
@@ -1007,49 +1036,40 @@
                     <img src="~/images/Gallery-img/rounded rectangle.svg" />
                     <img src="~/images/Gallery-img/rectangle.svg" />
                     <img src="~/images/Gallery-img/abstract.svg" />
-                   @*    <img src="~/images/Gallery-img/circle600.svg" />
-                        <img src="~/images/Gallery-img/circle600.svg" /> *@
+                    </div>
+                </div> *@
+                <div class="temp_gallery">
+                    <div class="inside_wrapper temp_inside">
+                        <div class="row">
+                            <div class="col-6 h-col-width">
+                               <div class="row d-flex gap-3">
+                                   <div class="col-12">
+                                        <img class="h_temp" src="~/images/banner.png" />
+                                   </div>
+                                    <div class="col-12">
+                                        <img class="h_temp" src="~/images/banner.png" />
+                                    </div>
+                               </div>
+                            </div>
+                            <div class="col-6 v-col-width">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <img class="v_temp" src="~/images/Vertical-Menuboard.png" />
+                                    </div>
+                                    <div class="col-6">
+                                        <img class="v_temp" src="~/images/Vertical-Menuboard.png" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
             </div>
-            <!-- my images tab -->
-            <div id="my-images" class="left_content">
+            
 
-                <div class="d-flex justify-content-between gap-3">
-                    <!-- search box -->
-                    <div class="search-box w-100">
-                        <input class="left-panel-imput" type="text" placeholder="Search..." />
-                    </div>
-                    <!-- file upload -->
-                    <div class="custom-file-input choose_file w-100">
-                        <label for="fileUpload">Choose File</label>
-                        <span id="fileName">No File</span>
-                        <input type="file" id="fileUpload" onchange="updateFileName()">
-                    </div>
-                </div>
-
-                <p class="my-3 gallery_type">All My Images</p>
-                <div class="gallery my_img_gal">
-                    <div class="d-flex flex-wrap justify-content-between gap-4 inside_wrapper">
-                    <img src="~/images/Gallery-img/aniboard-logo.png" />
-                    <img src="~/images/Gallery-img/aniboard-logo-white.png" />
-                    <img src="~/images/Gallery-img/aniboard-logo-black.png" />
-                    @* <img src="~/images/Gallery-img/gl004.png" />
-                    <img src="~/images/Gallery-img/gl001.png" />
-                    <img src="~/images/Gallery-img/gl002.png" />
-                    <img src="~/images/Gallery-img/gl003.png" />
-                    <img src="~/images/Gallery-img/gl004.png" />
-                    <img src="~/images/Gallery-img/gl001.png" />
-                    <img src="~/images/Gallery-img/gl002.png" />
-                    <img src="~/images/Gallery-img/gl003.png" />
-                    <img src="~/images/Gallery-img/gl004.png" /> *@
-                    </div>
-                </div>
-            </div>
-
-            <!-- templates tab -->
-            <div id="templates" class="left_content">
+            @* <!-- templates tab -->
+            <div id="templates" class="left_content ">
                 <!-- serach box -->
                 <div class="search-box w-50">
                     <input class="left-panel-imput" type="text" placeholder="Search..." />
@@ -1063,7 +1083,7 @@
                     <img src="~/images/Vertical-Menuboard.png" />
                     </div>
                 </div>
-            </div>
+            </div> *@
             <div class="pagination">
                 <span>&lt;</span>
                 <span>4</span>
@@ -1105,5 +1125,70 @@
         </div>
     </div>
 </div>
+
 <div class="background_edit" id="background_popup">
+</div>
+
+<div id="elementsPopup" class="elements-popup">
+    <div class="d-flex justify-content-between">
+        <p class="gallery_head m-0">Elements</p>
+        <!-- <div class="tab cross">x</div> -->
+        <button 
+                class="btn-cross b-radius-6 tab cross"
+                onclick="hideElemennts()"
+                type="button">
+            ✕
+        </button>
+    </div>
+    <div class="d-flex justify-content-between gap-3">
+        <!-- search box -->
+        <div class="search-box w-50">
+            <input class="left-panel-imput" type="text" placeholder="Search..." />
+        </div>
+
+    </div>
+    <div class="tabs mt-3">
+        <div class="tab active" onclick="switchTab(this, 'shapes')">Shapes</div>
+        <div class="tab" onclick="switchTab(this, 'icons')">Icons</div>
+        <div class="tab" onclick="switchTab(this, 'patterns')">Patterns</div>
+        <div class="tab" onclick="switchTab(this, 'photos')">Photos</div>
+        <div class="tab" onclick="switchTab(this, 'my-images')">My Images</div>
+    </div>
+
+            <!-- my images tab -->
+            <div id="my-images" class="left_content">
+
+                <div class="d-flex justify-content-between gap-3">  
+                    <!-- file upload -->
+                    <div class="custom-file-input choose_file w-50">
+                        <label for="fileUpload">Choose File</label>
+                        <span id="fileName">No File</span>
+                        <input type="file" id="fileUpload" onchange="updateFileName()">
+                    </div>
+                </div>
+
+                <p class="my-3 gallery_type">All My Images</p>
+                <div class="gallery my_img_gal">
+                    <div class="d-flex flex-wrap justify-content-between gap-4 inside_wrapper">
+                    <img src="~/images/Gallery-img/aniboard-logo.png" />
+                    <img src="~/images/Gallery-img/aniboard-logo-white.png" />
+                    <img src="~/images/Gallery-img/aniboard-logo-black.png" />              
+                    </div>
+                </div>
+            </div>
+
+        <div class="gallery" id="shapes">
+            <div class="d-flex flex-wrap inside_wrapper" style="gap: 54px;">
+                <img src="~/images/Gallery-img/man.png" />
+                <img src="~/images/Gallery-img/bag.png" />
+                <img src="~/images/Gallery-img/circle shape1.svg" />
+                <img src="~/images/Gallery-img/shape1.svg" />
+                <img src="~/images/Gallery-img/apple_watch.png" />
+                <img src="~/images/Gallery-img/Square.svg" />
+                <img src="~/images/Gallery-img/rounded square.svg" />
+                <img src="~/images/Gallery-img/rounded rectangle.svg" />
+                <img src="~/images/Gallery-img/rectangle.svg" />
+                <img src="~/images/Gallery-img/abstract.svg" />
+            </div>
+        </div>
 </div>

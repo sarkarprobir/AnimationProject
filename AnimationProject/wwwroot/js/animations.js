@@ -4635,3 +4635,19 @@ function handleThumbClick(clickedElement) {
 //        popup.style.display = 'none';
 //    }
 //});
+
+
+// function for elements popup
+function elementsTogglePopup() {
+    const popup = document.getElementById('elementsPopup');
+    popup.style.display = (popup.style.display === 'block') ? 'none' : 'block';
+}
+// Optional: click outside to close
+document.addEventListener('click', function (event) {
+    const popup = document.getElementById('elementsPopup');
+    const button = document.querySelectorAll('elementsToggleBtn');
+
+    if (!popup.contains(event.target) && !button.contains(event.target)) {
+        popup.style.display = 'none';
+    }
+});
