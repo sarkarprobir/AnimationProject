@@ -538,7 +538,11 @@ ul.speed-list li:hover{background:#f5f5f5; border-radius:6px; cursor:pointer;}
 ul.TextStyle{ margin:0px;}
 ul.TextStyle li {list-style-type:none; float:left; width:100%; margin-bottom:10px;}
  ul.TextStyle li a{color:#000; padding:0px 14px; float: left; text-decoration:none; cursor: pointer;}
- ul.TextStyle li a:hover{color:#fff; background:#4e43e1}
+ ul.TextStyle li a:hover {
+     color:#fff; 
+     background:#4e43e1;
+     border-radius: 3px;
+ }
  
  /*font-face css*/
     ul.TextStyle li a {
