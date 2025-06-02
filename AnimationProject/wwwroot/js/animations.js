@@ -2283,6 +2283,82 @@ function isInsideRotatedBox(mouseX, mouseY, obj) {
         localY <= obj.boundingHeight / 2
     );
 }
+function isInsideRotatedImage(mouseX, mouseY, imgObj) {
+    const sx = (typeof imgObj.scaleX === 'number' && !isNaN(imgObj.scaleX)) ? imgObj.scaleX : 1;
+    const sy = (typeof imgObj.scaleY === 'number' && !isNaN(imgObj.scaleY)) ? imgObj.scaleY : 1;
+    const w = imgObj.width * sx;
+    const h = imgObj.height * sy;
+
+    // Assume x/y is CENTER
+    const centerX = imgObj.x;
+    const centerY = imgObj.y;
+
+    const θ = -(imgObj.rotation || 0) * Math.PI / 180;
+    const dx = mouseX - centerX;
+    const dy = mouseY - centerY;
+
+    const localX = dx * Math.cos(θ) - dy * Math.sin(θ);
+    const localY = dx * Math.sin(θ) + dy * Math.cos(θ);
+
+    const halfW = w / 2;
+    const halfH = h / 2;
+
+    const EPS = 0.5;
+    console.log("localX >= -halfW - EPS", localX >= -halfW - EPS);
+    console.log("localX <= halfW + EPS", localX <= halfW + EPS);
+    console.log("localX", localX);
+    console.log("halfW", halfW);
+    console.log("EPS", EPS);
+    console.log(" localY >= -halfH - EPS", localY >= -halfH - EPS);
+    console.log("localY", localY);
+    console.log("halfH", halfH);
+    console.log("EPS", EPS);
+    console.log("  localY <= halfH + EPS", localY <= halfH + EPS);
+
+    return (
+        localX >= -halfW - EPS &&
+        localX <= halfW + EPS &&
+        localY >= -halfH - EPS &&
+        localY <= halfH + EPS
+    );
+}
+
+
+
+
+//function isInsideRotatedImage(mouseX, mouseY, imgObj) {
+//    // 1) Compute the image’s on‐canvas width/height after scaling:
+//    const sx = (typeof imgObj.scaleX === 'number') ? imgObj.scaleX : 1;
+//    const sy = (typeof imgObj.scaleY === 'number') ? imgObj.scaleY : 1;
+//    const w = imgObj.width * sx;
+//    const h = imgObj.height * sy;
+
+//    // 2) Find the center of the image (in screen coords):
+//    //const centerX = imgObj.x + w / 2;
+//    //const centerY = imgObj.y + h / 2;
+//    const centerX = imgObj.x + w / 2;
+//    const centerY = imgObj.y + h / 2;
+
+//    // 3) Convert the rotation from degrees into a negative‐radian (to undo it):
+//    const θ = -(imgObj.rotation || 0) * Math.PI / 180;
+
+//    // 4) Translate the mouse point into the image’s local frame:
+//    const dx = mouseX - centerX;
+//    const dy = mouseY - centerY;
+
+//    // 5) Apply the “undo rotation” to get localX/localY:
+//    const localX = dx * Math.cos(θ) - dy * Math.sin(θ);
+//    const localY = dx * Math.sin(θ) + dy * Math.cos(θ);
+
+//    // 6) Finally, check if that local point lies inside the unrotated rectangle:
+//    //    (−w/2 ≤ localX ≤ +w/2)  and  (−h/2 ≤ localY ≤ +h/2)
+//    return (
+//        localX >= -w / 2 &&
+//        localX <= +w / 2 &&
+//        localY >= -h / 2 &&
+//        localY <= +h / 2
+//    );
+//}
 
 canvas.addEventListener("mousedown", e => {
     const rotationValueDisplay = document.getElementById('rotationValue');
@@ -2318,8 +2394,8 @@ canvas.addEventListener("mousedown", e => {
 
     // Hit‐test rotated text and images
     const txtHit = textObjects.find(obj => isInsideRotatedBox(mouse.x, mouse.y, obj));
+    //const imgHit = images.find(imgObj => isInsideRotatedImage(mouse.x, mouse.y, imgObj));/*findImageAt(mouse);*/
     const imgHit = findImageAt(mouse);
-
     // SHIFT‐click toggles selection
     if (shift) {
         if (txtHit) return toggleSelect(txtHit);
@@ -2619,12 +2695,13 @@ function onMultiResizeUp() {
 function findImageAt(pt) {
     for (let i = images.length - 1; i >= 0; i--) {
         const img = images[i];
-        const sx = img.scaleX || 1, sy = img.scaleY || 1;
-        const w = img.width * sx, h = img.height * sy;
-        if (pt.x >= img.x && pt.x <= img.x + w && pt.y >= img.y && pt.y <= img.y + h) return img;
+        if (isInsideRotatedImage(pt.x, pt.y, img)) {
+            return img;
+        }
     }
     return null;
 }
+
 
 function toggleSelect(item) {
     item.selected = !item.selected;
