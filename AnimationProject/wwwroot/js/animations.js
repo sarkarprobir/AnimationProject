@@ -536,7 +536,12 @@ function drawCanvas(condition) {
         ctx.translate(x + w / 2, y + h / 2);
         ctx.rotate(rotation);
         ctx.scale(scaleX, scaleY);
-        ctx.drawImage(imgObj.img, -imgObj.width / 2, -imgObj.height / 2, imgObj.width, imgObj.height);
+        try {
+            ctx.drawImage(imgObj.img, -imgObj.width / 2, -imgObj.height / 2, imgObj.width, imgObj.height);
+        } catch (e) {
+
+        }
+       
 
         ctx.restore();
     });
@@ -2262,59 +2267,75 @@ function rotateSelectedItems(degrees) {
     drawCanvas('Common');
 }
 
-function isInsideRotatedBox(mouseX, mouseY, obj) {
-    const rotation = -(obj.rotation || 0) * Math.PI / 180;
-    const centerX = obj.x + obj.boundingWidth / 2;
-    const centerY = obj.y + obj.boundingHeight / 2;
+/**
+ * Returns true if (mouseX, mouseY) lies inside the rotated text object's bounding box.
+ * txt.x/y is the top‐left of the unrotated box; txt.boundingWidth/Height are its unrotated dimensions.
+ */
+function isInsideRotatedBox(mouseX, mouseY, txt) {
+    // 1) Grab width/height
+    const w = txt.boundingWidth;
+    const h = txt.boundingHeight;
 
-    // Translate mouse to object's center
-    const dx = mouseX - centerX;
-    const dy = mouseY - centerY;
+    // 2) Compute center of that unrotated box
+    //    (top-left + half width/height)
+    const cx = txt.x + w / 2;
+    const cy = txt.y + h / 2;
 
-    // Rotate point back (undo rotation)
-    const localX = dx * Math.cos(rotation) - dy * Math.sin(rotation);
-    const localY = dx * Math.sin(rotation) + dy * Math.cos(rotation);
+    // 3) Convert rotation° to radians, then invert (−θ) to “undo” rotation
+    const θ = -(txt.rotation || 0) * Math.PI / 180;
 
-    // Check if inside unrotated bounding box
+    // 4) Translate the mouse point into the text’s local coordinate frame
+    const dx = mouseX - cx;
+    const dy = mouseY - cy;
+
+    // 5) Apply the “undo rotation” matrix
+    const localX = dx * Math.cos(θ) - dy * Math.sin(θ);
+    const localY = dx * Math.sin(θ) + dy * Math.cos(θ);
+
+    // 6) Check if (localX, localY) lies inside the unrotated [−w/2, +w/2]×[−h/2, +h/2]
     return (
-        localX >= -obj.boundingWidth / 2 &&
-        localX <= obj.boundingWidth / 2 &&
-        localY >= -obj.boundingHeight / 2 &&
-        localY <= obj.boundingHeight / 2
+        localX >= -w / 2 &&
+        localX <= w / 2 &&
+        localY >= -h / 2 &&
+        localY <= h / 2
     );
 }
+
+/**
+ * Returns true if (mouseX, mouseY) lies inside the rotated image object.
+ * img.x/y is the top‐left of the unrotated, unscaled image.
+ * img.width/height are intrinsic; img.scaleX/scaleY default to 1 if missing.
+ */
 function isInsideRotatedImage(mouseX, mouseY, imgObj) {
+    // 1) Compute the on-canvas width/height after scaling:
     const sx = (typeof imgObj.scaleX === 'number' && !isNaN(imgObj.scaleX)) ? imgObj.scaleX : 1;
     const sy = (typeof imgObj.scaleY === 'number' && !isNaN(imgObj.scaleY)) ? imgObj.scaleY : 1;
     const w = imgObj.width * sx;
     const h = imgObj.height * sy;
 
-    // Assume x/y is CENTER
-    const centerX = imgObj.x;
-    const centerY = imgObj.y;
+    // 2) Compute the image’s center (in screen coordinates):
+    //    Since x/y is top-left, the center is x + w/2, y + h/2
+    const cx = imgObj.x + w / 2;
+    const cy = imgObj.y + h / 2;
 
+    // 3) Convert rotation (in degrees) into radians, then negate to "undo"
     const θ = -(imgObj.rotation || 0) * Math.PI / 180;
-    const dx = mouseX - centerX;
-    const dy = mouseY - centerY;
 
+    // 4) Translate the mouse point into the image’s local (unrotated) frame
+    const dx = mouseX - cx;
+    const dy = mouseY - cy;
+
+    // 5) Apply the inverse rotation matrix:
     const localX = dx * Math.cos(θ) - dy * Math.sin(θ);
     const localY = dx * Math.sin(θ) + dy * Math.cos(θ);
 
+    // 6) Now check if (localX, localY) is inside the axis-aligned rectangle
+    //    that spans from (−w/2, −h/2) to (+w/2, +h/2).
     const halfW = w / 2;
     const halfH = h / 2;
 
+    // Optional: small epsilon to handle edge cases
     const EPS = 0.5;
-    console.log("localX >= -halfW - EPS", localX >= -halfW - EPS);
-    console.log("localX <= halfW + EPS", localX <= halfW + EPS);
-    console.log("localX", localX);
-    console.log("halfW", halfW);
-    console.log("EPS", EPS);
-    console.log(" localY >= -halfH - EPS", localY >= -halfH - EPS);
-    console.log("localY", localY);
-    console.log("halfH", halfH);
-    console.log("EPS", EPS);
-    console.log("  localY <= halfH + EPS", localY <= halfH + EPS);
-
     return (
         localX >= -halfW - EPS &&
         localX <= halfW + EPS &&
@@ -2322,6 +2343,8 @@ function isInsideRotatedImage(mouseX, mouseY, imgObj) {
         localY <= halfH + EPS
     );
 }
+
+
 
 
 
@@ -2363,88 +2386,111 @@ function isInsideRotatedImage(mouseX, mouseY, imgObj) {
 canvas.addEventListener("mousedown", e => {
     const rotationValueDisplay = document.getElementById('rotationValue');
     const rect = canvas.getBoundingClientRect();
-    const mouse = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
     const shift = e.shiftKey;
     if (document.activeElement === textEditor) return;
 
-   
-
-    //  Rotation handle check FIRST
+    // ── A) ROTATION HIT (for any selected object) ────────────────────
     let hitRotate = null;
     [...textObjects, ...images].forEach(obj => {
         if (!obj.selected || !obj._rotateHandle) return;
-        const h = obj._rotateHandle;
-        const dist = Math.hypot(mouse.x - h.x, mouse.y - h.y);
+        const h = obj._rotateHandle; // { x, y, radius }
+        const dist = Math.hypot(mouseX - h.x, mouseY - h.y);
         if (dist < h.radius) {
             hitRotate = obj;
         }
     });
-
     if (hitRotate) {
         isRotating = true;
         rotatingObject = hitRotate;
-        rotationStartAngle = Math.atan2(mouse.y - hitRotate.y, mouse.x - hitRotate.x);
+        rotationStartAngle = Math.atan2(mouseY - hitRotate.y, mouseX - hitRotate.x);
         rotationStartValue = hitRotate.rotation || 0;
-
         e.preventDefault();
         return;
     }
 
+    // ── B) FIND TEXT OR IMAGE UNDER MOUSE ─────────────────────────────
+    // 1) Rotate-aware text hit:
+    let txtHit = null;
+    for (let i = textObjects.length - 1; i >= 0; i--) {
+        const txt = textObjects[i];
+        if (isInsideRotatedBox(mouseX, mouseY, txt)) {
+            txtHit = txt;
+            break;
+        }
+    }
+    // 2) Rotate-aware image hit:
+    let imgHit = null;
+    for (let i = images.length - 1; i >= 0; i--) {
+        const img = images[i];
+        if (isInsideRotatedImage(mouseX, mouseY, img)) {
+            imgHit = img;
+            break;
+        }
+    }
 
-
-    // Hit‐test rotated text and images
-    const txtHit = textObjects.find(obj => isInsideRotatedBox(mouse.x, mouse.y, obj));
-    //const imgHit = images.find(imgObj => isInsideRotatedImage(mouse.x, mouse.y, imgObj));/*findImageAt(mouse);*/
-    const imgHit = findImageAt(mouse);
-    // SHIFT‐click toggles selection
+    // ── C) SHIFT+CLICK TOGGLE SELECTION ───────────────────────────────
     if (shift) {
-        if (txtHit) return toggleSelect(txtHit);
-        if (imgHit) return toggleSelect(imgHit);
+        if (txtHit) {
+            toggleSelect(txtHit);
+            drawCanvas("Common");
+        }
+        if (imgHit) {
+            toggleSelect(imgHit);
+            drawCanvas("Common");
+        }
         return;
     }
 
-    // Check if clicking on a resize handle of an already‐selected object
+    // ── D) CHECK FOR RESIZE HANDLE ON A SELECTED OBJECT ───────────────
     let primary = null;
     let handle;
+
+    // 1) Text
     if (txtHit && txtHit.selected) {
-        handle = getHandleUnderMouse(mouse.x, mouse.y, txtHit);
-        if (handle && !handle.includes('middle')) {
-            primary = { obj: txtHit, type: 'text', handle };
+        handle = getHandleUnderMouse(mouseX, mouseY, txtHit);
+        if (handle && !handle.includes("middle")) {
+            primary = { obj: txtHit, type: "text", handle };
         }
     }
+    // 2) Image
     if (!primary) {
         for (let i = images.length - 1; i >= 0; i--) {
             const img = images[i];
             if (!img.selected) continue;
-            handle = getHandleUnderMouseForImage(img, mouse);
+            handle = getHandleUnderMouseForImage(img, { x: mouseX, y: mouseY });
             if (handle) {
-                primary = { obj: img, type: 'image', handle };
+                primary = { obj: img, type: "image", handle };
                 break;
             }
         }
     }
 
-    // Count how many are selected
-    const selectedCount = textObjects.filter(o => o.selected).length
-        + images.filter(i => i.selected).length;
+    // ── E) MULTI-RESIZE OR SINGLE-RESIZE ─────────────────────────────
+    const selectedCount =
+        textObjects.filter(o => o.selected).length +
+        images.filter(i => i.selected).length;
 
-    // If multi‐resize
     if (primary && selectedCount > 1) {
+        // begin multi-resize
         startMultiResize(primary.obj, e);
         e.preventDefault();
         return;
     }
-
-    // If single‐item resize
     if (primary && selectedCount === 1) {
-        if (primary.type === 'text') {
+        // begin single-resize
+        if (primary.type === "text") {
             isResizingText = true;
             activeTextHandle = primary.handle;
             activeText = primary.obj;
             textResizeStart = {
-                mouseX: e.clientX, mouseY: e.clientY,
-                origX: primary.obj.x, origY: primary.obj.y,
-                origW: primary.obj.boundingWidth, origH: primary.obj.boundingHeight,
+                mouseX: e.clientX,
+                mouseY: e.clientY,
+                origX: primary.obj.x,
+                origY: primary.obj.y,
+                origW: primary.obj.boundingWidth,
+                origH: primary.obj.boundingHeight,
                 origFont: primary.obj.fontSize
             };
         } else {
@@ -2453,99 +2499,107 @@ canvas.addEventListener("mousedown", e => {
             activeImage = primary.obj;
         }
         e.preventDefault();
-        drawCanvas('Common');
+        drawCanvas("Common");
         return;
     }
 
-    // If group‐drag (click on any selected obj)
+    // ── F) GROUP-DRAG (if clicking on any selected object) ────────────
     if ((txtHit && txtHit.selected) || (imgHit && imgHit.selected)) {
         isDraggingGroup = true;
         groupDragStart = { x: e.clientX, y: e.clientY };
         groupStarts = [];
-        textObjects.filter(o => o.selected)
+        textObjects
+            .filter(o => o.selected)
             .forEach(o => groupStarts.push({ obj: o, x: o.x, y: o.y }));
-        images.filter(i => i.selected)
+        images
+            .filter(i => i.selected)
             .forEach(i => groupStarts.push({ obj: i, x: i.x, y: i.y }));
         e.preventDefault();
         return;
     }
 
-    // Deselect everything before a new selection
-    textObjects.forEach(o => o.selected = false);
-    images.forEach(i => i.selected = false);
-    activeText = activeImage = null;
-
-    // If clicked a text object: select and possibly start resize/drag
+    // ── G) CLICK-TO-SELECT TEXT ────────────────────────────────────────
+    // If we found a text but we didn’t return yet, that means
+    // it wasn’t resizing/dragging; so now we select it:
     if (txtHit) {
+        // clear old selection
+        textObjects.forEach(o => (o.selected = false));
+        images.forEach(i => (i.selected = false));
+
         txtHit.selected = true;
         activeText = txtHit;
 
-        // Sync slider, value display, and badge to this text’s current rotation
+        // sync rotation UI
         const angle = txtHit.rotation || 0;
         rotationSlider.value = angle;
-        rotationValueDisplay.textContent = angle + '°';
+        rotationValueDisplay.textContent = angle + "°";
         rotationBadge.textContent = angle;
 
-        handle = getHandleUnderMouse(mouse.x, mouse.y, txtHit);
-        if (handle && !handle.includes('middle')) {
+        // maybe begin drag or resize
+        handle = getHandleUnderMouse(mouseX, mouseY, txtHit);
+        if (handle && !handle.includes("middle")) {
             isResizingText = true;
             activeTextHandle = handle;
             textResizeStart = {
-                mouseX: e.clientX, mouseY: e.clientY,
-                origX: txtHit.x, origY: txtHit.y,
-                origW: txtHit.boundingWidth, origH: txtHit.boundingHeight,
+                mouseX: e.clientX,
+                mouseY: e.clientY,
+                origX: txtHit.x,
+                origY: txtHit.y,
+                origW: txtHit.boundingWidth,
+                origH: txtHit.boundingHeight,
                 origFont: txtHit.fontSize
             };
-            e.preventDefault();
-            drawCanvas('Common');
-            return;
-        }
-        if (isInsideRotatedBox(mouse.x, mouse.y, txtHit)) {
+        } else {
             isDraggingText = true;
-            dragOffsetText = { x: mouse.x - txtHit.x, y: mouse.y - txtHit.y };
-            e.preventDefault();
-            drawCanvas('Common');
-            return;
+            dragOffsetText = { x: mouseX - txtHit.x, y: mouseY - txtHit.y };
         }
+
+        e.preventDefault();
+        drawCanvas("Common");
+        return;
     }
 
-    // If clicked an image object: select and start drag
+    // ── H) CLICK-TO-SELECT IMAGE ───────────────────────────────────────
     if (imgHit) {
-        // Clear text selection
-        textObjects.forEach(o => o.selected = false);
-        images.forEach(i => i.selected = false);
+        // clear old selection
+        textObjects.forEach(o => (o.selected = false));
+        images.forEach(i => (i.selected = false));
 
         imgHit.selected = true;
         activeImage = imgHit;
 
-        // Sync slider, value display, and badge to this image’s current rotation
+        // sync rotation UI
         const angle = imgHit.rotation || 0;
         rotationSlider.value = angle;
-        rotationValueDisplay.textContent = angle + '°';
-        rotationBadge.textContent = angle ;
+        rotationValueDisplay.textContent = angle + "°";
+        rotationBadge.textContent = angle;
 
+        // begin drag
         isDraggingImage = true;
-        dragOffsetImage = { x: mouse.x - imgHit.x, y: mouse.y - imgHit.y };
+        dragOffsetImage = { x: mouseX - imgHit.x, y: mouseY - imgHit.y };
+
         enableFillColorDiv();
         enableStrockColorDiv();
 
         e.preventDefault();
-        drawCanvas('Common');
+        drawCanvas("Common");
         return;
     }
 
-    // If click on empty space: clear slider, value display, and badge to 0°
+    // ── I) CLICKED EMPTY SPACE => DESELECT EVERYTHING ────────────────
+    textObjects.forEach(o => (o.selected = false));
+    images.forEach(i => (i.selected = false));
+    activeText = activeImage = null;
+
     rotationSlider.value = 0;
-    rotationValueDisplay.textContent = '0°';
-    rotationBadge.textContent = '0';
-
-
-    
-
+    rotationValueDisplay.textContent = "0°";
+    rotationBadge.textContent = "0";
 
     e.preventDefault();
-    drawCanvas('Common');
+    drawCanvas("Common");
 });
+
+
 
 
 function drawRotateHandle(obj) {
@@ -2692,15 +2746,32 @@ function onMultiResizeUp() {
 }
 
 // Helpers
-function findImageAt(pt) {
+/**
+ * Returns the topmost (last‐drawn) text object under (mouseX, mouseY), or null if none.
+ */
+function findTextAt(mouseX, mouseY) {
+    for (let i = textObjects.length - 1; i >= 0; i--) {
+        const txt = textObjects[i];
+        if (isInsideRotatedBox(mouseX, mouseY, txt)) {
+            return txt;
+        }
+    }
+    return null;
+}
+
+/**
+ * Returns the topmost (last‐drawn) image object under (mouseX, mouseY), or null if none.
+ */
+function findImageAt(mouseX, mouseY) {
     for (let i = images.length - 1; i >= 0; i--) {
         const img = images[i];
-        if (isInsideRotatedImage(pt.x, pt.y, img)) {
+        if (isInsideRotatedImage(mouseX, mouseY, img)) {
             return img;
         }
     }
     return null;
 }
+
 
 
 function toggleSelect(item) {
@@ -2924,6 +2995,29 @@ function adjustFontSizeToFitBox(obj) {
         }
     }
     return 15; // fallback minimum
+}
+function drawImageObject(ctx, imgObj) {
+    // 1) compute on-canvas width/height
+    const sx = (typeof imgObj.scaleX === 'number') ? imgObj.scaleX : 1;
+    const sy = (typeof imgObj.scaleY === 'number') ? imgObj.scaleY : 1;
+    const w = imgObj.width * sx;
+    const h = imgObj.height * sy;
+
+    // 2) find the center of the unrotated image
+    const cx = imgObj.x + w / 2;
+    const cy = imgObj.y + h / 2;
+
+    // 3) save, translate to center, rotate, then draw from center
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate((imgObj.rotation || 0) * Math.PI / 180);
+    // drawImage(image, offsetX, offsetY, drawWidth, drawHeight)
+    ctx.drawImage(
+        imgObj.element,   // your HTMLImageElement or CanvasImageSource
+        -w / 2, -h / 2,
+        w, h
+    );
+    ctx.restore();
 }
 
 
