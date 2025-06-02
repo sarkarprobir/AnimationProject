@@ -2306,7 +2306,7 @@ function isInsideRotatedBox(mouseX, mouseY, txt) {
  * img.x/y is the top‐left of the unrotated, unscaled image.
  * img.width/height are intrinsic; img.scaleX/scaleY default to 1 if missing.
  */
-function isInsideRotatedImage(mouseX, mouseY, imgObj) {
+function isInsideRotatedImageOLD(mouseX, mouseY, imgObj) {
     // 1) Compute the on-canvas width/height after scaling:
     const sx = (typeof imgObj.scaleX === 'number' && !isNaN(imgObj.scaleX)) ? imgObj.scaleX : 1;
     const sy = (typeof imgObj.scaleY === 'number' && !isNaN(imgObj.scaleY)) ? imgObj.scaleY : 1;
@@ -2343,8 +2343,161 @@ function isInsideRotatedImage(mouseX, mouseY, imgObj) {
         localY <= halfH + EPS
     );
 }
+/**
+ * Returns one of:
+ *   'top-left', 'top-right', 'bottom-left', 'bottom-right'  (corner)
+ *   'left', 'right', 'top', 'bottom'                        (edge)
+ *   null if none
+ * for a rotated, scaled image under (mouseX, mouseY).
+ */
+function getImageHandleUnderMouse(mouseX, mouseY, img) {
+    const sx = (typeof img.scaleX === 'number') ? img.scaleX : 1;
+    const sy = (typeof img.scaleY === 'number') ? img.scaleY : 1;
+    const w = img.width * sx;
+    const h = img.height * sy;
+    const cx = img.x + w / 2;
+    const cy = img.y + h / 2;
+    const θ = -(img.rotation || 0) * Math.PI / 180;
+
+    const dx = mouseX - cx;
+    const dy = mouseY - cy;
+    const localX = dx * Math.cos(θ) - dy * Math.sin(θ);
+    const localY = dx * Math.sin(θ) + dy * Math.cos(θ);
+
+    // In local space, image spans [-w/2, +w/2] × [-h/2, +h/2]
+    const lx = -w / 2, ly = -h / 2, rx = +w / 2, ry = +h / 2;
+    const cornerTolerance = 10;
+    const edgeTolerance = 6;
+
+    // Corners
+    const corners = [
+        { x: lx, y: ly, name: 'top-left' },
+        { x: rx, y: ly, name: 'top-right' },
+        { x: lx, y: ry, name: 'bottom-left' },
+        { x: rx, y: ry, name: 'bottom-right' }
+    ];
+    for (const c of corners) {
+        if (Math.hypot(localX - c.x, localY - c.y) < cornerTolerance) {
+            return c.name;
+        }
+    }
+    // Vertical edges
+    if ((Math.abs(localX - lx) < edgeTolerance || Math.abs(localX - rx) < edgeTolerance)
+        && localY > ly + cornerTolerance && localY < ry - cornerTolerance) {
+        return (Math.abs(localX - lx) < edgeTolerance) ? 'left' : 'right';
+    }
+    // Horizontal edges
+    if ((Math.abs(localY - ly) < edgeTolerance || Math.abs(localY - ry) < edgeTolerance)
+        && localX > lx + cornerTolerance && localX < rx - cornerTolerance) {
+        return (Math.abs(localY - ly) < edgeTolerance) ? 'top' : 'bottom';
+    }
+    return null;
+}
+
+/**
+ * Returns one of:
+ *   'top-left', 'top-right', 'bottom-left', 'bottom-right'  (corner)
+ *   'left', 'right', 'top', 'bottom'                        (edge)
+ *   null if none
+ * for a rotated text object under (mouseX, mouseY).
+ */
+function getTextHandleUnderMouse(mouseX, mouseY, txt) {
+    const w = txt.boundingWidth;
+    const h = txt.boundingHeight;
+    const cx = txt.x + w / 2;
+    const cy = txt.y + h / 2;
+    const θ = -(txt.rotation || 0) * Math.PI / 180;
+
+    const dx = mouseX - cx;
+    const dy = mouseY - cy;
+    const localX = dx * Math.cos(θ) - dy * Math.sin(θ);
+    const localY = dx * Math.sin(θ) + dy * Math.cos(θ);
+
+    // In local (unrotated) space, text box spans [-w/2, +w/2] × [-h/2, +h/2]
+    const lx = -w / 2, ly = -h / 2, rx = +w / 2, ry = +h / 2;
+    const cornerTolerance = 10; // pixels
+    const edgeTolerance = 6; // pixels
+
+    // Corners
+    const corners = [
+        { x: lx, y: ly, name: 'top-left' },
+        { x: rx, y: ly, name: 'top-right' },
+        { x: lx, y: ry, name: 'bottom-left' },
+        { x: rx, y: ry, name: 'bottom-right' }
+    ];
+    for (const c of corners) {
+        if (Math.hypot(localX - c.x, localY - c.y) < cornerTolerance) {
+            return c.name;
+        }
+    }
+    // Vertical edges (not in corner zone)
+    if ((Math.abs(localX - lx) < edgeTolerance || Math.abs(localX - rx) < edgeTolerance)
+        && localY > ly + cornerTolerance && localY < ry - cornerTolerance) {
+        return (Math.abs(localX - lx) < edgeTolerance) ? 'left' : 'right';
+    }
+    // Horizontal edges
+    if ((Math.abs(localY - ly) < edgeTolerance || Math.abs(localY - ry) < edgeTolerance)
+        && localX > lx + cornerTolerance && localX < rx - cornerTolerance) {
+        return (Math.abs(localY - ly) < edgeTolerance) ? 'top' : 'bottom';
+    }
+    return null;
+}
+
+/**
+ * Returns true if (mouseX, mouseY) lies inside the rotated, scaled image object.
+ * img.x/y = top‐left of the unrotated image.
+ * img.width/height = intrinsic size.
+ * img.scaleX/scaleY default to 1 if missing.
+ * img.rotation in degrees.
+ */
+function isInsideRotatedImage(mouseX, mouseY, img) {
+    const sx = (typeof img.scaleX === 'number') ? img.scaleX : 1;
+    const sy = (typeof img.scaleY === 'number') ? img.scaleY : 1;
+    const w = img.width * sx;
+    const h = img.height * sy;
+    const cx = img.x + w / 2;
+    const cy = img.y + h / 2;
+    const θ = -(img.rotation || 0) * Math.PI / 180;
+
+    const dx = mouseX - cx;
+    const dy = mouseY - cy;
+    const localX = dx * Math.cos(θ) - dy * Math.sin(θ);
+    const localY = dx * Math.sin(θ) + dy * Math.cos(θ);
+
+    return (
+        localX >= -w / 2 &&
+        localX <= w / 2 &&
+        localY >= -h / 2 &&
+        localY <= h / 2
+    );
+}
 
 
+/**
+ * Returns true if (mouseX, mouseY) lies inside the rotated text object.
+ * txt.x/y = top‐left of the unrotated text box.
+ * txt.boundingWidth/Height = size of unrotated text box.
+ * txt.rotation is in degrees.
+ */
+function isInsideRotatedText(mouseX, mouseY, txt) {
+    const w = txt.boundingWidth;
+    const h = txt.boundingHeight;
+    const cx = txt.x + w / 2;
+    const cy = txt.y + h / 2;
+    const θ = -(txt.rotation || 0) * Math.PI / 180;
+
+    const dx = mouseX - cx;
+    const dy = mouseY - cy;
+    const localX = dx * Math.cos(θ) - dy * Math.sin(θ);
+    const localY = dx * Math.sin(θ) + dy * Math.cos(θ);
+
+    return (
+        localX >= -w / 2 &&
+        localX <= w / 2 &&
+        localY >= -h / 2 &&
+        localY <= h / 2
+    );
+}
 
 
 
@@ -2384,14 +2537,13 @@ function isInsideRotatedImage(mouseX, mouseY, imgObj) {
 //}
 
 canvas.addEventListener("mousedown", e => {
-    const rotationValueDisplay = document.getElementById('rotationValue');
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     const shift = e.shiftKey;
     if (document.activeElement === textEditor) return;
 
-    // ── A) ROTATION HIT (for any selected object) ────────────────────
+    // ── 1) ROTATION HANDLE CHECK ─────────────────────────────────────
     let hitRotate = null;
     [...textObjects, ...images].forEach(obj => {
         if (!obj.selected || !obj._rotateHandle) return;
@@ -2410,27 +2562,24 @@ canvas.addEventListener("mousedown", e => {
         return;
     }
 
-    // ── B) FIND TEXT OR IMAGE UNDER MOUSE ─────────────────────────────
-    // 1) Rotate-aware text hit:
+    // ── 2) HIT-TEST FOR TEXT AND IMAGE ─────────────────────────────────
     let txtHit = null;
     for (let i = textObjects.length - 1; i >= 0; i--) {
-        const txt = textObjects[i];
-        if (isInsideRotatedBox(mouseX, mouseY, txt)) {
-            txtHit = txt;
-            break;
-        }
-    }
-    // 2) Rotate-aware image hit:
-    let imgHit = null;
-    for (let i = images.length - 1; i >= 0; i--) {
-        const img = images[i];
-        if (isInsideRotatedImage(mouseX, mouseY, img)) {
-            imgHit = img;
+        if (isInsideRotatedText(mouseX, mouseY, textObjects[i])) {
+            txtHit = textObjects[i];
             break;
         }
     }
 
-    // ── C) SHIFT+CLICK TOGGLE SELECTION ───────────────────────────────
+    let imgHit = null;
+    for (let i = images.length - 1; i >= 0; i--) {
+        if (isInsideRotatedImage(mouseX, mouseY, images[i])) {
+            imgHit = images[i];
+            break;
+        }
+    }
+
+    // ── 3) SHIFT-CLICK TOGGLE SELECTION ─────────────────────────────────
     if (shift) {
         if (txtHit) {
             toggleSelect(txtHit);
@@ -2443,23 +2592,23 @@ canvas.addEventListener("mousedown", e => {
         return;
     }
 
-    // ── D) CHECK FOR RESIZE HANDLE ON A SELECTED OBJECT ───────────────
+    // ── 4) CHECK FOR RESIZE HANDLE ON A SELECTED OBJECT ─────────────────
     let primary = null;
     let handle;
 
-    // 1) Text
+    // 4a) Text handle
     if (txtHit && txtHit.selected) {
-        handle = getHandleUnderMouse(mouseX, mouseY, txtHit);
+        handle = getTextHandleUnderMouse(mouseX, mouseY, txtHit);
         if (handle && !handle.includes("middle")) {
             primary = { obj: txtHit, type: "text", handle };
         }
     }
-    // 2) Image
+    // 4b) Image handle
     if (!primary) {
         for (let i = images.length - 1; i >= 0; i--) {
             const img = images[i];
             if (!img.selected) continue;
-            handle = getHandleUnderMouseForImage(img, { x: mouseX, y: mouseY });
+            handle = getImageHandleUnderMouse(mouseX, mouseY, img);
             if (handle) {
                 primary = { obj: img, type: "image", handle };
                 break;
@@ -2467,43 +2616,59 @@ canvas.addEventListener("mousedown", e => {
         }
     }
 
-    // ── E) MULTI-RESIZE OR SINGLE-RESIZE ─────────────────────────────
+    // ── 5) COUNT SELECTED ITEMS ─────────────────────────────────────────
     const selectedCount =
         textObjects.filter(o => o.selected).length +
         images.filter(i => i.selected).length;
 
+    // 5a) Multi-resize if >1 selected
     if (primary && selectedCount > 1) {
-        // begin multi-resize
         startMultiResize(primary.obj, e);
         e.preventDefault();
         return;
     }
+    // 5b) Single-item resize if exactly 1 selected
     if (primary && selectedCount === 1) {
-        // begin single-resize
         if (primary.type === "text") {
+            // Begin text resize: store starting width/height/font
             isResizingText = true;
             activeTextHandle = primary.handle;
             activeText = primary.obj;
             textResizeStart = {
                 mouseX: e.clientX,
                 mouseY: e.clientY,
-                origX: primary.obj.x,
-                origY: primary.obj.y,
-                origW: primary.obj.boundingWidth,
-                origH: primary.obj.boundingHeight,
-                origFont: primary.obj.fontSize
+                origX: activeText.x,
+                origY: activeText.y,
+                origW: activeText.boundingWidth,
+                origH: activeText.boundingHeight,
+                origFont: activeText.fontSize
             };
+            // STORE “start‐of‐drag” dims for text:
+            activeText._resizeStartW = activeText.boundingWidth;
+            activeText._resizeStartH = activeText.boundingHeight;
+            activeText._resizeStartFont = activeText.fontSize;
         } else {
+            // Begin image resize: store starting on-canvas width/height & scale
             isResizingImage = true;
             activeImageHandle = primary.handle;
             activeImage = primary.obj;
+
+            const startSX = (typeof activeImage.scaleX === 'number')
+                ? activeImage.scaleX : 1;
+            const startSY = (typeof activeImage.scaleY === 'number')
+                ? activeImage.scaleY : 1;
+
+            activeImage._resizeStartSX = startSX;
+            activeImage._resizeStartSY = startSY;
+            activeImage._resizeStartW = activeImage.width * startSX;
+            activeImage._resizeStartH = activeImage.height * startSY;
         }
         e.preventDefault();
         drawCanvas("Common");
         return;
     }
 
-    // ── F) GROUP-DRAG (if clicking on any selected object) ────────────
+    // ── 6) GROUP-DRAG (if clicking any already-selected object) ──────────
     if ((txtHit && txtHit.selected) || (imgHit && imgHit.selected)) {
         isDraggingGroup = true;
         groupDragStart = { x: e.clientX, y: e.clientY };
@@ -2518,25 +2683,22 @@ canvas.addEventListener("mousedown", e => {
         return;
     }
 
-    // ── G) CLICK-TO-SELECT TEXT ────────────────────────────────────────
-    // If we found a text but we didn’t return yet, that means
-    // it wasn’t resizing/dragging; so now we select it:
-    if (txtHit) {
-        // clear old selection
-        textObjects.forEach(o => (o.selected = false));
-        images.forEach(i => (i.selected = false));
+    // ── 7) DESELECT ALL BEFORE NEW SELECTION ────────────────────────────
+    textObjects.forEach(o => (o.selected = false));
+    images.forEach(i => (i.selected = false));
+    activeText = null;
+    activeImage = null;
 
+    // ── 8) CLICK-TO-SELECT TEXT ─────────────────────────────────────────
+    if (txtHit) {
         txtHit.selected = true;
         activeText = txtHit;
-
-        // sync rotation UI
         const angle = txtHit.rotation || 0;
         rotationSlider.value = angle;
-        rotationValueDisplay.textContent = angle + "°";
+        document.getElementById("rotationValue").textContent = angle + "°";
         rotationBadge.textContent = angle;
 
-        // maybe begin drag or resize
-        handle = getHandleUnderMouse(mouseX, mouseY, txtHit);
+        handle = getTextHandleUnderMouse(mouseX, mouseY, txtHit);
         if (handle && !handle.includes("middle")) {
             isResizingText = true;
             activeTextHandle = handle;
@@ -2549,6 +2711,10 @@ canvas.addEventListener("mousedown", e => {
                 origH: txtHit.boundingHeight,
                 origFont: txtHit.fontSize
             };
+            // Also store “start” values in case user rotates then drags again:
+            txtHit._resizeStartW = txtHit.boundingWidth;
+            txtHit._resizeStartH = txtHit.boundingHeight;
+            txtHit._resizeStartFont = txtHit.fontSize;
         } else {
             isDraggingText = true;
             dragOffsetText = { x: mouseX - txtHit.x, y: mouseY - txtHit.y };
@@ -2559,25 +2725,20 @@ canvas.addEventListener("mousedown", e => {
         return;
     }
 
-    // ── H) CLICK-TO-SELECT IMAGE ───────────────────────────────────────
+    // ── 9) CLICK-TO-SELECT IMAGE ────────────────────────────────────────
     if (imgHit) {
-        // clear old selection
         textObjects.forEach(o => (o.selected = false));
         images.forEach(i => (i.selected = false));
 
         imgHit.selected = true;
         activeImage = imgHit;
-
-        // sync rotation UI
         const angle = imgHit.rotation || 0;
         rotationSlider.value = angle;
-        rotationValueDisplay.textContent = angle + "°";
+        document.getElementById("rotationValue").textContent = angle + "°";
         rotationBadge.textContent = angle;
 
-        // begin drag
         isDraggingImage = true;
         dragOffsetImage = { x: mouseX - imgHit.x, y: mouseY - imgHit.y };
-
         enableFillColorDiv();
         enableStrockColorDiv();
 
@@ -2586,18 +2747,20 @@ canvas.addEventListener("mousedown", e => {
         return;
     }
 
-    // ── I) CLICKED EMPTY SPACE => DESELECT EVERYTHING ────────────────
+    // ── 10) CLICKED EMPTY SPACE: DESELECT ALL ──────────────────────────
     textObjects.forEach(o => (o.selected = false));
     images.forEach(i => (i.selected = false));
     activeText = activeImage = null;
-
     rotationSlider.value = 0;
-    rotationValueDisplay.textContent = "0°";
+    document.getElementById("rotationValue").textContent = "0°";
     rotationBadge.textContent = "0";
 
     e.preventDefault();
     drawCanvas("Common");
 });
+
+
+
 
 
 
@@ -2675,32 +2838,32 @@ function drawRotateHandle(obj) {
 
 
 // Mouseup
-canvas.addEventListener('mouseup', e => {
-    if (isResizingText && activeText && activeTextHandle) {
-        onBoxResizeEnd(activeText);
-    }
+//canvas.addEventListener('mouseup', e => {
+//    if (isResizingText && activeText && activeTextHandle) {
+//        onBoxResizeEnd(activeText);
+//    }
 
-    if (isDraggingGroup) {
-        isDraggingGroup = false;
-        //SaveDesignBoard();
-    }
-    if (isResizingText) {
-        isResizingText = false;
-        //SaveDesignBoard();
-    }
-    if (isResizingImage) {
-        isResizingImage = false;
-        //SaveDesignBoard();
-    }
-    if (isDraggingText) {
-        isDraggingText = false;
-        //SaveDesignBoard();
-    }
-    if (isDraggingImage) {
-        isDraggingImage = false;
-        //SaveDesignBoard();
-    }
-});
+//    if (isDraggingGroup) {
+//        isDraggingGroup = false;
+//        //SaveDesignBoard();
+//    }
+//    if (isResizingText) {
+//        isResizingText = false;
+//        //SaveDesignBoard();
+//    }
+//    if (isResizingImage) {
+//        isResizingImage = false;
+//        //SaveDesignBoard();
+//    }
+//    if (isDraggingText) {
+//        isDraggingText = false;
+//        //SaveDesignBoard();
+//    }
+//    if (isDraggingImage) {
+//        isDraggingImage = false;
+//        //SaveDesignBoard();
+//    }
+//});
 
 // Multi-resize helpers
 function startMultiResize(primaryObj, e) {
@@ -3025,38 +3188,31 @@ canvas.addEventListener("mousemove", function (e) {
     const pos = getMousePos(canvas, e);
     let cursor = "default";
 
-    // Tolerance settings
-    const cornerTolerance = 25;      // increase corner hit area
-    const edgeTolerance = 15;        // reduce edge hit area
-    const verticalOffset = 5;        // shift edges slightly upward
-
+    // ── 1) ROTATION (live) ─────────────────────────────────────────────
     if (isRotating && rotatingObject) {
         const angleNow = Math.atan2(pos.y - rotatingObject.y, pos.x - rotatingObject.x);
         const delta = angleNow - rotationStartAngle;
         const angleDeg = (rotationStartValue + delta * 180 / Math.PI) % 360;
-
         const roundedAngle = Math.round(angleDeg);
         updateRotation(roundedAngle);
-
-        // ✅ Live update of rotationBadge
         rotationBadge.textContent = roundedAngle;
         return;
     }
 
-    // ── 0) TEXT HANDLE HOVER (corners first, then edges) ───────────
+    // ── 2) TEXT HANDLE HOVER ────────────────────────────────────────────
     if (!isDraggingText && !isResizingText && activeText) {
         const center = {
             x: activeText.x + activeText.boundingWidth / 2,
             y: activeText.y + activeText.boundingHeight / 2
         };
-        // Convert to unrotated space
         const pt = rotatePoint(pos.x, pos.y, center.x, center.y, -activeText.rotation);
         const x0 = activeText.x;
-        const y0 = activeText.y + verticalOffset;
+        const y0 = activeText.y;
         const x1 = x0 + activeText.boundingWidth;
-        const y1 = activeText.y + activeText.boundingHeight - verticalOffset;
+        const y1 = y0 + activeText.boundingHeight;
 
-        // 1) Corner zones
+        // Corner zones
+        const cornerTolerance = 10;
         const corners = [
             { x: x0, y: y0, cursor: 'nwse-resize' },
             { x: x1, y: y0, cursor: 'nesw-resize' },
@@ -3069,34 +3225,38 @@ canvas.addEventListener("mousemove", function (e) {
                 return;
             }
         }
-
-        // 2) Edge zones (after corners)
-        // vertical edges (left/right)
-        if ((Math.abs(pt.x - x0) < edgeTolerance || Math.abs(pt.x - x1) < edgeTolerance) &&
-            pt.y > y0 + cornerTolerance && pt.y < y1 - cornerTolerance) {
+        // Edges
+        const edgeTolerance = 6;
+        if ((Math.abs(pt.x - x0) < edgeTolerance || Math.abs(pt.x - x1) < edgeTolerance)
+            && pt.y > y0 + cornerTolerance && pt.y < y1 - cornerTolerance) {
             canvas.style.cursor = 'ew-resize';
             return;
         }
-        // horizontal edges (top/bottom)
-        if ((Math.abs(pt.y - y0) < edgeTolerance || Math.abs(pt.y - y1) < edgeTolerance) &&
-            pt.x > x0 + cornerTolerance && pt.x < x1 - cornerTolerance) {
+        if ((Math.abs(pt.y - y0) < edgeTolerance || Math.abs(pt.y - y1) < edgeTolerance)
+            && pt.x > x0 + cornerTolerance && pt.x < x1 - cornerTolerance) {
             canvas.style.cursor = 'ns-resize';
             return;
         }
     }
 
-    // ── 1) IMAGE HANDLE HOVER ───────────────────────────────────────
+    // ── 3) IMAGE HANDLE HOVER ───────────────────────────────────────────
     if (!isDraggingImage && !isResizingImage && activeImage) {
-        const imgHandle = getHandleUnderMouseForImage(activeImage, pos);
-        if (imgHandle) {
-            if (imgHandle === 'top-left' || imgHandle === 'bottom-right') cursor = 'nwse-resize';
-            if (imgHandle === 'top-right' || imgHandle === 'bottom-left') cursor = 'nesw-resize';
-            canvas.style.cursor = cursor;
+        const handle = getImageHandleUnderMouse(pos.x, pos.y, activeImage);
+        if (handle) {
+            if (handle === 'top-left' || handle === 'bottom-right') {
+                canvas.style.cursor = 'nwse-resize';
+            } else if (handle === 'top-right' || handle === 'bottom-left') {
+                canvas.style.cursor = 'nesw-resize';
+            } else if (handle === 'left' || handle === 'right') {
+                canvas.style.cursor = 'ew-resize';
+            } else if (handle === 'top' || handle === 'bottom') {
+                canvas.style.cursor = 'ns-resize';
+            }
             return;
         }
     }
 
-    // ── 2) GROUP DRAG ───────────────────────────────────────────────
+    // ── 4) GROUP DRAG ───────────────────────────────────────────────────
     if (isDraggingGroup) {
         const dx = e.clientX - groupDragStart.x;
         const dy = e.clientY - groupDragStart.y;
@@ -3104,130 +3264,237 @@ canvas.addEventListener("mousemove", function (e) {
             obj.x = x + dx;
             obj.y = y + dy;
         });
-        drawCanvas('Common');
-        canvas.style.cursor = 'grabbing';
+        drawCanvas("Common");
+        canvas.style.cursor = "grabbing";
         return;
     }
 
-
-    // ── 3) TEXT RESIZE & DRAG ────────────────────────────────────────
+    // ── 5) TEXT RESIZE & DRAG ───────────────────────────────────────────
     if (isResizingText && activeText && activeTextHandle) {
-        const obj = activeText;
-        const ctx = canvas.getContext('2d');
-        const center = { x: obj.x + obj.boundingWidth / 2, y: obj.y + obj.boundingHeight / 2 };
-        const pt = rotatePoint(pos.x, pos.y, center.x, center.y, -obj.rotation);
-        const oldL = obj.x, oldT = obj.y;
-        const oldW = obj.boundingWidth, oldH = obj.boundingHeight;
-        let dx, dy;
+        const txt = activeText;
 
-        // Determine corner logic
-        if (activeTextHandle === 'bottom-right') {
-            dx = pt.x - oldL; dy = pt.y - oldT; cursor = 'nwse-resize';
-        } else if (activeTextHandle === 'bottom-left') {
-            dx = (oldL + oldW) - pt.x; dy = pt.y - oldT; cursor = 'nesw-resize';
-        } else if (activeTextHandle === 'top-right') {
-            dx = pt.x - oldL; dy = (oldT + oldH) - pt.y; cursor = 'nesw-resize';
-        } else if (activeTextHandle === 'top-left') {
-            dx = (oldL + oldW) - pt.x; dy = (oldT + oldH) - pt.y; cursor = 'nwse-resize';
+        // 1) Pull in the stored “start‐of‐drag” dims:
+        const wStart = txt._resizeStartW;     // original boundingWidth
+        const hStart = txt._resizeStartH;     // original boundingHeight
+        const fontStart = txt._resizeStartFont; // original fontSize
+
+        // 2) Compute center of that original box and rotation
+        const cx = txt.x + wStart / 2;
+        const cy = txt.y + hStart / 2;
+        const θ = (txt.rotation || 0) * Math.PI / 180;
+
+        // 3) Map current mouse into local (unrotated) space
+        const dx = pos.x - cx;
+        const dy = pos.y - cy;
+        const localX = dx * Math.cos(-θ) - dy * Math.sin(-θ);
+        const localY = dx * Math.sin(-θ) + dy * Math.cos(-θ);
+
+        // 4) Find original handle position in that local frame
+        let origLX = 0, origLY = 0, cursorLocal = "default";
+        switch (activeTextHandle) {
+            case "bottom-right":
+                origLX = wStart / 2; origLY = hStart / 2; cursorLocal = "nwse-resize"; break;
+            case "bottom-left":
+                origLX = -wStart / 2; origLY = hStart / 2; cursorLocal = "nesw-resize"; break;
+            case "top-right":
+                origLX = wStart / 2; origLY = -hStart / 2; cursorLocal = "nesw-resize"; break;
+            case "top-left":
+                origLX = -wStart / 2; origLY = -hStart / 2; cursorLocal = "nwse-resize"; break;
         }
-        let scale = Math.min(dx / oldW, dy / oldH);
-        const minScale = 10 / obj.fontSize;
-        scale = Math.max(scale, minScale);
 
-        // Apply scale
-        const newFontSize = obj.fontSize * scale;
-        ctx.font = `${newFontSize}px ${obj.fontFamily}`;
-        const lines = wrapText(ctx, obj.text.replace(/\n/g, ''), Infinity);
-        const lineHeight = newFontSize * obj.lineSpacing;
-        const minH = lines.length * lineHeight + 2 * padding;
-        const minW = getMinTextWidth(ctx, obj.text.replace(/\n/g, ''));
-        const newW = Math.max(oldW * scale, minW);
-        const newH = Math.max(oldH * scale, minH);
+        // 5) How far has the handle moved locally?
+        const deltaLX = localX - origLX;
+        const deltaLY = localY - origLY;
 
-        // Reposition for left/top handles
-        if (activeTextHandle.includes('left')) obj.x = oldL + oldW - newW;
-        if (activeTextHandle.includes('top')) obj.y = oldT + oldH - newH;
-        obj.boundingWidth = newW;
-        obj.boundingHeight = newH;
-        obj.fontSize = newFontSize;
+        // 6) Compute new local width/height (before clamping)
+        let newLocalW = wStart;
+        let newLocalH = hStart;
+        if (activeTextHandle.includes("right")) newLocalW = wStart + 2 * deltaLX;
+        else if (activeTextHandle.includes("left")) newLocalW = wStart - 2 * deltaLX;
+        if (activeTextHandle.includes("bottom")) newLocalH = hStart + 2 * deltaLY;
+        else if (activeTextHandle.includes("top")) newLocalH = hStart - 2 * deltaLY;
 
-        drawCanvas('Common');
-        canvas.style.cursor = cursor;
+        // 7) Clamp so the text never collapses/disappears
+        const minTextW = 20; // adjust as needed
+        const minTextH = 20;
+        newLocalW = Math.max(newLocalW, minTextW);
+        newLocalH = Math.max(newLocalH, minTextH);
+
+        // 8) Derive new font size from the height ratio
+        const scaleFactor = newLocalH / hStart;
+        const newFontSize = fontStart * scaleFactor;
+
+        // 9) Re‐measure actual bounding box using newFontSize
+        const context = canvas.getContext("2d");
+        context.font = `${newFontSize}px ${txt.fontFamily}`;
+        const lines = wrapText(context, txt.text.replace(/\n/g, ""), Infinity);
+        const lineHeight = newFontSize * txt.lineSpacing;
+        const measuredH = lines.length * lineHeight + 2 * padding;
+        const measuredW = Math.max(...lines.map(line => context.measureText(line).width)) + 2 * padding;
+
+        txt.fontSize = newFontSize;
+        txt.boundingWidth = Math.max(measuredW, newLocalW);
+        txt.boundingHeight = Math.max(measuredH, newLocalH);
+
+        // 10) If dragging from left or top, shift x/y so opposite edge stays fixed
+        if (activeTextHandle.includes("left")) {
+            const shiftLX = deltaLX;
+            const shiftLY = 0;
+            const s = Math.sin(θ), c = Math.cos(θ);
+            txt.x += shiftLX * c - shiftLY * s;
+            txt.y += shiftLX * s + shiftLY * c;
+        }
+        if (activeTextHandle.includes("top")) {
+            const shiftLX = 0;
+            const shiftLY = deltaLY;
+            const s = Math.sin(θ), c = Math.cos(θ);
+            txt.x += shiftLX * c - shiftLY * s;
+            txt.y += shiftLX * s + shiftLY * c;
+        }
+
+        drawCanvas("Common");
+        canvas.style.cursor = cursorLocal;
         return;
     }
-
-    // ── 4) TEXT DRAG ────────────────────────────────────────────────
     if (isDraggingText && activeText) {
-        const center = { x: activeText.x + activeText.boundingWidth / 2, y: activeText.y + activeText.boundingHeight / 2 };
-        const pt = rotatePoint(pos.x, pos.y, center.x, center.y, -activeText.rotation);
-        activeText.x = pt.x - dragOffsetText.x;
-        activeText.y = pt.y - dragOffsetText.y;
-        drawCanvas('Common');
-        canvas.style.cursor = 'grabbing';
+        const txt = activeText;
+        const center = { x: txt.x + txt.boundingWidth / 2, y: txt.y + txt.boundingHeight / 2 };
+        const pt = rotatePoint(pos.x, pos.y, center.x, center.y, -txt.rotation);
+        txt.x = pt.x - dragOffsetText.x;
+        txt.y = pt.y - dragOffsetText.y;
+        drawCanvas("Common");
+        canvas.style.cursor = "grabbing";
         return;
     }
 
-    // ── 5) IMAGE DRAG ─────────────────────────────────────────────
+    // ── 6) IMAGE DRAG ───────────────────────────────────────────────────
     if (isDraggingImage && activeImage) {
         activeImage.x = pos.x - dragOffsetImage.x;
         activeImage.y = pos.y - dragOffsetImage.y;
-        drawCanvas('Common');
-        canvas.style.cursor = 'grabbing';
+        drawCanvas("Common");
+        canvas.style.cursor = "grabbing";
         return;
     }
 
-    // ── 6) IMAGE RESIZE ───────────────────────────────────────────
+    // ── 7) IMAGE RESIZE ─────────────────────────────────────────────────
     if (isResizingImage && activeImage && activeImageHandle) {
-        const oldR = activeImage.x + activeImage.width * activeImage.scaleX;
-        const oldB = activeImage.y + activeImage.height * activeImage.scaleY;
-        let newW, newH;
-        if (activeImageHandle === 'bottom-right') {
-            newW = pos.x - activeImage.x;
-            newH = pos.y - activeImage.y;
-            cursor = 'nwse-resize';
-        } else if (activeImageHandle === 'bottom-left') {
-            newW = oldR - pos.x;
-            newH = pos.y - activeImage.y;
-            activeImage.x = pos.x;
-            cursor = 'nesw-resize';
-        } else if (activeImageHandle === 'top-right') {
-            newW = pos.x - activeImage.x;
-            newH = oldB - pos.y;
-            activeImage.y = pos.y;
-            cursor = 'nesw-resize';
-        } else if (activeImageHandle === 'top-left') {
-            newW = oldR - pos.x;
-            newH = oldB - pos.y;
-            activeImage.x = pos.x;
-            activeImage.y = pos.y;
-            cursor = 'nwse-resize';
+        const img = activeImage;
+        // (image block remains exactly as you already verified it works)
+
+        const wStart = img._resizeStartW;
+        const hStart = img._resizeStartH;
+        const cx = img.x + wStart / 2;
+        const cy = img.y + hStart / 2;
+        const θ = (img.rotation || 0) * Math.PI / 180;
+
+        const dx = pos.x - cx;
+        const dy = pos.y - cy;
+        const localX = dx * Math.cos(-θ) - dy * Math.sin(-θ);
+        const localY = dx * Math.sin(-θ) + dy * Math.cos(-θ);
+
+        let origLX = 0, origLY = 0, cursorImg = "default";
+        switch (activeImageHandle) {
+            case "bottom-right":
+                origLX = wStart / 2; origLY = hStart / 2; cursorImg = "nwse-resize"; break;
+            case "bottom-left":
+                origLX = -wStart / 2; origLY = hStart / 2; cursorImg = "nesw-resize"; break;
+            case "top-right":
+                origLX = wStart / 2; origLY = -hStart / 2; cursorImg = "nesw-resize"; break;
+            case "top-left":
+                origLX = -wStart / 2; origLY = -hStart / 2; cursorImg = "nwse-resize"; break;
+            case "right":
+                origLX = wStart / 2; origLY = 0; cursorImg = "ew-resize"; break;
+            case "left":
+                origLX = -wStart / 2; origLY = 0; cursorImg = "ew-resize"; break;
+            case "bottom":
+                origLX = 0; origLY = hStart / 2; cursorImg = "ns-resize"; break;
+            case "top":
+                origLX = 0; origLY = -hStart / 2; cursorImg = "ns-resize"; break;
         }
-        activeImage.scaleX = Math.max(newW / activeImage.width, 0.01);
-        activeImage.scaleY = Math.max(newH / activeImage.height, 0.01);
-        drawCanvas('Common');
-        canvas.style.cursor = cursor;
+
+        const deltaLX = localX - origLX;
+        const deltaLY = localY - origLY;
+
+        let newLocalW = wStart;
+        let newLocalH = hStart;
+        if (activeImageHandle.includes("right")) newLocalW = wStart + 2 * deltaLX;
+        else if (activeImageHandle.includes("left")) newLocalW = wStart - 2 * deltaLX;
+        if (activeImageHandle.includes("bottom")) newLocalH = hStart + 2 * deltaLY;
+        else if (activeImageHandle.includes("top")) newLocalH = hStart - 2 * deltaLY;
+
+        const minW = 20;
+        const minH = 20;
+        newLocalW = Math.max(newLocalW, minW);
+        newLocalH = Math.max(newLocalH, minH);
+
+        img.scaleX = newLocalW / img.width;
+        img.scaleY = newLocalH / img.height;
+
+        if (activeImageHandle.includes("left")) {
+            const shiftLX = deltaLX;
+            const shiftLY = 0;
+            const s = Math.sin(θ), c = Math.cos(θ);
+            img.x += shiftLX * c - shiftLY * s;
+            img.y += shiftLX * s + shiftLY * c;
+        }
+        if (activeImageHandle.includes("top")) {
+            const shiftLX = 0;
+            const shiftLY = deltaLY;
+            const s = Math.sin(θ), c = Math.cos(θ);
+            img.x += shiftLX * c - shiftLY * s;
+            img.y += shiftLX * s + shiftLY * c;
+        }
+
+        drawCanvas("Common");
+        canvas.style.cursor = cursorImg;
         return;
     }
 
-    // ── 7) Hover Feedback (no action) ───────────────────────────────
+    // ── 8) HOVER FEEDBACK ───────────────────────────────────────────────
     if (!isDraggingText && !isResizingText && activeText) {
-        const center = { x: activeText.x + activeText.boundingWidth / 2, y: activeText.y + activeText.boundingHeight / 2 };
-        const pt = rotatePoint(pos.x, pos.y, center.x, center.y, -activeText.rotation);
-        if (pt.x >= activeText.x && pt.x <= activeText.x + activeText.boundingWidth && pt.y >= activeText.y && pt.y <= activeText.y + activeText.boundingHeight) {
-            cursor = 'grab';
+        const cx = activeText.x + activeText.boundingWidth / 2;
+        const cy = activeText.y + activeText.boundingHeight / 2;
+        const θ = -(activeText.rotation || 0) * Math.PI / 180;
+        const dx = pos.x - cx;
+        const dy = pos.y - cy;
+        const localX = dx * Math.cos(θ) - dy * Math.sin(θ);
+        const localY = dx * Math.sin(θ) + dy * Math.cos(θ);
+        if (
+            localX >= -activeText.boundingWidth / 2 &&
+            localX <= activeText.boundingWidth / 2 &&
+            localY >= -activeText.boundingHeight / 2 &&
+            localY <= activeText.boundingHeight / 2
+        ) {
+            cursor = "grab";
         }
     }
     if (!isDraggingImage && !isResizingImage && activeImage) {
-        const w = activeImage.width * activeImage.scaleX;
-        const h = activeImage.height * activeImage.scaleY;
-        if (pos.x >= activeImage.x && pos.x <= activeImage.x + w && pos.y >= activeImage.y && pos.y <= activeImage.y + h) {
-            cursor = 'grab';
+        const sx = (typeof activeImage.scaleX === "number") ? activeImage.scaleX : 1;
+        const sy = (typeof activeImage.scaleY === "number") ? activeImage.scaleY : 1;
+        const w = activeImage.width * sx;
+        const h = activeImage.height * sy;
+        const cx = activeImage.x + w / 2;
+        const cy = activeImage.y + h / 2;
+        const θ = -(activeImage.rotation || 0) * Math.PI / 180;
+        const dx = pos.x - cx;
+        const dy = pos.y - cy;
+        const localX = dx * Math.cos(θ) - dy * Math.sin(θ);
+        const localY = dx * Math.sin(θ) + dy * Math.cos(θ);
+        if (
+            localX >= -w / 2 &&
+            localX <= w / 2 &&
+            localY >= -h / 2 &&
+            localY <= h / 2
+        ) {
+            cursor = "grab";
         }
     }
 
-
     canvas.style.cursor = cursor;
 });
+
+
+
 
 
 
@@ -3354,6 +3621,32 @@ function updateRotation(angle) {
 }
 
 
+//canvas.addEventListener("mouseup", function () {
+//    if (isResizingText && activeText && activeTextHandle) {
+//        onBoxResizeEnd(activeText);
+//    }
+//    isDraggingGroup = false;
+//    groupDragStart = null;
+//    groupStarts = [];
+
+//    currentDrag = null;
+//    isResizing = false;
+//    isDragging = false;
+//    activeHandle = null;
+
+//    isDraggingImage = false;
+//    isResizingImage = false;
+
+//    isResizingText = false;
+//    isDraggingText = false;
+//    activeTextHandle = null;
+//    activeText = null;
+
+//    isRotating = false;
+//    rotatingObject = null;
+
+//});
+
 canvas.addEventListener("mouseup", function () {
     if (isResizingText && activeText && activeTextHandle) {
         onBoxResizeEnd(activeText);
@@ -3362,23 +3655,19 @@ canvas.addEventListener("mouseup", function () {
     groupDragStart = null;
     groupStarts = [];
 
-    currentDrag = null;
-    isResizing = false;
-    isDragging = false;
-    activeHandle = null;
-
     isDraggingImage = false;
     isResizingImage = false;
+    activeImageHandle = null;
 
-    isResizingText = false;
     isDraggingText = false;
+    isResizingText = false;
     activeTextHandle = null;
-    activeText = null;
 
     isRotating = false;
     rotatingObject = null;
-
+    currentDrag = null;
 });
+
 
 canvas.addEventListener("mouseleave", function () {
     currentDrag = null;
