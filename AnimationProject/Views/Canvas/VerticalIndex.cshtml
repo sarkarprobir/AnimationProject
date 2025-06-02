@@ -712,10 +712,12 @@
          {
          // document.getElementById("modeButton").innerText = "Graphic Mode";
           $("#opengl_popup").toggle();
+   
           if(document.getElementById("fontstyle_popup").style.display == "block"){
                 $("#fontstyle_popup").hide();
                 $(".right-sec-two").toggle();
                 $(".right-sec-one").toggle();
+                
             }
          }
     </script>
@@ -800,6 +802,7 @@
           $('#background_popup').show();
           $('#fontstyle_popup').hide();
           $('#opengl_popup').hide();
+          $('#elementsPopup').hide();
         });
 
         // hide the popup when the close button is clicked
