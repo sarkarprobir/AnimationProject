@@ -1128,8 +1128,8 @@ body {
     min-height: 59.8vh;
 }
 .temp_inside {
-    display: flex;
-    justify-content: center;
+/*    display: flex;
+    justify-content: center;*/
 /*    flex-wrap: wrap;*/
 }
 
@@ -1418,12 +1418,12 @@ body {
     height: 210px;
     object-fit: contain;
 }
-.h-col-width {
+/*.h-col-width {
     width: 227px;
 }
 .v-col-width{
 
-}
+}*/
 .elements-popup {
     background: #fff;
     width: 575px;
@@ -1443,4 +1443,19 @@ body {
     .elements-popup {
         height: 100vh;
     }
+}
+.h-templates {
+    width: 230px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.v-templates {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+.temp-V_H{
+    display: flex;
+    gap: 20px;
 }
