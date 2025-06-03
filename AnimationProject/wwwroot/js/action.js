@@ -234,7 +234,7 @@ async function captureSlide(activeSlide, slideResult) {
                     ImagePath: data.filePath
                 },
                 success: function (response) {
-                    //sessionStorage.setItem("leftPanelHtml", document.getElementById("divpanelleft").innerHTML);
+                    sessionStorage.setItem("leftPanelHtml", document.getElementById("divpanelleft").innerHTML);
                     MessageShow('RedirectToVerticalPageWithQueryString()', 'Design Board saved successfully!', 'success');
                 },
                 error: function (xhr, status, error) {
