@@ -3273,83 +3273,60 @@ canvas.addEventListener("mousemove", function (e) {
     if (isResizingText && activeText && activeTextHandle) {
         const txt = activeText;
 
-        // 1) Pull in the stored “start‐of‐drag” dims:
-        const wStart = txt._resizeStartW;     // original boundingWidth
-        const hStart = txt._resizeStartH;     // original boundingHeight
-        const fontStart = txt._resizeStartFont; // original fontSize
+        const wStart = txt._resizeStartW;
+        const hStart = txt._resizeStartH;
+        const fontStart = txt._resizeStartFont;
 
-        // 2) Compute center of that original box and rotation
         const cx = txt.x + wStart / 2;
         const cy = txt.y + hStart / 2;
         const θ = (txt.rotation || 0) * Math.PI / 180;
 
-        // 3) Map current mouse into local (unrotated) space
         const dx = pos.x - cx;
         const dy = pos.y - cy;
         const localX = dx * Math.cos(-θ) - dy * Math.sin(-θ);
         const localY = dx * Math.sin(-θ) + dy * Math.cos(-θ);
 
-        // 4) Find original handle position in that local frame
         let origLX = 0, origLY = 0, cursorLocal = "default";
         switch (activeTextHandle) {
-            case "bottom-right":
-                origLX = wStart / 2; origLY = hStart / 2; cursorLocal = "nwse-resize"; break;
-            case "bottom-left":
-                origLX = -wStart / 2; origLY = hStart / 2; cursorLocal = "nesw-resize"; break;
-            case "top-right":
-                origLX = wStart / 2; origLY = -hStart / 2; cursorLocal = "nesw-resize"; break;
-            case "top-left":
-                origLX = -wStart / 2; origLY = -hStart / 2; cursorLocal = "nwse-resize"; break;
+            case "bottom-right": origLX = wStart / 2; origLY = hStart / 2; cursorLocal = "nwse-resize"; break;
+            case "bottom-left": origLX = -wStart / 2; origLY = hStart / 2; cursorLocal = "nesw-resize"; break;
+            case "top-right": origLX = wStart / 2; origLY = -hStart / 2; cursorLocal = "nesw-resize"; break;
+            case "top-left": origLX = -wStart / 2; origLY = -hStart / 2; cursorLocal = "nwse-resize"; break;
         }
 
-        // 5) How far has the handle moved locally?
-        const deltaLX = localX - origLX;
-        const deltaLY = localY - origLY;
+        const origDist = Math.hypot(origLX, origLY);
+        const newDist = Math.hypot(localX, localY);
+        const scaleFactor = newDist / origDist;
 
-        // 6) Compute new local width/height (before clamping)
-        let newLocalW = wStart;
-        let newLocalH = hStart;
-        if (activeTextHandle.includes("right")) newLocalW = wStart + 2 * deltaLX;
-        else if (activeTextHandle.includes("left")) newLocalW = wStart - 2 * deltaLX;
-        if (activeTextHandle.includes("bottom")) newLocalH = hStart + 2 * deltaLY;
-        else if (activeTextHandle.includes("top")) newLocalH = hStart - 2 * deltaLY;
+        const newFontSize = Math.max(8, fontStart * scaleFactor);
 
-        // 7) Clamp so the text never collapses/disappears
-        const minTextW = 20; // adjust as needed
-        const minTextH = 20;
-        newLocalW = Math.max(newLocalW, minTextW);
-        newLocalH = Math.max(newLocalH, minTextH);
-
-        // 8) Derive new font size from the height ratio
-        const scaleFactor = newLocalH / hStart;
-        const newFontSize = fontStart * scaleFactor;
-
-        // 9) Re‐measure actual bounding box using newFontSize
         const context = canvas.getContext("2d");
         context.font = `${newFontSize}px ${txt.fontFamily}`;
-        const lines = wrapText(context, txt.text.replace(/\n/g, ""), Infinity);
+        //const lines = wrapText(context, txt.text.replace(/\n/g, ""), Infinity);
+        //const lineHeight = newFontSize * txt.lineSpacing;
+        //const measuredH = lines.length * lineHeight + 2 * padding;
+        //const measuredW = Math.max(...lines.map(line => context.measureText(line).width)) + 2 * padding;
+
+        const rawLines = txt.text.split('\n');
+        context.font = `${newFontSize}px ${txt.fontFamily}`;
         const lineHeight = newFontSize * txt.lineSpacing;
-        const measuredH = lines.length * lineHeight + 2 * padding;
-        const measuredW = Math.max(...lines.map(line => context.measureText(line).width)) + 2 * padding;
+        const measuredW = Math.max(...rawLines.map(line => context.measureText(line).width)) + 2 * padding;
+        const measuredH = rawLines.length * lineHeight + 2 * padding;
+
 
         txt.fontSize = newFontSize;
-        txt.boundingWidth = Math.max(measuredW, newLocalW);
-        txt.boundingHeight = Math.max(measuredH, newLocalH);
+        txt.boundingWidth = measuredW;
+        txt.boundingHeight = measuredH;
 
-        // 10) If dragging from left or top, shift x/y so opposite edge stays fixed
-        if (activeTextHandle.includes("left")) {
-            const shiftLX = deltaLX;
-            const shiftLY = 0;
+        // Shift x/y if resizing from top or left
+        if (activeTextHandle.includes("left") || activeTextHandle.includes("top")) {
+            const deltaLX = localX - origLX;
+            const deltaLY = localY - origLY;
             const s = Math.sin(θ), c = Math.cos(θ);
-            txt.x += shiftLX * c - shiftLY * s;
-            txt.y += shiftLX * s + shiftLY * c;
-        }
-        if (activeTextHandle.includes("top")) {
-            const shiftLX = 0;
-            const shiftLY = deltaLY;
-            const s = Math.sin(θ), c = Math.cos(θ);
-            txt.x += shiftLX * c - shiftLY * s;
-            txt.y += shiftLX * s + shiftLY * c;
+            const dxShift = (activeTextHandle.includes("left") ? deltaLX : 0);
+            const dyShift = (activeTextHandle.includes("top") ? deltaLY : 0);
+            txt.x += dxShift * c - dyShift * s;
+            txt.y += dxShift * s + dyShift * c;
         }
 
         drawCanvas("Common");
@@ -3569,19 +3546,17 @@ function onBoxResizeEndOld(obj) {
 function onBoxResizeEnd(obj) {
     const ctx = canvas.getContext('2d');
     const padding = obj.padding || 5;
-
     const maxW = obj.boundingWidth - 2 * padding;
     const maxH = obj.boundingHeight - 2 * padding;
 
     const lines = obj.text.split('\n');
     let fontSize = obj.fontSize;
-    const lineSpacing = obj.lineSpacing ?? fontSize * 1.2; // fallback if not set
+    const lineSpacingMultiplier = obj.lineSpacing ?? 1.2;
 
-    // Updated measure to use lineSpacing
     function measure(fs) {
         ctx.font = `${fs}px ${obj.fontFamily}`;
         const w = Math.max(...lines.map(l => ctx.measureText(l).width));
-        const h = (lines.length - 1) * lineSpacing + fs; // fs is height of first line
+        const h = lines.length * fs * lineSpacingMultiplier;
         return { w, h };
     }
 
@@ -3593,9 +3568,8 @@ function onBoxResizeEnd(obj) {
     }
 
     // Grow if too small
-    let next;
     while (true) {
-        next = measure(fontSize + 1);
+        const next = measure(fontSize + 1);
         if (next.w <= maxW && next.h <= maxH) {
             fontSize++;
         } else {
@@ -3603,9 +3577,11 @@ function onBoxResizeEnd(obj) {
         }
     }
 
+    fontSize = Math.max(fontSize, 4); // Clamp to minimum
     obj.fontSize = fontSize;
     drawCanvas('Common');
 }
+
 
 function updateRotation(angle) {
     angle = ((angle % 360) + 360) % 360; // normalize
