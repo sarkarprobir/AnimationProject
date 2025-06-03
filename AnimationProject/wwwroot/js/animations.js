@@ -2139,6 +2139,7 @@ function addDefaultText() {
     // 6) Redraw
     drawCanvas('Common');
     $("#opengl_popup").hide();
+    $("#elementsPopup").hide();
 }
 
 
