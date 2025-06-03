@@ -483,15 +483,33 @@
             $(document).ready(function(){
       (async () => {
         try {
-          // 1) Load all four panels in parallel
-          await Promise.all([
-            CreateRightSectionhtml(),
-            CreateHeaderSectionhtml(),
-            CreateBackgroundSectionhtml(),
-            CreateLeftSectionhtml()
-          ]);
+        //         const savedHtml = sessionStorage.getItem("leftPanelHtml");
+        // let leftPanelPromise;
+        // debugger;
+        // if (savedHtml) {
+        //   document.getElementById("divpanelleft").innerHTML = savedHtml;
+        //   sessionStorage.removeItem("leftPanelHtml"); // optional cleanup
+        //   leftPanelPromise = Promise.resolve(); // no async work needed
+        // } else {
+        //   // Make sure CreateLeftSectionhtml returns a Promise
+        //   leftPanelPromise = CreateLeftSectionhtml();
+        // }
+        //   // 1) Load all four panels in parallel
+        //   await Promise.all([
+        //     CreateRightSectionhtml(),
+        //     CreateHeaderSectionhtml(),
+        //     CreateBackgroundSectionhtml(),
+        //     //CreateLeftSectionhtml()
+        //           leftPanelPromise
+        //   ]);
 
-          
+              await Promise.all([
+                CreateLeftSectionhtml(),
+                CreateRightSectionhtml(),
+                CreateHeaderSectionhtml(),
+                CreateBackgroundSectionhtml()
+                
+              ]);
           await document.fonts.ready;
 
           // 3) Now your controls can be initialized
