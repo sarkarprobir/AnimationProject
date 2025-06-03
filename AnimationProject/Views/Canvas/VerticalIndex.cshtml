@@ -245,11 +245,11 @@
             color: var(--color-muted-grey);
         }
 
-        .shapes_tabs a {
+        /* .shapes_tabs a {
             font-size: 14px;
             text-decoration: none;
             color: black;
-        }
+        } */
 
         .left-panel-imput {
             flex: 1;
@@ -258,8 +258,7 @@
             border-color: #00000036;
         }
 
-        .search-box,
-        .choose_file {
+        .search-box{
             margin-top: 15px;
         }
 
@@ -268,17 +267,17 @@
         }
 
         .temp_gallery {
-            display: flex;
+            /* display: flex;
             gap: 8px;
-            flex-wrap: wrap;
+            flex-wrap: wrap; */
             overflow-y: hidden;
             min-height: 432px;
         }
 
-            .temp_gallery img {
+            /* .temp_gallery img {
                 width: auto;
                 height: 147px;
-            }
+            } */
 
         .gallery_head {
             font-size: 18px;
@@ -444,6 +443,8 @@
 
         .inside_wrapper{
             height: fit-content !important;
+            display: flex;
+            justify-content: center;
         }
 
         .context-options{
@@ -712,10 +713,12 @@
          {
          // document.getElementById("modeButton").innerText = "Graphic Mode";
           $("#opengl_popup").toggle();
+   
           if(document.getElementById("fontstyle_popup").style.display == "block"){
                 $("#fontstyle_popup").hide();
                 $(".right-sec-two").toggle();
                 $(".right-sec-one").toggle();
+                
             }
          }
     </script>
@@ -800,6 +803,7 @@
           $('#background_popup').show();
           $('#fontstyle_popup').hide();
           $('#opengl_popup').hide();
+          $('#elementsPopup').hide();
         });
 
         // hide the popup when the close button is clicked
