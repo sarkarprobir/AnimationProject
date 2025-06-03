@@ -2431,16 +2431,16 @@ function getTextHandleUnderMouse(mouseX, mouseY, txt) {
             return c.name;
         }
     }
-    // Vertical edges (not in corner zone)
-    if ((Math.abs(localX - lx) < edgeTolerance || Math.abs(localX - rx) < edgeTolerance)
-        && localY > ly + cornerTolerance && localY < ry - cornerTolerance) {
-        return (Math.abs(localX - lx) < edgeTolerance) ? 'left' : 'right';
-    }
-    // Horizontal edges
-    if ((Math.abs(localY - ly) < edgeTolerance || Math.abs(localY - ry) < edgeTolerance)
-        && localX > lx + cornerTolerance && localX < rx - cornerTolerance) {
-        return (Math.abs(localY - ly) < edgeTolerance) ? 'top' : 'bottom';
-    }
+    //// Vertical edges (not in corner zone)
+    //if ((Math.abs(localX - lx) < edgeTolerance || Math.abs(localX - rx) < edgeTolerance)
+    //    && localY > ly + cornerTolerance && localY < ry - cornerTolerance) {
+    //    return (Math.abs(localX - lx) < edgeTolerance) ? 'left' : 'right';
+    //}
+    //// Horizontal edges
+    //if ((Math.abs(localY - ly) < edgeTolerance || Math.abs(localY - ry) < edgeTolerance)
+    //    && localX > lx + cornerTolerance && localX < rx - cornerTolerance) {
+    //    return (Math.abs(localY - ly) < edgeTolerance) ? 'top' : 'bottom';
+    //}
     return null;
 }
 
