@@ -3751,6 +3751,28 @@ function isInsideBox(mouseX, mouseY, obj) {
 
 //////    drawCanvas('Common');
 //////});
+
+function getSelectedType() {
+    const selectedText = textObjects.find(o => o.selected);
+    if (selectedText) {
+        if (selectedText.groupId != null) return "Group";
+        return "Text";
+    }
+
+    const selectedImage = images.find(img => img.selected);
+    if (selectedImage) {
+        if (selectedImage.groupId != null) return "Group";
+        if (selectedImage.img?.src?.toLowerCase().includes(".svg")) {
+            return "Shape";
+        }
+        return "Image";
+    }
+
+    return null;
+}
+
+
+
 canvas.addEventListener("click", function (e) {
     // ignore shift here
     if (e.shiftKey) return;
@@ -3872,6 +3894,10 @@ canvas.addEventListener("click", function (e) {
     }
 
     drawCanvas('Common');
+
+    const selectedType = getSelectedType();
+    console.log("Selected Type:", selectedType);
+
 });
 
 // Arrow-key nudge: move all selected items by the arrow direction
