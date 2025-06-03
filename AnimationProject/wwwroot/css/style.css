@@ -185,12 +185,12 @@ ul.right-listone li a img {
 ul.right-listone li a:hover {
     border: 2px solid #ccc;
 }
-        ul.right-listone li a:focus {
-            border: 2px solid #ccc;
-        }
-    .active_effect {
-        border: 2px solid #ccc !important;
-    }
+.active_direction {
+    border: 2px solid #ccc !important;
+}
+.active_effect {
+    border: 2px solid #ccc !important;
+}
 
 ul.right-listone li:nth-child(3){margin-right:0px;}
 ul.right-listone li:nth-child(6){margin-right:0px;}
@@ -516,7 +516,7 @@ ul.speed-list li:hover{background:#f5f5f5; border-radius:6px; cursor:pointer;}
     top: 0px;
     bottom: 0px;
     background-color: transparent;
-    width: 261px;
+    width: 260px;
 /*    z-index: 1;*/
     border-radius: 0;
     box-shadow: none;
@@ -1091,7 +1091,7 @@ body {
 .pagination {
     display: flex;
     justify-content: center;
-    margin-top: 24px;
+    margin-top: 27px;
 }
 
     .pagination span {
@@ -1257,7 +1257,7 @@ body {
         height: 95vh;
     }
     .texture_top_cont {
-        min-height: 804px;
+        min-height: 675px;
     }
     #background_popup{
         width: 279px;
@@ -1462,4 +1462,7 @@ body {
 .temp-V_H{
     display: flex;
     gap: 20px;
+}
+.form-control:focus{
+    box-shadow: none !important;
 }

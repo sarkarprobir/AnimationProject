@@ -2144,6 +2144,7 @@ function addDefaultText() {
     // 6) Redraw
     drawCanvas('Common');
     $("#opengl_popup").hide();
+    $("#elementsPopup").hide();
 }
 
 
@@ -5088,14 +5089,27 @@ function handleThumbClick(clickedElement) {
 // function for elements popup
 function elementsTogglePopup() {
     const popup = document.getElementById('elementsPopup');
+    const otherPopups = [
+        document.getElementById('opengl_popup'),
+        document.getElementById('fontstyle_popup'),
+        document.getElementById('background_popup')
+    ];
+
+    // Hide all other popups
+    otherPopups.forEach(p => p.style.display = 'none');
+
+    // Toggle the target popup
     popup.style.display = (popup.style.display === 'block') ? 'none' : 'block';
 }
+
 // Optional: click outside to close
 document.addEventListener('click', function (event) {
     const popup = document.getElementById('elementsPopup');
-    const button = document.querySelectorAll('elementsToggleBtn');
+    const button = document.querySelector('.elementsToggleBtn');
 
     if (!popup.contains(event.target) && !button.contains(event.target)) {
         popup.style.display = 'none';
     }
 });
+
+
