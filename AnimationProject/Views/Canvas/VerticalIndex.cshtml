@@ -637,13 +637,18 @@
          }
           function opentlClose()
          {
+             const animationBtn = document.querySelector('.toggle-btn[data-mode="animation"]')
+             const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]')
+             animationBtn.classList.add('active');
+             graphicBtn.classList.remove('active');
              //document.getElementById("modeButton").innerText = "Graphic Mode";
             if(document.getElementById("opengl_popup").style.display == "block"){
                 $("#opengl_popup").hide();
             }
-          $("#fontstyle_popup").toggle();
-          $(".right-sec-two").toggle();
-          $(".right-sec-one").toggle();
+            $("#fontstyle_popup").toggle();
+            $(".right-sec-two").toggle();
+            $(".right-sec-one").toggle();
+          
          }
          
 
@@ -702,6 +707,16 @@
                 box.style.display = (box.style.display === "none" || box.style.display === "") ? "block" : "none";
             });
         });
+
+        // nav item active function
+        function handleNavButtonClick(clickedElement) {
+            document.querySelectorAll('.nav_button').forEach(btn => {
+                btn.classList.remove('active_nav_button');
+            });
+            clickedElement.classList.add('active_nav_button');
+        }
+
+              
 
     </script>
 
