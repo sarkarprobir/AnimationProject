@@ -5,24 +5,24 @@
 <div class="col-md-3 d-flex align-items-center gap-3 p-0">
     <a class="logo ms-2" href="javascript:history.back()"> <img src="~/images/icons/icon-left-arrow.png" alt="Logo" alt="Logo"></a>
     <ul class="top-left-icon d-flex align-items-center gap-2">
-        <li id="toggle_img">
+        <li class="nav_button" id="toggle_img" onclick="handleNavButtonClick(this);">
             <a href="javascript:void(0)"> <img  src="~/images/icons/ico-pattren.svg" title="Pattren" alt="pattren" width="20"></a>
         </li>
-        <li onclick="addDefaultText();opentl();">
+        <li class="nav_button" onclick="addDefaultText(); opentl(); handleNavButtonClick(this);">
             <a href="javascript:void(0)"> <img  src="~/images/icons/icon-text.png" title="Text" alt="text" width="17"></a>
         </li>
-        <li class="elementsToggleBtn" onclick="elementsTogglePopup();">
+        <li class="nav_button elementsToggleBtn" onclick="elementsTogglePopup(); handleNavButtonClick(this);">
             <a href="javascript:void(0)"> <img src="~/images/icons/icon_circle.svg" title="Circle" alt="circle" width="16"></a>
         </li>
         @* <li>
             <a href="javascript:void(0)"> <img src="~/images/icons/ico-shapes-masking.svg" title="Masking" alt="Masking" width="17"></a>
         </li> *@
-        <li onclick="opengl()">
+        <li class="nav_button" onclick="opengl(); handleNavButtonClick(this);">
             <a href="javascript:void(0)">
                 <img  src="~/images/icons/icon_gallery.svg" title="Gallery" alt="Gallery" width="20">
             </a>
         </li>
-        <li data-bs-toggle="modal" data-bs-target="#exampleModal">
+        <li class="nav_button" onclick="handleNavButtonClick(this);" data-bs-toggle="modal" data-bs-target="#exampleModal">
             <a href="javascript:void(0)" >
                 <img src="~/images/icons/plus.png" title="Create" alt="Create_Board" width="18">
             </a>

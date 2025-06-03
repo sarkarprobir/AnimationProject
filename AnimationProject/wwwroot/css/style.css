@@ -356,14 +356,19 @@ a.logo{
 ul.top-left-icon li {
     list-style-type: none;
     float: left;
-    padding: 2px 7px;
-    border-radius: 4px;
+    /*    padding: 2px 7px;*/
+    width: 30px;
+    height: 25px;
+    border-radius: 3px;
 }
     ul.top-left-icon li:hover {
         background-color: #4e43e1;
-        padding: 2px 7px;
+/*        padding: 2px 7px;*/
     }
-.top-left-icon li a{
+.active_nav_button {
+    background-color: #4e43e1 !important;
+}
+    .top-left-icon li a{
 /*    padding:5px 10px 6px 10px;*/
 }
 .navbar ul.top-left-icon{

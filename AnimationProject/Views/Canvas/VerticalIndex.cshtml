@@ -827,6 +827,16 @@
             });
         });
 
+        // nav item active function
+        function handleNavButtonClick(clickedElement) {
+            document.querySelectorAll('.nav_button').forEach(btn => {
+                btn.classList.remove('active_nav_button');
+            });
+            clickedElement.classList.add('active_nav_button');
+        }
+
+              
+
     </script>
 
     <!-- JavaScript for Handling Selection and Redirection -->
