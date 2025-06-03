@@ -3762,7 +3762,7 @@ function getSelectedType() {
     const selectedImage = images.find(img => img.selected);
     if (selectedImage) {
         if (selectedImage.groupId != null) return "Group";
-        if (selectedImage.img?.src?.toLowerCase().includes(".svg")) {
+        if (selectedImage.img?.src?.toLowerCase().includes("svg")) {
             return "Shape";
         }
         return "Image";
