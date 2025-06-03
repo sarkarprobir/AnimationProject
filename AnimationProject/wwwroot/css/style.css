@@ -185,12 +185,12 @@ ul.right-listone li a img {
 ul.right-listone li a:hover {
     border: 2px solid #ccc;
 }
-        ul.right-listone li a:focus {
-            border: 2px solid #ccc;
-        }
-    .active_effect {
-        border: 2px solid #ccc !important;
-    }
+.active_direction {
+    border: 2px solid #ccc !important;
+}
+.active_effect {
+    border: 2px solid #ccc !important;
+}
 
 ul.right-listone li:nth-child(3){margin-right:0px;}
 ul.right-listone li:nth-child(6){margin-right:0px;}

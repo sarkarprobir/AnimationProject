@@ -380,6 +380,19 @@
     function hideElemennts() {
       document.getElementById("elementsPopup").style.display = "none";
     }
+
+    //active class for animation direction
+
+        function toggleDirectionActive(clickedElement) {
+      // Remove 'active_direction' from all elements
+      document.querySelectorAll('.direction_link').forEach(el => {
+        el.classList.remove('active_direction');
+      });
+
+      // Add 'active_direction' to the clicked element
+      clickedElement.classList.add('active_direction');
+    }
+
 </script>
 
 
@@ -570,7 +583,7 @@
                         <li>
                             <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                                 <!-- hide the <a> by default -->
-                                <a id="aleft" href="javascript:void(0)" onclick="setCoordinate(this,'left',100,20,50,50)"
+                                <a class="direction_link" id="aleft" href="javascript:void(0)" onclick="setCoordinate(this,'left',100,20,50,50); toggleDirectionActive(this);"
                                    style=" width:100%; height:100%;">
                                     <img src="/images/icons/right arrow.svg" alt="Left to Center">
                                 </a>
@@ -585,7 +598,7 @@
                         <li>
                             <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                                 <!-- hide the <a> by default -->
-                                <a id="aright" href="javascript:void(0)" onclick="setCoordinate(this,'right',400,0,50,50)"
+                                <a class="direction_link" id="aright" href="javascript:void(0)" onclick="setCoordinate(this,'right',400,0,50,50); toggleDirectionActive(this);"
                                    style=" width:100%; height:100%;">
                                     <img src="/images/icons/right arrow.svg" alt="right to Center"
                                          style=" transform: rotate(180deg);">
@@ -602,8 +615,8 @@
                         <li>
                             <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                                 <!-- hide the <a> by default -->
-                                <a id="abottom" href="javascript:void(0)"
-                                   onclick="setCoordinate(this,'bottom',800,0,50,50)"
+                                <a class="direction_link" id="abottom" href="javascript:void(0)"
+                                   onclick="setCoordinate(this,'bottom',800,0,50,50); toggleDirectionActive(this);"
                                    style=" width:100%; height:100%;">
                                     <img src="/images/icons/right arrow.svg" alt="bottom to Center"
                                          style=" transform: rotate(270deg);">
@@ -620,7 +633,7 @@
                         <li>
                             <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                                 <!-- hide the <a> by default -->
-                                <a id="atop" href="javascript:void(0)" onclick="setCoordinate(this,'top',400,0,50,50)"
+                                <a class="direction_link" id="atop" href="javascript:void(0)" onclick="setCoordinate(this,'top',400,0,50,50); toggleDirectionActive(this);"
                                    style=" width:100%; height:100%;">
                                     <img src="/images/icons/right arrow.svg" alt="top to Center"
                                          style=" transform: rotate(90deg);">
