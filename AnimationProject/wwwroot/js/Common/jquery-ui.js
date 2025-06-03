@@ -14839,7 +14839,10 @@
 
 
 
-    var tabs = $.widget("ui.tabs", {
+    var tabs = $.widget("ui
+    
+    
+    ", {
         version: "1.11.4",
         delay: 300,
         options: {
