@@ -109,10 +109,10 @@ function SaveDesignBoard() {
                             const ctx = canvas.getContext('2d');
 
                             // Ensure all images & SVGs are fully loaded before capturing
-                            const images = document.querySelectorAll("img, svg");
+                          //  const images = document.querySelectorAll("img, svg");
                             let loadedCount = 0;
                             images.forEach(img => {
-                                if (!img.complete) {
+                                if (!img.img.complete) {
                                     img.onload = () => {
                                         loadedCount++;
                                         if (loadedCount === images.length) captureSlide(activeSlide, slideResult);
@@ -180,9 +180,9 @@ async function captureSlide(activeSlide, slideResult) {
     // 1) Update your canvas one last time:
     drawCanvas("Common");
     // 2) Wait for any <img> or <svg> in the DOM to be fully loaded:
-    const imgs = Array.from(document.querySelectorAll("img, svg"));
+    const imgs = images;//Array.from(document.querySelectorAll("img, svg"));
     await Promise.all(imgs.map(el => {
-        if (el.complete) return Promise.resolve();
+        if (el.img.complete) return Promise.resolve();
         return new Promise(res => {
             el.onload = () => res();
             el.onerror = () => {
