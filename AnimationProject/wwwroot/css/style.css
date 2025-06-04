@@ -1026,7 +1026,7 @@ body {
 .tabs {
     display: flex;
     justify-content: space-between;
-    width: 85%;
+    width: 85% !important;
 }
 
 .tab {
@@ -1470,4 +1470,9 @@ body {
 }
 .form-control:focus{
     box-shadow: none !important;
+}
+
+#text_decoration_tool{
+    display: flex;
+    justify-content: space-between;
 }

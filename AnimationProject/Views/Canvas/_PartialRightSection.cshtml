@@ -476,6 +476,36 @@
             border-radius: 50%;
             cursor: pointer;
         }
+
+
+
+    #opacitySlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 1rem;
+            height: 1rem;
+            background: #4e43e1;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            cursor: pointer;
+    }
+
+    #opacitySlider::-moz-range-thumb {
+            width: 1rem;
+            height: 1rem;
+            background: #4e43e1;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            cursor: pointer;
+    }
+
+    #opacitySlider::-ms-thumb {
+            width: 1rem;
+            height: 1rem;
+            background: #4e43e1;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            cursor: pointer;
+    }
     /* Optional: make the editable span look a bit nicer when focused */
     #rotationBadge[contenteditable] {
         padding: 0.15rem 0.5rem;
@@ -484,7 +514,19 @@
         background-color: #4e43e1;
     }
 
+    #opacityBadge {
+        padding: 0.15rem 0.5rem;
+        border-radius: 0.25rem;
+        outline: none;
+        background-color: #4e43e1;
+    }
+
         #rotationBadge[contenteditable]:focus {
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+            background-color: #4e43e1;
+        }
+
+        #opacityBadge[contenteditable]:focus {
             box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
             background-color: #4e43e1;
         }
@@ -778,9 +820,11 @@
 </div>
 
 <div class="right-sec-two" style="display:none;">
-    <div class="headtext">Text</div>
+    <div id="text_heading" class="headtext">Text</div>
+    @* <div id="image_heading" class="headtext">Image</div>
+    <div id="shape_heading" class="headtext">Shape</div> *@
 
-    <div class="col-md-12 mb-3">
+    <div id="text_alignment_tool" class="col-md-12 mb-3">
         <div class="row alignment-img">
             <ul class="d-flex justify-content-between mb-0">
                 <li>
@@ -820,12 +864,12 @@
 
         </div>
     </div>
-    <div class="d-flex justify-content-between">
+    <div id="text_decoration_tool">
         <button id="boldBtn" onclick="boldText();" class="text_decoration"><i class="fa-solid fa-bold"></i></button>
         <button id="italicBtn" onclick="italicText();" class="text_decoration"><i class="fa-solid fa-italic"></i></button>
         <button class="text_decoration">aA</button>
     </div>
-    <div class="col-md-12 mb-3">
+    <div id="text_color_tool" class="col-md-12 mb-3">
         <div class="row FontSize my-4">
             <div class="col-md-6  d-flex align-items-center">
                 <label>Text Color</label>
@@ -842,7 +886,7 @@
         </div>
     </div>
 
-    <div class="line_spacing mb-3">
+    <div id="line_spacing_tool" class="line_spacing mb-3">
         <div class="d-flex justify-content-between align-items-center">
             <p class="spacing_title m-0">Line Spacing</p>
             <div class="d-flex justify-content-between spacing_buttons">
@@ -873,7 +917,7 @@
     <div class="col-md-12 mb-4" id="divStrockColor" style="display:none;">
         <div class="row Strock">
             <div class="col-md-6 d-flex align-items-center">
-                <label>Strock</label>
+                <label>Stroke</label>
             </div>
             <div class="col-md-6  d-flex justify-content-end">
                 <div id="divStrock">
@@ -891,7 +935,7 @@
     </div>
 
    
-      <div class="mb-3">
+      <div id="group_tool" class="mb-3">
         <div class="d-flex justify-content-between align-items-center">
             <p class="spacing_title m-0">
                 Group
@@ -904,7 +948,7 @@
             </div>
         </div>
     </div>
-    <div class="mb-3">
+    <div id="no_animation_tool" class="mb-3">
         <div class="d-flex justify-content-between align-items-center">
             <p class="spacing_title m-0">
                 No Animation
@@ -917,7 +961,20 @@
             </div>
         </div>
     </div>
-    <div class="slider-card">
+    @* opacity slider *@
+    <div id="opacity_tool" class="slider-card">
+        <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+            <label for="opacitySlider" class="mb-0 fw-semibold slider_label">
+                Opacity: <span id="opacityValue">0</span>
+            </label>
+            <span class="badge"
+                  id="opacityBadge"
+                  spellcheck="false">0</span>
+        </div>
+        <input type="range" class="form-range" min="0" max="1" step="0.001" id="opacitySlider">
+    </div>
+    @* rotation slider *@
+    <div id="rotation_tool" class="slider-card">
         <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
             <label for="rotationSlider" class="mb-0 fw-semibold slider_label">
                 Rotation: <span id="rotationValue">0</span>
