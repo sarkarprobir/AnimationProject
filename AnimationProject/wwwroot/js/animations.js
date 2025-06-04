@@ -3901,17 +3901,40 @@ canvas.addEventListener("click", function (e) {
 
 });
 function HideShowRightPannel(selectedType) {
+    const heading = document.getElementById("text_heading");
     if (selectedType == 'Image') {
-
+        heading.innerHTML = "Image";
+        document.getElementById("text_alignment_tool").style.display = 'none';
+        document.getElementById("text_decoration_tool").style.display = 'none';
+        document.getElementById("text_color_tool").style.display = 'none';
+        document.getElementById("line_spacing_tool").style.display = 'none';
+        document.getElementById("divStrockColor").style.display = 'none';
+        document.getElementById("divFillColor").style.display = 'none';
     }
     else if (selectedType == 'Text') {
-
+        heading.innerHTML = "Text";
+        document.getElementById("text_alignment_tool").style.display = 'block';
+        document.getElementById("text_decoration_tool").style.display = 'flex';
+        document.getElementById("text_color_tool").style.display = 'block';
+        document.getElementById("line_spacing_tool").style.display = 'block';
+        document.getElementById("divStrockColor").style.display = 'none';
+        document.getElementById("divFillColor").style.display = 'none'; 
     }
     else if (selectedType == 'Shape') {
-
+        heading.innerHTML = "Shape";
+        document.getElementById("text_alignment_tool").style.display = 'none';
+        document.getElementById("text_decoration_tool").style.display = 'none';
+        document.getElementById("text_color_tool").style.display = 'none';
+        document.getElementById("line_spacing_tool").style.display = 'none';
     }
-    else {
-
+    else if (selectedType == 'Icon') {
+        heading.innerHTML = "Icon";
+        document.getElementById("text_alignment_tool").style.display = 'none';
+        document.getElementById("text_decoration_tool").style.display = 'none';
+        document.getElementById("text_color_tool").style.display = 'none';
+        document.getElementById("line_spacing_tool").style.display = 'none';
+        document.getElementById("divStrockColor").style.display = 'none';
+        document.getElementById("divFillColor").style.display = 'none';
     }
 }
 

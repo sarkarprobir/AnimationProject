@@ -1471,3 +1471,8 @@ body {
 .form-control:focus{
     box-shadow: none !important;
 }
+
+#text_decoration_tool{
+    display: flex;
+    justify-content: space-between;
+}
