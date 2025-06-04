@@ -3897,8 +3897,23 @@ canvas.addEventListener("click", function (e) {
 
     const selectedType = getSelectedType();
     console.log("Selected Type:", selectedType);
+    HideShowRightPannel(selectedType);
 
 });
+function HideShowRightPannel(selectedType) {
+    if (selectedType == 'Image') {
+
+    }
+    else if (selectedType == 'Text') {
+
+    }
+    else if (selectedType == 'Shape') {
+
+    }
+    else {
+
+    }
+}
 
 // Arrow-key nudge: move all selected items by the arrow direction
 document.addEventListener('keydown', function (e) {
