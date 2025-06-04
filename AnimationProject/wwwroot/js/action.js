@@ -3713,7 +3713,7 @@ function showPublishMessage() {
 function initModeToggle() {
     const buttons = document.querySelectorAll('.toggle-container .toggle-btn');
 
-    function applyMode(mode) {
+    function applyModeOld(mode) {
         if (mode === 'graphic') {
             document.getElementById('opengl_popup').style.display = 'none';
             document.getElementById('fontstyle_popup').style.display = 'block';
@@ -3728,6 +3728,25 @@ function initModeToggle() {
             document.querySelector('.right-sec-two').style.display = 'none';
         }
     }
+    function applyMode(mode) {
+        const openglPopup = document.getElementById('opengl_popup');
+        const fontstylePopup = document.getElementById('fontstyle_popup');
+        const rightSecOne = document.querySelector('.right-sec-one');
+        const rightSecTwo = document.querySelector('.right-sec-two');
+
+        if (mode === 'graphic') {
+            if (openglPopup) openglPopup.style.display = 'none';
+            if (fontstylePopup) fontstylePopup.style.display = 'block';
+            if (rightSecOne) rightSecOne.style.display = 'none';
+            if (rightSecTwo) rightSecTwo.style.display = 'block';
+        } else {
+            if (openglPopup) openglPopup.style.display = 'none';
+            if (fontstylePopup) fontstylePopup.style.display = 'none';
+            if (rightSecOne) rightSecOne.style.display = 'block';
+            if (rightSecTwo) rightSecTwo.style.display = 'none';
+        }
+    }
+
 
     buttons.forEach(btn => {
         btn.addEventListener('click', () => {
