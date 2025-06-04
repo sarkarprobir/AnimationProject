@@ -483,15 +483,34 @@
             $(document).ready(function(){
       (async () => {
         try {
+                const savedHtml = sessionStorage.getItem("leftPanelHtml");
+        let leftPanelPromise;
+        debugger;
+        if (savedHtml) {
+          document.getElementById("divpanelleft").innerHTML = savedHtml;
+          sessionStorage.removeItem("leftPanelHtml"); // optional cleanup
+          leftPanelPromise = Promise.resolve(); // no async work needed
+        } else {
+          // Make sure CreateLeftSectionhtml returns a Promise
+          leftPanelPromise = CreateLeftSectionhtml();
+        }
           // 1) Load all four panels in parallel
           await Promise.all([
+              leftPanelPromise,
             CreateRightSectionhtml(),
             CreateHeaderSectionhtml(),
-            CreateBackgroundSectionhtml(),
-            CreateLeftSectionhtml()
+            CreateBackgroundSectionhtml()
+            //CreateLeftSectionhtml()
+                  
           ]);
 
-          
+              // await Promise.all([
+              //   CreateLeftSectionhtml(),
+              //   CreateRightSectionhtml(),
+              //   CreateHeaderSectionhtml(),
+              //   CreateBackgroundSectionhtml()
+                
+              // ]);
           await document.fonts.ready;
 
           // 3) Now your controls can be initialized
@@ -543,145 +562,7 @@
         }
       })();
     });
-        // //     $(document).ready(function(){
-        // //        CreateRightSectionhtml();
-        // //        CreateHeaderSectionhtml();
-        // //        CreateBackgroundSectionhtml();
-        // //        CreateLeftSectionhtml();
-               
-              
-        // //          $("#hdnlLoopControl").val(1);
-        // //          $("#hdnfillColor").val('#42b3f5');
-        // //          $("#hdnStrockColor").val('#78f542');
-        // //          let button = document.getElementById("modeButton");
-        // //            button.innerText = "Graphic Mode";
-
-        // //                 // Function to get URL parameter
-        // //                 function getUrlParameter(name) {
-        // //                     const urlParams = new URLSearchParams(window.location.search);
-        // //                     return urlParams.get(name);
-        // //                 }
-
-        // //                 // Get the ID from URL
-        // //                 const id = getUrlParameter('id');
-
-        // //                 // Check if parameter exists
-        // //                 if(id) {
-        // //                     // Call your initialization function with the ID
-        // //                               GetDesignBoardById(id);
-                           
-
-        // //                          const canvas      = document.getElementById("myCanvas");
-        // //                           const contextMenu = document.getElementById("contextMenu");
-
-        // //                           canvas.addEventListener("contextmenu", function(e) {
-        // //                             e.preventDefault(); // Prevent default browser context menu
-
-        // //                             const rect    = canvas.getBoundingClientRect();
-        // //                             const offsetX = e.clientX - rect.left;
-        // //                             const offsetY = e.clientY - rect.top;
-
-        // //                             // adjust these as needed to get the menu exactly where you want
-        // //                             const adjustX = 280;
-        // //                             const adjustY = 64;
-
-        // //                             const found = getObjectAtcontextmenu(offsetX, offsetY);
-        // //                             if (found) {
-        // //                               selectedForContextMenu = found.obj;
-        // //                               selectedType           = found.type;
-
-        // //                               // position & show your custom menu
-        // //                               contextMenu.style.left    = (offsetX + adjustX) + "px";
-        // //                               contextMenu.style.top     = (offsetY + adjustY) + "px";
-        // //                               contextMenu.style.display = "block";
-        // //                             } else {
-        // //                               contextMenu.style.display = "none";
-        // //                             }
-        // //                           });
-        // //                 }
-
-        // //  const params = new URLSearchParams(window.location.search);
-        // // if (params.get('openModal') === 'true') {
-        // //   // Bootstrap 5 way:
-        // //   const modalEl = document.getElementById('exampleModal');
-        // //   const bsModal = new bootstrap.Modal(modalEl);
-        // //   bsModal.show();
-        // // }
-        // // });
-
-
-
-
-
-          
-        //   const canvas = document.getElementById('myCanvas');
-        //   const ctx    = canvas.getContext('2d');
-
-        //   canvas.addEventListener('click', function (e) {
-        //         const rect = canvas.getBoundingClientRect();
-        // const mouseX = e.clientX - rect.left;
-        // const mouseY = e.clientY - rect.top;
-        // const pos = { x: mouseX, y: mouseY };
-
-        // const obj = getTextObjectAt(mouseX, mouseY);
-        // let imageFound = false;
-        // let imgObj = null;
-
-        // // Check if an image is clicked
-        // for (let i = images.length - 1; i >= 0; i--) {
-        //     if (isMouseOverImage(images[i], pos)) {
-        //         imgObj = images[i];
-        //         imageFound = true;
-        //         break;
-        //     }
-        // }
-
-        // if (obj) {
-        //     // Select text object and update UI
-        //     textObjects.forEach(o => o.selected = false);
-        //     obj.selected = true;
-
-        //     $("#favcolor").val(obj.textColor);
-        //     $("#fontstyle_popup").css("display", "block");
-        //     $(".right-sec-two").css("display", "block");
-        //     $(".right-sec-one").css("display", "none");
-        //     document.getElementById("modeButton").innerText = "Animation Mode";
-        // } else if (imageFound) {
-        //     // Select image and update UI
-        //     images.forEach(img => img.selected = false);
-        //     imgObj.selected = true;
-        //     $("#fontstyle_popup").css("display", "block");
-        //     $(".right-sec-two").css("display", "block");
-        //     $(".right-sec-one").css("display", "none");
-        //     document.getElementById("modeButton").innerText = "Animation Mode";
-        // } else {
-        //     // Deselect all if clicking on empty canvas
-        //     textObjects.forEach(o => o.selected = false);
-        //     images.forEach(img => img.selected = false);
-
-        //     //$("#fontstyle_popup").css("display", "none");
-        //     //$(".right-sec-two").css("display", "none");
-        //     //$(".right-sec-one").css("display", "block");
-        //     //document.getElementById("modeButton").innerText = "Graphic Mode";
-        // }
-
-        //    drawCanvas('Common'); // Redraw to update selection changes
-        //   });
-
-        //   // —and here’s the trick to force a 2nd draw once your web‐fonts are actually available—
-        //   // you **must** wait for the font‐loading API (or at least a short timeout)
-        //   // otherwise canvas “bakes in” its first draw with the fallback font.
-        //   document.fonts
-        //     .ready
-        //     .then(() => {
-        //       // after *all* font‑face fonts have loaded, do one more draw
-        //       drawCanvas('Common');
-        //     })
-        //     .catch(() => {
-        //       // in case the Font Loading API isn’t supported, fall back to a small delay
-        //       setTimeout(() => drawCanvas('Common'), 100);
-        //     });
-       // });
+       
         const buttons = document.querySelectorAll('.toggle-btn');
 
         buttons.forEach(button => {

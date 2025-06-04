@@ -2431,16 +2431,16 @@ function getTextHandleUnderMouse(mouseX, mouseY, txt) {
             return c.name;
         }
     }
-    // Vertical edges (not in corner zone)
-    if ((Math.abs(localX - lx) < edgeTolerance || Math.abs(localX - rx) < edgeTolerance)
-        && localY > ly + cornerTolerance && localY < ry - cornerTolerance) {
-        return (Math.abs(localX - lx) < edgeTolerance) ? 'left' : 'right';
-    }
-    // Horizontal edges
-    if ((Math.abs(localY - ly) < edgeTolerance || Math.abs(localY - ry) < edgeTolerance)
-        && localX > lx + cornerTolerance && localX < rx - cornerTolerance) {
-        return (Math.abs(localY - ly) < edgeTolerance) ? 'top' : 'bottom';
-    }
+    //// Vertical edges (not in corner zone)
+    //if ((Math.abs(localX - lx) < edgeTolerance || Math.abs(localX - rx) < edgeTolerance)
+    //    && localY > ly + cornerTolerance && localY < ry - cornerTolerance) {
+    //    return (Math.abs(localX - lx) < edgeTolerance) ? 'left' : 'right';
+    //}
+    //// Horizontal edges
+    //if ((Math.abs(localY - ly) < edgeTolerance || Math.abs(localY - ry) < edgeTolerance)
+    //    && localX > lx + cornerTolerance && localX < rx - cornerTolerance) {
+    //    return (Math.abs(localY - ly) < edgeTolerance) ? 'top' : 'bottom';
+    //}
     return null;
 }
 
@@ -3751,6 +3751,28 @@ function isInsideBox(mouseX, mouseY, obj) {
 
 //////    drawCanvas('Common');
 //////});
+
+function getSelectedType() {
+    const selectedText = textObjects.find(o => o.selected);
+    if (selectedText) {
+        if (selectedText.groupId != null) return "Group";
+        return "Text";
+    }
+
+    const selectedImage = images.find(img => img.selected);
+    if (selectedImage) {
+        if (selectedImage.groupId != null) return "Group";
+        if (selectedImage.img?.src?.toLowerCase().includes("svg")) {
+            return "Shape";
+        }
+        return "Image";
+    }
+
+    return null;
+}
+
+
+
 canvas.addEventListener("click", function (e) {
     // ignore shift here
     if (e.shiftKey) return;
@@ -3872,7 +3894,26 @@ canvas.addEventListener("click", function (e) {
     }
 
     drawCanvas('Common');
+
+    const selectedType = getSelectedType();
+    console.log("Selected Type:", selectedType);
+    HideShowRightPannel(selectedType);
+
 });
+function HideShowRightPannel(selectedType) {
+    if (selectedType == 'Image') {
+
+    }
+    else if (selectedType == 'Text') {
+
+    }
+    else if (selectedType == 'Shape') {
+
+    }
+    else {
+
+    }
+}
 
 // Arrow-key nudge: move all selected items by the arrow direction
 document.addEventListener('keydown', function (e) {

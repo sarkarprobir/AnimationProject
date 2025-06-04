@@ -234,7 +234,7 @@ async function captureSlide(activeSlide, slideResult) {
                     ImagePath: data.filePath
                 },
                 success: function (response) {
-                   
+                    sessionStorage.setItem("leftPanelHtml", document.getElementById("divpanelleft").innerHTML);
                     MessageShow('RedirectToVerticalPageWithQueryString()', 'Design Board saved successfully!', 'success');
                 },
                 error: function (xhr, status, error) {
@@ -257,6 +257,7 @@ function RedirectToVerticalPageWithQueryString() {
     HideLoader();
     window.location = `${baseURL}Canvas/VerticalIndex?id=${boardId}`;
 }
+
 function saveCurrentSlide() {
     var currentState = saveCanvasData();
     // Parse the JSON string to an object.
