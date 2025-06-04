@@ -398,7 +398,9 @@ function saveCanvasData() {
                 lineSpacing: obj.lineSpacing,
                 noAnim: obj.noAnim,
                 groupId: obj.groupId,
-                rotation: obj.rotation
+                rotation: obj.rotation,
+                isBold: obj.isBold || false,
+                isItalic: obj.isItalic || false
             };
         }),
 
@@ -673,6 +675,8 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
             noAnim: obj.noAnim,
             groupId: obj.groupId,
             rotation: obj.rotation,
+            isBold: obj.isBold || false,
+            isItalic: obj.isItalic || false,
         };
     });
 
@@ -1434,7 +1438,9 @@ function loadCanvasFromJsonForDownload1(jsonData, condition = 'Common') {
                 : obj.fontSize * 1.2,
             noAnim: obj.noAnim,
             groupId: obj.groupId,
-            rotation: obj.rotation
+            rotation: obj.rotation,
+            isBold: obj.isBold || false,
+            isItalic: obj.isItalic || false
         };
     });
 
@@ -1835,7 +1841,14 @@ function drawCanvasForDownload(condition) {
         textObjects.forEach(obj => {
             ctxElementForDownload.save();
             ctxElementForDownload.globalAlpha = obj.opacity || 1;
-            ctxElementForDownload.font = `${obj.fontSize}px ${obj.fontFamily}`;
+            // ctxElementForDownload.font = `${obj.fontSize}px ${obj.fontFamily}`;
+            let styleParts = [];
+            if (obj.isItalic) styleParts.push("italic");
+            if (obj.isBold) styleParts.push("bold");
+            styleParts.push(`${obj.fontSize}px`);
+            styleParts.push(obj.fontFamily);
+            ctxElementForDownload.font = styleParts.join(" ");
+
             ctxElementForDownload.fillStyle = obj.textColor;
             ctxElementForDownload.textBaseline = "top";
 

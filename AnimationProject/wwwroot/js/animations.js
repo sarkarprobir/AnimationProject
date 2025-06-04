@@ -551,7 +551,14 @@ function drawCanvas(condition) {
         textObjects.forEach(obj => {
             ctx.save();
             ctx.globalAlpha = obj.opacity || 1;
-            ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+            // ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+            let styleParts = [];
+            if (obj.isItalic) styleParts.push("italic");
+            if (obj.isBold) styleParts.push("bold");
+            styleParts.push(`${obj.fontSize}px`);
+            styleParts.push(obj.fontFamily);
+            ctx.font = styleParts.join(" ");
+
             ctx.fillStyle = obj.textColor;
             ctx.textBaseline = "top";
 
@@ -997,11 +1004,35 @@ function ChangeAlignStyle(value) {
 
 
 function OnChangefontFamily(value) {
+    //const paddingX = 23;
+    //const paddingY = 15;
     $("#fontFamily").val(value);
     const fontFamily = document.getElementById("fontFamily").value; // Font family from dropdown
     const Obj = textObjects.find(obj => obj.selected);
     if (Obj) {
         Obj.fontFamily = fontFamily || 'Arial';
+
+        //// 3) Measure the text
+        //const metrics = ctx.measureText(Obj.text);
+        //const measuredWidth = metrics.width;
+
+        //// 4) Measure height if supported; otherwise fallback to fontSize:
+        //let measuredHeight;
+        //if (
+        //    typeof metrics.actualBoundingBoxAscent === "number" &&
+        //    typeof metrics.actualBoundingBoxDescent === "number"
+        //) {
+        //    measuredHeight =
+        //        metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+        //} else {
+        //    // Fallback: approximate height with fontSize (not pixel‐perfect,
+        //    // but better than nothing)
+        //    measuredHeight = Obj.fontSize;
+        //}
+
+        //// 5) Overwrite boundingWidth/boundingHeight with dynamic values + padding:
+        //Obj.boundingWidth = measuredWidth + paddingX * 2;
+        //Obj.boundingHeight = measuredHeight + paddingY * 2;
     }
 
     drawCanvas('ChangeStyle');
@@ -2117,7 +2148,9 @@ function addDefaultText() {
         boundingHeight: 0,
         noAnim: false,
         groupId: null,
-        rotation:0
+        rotation: 0,
+        isBold: false,
+        isItalic: false
     };
 
     // 2) Measure it
@@ -3894,7 +3927,7 @@ canvas.addEventListener("click", function (e) {
     }
 
     drawCanvas('Common');
-
+    updateFontStyleButtons();
     const selectedType = getSelectedType();
     console.log("Selected Type:", selectedType);
     HideShowRightPannel(selectedType);
@@ -5175,6 +5208,83 @@ document.addEventListener('click', function (event) {
         popup.style.display = 'none';
     }
 });
+function boldText() {
+    //const paddingX = 23;
+    //const paddingY = 15;
+    textObjects.forEach(obj => {
+        if (obj.selected) obj.isBold = !obj.isBold;
+        //// 3) Measure the text
+        //const metrics = ctx.measureText(obj.text);
+        //const measuredWidth = metrics.width;
+
+        //// 4) Measure height if supported; otherwise fallback to fontSize:
+        //let measuredHeight;
+        //if (
+        //    typeof metrics.actualBoundingBoxAscent === "number" &&
+        //    typeof metrics.actualBoundingBoxDescent === "number"
+        //) {
+        //    measuredHeight =
+        //        metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+        //} else {
+        //    // Fallback: approximate height with fontSize (not pixel‐perfect,
+        //    // but better than nothing)
+        //    measuredHeight = obj.fontSize;
+        //}
+
+        //// 5) Overwrite boundingWidth/boundingHeight with dynamic values + padding:
+        //obj.boundingWidth = measuredWidth + paddingX * 2;
+        //obj.boundingHeight = measuredHeight + paddingY * 2;
+     
+    });
+   
+    drawCanvas("Common");
+    updateFontStyleButtons();
+}
+
+function italicText() {
+    //const paddingX = 23;
+    //const paddingY = 15;
+    textObjects.forEach(obj => {
+        if (obj.selected) obj.isItalic = !obj.isItalic;
+        //// 3) Measure the text
+        //const metrics = ctx.measureText(obj.text);
+        //const measuredWidth = metrics.width;
+
+        //// 4) Measure height if supported; otherwise fallback to fontSize:
+        //let measuredHeight;
+        //if (
+        //    typeof metrics.actualBoundingBoxAscent === "number" &&
+        //    typeof metrics.actualBoundingBoxDescent === "number"
+        //) {
+        //    measuredHeight =
+        //        metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+        //} else {
+        //    // Fallback: approximate height with fontSize (not pixel‐perfect,
+        //    // but better than nothing)
+        //    measuredHeight = obj.fontSize;
+        //}
+
+        //// 5) Overwrite boundingWidth/boundingHeight with dynamic values + padding:
+        //obj.boundingWidth = measuredWidth + paddingX * 2;
+        //obj.boundingHeight = measuredHeight + paddingY * 2;
+    });
+    drawCanvas("Common");
+    updateFontStyleButtons();
+}
 
 
+//  Sync button “active” state to selection:
+function updateFontStyleButtons() {
+    const anySelected = textObjects.some(o => o.selected);
+    if (!anySelected) {
+        document.getElementById("boldBtn").classList.remove("active");
+        document.getElementById("italicBtn").classList.remove("active");
+        return;
+    }
+    const anyBold = textObjects.some(o => o.selected && o.isBold);
+    document.getElementById("boldBtn").classList.toggle("active", anyBold);
+
+    const anyItalic = textObjects.some(o => o.selected && o.isItalic);
+    document.getElementById("italicBtn").classList.toggle("active", anyItalic);
+}
 

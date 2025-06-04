@@ -485,7 +485,6 @@
         try {
                 const savedHtml = sessionStorage.getItem("leftPanelHtml");
         let leftPanelPromise;
-        debugger;
         if (savedHtml) {
           document.getElementById("divpanelleft").innerHTML = savedHtml;
           sessionStorage.removeItem("leftPanelHtml"); // optional cleanup
