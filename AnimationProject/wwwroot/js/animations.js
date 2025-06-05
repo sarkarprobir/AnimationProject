@@ -1103,9 +1103,9 @@ function animateText(direction, condition, loopCount) {
                 obj.exitY = obj.finalY;
                 break;
             case "right":
-                obj.x = canvas.width + 5;
+                obj.x = canvas.boundingHeight + 5;
                 obj.y = obj.finalY;
-                obj.exitX = canvas.width + 5;
+                obj.exitX = canvas.boundingHeight + 5;
                 obj.exitY = obj.finalY;
                 break;
             default:
@@ -1146,8 +1146,8 @@ function animateText(direction, condition, loopCount) {
         const scaleOutText = outTime;
         const individualIn = 0.15 * scaleInText;   // time per‐unit for “In”
         const individualOut = 0.15 * scaleOutText;  // time per‐unit for “Out”
-        const staggerIn = individualIn;         // gap between each group‐In
-        const staggerOut = individualOut;        // gap between each group‐Out
+        const staggerIn = individualIn/2;         // gap between each group‐In
+        const staggerOut = individualOut/2;        // gap between each group‐Out
 
         // 4) Build the GSAP timeline
         const tlText = gsap.timeline({
