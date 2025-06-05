@@ -577,14 +577,14 @@
                         </ul>
                     </div>
                     <h2>Effects</h2>
-                    <ul class="right-listone d-flex flex-wrap gap-2 mb-4" id="ulEffects">
+                    <ul class="right-listone d-flex flex-wrap gap-3 mb-4" id="ulEffects">
                         <li style="display:none;">
-                            <a id="alinear" href="javascript:void(0)" onclick="textAnimationClick(this, 'linear')" title="Linear">Linear</a>
+                            <a  id="alinear" href="javascript:void(0)" onclick="textAnimationClick(this, 'linear')" title="Linear">Linear</a>
                             <div class="clear"></div>
                         </li>
 
                         <li style="display:none;">
-                            <a id="abounce" href="javascript:void(0)" onclick="textAnimationClick(this, 'bounce')" title="Bounce">Bounce</a>
+                            <a  id="abounce" href="javascript:void(0)" onclick="textAnimationClick(this, 'bounce')" title="Bounce">Bounce</a>
                             <div class="clear"></div>
                         </li>
                         <li>
@@ -595,20 +595,20 @@
                             <a id="azoomInOut" href="javascript:void(0)" onclick="textAnimationClick(this, 'zoom')" title="Zoom">Zoom</a>
                             <div class="clear"></div>
                         </li>
-                        <li>
-                            <a id="ablur" href="javascript:void(0)" title="Zoom in">Zoom</a>
+                        <li title="Effect Disabled (Coming Soon)">
+                            <a class="disabled-ani-button" id="ablur" href="javascript:void(0)" title="Zoom in">Zoom</a>
                             <div class="clear"></div>
                         </li>
-                        <li>
-                            <a id="ablur" href="javascript:void(0)" title="Cross Fade">Fade</a>
+                        <li title="Effect Disabled (Coming Soon)">
+                            <a class="disabled-ani-button" id="ablur" href="javascript:void(0)" title="Cross Fade">Fade</a>
                             <div class="clear"></div>
                         </li>
-                        <li>
-                            <a id="ablur" href="javascript:void(0)" title="Type">Type</a>
+                        <li title="Effect Disabled (Coming Soon)">
+                            <a class="disabled-ani-button" id="ablur" href="javascript:void(0)" title="Type">Type</a>
                             <div class="clear"></div>
                         </li>
-                        <li>
-                            <a id="ablur" href="javascript:void(0)" title="Blur">Blur</a>
+                        <li title="Effect Disabled (Coming Soon)">
+                            <a class="disabled-ani-button" id="ablur" href="javascript:void(0)">Blur</a>
                             <div class="clear"></div>
                         </li>
 
@@ -748,8 +748,8 @@
                     </div>
                 </div>
                 <h2>Effects</h2>
-                <ul class="right-listone d-flex gap-3 mb-4">
-                    <li>
+                <ul class="right-listone d-flex flex-wrap gap-3 mb-4">
+                    @* <li>
                         <a href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear')"> <img src="~/images/icons/icon-effict.png" alt="pattren"></a>
 
                         <div class="clear"></div>
@@ -758,6 +758,27 @@
                         <a href="javascript:void(0)"> <img src="~/images/icons/icon-effict.png" alt="pattren"></a>
 
                         <div class="clear"></div>
+                    </li> *@
+                    <li>
+                        <a href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear')" title="linear">Linear</a>
+                        <div class="clear"></div>
+                    </li>
+                  
+                    <li title="Effect Disabled (Coming Soon)">
+                        <a class="disabled-ani-button" id="ablur" href="javascript:void(0)" title="Zoom in">Zoom</a>
+                        <div class="clear"></div>
+                    </li>
+                    <li title="Effect Disabled (Coming Soon)">
+                        <a class="disabled-ani-button" id="ablur" href="javascript:void(0)" title="Cross Fade">Fade</a>
+                        <div class="clear"></div>
+                    </li>
+                    <li title="Effect Disabled (Coming Soon)">
+                        <a class="disabled-ani-button" id="ablur" href="javascript:void(0)" title="Type">Type</a>
+                        <div class="clear"></div>
+                    </li>
+                    <li title="Effect Disabled (Coming Soon)">
+                        <a class="disabled-ani-button" id="ablur" href="javascript:void(0)">Blur</a>
+                        <div class="clear"></div>
                     </li>
 
                 </ul>
@@ -765,7 +786,7 @@
                 <h2>Out</h2>
 
                 <ul class="right-listone d-flex justify-content-between">
-                    <li>
+                    @* <li>
                         <a href="javascript:void(0)"> <img src="~/images/icons/icon-lr.png" onclick="setCoordinate(this,'left',100,20,50,50);" alt="pattren"></a>
 
                         <div class="clear"></div>
@@ -774,10 +795,7 @@
                         <a href="javascript:void(0)"> <img src="~/images/icons/icon-rl.png" onclick="setCoordinate(this,'right',400,0,50,50);" alt="text"></a>
 
                     </li>
-                    @* <li> *@
-                    @*     <a href="javascript:void(0)"> <img src="~/images/icons/icon-bu.png" alt="circle"></a> *@
-                    @*     <p>LR</p> *@
-                    @* </li> *@
+                   
                     <li>
                         <a href="javascript:void(0)"> <img src="~/images/icons/icon-bt.png" onclick="setCoordinate(this,'bottom',800,0,50,50);" alt="Masking"></a>
 
@@ -785,12 +803,55 @@
                     <li>
                         <a href="javascript:void(0)"> <img src="~/images/icons/icon-tb.png" onclick="setCoordinate(this,'top',400,0,50,50);" alt="image"></a>
 
+                    </li> *@
+                    <li>
+                        <div class="btn-canvas-container" style="width: 40px; height: 40px;">
+                            <!-- hide the <a> by default -->
+                            <a class="direction_link" id="aleft" href="javascript:void(0)" onclick="setCoordinate(this,'left',100,20,50,50); toggleDirectionActive(this);"
+                               style=" width:100%; height:100%;">
+                                <img src="/images/icons/right arrow.svg" alt="Left to Center">
+                            </a>
+                            
+                        </div>
+                        <div class="clear"></div>
+                    </li>
+                    <li>
+                        <div class="btn-canvas-container" style="width: 40px; height: 40px;">
+                            <!-- hide the <a> by default -->
+                            <a class="direction_link" id="aright" href="javascript:void(0)" onclick="setCoordinate(this,'right',400,0,50,50); toggleDirectionActive(this);"
+                               style=" width:100%; height:100%;">
+                                <img src="/images/icons/right arrow.svg" alt="right to Center"
+                                     style=" transform: rotate(180deg);">
+                            </a>
+                            
+                        </div>
+                        <div class="clear"></div>
                     </li>
 
-                    @* <li> *@
-                    @*     <a href="javascript:void(0)"> <img src="~/images/icons/icon-ud.png" alt="image"></a> *@
-                    @*     <p>LR</p> *@
-                    @* </li> *@
+                    <li>
+                        <div class="btn-canvas-container" style="width: 40px; height: 40px;">
+                            <!-- hide the <a> by default -->
+                            <a class="direction_link" id="abottom" href="javascript:void(0)"
+                               onclick="setCoordinate(this,'bottom',800,0,50,50); toggleDirectionActive(this);"
+                               style=" width:100%; height:100%;">
+                                <img src="/images/icons/right arrow.svg" alt="bottom to Center"
+                                     style=" transform: rotate(270deg);">
+                            </a>
+                        </div>
+                        <div class="clear"></div>
+                    </li>
+
+                    <li>
+                        <div class="btn-canvas-container" style="width: 40px; height: 40px;">
+                            <!-- hide the <a> by default -->
+                            <a class="direction_link" id="atop" href="javascript:void(0)" onclick="setCoordinate(this,'top',400,0,50,50); toggleDirectionActive(this);"
+                               style=" width:100%; height:100%;">
+                                <img src="/images/icons/right arrow.svg" alt="top to Center"
+                                     style=" transform: rotate(90deg);">
+                            </a>
+                        </div>
+                        <div class="clear"></div>
+                    </li>
 
                 </ul>
             </section>

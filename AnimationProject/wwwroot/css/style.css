@@ -158,7 +158,7 @@ p.collapsed{    font-size: var(--font-size14);}
  }
 ul.right-listone li {
     list-style-type:none; 
-    width: 30%;
+/*    width: 30%;*/
     float:left; 
     margin: 0; 
 }
@@ -1475,4 +1475,13 @@ body {
 #text_decoration_tool{
     display: flex;
     justify-content: space-between;
+}
+.disabled-ani-button {
+    opacity: 0.4;
+    pointer-events: none;
+    cursor: not-allowed;
+    box-shadow: none;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    color: #888;
 }
