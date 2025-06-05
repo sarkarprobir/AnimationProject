@@ -1490,3 +1490,6 @@ body {
     background-color: #f0f0f0;
     color: #888;
 }
+.svg_icons{
+    width: 40px !important;
+}
