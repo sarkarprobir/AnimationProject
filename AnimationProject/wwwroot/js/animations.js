@@ -1103,9 +1103,9 @@ function animateText(direction, condition, loopCount) {
                 obj.exitY = obj.finalY;
                 break;
             case "right":
-                obj.x = canvas.boundingHeight + 5;
+                obj.x = canvas.width + 5;
                 obj.y = obj.finalY;
-                obj.exitX = canvas.boundingHeight + 5;
+                obj.exitX = canvas.width + 5;
                 obj.exitY = obj.finalY;
                 break;
             default:
