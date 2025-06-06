@@ -2874,6 +2874,10 @@ function animateTextForPublish(animationType, direction, condition, loopCount) {
     }
 }
 function animateTextForDownload(animationType, direction, condition, loopCount, state) {
+
+    selectedInSpeed = parseInt(document.getElementById('lblSpeed').textContent);
+    selectedOutSpeed = parseInt(document.getElementById('lblOutSpeed').textContent);
+    selectedStaySpeed = parseInt(document.getElementById('lblSeconds').textContent);
     // Global timing settings (from your selected speeds).
     const inTime = parseFloat(selectedInSpeed) || 4; // seconds
     const outTime = parseFloat(selectedOutSpeed) || 4;
