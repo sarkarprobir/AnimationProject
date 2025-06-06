@@ -294,71 +294,99 @@
        const rotationSlider    = document.getElementById('rotationSlider');
     const rotationValueSpan = document.getElementById('rotationValue');
     const rotationBadge     = document.getElementById('rotationBadge');
-
-    // Helper: clamp a number between 0 and 360
-    function clampAngle(v) {
-      let n = parseInt(v, 10);
-      if (isNaN(n)) n = 0;
-      return Math.min(Math.max(n, 0), 360);
-    }
+function clampAngle(raw) {
+  let deg = parseFloat(raw);
+  // bring into [–360, +360] first (if your slider can go beyond)
+  while (deg > 180) deg -= 360;
+  while (deg <= -180) deg += 360;
+  return deg;
+}
 
     // 1) Slider → Badge & selected objects
     rotationSlider.addEventListener('input', () => {
-      
-      const angle = clampAngle(rotationSlider.value);
-      rotationValueSpan.textContent = angle+ '°';;
-      rotationBadge.textContent = angle ;
+  const angle = clampAngle(rotationSlider.value);
+  rotationValueSpan.textContent = angle + '°';
+  rotationBadge.textContent = angle;
 
-      [...textObjects, ...images].forEach(obj => {
-        if (obj.selected) obj.rotation = angle;
-      });
-      drawCanvas('Common');
-    });
+  [...textObjects, ...images].forEach(obj => {
+    if (obj.selected) obj.rotation = angle;
+  });
+  drawCanvas('Common');
+});
 
-        // Allow only digits, backspace, etc.
-    rotationBadge.addEventListener('keydown', (e) => {
-      const isAllowedKey =
-        /[0-9]/.test(e.key) ||
-        ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key);
+    //     // Allow only digits, backspace, etc.
+    // rotationBadge.addEventListener('keydown', (e) => {
+    //     debugger;
+    //   const isAllowedKey =
+    //     /[0-9]/.test(e.key) ||
+    //     ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key) ||  e.key === '-' && e.target.selectionStart === 0 && !e.target.value.includes('-');
+         
 
-      if (!isAllowedKey) {
-        e.preventDefault();
-        return;
-      }
+    //   if (!isAllowedKey) {
+    //     e.preventDefault();
+    //     return;
+    //   }
+rotationBadge.addEventListener('keydown', (e) => {
+  const value = e.target.textContent || '';
 
-      // Special case: if it's only one digit and user presses backspace, reset to 0°
-      const text = rotationBadge.innerText.replace(/[^\d]/g, '');
-      if (e.key === 'Backspace' && text.length === 1) {
-        e.preventDefault();
-        rotationBadge.innerText = '0';
-        updateRotation(0);
-        moveCaretToEnd(rotationBadge);
-      }
-    });
-
-    // Handle changes after editing
-    rotationBadge.addEventListener('input', () => {
-      let raw = rotationBadge.innerText.replace(/[^\d]/g, '');
-      if (raw === '') {
-        rotationBadge.innerText = '0';
-        updateRotation(0);
-      } else {
-        let angle = Math.min(360, Math.max(0, parseInt(raw)));
-        rotationBadge.innerText = angle;
-        updateRotation(angle);
-      }
+  // Handle special backspace case
+  if (e.key === 'Backspace') {
+    const text = value.replace(/[^\d-]/g, '');
+    if (text.length === 1 || text === '-') {
+      e.preventDefault();
+      rotationBadge.innerText = '0';
+      updateRotation(0);
       moveCaretToEnd(rotationBadge);
-    });
-
-    // Utility to move caret to end
-    function moveCaretToEnd(el) {
-      const range = document.createRange();
-      const sel = window.getSelection();
-      range.selectNodeContents(el);
-      range.collapse(false);
-      sel.removeAllRanges();
-      sel.addRange(range);
+      return;
     }
+    return; // allow normal backspace
+  }
+
+  const isArrowKey = ['ArrowLeft', 'ArrowRight'].includes(e.key);
+
+  const isAllowedKey =
+    /[0-9]/.test(e.key) ||
+    ['Delete', 'Tab'].includes(e.key) ||
+    isArrowKey ||
+    (e.key === '-' && !value.includes('-'));
+
+  if (!isAllowedKey) {
+    e.preventDefault();
+    return;
+  }
+});
+
+rotationBadge.addEventListener('input', () => {
+  let raw = rotationBadge.innerText.replace(/[^\d-]/g, '');
+
+  if (raw === '' || raw === '-') {
+    return; // let user keep typing
+  }
+
+  let angle = parseInt(raw, 10);
+  if (isNaN(angle)) angle = 0;
+
+  angle = Math.max(-360, Math.min(360, angle));
+
+  // Only update text if value changed (avoids triggering moveCaretToEnd unnecessarily)
+  if (rotationBadge.innerText !== angle.toString()) {
+    rotationBadge.innerText = angle;
+    updateRotation(angle);
+    moveCaretToEnd(rotationBadge);
+  } else {
+    updateRotation(angle); // update without disturbing caret
+  }
+});
+
+function moveCaretToEnd(el) {
+  const range = document.createRange();
+  const sel = window.getSelection();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
 
     // Sync rotation to slider, display, and objects
     function updateRotation(angle) {
@@ -1054,7 +1082,7 @@
                   contenteditable="true"
                   spellcheck="false">0</span>
         </div>
-        <input type="range" class="form-range" min="0" max="360" step="1" id="rotationSlider">
+        <input type="range" class="form-range" min="-180" max="180" step="1" id="rotationSlider">
     </div>
 
 
