@@ -319,7 +319,7 @@ let selectedType = null; // "text" or "image"
 // Show dynamic context menu on right-click.
 canvas.addEventListener("contextmenu", function (e) {
     e.preventDefault(); // Prevent default browser context menu
-
+    const items = contextMenu.querySelectorAll('.context-options');
     const rect = canvas.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
     const offsetY = e.clientY - rect.top;
@@ -327,14 +327,33 @@ canvas.addEventListener("contextmenu", function (e) {
     const adjustY = 64;
     const found = getObjectAtcontextmenu(offsetX, offsetY);
     if (found) {
+        // ── If an object is found, show ALL menu items ────────────────
+        items.forEach(li => {
+            li.style.display = "block";
+        });
+
+        // Optionally disable/enable specific items based on 'found'
+        // e.g. disable "Paste" if your clipboard is empty, or enable "Copy", "Delete", etc.
+
+        contextMenu.style.left = e.clientX + adjustX + "px";
+        contextMenu.style.top = e.clientY + adjustY + "px";
+        contextMenu.style.display = "block";
         selectedForContextMenu = found.obj;
         selectedType = found.type;
-        // Position the context menu relative to the canvas
-        contextMenu.style.left = offsetX + adjustX + "px";
-        contextMenu.style.top = offsetY + adjustY + "px";
+    }
+    else {
+        // ── No object under cursor: show ONLY "Paste" ────────────────
+        items.forEach(li => {
+            items.forEach(li => {
+                li.style.display = (li.id === "pasteOption") ? "block" : "none";
+            });
+        });
+
+        contextMenu.style.left = e.clientX + adjustX + "px";
+        contextMenu.style.top = e.clientY + adjustY + "px";
         contextMenu.style.display = "block";
-    } else {
-        contextMenu.style.display = "none";
+        selectedForContextMenu = null;
+        selectedType = null;
     }
 });
 
@@ -342,6 +361,7 @@ canvas.addEventListener("contextmenu", function (e) {
 document.addEventListener("click", function (e) {
     contextMenu.style.display = "none";
 });
+
 
 // When the Delete option is clicked, remove the selected object.
 document.getElementById("deleteOption").addEventListener("click", function (e) {
@@ -2347,22 +2367,20 @@ function pasteFromClipboard() {
     textObjects.forEach(obj => obj.selected = false);
     images.forEach(img => img.selected = false);
 
-    const offset = 20; // how far to offset pasted items (so they appear slightly down-right)
-
-    // 4.2) Paste text items
+    // 4.2) Paste text items at the same x/y as the original
     canvasClipboard.textItems.forEach(orig => {
         const pasted = cloneTextObject(orig);
-        pasted.x += offset;
-        pasted.y += offset;
+        pasted.x = orig.x;
+        pasted.y = orig.y;
         pasted.selected = true;
         textObjects.push(pasted);
     });
 
-    // 4.3) Paste image items
+    // 4.3) Paste image items at the same x/y as the original
     canvasClipboard.imageItems.forEach(orig => {
         const pasted = cloneImageObject(orig);
-        pasted.x += offset;
-        pasted.y += offset;
+        pasted.x = orig.x;
+        pasted.y = orig.y;
         pasted.selected = true;
         images.push(pasted);
     });
@@ -2370,6 +2388,7 @@ function pasteFromClipboard() {
     // 4.4) Redraw the canvas
     drawCanvas('Common');
 }
+
 
 // ─── 5) Keyboard shortcuts (Ctrl+C, Ctrl+V) ─────────────────────────
 window.addEventListener('keydown', (e) => {
