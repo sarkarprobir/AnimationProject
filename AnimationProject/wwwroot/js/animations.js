@@ -1629,7 +1629,7 @@ function animateText(direction, condition, loopCount) {
 
 
 
-function textAnimationClick(clickedElement, type) {
+function textAnimationClick(clickedElement, from) {
     $("#hdnTextAnimationType").val(type);
     animationMode = type;
     if (activeSlide === 1) {
@@ -1640,6 +1640,17 @@ function textAnimationClick(clickedElement, type) {
     }
     else if (activeSlide === 3) {
         $("#hdnEffectSlide3").val(type);
+    }
+    if (from == 'Out') {
+        if (activeSlide === 1) {
+            $("#hdnOutEffectSlide1").val(type);
+        }
+        else if (activeSlide === 2) {
+            $("#hdnOutEffectSlide2").val(type);
+        }
+        else if (activeSlide === 3) {
+            $("#hdnOutEffectSlide3").val(type);
+        }
     }
     // Get the container using its ID.
     var ulEffects = document.getElementById("ulEffects");
@@ -2003,18 +2014,31 @@ function loadImage(src) {
 function ShowAnimationOption() {
     document.getElementById("imageCoordinationforBounce").style.display = "block";
 }
-function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imageEndX, imageEndY) {
+function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imageEndX, imageEndY,from) {
     // Get the container using its ID.
     var ulDirection = document.getElementById("uldirection");
-    $("#hdnslideDedirection").val(direction);
-    if (activeSlide === 1) {
-        $("#hdnDirectiontSlide1").val(direction);
+    if (from == 'In') {
+        $("#hdnslideDedirection").val(direction);
+        if (activeSlide === 1) {
+            $("#hdnDirectiontSlide1").val(direction);
+        }
+        else if (activeSlide === 2) {
+            $("#hdnDirectiontSlide2").val(direction);
+        }
+        else if (activeSlide === 3) {
+            $("#hdnDirectiontSlide3").val(direction);
+        }
     }
-    else if (activeSlide === 2) {
-        $("#hdnDirectiontSlide2").val(direction);
-    }
-    else if (activeSlide === 3) {
-        $("#hdnDirectiontSlide3").val(direction);
+    if (from == 'Out') {
+        if (activeSlide === 1) {
+            $("#hdnOutDirectiontSlide1").val(direction);
+        }
+        else if (activeSlide === 2) {
+            $("#hdnOutDirectiontSlide2").val(direction);
+        }
+        else if (activeSlide === 3) {
+            $("#hdnOutDirectiontSlide3").val(direction);
+        }
     }
     // Find the closest container wrapping the <a>
     var container = clickedElement.closest('div.btn-canvas-container');
@@ -2038,6 +2062,7 @@ function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imag
         $("#hdnTextAnimationType").val('delaylinear');
         animationMode = "delaylinear";
         $("#hdnEffectSlide1").val('delaylinear');
+        $("#hdnOutEffectSlide1").val('delaylinear');
     }
 
         document.getElementById("imageStartX").value = imageStartX;

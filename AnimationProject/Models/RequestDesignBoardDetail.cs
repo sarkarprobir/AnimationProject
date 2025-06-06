@@ -21,6 +21,8 @@
         public Guid CreatedBy { get; set; }
         public string Effect { get; set; }
         public string Direction { get; set; }
+        public string OutEffect { get; set; }
+        public string OutDirection { get; set; }
         public string AnimationVideoPath { get; set; }
         public string AnimationImagePath { get; set; }
 

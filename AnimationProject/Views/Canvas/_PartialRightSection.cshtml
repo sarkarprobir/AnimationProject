@@ -579,20 +579,20 @@
                     <h2>Effects</h2>
                     <ul class="right-listone d-flex flex-wrap gap-3 mb-4" id="ulEffects">
                         <li style="display:none;">
-                            <a  id="alinear" href="javascript:void(0)" onclick="textAnimationClick(this, 'linear')" title="Linear">Linear</a>
+                            <a  id="alinear" href="javascript:void(0)" onclick="textAnimationClick(this, 'linear','In')" title="Linear">Linear2</a>
                             <div class="clear"></div>
                         </li>
 
                         <li style="display:none;">
-                            <a  id="abounce" href="javascript:void(0)" onclick="textAnimationClick(this, 'bounce')" title="Bounce">Bounce</a>
+                            <a id="abounce" href="javascript:void(0)" onclick="textAnimationClick(this, 'bounce','In')" title="Bounce">Bounce</a>
                             <div class="clear"></div>
                         </li>
                         <li>
-                            <a id="adelaylinear" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear')" title="linear">Linear</a>
+                            <a id="adelaylinear" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear','In')" title="linear">Linear</a>
                             <div class="clear"></div>
                         </li>
                         <li style="display:none;">
-                            <a id="azoomInOut" href="javascript:void(0)" onclick="textAnimationClick(this, 'zoom')" title="Zoom">Zoom</a>
+                            <a id="azoomInOut" href="javascript:void(0)" onclick="textAnimationClick(this, 'zoom','In')" title="Zoom">Zoom</a>
                             <div class="clear"></div>
                         </li>
                         <li title="Effect Disabled (Coming Soon)">
@@ -618,15 +618,24 @@
                     <input type="hidden" id="hdnEffectSlide1" />
                     <input type="hidden" id="hdnEffectSlide2" />
                     <input type="hidden" id="hdnEffectSlide3" />
+
+                    <input type="hidden" id="hdnOutEffectSlide1" />
+                    <input type="hidden" id="hdnOutEffectSlide2" />
+                    <input type="hidden" id="hdnOutEffectSlide3" />
+
                     <input type="hidden" id="hdnDirectiontSlide1" />
                     <input type="hidden" id="hdnDirectiontSlide2" />
                     <input type="hidden" id="hdnDirectiontSlide3" />
+
+                    <input type="hidden" id="hdnOutDirectiontSlide1" />
+                    <input type="hidden" id="hdnOutDirectiontSlide2" />
+                    <input type="hidden" id="hdnOutDirectiontSlide3" />
                     <h2>In</h2>
                     <ul class="right-listone d-flex justify-content-between align-items-center" id="uldirection">
                         <li>
                             <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                                 <!-- hide the <a> by default -->
-                                <a class="direction_link" id="aleft" href="javascript:void(0)" onclick="setCoordinate(this,'left',100,20,50,50); toggleDirectionActive(this);"
+                                <a class="direction_link" id="aleft" href="javascript:void(0)" onclick="setCoordinate(this,'left',100,20,50,50,'In'); toggleDirectionActive(this);"
                                    style=" width:100%; height:100%;">
                                     <img src="/images/icons/right arrow.svg" alt="Left to Center">
                                 </a>
@@ -641,7 +650,7 @@
                         <li>
                             <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                                 <!-- hide the <a> by default -->
-                                <a class="direction_link" id="aright" href="javascript:void(0)" onclick="setCoordinate(this,'right',400,0,50,50); toggleDirectionActive(this);"
+                                <a class="direction_link" id="aright" href="javascript:void(0)" onclick="setCoordinate(this,'right',400,0,50,50,'In'); toggleDirectionActive(this);"
                                    style=" width:100%; height:100%;">
                                     <img src="/images/icons/right arrow.svg" alt="right to Center"
                                          style=" transform: rotate(180deg);">
@@ -659,7 +668,7 @@
                             <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                                 <!-- hide the <a> by default -->
                                 <a class="direction_link" id="abottom" href="javascript:void(0)"
-                                   onclick="setCoordinate(this,'bottom',800,0,50,50); toggleDirectionActive(this);"
+                                   onclick="setCoordinate(this,'bottom',800,0,50,50,'In'); toggleDirectionActive(this);"
                                    style=" width:100%; height:100%;">
                                     <img src="/images/icons/right arrow.svg" alt="bottom to Center"
                                          style=" transform: rotate(270deg);">
@@ -676,7 +685,7 @@
                         <li>
                             <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                                 <!-- hide the <a> by default -->
-                                <a class="direction_link" id="atop" href="javascript:void(0)" onclick="setCoordinate(this,'top',400,0,50,50); toggleDirectionActive(this);"
+                                <a class="direction_link" id="atop" href="javascript:void(0)" onclick="setCoordinate(this,'top',400,0,50,50,'In'); toggleDirectionActive(this);"
                                    style=" width:100%; height:100%;">
                                     <img src="/images/icons/right arrow.svg" alt="top to Center"
                                          style=" transform: rotate(90deg);">
@@ -760,7 +769,7 @@
                         <div class="clear"></div>
                     </li> *@
                     <li>
-                        <a href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear')" title="linear">Linear</a>
+                        <a href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear','Out')" title="linear">Linear</a>
                         <div class="clear"></div>
                     </li>
                   
@@ -807,9 +816,9 @@
                     <li>
                         <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                             <!-- hide the <a> by default -->
-                            <a class="direction_link" id="aleft" href="javascript:void(0)" onclick="setCoordinate(this,'left',100,20,50,50); toggleDirectionActive(this);"
+                            <a class="direction_link" id="aleft" href="javascript:void(0)" onclick="setCoordinate(this,'right',100,20,50,50,'Out'); toggleDirectionActive(this);"
                                style=" width:100%; height:100%;">
-                                <img src="/images/icons/right arrow.svg" alt="Left to Center">
+                                <img src="/images/icons/right arrow.svg" alt="Center to Right">
                             </a>
                             
                         </div>
@@ -818,9 +827,9 @@
                     <li>
                         <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                             <!-- hide the <a> by default -->
-                            <a class="direction_link" id="aright" href="javascript:void(0)" onclick="setCoordinate(this,'right',400,0,50,50); toggleDirectionActive(this);"
+                            <a class="direction_link" id="aright" href="javascript:void(0)" onclick="setCoordinate(this,'left',400,0,50,50,'Out'); toggleDirectionActive(this);"
                                style=" width:100%; height:100%;">
-                                <img src="/images/icons/right arrow.svg" alt="right to Center"
+                                <img src="/images/icons/right arrow.svg" alt="Center to Left"
                                      style=" transform: rotate(180deg);">
                             </a>
                             
@@ -832,9 +841,9 @@
                         <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                             <!-- hide the <a> by default -->
                             <a class="direction_link" id="abottom" href="javascript:void(0)"
-                               onclick="setCoordinate(this,'bottom',800,0,50,50); toggleDirectionActive(this);"
+                               onclick="setCoordinate(this,'top',800,0,50,50,'Out'); toggleDirectionActive(this);"
                                style=" width:100%; height:100%;">
-                                <img src="/images/icons/right arrow.svg" alt="bottom to Center"
+                                <img src="/images/icons/right arrow.svg" alt="Center to Top"
                                      style=" transform: rotate(270deg);">
                             </a>
                         </div>
@@ -844,9 +853,9 @@
                     <li>
                         <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                             <!-- hide the <a> by default -->
-                            <a class="direction_link" id="atop" href="javascript:void(0)" onclick="setCoordinate(this,'top',400,0,50,50); toggleDirectionActive(this);"
+                            <a class="direction_link" id="atop" href="javascript:void(0)" onclick="setCoordinate(this,'bottom',400,0,50,50,'Out'); toggleDirectionActive(this);"
                                style=" width:100%; height:100%;">
-                                <img src="/images/icons/right arrow.svg" alt="top to Center"
+                                <img src="/images/icons/right arrow.svg" alt="Center to Bottom"
                                      style=" transform: rotate(90deg);">
                             </a>
                         </div>

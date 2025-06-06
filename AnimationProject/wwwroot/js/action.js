@@ -69,9 +69,9 @@ function SaveDesignBoard() {
 
                 // Prepare slide data for each slide
                 var slides = [
-                    { slideSeq: 1, json: verticalSlide1, hdnField: "#hdnDesignBoardDetailsIdSlide1", slideName: 'Slide-1', effect: "#hdnEffectSlide1", direction: "#hdnDirectiontSlide1", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath1", animationImagePath: "#hdnDesignBoardDetailsIdSlideImageFilePath1" },
-                    { slideSeq: 2, json: verticalSlide2, hdnField: "#hdnDesignBoardDetailsIdSlide2", slideName: 'Slide-2', effect: "#hdnEffectSlide2", direction: "#hdnDirectiontSlide2", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath2", animationImagePath: "#hdnDesignBoardDetailsIdSlideImageFilePath2" },
-                    { slideSeq: 3, json: verticalSlide3, hdnField: "#hdnDesignBoardDetailsIdSlide3", slideName: 'Slide-3', effect: "#hdnEffectSlide3", direction: "#hdnDirectiontSlide3", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath3", animationImagePath: "#hdnDesignBoardDetailsIdSlideImageFilePath3" }
+                    { slideSeq: 1, json: verticalSlide1, hdnField: "#hdnDesignBoardDetailsIdSlide1", slideName: 'Slide-1', effect: "#hdnEffectSlide1", direction: "#hdnDirectiontSlide1", outEffect: "#hdnOutEffectSlide1", outDirection: "#hdnOutDirectiontSlide1", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath1", animationImagePath: "#hdnDesignBoardDetailsIdSlideImageFilePath1" },
+                    { slideSeq: 2, json: verticalSlide2, hdnField: "#hdnDesignBoardDetailsIdSlide2", slideName: 'Slide-2', effect: "#hdnEffectSlide2", direction: "#hdnDirectiontSlide2", outEffect: "#hdnOutEffectSlide2", outDirection: "#hdnOutDirectiontSlide2", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath2", animationImagePath: "#hdnDesignBoardDetailsIdSlideImageFilePath2" },
+                    { slideSeq: 3, json: verticalSlide3, hdnField: "#hdnDesignBoardDetailsIdSlide3", slideName: 'Slide-3', effect: "#hdnEffectSlide3", direction: "#hdnDirectiontSlide3", outEffect: "#hdnOutEffectSlide3", outDirection: "#hdnOutDirectiontSlide3", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath3", animationImagePath: "#hdnDesignBoardDetailsIdSlideImageFilePath3" }
                 ];
 
                 // Function to save/update one slide
@@ -80,6 +80,10 @@ function SaveDesignBoard() {
                     var currentDetailId = $(slide.hdnField).val() || defaultId;
                     var currentEffect = $(slide.effect).val() || defaultEffect;
                     var currentDirection = $(slide.direction).val() || defaultDirection;
+
+                    var currentOutEffect = $(slide.outEffect).val() || defaultEffect;
+                    var currentOutDirection = $(slide.outDirection).val() || defaultDirection;
+
                     var currentAnimationVideoPath = $(slide.animationVideoPath).val() || defaultAnimationVideoPath;
                     var currentAnimationImagePath = $(slide.animationImagePath).val() || defaultAnimationImagePath;
                     var dataSlide = {
@@ -90,6 +94,8 @@ function SaveDesignBoard() {
                         SlideName: slide.slideName,
                         Effect: currentEffect,
                         Direction: currentDirection,
+                        OutEffect: currentOutEffect,
+                        OutDirection: currentOutDirection,
                         AnimationVideoPath: currentAnimationVideoPath,
                         AnimationImagePath: currentAnimationImagePath
                     };
@@ -347,17 +353,29 @@ function SelectionOfEffectandDirection(activeSlide) {
             document.getElementById("a" + $("#hdnEffectSlide1").val() + "").classList.add("active_effect");
             document.getElementById("a" + $("#hdnDirectiontSlide1").val() + "").classList.add("active_effect");
         }
+        if ($("#hdnOutEffectSlide1").val() !== '') {
+            document.getElementById("a" + $("#hdnOutEffectSlide1").val() + "").classList.add("active_effect");
+            document.getElementById("a" + $("#hdnOutDirectiontSlide1").val() + "").classList.add("active_effect");
+        }
     }
     else if (activeSlide === 2) {
         if ($("#hdnEffectSlide2").val() !== '') {
             document.getElementById("a" + $("#hdnEffectSlide2").val() + "").classList.add("active_effect");
             document.getElementById("a" + $("#hdnDirectiontSlide2").val() + "").classList.add("active_effect");
         }
+        if ($("#hdnOutEffectSlide2").val() !== '') {
+            document.getElementById("a" + $("#hdnOutEffectSlide2").val() + "").classList.add("active_effect");
+            document.getElementById("a" + $("#hdnOutDirectiontSlide2").val() + "").classList.add("active_effect");
+        }
     }
     else if (activeSlide === 3) {
         if ($("#hdnEffectSlide3").val() !== '') {
             document.getElementById("a" + $("#hdnEffectSlide3").val() + "").classList.add("active_effect");
             document.getElementById("a" + $("#hdnDirectiontSlide3").val() + "").classList.add("active_effect");
+        }
+        if ($("#hdnOutEffectSlide3").val() !== '') {
+            document.getElementById("a" + $("#hdnOutEffectSlide3").val() + "").classList.add("active_effect");
+            document.getElementById("a" + $("#hdnOutDirectiontSlide3").val() + "").classList.add("active_effect");
         }
     }
     resizeCanvas();
@@ -479,6 +497,32 @@ function GetDesignBoardById(id) {
                     setHiddenFielddirection(0, '#hdnDirectiontSlide1');
                     setHiddenFielddirection(1, '#hdnDirectiontSlide2');
                     setHiddenFielddirection(2, '#hdnDirectiontSlide3');
+
+
+                    // Update hidden fields with safety checks
+                    const setHiddenFieldOuteffect = (index, selector) => {
+                        const value = result.designBoardDetailsList[index]?.outEffect || '';
+                        $(selector).val(value);
+
+                    };
+
+                    setHiddenFieldOuteffect(0, '#hdnOutEffectSlide1');
+                    setHiddenFieldOuteffect(1, '#hdnOutEffectSlide2');
+                    setHiddenFieldOuteffect(2, '#hdnOutEffectSlide3');
+
+                    // Update hidden fields with safety checks
+                    const setHiddenFieldOutdirection = (index, selector) => {
+                        const value = result.designBoardDetailsList[index]?.outDirection || '';
+                        $(selector).val(value);
+                    };
+
+                    setHiddenFieldOutdirection(0, '#hdnOutDirectiontSlide1');
+                    setHiddenFieldOutdirection(1, '#hdnOutDirectiontSlide2');
+                    setHiddenFieldOutdirection(2, '#hdnOutDirectiontSlide3');
+
+
+
+
 
                     // Update hidden fields with safety checks hdnDesignBoardDetailsIdSlideFilePath1
                     const setHiddenSlideFilePath = (index, selector, videoSelector) => {
@@ -928,6 +972,8 @@ async function GetDesignBoardByIdForDownload(condition) {
                     // Ensure default values for effect and direction
                     jsonObj.effect = item.effect || "delaylinear";
                     jsonObj.direction = item.direction || "left";
+                    jsonObj.outEffect = item.outEffect || "delaylinear";
+                    jsonObj.outDirection = item.outDirection || "left";
                     return jsonObj;
                 });
                 console.log("jsonArray:", jsonArray);
@@ -2828,51 +2874,120 @@ function animateTextForPublish(animationType, direction, condition, loopCount) {
     }
 }
 function animateTextForDownload(animationType, direction, condition, loopCount, state) {
-    
     // Global timing settings (from your selected speeds).
-    const inTime = parseFloat(selectedInSpeed) || 4;   // e.g. 4 seconds for all "in"
-    const outTime = parseFloat(selectedOutSpeed) || 4;   // e.g. 3 seconds for all "out"
-    const stayTime = parseFloat(selectedStaySpeed) || 3; // Overall stay time (applied globally if desired)
+    const inTime = parseFloat(selectedInSpeed) || 4; // seconds
+    const outTime = parseFloat(selectedOutSpeed) || 4;
+    const stayTime = parseFloat(selectedStaySpeed) || 3;
+    const Outdirection = state.outDirection || 'right'
     // ----- TEXT ANIMATION SECTION -----
-    // Pre-calculate final positions and offscreen positions.
     textObjects.forEach((obj) => {
-
-        // Save the final (target) position.
         obj.finalX = obj.x;
         obj.finalY = obj.y;
 
-        // Compute the starting (offscreen) and exit positions based on the direction.
+        // 1) ENTRY (based on `direction`)
         switch (direction) {
             case "top":
                 obj.x = obj.finalX;
                 obj.y = -(obj.boundingHeight + 5);
-                obj.exitX = obj.finalX;
-                obj.exitY = -(obj.boundingHeight + 5);
                 break;
             case "bottom":
                 obj.x = obj.finalX;
                 obj.y = canvasForDownload.height + 5;
-                obj.exitX = obj.finalX;
-                obj.exitY = canvasForDownload.height + 5;
                 break;
             case "left":
                 obj.x = -(obj.boundingWidth + 5);
                 obj.y = obj.finalY;
-                obj.exitX = -(obj.boundingWidth + 5);
-                obj.exitY = obj.finalY;
                 break;
             case "right":
                 obj.x = canvasForDownload.width + 5;
                 obj.y = obj.finalY;
+                break;
+            default:
+                // fallback: slide in from right
+                obj.x = canvasForDownload.width + 5;
+                obj.y = obj.finalY;
+        }
+
+        // 2) EXIT (based on `Outdirection`)
+        switch (Outdirection) {
+            case "top":
+                obj.exitX = obj.finalX;
+                obj.exitY = -(obj.boundingHeight + 5);
+                break;
+            case "bottom":
+                obj.exitX = obj.finalX;
+                obj.exitY = canvasForDownload.height + 5;
+                break;
+            case "left":
+                obj.exitX = -(obj.boundingWidth + 5);
+                obj.exitY = obj.finalY;
+                break;
+            case "right":
                 obj.exitX = canvasForDownload.width + 5;
                 obj.exitY = obj.finalY;
                 break;
             default:
-                // Default: animate offscreen to the right.
-                obj.x = obj.finalX;
-                obj.y = obj.finalY;
-                obj.exitX = window.innerWidth;
+                // fallback: slide out to right
+                obj.exitX = canvasForDownload.width + 5;
                 obj.exitY = obj.finalY;
+        }
+    });
+
+    // ----- IMAGE ANIMATION SECTION -----
+    images.forEach((imgObj) => {
+        imgObj.finalX = imgObj.x;
+        imgObj.finalY = imgObj.y;
+
+        // Take into account any scaling:
+        const dispWidth = imgObj.width * (imgObj.scaleX || 1);
+        const dispHeight = imgObj.height * (imgObj.scaleY || 1);
+
+        // 1) ENTRY (based on `direction`)
+        switch (direction) {
+            case "top":
+                imgObj.x = imgObj.finalX;
+                imgObj.y = -(dispHeight + 5);
+                break;
+            case "bottom":
+                imgObj.x = imgObj.finalX;
+                imgObj.y = canvasForDownload.height + 5;
+                break;
+            case "left":
+                imgObj.x = -(dispWidth + 5);
+                imgObj.y = imgObj.finalY;
+                break;
+            case "right":
+                imgObj.x = canvasForDownload.width + 5;
+                imgObj.y = imgObj.finalY;
+                break;
+            default:
+                // fallback: slide in from right
+                imgObj.x = canvasForDownload.width + 5;
+                imgObj.y = imgObj.finalY;
+        }
+
+        // 2) EXIT (based on `Outdirection`)
+        switch (Outdirection) {
+            case "top":
+                imgObj.exitX = imgObj.finalX;
+                imgObj.exitY = -(dispHeight + 5);
+                break;
+            case "bottom":
+                imgObj.exitX = imgObj.finalX;
+                imgObj.exitY = canvasForDownload.height + 5;
+                break;
+            case "left":
+                imgObj.exitX = -(dispWidth + 5);
+                imgObj.exitY = imgObj.finalY;
+                break;
+            case "right":
+                imgObj.exitX = canvasForDownload.width + 5;
+                imgObj.exitY = imgObj.finalY;
+                break;
+            default:
+                // fallback: slide out to right
+                imgObj.exitX = canvasForDownload.width + 5;
+                imgObj.exitY = imgObj.finalY;
         }
     });
 
@@ -2915,7 +3030,7 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
             onUpdate: () => drawCanvasForDownload(condition)
         });
 
-        // Pin noAnim
+        // Pin noAnim images/text at their fixed positions
         images.filter(i => i.noAnim).forEach(img => {
             tlText.set(img, { x: img.x, y: img.y, opacity: img.opacity ?? 1 }, 0);
         });
@@ -3076,45 +3191,45 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
 
         });
     }
-    // ----- IMAGE ANIMATION SECTION -----
-    // (A similar approach can be applied to images.)
-    images.forEach((imgObj) => {
-        imgObj.finalX = imgObj.x;
-        imgObj.finalY = imgObj.y;
-        const dispWidth = imgObj.width * (imgObj.scaleX || 1);
-        const dispHeight = imgObj.height * (imgObj.scaleY || 1);
-        switch (direction) {
-            case "top":
-                imgObj.x = imgObj.finalX;
-                imgObj.y = -(dispHeight + 5);
-                imgObj.exitX = imgObj.finalX;
-                imgObj.exitY = -(dispHeight + 5);
-                break;
-            case "bottom":
-                imgObj.x = imgObj.finalX;
-                imgObj.y = canvasForDownload.height + 5;
-                imgObj.exitX = imgObj.finalX;
-                imgObj.exitY = canvasForDownload.height + 5;
-                break;
-            case "left":
-                imgObj.x = -(dispWidth + 5);
-                imgObj.y = imgObj.finalY;
-                imgObj.exitX = -(dispWidth + 5);
-                imgObj.exitY = imgObj.finalY;
-                break;
-            case "right":
-                imgObj.x = canvasForDownload.width + 5;
-                imgObj.y = imgObj.finalY;
-                imgObj.exitX = canvasForDownload.width + 5;
-                imgObj.exitY = imgObj.finalY;
-                break;
-            default:
-                imgObj.x = imgObj.finalX;
-                imgObj.y = imgObj.finalY;
-                imgObj.exitX = window.innerWidth;
-                imgObj.exitY = imgObj.finalY;
-        }
-    });
+    //// ----- IMAGE ANIMATION SECTION -----
+    //// (A similar approach can be applied to images.)
+    //images.forEach((imgObj) => {
+    //    imgObj.finalX = imgObj.x;
+    //    imgObj.finalY = imgObj.y;
+    //    const dispWidth = imgObj.width * (imgObj.scaleX || 1);
+    //    const dispHeight = imgObj.height * (imgObj.scaleY || 1);
+    //    switch (direction) {
+    //        case "top":
+    //            imgObj.x = imgObj.finalX;
+    //            imgObj.y = -(dispHeight + 5);
+    //            imgObj.exitX = imgObj.finalX;
+    //            imgObj.exitY = -(dispHeight + 5);
+    //            break;
+    //        case "bottom":
+    //            imgObj.x = imgObj.finalX;
+    //            imgObj.y = canvasForDownload.height + 5;
+    //            imgObj.exitX = imgObj.finalX;
+    //            imgObj.exitY = canvasForDownload.height + 5;
+    //            break;
+    //        case "left":
+    //            imgObj.x = -(dispWidth + 5);
+    //            imgObj.y = imgObj.finalY;
+    //            imgObj.exitX = -(dispWidth + 5);
+    //            imgObj.exitY = imgObj.finalY;
+    //            break;
+    //        case "right":
+    //            imgObj.x = canvasForDownload.width + 5;
+    //            imgObj.y = imgObj.finalY;
+    //            imgObj.exitX = canvasForDownload.width + 5;
+    //            imgObj.exitY = imgObj.finalY;
+    //            break;
+    //        default:
+    //            imgObj.x = imgObj.finalX;
+    //            imgObj.y = imgObj.finalY;
+    //            imgObj.exitX = window.innerWidth;
+    //            imgObj.exitY = imgObj.finalY;
+    //    }
+    //});
 
 
     if (animationType === "linear" || animationType === "zoom" ||
