@@ -2390,13 +2390,27 @@ function pasteFromClipboard() {
 }
 
 
-// ─── 5) Keyboard shortcuts (Ctrl+C, Ctrl+V) ─────────────────────────
+//// ─── 5) Keyboard shortcuts (Ctrl+C, Ctrl+V) ─────────────────────────
+//window.addEventListener('keydown', (e) => {
+//    if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) {
+//        e.preventDefault();
+//        copyOption.click();
+//    }
+//    if (e.ctrlKey && (e.key === 'v' || e.key === 'V')) {
+//        e.preventDefault();
+//        pasteFromClipboard();
+//    }
+//});
+// ─── 5) Keyboard shortcuts (Ctrl+C/Cmd+C, Ctrl+V/Cmd+V) ─────────────────────────
 window.addEventListener('keydown', (e) => {
-    if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) {
+    const isCopy = (e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C');
+    const isPaste = (e.ctrlKey || e.metaKey) && (e.key === 'v' || e.key === 'V');
+
+    if (isCopy) {
         e.preventDefault();
         copyOption.click();
     }
-    if (e.ctrlKey && (e.key === 'v' || e.key === 'V')) {
+    if (isPaste) {
         e.preventDefault();
         pasteFromClipboard();
     }
