@@ -22,6 +22,11 @@ let rotatingObject = null;
 let rotationStartAngle = 0;
 let rotationStartValue = 0;
 
+let canvasClipboard = {
+    textItems: [],
+    imageItems: []
+};
+
 
 //document.getElementById('alinear').classList.add('active_effect');
 //const stream = canvas.captureStream(7); // Capture at 30 fps
@@ -2256,7 +2261,127 @@ function addDefaultText() {
     $("#elementsPopup").hide();
 }
 
+// ─── 2) Clone helpers ────────────────────────────────────────────────
+function cloneTextObject(srcObj) {
+    return {
+        x: srcObj.x,
+        y: srcObj.y,
+        text: srcObj.text,
+        fontSize: srcObj.fontSize,
+        fontFamily: srcObj.fontFamily,
+        isBold: srcObj.isBold,
+        isItalic: srcObj.isItalic,
+        textColor: srcObj.textColor,
+        lineSpacing: srcObj.lineSpacing,
+        textAlign: srcObj.textAlign,
+        boundingWidth: srcObj.boundingWidth,
+        boundingHeight: srcObj.boundingHeight,
+        opacity: srcObj.opacity,
+        rotation: srcObj.rotation,
+        selected: false
+        // Copy any other fields you need...
+    };
+}
 
+function cloneImageObject(srcObj) {
+    return {
+        x: srcObj.x,
+        y: srcObj.y,
+        width: srcObj.width,
+        height: srcObj.height,
+        scaleX: srcObj.scaleX,
+        scaleY: srcObj.scaleY,
+        src: srcObj.src,
+        svgData: srcObj.svgData,
+        opacity: srcObj.opacity,
+        rotation: srcObj.rotation,
+        img: null,      // will reload from `src` during draw
+        selected: false
+        // Copy any other custom fields if needed...
+    };
+}
+// ─── 3) Copy / Paste menu handlers ───────────────────────────────────
+const copyOption = document.getElementById('copyOption');
+const pasteOption = document.getElementById('pasteOption');
+
+copyOption.addEventListener('click', () => {
+    // Find all currently selected items
+    const selectedTexts = textObjects.filter(obj => obj.selected);
+    const selectedImages = images.filter(img => img.selected);
+
+    // If nothing is selected, do nothing
+    if (selectedTexts.length === 0 && selectedImages.length === 0) {
+        return;
+    }
+
+    // Clear previous clipboard
+    canvasClipboard.textItems = [];
+    canvasClipboard.imageItems = [];
+
+    // Deep-clone each selected object into clipboard
+    selectedTexts.forEach(txt => {
+        canvasClipboard.textItems.push(cloneTextObject(txt));
+    });
+    selectedImages.forEach(img => {
+        canvasClipboard.imageItems.push(cloneImageObject(img));
+    });
+
+    // (Optional) give user feedback: e.g. flash “Copied” somewhere
+});
+
+pasteOption.addEventListener('click', () => {
+    pasteFromClipboard();
+});
+
+// ─── 4) pasteFromClipboard implementation ───────────────────────────
+function pasteFromClipboard() {
+    // If nothing in clipboard, do nothing
+    if (
+        canvasClipboard.textItems.length === 0 &&
+        canvasClipboard.imageItems.length === 0
+    ) {
+        return;
+    }
+
+    // 4.1) Clear existing selection
+    textObjects.forEach(obj => obj.selected = false);
+    images.forEach(img => img.selected = false);
+
+    const offset = 20; // how far to offset pasted items (so they appear slightly down-right)
+
+    // 4.2) Paste text items
+    canvasClipboard.textItems.forEach(orig => {
+        const pasted = cloneTextObject(orig);
+        pasted.x += offset;
+        pasted.y += offset;
+        pasted.selected = true;
+        textObjects.push(pasted);
+    });
+
+    // 4.3) Paste image items
+    canvasClipboard.imageItems.forEach(orig => {
+        const pasted = cloneImageObject(orig);
+        pasted.x += offset;
+        pasted.y += offset;
+        pasted.selected = true;
+        images.push(pasted);
+    });
+
+    // 4.4) Redraw the canvas
+    drawCanvas('Common');
+}
+
+// ─── 5) Keyboard shortcuts (Ctrl+C, Ctrl+V) ─────────────────────────
+window.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) {
+        e.preventDefault();
+        copyOption.click();
+    }
+    if (e.ctrlKey && (e.key === 'v' || e.key === 'V')) {
+        e.preventDefault();
+        pasteFromClipboard();
+    }
+});
 
 // Utility: Check if point (x, y) is within the bounding box of a text object
 function isWithinText(obj, x, y) {
