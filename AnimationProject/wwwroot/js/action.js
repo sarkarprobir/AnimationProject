@@ -418,7 +418,9 @@ function saveCanvasData() {
                 groupId: obj.groupId,
                 rotation: obj.rotation,
                 isBold: obj.isBold || false,
-                isItalic: obj.isItalic || false
+                isItalic: obj.isItalic || false,
+                type: obj.type || 'text',
+                zIndex: obj.zIndex || getNextZIndex()
             };
         }),
 
@@ -436,7 +438,9 @@ function saveCanvasData() {
                 opacity: imgObj.opacity,
                 noAnim: imgObj.noAnim,
                 groupId: imgObj.groupId,
-                rotation: imgObj.rotation
+                rotation: imgObj.rotation,
+                type: imgObj.type || 'image',
+                zIndex: imgObj.zIndex || getNextZIndex()
             };
         })
     };
@@ -555,7 +559,7 @@ function GetDesignBoardById(id) {
                     setHiddenSlideImageFilePath(1, '#hdnDesignBoardDetailsIdSlideImageFilePath2');
                     setHiddenSlideImageFilePath(2, '#hdnDesignBoardDetailsIdSlideImageFilePath3');
 
-                   
+                 
                     
                     // Optionally, load one of the slides into the canvas
                     // For example, load slide 1's JSON data if available:
@@ -721,6 +725,8 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
             rotation: obj.rotation,
             isBold: obj.isBold || false,
             isItalic: obj.isItalic || false,
+            type: obj.type || 'text',
+            zIndex: obj.zIndex || getNextZIndex(),
         };
     });
 
@@ -740,6 +746,8 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
         o.noAnim = imgObj.noAnim;
         o.groupId = imgObj.groupId;
         o.rotation = imgObj.rotation;
+        o.type = imgObj.type || 'image';
+        o.zIndex = imgObj.zIndex || getNextZIndex();
         return o;
     });
 
@@ -1992,10 +2000,6 @@ function drawCanvasForDownload(condition) {
 
 
 
-    
-
-
-    // 5) Overlay selection UI *in raw pixel space*  
     function toPixelSpace(fn) {
         ctxElementForDownload.save();
         ctxElementForDownload.resetTransform();    // drop design→screen CTM

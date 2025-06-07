@@ -27,7 +27,11 @@ let canvasClipboard = {
     imageItems: []
 };
 
-
+let currentZIndex = 0;
+function getNextZIndex() {
+    return ++currentZIndex;
+}
+let layers = []; // global
 //document.getElementById('alinear').classList.add('active_effect');
 //const stream = canvas.captureStream(7); // Capture at 30 fps
 //const recorder = new MediaRecorder(stream);
@@ -323,8 +327,8 @@ canvas.addEventListener("contextmenu", function (e) {
     const rect = canvas.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
     const offsetY = e.clientY - rect.top;
-    const adjustX = 280;
-    const adjustY = 64;
+    const adjustX = -280;
+    const adjustY = -30;
     const found = getObjectAtcontextmenu(offsetX, offsetY);
     if (found) {
         // ── If an object is found, show ALL menu items ────────────────
@@ -377,6 +381,23 @@ document.getElementById("deleteOption").addEventListener("click", function (e) {
         contextMenu.style.display = "none";
     }
 });
+window.addEventListener("keydown", function (e) {
+    // Delete key (Windows) or Backspace (Mac)
+    if ((e.key === "Delete" || e.key === "Backspace") && selectedForContextMenu) {
+        e.preventDefault(); // prevent browser back navigation
+
+        if (selectedType === "text") {
+            textObjects = textObjects.filter(obj => obj !== selectedForContextMenu);
+        } else if (selectedType === "image") {
+            images = images.filter(imgObj => imgObj !== selectedForContextMenu);
+        }
+
+        drawCanvas('Common');
+        selectedForContextMenu = null;
+        contextMenu.style.display = "none";
+    }
+});
+
 ////END   This is for delete text///////////////////
 // Draw Canvas Elements
 //function drawRoundedRect(ctx, x, y, width, height, radius) {
@@ -512,8 +533,18 @@ function drawImageOnCanvas(img) {
     ctx.drawImage(img.img, 0, 0, img.width, img.height);
     ctx.restore();
 }
+//let allItems = [...images, ...textObjects];
+//allItems.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+//reindex();
+
+function initializeLayers() {
+    allItems = [...images, ...textObjects];
+    allItems.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+    reindex();
+}
 
 function drawCanvas(condition) {
+    initializeLayers();
     resizeCanvas();
     const dpr = window.devicePixelRatio || 1;
 
@@ -531,99 +562,187 @@ function drawCanvas(condition) {
     if (canvas._bgImg) {
         ctx.drawImage(canvas._bgImg, 0, 0, designW, designH);
     }
+    // === Merge and sort by zIndex ===
+    
+  //  allItems.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
 
-    // === Draw Images with Rotation ===
-    images.forEach(imgObj => {
-        const x = imgObj.x;
-        const y = imgObj.y;
-        const scaleX = imgObj.scaleX || 1;
-        const scaleY = imgObj.scaleY || 1;
-        const w = imgObj.width * scaleX;
-        const h = imgObj.height * scaleY;
-        const rotation = (imgObj.rotation || 0) * Math.PI / 180;
-        if (imgObj.selected) {
-            drawRotateHandle(imgObj);
-        }
 
-        if (!imgObj.img) {
-            const img = new Image();
-            img.onload = () => {
-                imgObj.img = img;
-                drawCanvas(condition);
-            };
-            img.src = imgObj.svgData || imgObj.src;
-            return;
-        }
+    //// === Draw Images with Rotation ===
+    //images.forEach(imgObj => {
+    //    const x = imgObj.x;
+    //    const y = imgObj.y;
+    //    const scaleX = imgObj.scaleX || 1;
+    //    const scaleY = imgObj.scaleY || 1;
+    //    const w = imgObj.width * scaleX;
+    //    const h = imgObj.height * scaleY;
+    //    const rotation = (imgObj.rotation || 0) * Math.PI / 180;
+    //    if (imgObj.selected) {
+    //        drawRotateHandle(imgObj);
+    //    }
 
+    //    if (!imgObj.img) {
+    //        const img = new Image();
+    //        img.onload = () => {
+    //            imgObj.img = img;
+    //            drawCanvas(condition);
+    //        };
+    //        img.src = imgObj.svgData || imgObj.src;
+    //        return;
+    //    }
+
+    //    ctx.save();
+    //    ctx.globalAlpha = imgObj.opacity || 1;
+
+    //    ctx.translate(x + w / 2, y + h / 2);
+    //    ctx.rotate(rotation);
+    //    ctx.scale(scaleX, scaleY);
+    //    try {
+    //        ctx.drawImage(imgObj.img, -imgObj.width / 2, -imgObj.height / 2, imgObj.width, imgObj.height);
+    //    } catch (e) {
+
+    //    }
+
+
+    //    ctx.restore();
+    //});
+
+    //// === Draw Text with Rotation ===
+    //if (['Common', 'ChangeStyle', 'applyAnimations'].includes(condition)) {
+    //    textObjects.forEach(obj => {
+    //        ctx.save();
+    //        ctx.globalAlpha = obj.opacity || 1;
+    //        // ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+    //        let styleParts = [];
+    //        if (obj.isItalic) styleParts.push("italic");
+    //        if (obj.isBold) styleParts.push("bold");
+    //        styleParts.push(`${obj.fontSize}px`);
+    //        styleParts.push(obj.fontFamily);
+    //        ctx.font = styleParts.join(" ");
+
+    //        ctx.fillStyle = obj.textColor;
+    //        ctx.textBaseline = "top";
+
+    //        if (obj.selected) {
+    //            drawRotateHandle(obj);
+    //        }
+
+
+    //        const x = obj.x;
+    //        const y = obj.y;
+    //        const pad = padding;
+    //        const maxW = obj.boundingWidth - 2 * pad;
+    //        const rotation = (obj.rotation || 0) * Math.PI / 180;
+
+    //        let lines = obj.text.includes('\n') ? obj.text.split('\n') : wrapText(ctx, obj.text, maxW);
+    //        const lineH = obj.lineSpacing * obj.fontSize;
+
+    //        if (lines.length > 1) {
+    //            obj.boundingHeight = lines.length * lineH + 2 * pad;
+    //        }
+
+    //        const availableHeight = obj.boundingHeight - 2 * pad;
+    //        const maxLines = Math.floor(availableHeight / lineH);
+
+    //        // Rotate around center of bounding box
+    //        ctx.translate(x + obj.boundingWidth / 2, y + obj.boundingHeight / 2);
+    //        ctx.rotate(rotation);
+
+    //        lines.slice(0, maxLines).forEach((line, i) => {
+    //            const lw = ctx.measureText(line).width;
+    //            let offsetX = -obj.boundingWidth / 2 + pad;
+    //            if (obj.textAlign === 'center') offsetX = -lw / 2;
+    //            if (obj.textAlign === 'right') offsetX = obj.boundingWidth / 2 - lw - pad;
+    //            const offsetY = -obj.boundingHeight / 2 + pad + i * lineH;
+    //            ctx.fillText(line, offsetX, offsetY);
+    //        });
+
+    //        ctx.restore();
+    //    });
+    //}
+
+
+
+    allItems.forEach(item => {
         ctx.save();
-        ctx.globalAlpha = imgObj.opacity || 1;
+        ctx.globalAlpha = item.opacity || 1;
 
-        ctx.translate(x + w / 2, y + h / 2);
-        ctx.rotate(rotation);
-        ctx.scale(scaleX, scaleY);
-        try {
-            ctx.drawImage(imgObj.img, -imgObj.width / 2, -imgObj.height / 2, imgObj.width, imgObj.height);
-        } catch (e) {
+        if (item.type === 'image') {
+            const scaleX_ = item.scaleX || 1;
+            const scaleY_ = item.scaleY || 1;
+            const w = item.width * scaleX_;
+            const h = item.height * scaleY_;
+            const rot = (item.rotation || 0) * Math.PI / 180;
 
+            if (!item.img) {
+                const img = new Image();
+                img.onload = () => {
+                    item.img = img;
+                    drawCanvas(condition);
+                };
+                img.src = item.svgData || item.src;
+                ctx.restore();
+                return;
+            }
+
+            ctx.translate(item.x + w / 2, item.y + h / 2);
+            ctx.rotate(rot);
+            ctx.scale(scaleX_, scaleY_);
+
+            try {
+                ctx.drawImage(item.img, -item.width / 2, -item.height / 2, item.width, item.height);
+            } catch (e) { }
+
+            ctx.restore();
+            if (item.selected) drawRotateHandle(item);
         }
-       
+
+        else if (item.type === 'text' && ['Common', 'ChangeStyle', 'applyAnimations'].includes(condition)) {
+            let styleParts = [];
+            if (item.isItalic) styleParts.push("italic");
+            if (item.isBold) styleParts.push("bold");
+            styleParts.push(`${item.fontSize}px`);
+            styleParts.push(item.fontFamily);
+            ctx.font = styleParts.join(" ");
+            ctx.fillStyle = item.textColor;
+            ctx.textBaseline = "top";
+
+            const pad = padding;
+            const maxW = item.boundingWidth - 2 * pad;
+            const rot = (item.rotation || 0) * Math.PI / 180;
+
+            const lines = item.text.includes('\n')
+                ? item.text.split('\n')
+                : wrapText(ctx, item.text, maxW);
+
+            const lineH = item.lineSpacing * item.fontSize;
+            if (lines.length > 1) {
+                item.boundingHeight = lines.length * lineH + 2 * pad;
+            }
+            const maxLines = Math.floor((item.boundingHeight - 2 * pad) / lineH);
+
+            ctx.translate(item.x + item.boundingWidth / 2, item.y + item.boundingHeight / 2);
+            ctx.rotate(rot);
+
+            lines.slice(0, maxLines).forEach((line, i) => {
+                const lw = ctx.measureText(line).width;
+                let ox = -item.boundingWidth / 2 + pad;
+                if (item.textAlign === 'center') ox = -lw / 2;
+                else if (item.textAlign === 'right') ox = item.boundingWidth / 2 - lw - pad;
+                const oy = -item.boundingHeight / 2 + pad + i * lineH;
+                ctx.fillText(line, ox, oy);
+            });
+
+            ctx.restore();
+            if (item.selected) drawRotateHandle(item);
+        }
 
         ctx.restore();
     });
 
-    // === Draw Text with Rotation ===
-    if (['Common', 'ChangeStyle', 'applyAnimations'].includes(condition)) {
-        textObjects.forEach(obj => {
-            ctx.save();
-            ctx.globalAlpha = obj.opacity || 1;
-            // ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-            let styleParts = [];
-            if (obj.isItalic) styleParts.push("italic");
-            if (obj.isBold) styleParts.push("bold");
-            styleParts.push(`${obj.fontSize}px`);
-            styleParts.push(obj.fontFamily);
-            ctx.font = styleParts.join(" ");
-
-            ctx.fillStyle = obj.textColor;
-            ctx.textBaseline = "top";
-
-            if (obj.selected) {
-                drawRotateHandle(obj);
-            }
 
 
-            const x = obj.x;
-            const y = obj.y;
-            const pad = padding;
-            const maxW = obj.boundingWidth - 2 * pad;
-            const rotation = (obj.rotation || 0) * Math.PI / 180;
 
-            let lines = obj.text.includes('\n') ? obj.text.split('\n') : wrapText(ctx, obj.text, maxW);
-            const lineH = obj.lineSpacing * obj.fontSize;
 
-            if (lines.length > 1) {
-                obj.boundingHeight = lines.length * lineH + 2 * pad;
-            }
-
-            const availableHeight = obj.boundingHeight - 2 * pad;
-            const maxLines = Math.floor(availableHeight / lineH);
-
-            // Rotate around center of bounding box
-            ctx.translate(x + obj.boundingWidth / 2, y + obj.boundingHeight / 2);
-            ctx.rotate(rotation);
-
-            lines.slice(0, maxLines).forEach((line, i) => {
-                const lw = ctx.measureText(line).width;
-                let offsetX = -obj.boundingWidth / 2 + pad;
-                if (obj.textAlign === 'center') offsetX = -lw / 2;
-                if (obj.textAlign === 'right') offsetX = obj.boundingWidth / 2 - lw - pad;
-                const offsetY = -obj.boundingHeight / 2 + pad + i * lineH;
-                ctx.fillText(line, offsetX, offsetY);
-            });
-
-            ctx.restore();
-        });
-    }
 
     // === Selection Overlays ===
     function toPixelSpace(fn) {
@@ -2251,7 +2370,9 @@ function addDefaultText() {
         groupId: null,
         rotation: 0,
         isBold: false,
-        isItalic: false
+        isItalic: false,
+        type: 'text',
+        zIndex: getNextZIndex()
     };
 
     // 2) Measure it
@@ -2298,7 +2419,9 @@ function cloneTextObject(srcObj) {
         boundingHeight: srcObj.boundingHeight,
         opacity: srcObj.opacity,
         rotation: srcObj.rotation,
-        selected: false
+        selected: false,
+        zIndex: getNextZIndex(),
+        type: 'text',
         // Copy any other fields you need...
     };
 }
@@ -2316,7 +2439,9 @@ function cloneImageObject(srcObj) {
         opacity: srcObj.opacity,
         rotation: srcObj.rotation,
         img: null,      // will reload from `src` during draw
-        selected: false
+        selected: false,
+        zIndex: getNextZIndex(),
+        type: 'image',
         // Copy any other custom fields if needed...
     };
 }
@@ -2367,12 +2492,21 @@ function pasteFromClipboard() {
     textObjects.forEach(obj => obj.selected = false);
     images.forEach(img => img.selected = false);
 
+    // Compute the current highest zIndex
+    //const allItems = [...textObjects, ...images];
+    //const maxZ = allItems.reduce((max, item) => Math.max(max, item.zIndex || 0), 0);
+
+    //let currentZ = maxZ + 1;
+
+
     // 4.2) Paste text items at the same x/y as the original
     canvasClipboard.textItems.forEach(orig => {
         const pasted = cloneTextObject(orig);
         pasted.x = orig.x;
         pasted.y = orig.y;
         pasted.selected = true;
+        pasted.zIndex = orig.zIndex;
+        type: orig.type,
         textObjects.push(pasted);
     });
 
@@ -2382,6 +2516,8 @@ function pasteFromClipboard() {
         pasted.x = orig.x;
         pasted.y = orig.y;
         pasted.selected = true;
+        pasted.zIndex = orig.zIndex;
+        type: orig.type,
         images.push(pasted);
     });
 
@@ -4637,7 +4773,9 @@ canvas.addEventListener('drop', e => {
             selected: false,
             noAnim: false,
             groupId: null,
-            rotation: 0
+            rotation: 0,
+            type: "image",
+            zIndex: getNextZIndex()
         });
         drawCanvas('Common');
     };
@@ -5536,4 +5674,38 @@ function updateFontStyleButtons() {
     const anyItalic = textObjects.some(o => o.selected && o.isItalic);
     document.getElementById("italicBtn").classList.toggle("active", anyItalic);
 }
+function reindex() {
+    allItems.forEach((obj, idx) => obj.zIndex = idx + 1)
+}
+function bringToFront(item) {
+    // item.zIndex = getNextZIndex(); // highest zIndex = drawn last = on top
+    const i = allItems.indexOf(item)
+    if (i === -1) return
+    allItems.splice(i, 1)     // remove it
+    allItems.push(item)       // insert at end (top)
+    reindex()
+}
+function getAllItems() {
+    return [...textObjects, ...images];
+}
+function sendToBack(item) {
+    // item.zIndex = Math.min(...getAllItems().map(i => i.zIndex || 0)) - 1;
+    const i = allItems.indexOf(item)
+    if (i === -1) return
+    allItems.splice(i, 1)     // remove it
+    allItems.unshift(item)    // insert at start (bottom)
+    reindex()
+}
+bringFrontOption.addEventListener('click', () => {
+    if (!selectedForContextMenu) return;
+    bringToFront(selectedForContextMenu);
+    drawCanvas("Common");
+    contextMenu.style.display = 'none';
+});
 
+sendBackOption.addEventListener('click', () => {
+    if (!selectedForContextMenu) return;
+    sendToBack(selectedForContextMenu);
+    drawCanvas("Common");
+    contextMenu.style.display = 'none';
+});
