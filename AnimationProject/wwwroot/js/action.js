@@ -1427,8 +1427,8 @@ function loadCanvasFromJsonForDownload1(jsonData, condition = 'Common') {
     });
 }
 
- function loadCanvasFromJsonForDownload(jsonData, condition = 'Common') {
-   // await ensureFontsInitialized();
+function loadCanvasFromJsonForDownload(jsonData, condition = 'Common') {
+    // await ensureFontsInitialized();
     // Clear download canvas
     ctxElementForDownload.clearRect(0, 0, canvasForDownload.width, canvasForDownload.height);
     currentConditionForDownload = condition;
@@ -1494,7 +1494,9 @@ function loadCanvasFromJsonForDownload1(jsonData, condition = 'Common') {
             groupId: obj.groupId,
             rotation: obj.rotation,
             isBold: obj.isBold || false,
-            isItalic: obj.isItalic || false
+            isItalic: obj.isItalic || false,
+            type: obj.type || 'text',
+            zIndex: obj.zIndex || getNextZIndex()
         };
     });
 
@@ -1513,6 +1515,8 @@ function loadCanvasFromJsonForDownload1(jsonData, condition = 'Common') {
         obj.img.onload = () => drawCanvasForDownload(condition);
         obj.img.onerror = () => drawCanvasForDownload(condition);
         obj.img.src = o.src;
+        obj.type = o.type || 'image';
+        obj.zIndex = o.zIndex || getNextZIndex();
         return obj;
     });
 

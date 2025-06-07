@@ -1773,7 +1773,7 @@ function animateText(direction, condition, loopCount) {
 
 
 
-function textAnimationClick(clickedElement, from) {
+function textAnimationClick(clickedElement, type, from) {
     $("#hdnTextAnimationType").val(type);
     animationMode = type;
     if (activeSlide === 1) {
