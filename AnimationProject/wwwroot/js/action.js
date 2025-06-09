@@ -1427,8 +1427,8 @@ function loadCanvasFromJsonForDownload1(jsonData, condition = 'Common') {
     });
 }
 
- function loadCanvasFromJsonForDownload(jsonData, condition = 'Common') {
-   // await ensureFontsInitialized();
+function loadCanvasFromJsonForDownload(jsonData, condition = 'Common') {
+    // await ensureFontsInitialized();
     // Clear download canvas
     ctxElementForDownload.clearRect(0, 0, canvasForDownload.width, canvasForDownload.height);
     currentConditionForDownload = condition;
@@ -1494,7 +1494,9 @@ function loadCanvasFromJsonForDownload1(jsonData, condition = 'Common') {
             groupId: obj.groupId,
             rotation: obj.rotation,
             isBold: obj.isBold || false,
-            isItalic: obj.isItalic || false
+            isItalic: obj.isItalic || false,
+            type: obj.type || 'text',
+            zIndex: obj.zIndex || getNextZIndex()
         };
     });
 
@@ -1513,6 +1515,8 @@ function loadCanvasFromJsonForDownload1(jsonData, condition = 'Common') {
         obj.img.onload = () => drawCanvasForDownload(condition);
         obj.img.onerror = () => drawCanvasForDownload(condition);
         obj.img.src = o.src;
+        obj.type = o.type || 'image';
+        obj.zIndex = o.zIndex || getNextZIndex();
         return obj;
     });
 
@@ -1813,273 +1817,431 @@ function drawCanvasForDownloadOld(condition) {
         });
     }
 }
+// load all unresolved images before drawing
+async function preloadImages(items) {
+    const loads = items
+        .filter(item => item.type === 'image' && !item.img)
+        .map(item => {
+            return new Promise(resolve => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => { item.img = img; resolve(); };
+                img.onerror = () => { console.warn('Image load failed:', item.src || item.svgData); resolve(); };
+                img.src = item.svgData || item.src;
+            });
+        });
+    await Promise.all(loads);
+}
 
-function drawCanvasForDownload(condition) {
-    // 1) Refresh CTM: design→screen
-    resizeCanvas_d();           // must set ctx.resetTransform(); ctx.scale(dpr,dpr); ctx.scale(scaleX,scaleY);
+// reset transform to HiDPI + design scaling
+function setCanvasTransform(ctx, dpr, scaleX, scaleY) {
+    ctx.resetTransform();
+    ctx.scale(dpr, dpr);
+    ctx.scale(scaleX, scaleY);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+}
+
+function drawHandles(ctx, objects, getBounds, handleColor) {
+    objects.forEach(obj => {
+        if (!obj.selected) return;
+        const { xPx, yPx, wPx, hPx } = getBounds(obj);
+        // stroke around
+        ctx.strokeStyle = handleColor.stroke;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(xPx, yPx, wPx, hPx);
+        // resize handles
+        ctx.fillStyle = handleColor.fill;
+        const half = handleSize / 2;
+        getResizePoints(obj).forEach(pt => {
+            ctx.fillRect(pt.x * scaleX - half, pt.y * scaleY - half, handleSize, handleSize);
+        });
+    });
+}
+
+async function drawCanvasForDownload(condition) {
+    initializeLayers();
     const dpr = window.devicePixelRatio || 1;
+    const wPx = canvasForDownload.width;
+    const hPx = canvasForDownload.height;
+    const designW = wPx / dpr / scaleX;
+    const designH = hPx / dpr / scaleY;
 
-    // compute “design‐space” dimensions for clearing
-    const designW = canvasForDownload.width / dpr / scaleX;
-    const designH = canvasForDownload.height / dpr / scaleY;
-    // 2) Clear & draw background (in design units)
+    // ensure images are loaded
+    await preloadImages(allItems);
+
+    // 1) set transform & clear
+    setCanvasTransform(ctxElementForDownload, dpr, scaleX, scaleY);
     ctxElementForDownload.clearRect(0, 0, designW, designH);
-    const bgColor = document.getElementById('hdnBackgroundSpecificColorDownload').value.trim();
 
+    // 2) background color or image
+    const bgColor = document.getElementById('hdnBackgroundSpecificColorDownload').value.trim();
     if (bgColor) {
         ctxElementForDownload.fillStyle = bgColor;
         ctxElementForDownload.fillRect(0, 0, designW, designH);
-
     }
-    //if (canvas.bgImage) {
-    //    ctx.drawImage(canvas.bgImage, 0, 0, designW, designH);
-    //}
     if (canvas._bgImg) {
         ctxElementForDownload.drawImage(canvas._bgImg, 0, 0, designW, designH);
     }
-    // 3) Draw images (lazy‑load + design units)
-    images.forEach(imgObj => {
-        // design→screen position & size
-        const x = imgObj.x;
-        const y = imgObj.y;
-        const w = imgObj.width * (imgObj.scaleX || 1);
-        const h = imgObj.height * (imgObj.scaleY || 1);
-        const rotation = (imgObj.rotation || 0) * Math.PI / 180; // radians
 
-        // lazy-load if this imgObj has no <img> yet
-        if (!imgObj.img) {
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = () => {
-                imgObj.img = img;
-                drawCanvasForDownload(condition);
-            };
-            img.src = imgObj.svgData || imgObj.src;
-            return;
-        }
-
-
-        //// 3c) Draw with correct center‐pivot rotation:
+    // 3) draw items
+    allItems.forEach(item => {
         ctxElementForDownload.save();
-        ctxElementForDownload.globalAlpha = imgObj.opacity || 1;
+        ctxElementForDownload.globalAlpha = item.opacity || 1;
 
-        // 1) Move origin to the image’s center
-        const cx = x + w / 2;
-        const cy = y + h / 2;
-        ctxElementForDownload.translate(cx, cy);
-
-        // 2) Apply rotation about that center
-        ctxElementForDownload.rotate(rotation);
-
-        // 3) Apply scale (if any) in this rotated coordinate system
-        ctxElementForDownload.scale(imgObj.scaleX || 1, imgObj.scaleY || 1);
-        // 4) Draw the image so that its center is at (0,0):
-        //    since we translated to (cx, cy), drawing from (−w/2, −h/2) puts top‐left at the correct spot.
-        try {
-            ctxElementForDownload.drawImage(
-                imgObj.img,
-                - (imgObj.width / 2),    // −(original width)/2
-                - (imgObj.height / 2),   // −(original height)/2
-                imgObj.width,
-                imgObj.height
-            );
-        } catch (e) {
-            // silent if drawImage fails
-        }
-
-        ctxElementForDownload.restore();
-    });
-
-    // 4) Draw text (in design units)
-    if (['Common', 'ChangeStyle', 'applyAnimations'].includes(condition)) {
-        textObjects.forEach(obj => {
-            ctxElementForDownload.save();
-            ctxElementForDownload.globalAlpha = obj.opacity || 1;
-            // ctxElementForDownload.font = `${obj.fontSize}px ${obj.fontFamily}`;
-            let styleParts = [];
-            if (obj.isItalic) styleParts.push("italic");
-            if (obj.isBold) styleParts.push("bold");
-            styleParts.push(`${obj.fontSize}px`);
-            styleParts.push(obj.fontFamily);
-            ctxElementForDownload.font = styleParts.join(" ");
-
-            ctxElementForDownload.fillStyle = obj.textColor;
-            ctxElementForDownload.textBaseline = "top";
-
-            const x = obj.x;
-            const y = obj.y;
-           
-            const pad = padding;
-            const maxW = obj.boundingWidth - 2 * pad;
-            const rotation = (obj.rotation || 0) * Math.PI / 180;
-            //// split or wrap
-            //const lines = obj.text.includes('\n')
-            //    ? obj.text.split('\n')
-            //    : wrapText(ctxElementForDownload, obj.text, maxW);
-            const raw = obj.text;
-            let lines;
-            if (raw.includes('\n')) {
-                lines = raw.split('\n');
-            } else {
-                const fullW = ctxElementForDownload.measureText(raw).width;
-                const maxW = obj.boundingWidth * designW - 2 * padding;
-                if (!raw.includes(' ') && fullW <= maxW) {
-                    // single “word” that actually fits: keep it one line
-                    lines = [raw];
-                } else {
-                    // otherwise do your normal word-wrap
-                    lines = wrapText(ctxElementForDownload, raw, maxW);
-                }
+        if (item.type === 'image') {
+            const x = item.x, y = item.y;
+            const w = item.width, h = item.height;
+            const rot = (item.rotation || 0) * Math.PI / 180;
+            ctxElementForDownload.translate(x + w / 2, y + h / 2);
+            ctxElementForDownload.rotate(rot);
+            ctxElementForDownload.scale(item.scaleX || 1, item.scaleY || 1);
+            try {
+                ctxElementForDownload.drawImage(item.img, -w / 2, -h / 2, w, h);
+            } catch (e) {
+                console.warn('drawImage error', e);
             }
+        }
+        else if (item.type === 'text' && ['Common', 'ChangeStyle', 'applyAnimations'].includes(condition)) {
+            // font setup
+            const parts = [];
+            if (item.isItalic) parts.push('italic');
+            if (item.isBold) parts.push('bold');
+            parts.push(`${item.fontSize}px`, item.fontFamily);
+            ctxElementForDownload.font = parts.join(' ');
+            ctxElementForDownload.fillStyle = item.textColor;
+            ctxElementForDownload.textBaseline = 'top';
 
-            // line height in px
-            const fs = obj.fontSize;
-            const lineH = obj.lineSpacing * fs;
+            const raw = item.text;
+            let lines = raw.includes('\n') ? raw.split('\n') : wrapText(ctxElementForDownload, raw, item.boundingWidth - 2 * padding);
+            const fs = item.fontSize;
+            const lineH = item.lineSpacing * fs;
+            // compute box dims
+            const maxW = Math.max(...lines.map(l => ctxElementForDownload.measureText(l).width));
+            const boxW = Math.ceil(maxW + 2 * padding);
+            const boxH = Math.ceil(lines.length * lineH + 2 * padding);
+            item.boundingWidth = boxW;
+            item.boundingHeight = boxH;
 
-            // measure true ink-width
-            let maxLineW = 0;
-            lines.forEach(line => {
-                const m = ctxElementForDownload.measureText(line);
-                const glyphW = (m.actualBoundingBoxLeft != null && m.actualBoundingBoxRight != null)
-                    ? m.actualBoundingBoxLeft + m.actualBoundingBoxRight
-                    : m.width;
-                maxLineW = Math.max(maxLineW, glyphW);
-            });
-
-           
-
-            // compute overlap buffer *only* if spacing < 1
-            const overlap = Math.max(0, 1 - obj.lineSpacing);
-            const extraPerLine = overlap * fs;
-
-            // base box size in px (always include any overlap buffer)
-            const totalTextH = lines.length * lineH;
-            const baseWpx = maxLineW + 2 * pad + extraPerLine;
-            const baseHpx = totalTextH + 2 * pad + extraPerLine;
-
-            // extra margin *only* when lineSpacing < 1
-            const extraMarginFraction = 0.6;            // tweak this as % of font
-            const extraMargin = obj.lineSpacing < 1
-                ? fs * extraMarginFraction
-                : 0;
-
-            // final box size
-            const boxWpx = Math.ceil(baseWpx + extraMargin);
-            const boxHpx = Math.ceil(baseHpx + extraMargin);
-
-            // overwrite props
-            obj.boundingWidth = boxWpx;
-            obj.boundingHeight = boxHpx;
-
-            const cx = x + boxWpx / 2;
-            const cy = y + boxHpx / 2;
-
-            // 4f) Translate → rotate around center
+            const cx = item.x + boxW / 2;
+            const cy = item.y + boxH / 2;
+            const rot = (item.rotation || 0) * Math.PI / 180;
             ctxElementForDownload.translate(cx, cy);
-            ctxElementForDownload.rotate(rotation);
+            ctxElementForDownload.rotate(rot);
             ctxElementForDownload.translate(-cx, -cy);
 
-            // clipping & drawing
-            const maxLines = Math.floor((boxHpx - 2 * pad) / lineH);
-            const startY = y + pad;
-
-            lines.slice(0, maxLines).forEach((line, i) => {
+            // draw text lines
+            lines.slice(0, Math.floor((boxH - 2 * padding) / lineH)).forEach((line, i) => {
+                let offsetX = item.x + padding;
                 const lw = ctxElementForDownload.measureText(line).width;
-                let offsetX = x + pad;
-                if (obj.textAlign === 'center') {
-                    offsetX = x + (boxWpx - lw) / 2;
-                } else if (obj.textAlign === 'right') {
-                    offsetX = x + boxWpx - lw - pad;
-                }
-                ctxElementForDownload.fillText(line, offsetX, startY + i * lineH);
+                if (item.textAlign === 'center') offsetX = item.x + (boxW - lw) / 2;
+                if (item.textAlign === 'right') offsetX = item.x + boxW - lw - padding;
+                ctxElementForDownload.fillText(line, offsetX, item.y + padding + i * lineH);
             });
+        }
 
-            ctxElementForDownload.restore();
-        });
-    }
-
-
-
-    function toPixelSpace(fn) {
-        ctxElementForDownload.save();
-        ctxElementForDownload.resetTransform();    // drop design→screen CTM
-        ctxElementForDownload.scale(dpr, dpr);     // keep only HiDPI
-        fn();
         ctxElementForDownload.restore();
-    }
-
-    // 5a) Image selections
-    toPixelSpace(() => {
-        images.forEach(imgObj => {
-            if (!imgObj.selected) return;
-            // compute pixel coords from design coords
-            const xPx = imgObj.x * scaleX;
-            const yPx = imgObj.y * scaleY;
-            const wPx = imgObj.width * (imgObj.scaleX || 1) * scaleX;
-            const hPx = imgObj.height * (imgObj.scaleY || 1) * scaleY;
-
-            ctxElementForDownload.strokeStyle = "blue";
-            ctxElementForDownload.lineWidth = 2;
-            ctxElementForDownload.strokeRect(xPx, yPx, wPx, hPx);
-
-            ctxElementForDownload.fillStyle = "red";
-            const hs = getImageResizeHandles(imgObj)
-                .map(pt => ({ x: pt.x * scaleX, y: pt.y * scaleY }));
-            const halfH = handleSize / 2;
-            hs.forEach(pt => {
-                ctxElementForDownload.fillRect(pt.x - halfH, pt.y - halfH, handleSize, handleSize);
-            });
-        });
     });
 
-    // 5b) Text selections
-    // 5b) Text selections (with 8 handles)
-    toPixelSpace(() => {
-        textObjects.forEach(obj => {
-            if (!obj.selected) return;
-
-            const xPx = obj.x * scaleX;
-            const yPx = obj.y * scaleY;
-            const wPx = obj.boundingWidth * scaleX;
-            const hPx = obj.boundingHeight * scaleY;
-
-            // draw rounded‐rect around text
-            drawRoundedRect(
-                ctxElementForDownload,
-                xPx - padding * scaleX,
-                yPx - padding * scaleY,
-                wPx + 2 * padding * scaleX - RECT_WIDTH_ADJUST * scaleX,
-                hPx + 2 * padding * scaleY - RECT_HEIGHT_ADJUST * scaleY,
-                5 * scaleX
-            );
-
-            // all 8 handles: corners + midpoints
-            ctxElementForDownload.fillStyle = "#FF7F50";
-            const halfW = handleSize / 2;
-            const liftY = 2;   // tweak Y offset if needed
-
-            const handlePoints = [
-                // corners
-                { x: xPx, y: yPx },        // top-left
-                { x: xPx + wPx, y: yPx },        // top-right
-                { x: xPx, y: yPx + hPx },  // bottom-left
-                { x: xPx + wPx, y: yPx + hPx },  // bottom-right
-                // midpoints
-                // { x: xPx + wPx / 2, y: yPx },        // top-middle
-                //{ x: xPx + wPx / 2, y: yPx + hPx },  // bottom-middle
-                { x: xPx, y: yPx + hPx / 2 }, // left-middle
-                { x: xPx + wPx, y: yPx + hPx / 2 }  // right-middle
-            ];
-
-            handlePoints.forEach(pt => {
-                ctxElementForDownload.fillRect(pt.x - halfW, pt.y - halfW - liftY, handleSize, handleSize);
-            });
-        });
-    });
-
-    // 6) reset alpha
+    // 4) draw selection handles in pixel-space
     ctxElementForDownload.globalAlpha = 1;
+    ctxElementForDownload.save();
+    ctxElementForDownload.resetTransform();
+    ctxElementForDownload.scale(dpr, dpr);
+
+    drawHandles(ctxElementForDownload, images,
+        img => ({
+            xPx: img.x * scaleX, yPx: img.y * scaleY,
+            wPx: img.width * (img.scaleX || 1) * scaleX,
+            hPx: img.height * (img.scaleY || 1) * scaleX
+        }),
+        { stroke: 'blue', fill: 'red' }
+    );
+
+    drawHandles(ctxElementForDownload, textObjects,
+        txt => ({
+            xPx: txt.x * scaleX, yPx: txt.y * scaleY,
+            wPx: txt.boundingWidth * scaleX, hPx: txt.boundingHeight * scaleY
+        }),
+        { stroke: '#00f', fill: '#FF7F50' }
+    );
+
+    ctxElementForDownload.restore();
 }
+
+
+//function drawCanvasForDownload(condition) {
+//    initializeLayers();
+//    // 1) Refresh CTM: design→screen
+//    resizeCanvas_d();           // must set ctx.resetTransform(); ctx.scale(dpr,dpr); ctx.scale(scaleX,scaleY);
+//    const dpr = window.devicePixelRatio || 1;
+
+//    // compute “design‐space” dimensions for clearing
+//    const designW = canvasForDownload.width / dpr / scaleX;
+//    const designH = canvasForDownload.height / dpr / scaleY;
+//    // 2) Clear & draw background (in design units)
+//    ctxElementForDownload.clearRect(0, 0, designW, designH);
+//    const bgColor = document.getElementById('hdnBackgroundSpecificColorDownload').value.trim();
+
+//    if (bgColor) {
+//        ctxElementForDownload.fillStyle = bgColor;
+//        ctxElementForDownload.fillRect(0, 0, designW, designH);
+
+//    }
+//    //if (canvas.bgImage) {
+//    //    ctx.drawImage(canvas.bgImage, 0, 0, designW, designH);
+//    //}
+//    if (canvas._bgImg) {
+//        ctxElementForDownload.drawImage(canvas._bgImg, 0, 0, designW, designH);
+//    }
+
+//    allItems.forEach(item => {
+
+//        if (item.type === 'image') {
+//            // design→screen position & size
+//            const x = item.x;
+//            const y = item.y;
+//            const w = item.width * (item.scaleX || 1);
+//            const h = item.height * (item.scaleY || 1);
+//            const rotation = (item.rotation || 0) * Math.PI / 180; // radians
+
+//            // lazy-load if this imgObj has no <img> yet
+//            if (!item.img) {
+//                const img = new Image();
+//                img.crossOrigin = 'anonymous';
+//                img.onload = () => {
+//                    item.img = img;
+//                    drawCanvasForDownload(condition);
+//                };
+//                img.src = item.svgData || item.src;
+//                return;
+//            }
+
+
+//            //// 3c) Draw with correct center‐pivot rotation:
+//            ctxElementForDownload.save();
+//            ctxElementForDownload.globalAlpha = item.opacity || 1;
+
+//            // 1) Move origin to the image’s center
+//            const cx = x + w / 2;
+//            const cy = y + h / 2;
+//            ctxElementForDownload.translate(cx, cy);
+
+//            // 2) Apply rotation about that center
+//            ctxElementForDownload.rotate(rotation);
+
+//            // 3) Apply scale (if any) in this rotated coordinate system
+//            ctxElementForDownload.scale(item.scaleX || 1, item.scaleY || 1);
+//            // 4) Draw the image so that its center is at (0,0):
+//            //    since we translated to (cx, cy), drawing from (−w/2, −h/2) puts top‐left at the correct spot.
+//            try {
+//                ctxElementForDownload.drawImage(
+//                    item.img,
+//                    - (item.width / 2),    // −(original width)/2
+//                    - (item.height / 2),   // −(original height)/2
+//                    item.width,
+//                    item.height
+//                );
+//            } catch (e) {
+//                // silent if drawImage fails
+//            }
+
+//            ctxElementForDownload.restore();
+//        }
+//        else if (item.type === 'text' && ['Common', 'ChangeStyle', 'applyAnimations'].includes(condition)) {
+//            ctxElementForDownload.save();
+//            ctxElementForDownload.globalAlpha = item.opacity || 1;
+//            // ctxElementForDownload.font = `${obj.fontSize}px ${obj.fontFamily}`;
+//            let styleParts = [];
+//            if (item.isItalic) styleParts.push("italic");
+//            if (item.isBold) styleParts.push("bold");
+//            styleParts.push(`${item.fontSize}px`);
+//            styleParts.push(item.fontFamily);
+//            ctxElementForDownload.font = styleParts.join(" ");
+
+//            ctxElementForDownload.fillStyle = item.textColor;
+//            ctxElementForDownload.textBaseline = "top";
+
+//            const x = item.x;
+//            const y = item.y;
+
+//            const pad = padding;
+//            const maxW = item.boundingWidth - 2 * pad;
+//            const rotation = (item.rotation || 0) * Math.PI / 180;
+//            //// split or wrap
+//            //const lines = obj.text.includes('\n')
+//            //    ? obj.text.split('\n')
+//            //    : wrapText(ctxElementForDownload, obj.text, maxW);
+//            const raw = item.text;
+//            let lines;
+//            if (raw.includes('\n')) {
+//                lines = raw.split('\n');
+//            } else {
+//                const fullW = ctxElementForDownload.measureText(raw).width;
+//                const maxW = item.boundingWidth * designW - 2 * padding;
+//                if (!raw.includes(' ') && fullW <= maxW) {
+//                    // single “word” that actually fits: keep it one line
+//                    lines = [raw];
+//                } else {
+//                    // otherwise do your normal word-wrap
+//                    lines = wrapText(ctxElementForDownload, raw, maxW);
+//                }
+//            }
+
+//            // line height in px
+//            const fs = item.fontSize;
+//            const lineH = item.lineSpacing * fs;
+
+//            // measure true ink-width
+//            let maxLineW = 0;
+//            lines.forEach(line => {
+//                const m = ctxElementForDownload.measureText(line);
+//                const glyphW = (m.actualBoundingBoxLeft != null && m.actualBoundingBoxRight != null)
+//                    ? m.actualBoundingBoxLeft + m.actualBoundingBoxRight
+//                    : m.width;
+//                maxLineW = Math.max(maxLineW, glyphW);
+//            });
+
+
+
+//            // compute overlap buffer *only* if spacing < 1
+//            const overlap = Math.max(0, 1 - item.lineSpacing);
+//            const extraPerLine = overlap * fs;
+
+//            // base box size in px (always include any overlap buffer)
+//            const totalTextH = lines.length * lineH;
+//            const baseWpx = maxLineW + 2 * pad + extraPerLine;
+//            const baseHpx = totalTextH + 2 * pad + extraPerLine;
+
+//            // extra margin *only* when lineSpacing < 1
+//            const extraMarginFraction = 0.6;            // tweak this as % of font
+//            const extraMargin = item.lineSpacing < 1
+//                ? fs * extraMarginFraction
+//                : 0;
+
+//            // final box size
+//            const boxWpx = Math.ceil(baseWpx + extraMargin);
+//            const boxHpx = Math.ceil(baseHpx + extraMargin);
+
+//            // overwrite props
+//            item.boundingWidth = boxWpx;
+//            item.boundingHeight = boxHpx;
+
+//            const cx = x + boxWpx / 2;
+//            const cy = y + boxHpx / 2;
+
+//            // 4f) Translate → rotate around center
+//            ctxElementForDownload.translate(cx, cy);
+//            ctxElementForDownload.rotate(rotation);
+//            ctxElementForDownload.translate(-cx, -cy);
+
+//            // clipping & drawing
+//            const maxLines = Math.floor((boxHpx - 2 * pad) / lineH);
+//            const startY = y + pad;
+
+//            lines.slice(0, maxLines).forEach((line, i) => {
+//                const lw = ctxElementForDownload.measureText(line).width;
+//                let offsetX = x + pad;
+//                if (item.textAlign === 'center') {
+//                    offsetX = x + (boxWpx - lw) / 2;
+//                } else if (item.textAlign === 'right') {
+//                    offsetX = x + boxWpx - lw - pad;
+//                }
+//                ctxElementForDownload.fillText(line, offsetX, startY + i * lineH);
+//            });
+
+//            ctxElementForDownload.restore();
+//        }
+//    });
+
+
+
+
+
+
+   
+
+
+//    function toPixelSpace(fn) {
+//        ctxElementForDownload.save();
+//        ctxElementForDownload.resetTransform();    // drop design→screen CTM
+//        ctxElementForDownload.scale(dpr, dpr);     // keep only HiDPI
+//        fn();
+//        ctxElementForDownload.restore();
+//    }
+
+//    // 5a) Image selections
+//    toPixelSpace(() => {
+//        images.forEach(imgObj => {
+//            if (!imgObj.selected) return;
+//            // compute pixel coords from design coords
+//            const xPx = imgObj.x * scaleX;
+//            const yPx = imgObj.y * scaleY;
+//            const wPx = imgObj.width * (imgObj.scaleX || 1) * scaleX;
+//            const hPx = imgObj.height * (imgObj.scaleY || 1) * scaleY;
+
+//            ctxElementForDownload.strokeStyle = "blue";
+//            ctxElementForDownload.lineWidth = 2;
+//            ctxElementForDownload.strokeRect(xPx, yPx, wPx, hPx);
+
+//            ctxElementForDownload.fillStyle = "red";
+//            const hs = getImageResizeHandles(imgObj)
+//                .map(pt => ({ x: pt.x * scaleX, y: pt.y * scaleY }));
+//            const halfH = handleSize / 2;
+//            hs.forEach(pt => {
+//                ctxElementForDownload.fillRect(pt.x - halfH, pt.y - halfH, handleSize, handleSize);
+//            });
+//        });
+//    });
+
+//    // 5b) Text selections
+//    // 5b) Text selections (with 8 handles)
+//    toPixelSpace(() => {
+//        textObjects.forEach(obj => {
+//            if (!obj.selected) return;
+
+//            const xPx = obj.x * scaleX;
+//            const yPx = obj.y * scaleY;
+//            const wPx = obj.boundingWidth * scaleX;
+//            const hPx = obj.boundingHeight * scaleY;
+
+//            // draw rounded‐rect around text
+//            drawRoundedRect(
+//                ctxElementForDownload,
+//                xPx - padding * scaleX,
+//                yPx - padding * scaleY,
+//                wPx + 2 * padding * scaleX - RECT_WIDTH_ADJUST * scaleX,
+//                hPx + 2 * padding * scaleY - RECT_HEIGHT_ADJUST * scaleY,
+//                5 * scaleX
+//            );
+
+//            // all 8 handles: corners + midpoints
+//            ctxElementForDownload.fillStyle = "#FF7F50";
+//            const halfW = handleSize / 2;
+//            const liftY = 2;   // tweak Y offset if needed
+
+//            const handlePoints = [
+//                // corners
+//                { x: xPx, y: yPx },        // top-left
+//                { x: xPx + wPx, y: yPx },        // top-right
+//                { x: xPx, y: yPx + hPx },  // bottom-left
+//                { x: xPx + wPx, y: yPx + hPx },  // bottom-right
+//                // midpoints
+//                // { x: xPx + wPx / 2, y: yPx },        // top-middle
+//                //{ x: xPx + wPx / 2, y: yPx + hPx },  // bottom-middle
+//                { x: xPx, y: yPx + hPx / 2 }, // left-middle
+//                { x: xPx + wPx, y: yPx + hPx / 2 }  // right-middle
+//            ];
+
+//            handlePoints.forEach(pt => {
+//                ctxElementForDownload.fillRect(pt.x - halfW, pt.y - halfW - liftY, handleSize, handleSize);
+//            });
+//        });
+//    });
+
+//    // 6) reset alpha
+//    ctxElementForDownload.globalAlpha = 1;
+//}
 
 function convertToPixels(data, canvasWidth, canvasHeight) {
     // Convert text positions and bounding box
