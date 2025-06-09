@@ -146,6 +146,7 @@ p.collapsed{    font-size: var(--font-size14);}
         float: left;
         line-height: 22px;
         font-weight: 500;
+        cursor: pointer;
 }
  
  .clear {
@@ -967,16 +968,25 @@ svg:hover {
 }
 
 .create-btn {
-    background-color: black;
+    background-color: #000;
     color: white;
-    border: none;
-    padding: 9px 40px;
+    border: 2px solid transparent;
+    padding: 6px 32px;
     border-radius: 3px;
 }
-
-    .create-btn:hover {
-        background-color: #333;
-    }
+.cancel-btn {
+    background-color: #fff;
+    color: #000;
+    border: 2px solid #ccc;
+    padding: 6px 32px;
+    border-radius: 3px;
+}
+.create-btn:hover {
+    background-color: #333;
+}
+.cancel-btn:hover {
+    background-color: #d1d1d1;
+}
 
 .vertical_option {
     margin-left: 11px;
@@ -1492,4 +1502,25 @@ body {
 }
 .svg_icons{
     width: 40px !important;
+}
+.tran_popup {
+    width: 260px;
+    min-height: 685px;
+    height: 93vh;
+    background: #fff;
+    z-index: 9;
+    padding: 20px;
+    position: absolute;
+    left: 0px;
+    top: 4px;
+    border-right: none;
+    overflow: hidden;
+}
+.tran_button {
+    width: 45%;
+    background-color: transparent;
+    border-radius: 3px;
+    border: 2px solid #ccc;
+    font-size: var(--font-size14);
+    font-weight: 600;
 }

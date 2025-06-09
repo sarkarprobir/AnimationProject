@@ -1311,7 +1311,7 @@ function moveCaretToEnd(el) {
         <div class="tab active" onclick="switchTab(this, 'shapes')">Shapes</div>
         <div class="tab" onclick="switchTab(this, 'icons')">Icons</div>
         <div class="tab" onclick="switchTab(this, 'patterns')">Patterns</div>
-        <div class="tab" onclick="switchTab(this, 'photos')">Photos</div>
+        <div class="tab" onclick="switchTab(this, 'photos')">Images</div>
         <div class="tab" onclick="switchTab(this, 'my-images')">My Images</div>
     </div>
 
@@ -1376,4 +1376,25 @@ function moveCaretToEnd(el) {
         </div>
     </div>
         
+</div>
+
+<div id="tranPopup" class="tran_popup" style="display: none;">
+    <div class="d-flex justify-content-between mb-3">
+        <p class="gallery_head m-0">Transition</p>
+        <!-- <div class="tab cross">x</div> -->
+        <button class="btn-cross b-radius-6 tab cross" id="close_button" type="button" onclick="hideTran()">
+            ✕
+        </button>
+    </div>
+    <div class="d-flex gap-3 flex-wrap">
+        <button class="tran_button">Side <br /> Left</button>
+        <button class="tran_button">Side <br /> Right</button>
+        <button class="tran_button">Side <br /> Up</button>
+        <button class="tran_button">Side <br /> Down</button>
+        <button class="tran_button">Fade <br /> In</button>
+        <button class="tran_button">Fade <br /> Out</button>
+        <button class="tran_button">Dissolve <br /> Effect</button>
+        <button class="tran_button">Zoom <br /> In</button>
+        <button class="tran_button">Zoom <br /> Out</button>
+    </div>
 </div>
