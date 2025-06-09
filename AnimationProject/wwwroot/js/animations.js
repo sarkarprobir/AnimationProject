@@ -5709,3 +5709,28 @@ sendBackOption.addEventListener('click', () => {
     drawCanvas("Common");
     contextMenu.style.display = 'none';
 });
+
+// function for transition popup
+function tranTogglePopup() {
+    const popup = document.getElementById('tranPopup');
+    const otherPopups = [
+        document.getElementById('opengl_popup'),
+        document.getElementById('fontstyle_popup'),
+        document.getElementById('background_popup'),
+        document.getElementById('tranPopup')
+    ];
+
+    // Hide all other popups
+    otherPopups.forEach(p => p.style.display = 'none');
+
+    // Toggle the target popup
+    popup.style.display = 'block';
+}
+
+function hideTran() {
+    const popup = document.getElementById("tranPopup");
+    if (popup) {
+        popup.style.display = "none";
+    }
+    // document.getElementById("modeButton").innerText = "Graphic Mode";
+}
