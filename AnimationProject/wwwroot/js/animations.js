@@ -382,38 +382,42 @@ document.getElementById("deleteOption").addEventListener("click", function (e) {
     }
 });
 window.addEventListener("keydown", function (e) {
+    const active = document.activeElement;
+    // if focus is in any input/textarea or a contenteditable element, skip our canvas‐delete logic
+    if (
+        active.tagName === "INPUT" ||
+        active.tagName === "TEXTAREA" ||
+        active.isContentEditable
+    ) {
+        return; // allow native delete/backspace
+    }
+
     const isDelete =
-        e.key === "Delete" ||            // Windows “Delete”
-        e.key === "Backspace";           // Mac “Backspace”
+        e.key === "Delete" ||      // Windows “Delete”
+        e.key === "Backspace";     // Mac “Backspace”
 
     if (!isDelete) return;
-
-    // Prevent the browser’s default back-navigation on Backspace
-    e.preventDefault();
+    e.preventDefault();         // stop browser navigating back on Backspace
 
     // Remove *all* selected text objects
-    const anyTextSelected = textObjects.some(o => o.selected);
-    if (anyTextSelected) {
+    if (textObjects.some(o => o.selected)) {
         textObjects = textObjects.filter(o => !o.selected);
     }
-
     // Remove *all* selected images
-    const anyImageSelected = images.some(i => i.selected);
-    if (anyImageSelected) {
+    if (images.some(i => i.selected)) {
         images = images.filter(i => !i.selected);
     }
+    // (…other types…)
 
-    // (If you have shapes or other types, do the same there...)
-    // shapes = shapes.filter(s => !s.selected);
-
-    // Clear your context‐menu pointers and hide menu
+    // Clear context‐menu state
     selectedForContextMenu = null;
     selectedType = null;
     contextMenu.style.display = "none";
 
-    // Redraw the canvas without the deleted items
+    // Redraw canvas
     drawCanvas("Common");
 });
+
 
 
 ////END   This is for delete text///////////////////
@@ -3049,8 +3053,40 @@ canvas.addEventListener("mousedown", e => {
         return;
     }
     if (primary && selectedCount === 1) {
-        // ...existing text vs image resize setup...
-        // (unchanged)
+        if (primary.type === "text") {
+            // Begin text resize: store starting width/height/font
+            isResizingText = true;
+            activeTextHandle = primary.handle;
+            activeText = primary.obj;
+            textResizeStart = {
+                mouseX: e.clientX,
+                mouseY: e.clientY,
+                origX: activeText.x,
+                origY: activeText.y,
+                origW: activeText.boundingWidth,
+                origH: activeText.boundingHeight,
+                origFont: activeText.fontSize
+            };
+            // STORE “start‐of‐drag” dims for text:
+            activeText._resizeStartW = activeText.boundingWidth;
+            activeText._resizeStartH = activeText.boundingHeight;
+            activeText._resizeStartFont = activeText.fontSize;
+        } else {
+            // Begin image resize: store starting on-canvas width/height & scale
+            isResizingImage = true;
+            activeImageHandle = primary.handle;
+            activeImage = primary.obj;
+
+            const startSX = (typeof activeImage.scaleX === 'number')
+                ? activeImage.scaleX : 1;
+            const startSY = (typeof activeImage.scaleY === 'number')
+                ? activeImage.scaleY : 1;
+
+            activeImage._resizeStartSX = startSX;
+            activeImage._resizeStartSY = startSY;
+            activeImage._resizeStartW = activeImage.width * startSX;
+            activeImage._resizeStartH = activeImage.height * startSY;
+        }
         e.preventDefault();
         drawCanvas("Common");
         return;
@@ -3082,9 +3118,32 @@ canvas.addEventListener("mousedown", e => {
         selectedForContextMenu = txtHit;
         selectedType = "text";
         activeText = txtHit;
-        // ...rotation slider & handles setup...
-        isDraggingText = true;
-        dragOffsetText = { x: mouseX - txtHit.x, y: mouseY - txtHit.y };
+        const angle = txtHit.rotation || 0;
+        rotationSlider.value = angle;
+        document.getElementById("rotationValue").textContent = angle + "°";
+        rotationBadge.textContent = angle;
+
+        handle = getTextHandleUnderMouse(mouseX, mouseY, txtHit);
+        if (handle && !handle.includes("middle")) {
+            isResizingText = true;
+            activeTextHandle = handle;
+            textResizeStart = {
+                mouseX: e.clientX,
+                mouseY: e.clientY,
+                origX: txtHit.x,
+                origY: txtHit.y,
+                origW: txtHit.boundingWidth,
+                origH: txtHit.boundingHeight,
+                origFont: txtHit.fontSize
+            };
+            // Also store “start” values in case user rotates then drags again:
+            txtHit._resizeStartW = txtHit.boundingWidth;
+            txtHit._resizeStartH = txtHit.boundingHeight;
+            txtHit._resizeStartFont = txtHit.fontSize;
+        } else {
+            isDraggingText = true;
+            dragOffsetText = { x: mouseX - txtHit.x, y: mouseY - txtHit.y };
+        }
 
         e.preventDefault();
         drawCanvas("Common");
@@ -3098,9 +3157,15 @@ canvas.addEventListener("mousedown", e => {
         selectedForContextMenu = imgHit;
         selectedType = "image";
         activeImage = imgHit;
-        // ...rotation slider & handles setup...
+        const angle = imgHit.rotation || 0;
+        rotationSlider.value = angle;
+        document.getElementById("rotationValue").textContent = angle + "°";
+        rotationBadge.textContent = angle;
+
         isDraggingImage = true;
         dragOffsetImage = { x: mouseX - imgHit.x, y: mouseY - imgHit.y };
+        enableFillColorDiv();
+        enableStrockColorDiv();
 
         e.preventDefault();
         drawCanvas("Common");
