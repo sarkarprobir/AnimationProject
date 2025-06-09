@@ -111,7 +111,7 @@ p.collapsed{    font-size: var(--font-size14);}
     color:#fff
 }
     .Graphic-More:hover {
-        background: #290093;
+        background: #6214fe;
         color: #fff;
     }
 .panel-left h2{ font-size: var(--font-size18);  font-weight: bold;font-family: "Nunito Sans", serif; padding: 0 0 0 24px;}
@@ -218,7 +218,7 @@ ul.right-listone{padding:0px; margin:0px; width: 100%;
         border: none;
     }
         .nav-right ul li .btn:hover {
-            background-color: #290093;
+            background-color: #6214fe;
         }
     .nav-right ul li.play-btn .btn {
         color: #fff;
@@ -231,14 +231,14 @@ ul.right-listone{padding:0px; margin:0px; width: 100%;
         border: 1px solid #fff;
     }
         .nav-right ul li.play-btn .btn:hover {
-            background-color: #290093;
+            background-color: #6214fe;
         }
 
     .nav-right ul li button.login {
         color: #fff;
         padding: 13.2px 20px;
         float: left;
-        background: #290093;
+        background: #6214fe;
         font-size: var(--font-size14);
         border: none;
     }
@@ -258,7 +258,7 @@ ul.right-listone{padding:0px; margin:0px; width: 100%;
         padding: 0px !important;
 }
     .nav-middle .D-icon-save:hover {
-        background: #290093;
+        background: #6214fe;
         border-radius: 3px;
     }
 	/*tab css =========================*/
@@ -366,11 +366,11 @@ ul.top-left-icon li {
     border-radius: 3px;
 }
     ul.top-left-icon li:hover {
-        background-color: #290093;
+        background-color: #6214fe;
         /*        padding: 2px 7px;*/
     }
 .active_nav_button {
-    background-color: #290093 !important;
+    background-color: #6214fe !important;
 }
     .top-left-icon li a{
 /*    padding:5px 10px 6px 10px;*/
@@ -389,8 +389,8 @@ ul.top-left-icon li {
  ::-webkit-scrollbar {width:6px; :: -webkit-scrollbar background-color:transparent;border-radius: 10px;  background: transparent;}
  ::-webkit-scrollbar-thumb {background-color: #ddd;border-radius: 10px;}
     ::-webkit-scrollbar-thumb:hover {
-        background-color: #290093;
-        border: 1px solid #290093;
+        background-color: #6214fe;
+        border: 1px solid #6214fe;
     }
  ::-webkit-scrollbar-thumb:active {background-color: #111;border: 1px solid #111;}
  ::-webkit-scrollbar:horizontal {height: 10px !important;}
@@ -552,7 +552,7 @@ ul.TextStyle li {list-style-type:none; float:left; width:100%; margin-bottom:10p
  ul.TextStyle li a{color:#000; padding:0px 14px; float: left; text-decoration:none; cursor: pointer;}
     ul.TextStyle li a:hover {
         color: #fff;
-        background: #290093;
+        background: #6214fe;
         border-radius: 3px;
     }
  
@@ -614,7 +614,7 @@ ul.TextStyle li a.Roboto{ font-family: "Roboto", sans-serif; font-weight: bold;}
   width: 0;
 }
     .checkbox.style-c input:checked ~ .checkbox__checkmark {
-        background-color: #290093;
+        background-color: #6214fe;
     }
 .checkbox.style-c input:checked ~ .checkbox__checkmark:after {
   opacity: 1;
@@ -623,7 +623,7 @@ ul.TextStyle li a.Roboto{ font-family: "Roboto", sans-serif; font-weight: bold;}
   background-color: #eee;
 }
     .checkbox.style-c:hover input:checked ~ .checkbox__checkmark {
-        background-color: #290093;
+        background-color: #6214fe;
     }
 .checkbox.style-c .checkbox__checkmark {
   position: absolute;
@@ -700,7 +700,7 @@ svg:hover {
 
 
 .H-link.active, .V-link.active {
-    background-color: #290093;
+    background-color: #6214fe;
     color: #fff;
 }
  
@@ -862,7 +862,7 @@ svg:hover {
 }
 .btn-save {
     color: #fff;
-    background-color: #290093;
+    background-color: #6214fe;
     border-color: transparent;
 }
 .min-w-80px {
@@ -997,7 +997,7 @@ svg:hover {
 
 .profile {
     color: #fff !important;
-    background-color: #290093 !important;
+    background-color: #6214fe !important;
     width: 46.5px;
     height: 44.2px;
 }
@@ -1017,7 +1017,7 @@ svg:hover {
     --font-mont: "Montserrat", sans-serif;
     --font-nunito: "Nunito Sans", sans-serif;
     --color-white: #fff;
-    --color-blue: #290093;
+    --color-blue: #6214fe;
     --color-muted-grey: #777b7c;
     --color-border-grey: #00000036;
 }
@@ -1326,7 +1326,7 @@ body {
     height: 40px;
 }
 .active_border {
-    border: 2px solid #290093 !important; /* Example blue border */
+    border: 2px solid #6214fe !important; /* Example blue border */
     box-shadow: rgba(136, 165, 191, 0.48) 6px 2px 16px 0px, rgba(255, 255, 255, 0.8) -6px -2px 16px 0px;
 }
 .spacing_title {
@@ -1399,7 +1399,7 @@ body {
     border-radius: 3px;
 }
     .text_decoration:active, .text_decoration:focus {
-        color: #290093;
+        color: #6214fe;
         background-color: #4e43e136;
     }
 .slider_label{
@@ -1524,3 +1524,6 @@ body {
     font-size: var(--font-size14);
     font-weight: 600;
 }
+    .tran_button:hover {
+        border: 2px solid #6214fe;
+    }
