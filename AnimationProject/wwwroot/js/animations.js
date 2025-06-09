@@ -382,38 +382,42 @@ document.getElementById("deleteOption").addEventListener("click", function (e) {
     }
 });
 window.addEventListener("keydown", function (e) {
+    const active = document.activeElement;
+    // if focus is in any input/textarea or a contenteditable element, skip our canvas‐delete logic
+    if (
+        active.tagName === "INPUT" ||
+        active.tagName === "TEXTAREA" ||
+        active.isContentEditable
+    ) {
+        return; // allow native delete/backspace
+    }
+
     const isDelete =
-        e.key === "Delete" ||            // Windows “Delete”
-        e.key === "Backspace";           // Mac “Backspace”
+        e.key === "Delete" ||      // Windows “Delete”
+        e.key === "Backspace";     // Mac “Backspace”
 
     if (!isDelete) return;
-
-    // Prevent the browser’s default back-navigation on Backspace
-    e.preventDefault();
+    e.preventDefault();         // stop browser navigating back on Backspace
 
     // Remove *all* selected text objects
-    const anyTextSelected = textObjects.some(o => o.selected);
-    if (anyTextSelected) {
+    if (textObjects.some(o => o.selected)) {
         textObjects = textObjects.filter(o => !o.selected);
     }
-
     // Remove *all* selected images
-    const anyImageSelected = images.some(i => i.selected);
-    if (anyImageSelected) {
+    if (images.some(i => i.selected)) {
         images = images.filter(i => !i.selected);
     }
+    // (…other types…)
 
-    // (If you have shapes or other types, do the same there...)
-    // shapes = shapes.filter(s => !s.selected);
-
-    // Clear your context‐menu pointers and hide menu
+    // Clear context‐menu state
     selectedForContextMenu = null;
     selectedType = null;
     contextMenu.style.display = "none";
 
-    // Redraw the canvas without the deleted items
+    // Redraw canvas
     drawCanvas("Common");
 });
+
 
 
 ////END   This is for delete text///////////////////
