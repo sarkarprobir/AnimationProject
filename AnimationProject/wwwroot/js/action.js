@@ -14,7 +14,7 @@ const stream = canvasElement.captureStream(7); // Capture at 30 fps
 const recorder = new MediaRecorder(stream);
 const chunks = [];
 let publishDownloadcondition = '';
-
+const transitionState = { x: 0, y: 0, scale: 1, opacity: 1 };
 const options = {
     mimeType: 'video/webm; codecs=vp9',
     videoBitsPerSecond: 10_000_000  // 10 Mbps; adjust as needed
@@ -1033,7 +1033,7 @@ function loadNextJson() {
         console.log("All JSON objects loaded.");
     }
 }
-function loadNextJsonForDownload() {
+async function loadNextJsonForDownloadOLd() {
     if (currentIndexForDownload < jsonArray.length) {
         const state = jsonArray[currentIndexForDownload];
 
@@ -1055,6 +1055,33 @@ function loadNextJsonForDownload() {
         const slideExecutionTime = inTime + stayTime+3 + outTime;//stayTime +
 
         setTimeout(loadNextJsonForDownload, slideExecutionTime*1000 || 7000);
+    } else {
+        console.log("All JSON objects loaded.");
+        recorderForDownload.stop(); //HideLoader();
+    }
+}
+async function loadNextJsonForDownload() {
+    if (currentIndexForDownload < jsonArray.length) {
+        const state = jsonArray[currentIndexForDownload];
+
+        // Draw the current state into the fixed canvas.
+        loadCanvasFromJsonForDownload(state, 'Common');
+        //loadCanvasFromJson(state, 'Common');
+        console.log("Canvas State Loaded:", state);
+
+        // Now trigger the animation using the state's direction and effect.
+        // You can modify applyAnimations to also use the effect if needed.
+        await applyAnimationsforDownload(state.effect, state.direction, 'applyAnimations', state);
+
+        currentIndexForDownload++; // Move to the next JSON object
+
+        // Load next JSON after a delay (adjust the delay as needed) + parseFloat(selectedOutSpeed) || 4
+        const inTime = parseFloat(selectedInSpeed) || 4;
+        const stayTime = parseFloat(selectedStaySpeed) || 3;
+        const outTime = parseFloat(selectedStaySpeed) || 4;
+        const slideExecutionTime = inTime + stayTime + 5 + outTime;//stayTime +
+
+        setTimeout(loadNextJsonForDownload, slideExecutionTime * 1000 || 7000);
     } else {
         console.log("All JSON objects loaded.");
         recorderForDownload.stop(); //HideLoader();
@@ -1089,9 +1116,10 @@ recorder.onstop = () => {
     // Call the upload function with the blob and folder ID (if any)
     uploadVideo(blob, existingFolderId,  currentIndex);
 };
-function applyAnimationsforDownload(animationType, direction, conditionValue, state) {
+async function applyAnimationsforDownload(animationType, direction, conditionValue, state) {
     drawCanvasForDownload(conditionValue);
     animateTextForDownload(animationType, direction, conditionValue, parseInt($("#hdnlLoopControl").val()) || 1, state);
+   
 }
 recorderForDownload.ondataavailable = (e) => chunksForDownload.push(e.data);
 // Example usage inside your MediaRecorder's onstop callback
@@ -1427,6 +1455,151 @@ function loadCanvasFromJsonForDownload1(jsonData, condition = 'Common') {
     });
 }
 
+
+
+function animateContainerAsync(type) {
+    type = 'zoomIn';
+    return new Promise(resolve => {
+        const dur = 3,
+            props = {};
+
+        switch (type) {
+            case 'slideLeft': props.x = -canvasForDownload.width; break;
+            case 'slideRight': props.x = canvasForDownload.width; break;
+            case 'slideUp': props.y = -canvasForDownload.height; break;
+            case 'slideDown': props.y = canvasForDownload.height; break;
+            case 'fadeIn': transitionState.opacity = 0; props.opacity = 1; break;
+            case 'fadeOut': props.opacity = 0; break;
+            case 'zoomIn': transitionState.scale = 0.8; props.scale = 1.2; break;
+            case 'zoomOut': transitionState.scale = 1.2; props.scale = 0.8; break;
+            case 'dissolve': props.opacity = 0; break;
+            default: break;
+        }
+
+        gsap.to(transitionState, {
+            ...props,
+            duration: dur,
+            ease: 'power1.inOut',
+            onUpdate: () => drawCanvasForDownload(currentCondition),
+            onComplete: resolve
+        });
+    });
+}
+function animateCanvasImageElement(imgEl, type, duration = 3) {
+    // create temp item from imgEl
+    const temp = {
+        type: 'image',
+        img: imgEl,
+        width: imgEl.naturalWidth,
+        height: imgEl.naturalHeight,
+        x: 0,
+        y: 0,
+        scaleX: 1,
+        scaleY: 1,
+        opacity: 1
+    };
+    // draw initial position
+    images.push(temp);
+    return animateCanvasImage(temp, type, duration)
+        .then(() => {
+            images.pop();  // cleanup
+        });
+}
+function animateCanvasImage(obj, type, duration = 3) {
+    return new Promise(resolve => {
+        // calculate display dimensions
+        const dispW = obj.width * (obj.scaleX || 1);
+        const dispH = obj.height * (obj.scaleY || 1);
+        let toVars = { duration, ease: 'power1.inOut' };
+
+        switch (type) {
+            case 'slideLeft':
+                toVars.x = -dispW - 5;
+                break;
+            case 'slideRight':
+                toVars.x = canvasForDownload.width + 5;
+                break;
+            case 'slideUp':
+                toVars.y = -dispH - 5;
+                break;
+            case 'slideDown':
+                toVars.y = canvasForDownload.height + 5;
+                break;
+            case 'fadeIn':
+                obj.opacity = 0;
+                toVars.opacity = obj.opacity || 1;
+                break;
+            case 'fadeOut':
+                toVars.opacity = 0;
+                break;
+            case 'zoomIn':
+                obj.scaleX = obj.scaleY = 0.5;
+                toVars.scaleX = toVars.scaleY = 1;
+                break;
+            case 'zoomOut':
+                obj.scaleX = obj.scaleY = 1.5;
+                toVars.scaleX = toVars.scaleY = 1;
+                break;
+            case 'dissolve':
+                toVars.opacity = 0;
+                break;
+            default:
+                console.warn(`Unknown canvas animation type: ${type}`);
+        }
+
+        // animate object and redraw each frame
+        gsap.to(obj, {
+            ...toVars,
+            onUpdate: () => drawCanvasForDownload(currentCondition),
+            onComplete: resolve
+        });
+    });
+}
+/**
+ * Animate a DOM element in the page.
+ * @param {string} selector  – CSS selector for your <img> (or any block element)
+ * @param {string} type      – 'slideLeft'|'slideRight'|'slideUp'|'slideDown'|
+ *                             'zoomIn'|'zoomOut'|'fadeIn'|'fadeOut'
+ * @param {number} duration  – animation length in seconds (default: 3)
+ */
+function animateImageElement(selector, type, duration = 3) {
+    const el = document.querySelector(selector);
+    if (!el) {
+        console.warn(`No element found for selector: ${selector}`);
+        return;
+    }
+
+    // center‐origin for scale
+    el.style.transformOrigin = '50% 50%';
+
+    // build from/to vars
+    let fromVars = {}, toVars = { duration, ease: 'power1.inOut' };
+
+    switch (type) {
+        case 'slideLeft':
+            fromVars.xPercent = 0; toVars.xPercent = -100; break;
+        case 'slideRight':
+            fromVars.xPercent = 0; toVars.xPercent = 100; break;
+        case 'slideUp':
+            fromVars.yPercent = 0; toVars.yPercent = -100; break;
+        case 'slideDown':
+            fromVars.yPercent = 0; toVars.yPercent = 100; break;
+        case 'fadeIn':
+            fromVars.opacity = 0; toVars.opacity = 1; break;
+        case 'fadeOut':
+            fromVars.opacity = 1; toVars.opacity = 0; break;
+        case 'zoomIn':
+            fromVars.scale = 0.5; toVars.scale = 1; break;
+        case 'zoomOut':
+            fromVars.scale = 2; toVars.scale = 1; break;
+        default:
+            console.warn(`Unknown animation type: ${type}`);
+            return;
+    }
+
+    // execute tween
+    gsap.fromTo(el, fromVars, toVars);
+}
 function loadCanvasFromJsonForDownload(jsonData, condition = 'Common') {
     // await ensureFontsInitialized();
     // Clear download canvas
@@ -3103,6 +3276,18 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
         }
     });
 
+    
+
+    return new Promise(resolve => {
+        // copy your existing animateTextForDownload code,
+        // but in the GSAP timeline's onComplete call resolve()
+        const tl = gsap.timeline({
+            repeat: loopCount - 1,
+            onUpdate: () => drawCanvasForDownload(condition),
+            onComplete: resolve
+        });
+   
+
     // ----- IMAGE ANIMATION SECTION -----
     images.forEach((imgObj) => {
         imgObj.finalX = imgObj.x;
@@ -3239,12 +3424,42 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
                 onUpdate: () => drawCanvasForDownload(condition)
             }, outStart + idx * tweenOut);
         });
+
+        // after OUT, chain canvas-image animation if selector provided
+        units.forEach((unit, idx) => {
+        tlText.call(async () => {
+            const imgEl = document.querySelector('#transition1');
+            imgEl.style.display = 'block';
+            if (imgEl) {
+                await animateCanvasImageElement(imgEl, $("#hdntransition").val() || 'slideLeft', 3);
+            }
+            resolve();
+        }, [], null, outStart + idx * tweenOut);
+        });
+
+
+        //units.forEach((unit, idx) => {
+        //    tlText.call(async () => {
+           
+        //    // 3-second transition for GIF or image
+        //            imgEl.style.display = 'block';
+        //            if (imgEl) {
+        //                await animateCanvasImageElement(imgEl, $("#hdntransition").val() || 'slideLeft', 3);
+        //            }
+        //    resolve();
+        //    }, outStart + unit.length * tweenOut);
+        //});
+
     }
-    
+    });
 
 
 
-    else if (animationType === "linear" || animationType === "zoom" ||
+
+ 
+
+
+     if (animationType === "linear" || animationType === "zoom" ||
         animationType === "bounce" || animationType === "blur") {
         // Keep your existing implementation for these cases.
         textObjects.forEach((obj) => {
@@ -3361,45 +3576,7 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
 
         });
     }
-    //// ----- IMAGE ANIMATION SECTION -----
-    //// (A similar approach can be applied to images.)
-    //images.forEach((imgObj) => {
-    //    imgObj.finalX = imgObj.x;
-    //    imgObj.finalY = imgObj.y;
-    //    const dispWidth = imgObj.width * (imgObj.scaleX || 1);
-    //    const dispHeight = imgObj.height * (imgObj.scaleY || 1);
-    //    switch (direction) {
-    //        case "top":
-    //            imgObj.x = imgObj.finalX;
-    //            imgObj.y = -(dispHeight + 5);
-    //            imgObj.exitX = imgObj.finalX;
-    //            imgObj.exitY = -(dispHeight + 5);
-    //            break;
-    //        case "bottom":
-    //            imgObj.x = imgObj.finalX;
-    //            imgObj.y = canvasForDownload.height + 5;
-    //            imgObj.exitX = imgObj.finalX;
-    //            imgObj.exitY = canvasForDownload.height + 5;
-    //            break;
-    //        case "left":
-    //            imgObj.x = -(dispWidth + 5);
-    //            imgObj.y = imgObj.finalY;
-    //            imgObj.exitX = -(dispWidth + 5);
-    //            imgObj.exitY = imgObj.finalY;
-    //            break;
-    //        case "right":
-    //            imgObj.x = canvasForDownload.width + 5;
-    //            imgObj.y = imgObj.finalY;
-    //            imgObj.exitX = canvasForDownload.width + 5;
-    //            imgObj.exitY = imgObj.finalY;
-    //            break;
-    //        default:
-    //            imgObj.x = imgObj.finalX;
-    //            imgObj.y = imgObj.finalY;
-    //            imgObj.exitX = window.innerWidth;
-    //            imgObj.exitY = imgObj.finalY;
-    //    }
-    //});
+  
 
 
     if (animationType === "linear" || animationType === "zoom" ||
@@ -3557,6 +3734,8 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
         });
     }
 }
+
+
 //function animateTextForDownload(animationType, direction, condition, loopCount, state) {
 
 //    // Global timing settings (from your selected speeds).
@@ -4054,3 +4233,6 @@ document.addEventListener('DOMContentLoaded', initModeToggle);
 
 //// initialize on DOM ready
 //document.addEventListener('DOMContentLoaded', initModeToggle);
+function tranTypeSet(type) {
+    $("#hdntransition").val(type);
+}
