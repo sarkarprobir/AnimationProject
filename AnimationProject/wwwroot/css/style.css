@@ -1200,6 +1200,7 @@ body {
         font-size: 13px;
         color: #888;
         background-color: #f9f9f9;
+        overflow: hidden;
     }
 
     .custom-file-input input {
