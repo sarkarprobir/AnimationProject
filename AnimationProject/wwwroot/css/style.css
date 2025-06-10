@@ -360,10 +360,12 @@ a.logo{
 ul.top-left-icon li {
     list-style-type: none;
     float: left;
-    /*    padding: 2px 7px;*/
-    width: 30px;
-    height: 25px;
+    width: 32px;
+    height: 30px;
     border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
     ul.top-left-icon li:hover {
         background-color: #6214fe;
@@ -1476,7 +1478,7 @@ body {
 }
 .v-templates {
     display: flex;
-    gap: 20px;
+    gap: 15px;
     flex-wrap: wrap;
 }
 .temp-V_H{
@@ -1529,3 +1531,15 @@ body {
     .tran_button:hover {
         border: 2px solid #6214fe;
     }
+.active_tran {
+    background: #000;
+    color: #fff;
+    border: 2px solid #000;
+}
+.custom-dropdown select {
+    border: 1.7px solid #000;        
+    border-radius: 3px;
+    color: #000;
+    font-size: 14px;
+    padding: 3px 5px;
+}
