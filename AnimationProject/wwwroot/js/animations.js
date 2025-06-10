@@ -4367,6 +4367,11 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("divFillColor").style.display = 'none';
         HideLoader();
     }
+    else if (selectedType == null) {
+        const animationBtn = document.querySelector('.toggle-btn[data-mode="animation"]');
+        if (animationBtn) animationBtn.click();
+        HideLoader();
+    }
     else {
         heading.innerHTML = "Text";
         document.getElementById("text_alignment_tool").style.display = 'block';

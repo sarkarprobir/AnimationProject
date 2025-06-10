@@ -421,6 +421,28 @@ function moveCaretToEnd(el) {
       clickedElement.classList.add('active_direction');
     }
 
+        //active class for animation direction
+
+            function toggleDirectionOutActive(clickedElement) {
+          // Remove 'active_direction' from all elements
+          document.querySelectorAll('.out_link').forEach(el => {
+            el.classList.remove('active_direction');
+          });
+
+          // Add 'active_direction' to the clicked element
+          clickedElement.classList.add('active_direction');
+        }
+
+            function transitionActive(clickedElement) {
+          // Remove 'active_direction' from all elements
+          document.querySelectorAll('.tran_button').forEach(el => {
+            el.classList.remove('active_tran');
+          });
+
+          // Add 'active_direction' to the clicked element
+              clickedElement.classList.add('active_tran');
+        }
+
 </script>
 
 
@@ -844,7 +866,7 @@ function moveCaretToEnd(el) {
                     <li>
                         <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                             <!-- hide the <a> by default -->
-                            <a class="direction_link" id="aleft" href="javascript:void(0)" onclick="setCoordinate(this,'right',100,20,50,50,'Out'); toggleDirectionActive(this);"
+                            <a class="direction_link out_link" id="aleft" href="javascript:void(0)" onclick="setCoordinate(this,'right',100,20,50,50,'Out'); toggleDirectionOutActive(this);"
                                style=" width:100%; height:100%;">
                                 <img src="/images/icons/right arrow.svg" alt="Center to Right">
                             </a>
@@ -855,7 +877,7 @@ function moveCaretToEnd(el) {
                     <li>
                         <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                             <!-- hide the <a> by default -->
-                            <a class="direction_link" id="aright" href="javascript:void(0)" onclick="setCoordinate(this,'left',400,0,50,50,'Out'); toggleDirectionActive(this);"
+                            <a class="direction_link out_link" id="aright" href="javascript:void(0)" onclick="setCoordinate(this,'left',400,0,50,50,'Out'); toggleDirectionOutActive(this);"
                                style=" width:100%; height:100%;">
                                 <img src="/images/icons/right arrow.svg" alt="Center to Left"
                                      style=" transform: rotate(180deg);">
@@ -868,8 +890,8 @@ function moveCaretToEnd(el) {
                     <li>
                         <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                             <!-- hide the <a> by default -->
-                            <a class="direction_link" id="abottom" href="javascript:void(0)"
-                               onclick="setCoordinate(this,'top',800,0,50,50,'Out'); toggleDirectionActive(this);"
+                            <a class="direction_link out_link" id="abottom" href="javascript:void(0)"
+                               onclick="setCoordinate(this,'top',800,0,50,50,'Out'); toggleDirectionOutActive(this);"
                                style=" width:100%; height:100%;">
                                 <img src="/images/icons/right arrow.svg" alt="Center to Top"
                                      style=" transform: rotate(270deg);">
@@ -881,7 +903,7 @@ function moveCaretToEnd(el) {
                     <li>
                         <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                             <!-- hide the <a> by default -->
-                            <a class="direction_link" id="atop" href="javascript:void(0)" onclick="setCoordinate(this,'bottom',400,0,50,50,'Out'); toggleDirectionActive(this);"
+                            <a class="direction_link out_link" id="atop" href="javascript:void(0)" onclick="setCoordinate(this,'bottom',400,0,50,50,'Out'); toggleDirectionOutActive(this);"
                                style=" width:100%; height:100%;">
                                 <img src="/images/icons/right arrow.svg" alt="Center to Bottom"
                                      style=" transform: rotate(90deg);">
@@ -1013,11 +1035,20 @@ function moveCaretToEnd(el) {
         </div>
     </div>
     <div class="col-md-12 mb-4" id="divStrockColor" style="display:none;">
-        <div class="row Strock">
-            <div class="col-md-6 d-flex align-items-center">
+        <div class="d-flex justify-content-between Strock">
+            <div class=" d-flex align-items-center">
                 <label>Stroke</label>
             </div>
-            <div class="col-md-6  d-flex justify-content-end">
+            <div class="d-flex gap-2 align-items-center justify-content-end">
+                <div class="custom-dropdown">
+                    <select>
+                        <option>1</option>
+                        <option>2</option>
+                        <option selected>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                    </select>
+                </div>
                 <div id="divStrock">
                     <div class="color-palette">
                         <input type="hidden" id="hdnStrockColor" />
@@ -1063,13 +1094,13 @@ function moveCaretToEnd(el) {
     <div id="opacity_tool" class="slider-card">
         <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
             <label for="opacitySlider" class="mb-0 fw-semibold slider_label">
-                Opacity: <span id="opacityValue">0</span>
+                Opacity: <span id="opacityValue">100</span>
             </label>
             <span class="badge"
                   id="opacityBadge"
-                  spellcheck="false">0</span>
+                  spellcheck="false">100</span>
         </div>
-        <input type="range" class="form-range" min="0" max="1" step="0.001" id="opacitySlider">
+        <input type="range" class="form-range" value="100" min="0" max="100" step="10" id="opacitySlider">
     </div>
     @* rotation slider *@
     <div id="rotation_tool" class="slider-card">
@@ -1210,12 +1241,16 @@ function moveCaretToEnd(el) {
                 <div class="temp_gallery">
                     <div class="inside_wrapper temp_inside">
                         <div class="temp-V_H">
-                            <div class="h-templates">
+                            @* <div class="h-templates">
                                 <img class="h_temp" src="~/images/banner.png" />
                                 <img class="h_temp" src="~/images/banner.png" />
                                 <img class="h_temp" src="~/images/banner.png" />
-                            </div>
+                            </div> *@
                             <div class="v-templates">
+                                <img class="v_temp" src="~/images/Vertical-Menuboard.png" />
+                                <img class="v_temp" src="~/images/Vertical-Menuboard.png" />
+                                <img class="v_temp" src="~/images/Vertical-Menuboard.png" />
+                                <img class="v_temp" src="~/images/Vertical-Menuboard.png" />
                                 <img class="v_temp" src="~/images/Vertical-Menuboard.png" />
                                 <img class="v_temp" src="~/images/Vertical-Menuboard.png" />
                                 <img class="v_temp" src="~/images/Vertical-Menuboard.png" />
