@@ -1060,7 +1060,37 @@ async function loadNextJsonForDownloadOLd() {
         recorderForDownload.stop(); //HideLoader();
     }
 }
+
 async function loadNextJsonForDownload() {
+    for (let i = 0; i < jsonArray.length; i++) {
+        const state = jsonArray[i];
+        const inTime = parseFloat(selectedInSpeed) || 4;
+        const stayTime = parseFloat(selectedStaySpeed) || 3;
+        const outTime = parseFloat(selectedOutSpeed) || 4;
+        const slideExecutionTime = inTime + stayTime+2 + outTime;
+
+        // 1) Draw & run the animation (this promise resolves when GSAP’s onComplete fires)
+        loadCanvasFromJsonForDownload(state, 'Common');
+        await applyAnimationsforDownload(
+            state.effect,
+            state.direction,
+            'applyAnimations',
+            state
+        );
+
+        // 2) Wait out the remainder of the slide duration
+        //    (if your GSAP timeline already spans exactly slideExecutionTime,
+        //     you can skip this—but if you need to enforce it, do this:)
+        await new Promise(r => setTimeout(r, slideExecutionTime * 1000));
+    }
+
+    // All done
+    recorderForDownload.stop();
+}
+
+
+
+async function loadNextJsonForDownloadNewOld() {
     if (currentIndexForDownload < jsonArray.length) {
         const state = jsonArray[currentIndexForDownload];
 
@@ -1073,15 +1103,24 @@ async function loadNextJsonForDownload() {
         // You can modify applyAnimations to also use the effect if needed.
         await applyAnimationsforDownload(state.effect, state.direction, 'applyAnimations', state);
 
-        currentIndexForDownload++; // Move to the next JSON object
+        //currentIndexForDownload++; // Move to the next JSON object
 
-        // Load next JSON after a delay (adjust the delay as needed) + parseFloat(selectedOutSpeed) || 4
-        const inTime = parseFloat(selectedInSpeed) || 4;
-        const stayTime = parseFloat(selectedStaySpeed) || 3;
-        const outTime = parseFloat(selectedStaySpeed) || 4;
-        const slideExecutionTime = inTime + stayTime + 5 + outTime;//stayTime +
+        //// Load next JSON after a delay (adjust the delay as needed) + parseFloat(selectedOutSpeed) || 4
+        //const inTime = parseFloat(selectedInSpeed) || 4;
+        //const stayTime = parseFloat(selectedStaySpeed) || 3;
+        //const outTime = parseFloat(selectedOutSpeed) || 4;
+        //const slideExecutionTime = inTime + stayTime + outTime;
 
-        setTimeout(loadNextJsonForDownload, slideExecutionTime * 1000 || 7000);
+        //setTimeout(loadNextJsonForDownload, slideExecutionTime * 1000 || 7000);
+
+        // 2) small buffer
+        await new Promise(r => setTimeout(r, 500));
+
+        // 3) advance and recurse *with await*
+        currentIndexForDownload++;
+        await loadNextJsonForDownload();
+      
+       
     } else {
         console.log("All JSON objects loaded.");
         recorderForDownload.stop(); //HideLoader();
@@ -1117,8 +1156,8 @@ recorder.onstop = () => {
     uploadVideo(blob, existingFolderId,  currentIndex);
 };
 async function applyAnimationsforDownload(animationType, direction, conditionValue, state) {
-    drawCanvasForDownload(conditionValue);
-    animateTextForDownload(animationType, direction, conditionValue, parseInt($("#hdnlLoopControl").val()) || 1, state);
+    await drawCanvasForDownload(conditionValue);
+    await animateTextForDownload(animationType, direction, conditionValue, parseInt($("#hdnlLoopControl").val()) || 1, state);
    
 }
 recorderForDownload.ondataavailable = (e) => chunksForDownload.push(e.data);
@@ -1485,7 +1524,70 @@ function animateContainerAsync(type) {
         });
     });
 }
+
+
 function animateCanvasImageElement(imgEl, type, duration = 3) {
+    if (typeof imgEl === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(imgEl)) {
+       
+        ctxElementForDownload.fillStyle = imgEl;
+        ctxElementForDownload.fillRect(0, 0, canvasForDownload.width, canvasForDownload.height);
+
+        const colorImage = new Image();
+        return new Promise((resolve) => {
+            colorImage.onload = () => {
+                const temp = {
+                    type: 'image',
+                    img: colorImage,
+                    width: colorImage.naturalWidth || colorImage.width,
+                    height: colorImage.naturalHeight || colorImage.height,
+                    x: 0,
+                    y: 0,
+                    scaleX: 1,
+                    scaleY: 1,
+                    opacity: 1
+                };
+                images.push(temp);
+                animateCanvasImage(temp, type, duration).then(() => {
+                    images.pop();
+                    resolve();
+                });
+            };
+            colorImage.src = canvasForDownload.toDataURL();
+        });
+    }
+   
+    
+    if (imgEl instanceof HTMLImageElement) {
+        const imgWidth = 50;
+        const imgHeight = canvasForDownload.height;
+
+        const temp = {
+            type: 'image',
+            img: imgEl,
+            width: imgWidth,
+            height: imgHeight,
+            x: canvasForDownload.width, // Start offscreen right
+            y: 0,
+            scaleX: 1,
+            scaleY: 1,
+            opacity: 1
+        };
+
+        images.push(temp);
+
+        // 👇 animate from right to left using your function
+        return animateCanvasImage(temp, type, duration).then(() => {
+            images.pop();
+        });
+    }
+
+
+
+    // Fallback if neither color code nor image
+    return Promise.resolve();
+}
+
+function animateCanvasImageElementOLD(imgEl, type, duration = 3) {
     // create temp item from imgEl
     const temp = {
         type: 'image',
@@ -1504,6 +1606,20 @@ function animateCanvasImageElement(imgEl, type, duration = 3) {
         .then(() => {
             images.pop();  // cleanup
         });
+}
+function animateCanvasImageDiff(obj, type, duration) {
+    if (type === 'linearleft') {
+        return gsap.to(obj, {
+            x: -obj.width, // Move off left
+            duration: duration,
+            ease: "linear",
+            onUpdate: () => {
+                // Redraw canvas
+            }
+        });
+    }
+
+    // other types...
 }
 function animateCanvasImage(obj, type, duration = 3) {
     return new Promise(resolve => {
@@ -1555,6 +1671,84 @@ function animateCanvasImage(obj, type, duration = 3) {
         });
     });
 }
+
+/**
+ * Animate a DOM image or a full‐canvas color overlay inside the canvas.
+ * @param {HTMLImageElement|string} imgOrColor – <img> element or CSS color code (e.g. '#fff')
+ * @param {string} type – slideLeft|slideRight|slideUp|slideDown|fadeIn|fadeOut|zoomIn|zoomOut|dissolve
+ * @param {number} duration – seconds
+ * @returns {Promise}
+ */
+function animateCanvasImageElementOLD(imgOrColor, type, duration = 3) {
+    const isColor = typeof imgOrColor === 'string';
+    let temp;
+
+    if (isColor) {
+        // create a full‐canvas rectangle
+        temp = {
+            type: 'shape',
+            shapeType: 'rect',
+            x: 0, y: 0,
+            width: canvasForDownload.width,
+            height: canvasForDownload.height,
+            fillColor: imgOrColor,
+            opacity: 1,
+            scaleX: 1, scaleY: 1
+        };
+        if (!Array.isArray(shapes)) shapes = [];
+        shapes.push(temp);
+        return animateCanvasShape(temp, type, duration)
+            .then(() => shapes.pop());
+    } else {
+        // wrap an <img> element
+        const imgEl = imgOrColor;
+        temp = {
+            type: 'image',
+            img: imgEl,
+            width: imgEl.naturalWidth,
+            height: imgEl.naturalHeight,
+            x: 0, y: 0,
+            scaleX: 1, scaleY: 1,
+            opacity: 1
+        };
+        images.push(temp);
+        return animateCanvasImage(temp, type, duration)
+            .then(() => images.pop());
+    }
+}
+
+/**
+ * Animate a canvas rectangle item by tweening its props.
+ * @param {Object} shape – rectangle item with x,y,width,height,fillColor,opacity,scaleX/scaleY
+ * @param {string} type
+ * @param {number} duration
+ * @returns {Promise}
+ */
+function animateCanvasShapeOLD(shape, type, duration = 3) {
+    return new Promise(resolve => {
+        const toVars = { duration, ease: 'power1.inOut' };
+        switch (type) {
+            case 'slideLeft': toVars.x = -shape.width - 5; break;
+            case 'slideRight': toVars.x = canvasForDownload.width + 5; break;
+            case 'slideUp': toVars.y = -shape.height - 5; break;
+            case 'slideDown': toVars.y = canvasForDownload.height + 5; break;
+            case 'fadeIn': shape.opacity = 0; toVars.opacity = 1; break;
+            case 'fadeOut': toVars.opacity = 0; break;
+            case 'zoomIn': shape.scaleX = shape.scaleY = 0.8; toVars.scaleX = toVars.scaleY = 1; break;
+            case 'zoomOut': shape.scaleX = shape.scaleY = 1.2; toVars.scaleX = toVars.scaleY = 1; break;
+            case 'dissolve': toVars.opacity = 0; break;
+            default: break;
+        }
+        gsap.to(shape, {
+            ...toVars,
+            onUpdate: () => drawCanvasForDownload(currentCondition),
+            onComplete: resolve
+        });
+    });
+}
+
+
+
 /**
  * Animate a DOM element in the page.
  * @param {string} selector  – CSS selector for your <img> (or any block element)
@@ -2443,7 +2637,16 @@ function convertToPixels(data, canvasWidth, canvasHeight) {
 
     return data;
 }
+function getCanvasBackgroundColorHex(rgb) {
+    const result = rgb.match(/\d+/g); // Extract numbers from "rgb(255, 255, 255)"
+    if (!result || result.length < 3) return null;
 
+    const [r, g, b] = result.map(Number);
+
+    return "#" + [r, g, b]
+        .map(c => c.toString(16).padStart(2, '0'))
+        .join('');
+}
 
 function drawCanvasPublish(condition) {
     ctxElement.clearRect(0, 0, canvas.width, canvas.height); // Clear entire canvas
@@ -3212,7 +3415,7 @@ function animateTextForPublish(animationType, direction, condition, loopCount) {
         });
     }
 }
-function animateTextForDownload(animationType, direction, condition, loopCount, state) {
+async function animateTextForDownload(animationType, direction, condition, loopCount, state) {
 
     selectedInSpeed = parseInt(document.getElementById('lblSpeed').textContent);
     selectedOutSpeed = parseInt(document.getElementById('lblOutSpeed').textContent);
@@ -3346,112 +3549,217 @@ function animateTextForDownload(animationType, direction, condition, loopCount, 
         }
     });
 
-    if (animationType === "delaylinear") {
-        // 1) Gather animatable items
-        const allItems = [
-            ...images.filter(i => !i.noAnim),
-            ...textObjects.filter(t => !t.noAnim)
-        ];
+        if (animationType === "delaylinear") {
+                // 1) Gather animatable items
+                const allItems = [
+                    ...images.filter(i => !i.noAnim),
+                    ...textObjects.filter(t => !t.noAnim)
+                ];
 
-        // 2) Bucket into “units” by groupId
-        const groupMap = new Map();
-        const units = [];
-        allItems.forEach(item => {
-            const gid = item.groupId;
-            if (gid != null) {
-                if (!groupMap.has(gid)) {
-                    groupMap.set(gid, []);
-                    units.push(groupMap.get(gid));
+                // 2) Bucket into “units” by groupId
+                const groupMap = new Map();
+                const units = [];
+                allItems.forEach(item => {
+                    const gid = item.groupId;
+                    if (gid != null) {
+                        if (!groupMap.has(gid)) {
+                            groupMap.set(gid, []);
+                            units.push(groupMap.get(gid));
+                        }
+                        groupMap.get(gid).push(item);
+                    } else {
+                        units.push([item]);
+                    }
+                });
+
+                // 3) Timings
+                const tweenIn = 0.15 * inTime;
+                const tweenOut = 0.15 * outTime;
+
+                // 4) Build timeline
+                const tlText = gsap.timeline({
+                    repeat: loopCount - 1,
+                    repeatDelay: 0,
+                    onRepeat: () => {
+                        images.forEach(img => { img.x = img.startX; img.y = img.startY; });
+                        textObjects.forEach(txt => { txt.x = txt.startX; txt.y = txt.startY; });
+                        drawCanvasForDownload(condition);
+                    },
+                    onUpdate: () => drawCanvasForDownload(condition)
+                });
+
+                // Pin noAnim images/text at their fixed positions
+                images.filter(i => i.noAnim).forEach(img => {
+                    tlText.set(img, { x: img.x, y: img.y, opacity: img.opacity ?? 1 }, 0);
+                });
+                textObjects.filter(t => t.noAnim).forEach(txt => {
+                    tlText.set(txt, { x: txt.finalX, y: txt.finalY, opacity: txt.opacity ?? 1 }, 0);
+                });
+
+                // --- IN: one tween per group/unit ---
+                units.forEach((unit, idx) => {
+                    tlText.to(unit, {
+                        x: (i, t) => t.finalX,
+                        y: (i, t) => t.finalY,
+                        duration: tweenIn,
+                        ease: "power1.in",
+                        onUpdate: () => drawCanvasForDownload(condition)
+                    }, idx * tweenIn);
+                });
+
+            // 1) STAY tween
+            const totalIn = units.length * tweenIn;
+            tlText.to({}, { duration: stayTime, ease: "none" }, totalIn);
+
+            // 2) OUT tweens
+            const outStart = totalIn + stayTime;
+            units.forEach((unit, idx) => {
+                tlText.to(unit, {
+                    x: (i, t) => t.exitX,
+                    y: (i, t) => t.exitY,
+                    duration: tweenOut,
+                    ease: "power1.out",
+                    onUpdate: () => drawCanvasForDownload(condition)
+                }, outStart + idx * tweenOut);
+            });
+
+            // ──────────────────────────────────────────────────────────────────
+            // 3) PAD or COMPRESS to exactly slideExecutionTime
+            const slideExecutionTime = inTime + stayTime + outTime;  // e.g. 11
+            const actualDuration = tlText.duration();            // e.g. 12.6
+
+            if (actualDuration < slideExecutionTime) {
+                tlText.to({}, { duration: slideExecutionTime - actualDuration }, actualDuration);
+            } else if (actualDuration > slideExecutionTime) {
+                tlText.timeScale(actualDuration / slideExecutionTime);
+            }
+
+            // 4) Delay for cross: how many seconds before timeline end?
+            const crossDelay = 1.0  // shift the SVG‐cross to 1s before slide ends
+            const crossTime = Math.max(0, tlText.duration() - crossDelay);
+
+            // 5) Single call for SVG-cross near the end
+            tlText.call(async () => {
+                const imgEl = document.querySelector('#transition1');
+                if (imgEl) {
+                    await animateCanvasImageElement(
+                        imgEl,
+                        $("#hdntransition").val() || 'slideLeft',
+                        2
+                    );
                 }
-                groupMap.get(gid).push(item);
-            } else {
-                units.push([item]);
-            }
+            }, [], null, crossTime);
+
+            // 6) Finally resolve when the (now-adjusted) timeline is done
+            tlText.call(resolve, [], null, tlText.duration());
+        }
+
+     //   console.log("TL duration:", tlText.duration(), "seconds");
+       
         });
+    //if (animationType === "delaylinear") {
+    //    // 1) Gather animatable items
+    //    const allItems = [
+    //        ...images.filter(i => !i.noAnim),
+    //        ...textObjects.filter(t => !t.noAnim)
+    //    ];
 
-        // 3) Timings
-        const tweenIn = 0.15 * inTime;
-        const tweenOut = 0.15 * outTime;
+    //    // 2) Bucket into “units” by groupId
+    //    const groupMap = new Map();
+    //    const units = [];
+    //    allItems.forEach(item => {
+    //        const gid = item.groupId;
+    //        if (gid != null) {
+    //            if (!groupMap.has(gid)) {
+    //                groupMap.set(gid, []);
+    //                units.push(groupMap.get(gid));
+    //            }
+    //            groupMap.get(gid).push(item);
+    //        } else {
+    //            units.push([item]);
+    //        }
+    //    });
 
-        // 4) Build timeline
-        const tlText = gsap.timeline({
-            repeat: loopCount - 1,
-            repeatDelay: 0,
-            onRepeat: () => {
-                images.forEach(img => { img.x = img.startX; img.y = img.startY; });
-                textObjects.forEach(txt => { txt.x = txt.startX; txt.y = txt.startY; });
-                drawCanvasForDownload(condition);
-            },
-            onUpdate: () => drawCanvasForDownload(condition)
-        });
+    //    // 3) Timings
+    //    const tweenIn = 0.15 * inTime;
+    //    const tweenOut = 0.15 * outTime;
 
-        // Pin noAnim images/text at their fixed positions
-        images.filter(i => i.noAnim).forEach(img => {
-            tlText.set(img, { x: img.x, y: img.y, opacity: img.opacity ?? 1 }, 0);
-        });
-        textObjects.filter(t => t.noAnim).forEach(txt => {
-            tlText.set(txt, { x: txt.finalX, y: txt.finalY, opacity: txt.opacity ?? 1 }, 0);
-        });
+    //    // 4) Build timeline
+    //    const tlText = gsap.timeline({
+    //        repeat: loopCount - 1,
+    //        repeatDelay: 0,
+    //        onRepeat: () => {
+    //            images.forEach(img => { img.x = img.startX; img.y = img.startY; });
+    //            textObjects.forEach(txt => { txt.x = txt.startX; txt.y = txt.startY; });
+    //            drawCanvasForDownload(condition);
+    //        },
+    //        onUpdate: () => drawCanvasForDownload(condition)
+    //    });
 
-        // --- IN: one tween per group/unit ---
-        units.forEach((unit, idx) => {
-            tlText.to(unit, {
-                x: (i, t) => t.finalX,
-                y: (i, t) => t.finalY,
-                duration: tweenIn,
-                ease: "power1.in",
-                onUpdate: () => drawCanvasForDownload(condition)
-            }, idx * tweenIn);
-        });
+    //    // Pin noAnim images/text at their fixed positions
+    //    images.filter(i => i.noAnim).forEach(img => {
+    //        tlText.set(img, { x: img.x, y: img.y, opacity: img.opacity ?? 1 }, 0);
+    //    });
+    //    textObjects.filter(t => t.noAnim).forEach(txt => {
+    //        tlText.set(txt, { x: txt.finalX, y: txt.finalY, opacity: txt.opacity ?? 1 }, 0);
+    //    });
 
-        // compute when IN ends
-        const totalIn = units.length * tweenIn;
+    //    // --- IN: one tween per group/unit ---
+    //    units.forEach((unit, idx) => {
+    //        tlText.to(unit, {
+    //            x: (i, t) => t.finalX,
+    //            y: (i, t) => t.finalY,
+    //            duration: tweenIn,
+    //            ease: "power1.in",
+    //            onUpdate: () => drawCanvasForDownload(condition)
+    //        }, idx * tweenIn);
+    //    });
 
-        // 2) STAY tween at end of IN
-        tlText.to({}, {
-            duration: stayTime,
-            ease: "none"
-        }, totalIn);
+    //    // compute when IN ends
+    //    const totalIn = units.length * tweenIn;
 
-        // 3) OUT tweens start after IN + STAY
-        const outStart = totalIn + stayTime;
-        units.forEach((unit, idx) => {
-            tlText.to(unit, {
-                x: (i, t) => t.exitX,
-                y: (i, t) => t.exitY,
-                duration: tweenOut,
-                ease: "power1.out",
-                onUpdate: () => drawCanvasForDownload(condition)
-            }, outStart + idx * tweenOut);
-        });
+    //    // 2) STAY tween at end of IN
+    //    tlText.to({}, {
+    //        duration: stayTime,
+    //        ease: "none"
+    //    }, totalIn);
 
-        // after OUT, chain canvas-image animation if selector provided
-        units.forEach((unit, idx) => {
-        tlText.call(async () => {
-            const imgEl = document.querySelector('#transition1');
-            imgEl.style.display = 'block';
-            if (imgEl) {
-                await animateCanvasImageElement(imgEl, $("#hdntransition").val() || 'slideLeft', 3);
-            }
-            resolve();
-        }, [], null, outStart + idx * tweenOut);
-        });
+    //    // 3) OUT tweens start after IN + STAY
+    //    const outStart = totalIn + stayTime;
+    //    units.forEach((unit, idx) => {
+    //        tlText.to(unit, {
+    //            x: (i, t) => t.exitX,
+    //            y: (i, t) => t.exitY,
+    //            duration: tweenOut,
+    //            ease: "power1.out",
+    //            onUpdate: () => drawCanvasForDownload(condition)
+    //        }, outStart + idx * tweenOut);
+    //    });
 
+    //    // after OUT, chain canvas-image animation if selector provided
+    //    units.forEach((unit, idx) => {
+    //    tlText.call(async () => {
+    //        const imgEl = document.querySelector('#transition1');
+    //       // imgEl.style.display = 'block';
+    //        if (imgEl) {
+               
+    //            //ctxElementForDownload.fillStyle = 'rgb(255, 255, 255)';
+    //            //ctxElementForDownload.fillRect(0, 0, designW, designH);
+    //          //  $("#hdnBackgroundSpecificColorDownload").val('rgb(255, 255, 255)');
+    //           // await drawCanvasForDownload(condition);
+    //           // await animateCanvasImageElement(imgEl, $("#hdntransition").val() || 'slideLeft', 3);
+    //            await animateCanvasImageElement(imgEl, $("#hdntransition").val() || 'slideLeft', .5);
 
-        //units.forEach((unit, idx) => {
-        //    tlText.call(async () => {
-           
-        //    // 3-second transition for GIF or image
-        //            imgEl.style.display = 'block';
-        //            if (imgEl) {
-        //                await animateCanvasImageElement(imgEl, $("#hdntransition").val() || 'slideLeft', 3);
-        //            }
-        //    resolve();
-        //    }, outStart + unit.length * tweenOut);
-        //});
-
-    }
-    });
+                
+    //           // const bgColor = getCanvasBackgroundColorHex($("#hdnBackgroundSpecificColorDownload").val())
+    //           // await animateCanvasImageElement('#00FF00', $("#hdntransition").val() || 'slideLeft', 3);
+                
+    //        }
+    //        resolve();
+    //    }, [], null, outStart + idx * tweenOut);
+    //    });
+    //}
+    //});
 
 
 
