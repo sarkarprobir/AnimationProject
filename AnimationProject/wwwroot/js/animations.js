@@ -3207,7 +3207,7 @@ function drawRotateHandle(obj) {
 
         // 2) Compute rotation in radians and a fixed offset:
         const angle = (obj.rotation || 0) * Math.PI / 180;
-        const offset = 25;                       // “extra distance” beyond the text edge
+        const offset = 35;                       // “extra distance” beyond the text edge
         const halfH = obj.boundingHeight / 2;   // half the text’s height
 
         // 3) Total distance from center to handle = halfH + offset:

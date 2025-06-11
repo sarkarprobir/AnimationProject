@@ -1422,14 +1422,14 @@ function moveCaretToEnd(el) {
         </button>
     </div>
     <div class="d-flex gap-3 flex-wrap">
-        <button onclick="transitionActive(this);" class="tran_button">Side <br /> Left</button>
-        <button onclick="transitionActive(this);" class="tran_button">Side <br /> Right</button>
-        <button onclick="transitionActive(this);" class="tran_button">Side <br /> Up</button>
-        <button onclick="transitionActive(this);" class="tran_button">Side <br /> Down</button>
-        <button onclick="transitionActive(this);" class="tran_button">Fade <br /> In</button>
-        <button onclick="transitionActive(this);" class="tran_button">Fade <br /> Out</button>
-        <button onclick="transitionActive(this);" class="tran_button">Dissolve <br /> Effect</button>
-        <button onclick="transitionActive(this);" class="tran_button">Zoom <br /> In</button>
-        <button onclick="transitionActive(this);" class="tran_button">Zoom <br /> Out</button>
+        <button class="tran_button" onclick="tranTypeSet('slideLeft');transitionActive(this);">Side <br /> Left</button>
+        <button class="tran_button" onclick="tranTypeSet('slideRight');transitionActive(this);">Side <br /> Right</button>
+        <button class="tran_button" onclick="tranTypeSet('slideUp');transitionActive(this);">Side <br /> Up</button>
+        <button class="tran_button" onclick="tranTypeSet('slideDown');transitionActive(this);">Side <br /> Down</button>
+        <button class="tran_button" onclick="tranTypeSet('fadeIn');transitionActive(this);">Fade <br /> In</button>
+        <button class="tran_button" onclick="tranTypeSet('fadeOut');transitionActive(this);">Fade <br /> Out</button>
+        <button class="tran_button" onclick="tranTypeSet('dissolve');transitionActive(this);">Dissolve <br /> Effect</button>
+        <button class="tran_button" onclick="tranTypeSet('zoomIn');transitionActive(this);">Zoom <br /> In</button>
+        <button class="tran_button" onclick="tranTypeSet('zoomOut');transitionActive(this);">Zoom <br /> Out</button>
     </div>
 </div>
