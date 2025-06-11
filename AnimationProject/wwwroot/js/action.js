@@ -1526,7 +1526,9 @@ function animateContainerAsync(type) {
 }
 
 
-function animateCanvasImageElement(imgEl, type, duration = 3) {
+
+function animateCanvasImageElementForSingle(imgEl, type, duration = 3, opts = {}) {
+    const { color, width } = opts;
     if (typeof imgEl === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(imgEl)) {
        
         ctxElementForDownload.fillStyle = imgEl;
@@ -1586,42 +1588,146 @@ function animateCanvasImageElement(imgEl, type, duration = 3) {
     // Fallback if neither color code nor image
     return Promise.resolve();
 }
+/**
+ * Loads one SVG <img>, draws it into an offscreen canvas
+ * at opts.width × full-height and tints it with opts.color.
+ * Returns a Promise<Image> for the fully ready tinted stripe.
+ */
+function buildTintedStripe(imgEl, opts = {}) {
+    const width = parseInt(opts.width, 10);
+    const color = opts.color;
 
-function animateCanvasImageElementOLD(imgEl, type, duration = 3) {
-    // create temp item from imgEl
-    const temp = {
-        type: 'image',
-        img: imgEl,
-        width: imgEl.naturalWidth,
-        height: imgEl.naturalHeight,
-        x: 0,
-        y: 0,
-        scaleX: 1,
-        scaleY: 1,
-        opacity: 1
-    };
-    // draw initial position
-    images.push(temp);
-    return animateCanvasImage(temp, type, duration)
-        .then(() => {
-            images.pop();  // cleanup
-        });
+    return new Promise(resolve => {
+        const draw = () => {
+            const off = document.createElement('canvas');
+            off.width = width;
+            off.height = canvasForDownload.height;
+            const octx = off.getContext('2d');
+
+            // draw the already‐loaded <img>
+            octx.drawImage(imgEl, 0, 0, width, off.height);
+            octx.globalCompositeOperation = 'source-in';
+            octx.fillStyle = color;
+            octx.fillRect(0, 0, width, off.height);
+
+            const tinted = new Image();
+            tinted.onload = () => resolve({ img: tinted, width, height: off.height });
+            tinted.src = off.toDataURL();
+        };
+
+        if (imgEl.complete && imgEl.naturalWidth) {
+            draw();
+        } else {
+            imgEl.onload = draw;
+        }
+    });
 }
-function animateCanvasImageDiff(obj, type, duration) {
-    if (type === 'linearleft') {
-        return gsap.to(obj, {
-            x: -obj.width, // Move off left
-            duration: duration,
-            ease: "linear",
-            onUpdate: () => {
-                // Redraw canvas
-            }
-        });
+
+
+function animateCanvasImageElement(imgEl, type, duration = 3, opts = {}) {
+    const color = opts.color;
+    const width = parseInt(opts.width, 10);
+
+    if (!(imgEl instanceof HTMLImageElement)) {
+        // nothing to do
+        return Promise.resolve();
     }
 
-    // other types...
+    return new Promise(resolve => {
+        // 1) make an offscreen canvas the exact stripe size
+        const off = document.createElement('canvas');
+        off.width = width;
+        off.height = canvasForDownload.height;
+        const octx = off.getContext('2d');
+
+        // 2) load the raw SVG
+        const base = new Image();
+        base.onload = () => {
+            // draw the SVG scaled to [width × full height]
+            octx.drawImage(base, 0, 0, width, off.height);
+
+            // 3) tint only the non-transparent pixels
+            octx.globalCompositeOperation = 'source-in';
+            octx.fillStyle = color;
+            octx.fillRect(0, 0, width, off.height);
+
+            // 4) build a new Image from the tinted canvas
+            const tinted = new Image();
+            tinted.onload = () => {
+                const temp = {
+                    type: 'image',
+                    img: tinted,
+                    width,
+                    height: off.height,
+                    x: canvasForDownload.width, // start off-screen right
+                    y: 0,
+                    scaleX: 1,
+                    scaleY: 1,
+                    opacity: 1
+                };
+                images.push(temp);
+                // animate and clean up
+                animateCanvasImage(temp, type, duration).then(() => {
+                    images.pop();
+                    resolve();
+                });
+            };
+            tinted.src = off.toDataURL();
+        };
+        base.src = imgEl.src;
+    });
 }
-function animateCanvasImage(obj, type, duration = 3) {
+function animateCanvasImage(obj, type, duration = 3, delay = 0) {
+    return new Promise(resolve => {
+        const dispW = obj.width * (obj.scaleX || 1);
+        const dispH = obj.height * (obj.scaleY || 1);
+        let toVars = { duration, ease: 'power1.inOut', delay };
+
+        switch (type) {
+            case 'slideLeft':
+                toVars.x = -dispW - 5;
+                break;
+            case 'slideRight':
+                toVars.x = canvasForDownload.width + 5;
+                break;
+            case 'slideUp':
+                toVars.y = -dispH - 5;
+                break;
+            case 'slideDown':
+                toVars.y = canvasForDownload.height + 5;
+                break;
+            case 'fadeIn':
+                obj.opacity = 0;
+                toVars.opacity = obj.opacity || 1;
+                break;
+            case 'fadeOut':
+                toVars.opacity = 0;
+                break;
+            case 'zoomIn':
+                obj.scaleX = obj.scaleY = 0.5;
+                toVars.scaleX = toVars.scaleY = 1;
+                break;
+            case 'zoomOut':
+                obj.scaleX = obj.scaleY = 1.5;
+                toVars.scaleX = toVars.scaleY = 1;
+                break;
+            case 'dissolve':
+                toVars.opacity = 0;
+                break;
+            default:
+                console.warn(`Unknown canvas animation type: ${type}`);
+        }
+
+        gsap.to(obj, {
+            ...toVars,
+            onUpdate: () => drawCanvasForDownload(currentCondition),
+            onComplete: resolve
+        });
+    });
+}
+
+
+function animateCanvasImageTodayOld(obj, type, duration = 3) {
     return new Promise(resolve => {
         // calculate display dimensions
         const dispW = obj.width * (obj.scaleX || 1);
@@ -3638,134 +3744,75 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             const crossDelay = 1.0  // shift the SVG‐cross to 1s before slide ends
             const crossTime = Math.max(0, tlText.duration() - crossDelay);
 
-            // 5) Single call for SVG-cross near the end
+            
+
             tlText.call(async () => {
-                const imgEl = document.querySelector('#transition1');
-                if (imgEl) {
-                    await animateCanvasImageElement(
-                        imgEl,
-                        $("#hdntransition").val() || 'slideLeft',
-                        2
-                    );
-                }
+                const els = [
+                    document.getElementById('transition1'),
+                    document.getElementById('transition2'),
+                    /*document.getElementById('transition3'),*/
+                ];
+
+                const type = $("#hdntransition").val() || 'slideLeft';
+                const duration = 2;
+
+
+                const stripes = await Promise.all(
+                    els.map(el => buildTintedStripe(el, {
+                        color: el.dataset.color,
+                        width: parseInt(el.dataset.width, 10)
+                    }))
+                );
+
+                //const temps = [];
+               // let totalOffset = 0;
+
+                let currentX = canvasForDownload.width; // Start offscreen to the right
+
+                const temps = stripes.map((s) => {
+                    const temp = {
+                        type: 'image',
+                        img: s.img,
+                        width: s.width,
+                        height: s.height,
+                        x: currentX,
+                        y: 0,
+                        scaleX: 1,
+                        scaleY: 1,
+                        opacity: 1
+                    };
+                    currentX += s.width; // update for next stripe
+                    return temp;
+                });
+
+
+
+
+                // Push all images
+                temps.forEach(t => images.push(t));
+
+
+                // ✅ Force an initial render
+                drawCanvasForDownload(currentCondition);
+
+                // ✅ Animate
+                await Promise.all(
+                    temps.map((t, i) =>
+                        animateCanvasImage(t, type, duration, i * .05) // delay = 0s, 1s, 2s
+                    )
+                );
+
+                // Cleanup
+                temps.forEach(() => images.pop());
             }, [], null, crossTime);
 
-            // 6) Finally resolve when the (now-adjusted) timeline is done
-            tlText.call(resolve, [], null, tlText.duration());
+
         }
 
      //   console.log("TL duration:", tlText.duration(), "seconds");
        
         });
-    //if (animationType === "delaylinear") {
-    //    // 1) Gather animatable items
-    //    const allItems = [
-    //        ...images.filter(i => !i.noAnim),
-    //        ...textObjects.filter(t => !t.noAnim)
-    //    ];
-
-    //    // 2) Bucket into “units” by groupId
-    //    const groupMap = new Map();
-    //    const units = [];
-    //    allItems.forEach(item => {
-    //        const gid = item.groupId;
-    //        if (gid != null) {
-    //            if (!groupMap.has(gid)) {
-    //                groupMap.set(gid, []);
-    //                units.push(groupMap.get(gid));
-    //            }
-    //            groupMap.get(gid).push(item);
-    //        } else {
-    //            units.push([item]);
-    //        }
-    //    });
-
-    //    // 3) Timings
-    //    const tweenIn = 0.15 * inTime;
-    //    const tweenOut = 0.15 * outTime;
-
-    //    // 4) Build timeline
-    //    const tlText = gsap.timeline({
-    //        repeat: loopCount - 1,
-    //        repeatDelay: 0,
-    //        onRepeat: () => {
-    //            images.forEach(img => { img.x = img.startX; img.y = img.startY; });
-    //            textObjects.forEach(txt => { txt.x = txt.startX; txt.y = txt.startY; });
-    //            drawCanvasForDownload(condition);
-    //        },
-    //        onUpdate: () => drawCanvasForDownload(condition)
-    //    });
-
-    //    // Pin noAnim images/text at their fixed positions
-    //    images.filter(i => i.noAnim).forEach(img => {
-    //        tlText.set(img, { x: img.x, y: img.y, opacity: img.opacity ?? 1 }, 0);
-    //    });
-    //    textObjects.filter(t => t.noAnim).forEach(txt => {
-    //        tlText.set(txt, { x: txt.finalX, y: txt.finalY, opacity: txt.opacity ?? 1 }, 0);
-    //    });
-
-    //    // --- IN: one tween per group/unit ---
-    //    units.forEach((unit, idx) => {
-    //        tlText.to(unit, {
-    //            x: (i, t) => t.finalX,
-    //            y: (i, t) => t.finalY,
-    //            duration: tweenIn,
-    //            ease: "power1.in",
-    //            onUpdate: () => drawCanvasForDownload(condition)
-    //        }, idx * tweenIn);
-    //    });
-
-    //    // compute when IN ends
-    //    const totalIn = units.length * tweenIn;
-
-    //    // 2) STAY tween at end of IN
-    //    tlText.to({}, {
-    //        duration: stayTime,
-    //        ease: "none"
-    //    }, totalIn);
-
-    //    // 3) OUT tweens start after IN + STAY
-    //    const outStart = totalIn + stayTime;
-    //    units.forEach((unit, idx) => {
-    //        tlText.to(unit, {
-    //            x: (i, t) => t.exitX,
-    //            y: (i, t) => t.exitY,
-    //            duration: tweenOut,
-    //            ease: "power1.out",
-    //            onUpdate: () => drawCanvasForDownload(condition)
-    //        }, outStart + idx * tweenOut);
-    //    });
-
-    //    // after OUT, chain canvas-image animation if selector provided
-    //    units.forEach((unit, idx) => {
-    //    tlText.call(async () => {
-    //        const imgEl = document.querySelector('#transition1');
-    //       // imgEl.style.display = 'block';
-    //        if (imgEl) {
-               
-    //            //ctxElementForDownload.fillStyle = 'rgb(255, 255, 255)';
-    //            //ctxElementForDownload.fillRect(0, 0, designW, designH);
-    //          //  $("#hdnBackgroundSpecificColorDownload").val('rgb(255, 255, 255)');
-    //           // await drawCanvasForDownload(condition);
-    //           // await animateCanvasImageElement(imgEl, $("#hdntransition").val() || 'slideLeft', 3);
-    //            await animateCanvasImageElement(imgEl, $("#hdntransition").val() || 'slideLeft', .5);
-
-                
-    //           // const bgColor = getCanvasBackgroundColorHex($("#hdnBackgroundSpecificColorDownload").val())
-    //           // await animateCanvasImageElement('#00FF00', $("#hdntransition").val() || 'slideLeft', 3);
-                
-    //        }
-    //        resolve();
-    //    }, [], null, outStart + idx * tweenOut);
-    //    });
-    //}
-    //});
-
-
-
-
- 
-
+    
 
      if (animationType === "linear" || animationType === "zoom" ||
         animationType === "bounce" || animationType === "blur") {
