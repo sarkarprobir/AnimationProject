@@ -52,10 +52,12 @@ rel="stylesheet" />
         border-radius: 6px;
         font-size: 0.9rem;
         transition: background 0.2s;
+        font-family: "Nunito Sans", sans-serif;
     }
 
     .create-btn:hover {
-         background-color: #2f2893;
+         background-color: #000;
+         color: #fff;
     }
 
     .nav-icon {
@@ -71,6 +73,9 @@ rel="stylesheet" />
         color: black;
         margin-left: 1rem;
     }
+    .nav-right a:hover{
+        color: #6214fe;
+    }
     /* Action buttons */
     .actions {
         display: flex;
@@ -83,7 +88,7 @@ rel="stylesheet" />
         color: white;
         border: none;
         padding: 0.5rem 1rem;
-        border-radius: 4px;
+        border-radius: 3px;
         font-size: 0.9rem;
         cursor: pointer;
     }
@@ -98,14 +103,12 @@ rel="stylesheet" />
     .hero {
         display: flex;
         justify-content: space-between;
-        /* align-items: center; */
+        align-items: center;
         padding: 0px 10rem;
         gap: 2rem;
     }
 
     .hero-text {
-        flex: 0.8;
-        margin-top: 7rem;
         font-family: "Montserrat", sans-serif !important;
     }
 
@@ -175,7 +178,7 @@ rel="stylesheet" />
     .cate_img img{
         width: 100%;
         height: 100%;
-        object-fit: contain;
+        object-fit: cover;
     }
 
     .category{
@@ -303,6 +306,24 @@ rel="stylesheet" />
         font-weight: 800;
         font-family: "Montserrat", sans-serif !important;
     }
+
+    .pop_v{
+        height: 315px;
+        width: 175px;
+    }
+    .pop_h{
+        height: 175px;
+        width: 315px;
+    }
+
+    .pop_imgs{
+        background-color: #DADDEC;
+    }
+
+    .register_btn{
+        background-color: #fff;
+        color: #000;
+    }
 </style>
 
 <!-- Navbar -->
@@ -388,7 +409,7 @@ rel="stylesheet" />
 
 <div class="container py-4">
     <div class="text-center mb-4">
-        <h2 class="temp_head">New Templates</h2>
+        <h2 class="temp_head">Animation Templates</h2>
     </div>
     <div class="row column-gap-3 d-flex justify-content-center">
         <!-- Column 1: Horizontal Images -->
@@ -450,26 +471,46 @@ rel="stylesheet" />
     <img src="~/images/Layer 7.png" alt="" />
     <img src="~/images/Layer 8.png" alt="" />
 </div>
-<div class="container category d-flex gap-5">
-    <div class="cate_img">
+
+@* popular Aniboard *@
+<div class="my-5">
+    <h2 class="temp_head text-center mb-5">Most Popular AniBoards</h2>
+    <div class="pop_imgs p-5">
+        <div class="d-flex gap-4 justify-content-center  align-items-center">
+            <img class="pop_h" src="~/images/discount.png" alt="Alternate Text" />
+            <img class="pop_v" src="~/images/shoe.png" alt="Alternate Text" />
+            <img class="pop_h" src="~/images/70offf.png" alt="Alternate Text" />
+            <img class="pop_v" src="~/images/screen-V.png" alt="Alternate Text" />
+            <img class="pop_h" src="~/images/screen-H.png" alt="Alternate Text" />
+        </div>
+    </div>
+</div>
+
+<div class="container category">
+<h2 class="temp_head mb-4">Most Popular AniBoards</h2>
+<div class="d-flex gap-5">
+    
+    <div class="cate_img">   
         <img src="~/images/banner.png" alt="Alternate Text" />
     </div>
     <div class="cate_text d-flex flex-column justify-content-between ms-4">
         <div>
-            <h6>1. Choose Template</h6>
+            <h6>1. Choose <br /> Animation Template</h6>
             <p>Select your Animation Templates <br /> as per your business requirements</p>
         </div>
         <div>
-            <h6>2. Edit Template</h6>
+            <h6>2. Edit <br /> Content, Image and Style</h6>
             <p>Change Image and comtent. <br /> Add preset animation.</p>
         </div>
         <div>
-            <h6>3. Publish Template</h6>
+            <h6>3. Publish <br /> Motion Template</h6>
             <p>Publish the Template and <br /> run the animation in unique URL.</p>
         </div>
-        <div>
-            <button class="create-btn">Create New</button>
-        </div>
+        
+    </div>
+    </div>
+    <div class="d-flex justify-content-center mt-5">
+        <button class="create-btn">Create New</button>
     </div>
 </div>
 
@@ -512,6 +553,7 @@ rel="stylesheet" />
             <div class="foot-text py-5">
                 <h2 class="foot-head mb-4">Features</h2>
                 <p class="foot-para">No designer or animator needed... Just design it yourself and the animation will be created automatically.It's super simple to create an animation board for your signage screen.</p>
+                <button class="create-btn register_btn">Register Now</button>
             </div>
         </div>
     </div>
