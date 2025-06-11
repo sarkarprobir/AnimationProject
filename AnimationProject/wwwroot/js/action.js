@@ -3803,7 +3803,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 // ✅ Animate
                 await Promise.all(
                     temps.map((t, i) =>
-                        animateCanvasImage(t, type, duration, i * .05) // delay = 0s, 1s, 2s
+                        animateCanvasImage(t, type, duration, i * .23) // delay = 0s, 1s, 2s
                     )
                 );
 
