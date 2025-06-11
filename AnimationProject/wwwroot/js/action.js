@@ -3759,7 +3759,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 ];
 
                 const type = $("#hdntransition").val() || 'slideLeft';
-                const duration = 2;
+                const duration = 3;
 
 
                 const stripes = await Promise.all(
