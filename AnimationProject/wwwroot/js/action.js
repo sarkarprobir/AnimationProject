@@ -3730,18 +3730,23 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             });
 
             // ──────────────────────────────────────────────────────────────────
-            // 3) PAD or COMPRESS to exactly slideExecutionTime
+            //// 3) PAD or COMPRESS to exactly slideExecutionTime
             const slideExecutionTime = inTime + stayTime + outTime;  // e.g. 11
             const actualDuration = tlText.duration();            // e.g. 12.6
 
-            if (actualDuration < slideExecutionTime) {
-                tlText.to({}, { duration: slideExecutionTime - actualDuration }, actualDuration);
-            } else if (actualDuration > slideExecutionTime) {
-                tlText.timeScale(actualDuration / slideExecutionTime);
-            }
+            //if (actualDuration < slideExecutionTime) {
+            //    tlText.to({}, { duration: slideExecutionTime - actualDuration }, actualDuration);
+            //} else if (actualDuration > slideExecutionTime) {
+            //    tlText.timeScale(actualDuration / slideExecutionTime);
+            //}
+            // Compute how fast/slower to play so the timeline fills slideExecutionTime exactly:
+            const playbackRatio = actualDuration / slideExecutionTime;
+            // e.g. actualDuration = 9, slideExecutionTime = 11 → ratio = 0.818
+            //    timeScale < 1 → slow down;  >1 → speed up
+            tlText.timeScale(playbackRatio);
 
             // 4) Delay for cross: how many seconds before timeline end?
-            const crossDelay = 1.0  // shift the SVG‐cross to 1s before slide ends
+            const crossDelay = 0  // shift the SVG‐cross to 1s before slide ends
             const crossTime = Math.max(0, tlText.duration() - crossDelay);
 
             
