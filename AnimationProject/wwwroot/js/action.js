@@ -1112,7 +1112,14 @@ async function loadNextJsonForDownload() {
     const transitionType = $("#hdntransition").val() || 'slideLeft';
     const stripeDuration = 2;      // total stripe time in seconds
     const overlapDelay = 2100;   // ms into stripe when we actually pull in the full next canvas
-    const overlapColor = 1250;   // ms into stripe when we change the background color
+    let overlapColor = 1250;
+    if (transitionType == 'slideRight') {
+        overlapColor = 1050;//1050 ms into stripe when we change the background color
+    }
+    else if (transitionType == 'slideLeft') {
+        overlapColor = 1250;//1250 ms into stripe when we change the background color
+    }
+   
 
     if (!jsonArray.length) return;
 
@@ -1849,7 +1856,7 @@ function animateCanvasImageElement(imgEl, type, duration = 3, opts = {}) {
         base.src = imgEl.src;
     });
 }
-function animateCanvasImage(obj, type, duration = 3, delay = 0) {
+function animateCanvasImage(obj, type, duration = 2, delay = 0) {
     return new Promise(resolve => {
         const dispW = obj.width * (obj.scaleX || 1);
         const dispH = obj.height * (obj.scaleY || 1);
@@ -1860,29 +1867,42 @@ function animateCanvasImage(obj, type, duration = 3, delay = 0) {
                 toVars.x = -dispW - 5;
                 break;
             case 'slideRight':
+                // start just off the left edge
+                obj.x = -dispW - 5;
                 toVars.x = canvasForDownload.width + 5;
                 break;
+
             case 'slideUp':
+                // start just below the bottom edge
+                obj.y = canvasForDownload.height + 5;
                 toVars.y = -dispH - 5;
                 break;
+
             case 'slideDown':
+                // start just above the top edge
+                obj.y = -dispH - 5;
                 toVars.y = canvasForDownload.height + 5;
                 break;
+
             case 'fadeIn':
                 obj.opacity = 0;
                 toVars.opacity = obj.opacity || 1;
                 break;
+
             case 'fadeOut':
                 toVars.opacity = 0;
                 break;
+
             case 'zoomIn':
                 obj.scaleX = obj.scaleY = 0.5;
                 toVars.scaleX = toVars.scaleY = 1;
                 break;
+
             case 'zoomOut':
                 obj.scaleX = obj.scaleY = 1.5;
                 toVars.scaleX = toVars.scaleY = 1;
                 break;
+
             case 'dissolve':
                 toVars.opacity = 0;
                 break;
