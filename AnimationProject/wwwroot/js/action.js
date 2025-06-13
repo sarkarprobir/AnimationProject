@@ -1061,7 +1061,7 @@ async function loadNextJsonForDownloadOLd() {
     }
 }
 
-async function loadNextJsonForDownload() {
+async function loadNextJsonForDownload_OLD_12() {
     for (let i = 0; i < jsonArray.length; i++) {
         const state = jsonArray[i];
         const inTime = parseFloat(selectedInSpeed) || 4;
@@ -1087,7 +1087,179 @@ async function loadNextJsonForDownload() {
     // All done
     recorderForDownload.stop();
 }
+// 2) Use it inside your loader loop
+async function showSlide(index) {
+    const state = jsonArray[index];
+    const inTime = parseFloat(selectedInSpeed) || 4;
+    const stayTime = parseFloat(selectedStaySpeed) || 3;
+    const outTime = parseFloat(selectedOutSpeed) || 4;
+    const slideExecutionTime = inTime + stayTime + outTime;
 
+    // 1) draw & animate this slide’s in→stay→out
+    loadCanvasFromJsonForDownload(state, 'Common');
+    await applyAnimationsforDownload(
+        state.effect,
+        state.direction,
+        'applyAnimations',
+        state
+    );
+
+    // 2) wait out its full duration (no stripe here yet)
+    await new Promise(r => setTimeout(r, slideExecutionTime * 1000));
+}
+
+async function loadNextJsonForDownload() {
+    const transitionType = $("#hdntransition").val() || 'slideLeft';
+    const stripeDuration = 2;      // total stripe time in seconds
+    const overlapDelay = 2100;   // ms into stripe when we actually pull in the full next canvas
+    const overlapColor = 1250;   // ms into stripe when we change the background color
+
+    if (!jsonArray.length) return;
+
+    // 1) Show the very first slide
+    await showSlide(0);
+
+    // 2) For each subsequent slide:
+    for (let i = 0; i < jsonArray.length - 1; i++) {
+        const nextIdx = i + 1;
+        const nextBg = jsonArray[nextIdx].canvasBgColor;
+
+        // 2a) Start the stripe transition (doesn't block)
+        const stripePromise = runStripeTransition(transitionType, stripeDuration);
+
+        // 2b) Part-way through the stripe, swap to next slide’s bg color
+        setTimeout(() => {
+            $(`#hdnBackgroundSpecificColorDownload`).val(nextBg);
+            drawCanvasForDownload('Common');
+        }, overlapColor);
+
+        // 2c) Later in the stripe, actually load the next slide’s JSON
+        setTimeout(() => {
+            loadCanvasFromJsonForDownload(jsonArray[nextIdx], 'Common');
+        }, overlapDelay);
+
+        // 2d) Wait for stripe to finish before firing next slide’s IN→STAY→OUT
+        await stripePromise;
+        await showSlide(nextIdx);
+    }
+
+    // 3) All done
+    recorderForDownload.stop();
+}
+
+
+// 1) Extract transition into its own function
+async function runStripeTransitionOLD(type = 'slideLeft', duration = 2) {
+    const els = [
+        document.getElementById('transition1'),
+        document.getElementById('transition2'),
+/*        document.getElementById('transition3'),*/
+    ];
+    // build stripes
+    const stripes = await Promise.all(
+        els.map(el => buildTintedStripe(el, {
+            color: el.dataset.color,
+            width: parseInt(el.dataset.width, 10)
+        }))
+    );
+
+    // position them off-canvas to the right
+    let currentX = canvasForDownload.width;
+    const temps = stripes.map(s => {
+        const t = {
+            type: 'image',
+            img: s.img,
+            width: s.width,
+            height: s.height,
+            x: currentX,
+            y: 0,
+            scaleX: 1,
+            scaleY: 1,
+            opacity: 1
+        };
+        currentX += s.width;
+        return t;
+    });
+   
+    // push into your `images` array, render once, then animate
+    temps.forEach(t => images.push(t));
+    drawCanvasForDownload('Common');  // force initial paint
+   
+    // stagger them
+    await Promise.all(
+        temps.map((t, i) => animateCanvasImage(t, type, duration, i * 0.1))        
+    );
+   
+    // cleanup
+    temps.forEach(() => images.pop());
+}
+async function runStripeTransition(type = 'slideLeft', duration = 2) {
+    
+    //$('#hdnTransition1').val('#b42ce7');
+    //$('#hdnTransition2').val('#611d7a');
+    // grab your dynamic colors
+    const dynamicColors = [
+        $('#hdnTransition1').val(),   // for transition1
+        $('#hdnTransition2').val(),   // for transition2
+        // if you had a third stripe, add its hidden input here
+    ];
+
+    // collect your stripe <img>s
+    const els = [
+        document.getElementById('transition1'),
+        document.getElementById('transition2'),
+        // …etc
+    ];
+
+    // build tinted stripes, injecting dynamic color only when present
+    const stripes = await Promise.all(
+        els.map((el, idx) => {
+            // prefer the hidden-input value if it's non-empty; otherwise use the existing data-color
+            const dyn = dynamicColors[idx];
+            const color = (typeof dyn === 'string' && dyn.trim() !== '')
+                ? dyn.trim()
+                : el.dataset.color;
+
+            // keep the DOM in sync (in case you read it elsewhere)
+            el.dataset.color = color;
+
+            return buildTintedStripe(el, {
+                color,
+                width: parseInt(el.dataset.width, 10)
+            });
+        })
+    );
+
+    // position them off-canvas
+    let currentX = canvasForDownload.width;
+    const temps = stripes.map(s => {
+        const t = {
+            type: 'image',
+            img: s.img,
+            width: s.width,
+            height: s.height,
+            x: currentX,
+            y: 0,
+            scaleX: 1,
+            scaleY: 1,
+            opacity: 1
+        };
+        currentX += s.width;
+        return t;
+    });
+
+    // add, render, animate, cleanup…
+    temps.forEach(t => images.push(t));
+    drawCanvasForDownload('Common');
+
+    await Promise.all(
+        temps.map((t, i) =>
+            animateCanvasImage(t, type, duration, i * 0.10)
+        )
+    );
+
+    temps.forEach(() => images.pop());
+}
 
 
 async function loadNextJsonForDownloadNewOld() {
@@ -3521,6 +3693,7 @@ function animateTextForPublish(animationType, direction, condition, loopCount) {
         });
     }
 }
+
 async function animateTextForDownload(animationType, direction, condition, loopCount, state) {
 
     selectedInSpeed = parseInt(document.getElementById('lblSpeed').textContent);
@@ -3656,62 +3829,66 @@ async function animateTextForDownload(animationType, direction, condition, loopC
     });
 
         if (animationType === "delaylinear") {
-                // 1) Gather animatable items
-                const allItems = [
-                    ...images.filter(i => !i.noAnim),
-                    ...textObjects.filter(t => !t.noAnim)
-                ];
+            // 1) Gather animatable items
+            const allItems = [
+                ...images.filter(i => !i.noAnim),
+                ...textObjects.filter(t => !t.noAnim)
+            ];
 
-                // 2) Bucket into “units” by groupId
-                const groupMap = new Map();
-                const units = [];
-                allItems.forEach(item => {
-                    const gid = item.groupId;
-                    if (gid != null) {
-                        if (!groupMap.has(gid)) {
-                            groupMap.set(gid, []);
-                            units.push(groupMap.get(gid));
-                        }
-                        groupMap.get(gid).push(item);
-                    } else {
-                        units.push([item]);
+            // 2) Bucket into “units” by groupId
+            const groupMap = new Map();
+            const units = [];
+            allItems.forEach(item => {
+                const gid = item.groupId;
+                if (gid != null) {
+                    if (!groupMap.has(gid)) {
+                        groupMap.set(gid, []);
+                        units.push(groupMap.get(gid));
                     }
-                });
+                    groupMap.get(gid).push(item);
+                } else {
+                    units.push([item]);
+                }
+            });
 
-                // 3) Timings
-                const tweenIn = 0.15 * inTime;
-                const tweenOut = 0.15 * outTime;
+            // 3) Timings
+            const tweenIn = 0.15 * inTime;
+            const tweenOut = 0.15 * outTime;
 
-                // 4) Build timeline
-                const tlText = gsap.timeline({
-                    repeat: loopCount - 1,
-                    repeatDelay: 0,
-                    onRepeat: () => {
-                        images.forEach(img => { img.x = img.startX; img.y = img.startY; });
-                        textObjects.forEach(txt => { txt.x = txt.startX; txt.y = txt.startY; });
-                        drawCanvasForDownload(condition);
-                    },
+            // 4) Build timeline
+            const tlText = gsap.timeline({
+                repeat: loopCount - 1,
+                repeatDelay: 0,
+                onRepeat: () => {
+                    images.forEach(img => { img.x = img.startX; img.y = img.startY; });
+                    textObjects.forEach(txt => { txt.x = txt.startX; txt.y = txt.startY; });
+                    drawCanvasForDownload(condition);
+                },
+                onUpdate: () => drawCanvasForDownload(condition)
+            });
+
+            // Pin noAnim images/text at fixed positions
+            images.filter(i => i.noAnim).forEach(img => {
+                tlText.set(img, { x: img.x, y: img.y, opacity: img.opacity ?? 1 }, 0);
+            });
+            textObjects.filter(t => t.noAnim).forEach(txt => {
+                tlText.set(txt, {
+                    x: txt.finalX,
+                    y: txt.finalY,
+                    opacity: txt.opacity ?? 1
+                }, 0);
+            });
+
+            // --- IN: one tween per unit ---
+            units.forEach((unit, idx) => {
+                tlText.to(unit, {
+                    x: (i, t) => t.finalX,
+                    y: (i, t) => t.finalY,
+                    duration: tweenIn,
+                    ease: "power1.in",
                     onUpdate: () => drawCanvasForDownload(condition)
-                });
-
-                // Pin noAnim images/text at their fixed positions
-                images.filter(i => i.noAnim).forEach(img => {
-                    tlText.set(img, { x: img.x, y: img.y, opacity: img.opacity ?? 1 }, 0);
-                });
-                textObjects.filter(t => t.noAnim).forEach(txt => {
-                    tlText.set(txt, { x: txt.finalX, y: txt.finalY, opacity: txt.opacity ?? 1 }, 0);
-                });
-
-                // --- IN: one tween per group/unit ---
-                units.forEach((unit, idx) => {
-                    tlText.to(unit, {
-                        x: (i, t) => t.finalX,
-                        y: (i, t) => t.finalY,
-                        duration: tweenIn,
-                        ease: "power1.in",
-                        onUpdate: () => drawCanvasForDownload(condition)
-                    }, idx * tweenIn);
-                });
+                }, idx * tweenIn);
+            });
 
             // 1) STAY tween
             const totalIn = units.length * tweenIn;
@@ -3730,89 +3907,16 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             });
 
             // ──────────────────────────────────────────────────────────────────
-            //// 3) PAD or COMPRESS to exactly slideExecutionTime
+            // 3) Pad or compress to exactly slideExecutionTime
             const slideExecutionTime = inTime + stayTime + outTime;  // e.g. 11
             const actualDuration = tlText.duration();            // e.g. 12.6
-
-            //if (actualDuration < slideExecutionTime) {
-            //    tlText.to({}, { duration: slideExecutionTime - actualDuration }, actualDuration);
-            //} else if (actualDuration > slideExecutionTime) {
-            //    tlText.timeScale(actualDuration / slideExecutionTime);
-            //}
-            // Compute how fast/slower to play so the timeline fills slideExecutionTime exactly:
             const playbackRatio = actualDuration / slideExecutionTime;
-            // e.g. actualDuration = 9, slideExecutionTime = 11 → ratio = 0.818
-            //    timeScale < 1 → slow down;  >1 → speed up
             tlText.timeScale(playbackRatio);
 
-            // 4) Delay for cross: how many seconds before timeline end?
-            const crossDelay = 0  // shift the SVG‐cross to 1s before slide ends
-            const crossTime = Math.max(0, tlText.duration() - crossDelay);
-
-            
-
-            tlText.call(async () => {
-                const els = [
-                    document.getElementById('transition1'),
-                    document.getElementById('transition2'),
-                    /*document.getElementById('transition3'),*/
-                ];
-
-                const type = $("#hdntransition").val() || 'slideLeft';
-                const duration = 3;
-
-
-                const stripes = await Promise.all(
-                    els.map(el => buildTintedStripe(el, {
-                        color: el.dataset.color,
-                        width: parseInt(el.dataset.width, 10)
-                    }))
-                );
-
-                //const temps = [];
-               // let totalOffset = 0;
-
-                let currentX = canvasForDownload.width; // Start offscreen to the right
-
-                const temps = stripes.map((s) => {
-                    const temp = {
-                        type: 'image',
-                        img: s.img,
-                        width: s.width,
-                        height: s.height,
-                        x: currentX,
-                        y: 0,
-                        scaleX: 1,
-                        scaleY: 1,
-                        opacity: 1
-                    };
-                    currentX += s.width; // update for next stripe
-                    return temp;
-                });
-
-
-
-
-                // Push all images
-                temps.forEach(t => images.push(t));
-
-
-                // ✅ Force an initial render
-                drawCanvasForDownload(currentCondition);
-
-                // ✅ Animate
-                await Promise.all(
-                    temps.map((t, i) =>
-                        animateCanvasImage(t, type, duration, i * .05) // delay = 0s, 1s, 2s
-                    )
-                );
-
-                // Cleanup
-                temps.forEach(() => images.pop());
-            }, [], null, crossTime);
-
-
+            // --- STRIPE/CROSS-FADE: removed from here! ---
+            // call your external runStripeTransition(...) after this timeline completes
         }
+
 
      //   console.log("TL duration:", tlText.duration(), "seconds");
        
