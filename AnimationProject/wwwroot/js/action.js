@@ -1111,7 +1111,7 @@ async function showSlide(index) {
 async function loadNextJsonForDownload() {
     const transitionType = $("#hdntransition").val() || 'slideLeft';
     const stripeDuration = 2;      // total stripe time in seconds
-    const overlapDelay = 2050;   // ms into stripe when we actually pull in the full next canvas
+    const overlapDelay = 2100;   // ms into stripe when we actually pull in the full next canvas
     const overlapColor = 1250;   // ms into stripe when we change the background color
 
     if (!jsonArray.length) return;
@@ -1195,8 +1195,8 @@ async function runStripeTransitionOLD(type = 'slideLeft', duration = 2) {
 }
 async function runStripeTransition(type = 'slideLeft', duration = 2) {
     
-    $('#hdnTransition1').val('#b42ce7');
-    $('#hdnTransition2').val('#611d7a');
+    //$('#hdnTransition1').val('#b42ce7');
+    //$('#hdnTransition2').val('#611d7a');
     // grab your dynamic colors
     const dynamicColors = [
         $('#hdnTransition1').val(),   // for transition1
@@ -1254,7 +1254,7 @@ async function runStripeTransition(type = 'slideLeft', duration = 2) {
 
     await Promise.all(
         temps.map((t, i) =>
-            animateCanvasImage(t, type, duration, i * 0.1)
+            animateCanvasImage(t, type, duration, i * 0.10)
         )
     );
 
