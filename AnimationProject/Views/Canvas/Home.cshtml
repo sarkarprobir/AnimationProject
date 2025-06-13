@@ -297,10 +297,13 @@ rel="stylesheet" />
     .option-box-outer {
         padding-bottom: 65px;
         padding-top: 15px;
-        box-shadow: rgb(0 0 0 / 12%) -1px 9px 8px; 
+        box-shadow: rgba(0, 0, 0, 0.15) 2.4px 3.4px 3.2px;
         justify-content: center;
         transform: translateY(-10px);
         transition: max-height 0.4s ease, opacity 0.4s ease, transform 0.4s ease;
+        position: absolute;
+        width: 100%;
+        background-color: #fff;
     }
     .temp_head{
         font-weight: 800;
@@ -323,6 +326,9 @@ rel="stylesheet" />
     .register_btn{
         background-color: #fff;
         color: #000;
+    }
+    .border3{
+        border-radius: 3px;
     }
 </style>
 
@@ -415,49 +421,49 @@ rel="stylesheet" />
         <!-- Column 1: Horizontal Images -->
         <div class="col-auto p-0">
             <div class="img-box horizontal">
-                <img src="~/images/iphone.png" alt="Image 1" />
+                <img class="border3" src="~/images/iphone.png" alt="Image 1" />
             </div>
             <div class="img-box horizontal">
-                <img src="~/images/discount.png" alt="Image 2" />
+                <img class="border3" src="~/images/discount.png" alt="Image 2" />
             </div>
             <div class="img-box horizontal">
-                <img src="~/images/brandname.png" alt="Image 3" />
+                <img class="border3" src="~/images/brandname.png" alt="Image 3" />
             </div>
         </div>
 
         <!-- Column 2: Vertical Images -->
         <div class="col-auto p-0">
             <div class="img-box vertical">
-                <img src="~/images/watch.png" alt="Image 4" />
+                <img class="border3" src="~/images/watch.png" alt="Image 4" />
             </div>
             <div class="img-box vertical">
-                <img src="~/images/lemontea.png" alt="Image 5" />
+                <img class="border3" src="~/images/lemontea.png" alt="Image 5" />
             </div>
         </div>
 
         <!-- Column 3: Horizontal Images -->
         <div class="col-auto p-0">
             <div class="img-box horizontal">
-                <img src="~/images/onlinecloths.png" alt="Image 6" />
+                <img class="border3" src="~/images/onlinecloths.png" alt="Image 6" />
             </div>
             <div class="img-box horizontal">
-                <img src="~/images/70offf.png" alt="Image 7" />
+                <img class="border3" src="~/images/70offf.png" alt="Image 7" />
             </div>
             <div class="img-box horizontal">
-                <img src="~/images/stickynote.png" alt="Image 8" />
+                <img class="border3" src="~/images/stickynote.png" alt="Image 8" />
             </div>
             <div class="img-box horizontal">
-                <img src="~/images/laptop.png" alt="Image 8" />
+                <img class="border3" src="~/images/laptop.png" alt="Image 8" />
             </div>
         </div>
 
         <!-- Column 4: Vertical Images -->
         <div class="col-auto p-0">
             <div class="img-box vertical">
-                <img src="~/images/iphone14.png" alt="Image 9" />
+                <img class="border3" src="~/images/iphone14.png" alt="Image 9" />
             </div>
             <div class="img-box vertical">
-                <img src="~/images/shoe.png" alt="Image 10" />
+                <img class="border3" src="~/images/shoe.png" alt="Image 10" />
             </div>
         </div>
     </div>
@@ -474,14 +480,15 @@ rel="stylesheet" />
 
 @* popular Aniboard *@
 <div class="my-5">
-    <h2 class="temp_head text-center mb-5">Most Popular AniBoards</h2>
+    
     <div class="pop_imgs p-5">
+        <h2 class="temp_head text-center mb-5">Most Popular AniBoards</h2>
         <div class="d-flex gap-4 justify-content-center  align-items-center">
-            <img class="pop_h" src="~/images/discount.png" alt="Alternate Text" />
-            <img class="pop_v" src="~/images/shoe.png" alt="Alternate Text" />
-            <img class="pop_h" src="~/images/70offf.png" alt="Alternate Text" />
-            <img class="pop_v" src="~/images/screen-V.png" alt="Alternate Text" />
-            <img class="pop_h" src="~/images/screen-H.png" alt="Alternate Text" />
+            <img class="pop_h border3" src="~/images/discount.png" alt="Alternate Text" />
+            <img class="pop_v border3" src="~/images/screen-V.png" alt="Alternate Text" />
+            <img class="pop_h border3" src="~/images/70offf.png" alt="Alternate Text" />
+            <img class="pop_v border3" src="~/images/shoe.png" alt="Alternate Text" />
+            <img class="pop_h border3" src="~/images/screen-H.png" alt="Alternate Text" />
         </div>
     </div>
 </div>
@@ -491,7 +498,7 @@ rel="stylesheet" />
 <div class="d-flex gap-5">
     
     <div class="cate_img">   
-        <img src="~/images/banner.png" alt="Alternate Text" />
+        <img class="border3" src="~/images/banner.png" alt="Alternate Text" />
     </div>
     <div class="cate_text d-flex flex-column justify-content-between ms-4">
         <div>
@@ -545,10 +552,10 @@ rel="stylesheet" />
     <div class="container">
         <div class="d-flex justify-content-center footer-content">
             <div class="align-self-center">
-                <img class="foot_img ms-5" src="~/images/screen-H.png" alt="Alternate Text" />
+                <img class="foot_img ms-5 border3" src="~/images/screen-H.png" alt="Alternate Text" />
             </div>
             <div class="align-self-center">
-                <img class="foot_img" src="~/images/screen-V.png" alt="Alternate Text" />
+                <img class="foot_img border3" src="~/images/screen-V.png" alt="Alternate Text" />
             </div>
             <div class="foot-text py-5">
                 <h2 class="foot-head mb-4">Features</h2>
