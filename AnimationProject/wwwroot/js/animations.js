@@ -4623,6 +4623,27 @@ function ChangeColor() {
     }
     drawCanvas('ChangeStyle');
 }
+function ChangeTranColor1() {
+    const colorPicker = document.getElementById("tranColor1");
+    $("#hdnTransition1").val(colorPicker.value);
+    const textColor = document.getElementById("hdnTransition1").value; // Text color from dropdown 
+    const Obj = textObjects.find(obj => obj.selected);
+    if (Obj) {
+        Obj.textColor = textColor || 'black';
+    }
+    drawCanvas('ChangeStyle');
+}
+
+function ChangeTranColor2() {
+    const colorPicker = document.getElementById("tranColor2");
+    $("#hdnTransition2").val(colorPicker.value);
+    const textColor = document.getElementById("hdnTransition2").value; // Text color from dropdown 
+    const Obj = textObjects.find(obj => obj.selected);
+    if (Obj) {
+        Obj.textColor = textColor || 'black';
+    }
+    drawCanvas('ChangeStyle');
+}
 
 function ChangeFillColor() {
     if (activeImage) {

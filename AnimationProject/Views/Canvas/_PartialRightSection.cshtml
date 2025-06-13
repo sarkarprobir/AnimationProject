@@ -1442,9 +1442,9 @@ function moveCaretToEnd(el) {
         </div>
         <div class="col-md-4 text-end d-flex align-items-center justify-content-end">
             <div class="color-palette">
-                <input type="hidden">
+                
                 <form action="/action_page.php" class="d-flex">
-                    <input type="color"  name="transitionColor" value="#000000">
+                    <input id="tranColor1" type="color" name="transitionColor" oninput="ChangeTranColor1();" value="#000000">
                 </form>
             </div>
         </div>
@@ -1455,9 +1455,9 @@ function moveCaretToEnd(el) {
         </div>
         <div class="col-md-4 text-end d-flex align-items-center justify-content-end">
             <div class="color-palette">
-                <input type="hidden">
+                
                 <form action="/action_page.php" class="d-flex">
-                    <input type="color" name="transitionColor" value="#000000">
+                    <input id="tranColor2" type="color" name="transitionColor" oninput="ChangeTranColor1();" value="#000000">
                 </form>
             </div>
         </div>
