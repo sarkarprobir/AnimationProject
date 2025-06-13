@@ -5741,11 +5741,13 @@ sendBackOption.addEventListener('click', () => {
 // function for transition popup
 function tranTogglePopup() {
     const popup = document.getElementById('tranPopup');
+    const color_add = document.getElementById('tranColor');
     const otherPopups = [
         document.getElementById('opengl_popup'),
         document.getElementById('fontstyle_popup'),
         document.getElementById('background_popup'),
-        document.getElementById('tranPopup')
+        document.getElementById('tranPopup'),
+        document.querySelector('.right-sec-one'),
     ];
 
     // Hide all other popups
@@ -5753,12 +5755,20 @@ function tranTogglePopup() {
 
     // Toggle the target popup
     popup.style.display = 'block';
+    color_add.style.display = 'block';
 }
 
 function hideTran() {
     const popup = document.getElementById("tranPopup");
+    const color_add = document.getElementById('tranColor');
+    const boardAnimation = document.querySelector('.right-sec-one');
     if (popup) {
         popup.style.display = "none";
     }
-    // document.getElementById("modeButton").innerText = "Graphic Mode";
+    if (color_add) {
+        color_add.style.display = "none";
+    }
+    if (boardAnimation) {
+        boardAnimation.style.display = "block";
+    }
 }
