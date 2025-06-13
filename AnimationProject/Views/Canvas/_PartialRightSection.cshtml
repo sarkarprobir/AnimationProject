@@ -595,13 +595,13 @@ function moveCaretToEnd(el) {
     .view-color-1{
         width: 50px;
         height: 100%;
-        background-color: red;
+        background-color: #d6d61e;
     }
 
     .view-color-2 {
         width: 50px;
         height: 100%;
-        background-color: green;
+        background-color: #1ed633;
     }
 </style>
 
@@ -1485,7 +1485,7 @@ function moveCaretToEnd(el) {
             <div class="color-palette">
                 
                 <form action="/action_page.php" class="d-flex">
-                    <input id="tranColor2" type="color" name="transitionColor" oninput="ChangeTranColor2();" value="#000000">
+                    <input id="tranColor2" type="color" name="transitionColor" oninput="ChangeTranColor2(); changeTranBcak2();" value="#000000">
                 </form>
             </div>
         </div>
