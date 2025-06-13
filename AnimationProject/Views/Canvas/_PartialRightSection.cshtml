@@ -580,6 +580,29 @@ function moveCaretToEnd(el) {
             box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
             background-color: #6214fe;
         }
+
+    .box{
+        width: 100%;
+        height: 100px;
+        /* border: 1px solid #000; */
+        border-radius: 3px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: center;
+        gap: 0;
+    }
+
+    .view-color-1{
+        width: 50px;
+        height: 100%;
+        background-color: red;
+    }
+
+    .view-color-2 {
+        width: 50px;
+        height: 100%;
+        background-color: green;
+    }
 </style>
 
 <div class="right-sec-one">
@@ -1438,8 +1461,8 @@ function moveCaretToEnd(el) {
     <div class="headtext">Transition Colors</div>
 
     <div class="box">
-       <div class="view-color-1"></div>
-       <div class="view-color-2"></div>
+        <div id="targetDiv1" class="view-color-1"></div>
+        <div id="targetDiv2" class="view-color-2"></div>
     </div>
     <div class="row FontSize mb-4">
         <div class="col-md-8  d-flex align-items-center">
@@ -1449,7 +1472,7 @@ function moveCaretToEnd(el) {
             <div class="color-palette">
                 
                 <form action="/action_page.php" class="d-flex">
-                    <input id="tranColor1" type="color" name="transitionColor" oninput="ChangeTranColor1();" value="#000000">
+                    <input id="tranColor1" type="color" name="transitionColor" oninput="ChangeTranColor1(); changeTranBcak1();" value="#000000">
                 </form>
             </div>
         </div>
@@ -1462,7 +1485,7 @@ function moveCaretToEnd(el) {
             <div class="color-palette">
                 
                 <form action="/action_page.php" class="d-flex">
-                    <input id="tranColor2" type="color" name="transitionColor" oninput="ChangeTranColor1();" value="#000000">
+                    <input id="tranColor2" type="color" name="transitionColor" oninput="ChangeTranColor1(); changeTranBcak2();" value="#000000">
                 </form>
             </div>
         </div>

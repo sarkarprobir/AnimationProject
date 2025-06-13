@@ -5793,3 +5793,12 @@ function hideTran() {
         boardAnimation.style.display = "block";
     }
 }
+
+function changeTranBcak1() {
+    const color = document.getElementById('tranColor1').value;
+    document.getElementById('targetDiv1').style.backgroundColor = color;
+}
+function changeTranBcak2() {
+    const color = document.getElementById('tranColor2').value;
+    document.getElementById('targetDiv2').style.backgroundColor = color;
+}
