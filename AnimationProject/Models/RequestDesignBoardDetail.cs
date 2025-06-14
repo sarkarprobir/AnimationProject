@@ -25,6 +25,8 @@
         public string OutDirection { get; set; }
         public string AnimationVideoPath { get; set; }
         public string AnimationImagePath { get; set; }
+        public string TransitionType { get; set; }
+        public string TransitionColor { get; set; }
 
     }
     public class RequestDesignBoardDetailsImagePath

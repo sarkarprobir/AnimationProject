@@ -86,6 +86,18 @@ function SaveDesignBoard() {
 
                     var currentAnimationVideoPath = $(slide.animationVideoPath).val() || defaultAnimationVideoPath;
                     var currentAnimationImagePath = $(slide.animationImagePath).val() || defaultAnimationImagePath;
+
+                    const els = [
+                        document.getElementById('hdnTransition1'),
+                        document.getElementById('hdnTransition2'),
+                    ];
+
+                    const stripescolor = els
+                        .map(el => el.value)
+                        .join('~');
+
+
+
                     var dataSlide = {
                         DesignBoardDetailsId: currentDetailId,  // if new, this is default, if update, this is the actual id
                         DesignBoardId: $("#hdnDesignBoardId").val(),
@@ -97,7 +109,9 @@ function SaveDesignBoard() {
                         OutEffect: currentOutEffect,
                         OutDirection: currentOutDirection,
                         AnimationVideoPath: currentAnimationVideoPath,
-                        AnimationImagePath: currentAnimationImagePath
+                        AnimationImagePath: currentAnimationImagePath,
+                        TransitionType: $("#hdntransition").val() || 'slideLeft',
+                        TransitionColor: stripescolor
                     };
 
                     $.ajax({
@@ -463,9 +477,41 @@ function GetDesignBoardById(id) {
                 if (result) { 
                     $("#hdnDesignBoardId").val(result.designBoardId);
                     $("#txtSaveDesignBoardName").val(result.designBoardName);
+                   
+
                 if ( Array.isArray(result.designBoardDetailsList) && result.designBoardDetailsList.length > 0) {
                     // Reset global variables first to avoid stale data
+                    $("#hdntransition").val(result.designBoardDetailsList[0].transitionType);
 
+                    // read the current transition type
+                    const t = $('#hdntransition').val();
+
+                    // clear any previously active transition buttons
+                    $('.tran_button').removeClass('active');
+
+                    // if it’s slideLeft, add `.active` to the #TslideLeft button
+                    if (t === 'slideLeft') {
+                        $('#TslideLeft').addClass('active');
+                    }
+                    // (repeat for other types if you want)
+                    else if (t === 'slideRight') {
+                        $('#TslideRight').addClass('active');
+                    }
+                    else {
+                        $('.tran_button').removeClass('active');
+                    }
+
+
+                    const [beforeTilde, afterTilde] = result.designBoardDetailsList[0].transitionColor.split('~');
+
+
+                    $('#hdnTransition1').val(beforeTilde);
+                    $('#hdnTransition2').val(afterTilde);
+                    document.getElementById('targetDiv1').style.backgroundColor = beforeTilde;
+                    document.getElementById('targetDiv2').style.backgroundColor = afterTilde;
+
+                    $("#tranColor1").val(beforeTilde);
+                    $("#tranColor2").val(afterTilde);
 
                     // Destructure first 3 elements with null coalescing
                     [verticalSlide1, verticalSlide2, verticalSlide3] = result.designBoardDetailsList
@@ -1108,6 +1154,72 @@ async function showSlide(index) {
     await new Promise(r => setTimeout(r, slideExecutionTime * 1000));
 }
 async function loadNextJsonForDownload() {
+    const transitionType = $("#hdntransition").val() || 'slideLeft';
+    const stripeDuration = 2;     // total stripe time in seconds
+
+    // decide when (ms) into the stripe to swap bg
+    const overlapColor = transitionType === 'slideRight' ? 1050 : 1250;
+
+    if (!jsonArray.length) return;
+
+    // Show the very first slide
+    await showSlide(0);
+
+    // Loop through each “next” slide
+    for (let i = 0; i < jsonArray.length - 1; i++) {
+        const nextIdx = i + 1;
+        const { canvasBgColor: nextBgColor, canvasBgImage: nextBgImage } = jsonArray[nextIdx];
+
+        // 1) kick off the stripe (non‑blocking)
+        const stripePromise = runStripeTransition(transitionType, stripeDuration);
+
+        // 2) mid‑stripe, swap background (image or color)
+        setTimeout(() => {
+            if (nextBgImage) {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    canvas._bgImg = img;
+                    drawCanvasForDownload('Common');
+                };
+                img.onerror = () => {
+                    canvas._bgImg = null;
+                    $("#hdnBackgroundSpecificColorDownload").val(nextBgColor);
+                    drawCanvasForDownload('Common');
+                };
+                img.src = nextBgImage;
+            } else {
+                canvas._bgImg = null;
+                $("#hdnBackgroundSpecificColorDownload").val(nextBgColor);
+                drawCanvasForDownload('Common');
+            }
+        }, overlapColor);
+
+        // 3) wait for stripe to finish
+        await stripePromise;
+
+        // 4) now that stripe is done, load the next JSON fully
+        await loadCanvasFromJsonForDownload(jsonArray[nextIdx], 'Common');
+
+        // 5) redraw (in case loadCanvasFromJsonForDownload didn’t auto‑draw)
+        if (nextBgImage) {
+            drawCanvasForDownload('Common');
+        } else {
+            canvas._bgImg = null;
+            $("#hdnBackgroundSpecificColorDownload").val(nextBgColor);
+            drawCanvasForDownload('Common');
+        }
+
+        // 6) finally run the IN→STAY→OUT for that slide
+        await showSlide(nextIdx);
+    }
+
+    // All done
+    recorderForDownload.stop();
+}
+
+
+async function loadNextJsonForDownload_NEWOLD() {
     const transitionType = $("#hdntransition").val() || 'slideLeft';
     const stripeDuration = 2;     // total stripe time in seconds
     const overlapDelay = 2100;  // ms into stripe when we actually pull in the full next canvas

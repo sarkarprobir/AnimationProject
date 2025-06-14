@@ -5777,6 +5777,28 @@ function tranTogglePopup() {
     // Toggle the target popup
     popup.style.display = 'block';
     color_add.style.display = 'block';
+
+
+
+    // read the current transition type
+    const t = $('#hdntransition').val();
+
+    // clear any previously active transition buttons
+    $('.tran_button').removeClass('active_tran');
+
+    // if it’s slideLeft, add `.active` to the #TslideLeft button
+    if (t === 'slideLeft') {
+        $('#TslideLeft').addClass('active_tran');
+    }
+    // (repeat for other types if you want)
+    else if (t === 'slideRight') {
+        $('#TslideRight').addClass('active_tran');
+    }
+    else {
+        $('.tran_button').removeClass('active_tran');
+    }
+
+
 }
 
 function hideTran() {
