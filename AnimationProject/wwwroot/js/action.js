@@ -1107,8 +1107,68 @@ async function showSlide(index) {
     // 2) wait out its full duration (no stripe here yet)
     await new Promise(r => setTimeout(r, slideExecutionTime * 1000));
 }
-
 async function loadNextJsonForDownload() {
+    const transitionType = $("#hdntransition").val() || 'slideLeft';
+    const stripeDuration = 2;     // total stripe time in seconds
+    const overlapDelay = 2100;  // ms into stripe when we actually pull in the full next canvas
+
+    let overlapColor = (transitionType === 'slideRight')
+        ? 1050
+        : 1250; // for slideLeft or any other default
+
+    if (!jsonArray.length) return;
+
+    // 1) Show the very first slide
+    await showSlide(0);
+
+    // 2) For each subsequent slide:
+    for (let i = 0; i < jsonArray.length - 1; i++) {
+        const nextIdx = i + 1;
+        const { canvasBgColor: nextBgColor, canvasBgImage: nextBgImage } = jsonArray[nextIdx];
+
+        // 2a) Start the stripe transition (doesn't block)
+        const stripePromise = runStripeTransition(transitionType, stripeDuration);
+
+        // 2b) Part-way through the stripe, swap to next slide’s bg (image or color)
+        setTimeout(() => {
+            if (nextBgImage) {
+                // preload & draw the image
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    canvas._bgImg = img;
+                    drawCanvasForDownload('Common');
+                };
+                img.onerror = () => {
+                    // on error, clear image and fall back to color
+                    canvas._bgImg = null;
+                    $("#hdnBackgroundSpecificColorDownload").val(nextBgColor);
+                    drawCanvasForDownload('Common');
+                };
+                img.src = nextBgImage;
+            } else {
+                // no image → clear any prior image and use color
+                canvas._bgImg = null;
+                $("#hdnBackgroundSpecificColorDownload").val(nextBgColor);
+                drawCanvasForDownload('Common');
+            }
+        }, overlapColor);
+
+        // 2c) Later in the stripe, actually load the next slide’s JSON
+        setTimeout(() => {
+            loadCanvasFromJsonForDownload(jsonArray[nextIdx], 'Common');
+        }, overlapDelay);
+
+        // 2d) Wait for stripe to finish before firing next slide’s IN→STAY→OUT
+        await stripePromise;
+        await showSlide(nextIdx);
+    }
+
+    // 3) All done
+    recorderForDownload.stop();
+}
+
+async function loadNextJsonForDownload_14_6() {
     const transitionType = $("#hdntransition").val() || 'slideLeft';
     const stripeDuration = 2;      // total stripe time in seconds
     const overlapDelay = 2100;   // ms into stripe when we actually pull in the full next canvas
