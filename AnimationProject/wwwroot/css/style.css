@@ -132,12 +132,15 @@ p.collapsed{    font-size: var(--font-size14);}
     .panel-left ul li .sd-btn-right {
         float: right;
         border: none;
-        border-radius: 6px;
+        border-radius: 3px;
         background: transparent;
-        padding: 3px 11px;
+        padding: 2px 4px;
         color: #747474;
         font-weight: bold;
         font-size: 13px !important;
+    }
+    .panel-left ul li .sd-btn-right:hover{
+        box-shadow: rgba(3, 102, 214, 0.3) 0px 0px 0px 3px;
     }
   .sd-btn-right img{float:left!important; margin:1px 10px 0px 0px !important;}
 .panel-left ul li b {
