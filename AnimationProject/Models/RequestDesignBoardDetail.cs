@@ -49,7 +49,7 @@
         public long CompanyUniqueId { get; set; }
     }
     public class RequestGetDesignBoard
-     {
+    {
         public Guid CustomerId { get; set; }
         public Guid CompanyId { get; set; }
 
@@ -67,11 +67,17 @@
         public long CompanyUniqueId { get; set; }
         public string ScreenType { get; set; }
         public int ScreenNo { get; set; }
-        
+
     }
     public class ScreenRefreshInterval
     {
         public long CompanyUniqueId { get; set; }
         public int ScreenNo { get; set; }
+    }
+    public class RequestDesignBoardSlideDetailForDelete
+    {
+        public Guid DesignBoardDetailsId { get; set; }
+        public bool IsActive { get; set; }
+        public Guid UpdatedBy { get; set; }
     }
 }

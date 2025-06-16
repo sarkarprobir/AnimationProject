@@ -433,7 +433,26 @@ namespace AnimationProject.Controllers
             }
 
         }
+        [HttpPost]
+        public async Task<IActionResult> DeleteDesignSlideBoard(RequestDesignBoardSlideDetailForDelete request)
+        {
+            //if (!_checkSession.IsSession()) return Ok("login");
+            var response = new Response<ResponseSaveDesignBoardSlideDetail>();
+            try
+            {
+                request.IsActive = false;
+                request.UpdatedBy = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
+                var saveDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/DeleteDesignSlideBoard", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<ResponseSaveDesignBoardSlideDetail>>(saveDesignSlideBoard);
+                return Json(response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***DeleteDesignSlideBoard*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return Json("NO");
+            }
 
+        }
         #endregion
     }
 }
