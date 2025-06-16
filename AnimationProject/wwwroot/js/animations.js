@@ -2564,15 +2564,25 @@ window.addEventListener('keydown', (e) => {
     const isCopy = (e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C');
     const isPaste = (e.ctrlKey || e.metaKey) && (e.key === 'v' || e.key === 'V');
 
-    if (isCopy) {
-        e.preventDefault();
-        copyOption.click();
-    }
-    if (isPaste) {
-        e.preventDefault();
-        pasteFromClipboard();
+    const activeEl = document.activeElement;
+    const isEditable = activeEl && (
+        activeEl.tagName === 'INPUT' ||
+        activeEl.tagName === 'TEXTAREA' ||
+        activeEl.isContentEditable
+    );
+
+    if (!isEditable) {
+        if (isCopy) {
+            e.preventDefault();
+            copyOption.click();  // your custom copy
+        }
+        if (isPaste) {
+            e.preventDefault();
+            pasteFromClipboard(); // your custom paste
+        }
     }
 });
+
 
 // Utility: Check if point (x, y) is within the bounding box of a text object
 function isWithinText(obj, x, y) {
@@ -4677,6 +4687,14 @@ function TabShowHide(type) {
         $("#marzen").css("display", "none");
         $("#rauchbier").css("display", "none");
         $("#dunkles").css("display", "block");
+    }
+    // Set the corresponding radio button as checked
+    if (type === 'In') {
+        document.getElementById("tab1").checked = true;
+    } else if (type === 'Stay') {
+        document.getElementById("tab2").checked = true;
+    } else if (type === 'Out') {
+        document.getElementById("tab3").checked = true;
     }
 }
  //Listen for clicks on the dropdown menu.
