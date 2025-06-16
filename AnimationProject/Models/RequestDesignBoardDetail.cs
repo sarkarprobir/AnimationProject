@@ -80,4 +80,9 @@
         public bool IsActive { get; set; }
         public Guid UpdatedBy { get; set; }
     }
+    public class RequestDesignBoardSlideDetailForDuplicate
+    {
+        public Guid DesignBoardDetailsId { get; set; }
+        public Guid UpdatedBy { get; set; }
+    }
 }

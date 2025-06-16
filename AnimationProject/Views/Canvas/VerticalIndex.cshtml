@@ -624,6 +624,59 @@
             HideLoader();
         }
         }
+
+     function DuplicateSlide()
+        {
+             const confirmduplicate = confirm("Do you want to duplicate "+activeSlide+" slide?");
+                    if (!confirmduplicate) return;
+
+            if($(`#hdnDesignBoardDetailsIdSlide3`).val() !=='')
+            {
+                    MessageShow('', 'Already 3 slide created.Delete any one and then duplicate!', 'error');
+                        return;
+            }
+        let DesignBoardDetailsId;
+        if (activeSlide === 1) {
+            DesignBoardDetailsId = $(`#hdnDesignBoardDetailsIdSlide1`).val();
+        } else if (activeSlide === 2) {
+            DesignBoardDetailsId = $(`#hdnDesignBoardDetailsIdSlide2`).val();
+        }
+        
+            const isDefaultOrBlank = !DesignBoardDetailsId || DesignBoardDetailsId.trim() === "" || DesignBoardDetailsId === "00000000-0000-0000-0000-000000000000";
+
+        if (!isDefaultOrBlank) {
+            try {
+            ShowLoader();
+            const dataSlide = {
+                    DesignBoardDetailsId: DesignBoardDetailsId
+            };
+
+            $.ajax({
+                url: baseURL + "Canvas/DuplicateDesignSlideBoard",
+                type: "POST",
+                dataType: "json",
+                data: dataSlide,
+                success: function (slideResult) {
+                    HideLoader();
+                    if (slideResult.response === 'ok') {
+                        MessageShow('RedirectToVerticalPageWithQueryString()', 'Slide duplicate successfully!', 'success');
+                    } else {
+                        MessageShow('', 'Failed to duplicate slide.', 'error');
+                    }
+                },
+                error: function (data) {
+                    console.log("Error in delete slide", data);
+                    HideLoader();
+                    MessageShow('', 'Error duplicate slide.', 'error');
+                }
+            });
+
+        } catch (e) {
+            console.log("catch", e);
+            HideLoader();
+        }
+        }
+        }
     </script>
 
 

@@ -442,13 +442,32 @@ namespace AnimationProject.Controllers
             {
                 request.IsActive = false;
                 request.UpdatedBy = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
-                var saveDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/DeleteDesignSlideBoard", JsonConvert.SerializeObject(request), user.token);
-                response = JsonConvert.DeserializeObject<Response<ResponseSaveDesignBoardSlideDetail>>(saveDesignSlideBoard);
+                var deleteDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/DeleteDesignSlideBoard", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<ResponseSaveDesignBoardSlideDetail>>(deleteDesignSlideBoard);
                 return Json(response.Data);
             }
             catch (Exception ex)
             {
                 log.Info("***DeleteDesignSlideBoard*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return Json("NO");
+            }
+
+        }
+        [HttpPost]
+        public async Task<IActionResult> DuplicateDesignSlideBoard(RequestDesignBoardSlideDetailForDuplicate request)
+        {
+            //if (!_checkSession.IsSession()) return Ok("login");
+            var response = new Response<ResponseSaveDesignBoardSlideDetail>();
+            try
+            {
+                request.UpdatedBy = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
+                var DuplicateDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/DuplicateDesignSlideBoard", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<ResponseSaveDesignBoardSlideDetail>>(DuplicateDesignSlideBoard);
+                return Json(response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***DuplicateDesignSlideBoard*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
                 return Json("NO");
             }
 
