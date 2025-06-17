@@ -2725,7 +2725,66 @@ async function drawCanvasForDownload(condition) {
     allItems.forEach(item => {
         ctxElementForDownload.save();
         ctxElementForDownload.globalAlpha = item.opacity || 1;
+        // **1) if noAnim, draw immediately and skip the rest**
+        if (item.noAnim) {
+            if (item.type === 'image') {
+                // same as your image‑draw code
+                const x = item.finalX, y = item.finalY;
+                const w = item.width, h = item.height;
+                const rot = (item.rotation || 0) * Math.PI / 180;
+                ctxElementForDownload.translate(x + w / 2, y + h / 2);
+                ctxElementForDownload.rotate(rot);
+                ctxElementForDownload.scale(item.scaleX || 1, item.scaleY || 1);
+                try {
+                    ctxElementForDownload.drawImage(item.img, -w / 2, -h / 2, w, h);
+                } catch (e) {
+                    console.warn('drawImage error', e);
+                }
+            }
+            else if (item.type === 'text') {
+                // same as your text‑draw code, but unconditionally
+                const parts = [];
+                if (item.isItalic) parts.push('italic');
+                if (item.isBold) parts.push('bold');
+                parts.push(`${item.fontSize}px`, item.fontFamily);
+                ctxElementForDownload.font = parts.join(' ');
+                ctxElementForDownload.fillStyle = item.textColor;
+                ctxElementForDownload.textBaseline = 'top';
 
+                const raw = item.text;
+                let lines = raw.includes('\n')
+                    ? raw.split('\n')
+                    : wrapText(ctxElementForDownload, raw, item.boundingWidth - 2 * padding);
+                const fs = item.fontSize;
+                const lineH = item.lineSpacing * fs;
+
+                // adjust for rotation & padding exactly as you do below
+                const maxW = Math.max(...lines.map(l => ctxElementForDownload.measureText(l).width));
+                const boxW = Math.ceil(maxW + 2 * padding);
+                const boxH = Math.ceil(lines.length * lineH + 2 * padding);
+                item.boundingWidth = boxW;
+                item.boundingHeight = boxH;
+
+                const cx = item.x + boxW / 2;
+                const cy = item.y + boxH / 2;
+                const rot = (item.rotation || 0) * Math.PI / 180;
+                ctxElementForDownload.translate(cx, cy);
+                ctxElementForDownload.rotate(rot);
+                ctxElementForDownload.translate(-cx, -cy);
+
+                lines.slice(0, Math.floor((boxH - 2 * padding) / lineH))
+                    .forEach((line, i) => {
+                        let offsetX = item.x + padding;
+                        const lw = ctxElementForDownload.measureText(line).width;
+                        if (item.textAlign === 'center') offsetX = item.x + (boxW - lw) / 2;
+                        if (item.textAlign === 'right') offsetX = item.x + boxW - lw - padding;
+                        ctxElementForDownload.fillText(line, offsetX, item.y + padding + i * lineH);
+                    });
+            }
+
+            ctxElementForDownload.restore();
+            return;  // skip the rest of the logic for this item
+        }
         if (item.type === 'image') {
             const x = item.x, y = item.y;
             const w = item.width, h = item.height;
