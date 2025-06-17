@@ -2385,7 +2385,12 @@ function loadCanvasFromJsonForDownload(jsonData, condition = 'Common') {
             //if (!obj._hasManualBreaks) {
             //    autoFitText(obj, padding);
             //}
-            autoFitTextNewDownload(obj, padding);
+           // autoFitTextNewDownload(obj, padding);
+            const fitResult = autoFitTextNewDownload(obj, padding);
+            //obj.fontSize = fitResult.fontSize;
+            obj._wrappedLines = fitResult.wrappedLines;
+            obj.boundingWidth = fitResult.boundingWidth;
+            obj.boundingHeight = fitResult.boundingHeight;
         });
         drawCanvasForDownload(condition);
     });
@@ -2439,12 +2444,21 @@ function autoFitTextNewDownload(obj, padding = 5) {
         }
     }
 
-    // 4) commit: final fs + its wrapped lines + new boundingHeight
-    obj.fontSize = fs;
-    obj._wrappedLines = lines;
-    //obj.boundingHeight = lines.length * fs * 1.2 + 2 * padding;
-    const measuredWidths = lines.map(l => ctx2.measureText(l).width);
-    obj.boundingWidth = Math.max(...measuredWidths, 0) + 2 * padding;
+    //// 4) commit: final fs + its wrapped lines + new boundingHeight
+    //obj.fontSize = fs;
+    //obj._wrappedLines = lines;
+    ////obj.boundingHeight = lines.length * fs * 1.2 + 2 * padding;
+    //const measuredWidths = lines.map(l => ctx2.measureText(l).width);
+    //obj.boundingWidth = Math.max(...measuredWidths, 0) + 2 * padding;
+
+
+    // Return new values instead of mutating the object
+    return {
+        fontSize: fs,
+        wrappedLines: lines,
+        boundingWidth: blockW + 2 * padding,
+        boundingHeight: blockH + 2 * padding
+    };
 }
 
 
@@ -2834,6 +2848,8 @@ async function drawCanvasForDownload(condition) {
                 if (item.textAlign === 'right') offsetX = item.x + boxW - lw - padding;
                 ctxElementForDownload.fillText(line, offsetX, item.y + padding + i * lineH);
             });
+            console.log('FONT:', item.fontSize, 'cx:', cx, 'cy:', cy, 'canvas size:', canvasForDownload.width, canvasForDownload.height);
+
         }
 
         ctxElementForDownload.restore();
@@ -2864,6 +2880,7 @@ async function drawCanvasForDownload(condition) {
 
     ctxElementForDownload.restore();
 }
+
 
 
 //function drawCanvasForDownload(condition) {
