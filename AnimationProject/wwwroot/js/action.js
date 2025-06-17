@@ -2848,7 +2848,6 @@ async function drawCanvasForDownload(condition) {
                 if (item.textAlign === 'right') offsetX = item.x + boxW - lw - padding;
                 ctxElementForDownload.fillText(line, offsetX, item.y + padding + i * lineH);
             });
-            console.log('FONT:', item.fontSize, 'cx:', cx, 'cy:', cy, 'canvas size:', canvasForDownload.width, canvasForDownload.height);
 
         }
 
@@ -4005,7 +4004,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
         switch (Outdirection) {
             case "top":
                 obj.exitX = obj.finalX;
-                obj.exitY = -(obj.boundingHeight + 5);
+                obj.exitY = -(obj.boundingHeight + 25);
                 break;
             case "bottom":
                 obj.exitX = obj.finalX;
@@ -4075,14 +4074,14 @@ async function animateTextForDownload(animationType, direction, condition, loopC
         switch (Outdirection) {
             case "top":
                 imgObj.exitX = imgObj.finalX;
-                imgObj.exitY = -(dispHeight + 5);
+                imgObj.exitY = -(dispHeight + 55);
                 break;
             case "bottom":
                 imgObj.exitX = imgObj.finalX;
                 imgObj.exitY = canvasForDownload.height + 5;
                 break;
             case "left":
-                imgObj.exitX = -(dispWidth + 5);
+                imgObj.exitX = -(dispWidth + 55);
                 imgObj.exitY = imgObj.finalY;
                 break;
             case "right":
