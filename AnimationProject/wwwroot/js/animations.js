@@ -2645,7 +2645,7 @@ function getHandleUnderMouseForImage(imgObj, pos) {
 
 
 // Check if the mouse is over an image (returns the image object or null)
-function isMouseOverImageOld(imageObj, pos) {
+function isMouseOverImage(imageObj, pos) {
     const w = imageObj.width * imageObj.scaleX;
     const h = imageObj.height * imageObj.scaleY;
     return (
@@ -2655,7 +2655,7 @@ function isMouseOverImageOld(imageObj, pos) {
         pos.y <= imageObj.y + h
     );
 }
-function isMouseOverImage(imgObj, pos) {
+function isMouseOverImageOLD(imgObj, pos) {
     const sx = (typeof imgObj.scaleX === 'number') ? imgObj.scaleX : 1;
     const sy = (typeof imgObj.scaleY === 'number') ? imgObj.scaleY : 1;
     const w = imgObj.width * sx;
