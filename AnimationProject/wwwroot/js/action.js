@@ -2823,7 +2823,7 @@ async function drawCanvasForDownload(condition) {
             ctxElementForDownload.textBaseline = 'top';
 
             const raw = item.text;
-            let lines = raw.includes('\n') ? raw.split('\n') : wrapText(ctxElementForDownload, raw, item.boundingWidth - 2 * padding);
+            let lines = raw.includes('\n') ? raw.split('\n') : wrapText(ctxElementForDownload, raw, item.boundingWidth  * padding);
             const fs = item.fontSize;
             const lineH = item.lineSpacing * fs;
             // compute box dims
