@@ -2645,17 +2645,43 @@ function getHandleUnderMouseForImage(imgObj, pos) {
 
 
 // Check if the mouse is over an image (returns the image object or null)
-function isMouseOverImage(imageObj, pos) {
-    const w = imageObj.width * imageObj.scaleX;
-    const h = imageObj.height * imageObj.scaleY;
+//function isMouseOverImage(imageObj, pos) {
+//    const w = imageObj.width * imageObj.scaleX;
+//    const h = imageObj.height * imageObj.scaleY;
+//    return (
+//        pos.x >= imageObj.x &&
+//        pos.x <= imageObj.x + w &&
+//        pos.y >= imageObj.y &&
+//        pos.y <= imageObj.y + h
+//    );
+//}
+function isMouseOverImage(imgObj, pos) {
+    // 1) Compute pixel dimensions & center
+    const w = imgObj.width * (imgObj.scaleX || 1);
+    const h = imgObj.height * (imgObj.scaleY || 1);
+    const cx = imgObj.x + w / 2;
+    const cy = imgObj.y + h / 2;
+
+    // 2) Translate mouse into object‑center coords
+    let dx = pos.x - cx;
+    let dy = pos.y - cy;
+
+    // 3) Inverse‐rotate the point by –rotation
+    const rad = -(imgObj.rotation || 0) * Math.PI / 180;
+    const cos = Math.cos(rad), sin = Math.sin(rad);
+    const localX = dx * cos - dy * sin;
+    const localY = dx * sin + dy * cos;
+
+    // 4) Now do a simple half‑width/height check
     return (
-        pos.x >= imageObj.x &&
-        pos.x <= imageObj.x + w &&
-        pos.y >= imageObj.y &&
-        pos.y <= imageObj.y + h
+        localX >= -w / 2 &&
+        localX <= w / 2 &&
+        localY >= -h / 2 &&
+        localY <= h / 2
     );
 }
-function isMouseOverImageOLD(imgObj, pos) {
+
+function isMouseOverImageNewOLD(imgObj, pos) {
     const sx = (typeof imgObj.scaleX === 'number') ? imgObj.scaleX : 1;
     const sy = (typeof imgObj.scaleY === 'number') ? imgObj.scaleY : 1;
     const w = imgObj.width * sx;
@@ -2668,6 +2694,7 @@ function isMouseOverImageOLD(imgObj, pos) {
         pos.y <= imgObj.y + h
     );
 }
+
 // Working canvas code with multi-resize and centered text positioning
 // Assumes existing helpers: getTextObjectAt, getHandleUnderMouse, getHandleUnderMouseForImage,
 // isInsideBox, drawCanvas, SaveDesignBoard, enableFillColorDiv, enableStrockColorDiv
