@@ -1595,10 +1595,11 @@ function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
                         // triggerAutorefresh();
                         //Need to remove as this is temporary
                         hideDownloadPanel();
-                        HideLoader();
+                      
                         const targetUrl = window.location.origin + "/Canvas/VScreen1/1";
                         window.open(targetUrl, "_blank");
                         RedirectToVerticalPageWithQueryString();
+                        HideLoader();
                     },
                     error: function (data) {
                         console.log("error in saving Image " + activeSlide);
