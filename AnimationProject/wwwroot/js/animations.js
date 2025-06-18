@@ -2362,6 +2362,20 @@ function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imag
         animationMode = "delaylinear";
         $("#hdnEffectSlide1").val('delaylinear');
         $("#hdnOutEffectSlide1").val('delaylinear');
+
+        $("#hdnDirectiontSlide1").val('left');
+        $("#hdnOutDirectiontSlide1").val('left');
+
+        $('#aleft').addClass('active_effect');
+        $('#oleft').addClass('active_effect');
+    }
+    if ($("#hdnDirectiontSlide1").val() == "") {
+       
+        $("#hdnDirectiontSlide1").val('left');
+        $("#hdnOutDirectiontSlide1").val('left');
+
+        $('#aleft').addClass('active_effect');
+        $('#oleft').addClass('active_effect');
     }
 
         document.getElementById("imageStartX").value = imageStartX;
@@ -4860,127 +4874,7 @@ function TabShowHide(type) {
     } else if (type === 'Out') {
         document.getElementById("tab3").checked = true;
     }
-   // updateEffectButtons(activeSlide, type);
-    //if (activeSlide === 1) {
-    //    if (type === 'In') {
-    //        // read the current transition type
-    //        const t = $('#hdnEffectSlide1').val();
-
-    //        // clear any previously active transition buttons
-    //        $('.effect_btn').removeClass('active_effect');
-
-    //        // if it’s slideLeft, add `.active` to the #TslideLeft button
-    //        if (t === 'delaylinear') {
-    //            $('#adelaylinear').addClass('active_effect');
-    //        }
-    //        // (repeat for other types if you want)
-    //        else if (t === 'delaylinear2') {
-    //            $('#adelaylinear2').addClass('active_effect');
-    //        }
-    //        else {
-    //            $('.effect_btn').removeClass('active_effect');
-    //        }
-    //    }
-    //    else if (type === 'Out') {
-    //        // read the current transition type
-    //        const t = $('#hdnOutEffectSlide1').val();
-
-    //        // clear any previously active transition buttons
-    //        $('.effect_btn').removeClass('active_effect');
-
-    //        // if it’s slideLeft, add `.active` to the #TslideLeft button
-    //        if (t === 'delaylinear') {
-    //            $('#adelaylinearOut1').addClass('active_effect');
-    //        }
-    //        // (repeat for other types if you want)
-    //        else if (t === 'delaylinear2') {
-    //            $('#adelaylinearOut2').addClass('active_effect');
-    //        }
-    //        else {
-    //            $('.effect_btn').removeClass('active_effect');
-    //        }
-    //    }
-    //}
-    //else if (activeSlide === 2) {
-    //    if (type === 'In') {
-    //        // read the current transition type
-    //        const t = $('#hdnEffectSlide2').val();
-
-    //        // clear any previously active transition buttons
-    //        $('.effect_btn').removeClass('active_effect');
-
-    //        // if it’s slideLeft, add `.active` to the #TslideLeft button
-    //        if (t === 'delaylinear') {
-    //            $('#adelaylinear').addClass('active_effect');
-    //        }
-    //        // (repeat for other types if you want)
-    //        else if (t === 'delaylinear2') {
-    //            $('#adelaylinear2').addClass('active_effect');
-    //        }
-    //        else {
-    //            $('.effect_btn').removeClass('active_effect');
-    //        }
-    //    }
-    //    else if (type === 'Out') {
-    //        // read the current transition type
-    //        const t = $('#hdnOutEffectSlide2').val();
-
-    //        // clear any previously active transition buttons
-    //        $('.effect_btn').removeClass('active_effect');
-
-    //        // if it’s slideLeft, add `.active` to the #TslideLeft button
-    //        if (t === 'delaylinear') {
-    //            $('#adelaylinearOut1').addClass('active_effect');
-    //        }
-    //        // (repeat for other types if you want)
-    //        else if (t === 'delaylinear2') {
-    //            $('#adelaylinearOut2').addClass('active_effect');
-    //        }
-    //        else {
-    //            $('.effect_btn').removeClass('active_effect');
-    //        }
-    //    }
-    //}
-    //else if (activeSlide === 3) {
-    //    if (type === 'In') {
-    //        // read the current transition type
-    //        const t = $('#hdnEffectSlide3').val();
-
-    //        // clear any previously active transition buttons
-    //        $('.effect_btn').removeClass('active_effect');
-
-    //        // if it’s slideLeft, add `.active` to the #TslideLeft button
-    //        if (t === 'delaylinear') {
-    //            $('#adelaylinear').addClass('active_effect');
-    //        }
-    //        // (repeat for other types if you want)
-    //        else if (t === 'delaylinear2') {
-    //            $('#adelaylinear2').addClass('active_effect');
-    //        }
-    //        else {
-    //            $('.effect_btn').removeClass('active_effect');
-    //        }
-    //    }
-    //    else if (type === 'Out') {
-    //        // read the current transition type
-    //        const t = $('#hdnOutEffectSlide3').val();
-
-    //        // clear any previously active transition buttons
-    //        $('.effect_btn').removeClass('active_effect');
-
-    //        // if it’s slideLeft, add `.active` to the #TslideLeft button
-    //        if (t === 'delaylinear') {
-    //            $('#adelaylinearOut1').addClass('active_effect');
-    //        }
-    //        // (repeat for other types if you want)
-    //        else if (t === 'delaylinear2') {
-    //            $('#adelaylinearOut2').addClass('active_effect');
-    //        }
-    //        else {
-    //            $('.effect_btn').removeClass('active_effect');
-    //        }
-    //    }
-    //}
+   
 }
 function updateEffectButtons(type) {
     // 1) pick the right hidden‑field based on In vs Out
