@@ -4210,8 +4210,8 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             // 3) Timings
             const tweenIn = 0.15 * inTime;
             const tweenOut = 0.15 * outTime;
-            const overlapIn = tweenIn / 4;   // each next In starts 50% in
-            const overlapOut = tweenOut / 4;   // each next Out starts 50% in
+            const overlapIn = tweenIn / 6;   // each next In starts 50% in
+            const overlapOut = tweenOut / 7;   // each next Out starts 50% in
 
             // 4) Build timeline
             const tlText = gsap.timeline({
