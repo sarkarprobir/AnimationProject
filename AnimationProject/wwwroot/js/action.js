@@ -4210,8 +4210,8 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             // 3) Timings
             const tweenIn = 0.15 * inTime;
             const tweenOut = 0.15 * outTime;
-            const overlapIn = tweenIn / 2;   // each next In starts 50% in
-            const overlapOut = tweenOut / 2;   // each next Out starts 50% in
+            const overlapIn = tweenIn / 6;   // each next In starts 50% in
+            const overlapOut = tweenOut / 7;   // each next Out starts 50% in
 
             // 4) Build timeline
             const tlText = gsap.timeline({
@@ -4269,16 +4269,16 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             const actualDuration = tlText.duration();
             tlText.timeScale(actualDuration / slideExecutionTime);
 
-            // (Optional) reset all to final positions on complete
-            tlText.eventCallback("onComplete", () => {
-                images.forEach(img => {
-                    img.x = img.finalX; img.y = img.finalY; img.opacity = img.opacity ?? 1;
-                });
-                textObjects.forEach(txt => {
-                    txt.x = txt.finalX; txt.y = txt.finalY;
-                });
-                drawCanvasForDownload(condition);
-            });
+            //// (Optional) reset all to final positions on complete
+            //tlText.eventCallback("onComplete", () => {
+            //    images.forEach(img => {
+            //        img.x = img.finalX; img.y = img.finalY; img.opacity = img.opacity ?? 1;
+            //    });
+            //    textObjects.forEach(txt => {
+            //        txt.x = txt.finalX; txt.y = txt.finalY;
+            //    });
+            //    drawCanvasForDownload(condition);
+            //});
         }
 
 

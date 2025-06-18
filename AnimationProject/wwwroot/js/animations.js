@@ -1452,8 +1452,8 @@ function animateText(direction, condition, loopCount) {
         // 3) Compute timings
         const individualIn = 0.15 * inTime;    // per‐unit “In”
         const individualOut = 0.15 * outTime;   // per‐unit “Out”
-        const staggerIn = individualIn / 2; // 50% overlap
-        const staggerOut = individualOut / 2; // 50% overlap
+        const staggerIn = individualIn / 6; // 50% overlap
+        const staggerOut = individualOut / 7; // 50% overlap
 
         // 4) Build the GSAP timeline
         const tlText = gsap.timeline({
