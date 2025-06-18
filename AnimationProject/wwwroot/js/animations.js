@@ -1227,8 +1227,13 @@ function uploadImage(blob, existingFolderId = 'new') {
         });
 }
 function animateText(direction, condition, loopCount) {
-    const animationType = document.getElementById("hdnTextAnimationType").value;
+    const hiddenField = ($("#hdnTabType").val()  === 'In')
+        ? `#hdnEffectSlide${activeSlide}`
+        : `#hdnOutEffectSlide${activeSlide}`;
+    const effectType = $(hiddenField).val();
 
+   // const animationType = document.getElementById("hdnTextAnimationType").value;
+    const animationType = effectType;
     let tabType = $("#hdnTabType").val();
 
     // default to "In" if it’s null, undefined, or just an empty string
@@ -2352,7 +2357,7 @@ function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imag
 
     textObjects.forEach(o => o.selected = false);
     images.forEach(img => img.selected = false);
-    if ($("#hdnTextAnimationType").val() == "") {
+    if ($("#hdnEffectSlide1").val() == "") {
         $("#hdnTextAnimationType").val('delaylinear');
         animationMode = "delaylinear";
         $("#hdnEffectSlide1").val('delaylinear');
