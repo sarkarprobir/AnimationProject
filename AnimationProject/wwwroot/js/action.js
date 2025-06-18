@@ -4184,6 +4184,104 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             // --- STRIPE/CROSS-FADE: removed from here! ---
             // call your external runStripeTransition(...) after this timeline completes
         }
+        else if (animationType === "delaylinear2") {
+            // 1) Gather animatable items
+            const allItems = [
+                ...images.filter(i => !i.noAnim),
+                ...textObjects.filter(t => !t.noAnim)
+            ];
+
+            // 2) Bucket into “units” by groupId
+            const groupMap = new Map();
+            const units = [];
+            allItems.forEach(item => {
+                const gid = item.groupId;
+                if (gid != null) {
+                    if (!groupMap.has(gid)) {
+                        groupMap.set(gid, []);
+                        units.push(groupMap.get(gid));
+                    }
+                    groupMap.get(gid).push(item);
+                } else {
+                    units.push([item]);
+                }
+            });
+
+            // 3) Timings
+            const tweenIn = 0.15 * inTime;
+            const tweenOut = 0.15 * outTime;
+            const overlapIn = tweenIn / 2;   // each next In starts 50% in
+            const overlapOut = tweenOut / 2;   // each next Out starts 50% in
+
+            // 4) Build timeline
+            const tlText = gsap.timeline({
+                repeat: loopCount - 1,
+                repeatDelay: 0,
+                onRepeat: () => {
+                    // reset positions on loop
+                    images.forEach(img => { img.x = img.startX; img.y = img.startY; });
+                    textObjects.forEach(txt => { txt.x = txt.startX; txt.y = txt.startY; });
+                    drawCanvasForDownload(condition);
+                },
+                onUpdate: () => drawCanvasForDownload(condition)
+            });
+
+            // Pin noAnim items
+            images.filter(i => i.noAnim).forEach(img =>
+                tlText.set(img, { x: img.x, y: img.y, opacity: img.opacity ?? 1 }, 0)
+            );
+            textObjects.filter(t => t.noAnim).forEach(txt =>
+                tlText.set(txt, { x: txt.finalX, y: txt.finalY, opacity: txt.opacity ?? 1 }, 0)
+            );
+
+            // ── IN ──
+            tlText.to(units, {
+                x: (i, t) => t.finalX,
+                y: (i, t) => t.finalY,
+                duration: tweenIn,
+                ease: "power1.in",
+                stagger: overlapIn,
+                onUpdate: () => drawCanvasForDownload(condition)
+            }, 0);
+
+            // compute when the last IN actually ends:
+            // starts at (units.length-1)*overlapIn, runs tweenIn
+            const inEndTime = (units.length - 1) * overlapIn + tweenIn;
+
+            // ── STAY ──
+            tlText.to({}, {
+                duration: stayTime,
+                ease: "none"
+            }, inEndTime);
+
+            // ── OUT ──
+            tlText.to(units, {
+                x: (i, t) => t.exitX,
+                y: (i, t) => t.exitY,
+                duration: tweenOut,
+                ease: "power1.out",
+                stagger: overlapOut,
+                onUpdate: () => drawCanvasForDownload(condition)
+            }, inEndTime + stayTime);
+
+            // ── NORMALIZE TIMING ──
+            const slideExecutionTime = inTime + stayTime + outTime;
+            const actualDuration = tlText.duration();
+            tlText.timeScale(actualDuration / slideExecutionTime);
+
+            // (Optional) reset all to final positions on complete
+            tlText.eventCallback("onComplete", () => {
+                images.forEach(img => {
+                    img.x = img.finalX; img.y = img.finalY; img.opacity = img.opacity ?? 1;
+                });
+                textObjects.forEach(txt => {
+                    txt.x = txt.finalX; txt.y = txt.finalY;
+                });
+                drawCanvasForDownload(condition);
+            });
+        }
+
+
 
 
      //   console.log("TL duration:", tlText.duration(), "seconds");
