@@ -1252,7 +1252,7 @@ function animateText(direction, condition, loopCount) {
         switch (direction) {
             case "top":
                 obj.x = obj.finalX;
-                obj.y = -(obj.boundingHeight + 5);
+                obj.y = -(obj.boundingHeight + 55);
                 obj.exitX = obj.finalX;
                 obj.exitY = -(obj.boundingHeight + 5);
                 break;
@@ -1312,8 +1312,8 @@ function animateText(direction, condition, loopCount) {
         const scaleOutText = outTime;
         const individualIn = 0.15 * scaleInText;   // time per‐unit for “In”
         const individualOut = 0.15 * scaleOutText;  // time per‐unit for “Out”
-        const staggerIn = individualIn/2;         // gap between each group‐In
-        const staggerOut = individualOut/2;        // gap between each group‐Out
+        const staggerIn = individualIn;         // gap between each group‐In
+        const staggerOut = individualOut;        // gap between each group‐Out
 
         // 4) Build the GSAP timeline
         const tlText = gsap.timeline({
@@ -1426,6 +1426,128 @@ function animateText(direction, condition, loopCount) {
             drawCanvas(condition);
         });
     }
+    else if (animationType === "delaylinear2") {
+        // 1) Collect animatable items
+        const allItems = [
+            ...images.filter(i => !i.noAnim),
+            ...textObjects.filter(t => !t.noAnim)
+        ];
+
+        // 2) Bucket into units by groupId
+        const groupMap = new Map();
+        const units = [];
+        allItems.forEach(item => {
+            const gid = item.groupId;
+            if (gid != null) {
+                if (!groupMap.has(gid)) {
+                    groupMap.set(gid, []);
+                    units.push(groupMap.get(gid));
+                }
+                groupMap.get(gid).push(item);
+            } else {
+                units.push([item]);
+            }
+        });
+
+        // 3) Compute timings
+        const individualIn = 0.15 * inTime;    // per‐unit “In”
+        const individualOut = 0.15 * outTime;   // per‐unit “Out”
+        const staggerIn = individualIn / 2; // 50% overlap
+        const staggerOut = individualOut / 2; // 50% overlap
+
+        // 4) Build the GSAP timeline
+        const tlText = gsap.timeline({
+            repeat: loopCount - 1,
+            repeatDelay: 0,
+            onRepeat: () => {
+                // reset positions on loop
+                images.forEach(img => { img.x = img.startX; img.y = img.startY; });
+                textObjects.forEach(txt => { txt.x = txt.startX; txt.y = txt.startY; });
+                drawCanvas(condition);
+            },
+            onUpdate: () => drawCanvas(condition)
+        });
+
+        // Pin noAnim items at t=0
+        images.filter(i => i.noAnim).forEach(img =>
+            tlText.set(img, { x: img.x, y: img.y, opacity: img.opacity ?? 1 }, 0)
+        );
+        textObjects.filter(t => t.noAnim).forEach(txt =>
+            tlText.set(txt, { x: txt.finalX, y: txt.finalY, opacity: txt.opacity ?? 1 }, 0)
+        );
+
+        // ── IN ── (only if requested)
+        if (tabType === "In") {
+            tlText.to(units, {
+                x: (i, target) => target.finalX,
+                y: (i, target) => target.finalY,
+                duration: individualIn,
+                ease: "power1.in",
+                stagger: staggerIn,
+                onUpdate: () => drawCanvas(condition)
+            }, 0);
+        }
+
+        // compute when the last In actually finishes
+        const inEndTime = (tabType === "In")
+            ? (units.length - 1) * staggerIn + individualIn
+            : 0;
+
+        // ── STAY ── (for both Stay and Out)
+        if (tabType === "Stay" || tabType === "Out") {
+            tlText.to({}, {
+                duration: stayTime,
+                ease: "none"
+            }, inEndTime);
+        }
+
+        // ── OUT ── (only if requested)
+        if (tabType === "Out") {
+            // snap all to final at t=0
+            tlText.set([...images, ...textObjects], {
+                x: (i, t) => t.finalX,
+                y: (i, t) => t.finalY,
+                opacity: (i, t) => t.opacity ?? 1
+            }, 0);
+
+            tlText.to(units, {
+                x: (i, target) => target.exitX,
+                y: (i, target) => target.exitY,
+                duration: individualOut,
+                ease: "power1.out",
+                stagger: staggerOut,
+                onUpdate: () => drawCanvas(condition)
+            }, inEndTime + stayTime);
+        }
+
+        // ── RESET “snap‐back” at end ──
+        // total duration = inEndTime + stayTime + (if Out) last exit end
+        let totalDuration = inEndTime + stayTime;
+        if (tabType === "Out") {
+            totalDuration += (units.length - 1) * staggerOut + individualOut;
+        }
+
+        tlText.set([...images, ...textObjects], {
+            x: (i, t) => t.finalX,
+            y: (i, t) => t.finalY
+        }, totalDuration);
+
+        tlText.eventCallback("onComplete", () => {
+            images.forEach(img => {
+                img.x = img.finalX; img.y = img.finalY; img.opacity = img.opacity ?? 1;
+            });
+            textObjects.forEach(txt => {
+                txt.x = txt.finalX; txt.y = txt.finalY;
+            });
+            drawCanvas(condition);
+        });
+
+        // ── OPTIONAL: normalize to exact slide length ──
+        // const slideExec = inTime + stayTime + outTime;
+        // const ratio     = tlText.duration() / slideExec;
+        // tlText.timeScale(ratio);
+    }
+
 
 
 
@@ -1558,7 +1680,7 @@ function animateText(direction, condition, loopCount) {
         switch (direction) {
             case "top":
                 imgObj.x = imgObj.finalX;
-                imgObj.y = -(dispHeight + 5);
+                imgObj.y = -(dispHeight + 55);
                 imgObj.exitX = imgObj.finalX;
                 imgObj.exitY = -(dispHeight + 5);
                 break;
