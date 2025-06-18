@@ -129,17 +129,16 @@ p.collapsed{    font-size: var(--font-size14);}
 .panel-left ul {margin:0px; padding:0px;}
 .panel-left ul li .menuboard-thum{width:100%; margin-bottom:15px;border:2px solid #ddd; padding:4px; margin-bottom:20px;}
 .panel-left ul li p{margin:0px 0px 10px 0px;}
-    .panel-left ul li .sd-btn-right {
-        float: right;
+    .sd-btn-right {
+/*        float: right;*/
         border: none;
         border-radius: 3px;
         background: transparent;
         padding: 2px 4px;
         color: #747474;
-        font-weight: bold;
-        font-size: 13px !important;
+        font-size: 14px !important;
     }
-    .panel-left ul li .sd-btn-right:hover{
+    .sd-btn-right:hover{
         box-shadow: rgba(3, 102, 214, 0.3) 0px 0px 0px 3px;
     }
   .sd-btn-right img{float:left!important; margin:1px 10px 0px 0px !important;}
@@ -1566,4 +1565,44 @@ body {
     position: absolute;
     top: 10px;
     right: 20px;
+}
+/*slide options css*/
+.slide-options {
+    display: none;
+    position: absolute;
+    background: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    padding: 8px;
+    border-radius: 3px;
+    z-index: 1000;
+    font-size: 14px;
+}
+    .slide-options p{
+        font-weight: 700;
+        padding-left: 12px;
+    }
+    .slide-options .slide-option {
+        padding: 6px 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 3px;
+        border: none; 
+        background-color: transparent;
+    }
+
+        .slide-options .slide-option:hover {
+            background-color: #f0f0f0;
+        }
+
+.slide-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    gap: 20px;
+}
+
+.slide-item {
+    position: relative;
 }

@@ -4,18 +4,42 @@
 @{
     var mode = (string)(ViewBag.Orientation ?? "Unknown");
 }
+<script>
+        //slide options js
+    const thumbs = document.querySelectorAll('.menuboard-vertical-thum');
+    const slideOptions = document.getElementById('slideOptions');
+    let currentImage = null;
+
+    thumbs.forEach(image => {
+        image.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+            currentImage = image;
+            const rect = image.getBoundingClientRect();
+            slideOptions.style.display = 'block';
+            slideOptions.style.left = `${e.clientX + window.scrollX}px`;
+            slideOptions.style.top = `${e.clientY + window.scrollY}px`;
+            document.body.appendChild(slideOptions);
+        });
+    });
+
+    document.addEventListener('click', function () {
+        slideOptions.style.display = 'none';
+    });
+</script>
+
 <div class="panel-left-scroll panel-vertical-scroll">
     @if (mode == "Vertical")
     {
-
+        <button onclick="tranTogglePopup();" class="sd-btn-right mb-3"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;">Transition</button>
         <ul>
+            
             <li>
                 <img src="~/images/Default_Slide_Image.jpeg" id="imageVertical1" class="menuboard-vertical-thum active_border" alt="Banner" onclick="SaveDesignBoardSlide(1); handleThumbClick(this);TabShowHide('In');">
                 <div class="d-flex justify-content-center align-items-center ">
                   @*   <span>1</span> *@
-                    <button onclick="tranTogglePopup();" class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>Fade</b></button>
+                    @* <button onclick="tranTogglePopup();" class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>Fade</b></button> *@
                     <button onclick="DeleteSlide(hdnDesignBoardDetailsIdSlide1.value);" class="sd-btn-right"> <b>Delete</b></button>
-                    <button onclick="DuplicateSlide();" class="sd-btn-right"> <b>Duplicate</b></button>
+                    @* <button onclick="DuplicateSlide();" class="sd-btn-right"> <b>Duplicate</b></button> *@
                     <div class="clear"></div>
                 </div>
             </li>
@@ -23,9 +47,9 @@
                 <img src="~/images/Default_Slide_Image.jpeg" id="imageVertical2" class="menuboard-vertical-thum" alt="Banner" onclick="SaveDesignBoardSlide(2); handleThumbClick(this);TabShowHide('In');">
                 <div class="d-flex justify-content-center align-items-center ">
                   @*   <span>2</span> *@
-                    <butto onclick="tranTogglePopup();" class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>Fade</b></butto>
+                    @* <button onclick="tranTogglePopup();" class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>Fade</b></button> *@
                     <button onclick="DeleteSlide(hdnDesignBoardDetailsIdSlide2.value);" class="sd-btn-right"> <b>Delete</b></button>
-                        <button onclick="DuplicateSlide();" class="sd-btn-right"> <b>Duplicate</b></button>
+                    @* <button onclick="DuplicateSlide();" class="sd-btn-right"> <b>Duplicate</b></button> *@
                     <div class="clear"></div>
                 </div>
             </li>
@@ -73,5 +97,12 @@
                 </ul>
             </div>
     }
+
+    <div class="slide-options" id="slideOptions">
+        <p class="mb-1">Slide</p>
+        <button class="slide-option" onclick="DuplicateSlide();"><i class="fa-regular fa-clone"></i> Clone</button>
+        <button class="slide-option"><i class="fa-regular fa-trash-can"></i> Delete</button>
+    </div>
+
 </div>
 
