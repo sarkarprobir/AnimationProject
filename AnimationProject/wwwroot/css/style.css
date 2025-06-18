@@ -1547,6 +1547,23 @@ body {
     font-size: 14px;
     padding: 3px 5px;
 }
-.downloadModal-content{
-
+.downloadModal-content {
+    height: 211px !important;
+    padding-left: 43px !important;
+}
+.fileName {
+    font-size: 14px;
+    color: #000;
+}
+.fileLink {
+    font-size: 15px;
+    font-weight: 700;
+    color: #000;
+}
+.download-cross_btn{
+    font-size: 24px;
+    /* height: 10px; */
+    position: absolute;
+    top: 10px;
+    right: 20px;
 }
