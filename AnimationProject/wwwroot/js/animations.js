@@ -4990,7 +4990,7 @@ function updateEffectButtons(type) {
     const effectType = $(hiddenField).val();
 
     // 2) clear any previously active button
-    $('.effect_btn').removeClass('active_effect');
+   // $('.effect_btn').removeClass('active_effect');
 
     // 3) pick the button selector
     let btnSelector = null;
@@ -5009,7 +5009,37 @@ function updateEffectButtons(type) {
         $(btnSelector).addClass('active_effect');
     }
 }
+function updateDirectionButtons(type) {
+    // 1) pick the right hidden‑field based on In vs Out
+    const hiddenField = (type === 'In')
+        ? `#hdnDirectiontSlide${activeSlide}`
+        : `#hdnOutDirectiontSlide${activeSlide}`;
+    const directionType = $(hiddenField).val();
 
+    // 2) clear any previously active button
+   // $('.effect_btn').removeClass('active_effect');
+
+    // 3) pick the button selector
+    let btnSelector = null;
+    if (type === 'In') {
+        $('.direction_link').removeClass('active_effect');
+        if (directionType === 'left') btnSelector = '#aleft';
+        else if (directionType === 'right') btnSelector = '#aright';
+        else if (directionType === 'bottom') btnSelector = '#abottom';
+        else if (directionType === 'top') btnSelector = '#atop';
+    } else {
+        $('.direction_link .out_link').removeClass('active_effect');
+        if (directionType === 'left') btnSelector = '#oleft';
+        else if (directionType === 'right') btnSelector = '#oright';
+        else if (directionType === 'bottom') btnSelector = '#obottom';
+        else if (directionType === 'top') btnSelector = '#otop';
+    }
+
+    // 4) activate it (if any)
+    if (btnSelector) {
+        $(btnSelector).addClass('active_effect');
+    }
+}
 
 
 

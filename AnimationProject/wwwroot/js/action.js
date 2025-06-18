@@ -624,6 +624,8 @@ function GetDesignBoardById(id) {
 
                     updateEffectButtons('In');
                     updateEffectButtons('Out');
+                    updateDirectionButtons('In');
+                    updateDirectionButtons('Out');
                     }
                    
             }
