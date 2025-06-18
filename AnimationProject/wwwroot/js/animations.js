@@ -4488,8 +4488,10 @@ canvas.addEventListener("click", function (e) {
 function HideShowRightPannel(selectedType) {
     ShowLoader();
     const heading = document.getElementById("text_heading");
+    const fontPannel = document.getElementById("fontstyle_popup");
     if (selectedType == 'Image') {
         heading.innerHTML = "Image";
+        if (fontPannel) { fontPannel.style.display = 'none'; }
         document.getElementById("text_alignment_tool").style.display = 'none';
         document.getElementById("text_decoration_tool").style.display = 'none';
         document.getElementById("text_color_tool").style.display = 'none';
@@ -4510,6 +4512,7 @@ function HideShowRightPannel(selectedType) {
     }
     else if (selectedType == 'Shape') {
         heading.innerHTML = "Shape";
+        if (fontPannel) { fontPannel.style.display = 'none'; }
         document.getElementById("text_alignment_tool").style.display = 'none';
         document.getElementById("text_decoration_tool").style.display = 'none';
         document.getElementById("text_color_tool").style.display = 'none';
@@ -4518,6 +4521,7 @@ function HideShowRightPannel(selectedType) {
     }
     else if (selectedType == 'Icon') {
         heading.innerHTML = "Icon";
+        if (fontPannel) { fontPannel.style.display = 'none'; }
         document.getElementById("text_alignment_tool").style.display = 'none';
         document.getElementById("text_decoration_tool").style.display = 'none';
         document.getElementById("text_color_tool").style.display = 'none';
