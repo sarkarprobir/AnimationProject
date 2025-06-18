@@ -52,8 +52,8 @@
             @*  <button class="btn" title="Publish" onclick="triggerAutorefresh()" id="btnPublish">P </button> *@
             <button class="btn" title="Publish" onclick="GetDesignBoardByIdForDownload('');" id="btnPublish">P </button>
         </li>
-        <li>
-            <button class="btn" type="submit" onclick="GetDesignBoardByIdForDownload('download')" title="download"><img src="~/images/icons/ico-download.svg" width="30"> </button>
+        <li data-bs-toggle="modal" data-bs-target="#downloadModal">
+            <button class="btn" type="submit" onclick0="GetDesignBoardByIdForDownload('download')" title="download"><img src="~/images/icons/ico-download.svg" width="30"> </button>
         </li>
 
         <li class="nav-item dropdown">
