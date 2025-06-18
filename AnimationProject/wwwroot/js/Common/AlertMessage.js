@@ -67,27 +67,33 @@ function MessageShow(clickfunction, message, msgType) {
         //msgType = error, success, warning
         var msgHtml = '';
         if (msgType.toLowerCase() == 'error') {
+            document.getElementById('dvButtonShowCancel').style.display = 'none';
             msgHtml = msgHtml + '<div class="padding-control-withmsgdivstyle d-flex flex-column align-items-center"><div class="alert-icons-label error-sm-bg"><img class="msg-img" src="../../images/cancel.png" /></div><div class="error-msg msg-styles">' + message + '</div></div>';
         }
         else if (msgType.toLowerCase() == 'success') {
+            document.getElementById('dvButtonShowCancel').style.display = 'none';
             msgHtml = msgHtml + '<div class="padding-control-withmsgdivstyle d-flex flex-column align-items-center"><div class="alert-icons-label success-sm-bg"><img class="msg-img" src="../../images/checked.png" /></div><div class="sucess-msg msg-styles">' + message + '</div></div>';
         }
         else if (msgType.toLowerCase() == 'warning') {
+            document.getElementById('dvButtonShowCancel').style.display = 'block';
             msgHtml = msgHtml + '<div class="padding-control-withmsgdivstyle d-flex flex-column align-items-center"><div class="alert-icons-label warning-sm-bg"><img class="msg-img" src="../../images/complain.png" /></div><div class="warning-msg msg-styles">' + message + '</div></div>';
         }
         else {
+            document.getElementById('dvButtonShowCancel').style.display = 'none';
             msgHtml = msgHtml + '<div class="padding-control-withmsgdivstyle d-flex flex-column align-items-center"><div class="alert-icons-label info-sm-bg"><img class="msg-img" src="../../images/info.png" /></div><div class="info-msg msg-styles">' + message + '</div></div>';
         }
 
         var dvButtonHtml = '';
+        var clButtonHtml = '';
         dvButtonHtml = dvButtonHtml + '<button class="btn btn-save min-w-80px min-widthauto" onclick="' + clickfunction + '; CloseMessage();">Ok</button>';
+        clButtonHtml = clButtonHtml + '<button class="btn btn-secondary min-w-80px min-widthauto" onclick="' + clickfunction + '; CloseMessage();">Cancel</button>';
 
         $('#pMessageShow').html('');
         $('#pMessageShow').html(msgHtml);
-
         $('#dvButtonShow').html('');
         $('#dvButtonShowok').html('');
         $('#dvButtonShowok').html(dvButtonHtml);
+        $('#dvButtonShowCancel').html(clButtonHtml);
 
         $('#popUpAlerts').show();
         let toastEl = new bootstrap.Toast($("#popUpAlerts")[0]);
