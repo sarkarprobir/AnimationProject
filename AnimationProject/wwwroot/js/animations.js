@@ -1939,31 +1939,37 @@ function textAnimationClick(clickedElement, type, from) {
         else if (activeSlide === 3) {
             $("#hdnOutEffectSlide3").val(type);
         }
+        $('.effectOut_btn').removeClass('active_effect');
+        clickedElement.classList.add("active_effect");
+    }
+    else if (from == 'In') {
+        $('.effectIn_btn').removeClass('active_effect');
+        clickedElement.classList.add("active_effect");
     }
     // Get the container using its ID.
-    var ulEffects = document.getElementById("ulEffects");
+    //var ulEffects = document.getElementById("ulEffects");
 
-    // Select all <a> elements within the container.
-    var links = ulEffects.getElementsByTagName("a");
+    //// Select all <a> elements within the container.
+    //var links = ulEffects.getElementsByTagName("a");
 
-    // Remove the active_effect class from all links.
-    for (var i = 0; i < links.length; i++) {
-        links[i].classList.remove("active_effect");
-    }
+    //// Remove the active_effect class from all links.
+    //for (var i = 0; i < links.length; i++) {
+    //    links[i].classList.remove("active_effect");
+    //}
 
-    // Add the active_effect class to the clicked element.
-    clickedElement.classList.add("active_effect");
+    //// Add the active_effect class to the clicked element.
+    //clickedElement.classList.add("active_effect");
 
-    // Get the container using its ID.
-    var ulDirection = document.getElementById("uldirection");
+    //// Get the container using its ID.
+    //var ulDirection = document.getElementById("uldirection");
 
-    // Select all <a> elements within the container.
-    var links = ulDirection.getElementsByTagName("a");
+    //// Select all <a> elements within the container.
+    //var links = ulDirection.getElementsByTagName("a");
 
-    // Remove the active_effect class from all links.
-    for (var i = 0; i < links.length; i++) {
-        links[i].classList.remove("active_effect");
-    }
+    //// Remove the active_effect class from all links.
+    //for (var i = 0; i < links.length; i++) {
+    //    links[i].classList.remove("active_effect");
+    //}
     initMiniCanvasHandlers();
 }
 // miniCanvasHandlers.js
@@ -4849,7 +4855,159 @@ function TabShowHide(type) {
     } else if (type === 'Out') {
         document.getElementById("tab3").checked = true;
     }
+   // updateEffectButtons(activeSlide, type);
+    //if (activeSlide === 1) {
+    //    if (type === 'In') {
+    //        // read the current transition type
+    //        const t = $('#hdnEffectSlide1').val();
+
+    //        // clear any previously active transition buttons
+    //        $('.effect_btn').removeClass('active_effect');
+
+    //        // if it’s slideLeft, add `.active` to the #TslideLeft button
+    //        if (t === 'delaylinear') {
+    //            $('#adelaylinear').addClass('active_effect');
+    //        }
+    //        // (repeat for other types if you want)
+    //        else if (t === 'delaylinear2') {
+    //            $('#adelaylinear2').addClass('active_effect');
+    //        }
+    //        else {
+    //            $('.effect_btn').removeClass('active_effect');
+    //        }
+    //    }
+    //    else if (type === 'Out') {
+    //        // read the current transition type
+    //        const t = $('#hdnOutEffectSlide1').val();
+
+    //        // clear any previously active transition buttons
+    //        $('.effect_btn').removeClass('active_effect');
+
+    //        // if it’s slideLeft, add `.active` to the #TslideLeft button
+    //        if (t === 'delaylinear') {
+    //            $('#adelaylinearOut1').addClass('active_effect');
+    //        }
+    //        // (repeat for other types if you want)
+    //        else if (t === 'delaylinear2') {
+    //            $('#adelaylinearOut2').addClass('active_effect');
+    //        }
+    //        else {
+    //            $('.effect_btn').removeClass('active_effect');
+    //        }
+    //    }
+    //}
+    //else if (activeSlide === 2) {
+    //    if (type === 'In') {
+    //        // read the current transition type
+    //        const t = $('#hdnEffectSlide2').val();
+
+    //        // clear any previously active transition buttons
+    //        $('.effect_btn').removeClass('active_effect');
+
+    //        // if it’s slideLeft, add `.active` to the #TslideLeft button
+    //        if (t === 'delaylinear') {
+    //            $('#adelaylinear').addClass('active_effect');
+    //        }
+    //        // (repeat for other types if you want)
+    //        else if (t === 'delaylinear2') {
+    //            $('#adelaylinear2').addClass('active_effect');
+    //        }
+    //        else {
+    //            $('.effect_btn').removeClass('active_effect');
+    //        }
+    //    }
+    //    else if (type === 'Out') {
+    //        // read the current transition type
+    //        const t = $('#hdnOutEffectSlide2').val();
+
+    //        // clear any previously active transition buttons
+    //        $('.effect_btn').removeClass('active_effect');
+
+    //        // if it’s slideLeft, add `.active` to the #TslideLeft button
+    //        if (t === 'delaylinear') {
+    //            $('#adelaylinearOut1').addClass('active_effect');
+    //        }
+    //        // (repeat for other types if you want)
+    //        else if (t === 'delaylinear2') {
+    //            $('#adelaylinearOut2').addClass('active_effect');
+    //        }
+    //        else {
+    //            $('.effect_btn').removeClass('active_effect');
+    //        }
+    //    }
+    //}
+    //else if (activeSlide === 3) {
+    //    if (type === 'In') {
+    //        // read the current transition type
+    //        const t = $('#hdnEffectSlide3').val();
+
+    //        // clear any previously active transition buttons
+    //        $('.effect_btn').removeClass('active_effect');
+
+    //        // if it’s slideLeft, add `.active` to the #TslideLeft button
+    //        if (t === 'delaylinear') {
+    //            $('#adelaylinear').addClass('active_effect');
+    //        }
+    //        // (repeat for other types if you want)
+    //        else if (t === 'delaylinear2') {
+    //            $('#adelaylinear2').addClass('active_effect');
+    //        }
+    //        else {
+    //            $('.effect_btn').removeClass('active_effect');
+    //        }
+    //    }
+    //    else if (type === 'Out') {
+    //        // read the current transition type
+    //        const t = $('#hdnOutEffectSlide3').val();
+
+    //        // clear any previously active transition buttons
+    //        $('.effect_btn').removeClass('active_effect');
+
+    //        // if it’s slideLeft, add `.active` to the #TslideLeft button
+    //        if (t === 'delaylinear') {
+    //            $('#adelaylinearOut1').addClass('active_effect');
+    //        }
+    //        // (repeat for other types if you want)
+    //        else if (t === 'delaylinear2') {
+    //            $('#adelaylinearOut2').addClass('active_effect');
+    //        }
+    //        else {
+    //            $('.effect_btn').removeClass('active_effect');
+    //        }
+    //    }
+    //}
 }
+function updateEffectButtons(type) {
+    // 1) pick the right hidden‑field based on In vs Out
+    const hiddenField = (type === 'In')
+        ? `#hdnEffectSlide${activeSlide}`
+        : `#hdnOutEffectSlide${activeSlide}`;
+    const effectType = $(hiddenField).val();
+
+    // 2) clear any previously active button
+    $('.effect_btn').removeClass('active_effect');
+
+    // 3) pick the button selector
+    let btnSelector = null;
+    if (type === 'In') {
+        $('.effectIn_btn').removeClass('active_effect');
+        if (effectType === 'delaylinear') btnSelector = '#adelaylinear';
+        else if (effectType === 'delaylinear2') btnSelector = '#adelaylinear2';
+    } else {
+        $('.effectOut_btn').removeClass('active_effect');
+        if (effectType === 'delaylinear') btnSelector = '#adelaylinearOut1';
+        else if (effectType === 'delaylinear2') btnSelector = '#adelaylinearOut2';
+    }
+
+    // 4) activate it (if any)
+    if (btnSelector) {
+        $(btnSelector).addClass('active_effect');
+    }
+}
+
+
+
+
  //Listen for clicks on the dropdown menu.
 //document.getElementById('ddlSpeedControl').addEventListener('click', function (event) {
 //    if (event.target.matches('a.dropdown-item')) {

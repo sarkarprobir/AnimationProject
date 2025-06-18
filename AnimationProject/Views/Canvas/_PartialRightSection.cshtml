@@ -610,13 +610,13 @@ function moveCaretToEnd(el) {
     <div class="tabset">
         <input type="hidden" id="hdnTabType" />
         <!-- Tab 1 -->
-        <input type="radio" name="tabset" id="tab1" onclick="TabShowHide('In')" aria-controls="marzen" checked>
+        <input type="radio" name="tabset" id="tab1" onclick="TabShowHide('In');updateEffectButtons('In');" aria-controls="marzen" checked>
         <label style="margin-left:0px;" for="tab1">In</label>
         <!-- Tab 2 -->
         <input type="radio" name="tabset" id="tab2" onclick="TabShowHide('Stay')" aria-controls="rauchbier">
         <label for="tab2">Stay</label>
         <!-- Tab 3 -->
-        <input type="radio" name="tabset" id="tab3" onclick="TabShowHide('Out')" aria-controls="dunkles">
+        <input type="radio" name="tabset" id="tab3" onclick="TabShowHide('Out');updateEffectButtons('Out');" aria-controls="dunkles">
         <label style="margin-right:0px;" for="tab3">Out</label>
 
         <div class="tab-panels">
@@ -661,11 +661,11 @@ function moveCaretToEnd(el) {
                             <div class="clear"></div>
                         </li>
                         <li>
-                            <a id="adelaylinear" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear','In')" title="linear">Linear1</a>
+                            <a class="effectIn_btn active_effect" id="adelaylinear" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear','In')" title="linear">Linear1</a>
                             <div class="clear"></div>
                         </li>
                          <li>
-                            <a id="adelaylinear2" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear2','In')" title="linear">Linear2</a>
+                            <a class="effectIn_btn" id="adelaylinear2" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear2','In')" title="linear">Linear2</a>
                             <div class="clear"></div>
                         </li>
                         <li style="display:none;">
@@ -846,11 +846,11 @@ function moveCaretToEnd(el) {
                         <div class="clear"></div>
                     </li> *@
                     <li>
-                        <a id="adelaylinearOut1" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear','Out')" title="linear1">Linear1</a>
+                        <a class="effectOut_btn active_effect" id="adelaylinearOut1" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear','Out')" title="linear1">Linear1</a>
                         <div class="clear"></div>
                     </li>
                     <li>
-                        <a id="adelaylinearOut2" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear2','Out')" title="linear2">Linear2</a>
+                        <a class="effectOut_btn" id="adelaylinearOut2" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear2','Out')" title="linear2">Linear2</a>
                         <div class="clear"></div>
                     </li>
                     <li title="Coming Soon">

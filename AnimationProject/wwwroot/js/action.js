@@ -621,7 +621,11 @@ function GetDesignBoardById(id) {
                                 loadCanvasFromJson(verticalSlide1, 'Common');
                             });
                     }
-                }
+
+                    updateEffectButtons('In');
+                    updateEffectButtons('Out');
+                    }
+                   
             }
                 HideLoader();
             },
