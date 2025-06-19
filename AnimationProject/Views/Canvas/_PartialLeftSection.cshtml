@@ -9,7 +9,6 @@
     const thumbs = document.querySelectorAll('.menuboard-vertical-thum');
     const slideOptions = document.getElementById('slideOptions');
     let currentImage = null;
-
     thumbs.forEach(image => {
         image.addEventListener('contextmenu', function (e) {
             e.preventDefault();
@@ -36,30 +35,21 @@
             <li>
                 <img src="~/images/Default_Slide_Image.jpeg" id="imageVertical1" class="menuboard-vertical-thum active_border" alt="Banner" onclick="SaveDesignBoardSlide(1); handleThumbClick(this);TabShowHide('In');updateEffectButtons('In');updateEffectButtons('Out');updateDirectionButtons('In');updateDirectionButtons('Out');">
                 <div class="d-flex justify-content-center align-items-center ">
-                  @*   <span>1</span> *@
-                    @* <button onclick="tranTogglePopup();" class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>Fade</b></button> *@
-                    <button onclick="DeleteSlide(hdnDesignBoardDetailsIdSlide1.value);" class="sd-btn-right"> <b>Delete</b></button>
-                    @* <button onclick="DuplicateSlide();" class="sd-btn-right"> <b>Duplicate</b></button> *@
+                    <span>Slide-1</span>
                     <div class="clear"></div>
                 </div>
             </li>
             <li>
                 <img src="~/images/Default_Slide_Image.jpeg" id="imageVertical2" class="menuboard-vertical-thum" alt="Banner" onclick="SaveDesignBoardSlide(2); handleThumbClick(this);TabShowHide('In');updateEffectButtons('In');updateEffectButtons('Out');updateDirectionButtons('In');updateDirectionButtons('Out');">
                 <div class="d-flex justify-content-center align-items-center ">
-                  @*   <span>2</span> *@
-                    @* <button onclick="tranTogglePopup();" class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>Fade</b></button> *@
-                    <button onclick="DeleteSlide(hdnDesignBoardDetailsIdSlide2.value);" class="sd-btn-right"> <b>Delete</b></button>
-                    @* <button onclick="DuplicateSlide();" class="sd-btn-right"> <b>Duplicate</b></button> *@
+                    <span>Slide-2</span>
                     <div class="clear"></div>
                 </div>
             </li>
             <li>
                 <img src="~/images/Default_Slide_Image.jpeg" id="imageVertical3" class="menuboard-vertical-thum" alt="Banner" onclick="SaveDesignBoardSlide(3); handleThumbClick(this);TabShowHide('In');updateEffectButtons('In');updateEffectButtons('Out');updateDirectionButtons('In');updateDirectionButtons('Out');">
                 <div class="d-flex justify-content-center align-items-center ">
-                   @*  <span>3</span> *@
-                    @* <button onclick="tranTogglePopup();" class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>Fade</b></button> *@
-                    <button onclick="DeleteSlide(hdnDesignBoardDetailsIdSlide3.value);" class="sd-btn-right"> <b>Delete</b></button>
-                       @*  <button onclick="DuplicateSlide();" class="sd-btn-right"> <b>Duplicate</b></button> *@
+                    <span>Slide-3</span>
                     <div class="clear"></div>
                 </div>
             </li>
@@ -101,8 +91,8 @@
   @*   <div class="slide-options" id="slideOptions">
         <p class="mb-1">Slide</p>
         <button class="slide-option" onclick="DuplicateSlide();"><i class="fa-regular fa-clone"></i> Clone</button>
-        <button class="slide-option"><i class="fa-regular fa-trash-can"></i> Delete</button>
-    </div> *@
+        <button class="slide-option" onclick="DeleteSlide();"><i class="fa-regular fa-trash-can"></i> Delete</button>
+    </div>
 
 </div>
 
