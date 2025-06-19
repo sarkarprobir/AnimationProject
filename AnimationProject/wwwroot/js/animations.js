@@ -6027,6 +6027,7 @@ function tranTogglePopup() {
         document.getElementById('background_popup'),
         document.getElementById('tranPopup'),
         document.querySelector('.right-sec-one'),
+        document.querySelector('.right-sec-two'),
     ];
 
     // Hide all other popups

@@ -115,3 +115,37 @@ function CloseMessage() {
         console.log(e);
     }
 }
+
+//confirm message js
+function customConfirm(message) {
+    return new Promise((resolve) => {
+        const modalElement = document.getElementById('customConfirmModal');
+        const modal = new bootstrap.Modal(modalElement);
+        document.getElementById('customConfirmMessage').textContent = message;
+
+        const okBtn = document.getElementById('customConfirmOk');
+        const cancelBtn = document.getElementById('customConfirmCancel');
+
+        const cleanup = () => {
+            okBtn.removeEventListener('click', onOk);
+            cancelBtn.removeEventListener('click', onCancel);
+        };
+
+        const onOk = () => {
+            cleanup();
+            modal.hide();
+            resolve(true);
+        };
+
+        const onCancel = () => {
+            cleanup();
+            modal.hide();
+            resolve(false);
+        };
+
+        okBtn.addEventListener('click', onOk);
+        cancelBtn.addEventListener('click', onCancel);
+
+        modal.show();
+    });
+}

@@ -105,6 +105,25 @@
             </div>
         </div>
     </div>
+    @*--------------------Confirm functionality modal------------------*@
+    <!-- Custom Confirm Modal -->
+    <div class="cutom-confirm-modal">
+    <div class="modal fade" id="customConfirmModal" tabindex="-1" aria-hidden="true" style="opacity: 1; background: rgb(36 7 136 / 49%); z-index: 9999;">
+        <div class="modal-dialog">
+            <div class="modal-content custom-modal-content">
+                @* <div class="modal-header">
+                    <h5 class="modal-title">Confirm</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div> *@
+                <div class="modal-body custom-confirm-modal-body mt-3" id="customConfirmMessage">Are you sure?</div>
+                <div class="modal-footer d-flex justify-content-center">
+                        <button type="button" class="btn btn-cancel min-w-80px min-widthauto" id="customConfirmCancel">Cancel</button>
+                        <button type="button" class="btn btn-save min-w-80px min-widthauto" id="customConfirmOk">Ok</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
     @*---------------------------Message Popup End------------------*@
     @if (ViewBag.HideFooter == null || ViewBag.HideFooter == false)
     {

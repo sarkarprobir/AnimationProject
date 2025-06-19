@@ -868,10 +868,14 @@ svg:hover {
     color: #fff;
     background-color: #6214fe;
     border-color: transparent;
+    box-shadow: none !important;
 }
-.min-w-80px {
-    min-width: 80px;
-}
+    .btn-save:focus {
+        box-shadow: none !important;
+    }
+    .min-w-80px {
+        min-width: 80px;
+    }
 .btn-save:hover {
     color: #fff;
     background-color: #4038b5;
@@ -1605,4 +1609,52 @@ body {
 
 .slide-item {
     position: relative;
+}
+/*custom comfirm modal*/
+.cutom-confirm-modal .modal.fade .modal-dialog {
+    transform: translate(0, -145px) !important;
+    width: 18rem;
+}
+.cutom-confirm-modal .custom-modal-content {
+    height: 120px !important;
+}
+.custom-confirm-modal-body {
+    font-size: 14px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: "Nunito", sans-serif;
+    color: #000;
+    padding: 0;
+}
+.tranBox {
+    border: 2px solid transparent;
+    width: 45px;
+    border-radius: 3px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-block: 2px;
+    cursor: pointer;
+}
+.tranBox:hover{
+    border: 2px solid #ccc;
+}
+.btn-cancel {
+    background-color: #fff;
+    color: #000;
+    border: 2px solid #ccc;
+    border-radius: 3px;
+    box-shadow: none !important;
+}
+.btn-cancel:focus{
+    box-shadow: none !important;
+}
+.btn-cancel:hover{
+    background-color: #d1d1d1;
+}
+.cutom-confirm-modal .btn-save {
+    border: 2px solid #6214fe;
+    border-radius: 3px;
 }
