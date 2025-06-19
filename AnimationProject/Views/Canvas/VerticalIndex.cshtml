@@ -480,7 +480,7 @@
 
     </style>
     <script>
-            $(document).ready(function(){
+                $(document).ready(function(){
       (async () => {
         try {
                 const savedHtml = sessionStorage.getItem("leftPanelHtml");
@@ -558,8 +558,8 @@
           // fallback: at least try to draw board even if fonts or panels didn't load
           const fallbackId = new URLSearchParams(window.location.search).get('id');
           if (fallbackId) GetDesignBoardById(fallbackId);
-        }
-      })();
+        }          
+      })();        
     });
        
         const buttons = document.querySelectorAll('.toggle-btn');
@@ -573,7 +573,7 @@
         async function DeleteSlide() {
             try {
                 // const confirmDelete = confirm("Do you want to delete this slide?");
-            const confirmDelete = await customConfirm("Do you want to delete this slide?");
+                const confirmDelete = await customConfirm("Do you want to delete slide-"+activeSlide+"?");
             if (!confirmDelete) return;
 
                      let slideId;
@@ -638,7 +638,7 @@
      async function DuplicateSlide()
         {
              // const confirmduplicate = confirm("Do you want to duplicate "+activeSlide+" slide?");
-             const confirmduplicate = await customConfirm("Do you want to duplicate "+activeSlide+" slide?");
+                 const confirmduplicate = await customConfirm("Do you want to duplicate slide-"+activeSlide+"?");
                     if (!confirmduplicate) return;
 
             if($(`#hdnDesignBoardDetailsIdSlide3`).val() !=='')
@@ -689,7 +689,7 @@
         }
         }
     </script>
-
+   
 
 
  

@@ -255,7 +255,7 @@ async function captureSlide(activeSlide, slideResult) {
                 },
                 success: function (response) {
                     sessionStorage.setItem("leftPanelHtml", document.getElementById("divpanelleft").innerHTML);
-                    MessageShow('RedirectToVerticalPageWithQueryString()', 'Design Board saved successfully!', 'success');
+                    MessageShow('RedirectToVerticalPageWithQueryString()', 'Design Board saved successfully!', 'success');          
                 },
                 error: function (xhr, status, error) {
                     HideLoader();
