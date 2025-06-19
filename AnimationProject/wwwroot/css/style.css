@@ -1641,6 +1641,9 @@ body {
 .tranBox:hover{
     border: 2px solid #ccc;
 }
+.tranBox.active{
+    border: 2px solid #ccc;
+}
 .btn-cancel {
     background-color: #fff;
     color: #000;
@@ -1658,7 +1661,9 @@ body {
     border: 2px solid #6214fe;
     border-radius: 3px;
 }
-
+.slash-checkbox{
+    height: 30px;
+}
 .slash-checkbox input {
     display: none;
 }
@@ -1684,4 +1689,7 @@ body {
     background-color: red;
     transform: rotate(320deg);
     transform-origin: center;
+}
+.activeB {
+    box-shadow: rgba(3, 102, 214, 0.3) 0px 0px 0px 3px;
 }
