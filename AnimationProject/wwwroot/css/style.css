@@ -1658,3 +1658,30 @@ body {
     border: 2px solid #6214fe;
     border-radius: 3px;
 }
+
+.slash-checkbox input {
+    display: none;
+}
+
+.custom-box {
+    width: 30px;
+    height: 30px;
+    border: 2px solid #333;
+    border-radius: 3px;
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+    background-color: white;
+}
+
+.slash-checkbox input:checked + .custom-box::after {
+    content: "";
+    position: absolute;
+    top: 12px;
+    left: 1px;
+    width: 26px;
+    height: 2px;
+    background-color: red;
+    transform: rotate(320deg);
+    transform-origin: center;
+}

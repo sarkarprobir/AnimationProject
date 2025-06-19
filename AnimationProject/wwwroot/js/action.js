@@ -5072,3 +5072,4 @@ document.addEventListener('DOMContentLoaded', initModeToggle);
 function tranTypeSet(type) {
     $("#hdntransition").val(type);
 }
+

@@ -4,8 +4,8 @@
 @{
     var mode = (string)(ViewBag.Orientation ?? "Unknown");
 }
-<script>
-        //slide options js
+@* <script>
+    //slide options js
     const thumbs = document.querySelectorAll('.menuboard-vertical-thum');
     const slideOptions = document.getElementById('slideOptions');
     let currentImage = null;
@@ -25,7 +25,7 @@
     document.addEventListener('click', function () {
         slideOptions.style.display = 'none';
     });
-</script>
+</script> *@
 
 <div class="panel-left-scroll panel-vertical-scroll">
     @if (mode == "Vertical")
@@ -98,11 +98,11 @@
             </div>
     }
 
-    <div class="slide-options" id="slideOptions">
+  @*   <div class="slide-options" id="slideOptions">
         <p class="mb-1">Slide</p>
         <button class="slide-option" onclick="DuplicateSlide();"><i class="fa-regular fa-clone"></i> Clone</button>
         <button class="slide-option"><i class="fa-regular fa-trash-can"></i> Delete</button>
-    </div>
+    </div> *@
 
 </div>
 
