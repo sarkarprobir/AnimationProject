@@ -845,11 +845,14 @@ function drawCanvas(condition) {
 
             const bottomHandleLift = 8;    // move bottom handles upward
             const bottomHandleShiftX = 2;  // move bottom handles slightly left
-
+            const topleftHandleShiftX = -2;  // rightward shift for top handles
+            const topleftHandleLift = -2;   // downward lift for top handles (negative = down)
+            const toprightHandleShiftX = -4;  // rightward shift for top handles
+            const toprightHandleLift = 4;   // downward lift for top handles (negative = down)
             const handlePoints = [
-                { x: -wPx / 2, y: -hPx / 2 },                                        // top-left
-                { x: wPx / 2, y: -hPx / 2 },                                         // top-right
-                { x: -wPx / 2 - bottomHandleShiftX, y: hPx / 2 - bottomHandleLift }, // bottom-left (adjusted)
+                { x: -wPx / 2 + topleftHandleShiftX, y: -hPx / 2 + topleftHandleLift },          // top-left (right + down)
+                { x: wPx / 2 + toprightHandleShiftX, y: -hPx / 2 + toprightHandleLift },           // top-right (right + down)
+                { x: -wPx / 2 + bottomHandleShiftX, y: hPx / 2 - bottomHandleLift }, // bottom-left (adjusted)
                 { x: wPx / 2 - bottomHandleShiftX, y: hPx / 2 - bottomHandleLift },  // bottom-right (adjusted)
                 { x: -wPx / 2, y: 0 },                                               // mid-left
                 { x: wPx / 2, y: 0 }                                                 // mid-right
@@ -3033,7 +3036,7 @@ function getTextHandleUnderMouse(mouseX, mouseY, txt) {
     // In local (unrotated) space, text box spans [-w/2, +w/2] × [-h/2, +h/2]
     const lx = -w / 2, ly = -h / 2, rx = +w / 2, ry = +h / 2;
     const cornerTolerance = 20; // pixels
-    const edgeTolerance = 6; // pixels
+    const edgeTolerance = 12; // pixels
 
     // Corners
     const corners = [
@@ -3830,7 +3833,7 @@ canvas.addEventListener("mousemove", function (e) {
         const y1 = y0 + activeText.boundingHeight;
 
         // Corner zones
-        const cornerTolerance = 10;
+        const cornerTolerance = 16;
         const corners = [
             { x: x0, y: y0, cursor: 'nwse-resize' },
             { x: x1, y: y0, cursor: 'nesw-resize' },
@@ -3844,7 +3847,7 @@ canvas.addEventListener("mousemove", function (e) {
             }
         }
         // Edges
-        const edgeTolerance = 6;
+        const edgeTolerance = 12;
         if ((Math.abs(pt.x - x0) < edgeTolerance || Math.abs(pt.x - x1) < edgeTolerance)
             && pt.y > y0 + cornerTolerance && pt.y < y1 - cornerTolerance) {
             canvas.style.cursor = 'ew-resize';
@@ -3937,15 +3940,15 @@ canvas.addEventListener("mousemove", function (e) {
         txt.boundingHeight = measuredH;
 
         // Shift x/y if resizing from top or left
-        if (activeTextHandle.includes("left") || activeTextHandle.includes("top")) {
-            const deltaLX = localX - origLX;
-            const deltaLY = localY - origLY;
-            const s = Math.sin(θ), c = Math.cos(θ);
-            const dxShift = (activeTextHandle.includes("left") ? deltaLX : 0);
-            const dyShift = (activeTextHandle.includes("top") ? deltaLY : 0);
-            txt.x += dxShift * c - dyShift * s;
-            txt.y += dxShift * s + dyShift * c;
-        }
+        //if (activeTextHandle.includes("left") || activeTextHandle.includes("top")) {
+        //    const deltaLX = localX - origLX;
+        //    const deltaLY = localY - origLY;
+        //    const s = Math.sin(θ), c = Math.cos(θ);
+        //    const dxShift = (activeTextHandle.includes("left") ? deltaLX : 0);
+        //    const dyShift = (activeTextHandle.includes("top") ? deltaLY : 0);
+        //    txt.x += dxShift * c - dyShift * s;
+        //    txt.y += dxShift * s + dyShift * c;
+        //}
 
         drawCanvas("Common");
         canvas.style.cursor = cursorLocal;
