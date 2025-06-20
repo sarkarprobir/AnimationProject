@@ -6026,7 +6026,11 @@ sendBackOption.addEventListener('click', () => {
     drawCanvas("Common");
     contextMenu.style.display = 'none';
 });
-
+function transitionSelected() {
+    if ($("#hdntransition").val() != '') {
+        $('.sd-btn-right').addClass('activeB');
+    }
+}
 // function for transition popup
 function tranTogglePopup() {
     const popup = document.getElementById('tranPopup');
@@ -6054,7 +6058,7 @@ function tranTogglePopup() {
 
     // clear any previously active transition buttons
     $('.tran_button').removeClass('active_tran');
-
+    
     // if it’s slideLeft, add `.active` to the #TslideLeft button
     if (t === 'slideLeft') {
         $('#TslideLeft').addClass('active_tran');
@@ -6066,8 +6070,8 @@ function tranTogglePopup() {
     else {
         $('.tran_button').removeClass('active_tran');
     }
-
-
+   
+    
 }
 
 function hideTran() {
