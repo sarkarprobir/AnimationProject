@@ -1,5 +1,5 @@
 ﻿// Global variables
-const canvas = document.getElementById("myCanvas");
+//const canvas = document.getElementById("myCanvas");
 const ctx = canvas.getContext("2d");
 const contextMenu = document.getElementById("contextMenu");
 const canvasContainer = document.getElementById("canvasContainer");
@@ -321,7 +321,7 @@ let selectedType = null; // "text" or "image"
 
 
 // Show dynamic context menu on right-click.
-canvas.addEventListener("contextmenu", function (e) {
+realCanvasEl.addEventListener('contextmenu', function (e) {
     e.preventDefault(); // Prevent default browser context menu
     const items = contextMenu.querySelectorAll('.context-options');
     const rect = canvas.getBoundingClientRect();
@@ -2506,33 +2506,29 @@ function addDefaultTextOld() {
     $("#opengl_popup").hide();
 }
 function addDefaultText() {
-    images.forEach(img => img.selected = false);
-    const fs = 30;
-    const factor = 1.2;        // 120% of fontSize
-    const buttons = document.querySelectorAll('.toggle-btn');
-    const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]');
-    const text = "Default Text";
-    // 2) Clear `active` from all
-    buttons.forEach(b => b.classList.remove('active'));
+    // sanities
+    console.assert(canvas, '`canvas` is defined');
+    console.assert(canvas.upperCanvasEl, 'Fabric didn’t initialize the DOM canvas');
 
-    // 3) Activate only the Graphic button
-    graphicBtn.classList.add('active');
-    // 1) Create with defaults
-    const newObj = {
-        text,
-        x: 92,
-        y: 100,
-        selected: false,
-        editing: false,
-        fontFamily: "Arial",
-        textColor: "#000000",
-        textAlign: "left",
-        fontSize: fs,
+    // 1) clear selection
+    canvas.discardActiveObject();
 
-        // store only the factor
-        lineSpacing: factor,
+    // 2) UI toggles (unchanged)
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.toggle-btn[data-mode="graphic"]')?.classList.add('active');
 
-        // bounding box placeholders—will be set below
+    // 3) create text
+    const newText = new fabric.IText("Default Text", {
+        left: 10,  // test at a visible corner
+        top: 10,
+        fill: "#000000",
+        fontSize: 30,
+        lineHeight: 1.2,
+    });
+
+    // 4) attach your extra props
+    newText.set({
+        lineSpacing: 1.2,
         boundingWidth: 0,
         boundingHeight: 0,
         noAnim: false,
@@ -2541,35 +2537,25 @@ function addDefaultText() {
         isBold: false,
         isItalic: false,
         type: 'text',
-        zIndex: getNextZIndex()
-    };
+        zIndex: getNextZIndex(),
+    });
 
-    // 2) Measure it
-    ctx.font = `${newObj.fontSize}px ${newObj.fontFamily}`;
-    const metrics = ctx.measureText(text);
-    const width = metrics.width;
-    const ascent = metrics.actualBoundingBoxAscent || fs * 0.8;
-    const descent = metrics.actualBoundingBoxDescent || fs * 0.2;
-    const height = ascent + descent;
+    // 5) log the object
+    console.log('Adding object:', newText);
 
-    // 3) Tiny padding around
-    const offsetX = 20;
-    const offsetY = 25;
+    // 6) add, recalc, and render
+    canvas.add(newText);
+    newText.setCoords();
+    console.log('Objects on canvas now:', canvas.getObjects());
+    canvas.renderAll();
 
-    // 4) Assign your bounding dimensions
-    newObj.boundingWidth = width + offsetX;
-    newObj.boundingHeight = height + offsetY;
-
-    // 5) Make it the only selected object
-    textObjects.forEach(o => o.selected = false);
-    newObj.selected = true;
-    textObjects.push(newObj);
-
-    // 6) Redraw
-    drawCanvas('Common');
+    // 7) cleanup UI
     $("#opengl_popup").hide();
     $("#elementsPopup").hide();
 }
+
+
+
 
 // ─── 2) Clone helpers ────────────────────────────────────────────────
 function cloneTextObject(srcObj) {
@@ -3146,7 +3132,7 @@ function isInsideRotatedText(mouseX, mouseY, txt) {
 //    );
 //}
 
-canvas.addEventListener("mousedown", e => {
+realCanvasEl.addEventListener("mousedown", e => {
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
@@ -3795,7 +3781,7 @@ function drawImageObject(ctx, imgObj) {
 }
 
 
-canvas.addEventListener("mousemove", function (e) {
+realCanvasEl.addEventListener("mousemove", function (e) {
     const pos = getMousePos(canvas, e);
     let cursor = "default";
 
@@ -4234,7 +4220,7 @@ function updateRotation(angle) {
 
 //});
 
-canvas.addEventListener("mouseup", function () {
+realCanvasEl.addEventListener("mouseup", function () {
     if (isResizingText && activeText && activeTextHandle) {
         onBoxResizeEnd(activeText);
     }
@@ -4256,7 +4242,7 @@ canvas.addEventListener("mouseup", function () {
 });
 
 
-canvas.addEventListener("mouseleave", function () {
+realCanvasEl.addEventListener("mouseleave", function () {
     currentDrag = null;
     isResizing = false;
     isDragging = false;
@@ -4383,7 +4369,7 @@ function getSelectedType() {
 
 
 
-canvas.addEventListener("click", function (e) {
+realCanvasEl.addEventListener("click", function (e) {
     // ignore shift here
     if (e.shiftKey) return;
 
@@ -4989,7 +4975,7 @@ document.querySelectorAll("#imageContainer img").forEach(img => {
 //canvas.addEventListener("dragover", function (e) {
 //    e.preventDefault();
 //});
-canvas.addEventListener('dragover', e => {
+realCanvasEl.addEventListener('dragover', e => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
 });
@@ -5019,7 +5005,7 @@ canvas.addEventListener('dragover', e => {
 ////        };
 ////    }
 ////});
-canvas.addEventListener('drop', e => {
+realCanvasEl.addEventListener('drop', e => {
     e.preventDefault();
 
     let src = "";
