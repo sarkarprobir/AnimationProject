@@ -842,14 +842,19 @@ function drawCanvas(condition) {
             ctx.fillStyle = "#FF7F50";
             const halfW = handleSize / 2;
             const liftY = 2;
+
+            const bottomHandleLift = 8;    // move bottom handles upward
+            const bottomHandleShiftX = 2;  // move bottom handles slightly left
+
             const handlePoints = [
-                { x: -wPx / 2, y: -hPx / 2 },
-                { x: wPx / 2, y: -hPx / 2 },
-                { x: -wPx / 2, y: hPx / 2 },
-                { x: wPx / 2, y: hPx / 2 },
-                { x: -wPx / 2, y: 0 },
-                { x: wPx / 2, y: 0 }
+                { x: -wPx / 2, y: -hPx / 2 },                                        // top-left
+                { x: wPx / 2, y: -hPx / 2 },                                         // top-right
+                { x: -wPx / 2 - bottomHandleShiftX, y: hPx / 2 - bottomHandleLift }, // bottom-left (adjusted)
+                { x: wPx / 2 - bottomHandleShiftX, y: hPx / 2 - bottomHandleLift },  // bottom-right (adjusted)
+                { x: -wPx / 2, y: 0 },                                               // mid-left
+                { x: wPx / 2, y: 0 }                                                 // mid-right
             ];
+
             handlePoints.forEach(pt => {
                 ctx.fillRect(pt.x - halfW, pt.y - halfW - liftY, handleSize, handleSize);
             });
@@ -857,6 +862,8 @@ function drawCanvas(condition) {
             ctx.restore();
         });
     });
+
+
 
 
     ctx.globalAlpha = 1;
@@ -3025,7 +3032,7 @@ function getTextHandleUnderMouse(mouseX, mouseY, txt) {
 
     // In local (unrotated) space, text box spans [-w/2, +w/2] × [-h/2, +h/2]
     const lx = -w / 2, ly = -h / 2, rx = +w / 2, ry = +h / 2;
-    const cornerTolerance = 10; // pixels
+    const cornerTolerance = 20; // pixels
     const edgeTolerance = 6; // pixels
 
     // Corners
