@@ -3979,7 +3979,10 @@ async function animateTextForDownload(animationType, direction, condition, loopC
     const outTime = parseFloat(selectedOutSpeed) || 4;
     const stayTime = parseFloat(selectedStaySpeed) || 3;
     const Outdirection = state.outDirection || 'right'
+    const offscreenMargin = 80;
+    const margin = 40;
     // ----- TEXT ANIMATION SECTION -----
+
     textObjects.forEach((obj) => {
         obj.finalX = obj.x;
         obj.finalY = obj.y;
@@ -3995,7 +3998,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 obj.y = canvasForDownload.height + 5;
                 break;
             case "left":
-                obj.x = -(obj.boundingWidth + 5);
+                obj.x = -canvasForDownload.width / 2;
                 obj.y = obj.finalY;
                 break;
             case "right":
@@ -4012,14 +4015,15 @@ async function animateTextForDownload(animationType, direction, condition, loopC
         switch (Outdirection) {
             case "top":
                 obj.exitX = obj.finalX;
-                obj.exitY = -(obj.boundingHeight + 25);
+                obj.exitY = canvasForDownload.height + 5;
+               
                 break;
             case "bottom":
                 obj.exitX = obj.finalX;
-                obj.exitY = canvasForDownload.height + 5;
+                obj.exitY = -(obj.boundingHeight + 25);
                 break;
             case "left":
-                obj.exitX = -(obj.boundingWidth + 5);
+                obj.exitX = canvasForDownload.width + margin;;
                 obj.exitY = obj.finalY;
                 break;
             case "right":
@@ -4032,6 +4036,62 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 obj.exitY = obj.finalY;
         }
     });
+
+
+
+
+    //textObjects.forEach((obj) => {
+    //    obj.finalX = obj.x;
+    //    obj.finalY = obj.y;
+
+    //    // 1) ENTRY (based on `direction`)
+    //    switch (direction) {
+    //        case "top":
+    //            obj.x = obj.finalX;
+    //            obj.y = -(obj.boundingHeight + 5);
+    //            break;
+    //        case "bottom":
+    //            obj.x = obj.finalX;
+    //            obj.y = canvasForDownload.height + 5;
+    //            break;
+    //        case "left":
+    //            obj.x = -(obj.boundingWidth + 5);
+    //            obj.y = obj.finalY;
+    //            break;
+    //        case "right":
+    //            obj.x = canvasForDownload.width + 5;
+    //            obj.y = obj.finalY;
+    //            break;
+    //        default:
+    //            // fallback: slide in from right
+    //            obj.x = canvasForDownload.width + 5;
+    //            obj.y = obj.finalY;
+    //    }
+
+    //    // 2) EXIT (based on `Outdirection`)
+    //    switch (Outdirection) {
+    //        case "top":
+    //            obj.exitX = obj.finalX;
+    //            obj.exitY = -(obj.boundingHeight + 25);
+    //            break;
+    //        case "bottom":
+    //            obj.exitX = obj.finalX;
+    //            obj.exitY = canvasForDownload.height + 5;
+    //            break;
+    //        case "left":
+    //            obj.exitX = -(obj.boundingWidth + 5);
+    //            obj.exitY = obj.finalY;
+    //            break;
+    //        case "right":
+    //            obj.exitX = canvasForDownload.width + 5;
+    //            obj.exitY = obj.finalY;
+    //            break;
+    //        default:
+    //            // fallback: slide out to right
+    //            obj.exitX = canvasForDownload.width + 5;
+    //            obj.exitY = obj.finalY;
+    //    }
+    //});
 
     
 
@@ -4082,11 +4142,12 @@ async function animateTextForDownload(animationType, direction, condition, loopC
         switch (Outdirection) {
             case "top":
                 imgObj.exitX = imgObj.finalX;
-                imgObj.exitY = -(dispHeight + 55);
+                imgObj.exitY = canvasForDownload.height + 5;
+              
                 break;
             case "bottom":
                 imgObj.exitX = imgObj.finalX;
-                imgObj.exitY = canvasForDownload.height + 5;
+                imgObj.exitY = -(dispHeight + 55);
                 break;
             case "left":
                 imgObj.exitX = -(dispWidth + 55);
