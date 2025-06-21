@@ -1255,6 +1255,9 @@ function animateText(direction, condition, loopCount) {
     const inTime = parseFloat(selectedInSpeed) || 4;   // e.g. 4 seconds for all "in"
     const outTime = parseFloat(selectedOutSpeed) || 4;   // e.g. 3 seconds for all "out"
     const stayTime = parseFloat(selectedStaySpeed) || 3; // Overall stay time (applied globally if desired)
+
+    const offscreenMargin = 80;
+    const margin = 40;
     // ----- TEXT ANIMATION SECTION -----
     // Pre-calculate final positions and offscreen positions.
     textObjects.forEach((obj) => {
@@ -1267,26 +1270,28 @@ function animateText(direction, condition, loopCount) {
         switch (direction) {
             case "top":
                 obj.x = obj.finalX;
-                obj.y = -(obj.boundingHeight + 55);
+                obj.y = -canvas.height / 2 + offscreenMargin ;
                 obj.exitX = obj.finalX;
-                obj.exitY = -(obj.boundingHeight + 5);
+                obj.exitY = canvas.height / 2 + 220;
                 break;
+
             case "bottom":
                 obj.x = obj.finalX;
-                obj.y = canvas.height + 5;
+                obj.y = canvas.height / 2 + 220;
                 obj.exitX = obj.finalX;
-                obj.exitY = canvas.height + 5;
+                obj.exitY = -canvas.height/2;
                 break;
             case "left":
-                obj.x = -(obj.boundingWidth + 5);
+                obj.x = -canvas.width/2 ;
                 obj.y = obj.finalY;
-                obj.exitX = -(obj.boundingWidth + 5);
+                obj.exitX = canvas.width + margin;
                 obj.exitY = obj.finalY;
                 break;
+
             case "right":
-                obj.x = canvas.width + 5;
+                obj.x = canvas.width /2 +150;
                 obj.y = obj.finalY;
-                obj.exitX = canvas.width + 5;
+                obj.exitX = -obj.boundingWidth - margin;
                 obj.exitY = obj.finalY;
                 break;
             default:
@@ -1296,6 +1301,10 @@ function animateText(direction, condition, loopCount) {
                 obj.exitX = window.innerWidth;
                 obj.exitY = obj.finalY;
         }
+        console.log("Left dist:", -canvas.width / 2, canvas.width + margin);
+        console.log("Right dist:", canvas.width / 2 + 150, -obj.boundingWidth - margin);
+        console.log("top dist:", -canvas.width / 2 - 100, -obj.boundingWidth - margin);
+        console.log("bottom dist:", canvas.height, canvas.width);
     });
 
     if (animationType === "delaylinear") {
@@ -1467,8 +1476,8 @@ function animateText(direction, condition, loopCount) {
         // 3) Compute timings
         const individualIn = 0.15 * inTime;    // per‐unit “In”
         const individualOut = 0.15 * outTime;   // per‐unit “Out”
-        const staggerIn = individualIn / 6; // 50% overlap
-        const staggerOut = individualOut / 7; // 50% overlap
+        const staggerIn = individualIn / 3; // 50% overlap
+        const staggerOut = individualOut / 3; // 50% overlap
 
         // 4) Build the GSAP timeline
         const tlText = gsap.timeline({
