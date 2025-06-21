@@ -411,14 +411,14 @@ function moveCaretToEnd(el) {
 
     //active class for animation direction
 
-        function toggleDirectionActive(clickedElement) {
+    function toggleDirectionActive(clickedElement) {
       // Remove 'active_direction' from all elements
       document.querySelectorAll('.direction_link').forEach(el => {
-        el.classList.remove('active_direction');
+            el.classList.remove('active_effect');
       });
 
       // Add 'active_direction' to the clicked element
-      clickedElement.classList.add('active_direction');
+          clickedElement.classList.add('active_effect');
     }
 
         //active class for animation direction
@@ -426,11 +426,11 @@ function moveCaretToEnd(el) {
             function toggleDirectionOutActive(clickedElement) {
           // Remove 'active_direction' from all elements
           document.querySelectorAll('.out_link').forEach(el => {
-            el.classList.remove('active_direction');
+                el.classList.remove('active_effect');
           });
 
           // Add 'active_direction' to the clicked element
-          clickedElement.classList.add('active_direction');
+              clickedElement.classList.add('active_effect');
         }
 
             function transitionActive(clickedElement) {
