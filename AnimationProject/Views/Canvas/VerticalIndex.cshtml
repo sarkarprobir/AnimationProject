@@ -1015,6 +1015,18 @@
           window.addEventListener('resize',  resizeCanvas_d);
           window.addEventListener('DOMContentLoaded', resizeCanvas_d);
         })();
+
+        //copy function
+        function copyLink(element) {
+          const link = element.querySelector('span').innerText.trim();
+          navigator.clipboard.writeText(link)
+            .then(() => {
+              alert('Link copied: ' + link);
+            })
+            .catch(err => {
+              console.error('Failed to copy link:', err);
+            });
+        }
     </script>
     <style>
         .hidden {
@@ -1162,7 +1174,10 @@
 
                 <div class="modal-body text-start">
                     <p class="fileName"> File : Sunday Adboard v01</p>
-                    <div class="fileLink"><span>https://aniboard.com/v20560</span> <span class="ms-2"><i class="fa-regular fa-copy"></i></span></div>
+                    <div class="fileLink" onclick="copyLink(this)">
+                        <span>https://aniboard.com/v20560</span> 
+                        <span class="ms-2"><i class="fa-regular fa-copy"></i></span>
+                    </div>
 
                 </div>
 

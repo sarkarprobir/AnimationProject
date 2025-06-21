@@ -626,6 +626,7 @@ function GetDesignBoardById(id) {
                     updateEffectButtons('Out');
                     updateDirectionButtons('In');
                     updateDirectionButtons('Out');
+                    transitionSelected(this);
                     }
                    
             }

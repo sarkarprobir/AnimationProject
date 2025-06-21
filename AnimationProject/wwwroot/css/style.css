@@ -1562,6 +1562,7 @@ body {
     font-size: 15px;
     font-weight: 700;
     color: #000;
+    cursor: pointer;
 }
 .download-cross_btn{
     font-size: 24px;
