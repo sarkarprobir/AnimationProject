@@ -1272,12 +1272,12 @@ function animateText(direction, condition, loopCount) {
                 obj.x = obj.finalX;
                 obj.y = -canvas.height / 2 + offscreenMargin ;
                 obj.exitX = obj.finalX;
-                obj.exitY = canvas.height / 2 + 220;
+                obj.exitY = canvas.height ;
                 break;
 
             case "bottom":
                 obj.x = obj.finalX;
-                obj.y = canvas.height / 2 + 220;
+                obj.y = canvas.height / 2 + 250;
                 obj.exitX = obj.finalX;
                 obj.exitY = -canvas.height/2;
                 break;
@@ -1305,6 +1305,63 @@ function animateText(direction, condition, loopCount) {
         console.log("Right dist:", canvas.width / 2 + 150, -obj.boundingWidth - margin);
         console.log("top dist:", -canvas.width / 2 - 100, -obj.boundingWidth - margin);
         console.log("bottom dist:", canvas.height, canvas.width);
+    });
+    // ----- IMAGE ANIMATION SECTION -----
+    // (A similar approach can be applied to images.)
+    images.forEach((imgObj) => {
+        imgObj.finalX = imgObj.x;
+        imgObj.finalY = imgObj.y;
+        const dispWidth = imgObj.width * (imgObj.scaleX || 1);
+        const dispHeight = imgObj.height * (imgObj.scaleY || 1);
+        switch (direction) {
+            case "top":
+                //imgObj.x = imgObj.finalX;
+                //imgObj.y = -(dispHeight + 55);
+                //imgObj.exitX = imgObj.finalX;
+                //imgObj.exitY = -(dispHeight + 5);
+                imgObj.x = imgObj.finalX;
+                imgObj.y = -canvas.height / 2 + offscreenMargin;
+                imgObj.exitX = imgObj.finalX;
+                imgObj.exitY = canvas.height ;
+                break;
+            case "bottom":
+                //imgObj.x = imgObj.finalX;
+                //imgObj.y = canvas.height + 5;
+                //imgObj.exitX = imgObj.finalX;
+                //imgObj.exitY = canvas.height + 5;
+
+                imgObj.x = imgObj.finalX;
+                imgObj.y = canvas.height / 2 + 270;
+                imgObj.exitX = imgObj.finalX;
+                imgObj.exitY = -canvas.height / 2;
+
+                break;
+            case "left":
+                //imgObj.x = -(dispWidth + 5);
+                //imgObj.y = imgObj.finalY;
+                //imgObj.exitX = -(dispWidth + 5);
+                //imgObj.exitY = imgObj.finalY;
+                imgObj.x = -canvas.width / 2;
+                imgObj.y = imgObj.finalY;
+                imgObj.exitX = canvas.width + margin;
+                imgObj.exitY = imgObj.finalY;
+                break;
+            case "right":
+                //imgObj.x = canvas.width + 5;
+                //imgObj.y = imgObj.finalY;
+                //imgObj.exitX = canvas.width + 5;
+                //imgObj.exitY = imgObj.finalY;
+                imgObj.x = canvas.width / 2 + 150;
+                imgObj.y = imgObj.finalY;
+                imgObj.exitX = -canvas.width;
+                imgObj.exitY = imgObj.finalY;
+                break;
+            default:
+                imgObj.x = imgObj.finalX;
+                imgObj.y = imgObj.finalY;
+                imgObj.exitX = window.innerWidth;
+                imgObj.exitY = imgObj.finalY;
+        }
     });
 
     if (animationType === "delaylinear") {
@@ -1572,367 +1629,8 @@ function animateText(direction, condition, loopCount) {
         // tlText.timeScale(ratio);
     }
 
-
-
-
-
-
-    else if (animationType === "linear" || animationType === "zoom" ||
-        animationType === "bounce" || animationType === "blur") {
-        // Keep your existing implementation for these cases.
-        textObjects.forEach((obj) => {
-            const endX = obj.finalX;
-            const endY = obj.finalY;
-            let exitX, exitY;
-            switch (direction) {
-                case "top":
-                    exitX = endX;
-                    exitY = -(obj.boundingHeight + 5);
-                    break;
-                case "bottom":
-                    exitX = endX;
-                    exitY = canvas.height + 5;
-                    break;
-                case "left":
-                    exitX = -(obj.boundingWidth + 5);
-                    exitY = endY;
-                    break;
-                case "right":
-                    exitX = canvas.width + 5;
-                    exitY = endY;
-                    break;
-                default:
-                    exitX = window.innerWidth;
-                    exitY = endY;
-            }
-            if (animationType === "linear" || animationType === "zoom") {
-                let tl = gsap.timeline({
-                    repeat: loopCount - 1,
-                    onUpdate: function () {
-                        drawCanvas(condition);
-                    }
-                });
-
-                tl.to(obj, {
-                    x: endX,
-                    y: endY,
-                    duration: inTime,
-                    ease: "power1.in"
-                });
-                tl.to(obj, {
-                    duration: stayTime,
-                    ease: "none"
-                });
-                tl.to(obj, {
-                    x: exitX,
-                    y: exitY,
-                    duration: outTime,
-                    ease: "power1.out"
-                });
-                tl.set(obj, {
-                    x: endX,
-                    y: endY,
-                    duration: 0,
-                    ease: "power1.inOut",
-                    onUpdate: () => drawCanvas(condition)
-                });
-            }
-            else if (animationType === "bounce" || animationType === "blur") {
-
-                ////This section is for in out and stay
-                let tl = gsap.timeline({
-                    repeat: loopCount - 1,
-                    onUpdate: function () {
-                        drawCanvas(condition);
-                    }
-                });
-
-                // "In" phase: Animate the object onto the canvas.
-                tl.to(obj, {
-                    x: endX,
-                    y: endY,
-                    duration: inTime,
-                    ease: "bounce.out"
-                });
-
-                // "Stay" phase: Hold the object in place for the stay duration.
-                // This tween doesn't change any properties; it just acts as a pause.
-                tl.to(obj, {
-                    duration: stayTime,
-                    ease: "none"
-                });
-
-                // "Out" phase: Animate the object off the canvas.
-                tl.to(obj, {
-                    x: exitX,
-                    y: exitY,
-                    duration: outTime,
-                    ease: "bounce.out"
-                });
-                // Final phase: Reset the object to the final position with text.
-                // This sets the object’s position to (endX, endY) after the out tween completes.
-                tl.set(obj, {
-                    x: endX,
-                    y: endY,
-                    duration: 0,
-                    ease: "bounce.out",
-                    onUpdate: () => drawCanvas(condition),
-
-
-                });
-
-
-                ////This is default effect of bounce
-                //gsap.to(obj, {
-                //    x: endX,
-                //    y: endY,
-                //    duration: parseFloat(selectedInSpeed) || 2,
-                //    ease: "bounce.out",
-                //    onUpdate: () => drawCanvas(condition),
-                //});
-            }
-
-        });
-    }
-    // ----- IMAGE ANIMATION SECTION -----
-    // (A similar approach can be applied to images.)
-    images.forEach((imgObj) => {
-        imgObj.finalX = imgObj.x;
-        imgObj.finalY = imgObj.y;
-        const dispWidth = imgObj.width * (imgObj.scaleX || 1);
-        const dispHeight = imgObj.height * (imgObj.scaleY || 1);
-        switch (direction) {
-            case "top":
-                imgObj.x = imgObj.finalX;
-                imgObj.y = -(dispHeight + 55);
-                imgObj.exitX = imgObj.finalX;
-                imgObj.exitY = -(dispHeight + 5);
-                break;
-            case "bottom":
-                imgObj.x = imgObj.finalX;
-                imgObj.y = canvas.height + 5;
-                imgObj.exitX = imgObj.finalX;
-                imgObj.exitY = canvas.height + 5;
-                break;
-            case "left":
-                imgObj.x = -(dispWidth + 5);
-                imgObj.y = imgObj.finalY;
-                imgObj.exitX = -(dispWidth + 5);
-                imgObj.exitY = imgObj.finalY;
-                break;
-            case "right":
-                imgObj.x = canvas.width + 5;
-                imgObj.y = imgObj.finalY;
-                imgObj.exitX = canvas.width + 5;
-                imgObj.exitY = imgObj.finalY;
-                break;
-            default:
-                imgObj.x = imgObj.finalX;
-                imgObj.y = imgObj.finalY;
-                imgObj.exitX = window.innerWidth;
-                imgObj.exitY = imgObj.finalY;
-        }
-    });
-
-    //if (animationType === "delaylinear") {
-    //    if (images.length) {
-    //        const countImg = images.length;
-    //        const scaleImgIn = inTime / (countImg * 1.0);
-    //        const indTweenImg = 0.5 * scaleImgIn;
-    //        const indHoldImg = 0.5 * scaleImgIn;
-
-    //        const scaleImgOut = outTime / (countImg * 1.0);
-    //        const indTweenImgOut = 0.5 * scaleImgOut;
-    //        const indHoldImgOut = 0.5 * scaleImgOut;
-
-    //        let tlImg = gsap.timeline({
-    //            repeat: loopCount - 1,
-    //            onUpdate: () => { drawCanvas(condition); }
-    //        });
-    //        images.forEach((imgObj) => {
-    //            tlImg.to(imgObj, {
-    //                x: imgObj.finalX,
-    //                y: imgObj.finalY,
-    //                duration: indTweenImg,
-    //                ease: "power1.in"
-    //            });
-    //            tlImg.to({}, { duration: indHoldImg, ease: "none" });
-    //        });
-    //        // (Optional: you can also add a global stay phase here if you wish.)
-    //        tlImg.to({}, { duration: stayTime });
-    //        [...images].reverse().forEach((imgObj) => {
-    //            tlImg.to(imgObj, {
-    //                x: imgObj.exitX,
-    //                y: imgObj.exitY,
-    //                duration: indTweenImgOut,
-    //                ease: "power1.out"
-    //            });
-    //            tlImg.to({}, { duration: indHoldImgOut, ease: "none" });
-    //        });
-    //        tlImg.set(images, {
-    //            x: (i, target) => target.finalX,
-    //            y: (i, target) => target.finalY,
-    //            duration: 0,
-    //            ease: "power1.inOut",
-    //            onUpdate: () => { drawCanvas(condition); }
-    //        });
-    //    }
-    //}
-    //else
-    if (animationType === "linear" || animationType === "zoom" ||
-        animationType === "bounce" || animationType === "blur") {
-        // Keep the existing branches for images.
-        let exitX, exitY;
-        images.forEach((imgObj) => {
-            const endX = imgObj.finalX;
-            const endY = imgObj.finalY;
-            let tl = gsap.timeline({
-                repeat: loopCount - 1,
-                onUpdate: function () {
-                    drawCanvas(condition);
-                }
-            });
-
-            if (animationType === "linear") {
-                tl.to(imgObj, {
-                    x: endX,
-                    y: endY,
-                    duration: inTime,
-                    ease: "power1.in"
-                });
-                tl.to(imgObj, {
-                    duration: stayTime,
-                    ease: "none"
-                });
-                tl.to(imgObj, {
-                    x: exitX,
-                    y: exitY,
-                    duration: outTime,
-                    ease: "power1.out"
-                });
-                tl.set(imgObj, {
-                    x: endX,
-                    y: endY,
-                    duration: 0,
-                    ease: "power1.inOut",
-                    onUpdate: () => drawCanvas(condition)
-                });
-            }
-            else if (animationType === "bounce") {
-                tl.to(imgObj, {
-                    x: endX,
-                    y: endY,
-                    duration: inTime,
-                    ease: "bounce.out"
-                });
-                tl.to(imgObj, {
-                    duration: stayTime,
-                    ease: "none"
-                });
-                tl.to(imgObj, {
-                    x: exitX,
-                    y: exitY,
-                    duration: outTime,
-                    ease: "bounce.out"
-                });
-                tl.set(imgObj, {
-                    x: endX,
-                    y: endY,
-                    duration: 0,
-                    ease: "bounce.out",
-                    onUpdate: () => drawCanvas(condition)
-                });
-            }
-            else if (animationType === "zoom") {
-                // Zoom in then out.
-                tl.fromTo(
-                    imgObj,
-                    { scaleX: 0, scaleY: 0, x: startX, y: startY },
-                    {
-                        scaleX: originalScaleX,
-                        scaleY: originalScaleY,
-                        x: endX,
-                        y: endY,
-                        duration: inTime,
-                        ease: "power2.out",
-                        onUpdate: () => drawCanvas(condition)
-                    }
-                );
-                tl.to(imgObj, {
-                    duration: stayTime,
-                    ease: "none"
-                });
-                tl.to(imgObj, {
-                    scaleX: 0,
-                    scaleY: 0,
-                    x: exitX,
-                    y: exitY,
-                    duration: outTime,
-                    ease: "power2.in",
-                    onUpdate: () => drawCanvas(condition)
-                });
-                tl.set(imgObj, {
-                    x: endX,
-                    y: endY,
-                    scaleX: originalScaleX,
-                    scaleY: originalScaleY,
-                    duration: 0,
-                    ease: "none",
-                    onUpdate: () => drawCanvas(condition)
-                });
-            }
-            else if (animationType === "blur") {
-                imgObj.blur = 5;
-                tl.fromTo(
-                    imgObj,
-                    { blur: 5, x: startX, y: startY },
-                    {
-                        blur: 0,
-                        x: endX,
-                        y: endY,
-                        duration: inTime + 2,
-                        ease: "power2.out",
-                        onUpdate: () => {
-                            ctx.filter = `blur(${imgObj.blur}px)`;
-                            drawCanvas(condition);
-                        },
-                        onComplete: () => {
-                            ctx.filter = "none";
-                            drawCanvas(condition);
-                        }
-                    }
-                );
-                tl.to(imgObj, {
-                    duration: stayTime,
-                    ease: "none",
-                    onUpdate: () => {
-                        ctx.filter = "none";
-                        drawCanvas(condition);
-                    }
-                });
-                tl.to(imgObj, {
-                    x: exitX,
-                    y: exitY,
-                    duration: outTime,
-                    ease: "power2.in",
-                    onUpdate: () => {
-                        ctx.filter = "none";
-                        drawCanvas(condition);
-                    }
-                });
-                tl.set(imgObj, {
-                    x: endX,
-                    y: endY,
-                    duration: 0,
-                    ease: "none",
-                    onUpdate: () => {
-                        ctx.filter = "none";
-                        drawCanvas(condition);
-                    }
-                });
-            }
-        });
-    }
+   
+   
 }
 
 
