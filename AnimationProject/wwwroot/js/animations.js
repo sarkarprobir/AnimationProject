@@ -107,6 +107,20 @@ let isDraggingImage = false;
 let isResizingImage = false;
 let activeImage = null;
 
+
+let scrollSelectionMode = false;
+let scrollStartY = 0;
+let lastScrollY = 0;
+let selectableObjects = [];
+let scrollIndex = -1;
+let isDraggingToSelect = false;
+let dragStartY = 0;
+let dragCurrentY = 0;
+let isDraggingSelectionBox = false;
+let selectionStart = { x: 0, y: 0 };
+let selectionEnd = { x: 0, y: 0 };
+let skipNextClick = false;
+
 ////This is for delete text///////////////////
 // Utility: Returns an object (text or image) if the (x,y) falls within its bounding box."
 
@@ -566,6 +580,7 @@ function initializeLayers() {
 }
 
 function drawCanvas(condition) {
+    console.log("Calling Point");
     initializeLayers();
     resizeCanvas();
     const dpr = window.devicePixelRatio || 1;
@@ -584,105 +599,35 @@ function drawCanvas(condition) {
     if (canvas._bgImg) {
         ctx.drawImage(canvas._bgImg, 0, 0, designW, designH);
     }
-    // === Merge and sort by zIndex ===
-    
-  //  allItems.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+   
+    // ── 1) MARQUEE SELECTION LOGIC ─────────────────────────────────────
+    if (isDraggingSelectionBox) {
+        const x1 = Math.min(selectionStart.x, selectionEnd.x);
+        const y1 = Math.min(selectionStart.y, selectionEnd.y);
+        const x2 = Math.max(selectionStart.x, selectionEnd.x);
+        const y2 = Math.max(selectionStart.y, selectionEnd.y);
 
+        // clear prior selections
+        textObjects.forEach(o => o.selected = false);
+        images.forEach(i => i.selected = false);
 
-    //// === Draw Images with Rotation ===
-    //images.forEach(imgObj => {
-    //    const x = imgObj.x;
-    //    const y = imgObj.y;
-    //    const scaleX = imgObj.scaleX || 1;
-    //    const scaleY = imgObj.scaleY || 1;
-    //    const w = imgObj.width * scaleX;
-    //    const h = imgObj.height * scaleY;
-    //    const rotation = (imgObj.rotation || 0) * Math.PI / 180;
-    //    if (imgObj.selected) {
-    //        drawRotateHandle(imgObj);
-    //    }
-
-    //    if (!imgObj.img) {
-    //        const img = new Image();
-    //        img.onload = () => {
-    //            imgObj.img = img;
-    //            drawCanvas(condition);
-    //        };
-    //        img.src = imgObj.svgData || imgObj.src;
-    //        return;
-    //    }
-
-    //    ctx.save();
-    //    ctx.globalAlpha = imgObj.opacity || 1;
-
-    //    ctx.translate(x + w / 2, y + h / 2);
-    //    ctx.rotate(rotation);
-    //    ctx.scale(scaleX, scaleY);
-    //    try {
-    //        ctx.drawImage(imgObj.img, -imgObj.width / 2, -imgObj.height / 2, imgObj.width, imgObj.height);
-    //    } catch (e) {
-
-    //    }
-
-
-    //    ctx.restore();
-    //});
-
-    //// === Draw Text with Rotation ===
-    //if (['Common', 'ChangeStyle', 'applyAnimations'].includes(condition)) {
-    //    textObjects.forEach(obj => {
-    //        ctx.save();
-    //        ctx.globalAlpha = obj.opacity || 1;
-    //        // ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-    //        let styleParts = [];
-    //        if (obj.isItalic) styleParts.push("italic");
-    //        if (obj.isBold) styleParts.push("bold");
-    //        styleParts.push(`${obj.fontSize}px`);
-    //        styleParts.push(obj.fontFamily);
-    //        ctx.font = styleParts.join(" ");
-
-    //        ctx.fillStyle = obj.textColor;
-    //        ctx.textBaseline = "top";
-
-    //        if (obj.selected) {
-    //            drawRotateHandle(obj);
-    //        }
-
-
-    //        const x = obj.x;
-    //        const y = obj.y;
-    //        const pad = padding;
-    //        const maxW = obj.boundingWidth - 2 * pad;
-    //        const rotation = (obj.rotation || 0) * Math.PI / 180;
-
-    //        let lines = obj.text.includes('\n') ? obj.text.split('\n') : wrapText(ctx, obj.text, maxW);
-    //        const lineH = obj.lineSpacing * obj.fontSize;
-
-    //        if (lines.length > 1) {
-    //            obj.boundingHeight = lines.length * lineH + 2 * pad;
-    //        }
-
-    //        const availableHeight = obj.boundingHeight - 2 * pad;
-    //        const maxLines = Math.floor(availableHeight / lineH);
-
-    //        // Rotate around center of bounding box
-    //        ctx.translate(x + obj.boundingWidth / 2, y + obj.boundingHeight / 2);
-    //        ctx.rotate(rotation);
-
-    //        lines.slice(0, maxLines).forEach((line, i) => {
-    //            const lw = ctx.measureText(line).width;
-    //            let offsetX = -obj.boundingWidth / 2 + pad;
-    //            if (obj.textAlign === 'center') offsetX = -lw / 2;
-    //            if (obj.textAlign === 'right') offsetX = obj.boundingWidth / 2 - lw - pad;
-    //            const offsetY = -obj.boundingHeight / 2 + pad + i * lineH;
-    //            ctx.fillText(line, offsetX, offsetY);
-    //        });
-
-    //        ctx.restore();
-    //    });
-    //}
-
-
+        // select texts
+        textObjects.forEach(o => {
+            if (o.x < x2 && o.x + o.boundingWidth > x1
+                && o.y < y2 && o.y + o.boundingHeight > y1) {
+                o.selected = true;
+            }
+        });
+        // select images
+        images.forEach(i => {
+            const w = i.width * (i.scaleX || 1),
+                h = i.height * (i.scaleY || 1);
+            if (i.x < x2 && i.x + w > x1
+                && i.y < y2 && i.y + h > y1) {
+                i.selected = true;
+            }
+        });
+    }
 
     allItems.forEach(item => {
         ctx.save();
@@ -835,7 +780,7 @@ function drawCanvas(condition) {
                 -hPx / 2 - padding * scaleY,
                 wPx + 2 * padding * scaleX - RECT_WIDTH_ADJUST * scaleX,
                 hPx + 2 * padding * scaleY - RECT_HEIGHT_ADJUST * scaleY,
-                5 * scaleX
+                10 * scaleX
             );
 
             // draw rotated handles
@@ -866,7 +811,19 @@ function drawCanvas(condition) {
         });
     });
 
-
+    // ── 4) DRAW DRAG BOX OUTLINE ──────────────────────────────────────
+    if (isDraggingSelectionBox) {
+        ctx.save();
+        ctx.setLineDash([6, 4]);
+        ctx.strokeStyle = "#007BFF";
+        ctx.lineWidth = 1;
+        const x = Math.min(selectionStart.x, selectionEnd.x),
+            y = Math.min(selectionStart.y, selectionEnd.y),
+            w = Math.abs(selectionEnd.x - selectionStart.x),
+            h = Math.abs(selectionEnd.y - selectionStart.y);
+        ctx.strokeRect(x, y, w, h);
+        ctx.restore();
+    }
 
 
     ctx.globalAlpha = 1;
@@ -3073,17 +3030,48 @@ canvas.addEventListener("mousedown", e => {
         return;
     }
 
-    // ── 10) CLICKED EMPTY SPACE ─────────────────────────────────────
-    textObjects.forEach(o => o.selected = false);
-    images.forEach(i => i.selected = false);
-    selectedForContextMenu = null;
-    selectedType = null;
-    activeText = activeImage = null;
-    rotationSlider.value = 0;
-    rotationBadge.textContent = "0";
+    //// ── 10) CLICKED EMPTY SPACE ─────────────────────────────────────
+    //textObjects.forEach(o => o.selected = false);
+    //images.forEach(i => i.selected = false);
+    //selectedForContextMenu = null;
+    //selectedType = null;
+    //activeText = activeImage = null;
+    //rotationSlider.value = 0;
+    //rotationBadge.textContent = "0";
 
-    e.preventDefault();
-    drawCanvas("Common");
+    //e.preventDefault();
+    //drawCanvas("Common");
+
+    // ── 10) CLICKED EMPTY SPACE ─────────────────────────────────────
+    const clickedEmpty =
+        !hitRotate &&
+        !txtHit &&
+        !imgHit &&
+        !primary;
+
+    if (clickedEmpty) {
+        // clear any existing selection
+        textObjects.forEach(o => o.selected = false);
+        images.forEach(i => i.selected = false);
+        selectedForContextMenu = null;
+        selectedType = null;
+        activeText = activeImage = null;
+        rotationSlider.value = 0;
+        rotationBadge.textContent = "0";
+
+        // begin drag-to-select
+        isDraggingSelectionBox = true;
+        const rect = canvas.getBoundingClientRect();
+        selectionStart = {
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top
+        };
+        selectionEnd = { ...selectionStart };
+
+        e.preventDefault();
+        drawCanvas("Common");
+        return;
+    }
 });
 
 
@@ -3794,12 +3782,30 @@ canvas.addEventListener("mousemove", function (e) {
             cursor = "grab";
         }
     }
+    if (isDraggingSelectionBox) {
+        const r = canvas.getBoundingClientRect();
+        selectionEnd = { x: e.clientX - r.left, y: e.clientY - r.top };
+        drawCanvas("Common");        // live update
+    }
 
     canvas.style.cursor = cursor;
 });
 
 
+function drawSelectionBox() {
+    const ctx = canvas.getContext("2d");
+    const x = Math.min(selectionStart.x, selectionEnd.x);
+    const y = Math.min(selectionStart.y, selectionEnd.y);
+    const w = Math.abs(selectionEnd.x - selectionStart.x);
+    const h = Math.abs(selectionEnd.y - selectionStart.y);
 
+    ctx.save();
+    ctx.strokeStyle = "rgba(0, 122, 255, 0.8)";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(x, y, w, h);
+    ctx.restore();
+}
 
 
 
@@ -3951,26 +3957,53 @@ function updateRotation(angle) {
 
 //});
 
-canvas.addEventListener("mouseup", function () {
+canvas.addEventListener("mouseup", function (e) {
+    const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]');
+    const buttons = document.querySelectorAll('.toggle-btn');
+
     if (isResizingText && activeText && activeTextHandle) {
         onBoxResizeEnd(activeText);
     }
+
+    if (isDraggingSelectionBox) {
+        skipNextClick = true;
+        isDraggingSelectionBox = false;
+        drawCanvas("Common");        // final update + UI panels
+    }
+
+    // Final cleanup
     isDraggingGroup = false;
+    isDraggingText = false;
+    isDraggingImage = false;
+    isResizingText = false;
+    isResizingImage = false;
+    isRotating = false;
     groupDragStart = null;
     groupStarts = [];
-
-    isDraggingImage = false;
-    isResizingImage = false;
-    activeImageHandle = null;
-
-    isDraggingText = false;
-    isResizingText = false;
     activeTextHandle = null;
-
-    isRotating = false;
+    activeImageHandle = null;
     rotatingObject = null;
     currentDrag = null;
 });
+
+// Helper function to check if object is inside selection box
+function isObjectInSelection(objX, objY, objW, objH, x1, y1, x2, y2) {
+    return objX < x2 && objX + objW > x1 && objY < y2 && objY + objH > y1;
+}
+
+
+function updateCheckboxFor(groupId) {
+    // Example: update some UI checkbox based on the groupId
+    if (groupId != null) {
+        console.log('Checkbox updated for group:', groupId);
+        // If you have an actual checkbox update, you can do it here.
+        // Example:
+        // document.getElementById('groupCheckbox').checked = true;
+    } else {
+        console.log('No group selected, reset checkbox.');
+        // document.getElementById('groupCheckbox').checked = false;
+    }
+}
 
 
 canvas.addEventListener("mouseleave", function () {
@@ -3981,6 +4014,9 @@ canvas.addEventListener("mouseleave", function () {
 
     isDraggingImage = false;
     isResizingImage = false;
+
+    isDraggingToSelect = false;
+    canvas.style.cursor = "default";
 });
 
 
@@ -4103,6 +4139,11 @@ function getSelectedType() {
 canvas.addEventListener("click", function (e) {
     // ignore shift here
     if (e.shiftKey) return;
+
+    if (skipNextClick) {
+        skipNextClick = false;
+        return;    // swallow this click so it doesn’t clear selection
+    }
 
     const buttons = document.querySelectorAll('.toggle-btn');
     const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]');
