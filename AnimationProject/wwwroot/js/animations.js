@@ -4270,13 +4270,34 @@ canvas.addEventListener("click", function (e) {
         $("#hdnfillNoColor").val(imgHit.fillNoColor || false);
         $("#hdnstrokeNoColor").val(imgHit.strokeNoColor || false);
         document.getElementById('ddlStrokeWidth').value = (imgHit.strokeWidth || 3).toString();
-        document.getElementById("noColorCheck").checked = imgHit.fillNoColor||false;
-        document.getElementById("noColorCheck2").checked = imgHit.strokeNoColor || false;
+        document.getElementById("noColorCheck").checked = toBool(imgHit.fillNoColor)||false;
+        document.getElementById("noColorCheck2").checked = toBool(imgHit.strokeNoColor) || false;
+
+        const noColorChecked = document.getElementById("noColorCheck").checked;
+        const noStrokeChecked = document.getElementById("noColorCheck2").checked;
+        if (noColorChecked) {
+            updateSelectedImageColors(
+                "none", noStrokeChecked ? "none" : $("#hdnStrockColor").val()
+            );
+        }
+
+      
+        if (noStrokeChecked) {
+            updateSelectedImageColors(
+                noColorChecked ? "none" : $("#hdnfillColor").val(),
+                "none"
+            );
+        }
+
+       
     }
     console.log("Selected Type:", selectedType);
     HideShowRightPannel(selectedType);
 
 });
+function toBool(x) {
+    return x === true || x === "true";
+}
 function HideShowRightPannel(selectedType) {
     ShowLoader();
     const heading = document.getElementById("text_heading");
@@ -4601,6 +4622,7 @@ function ChangeTranColor2() {
 }
 
 function ChangeFillColor() {
+    const noStrokeChecked = document.getElementById("noColorCheck2").checked;
     if (activeImage) {
         const fillColorPicker = document.getElementById("favFillcolor");
         $("#hdnfillColor").val(fillColorPicker.value);
@@ -4608,40 +4630,52 @@ function ChangeFillColor() {
         // Uncheck the "no color" box if color is manually changed
         document.getElementById("noColorCheck").checked = false;
 
-        updateSelectedImageColors($("#hdnfillColor").val(), $("#hdnStrockColor").val());
+        updateSelectedImageColors($("#hdnfillColor").val(), noStrokeChecked ? "none" : $("#hdnStrockColor").val());
     }
 }
 //No color option for fill color 
-let previousFillColor = null; 
+/*let previousFillColor = null; */
 
 function SetNoFillColor() {
     const noColorChecked = document.getElementById("noColorCheck").checked;
     const fillColorPicker = document.getElementById("favFillcolor");
 
+    const noStrokeChecked = document.getElementById("noColorCheck2").checked;
     if (activeImage) {
         if (noColorChecked) {
             // Store current color before removing
-            previousFillColor = fillColorPicker.value;
+           // previousFillColor = fillColorPicker.value;
             $("#hdnfillColor").val("none");
-            updateSelectedImageColors("none", $("#hdnStrockColor").val());
+          //  updateSelectedImageColors("none", $("#hdnStrockColor").val());
+
+            updateSelectedImageColors(
+                "none", noStrokeChecked ? "none" : $("#hdnStrockColor").val()
+            );
+
             $("#hdnfillNoColor").val(true);
             /*document.getElementById("noColorCheck").checked = true;*/
         } else {
             $("#hdnfillNoColor").val(false);
             /*document.getElementById("noColorCheck").checked = false;*/
             // Restore previous fill color
-            if (previousFillColor) {
-                $("#hdnfillColor").val(previousFillColor);
-                updateSelectedImageColors(previousFillColor, $("#hdnStrockColor").val());
+            //if (previousFillColor) {
+            $("#hdnfillColor").val(fillColorPicker.value);
+           // updateSelectedImageColors($("#hdnfillColor").val(), $("#hdnStrockColor").val());
 
-                // Also update the color picker value visually
-                fillColorPicker.value = previousFillColor;
-            }
+            updateSelectedImageColors(
+                $("#hdnfillColor").val(), noStrokeChecked ? "none" : $("#hdnStrockColor").val()
+            );
+
+            //    // Also update the color picker value visually
+            //    fillColorPicker.value = previousFillColor;
+            //}
+           /* ChangeFillColor();*/
         }
     }
 }
 
 function ChangeStrockColor() {
+    const noColorChecked = document.getElementById("noColorCheck").checked;
     if (activeImage) {
         const strockColorPicker = document.getElementById("favStrockcolor");
         $("#hdnStrockColor").val(strockColorPicker.value);
@@ -4649,7 +4683,7 @@ function ChangeStrockColor() {
         // Uncheck "no stroke color" checkbox
         document.getElementById("noColorCheck2").checked = false;
 
-        updateSelectedImageColors($("#hdnfillColor").val(), $("#hdnStrockColor").val());
+        updateSelectedImageColors(noColorChecked ? "none" : $("#hdnfillColor").val(), $("#hdnStrockColor").val());
     }
 }
 //No color option for stroke color 
@@ -4659,31 +4693,38 @@ function SetNoStrokeColor() {
     const noStrokeChecked = document.getElementById("noColorCheck2").checked;
     const strokeColorPicker = document.getElementById("favStrockcolor");
 
+    const noColorChecked = document.getElementById("noColorCheck").checked;
+    //previousStrokeColor = strokeColorPicker.value;
     if (activeImage) {
         if (noStrokeChecked) {
             // Save current stroke color
-            previousStrokeColor = strokeColorPicker.value;
+            /*previousStrokeColor = strokeColorPicker.value;*/
             $("#hdnStrockColor").val("none");
-            updateSelectedImageColors($("#hdnStrockColor").val(), "none");
+            updateSelectedImageColors(
+                noColorChecked ? "none" : $("#hdnfillColor").val(),
+                "none"
+            );
+          
             $("#hdnstrokeNoColor").val(true);
            /* document.getElementById("noColorCheck2").checked = true;*/
         } else {
             $("#hdnstrokeNoColor").val(false);
            /* document.getElementById("noColorCheck2").checked = false;*/
             // Restore previous stroke color
-            if (previousStrokeColor) {
-                $("#hdnStrockColor").val(previousStrokeColor);
-                updateSelectedImageColors($("#hdnStrockColor").val(), previousStrokeColor);
+            //if (previousStrokeColor) {
+            $("#hdnStrockColor").val(strokeColorPicker.value);
+            updateSelectedImageColors(noColorChecked ? "none" : $("#hdnfillColor").val(), $("#hdnStrockColor").val());
 
-                // Also update the color picker UI
-                strokeColorPicker.value = previousStrokeColor;
-            }
+            //    // Also update the color picker UI
+            //    strokeColorPicker.value = previousStrokeColor;
+            //}
+            //ChangeStrockColor();
         }
     }
 }
 //stroke width change function
-function ChangeStrokeWidth() {
-    const selectEl = document.getElementById("strokeWidthSelect");
+function strokeWidthChanges() {
+    const selectEl = document.getElementById("ddlStrokeWidth");
     const strokeWidth = selectEl.value;
 
     if (activeImage) {
@@ -4993,12 +5034,14 @@ if (canvas && typeof canvas.on === 'function') {
     });
 }
 function updateSelectedImageColors(newFill, newStroke, newStrokeWidth = null) {
-    // 1) sanity‑check: do we have an SVG network URL?
+    // ── 0) honor “no-color” checkboxes ─────────────────────────────
+    //const noFillChecked = document.getElementById("noColorCheck").checked;
+    //const noStrokeChecked = document.getElementById("noColorCheck2").checked;
+    //if (noFillChecked) newFill = null;
+    //if (noStrokeChecked) newStroke = null;
+
+    // 1) sanity-check: do we have an SVG network URL?
     const svgUrl = activeImage.originalSrc || activeImage.src;
-    //if (!activeImage || !svgUrl?.endsWith('.svg') || !activeImage.img) {
-    //    console.warn("activeImage is not an SVG image");
-    //    return;
-    //}
     const isSvgFile = svgUrl.toLowerCase().endsWith('.svg');
     const isDataSvg = svgUrl.startsWith('data:image/svg+xml');
     if (!activeImage || (!isSvgFile && !isDataSvg) || !activeImage.img) {
@@ -5015,41 +5058,22 @@ function updateSelectedImageColors(newFill, newStroke, newStrokeWidth = null) {
     const origW = activeImage.width;
     const origH = activeImage.height;
 
-    // 4) core SVG patcher
-    //function patchSvg(svgText) {
-    //    const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
-
-    //    // update <style> block
-    //    const styleEl = doc.querySelector("style");
-    //    if (styleEl) {
-    //        styleEl.textContent = styleEl.textContent
-    //            .replace(/fill:[^;]+;/g, `fill:${newFill};`)
-    //            .replace(/stroke:[^;]+;/g, `stroke:${newStroke};`);
-    //    }
-
-    //    // update inline fill/stroke on every element
-    //    doc.querySelectorAll("*").forEach(el => {
-    //        if (newFill) el.setAttribute("fill", newFill);
-    //        if (newStroke) el.setAttribute("stroke", newStroke);
-    //    });
-
-    //    return new XMLSerializer().serializeToString(doc);
-    //}
+    // 4) patcher that skips fill/stroke when null
     function patchSvg(svgText) {
         const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
 
         // update <style> block
         const styleEl = doc.querySelector("style");
         if (styleEl) {
-            if (newFill)
+            if (newFill !== null)
                 styleEl.textContent = styleEl.textContent.replace(/fill:[^;]+;/g, `fill:${newFill};`);
-            if (newStroke)
+            if (newStroke !== null)
                 styleEl.textContent = styleEl.textContent.replace(/stroke:[^;]+;/g, `stroke:${newStroke};`);
-            if (newStrokeWidth)
+            if (newStrokeWidth !== null)
                 styleEl.textContent = styleEl.textContent.replace(/stroke-width:[^;]+;/g, `stroke-width:${newStrokeWidth};`);
         }
 
-        // update inline styles
+        // update inline attributes
         doc.querySelectorAll("*").forEach(el => {
             if (newFill !== null) el.setAttribute("fill", newFill);
             if (newStroke !== null) el.setAttribute("stroke", newStroke);
@@ -5060,34 +5084,17 @@ function updateSelectedImageColors(newFill, newStroke, newStrokeWidth = null) {
     }
 
     // 5) redraw into the existing <img> on the canvas
-    //function redraw(updatedSvg) {
-    //    const dataUri = "data:image/svg+xml;charset=utf-8,"
-    //        + encodeURIComponent(updatedSvg);
-
-    //    const imgEl = activeImage.img;
-    //    imgEl.onload = () => {
-    //        // restore size & re‑draw your canvas
-    //        activeImage.width = origW;
-    //        activeImage.height = origH;
-    //        drawCanvas('Common');    // your custom full‐canvas render function
-    //    };
-    //    imgEl.src = dataUri;   // swap in the recolored SVG
-    //}
     function redraw(updatedSvg) {
         const dataUri = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(updatedSvg);
         const imgEl = activeImage.img;
 
         imgEl.onload = () => {
-            // restore display size
+            // restore display size & src
             activeImage.width = origW;
             activeImage.height = origH;
-            // **important**: update your model’s src
             activeImage.src = dataUri;
-            // now redraw the canvas
             drawCanvas('Common');
         };
-
-        // swap the image URL
         imgEl.src = dataUri;
     }
 
@@ -5098,81 +5105,15 @@ function updateSelectedImageColors(newFill, newStroke, newStrokeWidth = null) {
         fetch(svgUrl)
             .then(res => res.text())
             .then(svgText => {
-                activeImage.originalSVG = svgText;   // cache raw SVG
-                redraw(patchSvg(svgText));           // apply first recolor
+                activeImage.originalSVG = svgText;
+                redraw(patchSvg(svgText));
             })
             .catch(err => console.error("Error fetching SVG:", err));
     }
 }
 
-function updateSelectedImageColorsOld(newFill, newStroke) {
-    // 1) sanity check
-    if (
-        !activeImage ||
-        !activeImage.src?.endsWith(".svg") ||
-        !activeImage.img        // your HTMLImageElement
-    ) {
-        console.warn("activeImage is not an SVG image on canvas");
-        return;
-    }
 
-    // remember its displayed size
-    const origW = activeImage.width;
-    const origH = activeImage.height;
 
-    // parse + patch the raw SVG text
-    function patchSvg(svgText) {
-        const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
-
-        // update <style> block if present
-        const styleEl = doc.querySelector("style");
-        if (styleEl) {
-            styleEl.textContent = styleEl.textContent
-                .replace(/fill:[^;]+;/g, `fill:${newFill};`)
-                .replace(/stroke:[^;]+;/g, `stroke:${newStroke};`);
-        }
-        // update inline fill/stroke on every element
-        doc.querySelectorAll("*").forEach(el => {
-            if (newFill) el.setAttribute("fill", newFill);
-            if (newStroke) el.setAttribute("stroke", newStroke);
-        });
-
-        return new XMLSerializer().serializeToString(doc);
-    }
-
-    // swap in the recolored SVG as a data‑uri on the same <img>
-    function redraw(updatedSvg) {
-        const dataUri =
-            "data:image/svg+xml;charset=utf-8," +
-            encodeURIComponent(updatedSvg);
-
-        const imgEl = activeImage.img;
-        imgEl.onload = () => {
-            // restore the canvas‐object’s width/height
-            activeImage.width = origW;
-            activeImage.height = origH;
-            // finally, re‑draw your entire canvas:
-            drawCanvas('Common');
-        };
-        // swap the source (this triggers imgEl.onload)
-        imgEl.src = dataUri;
-        // keep your model in sync
-        activeImage.src = dataUri;
-    }
-
-    // fetch & cache the original SVG once
-    if (activeImage.originalSVG) {
-        redraw(patchSvg(activeImage.originalSVG));
-    } else {
-        fetch(activeImage.src)
-            .then(res => res.text())
-            .then(svgText => {
-                activeImage.originalSVG = svgText;    // cache it
-                redraw(patchSvg(svgText));            // apply your first recolor
-            })
-            .catch(err => console.error("Error fetching SVG:", err));
-    }
-}
 
 
 
@@ -6021,10 +5962,10 @@ duplicateOption.addEventListener('click', () => {
     }
 });
 
-function strokeWidthChanges() {
-    const ddl = document.getElementById('ddlStrokeWidth');
-    const newWidth = ddl.value;    // e.g. "4"
-    const widthNum = parseInt(newWidth, 10);
+////function strokeWidthChanges() {
+////    const ddl = document.getElementById('ddlStrokeWidth');
+////    const newWidth = ddl.value;    // e.g. "4"
+////    const widthNum = parseInt(newWidth, 10);
 
-    console.log('Stroke width changed to:', widthNum);
-}
+////    console.log('Stroke width changed to:', widthNum);
+////}
