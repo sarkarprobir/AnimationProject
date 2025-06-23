@@ -455,8 +455,10 @@ function saveCanvasData() {
                 rotation: imgObj.rotation,
                 type: imgObj.type || 'image',
                 zIndex: imgObj.zIndex || getNextZIndex(),
-                fillNoColor: $("#hdnfillNoColor").val(),
-                strokeNoColor: $("#hdnstrokeNoColor").val(),
+                fillNoColorStatus: $("#hdnfillNoColorStatus").val(),
+                strokeNoColorStatus: $("#hdnstrokeNoColorStatus").val(),
+                fillNoColor: $("#hdnfillColor").val(),
+                strokeNoColor: $("#hdnStrockColor").val(),
                 strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 3
             };
         })
@@ -804,8 +806,10 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
         o.rotation = imgObj.rotation;
         o.type = imgObj.type || 'image';
         o.zIndex = imgObj.zIndex || getNextZIndex();
-        o.fillNoColor = imgObj.fillNoColor||false;
-        o.strokeNoColor = imgObj.strokeNoColor || false;
+        o.fillNoColorStatus = imgObj.fillNoColorStatus ||false;
+        o.strokeNoColorStatus = imgObj.strokeNoColorStatus || false;
+        o.fillNoColor = imgObj.fillNoColor || "#FFFFFF";
+        o.strokeNoColor = imgObj.strokeNoColor || "#FFFFFF";
         o.strokeWidth = imgObj.strokeWidth || 3;
         return o;
     });

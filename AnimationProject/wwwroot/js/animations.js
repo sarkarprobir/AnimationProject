@@ -2284,8 +2284,10 @@ function cloneImageObject(srcObj) {
         selected: false,
         zIndex: getNextZIndex(),
         type: 'image',
-        fillNoColor: false,
-        strokeNoColor: false,
+        fillNoColorStatus: srcObj.fillNoColorStatus|| false,
+        strokeNoColorStatus: srcObj.strokeNoColorStatus || false,
+        fillNoColor: srcObj.fillNoColor|| "#FFFFFF",
+        strokeNoColor: srcObj.strokeNoColor ||"#FFFFFF",
         strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 3
         // Copy any other custom fields if needed...
     };
@@ -4267,11 +4269,17 @@ canvas.addEventListener("click", function (e) {
     updateFontStyleButtons();
     const selectedType = getSelectedType();
     if (selectedType == "Shape") {
-        $("#hdnfillNoColor").val(imgHit.fillNoColor || false);
-        $("#hdnstrokeNoColor").val(imgHit.strokeNoColor || false);
+        $("#hdnfillNoColorStatus").val(imgHit.fillNoColorStatus || false);
+        $("#hdnstrokeNoColorStatus").val(imgHit.strokeNoColorStatus || false);
+        $("#hdnfillColor").val(imgHit.fillNoColor || "#FFFFFF");
+        $("#hdnStrockColor").val(imgHit.strokeNoColor || "#FFFFFF");
+       
+        $("#favFillcolor").val($("#hdnfillColor").val());
+        $("#favStrockcolor").val($("#hdnStrockColor").val());
+
         document.getElementById('ddlStrokeWidth').value = (imgHit.strokeWidth || 3).toString();
-        document.getElementById("noColorCheck").checked = toBool(imgHit.fillNoColor)||false;
-        document.getElementById("noColorCheck2").checked = toBool(imgHit.strokeNoColor) || false;
+        document.getElementById("noColorCheck").checked = toBool(imgHit.fillNoColorStatus)||false;
+        document.getElementById("noColorCheck2").checked = toBool(imgHit.strokeNoColorStatus) || false;
 
         const noColorChecked = document.getElementById("noColorCheck").checked;
         const noStrokeChecked = document.getElementById("noColorCheck2").checked;
@@ -4631,6 +4639,7 @@ function ChangeFillColor() {
         document.getElementById("noColorCheck").checked = false;
 
         updateSelectedImageColors($("#hdnfillColor").val(), noStrokeChecked ? "none" : $("#hdnStrockColor").val());
+        $("#hdnfillNoColorStatus").val(false);
     }
 }
 //No color option for fill color 
@@ -4652,10 +4661,10 @@ function SetNoFillColor() {
                 "none", noStrokeChecked ? "none" : $("#hdnStrockColor").val()
             );
 
-            $("#hdnfillNoColor").val(true);
-            /*document.getElementById("noColorCheck").checked = true;*/
+            $("#hdnfillNoColorStatus").val(true);
+            $("#hdnfillColor").val(fillColorPicker.value);
         } else {
-            $("#hdnfillNoColor").val(false);
+            $("#hdnfillNoColorStatus").val(false);
             /*document.getElementById("noColorCheck").checked = false;*/
             // Restore previous fill color
             //if (previousFillColor) {
@@ -4684,6 +4693,7 @@ function ChangeStrockColor() {
         document.getElementById("noColorCheck2").checked = false;
 
         updateSelectedImageColors(noColorChecked ? "none" : $("#hdnfillColor").val(), $("#hdnStrockColor").val());
+        $("#hdnstrokeNoColorStatus").val(false);
     }
 }
 //No color option for stroke color 
@@ -4705,10 +4715,10 @@ function SetNoStrokeColor() {
                 "none"
             );
           
-            $("#hdnstrokeNoColor").val(true);
-           /* document.getElementById("noColorCheck2").checked = true;*/
+            $("#hdnstrokeNoColorStatus").val(true);
+            $("#hdnStrockColor").val(strokeColorPicker.value);
         } else {
-            $("#hdnstrokeNoColor").val(false);
+            $("#hdnstrokeNoColorStatus").val(false);
            /* document.getElementById("noColorCheck2").checked = false;*/
             // Restore previous stroke color
             //if (previousStrokeColor) {
@@ -4981,8 +4991,10 @@ canvas.addEventListener('drop', e => {
             rotation: 0,
             type: "image",
             zIndex: getNextZIndex(),
-            fillNoColor: false,
-            strokeNoColor: false,
+            fillNoColorStatus: false,
+            strokeNoColorStatus: false,
+            fillNoColor: "#FFFFFF",
+            strokeNoColor: "#FFFFFF",
             strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 3
         });
         drawCanvas('Common');
