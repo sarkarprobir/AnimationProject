@@ -1053,6 +1053,7 @@ function moveCaretToEnd(el) {
                 <label>Fill</label>
             </div>
             <div class="col-md-6  d-flex justify-content-end gap-2">
+                <input type="hidden" id="hdnfillNoColor" />
                 <label class="slash-checkbox">
                     <input type="checkbox" id="noColorCheck" oninput="SetNoFillColor()" />
                     <span class="custom-box"></span>
@@ -1075,12 +1076,13 @@ function moveCaretToEnd(el) {
                 <label>Stroke</label>
             </div>
             <div class="d-flex gap-2 align-items-center justify-content-end">
+                <input type="hidden" id="hdnstrokeNoColor" />
                 <label class="slash-checkbox">
                     <input type="checkbox" id="noColorCheck2" oninput="SetNoStrokeColor()"   />
                     <span class="custom-box"></span>
                 </label>
                 <div class="custom-dropdown">
-                    <select>
+                    <select id="ddlStrokeWidth" onchange="strokeWidthChanges()">
                         <option>1</option>
                         <option>2</option>
                         <option selected>3</option>

@@ -580,7 +580,6 @@ function initializeLayers() {
 }
 
 function drawCanvas(condition) {
-    console.log("Calling Point");
     initializeLayers();
     resizeCanvas();
     const dpr = window.devicePixelRatio || 1;
@@ -2285,6 +2284,9 @@ function cloneImageObject(srcObj) {
         selected: false,
         zIndex: getNextZIndex(),
         type: 'image',
+        fillNoColor: false,
+        strokeNoColor: false,
+        strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 3
         // Copy any other custom fields if needed...
     };
 }
@@ -4264,6 +4266,13 @@ canvas.addEventListener("click", function (e) {
     drawCanvas('Common');
     updateFontStyleButtons();
     const selectedType = getSelectedType();
+    if (selectedType == "Shape") {
+        $("#hdnfillNoColor").val(imgHit.fillNoColor || false);
+        $("#hdnstrokeNoColor").val(imgHit.strokeNoColor || false);
+        document.getElementById('ddlStrokeWidth').value = (imgHit.strokeWidth || 3).toString();
+        document.getElementById("noColorCheck").checked = imgHit.fillNoColor||false;
+        document.getElementById("noColorCheck2").checked = imgHit.strokeNoColor || false;
+    }
     console.log("Selected Type:", selectedType);
     HideShowRightPannel(selectedType);
 
@@ -4615,7 +4624,11 @@ function SetNoFillColor() {
             previousFillColor = fillColorPicker.value;
             $("#hdnfillColor").val("none");
             updateSelectedImageColors("none", $("#hdnStrockColor").val());
+            $("#hdnfillNoColor").val(true);
+            /*document.getElementById("noColorCheck").checked = true;*/
         } else {
+            $("#hdnfillNoColor").val(false);
+            /*document.getElementById("noColorCheck").checked = false;*/
             // Restore previous fill color
             if (previousFillColor) {
                 $("#hdnfillColor").val(previousFillColor);
@@ -4651,12 +4664,16 @@ function SetNoStrokeColor() {
             // Save current stroke color
             previousStrokeColor = strokeColorPicker.value;
             $("#hdnStrockColor").val("none");
-            updateSelectedImageColors($("#hdnfillColor").val(), "none");
+            updateSelectedImageColors($("#hdnStrockColor").val(), "none");
+            $("#hdnstrokeNoColor").val(true);
+           /* document.getElementById("noColorCheck2").checked = true;*/
         } else {
+            $("#hdnstrokeNoColor").val(false);
+           /* document.getElementById("noColorCheck2").checked = false;*/
             // Restore previous stroke color
             if (previousStrokeColor) {
                 $("#hdnStrockColor").val(previousStrokeColor);
-                updateSelectedImageColors($("#hdnfillColor").val(), previousStrokeColor);
+                updateSelectedImageColors($("#hdnStrockColor").val(), previousStrokeColor);
 
                 // Also update the color picker UI
                 strokeColorPicker.value = previousStrokeColor;
@@ -4900,7 +4917,10 @@ canvas.addEventListener('drop', e => {
             groupId: null,
             rotation: 0,
             type: "image",
-            zIndex: getNextZIndex()
+            zIndex: getNextZIndex(),
+            fillNoColor: false,
+            strokeNoColor: false,
+            strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 3
         });
         drawCanvas('Common');
     };
@@ -5956,3 +5976,10 @@ duplicateOption.addEventListener('click', () => {
     }
 });
 
+function strokeWidthChanges() {
+    const ddl = document.getElementById('ddlStrokeWidth');
+    const newWidth = ddl.value;    // e.g. "4"
+    const widthNum = parseInt(newWidth, 10);
+
+    console.log('Stroke width changed to:', widthNum);
+}
