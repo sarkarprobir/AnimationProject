@@ -4847,16 +4847,76 @@ function ChangeFillColor() {
     if (activeImage) {
         const fillColorPicker = document.getElementById("favFillcolor");
         $("#hdnfillColor").val(fillColorPicker.value);
+
+        // Uncheck the "no color" box if color is manually changed
+        document.getElementById("noColorCheck").checked = false;
+
         updateSelectedImageColors($("#hdnfillColor").val(), $("#hdnStrockColor").val());
     }
 }
+//No color option for fill color 
+let previousFillColor = null; 
+
+function SetNoFillColor() {
+    const noColorChecked = document.getElementById("noColorCheck").checked;
+    const fillColorPicker = document.getElementById("favFillcolor");
+
+    if (activeImage) {
+        if (noColorChecked) {
+            // Store current color before removing
+            previousFillColor = fillColorPicker.value;
+            $("#hdnfillColor").val("none");
+            updateSelectedImageColors("none", $("#hdnStrockColor").val());
+        } else {
+            // Restore previous fill color
+            if (previousFillColor) {
+                $("#hdnfillColor").val(previousFillColor);
+                updateSelectedImageColors(previousFillColor, $("#hdnStrockColor").val());
+
+                // Also update the color picker value visually
+                fillColorPicker.value = previousFillColor;
+            }
+        }
+    }
+}
+
 function ChangeStrockColor() {
     if (activeImage) {
         const strockColorPicker = document.getElementById("favStrockcolor");
         $("#hdnStrockColor").val(strockColorPicker.value);
+
+        // Uncheck "no stroke color" checkbox
+        document.getElementById("noColorCheck2").checked = false;
+
         updateSelectedImageColors($("#hdnfillColor").val(), $("#hdnStrockColor").val());
     }
 }
+//No color option for stroke color 
+let previousStrokeColor = null; // Store the previous stroke color
+
+function SetNoStrokeColor() {
+    const noStrokeChecked = document.getElementById("noColorCheck2").checked;
+    const strokeColorPicker = document.getElementById("favStrockcolor");
+
+    if (activeImage) {
+        if (noStrokeChecked) {
+            // Save current stroke color
+            previousStrokeColor = strokeColorPicker.value;
+            $("#hdnStrockColor").val("none");
+            updateSelectedImageColors($("#hdnfillColor").val(), "none");
+        } else {
+            // Restore previous stroke color
+            if (previousStrokeColor) {
+                $("#hdnStrockColor").val(previousStrokeColor);
+                updateSelectedImageColors($("#hdnfillColor").val(), previousStrokeColor);
+
+                // Also update the color picker UI
+                strokeColorPicker.value = previousStrokeColor;
+            }
+        }
+    }
+}
+
 function TabShowHide(type) {
     if (type === 'In') {
         $("#hdnTabType").val('In');
