@@ -4664,6 +4664,28 @@ function SetNoStrokeColor() {
         }
     }
 }
+//stroke width change function
+function ChangeStrokeWidth() {
+    const selectEl = document.getElementById("strokeWidthSelect");
+    const strokeWidth = selectEl.value;
+
+    if (activeImage) {
+        $("#hdnStrokeWidth").val(strokeWidth);
+
+        // Update SVG stroke-width
+        const fill = $("#hdnfillColor").val();
+        const stroke = $("#hdnStrockColor").val();
+        updateSelectedImageColors(fill, stroke, strokeWidth);
+    }
+
+    // Remove 'selected' class from all options
+    Array.from(selectEl.options).forEach(opt => opt.classList.remove("selected"));
+
+    // Add 'selected' class to the selected option
+    selectEl.options[selectEl.selectedIndex].classList.add("selected");
+}
+
+
 
 function TabShowHide(type) {
     if (type === 'In') {
@@ -4950,7 +4972,7 @@ if (canvas && typeof canvas.on === 'function') {
         activeImage = null;
     });
 }
-function updateSelectedImageColors(newFill, newStroke) {
+function updateSelectedImageColors(newFill, newStroke, newStrokeWidth = null) {
     // 1) sanity‑check: do we have an SVG network URL?
     const svgUrl = activeImage.originalSrc || activeImage.src;
     //if (!activeImage || !svgUrl?.endsWith('.svg') || !activeImage.img) {
@@ -4974,21 +4996,44 @@ function updateSelectedImageColors(newFill, newStroke) {
     const origH = activeImage.height;
 
     // 4) core SVG patcher
+    //function patchSvg(svgText) {
+    //    const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+
+    //    // update <style> block
+    //    const styleEl = doc.querySelector("style");
+    //    if (styleEl) {
+    //        styleEl.textContent = styleEl.textContent
+    //            .replace(/fill:[^;]+;/g, `fill:${newFill};`)
+    //            .replace(/stroke:[^;]+;/g, `stroke:${newStroke};`);
+    //    }
+
+    //    // update inline fill/stroke on every element
+    //    doc.querySelectorAll("*").forEach(el => {
+    //        if (newFill) el.setAttribute("fill", newFill);
+    //        if (newStroke) el.setAttribute("stroke", newStroke);
+    //    });
+
+    //    return new XMLSerializer().serializeToString(doc);
+    //}
     function patchSvg(svgText) {
         const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
 
         // update <style> block
         const styleEl = doc.querySelector("style");
         if (styleEl) {
-            styleEl.textContent = styleEl.textContent
-                .replace(/fill:[^;]+;/g, `fill:${newFill};`)
-                .replace(/stroke:[^;]+;/g, `stroke:${newStroke};`);
+            if (newFill)
+                styleEl.textContent = styleEl.textContent.replace(/fill:[^;]+;/g, `fill:${newFill};`);
+            if (newStroke)
+                styleEl.textContent = styleEl.textContent.replace(/stroke:[^;]+;/g, `stroke:${newStroke};`);
+            if (newStrokeWidth)
+                styleEl.textContent = styleEl.textContent.replace(/stroke-width:[^;]+;/g, `stroke-width:${newStrokeWidth};`);
         }
 
-        // update inline fill/stroke on every element
+        // update inline styles
         doc.querySelectorAll("*").forEach(el => {
-            if (newFill) el.setAttribute("fill", newFill);
-            if (newStroke) el.setAttribute("stroke", newStroke);
+            if (newFill !== null) el.setAttribute("fill", newFill);
+            if (newStroke !== null) el.setAttribute("stroke", newStroke);
+            if (newStrokeWidth !== null) el.setAttribute("stroke-width", newStrokeWidth);
         });
 
         return new XMLSerializer().serializeToString(doc);
