@@ -1017,16 +1017,23 @@
         })();
 
         //copy function
-        function copyLink() {
-          const link = document.querySelector('.aniLink').innerText.trim();
-          navigator.clipboard.writeText(link)
-            // .then(() => {
-            //   alert('Link copied: ' + link);
-            // })
-            // .catch(err => {
-            //   console.error('Failed to copy link:', err);
-            // });
+        function copyLink(button) {
+          const linkText = button.closest('.fileLink').querySelector('.aniLink').innerText.trim();
+
+          navigator.clipboard.writeText(linkText).then(() => {
+            // Change icon to check
+            const icon = button.querySelector('i');
+            const originalClass = icon.className;
+
+            icon.className = 'fa-solid fa-check'; // show check icon
+
+            // Revert after 1 second
+            setTimeout(() => {
+              icon.className = originalClass;
+            }, 1000);
+          });
         }
+
     </script>
     <style>
         .hidden {
