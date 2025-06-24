@@ -2988,7 +2988,8 @@ canvas.addEventListener("mousedown", e => {
         rotationBadge.textContent = angle;
 
 
-        const opacity = txtHit.opacity*100 || 100;
+        var opacity = txtHit.opacity * 100 || 100;
+        if (opacity > 100) opacity = 100;
         opacitySlider.value = opacity;
         document.getElementById("opacityValue").textContent = opacity + "";
         opacityBadge.textContent = opacity;
@@ -3032,7 +3033,8 @@ canvas.addEventListener("mousedown", e => {
         document.getElementById("rotationValue").textContent = angle + "°";
         rotationBadge.textContent = angle;
 
-        const opacity = imgHit.opacity * 100 || 100;
+        var opacity = imgHit.opacity * 100 || 100;
+        if (opacity > 100) opacity = 100;
         opacitySlider.value = opacity;
         document.getElementById("opacityValue").textContent = opacity + "";
         opacityBadge.textContent = opacity;
@@ -4240,6 +4242,13 @@ canvas.addEventListener("click", function (e) {
 
         // 3) Activate only the Graphic button
         graphicBtn.classList.add('active');
+
+        var opacity = txtHit.opacity * 100 || 100;
+        if (opacity > 100) opacity = 100;
+        opacitySlider.value = opacity;
+        document.getElementById("opacityValue").textContent = opacity + "";
+        opacityBadge.textContent = opacity;
+
     }
     else if (imgHit) {
         // IMAGE clicked
@@ -4265,6 +4274,12 @@ canvas.addEventListener("click", function (e) {
 
         // 3) Activate only the Graphic button
         graphicBtn.classList.add('active');
+
+        var opacity = imgHit.opacity * 100 || 100;
+        if (opacity > 100) opacity = 100;
+        opacitySlider.value = opacity;
+        document.getElementById("opacityValue").textContent = opacity + "";
+        opacityBadge.textContent = opacity;
     }
     else {
                 // — clicked empty space —
@@ -4280,6 +4295,11 @@ canvas.addEventListener("click", function (e) {
 
         // 3) Activate only the Graphic button
         graphicBtn.classList.add('active');
+
+        const opacity =  100;
+        opacitySlider.value = opacity;
+        document.getElementById("opacityValue").textContent = opacity + "";
+        opacityBadge.textContent = opacity;
     }
 
     drawCanvas('Common');
