@@ -4280,6 +4280,14 @@ canvas.addEventListener("click", function (e) {
         opacitySlider.value = opacity;
         document.getElementById("opacityValue").textContent = opacity + "";
         opacityBadge.textContent = opacity;
+        if ($("#hdnFillStrockColorFlag").val() == '1') {
+            $("#hdnfillColor").val(imgHit.fillNoColor || "#FFFFFF");
+            $("#hdnStrockColor").val(imgHit.strokeNoColor || "#FFFFFF");
+            $("#favFillcolor").val($("#hdnfillColor").val());
+            $("#favStrockcolor").val($("#hdnStrockColor").val());
+            $("#hdnFillStrockColorFlag").val('2');
+        }
+       
     }
     else {
                 // — clicked empty space —
@@ -4308,11 +4316,15 @@ canvas.addEventListener("click", function (e) {
     if (selectedType == "Shape") {
         $("#hdnfillNoColorStatus").val(imgHit.fillNoColorStatus || false);
         $("#hdnstrokeNoColorStatus").val(imgHit.strokeNoColorStatus || false);
-        $("#hdnfillColor").val(imgHit.fillNoColor || "#FFFFFF");
-        $("#hdnStrockColor").val(imgHit.strokeNoColor || "#FFFFFF");
+        //if ($("#hdnfillColor").val() == imgHit.fillNoColor) {
+        //    $("#hdnfillColor").val(imgHit.fillNoColor || "#FFFFFF");
+        //}
+        //if ($("#hdnStrockColor").val() == imgHit.strokeNoColor) {
+        //    $("#hdnStrockColor").val(imgHit.strokeNoColor || "#FFFFFF");
+        //}
        
-        $("#favFillcolor").val($("#hdnfillColor").val());
-        $("#favStrockcolor").val($("#hdnStrockColor").val());
+        //$("#favFillcolor").val($("#hdnfillColor").val());
+        //$("#favStrockcolor").val($("#hdnStrockColor").val());
 
         document.getElementById('ddlStrokeWidth').value = (imgHit.strokeWidth || 3).toString();
         document.getElementById("noColorCheck").checked = toBool(imgHit.fillNoColorStatus)||false;
@@ -4322,7 +4334,7 @@ canvas.addEventListener("click", function (e) {
         const noStrokeChecked = document.getElementById("noColorCheck2").checked;
         if (noColorChecked) {
             updateSelectedImageColors(
-                "none", noStrokeChecked ? "none" : $("#hdnStrockColor").val()
+                "none", noStrokeChecked ? "none" : $("#hdnStrockColor").val(), document.getElementById("ddlStrokeWidth").value || 2
             );
         }
 
@@ -4330,7 +4342,7 @@ canvas.addEventListener("click", function (e) {
         if (noStrokeChecked) {
             updateSelectedImageColors(
                 noColorChecked ? "none" : $("#hdnfillColor").val(),
-                "none"
+                "none", document.getElementById("ddlStrokeWidth").value || 2
             );
         }
 
