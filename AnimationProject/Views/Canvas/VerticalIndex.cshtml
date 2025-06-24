@@ -1017,15 +1017,15 @@
         })();
 
         //copy function
-        function copyLink(element) {
-          const link = element.querySelector('span').innerText.trim();
+        function copyLink() {
+          const link = document.querySelector('.aniLink').innerText.trim();
           navigator.clipboard.writeText(link)
-            .then(() => {
-              alert('Link copied: ' + link);
-            })
-            .catch(err => {
-              console.error('Failed to copy link:', err);
-            });
+            // .then(() => {
+            //   alert('Link copied: ' + link);
+            // })
+            // .catch(err => {
+            //   console.error('Failed to copy link:', err);
+            // });
         }
     </script>
     <style>
@@ -1174,9 +1174,9 @@
 
                 <div class="modal-body text-start">
                     <p class="fileName"> File : Sunday Adboard v01</p>
-                    <div class="fileLink" onclick="copyLink(this)">
-                        <span>https://aniboard.com/v20560</span> 
-                        <span class="ms-2"><i class="fa-regular fa-copy"></i></span>
+                    <div class="fileLink">
+                        <span class="aniLink">https://aniboard.com/v20560</span> 
+                        <button class="copy-link-btn ms-2" onclick="copyLink(this)"><i class="fa-regular fa-copy"></i></button>
                     </div>
 
                 </div>

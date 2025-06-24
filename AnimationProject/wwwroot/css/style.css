@@ -1694,3 +1694,14 @@ body {
 .activeB {
     box-shadow: rgba(3, 102, 214, 0.3) 0px 0px 0px 3px;
 }
+.copy-link-btn {
+    border: none;
+    background-color: transparent;
+    font-size: 17px;
+}
+.aniLink {
+    background-color: #6214fe;
+    color: #fff;
+    border-radius: 3px;
+    padding: 3px 6px;
+}
