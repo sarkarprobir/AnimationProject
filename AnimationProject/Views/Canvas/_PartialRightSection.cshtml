@@ -291,9 +291,89 @@
     });
 </script>
 <script>
-       const rotationSlider    = document.getElementById('rotationSlider');
-    const rotationValueSpan = document.getElementById('rotationValue');
-    const rotationBadge     = document.getElementById('rotationBadge');
+  const slider    = document.getElementById('opacitySlider');
+  const valueSpan = document.getElementById('opacityValue');
+  const badge     = document.getElementById('opacityBadge');
+
+  // Apply a given opacity (0–100) to both controls and to the active object
+function applyOpacity(rawV) {
+  // Accept either 0–1 or 0–100
+  let percent = Number(rawV);
+  if (percent <= 1) percent = percent * 100;
+
+  // Clamp
+  percent = Math.min(100, Math.max(0, percent));
+
+  // Update controls
+  slider.value       = percent;
+  valueSpan.textContent = percent;
+  badge.textContent     = percent;
+
+  // Store as 0–1 on your objects & redraw
+  const alpha = percent / 100;
+  if (activeText)  activeText.opacity  = alpha;
+  if (activeImage) activeImage.opacity = alpha;
+  drawCanvas('Common');
+}
+
+  // 1) slider → spans & canvas
+  slider.addEventListener('input', () => {
+    applyOpacity(slider.value);
+  });
+
+  // 2) badge is editable: allow only digits/backspace/delete/arrow/tab
+  badge.contentEditable = 'true';
+  badge.spellcheck      = false;
+  badge.addEventListener('keydown', e => {
+    const txt = badge.textContent;
+    if (e.key === 'Backspace') {
+      const digits = txt.replace(/\D/g, '');
+      if (digits.length <= 1) {
+        e.preventDefault();
+        applyOpacity(100);
+        moveCaretToEnd(badge);
+      }
+      return;
+    }
+    const isArrow = ['ArrowLeft','ArrowRight'].includes(e.key);
+    const allowed = /\d/.test(e.key) || ['Delete','Tab'].includes(e.key) || isArrow;
+    if (!allowed) e.preventDefault();
+  });
+
+  // 3) badge → slider & canvas on input
+  badge.addEventListener('input', () => {
+    let raw = badge.textContent.replace(/\D/g,'');
+    if (raw === '') return;        // let them clear temporarily
+    applyOpacity(raw);
+  });
+
+  // 4) on blur, if badge empty default back to 100
+  badge.addEventListener('blur', () => {
+    if (badge.textContent.replace(/\D/g,'') === '') {
+      applyOpacity(100);
+    }
+  });
+
+  // helper: move caret to end of a contentEditable element
+  function moveCaretToEnd(el) {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  // optional: external API to set opacity programmatically
+  function setOpacity(v) {
+    applyOpacity(v);
+  }
+</script>
+
+<script>
+ const rotationSlider    = document.getElementById('rotationSlider');
+ const rotationValueSpan = document.getElementById('rotationValue');
+ const rotationBadge     = document.getElementById('rotationBadge');
 function clampAngle(raw) {
   let deg = parseFloat(raw);
   // bring into [–360, +360] first (if your slider can go beyond)
@@ -1141,17 +1221,23 @@ function moveCaretToEnd(el) {
         </div>
     </div>
     @* opacity slider *@
-    <div id="opacity_tool" class="slider-card">
-        <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
-            <label for="opacitySlider" class="mb-0 fw-semibold slider_label">
-                Opacity: <span id="opacityValue">100</span>
-            </label>
-            <span class="badge"
-                  id="opacityBadge"
-                  spellcheck="false">100</span>
-        </div>
-        <input type="range" class="form-range" value="100" min="0" max="100" step="10" id="opacitySlider">
-    </div>
+<div id="opacity_tool" class="slider-card">
+  <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+    <label for="opacitySlider" class="mb-0 fw-semibold slider_label">
+      Opacity: <span id="opacityValue">100</span>%
+    </label>
+    <span class="badge" id="opacityBadge" spellcheck="false">100</span>
+  </div>
+  <input
+    type="range"
+    class="form-range"
+    id="opacitySlider"
+    min="0"
+    max="100"
+    step="1"   
+    value="100"
+  >
+</div>
     @* rotation slider *@
     <div id="rotation_tool" class="slider-card">
         <div class="d-flex justify-content-between align-items-center mt-4 mb-2">

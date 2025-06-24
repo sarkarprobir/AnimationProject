@@ -771,7 +771,7 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
             fontFamily: obj.fontFamily,
             textColor: obj.textColor,
             textAlign: obj.textAlign,
-            opacity: obj.opacity || 1,
+            opacity: obj.opacity || 100,
             selected: false,
             _hasManualBreaks: hasManual,
             // ← RIGHT HERE: hydrate or default lineSpacing

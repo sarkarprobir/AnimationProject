@@ -50,8 +50,8 @@ let scrollTop = 0;
 let image = null;
 let recordedChunks = [];
 let text = $("#textInput").val();
-let textPosition = { x: 100, y: 100, opacity: 1, content: text, }; // Default start position
-let imagePosition = { x: 100, y: 20, scaleX: 1, scaleY: 1, opacity: 1, }; // Default start position
+let textPosition = { x: 100, y: 100, opacity: 100, content: text, }; // Default start position
+let imagePosition = { x: 100, y: 20, scaleX: 1, scaleY: 1, opacity: 100, }; // Default start position
 
 const FACTOR_INCREMENT = 0.1;
 
@@ -563,7 +563,7 @@ function changeLineSpacing(deltaFactor) {
 
 function drawImageOnCanvas(img) {
     ctx.save();
-    ctx.globalAlpha = img.opacity ?? 1;
+    ctx.globalAlpha = img.opacity ?? 100;
     ctx.translate(img.x, img.y);
     ctx.scale(img.scaleX ?? 1, img.scaleY ?? 1);
     ctx.drawImage(img.img, 0, 0, img.width, img.height);
@@ -630,7 +630,7 @@ function drawCanvas(condition) {
 
     allItems.forEach(item => {
         ctx.save();
-        ctx.globalAlpha = item.opacity || 1;
+        ctx.globalAlpha = item.opacity || 100;
 
         if (item.type === 'image') {
             const scaleX_ = item.scaleX || 1;
@@ -1364,14 +1364,14 @@ function animateText(direction, condition, loopCount) {
             tlText.set(imgObj, {
                 x: imgObj.x,
                 y: imgObj.y,
-                opacity: imgObj.opacity ?? 1
+                opacity: imgObj.opacity ?? 100
             }, 0);
         });
         textObjects.filter(t => t.noAnim).forEach(txtObj => {
             tlText.set(txtObj, {
                 x: txtObj.finalX,
                 y: txtObj.finalY,
-                opacity: txtObj.opacity ?? 1
+                opacity: txtObj.opacity ?? 100
             }, 0);
         });
 
@@ -1408,7 +1408,7 @@ function animateText(direction, condition, loopCount) {
             tlText.set([...textObjects, ...images], {
                 x: (i, target) => target.finalX,
                 y: (i, target) => target.finalY,
-                opacity: (i, target) => target.opacity ?? 1
+                opacity: (i, target) => target.opacity ?? 100
             }, 0);
 
             // 2) Schedule each unit’s Out tween right after the Stay block:
@@ -1454,7 +1454,7 @@ function animateText(direction, condition, loopCount) {
             images.forEach(img => {
                 img.x = img.finalX;
                 img.y = img.finalY;
-                img.opacity = img.opacity ?? 1;
+                img.opacity = img.opacity ?? 100;
             });
             textObjects.forEach(txt => {
                 txt.x = txt.finalX;
@@ -1507,10 +1507,10 @@ function animateText(direction, condition, loopCount) {
 
         // Pin noAnim items at t=0
         images.filter(i => i.noAnim).forEach(img =>
-            tlText.set(img, { x: img.x, y: img.y, opacity: img.opacity ?? 1 }, 0)
+            tlText.set(img, { x: img.x, y: img.y, opacity: img.opacity ?? 100 }, 0)
         );
         textObjects.filter(t => t.noAnim).forEach(txt =>
-            tlText.set(txt, { x: txt.finalX, y: txt.finalY, opacity: txt.opacity ?? 1 }, 0)
+            tlText.set(txt, { x: txt.finalX, y: txt.finalY, opacity: txt.opacity ?? 100 }, 0)
         );
 
         // ── IN ── (only if requested)
@@ -1544,7 +1544,7 @@ function animateText(direction, condition, loopCount) {
             tlText.set([...images, ...textObjects], {
                 x: (i, t) => t.finalX,
                 y: (i, t) => t.finalY,
-                opacity: (i, t) => t.opacity ?? 1
+                opacity: (i, t) => t.opacity ?? 100
             }, 0);
 
             tlText.to(units, {
@@ -1571,7 +1571,7 @@ function animateText(direction, condition, loopCount) {
 
         tlText.eventCallback("onComplete", () => {
             images.forEach(img => {
-                img.x = img.finalX; img.y = img.finalY; img.opacity = img.opacity ?? 1;
+                img.x = img.finalX; img.y = img.finalY; img.opacity = img.opacity ?? 100;
             });
             textObjects.forEach(txt => {
                 txt.x = txt.finalX; txt.y = txt.finalY;
@@ -2214,7 +2214,8 @@ function addDefaultText() {
         isBold: false,
         isItalic: false,
         type: 'text',
-        zIndex: getNextZIndex()
+        zIndex: getNextZIndex(),
+        opacity:100
     };
 
     // 2) Measure it
@@ -2264,6 +2265,7 @@ function cloneTextObject(srcObj) {
         selected: false,
         zIndex: getNextZIndex(),
         type: 'text',
+
         // Copy any other fields you need...
     };
 }
@@ -2985,6 +2987,12 @@ canvas.addEventListener("mousedown", e => {
         document.getElementById("rotationValue").textContent = angle + "°";
         rotationBadge.textContent = angle;
 
+
+        const opacity = txtHit.opacity*100 || 100;
+        opacitySlider.value = opacity;
+        document.getElementById("opacityValue").textContent = opacity + "";
+        opacityBadge.textContent = opacity;
+
         handle = getTextHandleUnderMouse(mouseX, mouseY, txtHit);
         if (handle && !handle.includes("middle")) {
             isResizingText = true;
@@ -3024,6 +3032,11 @@ canvas.addEventListener("mousedown", e => {
         document.getElementById("rotationValue").textContent = angle + "°";
         rotationBadge.textContent = angle;
 
+        const opacity = imgHit.opacity * 100 || 100;
+        opacitySlider.value = opacity;
+        document.getElementById("opacityValue").textContent = opacity + "";
+        opacityBadge.textContent = opacity;
+
         isDraggingImage = true;
         dragOffsetImage = { x: mouseX - imgHit.x, y: mouseY - imgHit.y };
         enableFillColorDiv();
@@ -3062,6 +3075,10 @@ canvas.addEventListener("mousedown", e => {
         activeText = activeImage = null;
         rotationSlider.value = 0;
         rotationBadge.textContent = "0";
+
+        opacitySlider.value = 100;
+        opacityBadge.textContent = "100";
+       
 
         // begin drag-to-select
         isDraggingSelectionBox = true;
@@ -4984,7 +5001,7 @@ canvas.addEventListener('drop', e => {
             // keep these at 1 so drawCanvas draws at exactly width×height:
             scaleX: 1,
             scaleY: 1,
-            opacity: 1,
+            opacity: 100,
             selected: false,
             noAnim: false,
             groupId: null,
