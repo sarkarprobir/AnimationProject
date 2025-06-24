@@ -4675,7 +4675,7 @@ function ChangeFillColor() {
         // Uncheck the "no color" box if color is manually changed
         document.getElementById("noColorCheck").checked = false;
 
-        updateSelectedImageColors($("#hdnfillColor").val(), noStrokeChecked ? "none" : $("#hdnStrockColor").val());
+        updateSelectedImageColors($("#hdnfillColor").val(), noStrokeChecked ? "none" : $("#hdnStrockColor").val(), document.getElementById("ddlStrokeWidth").value || 2);
         $("#hdnfillNoColorStatus").val(false);
     }
 }
@@ -4695,7 +4695,7 @@ function SetNoFillColor() {
           //  updateSelectedImageColors("none", $("#hdnStrockColor").val());
 
             updateSelectedImageColors(
-                "none", noStrokeChecked ? "none" : $("#hdnStrockColor").val()
+                "none", noStrokeChecked ? "none" : $("#hdnStrockColor").val(),document.getElementById("ddlStrokeWidth").value || 2
             );
 
             $("#hdnfillNoColorStatus").val(true);
@@ -4709,7 +4709,7 @@ function SetNoFillColor() {
            // updateSelectedImageColors($("#hdnfillColor").val(), $("#hdnStrockColor").val());
 
             updateSelectedImageColors(
-                $("#hdnfillColor").val(), noStrokeChecked ? "none" : $("#hdnStrockColor").val()
+                $("#hdnfillColor").val(), noStrokeChecked ? "none" : $("#hdnStrockColor").val(), document.getElementById("ddlStrokeWidth").value || 2
             );
 
             //    // Also update the color picker value visually
@@ -4729,7 +4729,7 @@ function ChangeStrockColor() {
         // Uncheck "no stroke color" checkbox
         document.getElementById("noColorCheck2").checked = false;
 
-        updateSelectedImageColors(noColorChecked ? "none" : $("#hdnfillColor").val(), $("#hdnStrockColor").val());
+        updateSelectedImageColors(noColorChecked ? "none" : $("#hdnfillColor").val(), $("#hdnStrockColor").val(), document.getElementById("ddlStrokeWidth").value||2);
         $("#hdnstrokeNoColorStatus").val(false);
     }
 }
@@ -4749,7 +4749,7 @@ function SetNoStrokeColor() {
             $("#hdnStrockColor").val("none");
             updateSelectedImageColors(
                 noColorChecked ? "none" : $("#hdnfillColor").val(),
-                "none"
+                "none", document.getElementById("ddlStrokeWidth").value || 2
             );
           
             $("#hdnstrokeNoColorStatus").val(true);
@@ -4760,7 +4760,7 @@ function SetNoStrokeColor() {
             // Restore previous stroke color
             //if (previousStrokeColor) {
             $("#hdnStrockColor").val(strokeColorPicker.value);
-            updateSelectedImageColors(noColorChecked ? "none" : $("#hdnfillColor").val(), $("#hdnStrockColor").val());
+            updateSelectedImageColors(noColorChecked ? "none" : $("#hdnfillColor").val(), $("#hdnStrockColor").val(), document.getElementById("ddlStrokeWidth").value || 2);
 
             //    // Also update the color picker UI
             //    strokeColorPicker.value = previousStrokeColor;
@@ -4780,7 +4780,11 @@ function strokeWidthChanges() {
         // Update SVG stroke-width
         const fill = $("#hdnfillColor").val();
         const stroke = $("#hdnStrockColor").val();
-        updateSelectedImageColors(fill, stroke, strokeWidth);
+
+        const noColorChecked = document.getElementById("noColorCheck").checked;
+        const noStrokeChecked = document.getElementById("noColorCheck2").checked;
+
+        updateSelectedImageColors(noColorChecked ? "none" : $("#hdnfillColor").val(), noStrokeChecked ? "none" : $("#hdnStrockColor").val(), strokeWidth);
     }
 
     // Remove 'selected' class from all options
@@ -5083,46 +5087,49 @@ if (canvas && typeof canvas.on === 'function') {
     });
 }
 function updateSelectedImageColors(newFill, newStroke, newStrokeWidth = null) {
-    // ── 0) honor “no-color” checkboxes ─────────────────────────────
-    //const noFillChecked = document.getElementById("noColorCheck").checked;
-    //const noStrokeChecked = document.getElementById("noColorCheck2").checked;
-    //if (noFillChecked) newFill = null;
-    //if (noStrokeChecked) newStroke = null;
-
-    // 1) sanity-check: do we have an SVG network URL?
     const svgUrl = activeImage.originalSrc || activeImage.src;
-    const isSvgFile = svgUrl.toLowerCase().endsWith('.svg');
-    const isDataSvg = svgUrl.startsWith('data:image/svg+xml');
-    if (!activeImage || (!isSvgFile && !isDataSvg) || !activeImage.img) {
-        console.warn("activeImage is not an SVG image");
+    const isSvg = svgUrl.toLowerCase().endsWith('.svg');
+    const isData = svgUrl.startsWith('data:image/svg+xml');
+    if (!activeImage || (!isSvg && !isData) || !activeImage.img) {
+        console.warn("activeImage is not an SVG");
         return;
     }
+    if (!activeImage.originalSrc) activeImage.originalSrc = activeImage.src;
+    const origW = activeImage.width, origH = activeImage.height;
+    // stash strokeWidth so your selection‐box can pad accordingly:
+    activeImage.strokeWidth = newStrokeWidth;
 
-    // 2) store the network URL once
-    if (!activeImage.originalSrc) {
-        activeImage.originalSrc = activeImage.src;
-    }
-
-    // 3) remember its displayed size
-    const origW = activeImage.width;
-    const origH = activeImage.height;
-
-    // 4) patcher that skips fill/stroke when null
     function patchSvg(svgText) {
         const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+        const svg = doc.documentElement;
 
-        // update <style> block
-        const styleEl = doc.querySelector("style");
-        if (styleEl) {
-            if (newFill !== null)
-                styleEl.textContent = styleEl.textContent.replace(/fill:[^;]+;/g, `fill:${newFill};`);
-            if (newStroke !== null)
-                styleEl.textContent = styleEl.textContent.replace(/stroke:[^;]+;/g, `stroke:${newStroke};`);
-            if (newStrokeWidth !== null)
-                styleEl.textContent = styleEl.textContent.replace(/stroke-width:[^;]+;/g, `stroke-width:${newStrokeWidth};`);
+        // 1) expand viewBox by half the stroke on each side:
+        if (newStrokeWidth != null) {
+            svg.setAttribute("overflow", "visible");
+            let vb = svg.getAttribute("viewBox");
+            if (!vb) {
+                // no viewBox? assume [0,0,width,height]
+                vb = [0, 0, origW, origH];
+            } else {
+                vb = vb.split(/\s+|,/).map(Number);
+            }
+            const pad = newStrokeWidth / 2;
+            vb[0] -= pad;
+            vb[1] -= pad;
+            vb[2] += pad * 2;
+            vb[3] += pad * 2;
+            svg.setAttribute("viewBox", vb.join(" "));
         }
 
-        // update inline attributes
+        // 2) update <style>
+        const styleEl = svg.querySelector("style");
+        if (styleEl) {
+            if (newFill !== null) styleEl.textContent = styleEl.textContent.replace(/fill:[^;]+;/g, `fill:${newFill};`);
+            if (newStroke !== null) styleEl.textContent = styleEl.textContent.replace(/stroke:[^;]+;/g, `stroke:${newStroke};`);
+            if (newStrokeWidth !== null) styleEl.textContent = styleEl.textContent.replace(/stroke-width:[^;]+;/g, `stroke-width:${newStrokeWidth};`);
+        }
+
+        // 3) inline attributes
         doc.querySelectorAll("*").forEach(el => {
             if (newFill !== null) el.setAttribute("fill", newFill);
             if (newStroke !== null) el.setAttribute("stroke", newStroke);
@@ -5132,32 +5139,28 @@ function updateSelectedImageColors(newFill, newStroke, newStrokeWidth = null) {
         return new XMLSerializer().serializeToString(doc);
     }
 
-    // 5) redraw into the existing <img> on the canvas
-    function redraw(updatedSvg) {
-        const dataUri = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(updatedSvg);
+    function redraw(svgText) {
+        const uri = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgText);
         const imgEl = activeImage.img;
-
         imgEl.onload = () => {
-            // restore display size & src
             activeImage.width = origW;
             activeImage.height = origH;
-            activeImage.src = dataUri;
-            drawCanvas('Common');
+            activeImage.src = uri;
+            drawCanvas("Common");
         };
-        imgEl.src = dataUri;
+        imgEl.src = uri;
     }
 
-    // 6) fetch & cache original SVG once, then always patch+redraw
     if (activeImage.originalSVG) {
         redraw(patchSvg(activeImage.originalSVG));
     } else {
         fetch(svgUrl)
-            .then(res => res.text())
-            .then(svgText => {
-                activeImage.originalSVG = svgText;
-                redraw(patchSvg(svgText));
+            .then(r => r.text())
+            .then(text => {
+                activeImage.originalSVG = text;
+                redraw(patchSvg(text));
             })
-            .catch(err => console.error("Error fetching SVG:", err));
+            .catch(console.error);
     }
 }
 
