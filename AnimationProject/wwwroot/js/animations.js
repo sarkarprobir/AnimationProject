@@ -758,57 +758,110 @@ function drawCanvas(condition) {
     });
 
     // Text Selection
+    //toPixelSpace(() => {
+    //    textObjects.forEach(obj => {
+    //        if (!obj.selected) return;
+
+    //        const xPx = obj.x * scaleX;
+    //        const yPx = obj.y * scaleY;
+    //        const wPx = obj.boundingWidth * scaleX;
+    //        const hPx = obj.boundingHeight * scaleY;
+    //        const rotation = (obj.rotation || 0) * Math.PI / 180;
+
+    //        ctx.save();
+    //        ctx.translate(xPx + wPx / 2, yPx + hPx / 2); // center
+    //        ctx.rotate(rotation);
+
+    //        // draw rotated rounded rect (relative to center)
+    //        drawRoundedRect(
+    //            ctx,
+    //            -wPx / 2 - padding * scaleX,
+    //            -hPx / 2 - padding * scaleY,
+    //            wPx + 2 * padding * scaleX - RECT_WIDTH_ADJUST * scaleX,
+    //            hPx + 2 * padding * scaleY - RECT_HEIGHT_ADJUST * scaleY,
+    //            10 * scaleX
+    //        );
+
+    //        // draw rotated handles
+    //        ctx.fillStyle = "#FF7F50";
+    //        const halfW = handleSize / 2;
+    //        const liftY = 2;
+
+    //        const bottomHandleLift = 8;    // move bottom handles upward
+    //        const bottomHandleShiftX = 2;  // move bottom handles slightly left
+    //        const topleftHandleShiftX = -2;  // rightward shift for top handles
+    //        const topleftHandleLift = -2;   // downward lift for top handles (negative = down)
+    //        const toprightHandleShiftX = -4;  // rightward shift for top handles
+    //        const toprightHandleLift = 4;   // downward lift for top handles (negative = down)
+    //        const handlePoints = [
+    //            { x: -wPx / 2 + topleftHandleShiftX, y: -hPx / 2 + topleftHandleLift },          // top-left (right + down)
+    //            { x: wPx / 2 + toprightHandleShiftX, y: -hPx / 2 + toprightHandleLift },           // top-right (right + down)
+    //            { x: -wPx / 2 + bottomHandleShiftX, y: hPx / 2 - bottomHandleLift }, // bottom-left (adjusted)
+    //            { x: wPx / 2 - bottomHandleShiftX, y: hPx / 2 - bottomHandleLift },  // bottom-right (adjusted)
+    //            { x: -wPx / 2, y: 0 },                                               // mid-left
+    //            { x: wPx / 2, y: 0 }                                                 // mid-right
+    //        ];
+
+    //        handlePoints.forEach(pt => {
+    //            ctx.fillRect(pt.x - halfW, pt.y - halfW - liftY, handleSize, handleSize);
+    //        });
+
+    //        ctx.restore();
+    //    });
+    //});
     toPixelSpace(() => {
         textObjects.forEach(obj => {
-            if (!obj.selected) return;
+            if (!obj.selected || obj.type !== 'text') return;
 
+            // Compute on‐screen coordinates
             const xPx = obj.x * scaleX;
             const yPx = obj.y * scaleY;
             const wPx = obj.boundingWidth * scaleX;
             const hPx = obj.boundingHeight * scaleY;
-            const rotation = (obj.rotation || 0) * Math.PI / 180;
+            const rot = (obj.rotation || 0) * Math.PI / 180;
 
             ctx.save();
-            ctx.translate(xPx + wPx / 2, yPx + hPx / 2); // center
-            ctx.rotate(rotation);
+            ctx.translate(xPx + wPx / 2, yPx + hPx / 2);
+            ctx.rotate(rot);
 
-            // draw rotated rounded rect (relative to center)
-            drawRoundedRect(
-                ctx,
+            // 1) Draw square‐corner rectangle
+            ctx.strokeStyle = "#00AEEF";  // your desired outline color
+            ctx.lineWidth = 2;          // thickness
+            ctx.setLineDash([]);          // solid line
+            ctx.strokeRect(
                 -wPx / 2 - padding * scaleX,
                 -hPx / 2 - padding * scaleY,
                 wPx + 2 * padding * scaleX - RECT_WIDTH_ADJUST * scaleX,
-                hPx + 2 * padding * scaleY - RECT_HEIGHT_ADJUST * scaleY,
-                10 * scaleX
+                hPx + 2 * padding * scaleY - RECT_HEIGHT_ADJUST * scaleY
             );
 
-            // draw rotated handles
-            ctx.fillStyle = "#FF7F50";
-            const halfW = handleSize / 2;
-            const liftY = 2;
+            // 2) Draw big corner handles
+            const handleSize = 16 * scaleX;  // increase from your previous value
+            const half = handleSize / 2;
 
-            const bottomHandleLift = 8;    // move bottom handles upward
-            const bottomHandleShiftX = 2;  // move bottom handles slightly left
-            const topleftHandleShiftX = -2;  // rightward shift for top handles
-            const topleftHandleLift = -2;   // downward lift for top handles (negative = down)
-            const toprightHandleShiftX = -4;  // rightward shift for top handles
-            const toprightHandleLift = 4;   // downward lift for top handles (negative = down)
-            const handlePoints = [
-                { x: -wPx / 2 + topleftHandleShiftX, y: -hPx / 2 + topleftHandleLift },          // top-left (right + down)
-                { x: wPx / 2 + toprightHandleShiftX, y: -hPx / 2 + toprightHandleLift },           // top-right (right + down)
-                { x: -wPx / 2 + bottomHandleShiftX, y: hPx / 2 - bottomHandleLift }, // bottom-left (adjusted)
-                { x: wPx / 2 - bottomHandleShiftX, y: hPx / 2 - bottomHandleLift },  // bottom-right (adjusted)
-                { x: -wPx / 2, y: 0 },                                               // mid-left
-                { x: wPx / 2, y: 0 }                                                 // mid-right
+            // corners: TL, TR, BR, BL
+            const pts = [
+                { x: -wPx / 2 - padding * scaleX, y: -hPx / 2 - padding * scaleY },
+                { x: wPx / 2 + padding * scaleX - handleSize, y: -hPx / 2 - padding * scaleY },
+                { x: wPx / 2 + padding * scaleX - handleSize, y: hPx / 2 + padding * scaleY - handleSize },
+                { x: -wPx / 2 - padding * scaleX, y: hPx / 2 + padding * scaleY - handleSize }
             ];
 
-            handlePoints.forEach(pt => {
-                ctx.fillRect(pt.x - halfW, pt.y - halfW - liftY, handleSize, handleSize);
+            ctx.fillStyle = "#FFF";    // handle fill color
+            ctx.strokeStyle = "#00AEEF"; // handle border color
+            ctx.lineWidth = 2;
+
+            pts.forEach(pt => {
+                ctx.beginPath();
+                ctx.rect(pt.x, pt.y, handleSize, handleSize);
+                ctx.fill();
+                ctx.stroke();
             });
 
             ctx.restore();
         });
     });
+
 
     // ── 4) DRAW DRAG BOX OUTLINE ──────────────────────────────────────
     if (isDraggingSelectionBox) {
