@@ -5,6 +5,190 @@
     <script src="~/js/animations.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
     <script src="~/js/action.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
 
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .rotate-line {
+            position: absolute;
+            width: 1px;
+            height: 20px;
+            background: #2196F3;
+            left: 50%;
+            top: -20px;
+            margin-left: -0.5px;
+        }
+
+        /* .text-box {
+            position: absolute;
+            min-width: 150px;
+            min-height: 60px;
+            padding: 5px;
+            font-size: 24px;
+            border: 1px solid #2196F3;
+            outline: none;
+            background-color: transparent;
+            color: black;
+            white-space: pre-wrap;
+            word-break: break-word;
+            transform-origin: center center;
+            box-sizing: border-box;
+            overflow-wrap: break-word;
+            
+        } */
+
+        .text-box {
+            position: absolute;
+            min-width: 150px;
+            min-height: 60px;
+           /*  border: 0.5px solid #2196F3 !important; */
+            background: white;
+            box-sizing: border-box;
+            overflow-wrap: break-word;
+            background-color: transparent;
+        }
+
+        .text-content {
+            width: 100%;
+            height: 100%;
+            padding: 5px;
+            font-size: 24px;
+            color: black;
+            white-space: pre-wrap;
+            word-break: break-word;
+            outline: none;
+        }
+
+        .rotate-handle {
+            width: 16px;
+            height: 16px;
+            background: #2196F3;
+            border: 2px solid white;
+            border-radius: 50%;
+            position: absolute;
+            top: -28px;
+            left: 50%;
+            margin-left: -8px;
+            cursor: grab;
+            z-index: 1000;
+        }
+
+
+
+        /* All handles (increase size) */
+        .ui-resizable-handle {
+            width: 10px !important;
+            height: 10px !important;
+            background: #2196F3;
+            border: none;
+            z-index: 10;
+        }
+
+        /* Universal handle size and color */
+        .ui-resizable-handle {
+            width: 10px !important;
+            height: 10px !important;
+            background: #2196F3;
+            border: none;
+            z-index: 10;
+        }
+
+        /* Top-left (perfect) */
+        .ui-resizable-nw {
+            top: -5px !important;
+            left: -5px !important;
+        }
+
+        /* Top-right */
+        .ui-resizable-ne {
+            top: -5px !important;
+            right: -5px !important;
+        }
+
+        /* Bottom-left */
+        .ui-resizable-sw {
+            bottom: -5px !important;
+            left: -5px !important;
+        }
+
+        /* Bottom-right */
+        .ui-resizable-se {
+            bottom: -5px !important;
+            right: -5px !important;
+        }
+
+        /* Top center */
+        .ui-resizable-n {
+            top: -5px !important;
+            left: 50% !important;
+            transform: translateX(-50%);
+        }
+
+        /* Bottom center */
+        .ui-resizable-s {
+            bottom: -5px !important;
+            left: 50% !important;
+            transform: translateX(-50%);
+        }
+
+        /* Left center */
+        .ui-resizable-w {
+            left: -5px !important;
+            top: 50% !important;
+            transform: translateY(-50%);
+        }
+
+        /* Right center */
+        .ui-resizable-e {
+            right: -5px !important;
+            top: 50% !important;
+            transform: translateY(-50%);
+        }
+
+        
+        .ui-resizable {
+            padding: 0 !important; /* This limits the grab area */
+        }
+
+        .text-box:focus {
+            outline: none !important;
+        }
+        .drag-handle {
+            width: 16px;
+            height: 16px;
+            position: absolute;
+            top: -28px;
+            left: -28px;
+            background: #2196F3;
+            border-radius: 4px;
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+
+        .delete-handle {
+            width: 18px;
+            height: 18px;
+            background: red;
+            color: white;
+            position: absolute;
+            top: -28px;
+            right: -28px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .selected {
+            border: 3px solid #2196F3 !important; /* Very thin dashed border */
+            box-sizing: border-box;
+        }
+    </style>
     
 
     <style>
@@ -705,6 +889,13 @@
     <script src='https://code.jquery.com/jquery-3.2.1.slim.min.js'></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js'></script>
     <script src="~/js/wow.min.js"></script>
+
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" rel="stylesheet">
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+
     
     <script>
         function opengl()
@@ -1204,19 +1395,45 @@
         </div>
 
         <div class="panel-middle d-flex align-items-center justify-content-center" id="canvasContainer">
-                
-                    <div class="canvas-top-btn">
-                        @* <button id="modeButton" class="Graphic-More active" onclick="toggleMode();"></button> *@
-                       @*  <div class="toggle-container">
-                            <button class="toggle-btn active">Graphic</button>
-                            <button class="toggle-btn ">Animation</button>
-                        </div> *@
+            <div id="controls" style="margin-bottom: 10px;">
+                @* <button id="addText">Add Text Box</button> *@
+                <label>
+                    Font Size:
+                    <input type="number" id="fontSize" value="24" style="width: 60px;" />
+                </label>
+                <label>
+                    Text Color:
+                    <input type="color" id="textColor" value="#000000" />
+                </label>
+                <label>
+                    Font Family:
+                    <select id="fontFamily">
+                        <option value="Arial">Arial</option>
+                        <option value="Poppins">Poppins</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Courier New">Courier New</option>
+                    </select>
+                </label>
+                <button class="toggle" id="boldBtn"><b>B</b></button>
+                <button class="toggle" id="italicBtn"><em>I</em></button>
+                <button class="toggle" id="underlineBtn"><u>U</u></button>
+                <button class="toggle" id="caseToggleBtn">Aa</button>
+                <button class="toggle" id="alignBtn"><i class="fas fa-align-left"></i></button>
+
+                <label>
+                    Line Height:
+                    <input type="number" id="lineHeight" step="0.1" value="1.2" style="width: 60px;" />
+                </label>
+            </div>
+                    <div class="canvas-top-btn" style="display:none">
+                        
                         <div class="toggle-container">
                             <button class="toggle-btn" data-mode="graphic">Graphic</button>
                     <button class="toggle-btn active" data-mode="animation">Animation</button>
                         </div>
 
                     </div>
+           
                     <canvas id="myCanvas" class="clsmyCanvas"></canvas>
                             <!-- Custom context menu for deletion -->
                             <div id="contextMenu">
@@ -1239,3 +1456,377 @@
 
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // add custom function
+    function rgbToHex(rgb) {
+      const result = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/.exec(rgb);
+      return result
+        ? "#" +
+            ("0" + parseInt(result[1]).toString(16)).slice(-2) +
+            ("0" + parseInt(result[2]).toString(16)).slice(-2) +
+            ("0" + parseInt(result[3]).toString(16)).slice(-2)
+        : rgb;
+    }
+
+
+
+    $(document).on('keydown', '.text-box', function (e) {
+      if (e.key === 'Enter') {
+        document.execCommand('insertHTML', false, '<br>');
+        e.preventDefault();
+      }
+    });
+    // Auto-resize height as user types or applies styles
+    $(document).on('input', '.text-box', function () {
+      this.style.height = 'auto'; // reset height
+      this.style.height = this.scrollHeight + 'px'; // fit content
+    });
+
+</script>
+<script>
+    $(document).on('click', '.text-box', function () {
+      $('.text-box').removeClass('selected');
+      $(this).addClass('selected');
+      selectedBox = $(this);
+
+      // Load current styles into controls
+      $('#fontSize').val(parseInt(selectedBox.css('font-size')));
+      $('#textColor').val(rgbToHex(selectedBox.css('color')));
+     // $('#fontFamily').val(selectedBox.css('font-family'));
+      
+    const lhPx = parseFloat(selectedBox.css('line-height'));
+    const fsPx = parseFloat(selectedBox.css('font-size'));
+    const multiplier = lhPx / fsPx;
+    $('#lineHeight').val(multiplier.toFixed(2));
+
+    });
+
+    // ✅ Font Size
+    function applyFontSize(size) {
+      if (!selectedBox) return;
+
+      restoreSelection(); // 🔁 Restore selection before applying
+
+      const sel = window.getSelection();
+      if (!sel.rangeCount) return;
+
+      const range = sel.getRangeAt(0);
+      if (range.collapsed) {
+        selectedBox.css('font-size', size + 'px');
+        return;
+      }
+
+      const span = document.createElement('span');
+      span.style.fontSize = size + 'px';
+
+      try {
+        const contents = range.extractContents();
+        span.appendChild(contents);
+        range.deleteContents();
+        range.insertNode(span);
+
+        // Keep selection on new content
+        const newRange = document.createRange();
+        newRange.selectNodeContents(span);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+
+        saveSelection(); // update saved selection
+      } catch (e) {
+        console.warn('Font size error:', e);
+      }
+    }
+    $('#fontSize').on('input', function () {
+      const size = parseInt($(this).val());
+      applyFontSize(size);
+    });
+
+    // ✅ Text Color
+    $('#textColor').on('input', function () {
+      const color = $(this).val();
+      applyStyleValue('foreColor', 'color', color);
+    });
+
+
+    // ✅ Font Family
+    function applyFontFamily(font) {
+      if (!selectedBox) return;
+
+      restoreSelection(); // 🔁 Restore preserved selection
+
+      const sel = window.getSelection();
+      if (!sel.rangeCount) return;
+
+      const range = sel.getRangeAt(0);
+      if (range.collapsed) {
+        // No selection, apply to full box
+        selectedBox.css('font-family', font);
+        return;
+      }
+
+      const span = document.createElement('span');
+      span.style.fontFamily = font;
+
+      try {
+        const contents = range.extractContents();
+        span.appendChild(contents);
+        range.deleteContents();
+        range.insertNode(span);
+
+        // Reselect the styled span
+        const newRange = document.createRange();
+        newRange.selectNodeContents(span);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+
+        saveSelection(); // 🔁 Save new selection
+      } catch (e) {
+        console.warn('Font family error:', e);
+      }
+    }
+
+    $('#fontFamily').on('change', function () {
+      const family = $(this).val();
+      applyStyleValue('fontName', 'font-family', family);
+    });
+
+
+    function applyStyleValue(cmd, cssProp, value) {
+      if (!selectedBox) return;
+
+      selectedBox[0].focus();
+      restoreSelection();
+
+      const sel = window.getSelection();
+      const isTextSelected = sel && !sel.isCollapsed && sel.rangeCount > 0;
+
+      if (isTextSelected) {
+        document.execCommand(cmd, false, value);
+        saveSelection(); // maintain selection
+      } else {
+        selectedBox.css(cssProp, value);
+      }
+    }
+
+    /*// Bold
+    $('#boldBtn').on('click', function () {
+      if (selectedBox) {
+        const current = selectedBox.css('font-weight');
+        selectedBox.css('font-weight', current === '700' || current === 'bold' ? 'normal' : 'bold');
+      }
+    });
+
+    // Italic
+    $('#italicBtn').on('click', function () {
+      if (selectedBox) {
+        const current = selectedBox.css('font-style');
+        selectedBox.css('font-style', current === 'italic' ? 'normal' : 'italic');
+      }
+    });
+
+    // Underline
+    $('#underlineBtn').on('click', function () {
+      if (selectedBox) {
+        const current = selectedBox.css('text-decoration-line');
+        selectedBox.css('text-decoration', current === 'underline' ? 'none' : 'underline');
+      }
+    });*/
+
+    // Bold
+    $('#boldBtn').on('click', function (e) {
+      e.preventDefault(); // don't steal focus
+      applyStyleCommand('bold', 'font-weight', 'bold');
+    });
+
+    $('#italicBtn').on('click', function (e) {
+      e.preventDefault(); // don't steal focus
+      applyStyleCommand('italic', 'font-style', 'italic');
+    });
+
+    $('#underlineBtn').on('click', function (e) {
+      e.preventDefault(); // don't steal focus
+      applyStyleCommand('underline', 'text-decoration', 'underline');
+    });
+
+
+    // Use execCommand after restoring selection
+    function applyStyleCommand(cmd, cssProp, cssToggleValue) {
+      if (!selectedBox) return;
+
+      selectedBox[0].focus();
+      restoreSelection();
+
+      const sel = window.getSelection();
+      const isTextSelected = sel && !sel.isCollapsed && sel.rangeCount > 0;
+
+      if (isTextSelected) {
+        document.execCommand(cmd, false, null);
+        saveSelection(); // re-save selection
+      } else {
+        // Toggle the CSS property manually
+        const current = selectedBox.css(cssProp);
+        const shouldRemove =
+          (cssProp === 'font-weight' && (current === 'bold' || current === '700')) ||
+          (cssProp === 'font-style' && current === 'italic') ||
+          (cssProp === 'text-decoration' && current.includes('underline'));
+
+        selectedBox.css(cssProp, shouldRemove ? '' : cssToggleValue);
+      }
+    }
+
+
+
+
+    // Toggle Case (uppercase/lowercase)
+    /*$('#caseToggleBtn').on('click', function () {
+      if (!selectedBox) return;
+
+      selectedBox.find('*').addBack().contents().filter(function () {
+        return this.nodeType === 3; // text node
+      }).each(function () {
+        const text = this.nodeValue;
+        const isUpper = text === text.toUpperCase();
+        this.nodeValue = isUpper ? text.toLowerCase() : text.toUpperCase();
+      });
+    });*/
+    $('#caseToggleBtn').on('click', function (e) {
+      e.preventDefault();
+      if (!selectedBox) return;
+
+      selectedBox[0].focus();
+
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+
+      const range = sel.getRangeAt(0);
+      const selectedText = range.toString();
+      if (!selectedText.trim()) return;
+
+      const isUpper = selectedText === selectedText.toUpperCase();
+      const toggledText = isUpper ? selectedText.toLowerCase() : selectedText.toUpperCase();
+
+      // Preserve formatting by inserting span with toggled content
+      const span = document.createElement('span');
+      span.textContent = toggledText;
+
+      range.deleteContents();
+      range.insertNode(span);
+
+      // Reselect toggled text
+      const newRange = document.createRange();
+      newRange.setStart(span.firstChild, 0);
+      newRange.setEnd(span.firstChild, toggledText.length);
+
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+
+      // Save selection for future reuse (optional)
+      savedSelection = newRange.cloneRange();
+    });
+
+
+
+
+    // Text Alignment (toggle between left, center, right, justify)
+    const alignments = ['left', 'center', 'right', 'justify'];
+    let alignIndex = 0;
+
+    $('#alignBtn').on('click', function () {
+      if (selectedBox) {
+        alignIndex = (alignIndex + 1) % alignments.length;
+        const align = alignments[alignIndex];
+        selectedBox.css('text-align', align);
+
+        const iconMap = {
+          left: 'fa-align-left',
+          center: 'fa-align-center',
+          right: 'fa-align-right',
+          justify: 'fa-align-justify'
+        };
+    $('#caseToggleBtn').on('click', function (e) {
+      e.preventDefault();
+      if (!selectedBox) return;
+
+      selectedBox[0].focus();
+      restoreSelection();
+
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+
+      const range = sel.getRangeAt(0);
+      const selectedText = range.toString();
+      const isUpper = selectedText === selectedText.toUpperCase();
+      const toggledText = isUpper ? selectedText.toLowerCase() : selectedText.toUpperCase();
+
+      // Create text node with toggled text
+      const toggledNode = document.createTextNode(toggledText);
+
+      // Replace original text with toggled version
+      range.deleteContents();
+      range.insertNode(toggledNode);
+
+      // 🔁 Rebuild the new selection range on the newly inserted text
+      const newRange = document.createRange();
+      newRange.setStart(toggledNode, 0);
+      newRange.setEnd(toggledNode, toggledText.length);
+
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+
+      // ✅ Now save the NEW selection properly
+      savedSelection = newRange.cloneRange();
+    });
+
+        const $icon = $(this).find('i');
+        $icon.removeClass().addClass(`fas ${iconMap[align]}`);
+      }
+    });
+
+    // Line Height
+       $('#lineHeight').on('input', function() {
+      if (!selectedBox) return;
+
+      const multiplier = parseFloat($(this).val());
+      selectedBox.css('line-height', multiplier);
+
+      // now re-flow the height
+      selectedBox.css('height', 'auto');                    // reset
+      const needed = selectedBox.prop('scrollHeight') + 'px';
+      selectedBox.css('height', needed);                     // fit content
+    });
+
+        // 3) After a paste or input, re-sync the control too
+    $(document).on('input paste', '.text-box', function() {
+      if (this !== selectedBox[0]) return;
+
+      const lhPx = parseFloat(selectedBox.css('line-height'));
+      const fsPx = parseFloat(selectedBox.css('font-size'));
+      const multiplier = lhPx / fsPx;
+      $('#lineHeight').val(multiplier.toFixed(2));
+    });
+</script>
+
+<script>
+    let savedSelection = null;
+
+    function saveSelection() {
+      const sel = window.getSelection();
+      if (sel.rangeCount > 0) {
+        savedSelection = sel.getRangeAt(0);
+      }
+    }
+
+    function restoreSelection() {
+      if (savedSelection) {
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(savedSelection);
+      }
+    }
+
+
+    // Save selection on mouseup or keyup
+    $(document).on('mouseup keyup', '.text-box', function () {
+      saveSelection();
+    });
+</script>

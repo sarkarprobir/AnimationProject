@@ -54,7 +54,7 @@ let textPosition = { x: 100, y: 100, opacity: 100, content: text, }; // Default 
 let imagePosition = { x: 100, y: 20, scaleX: 1, scaleY: 1, opacity: 100, }; // Default start position
 
 const FACTOR_INCREMENT = 0.1;
-
+let selectedBox = null;
 /////this is for add multiple text
 const textEditor = document.getElementById("textEditor");
 const addTextBtn = document.getElementById("addTextBtn");
@@ -2230,6 +2230,16 @@ function addDefaultTextOld() {
     drawCanvas('Common');
     $("#opengl_popup").hide();
 }
+function startResize(e) {
+    e.stopPropagation();
+    resizingBox = e.target.parentElement;
+    resizePos = e.target.dataset.position;
+    offsetX = e.pageX;
+    offsetY = e.pageY;
+    document.addEventListener('mousemove', resize);
+    document.addEventListener('mouseup', stopResize);
+}
+
 function addDefaultText() {
     images.forEach(img => img.selected = false);
     const fs = 30;
@@ -2295,8 +2305,87 @@ function addDefaultText() {
     drawCanvas('Common');
     $("#opengl_popup").hide();
     $("#elementsPopup").hide();
-}
 
+   
+
+
+    const $box = $(`<div class="text-box selected"></div>`)
+        .appendTo('#canvasContainer');
+
+    // 2) Create inner editable area
+    const $content = $(`<div class="text-content" contenteditable="true">Default Text</div>`)
+        .appendTo($box);
+
+    // 3) Create handles and append
+    const $drag = $(`<div class="drag-handle"><i class="fas fa-arrows-alt"></i></div>`).appendTo($box);
+    const $rotate = $(`<div class="rotate-handle"></div>`).appendTo($box);
+    const $del = $(`<div class="delete-handle"><i class="fas fa-trash"></i></div>`).appendTo($box);
+
+    // 4) Center it
+    const $cont = $('#canvasContainer'),
+        left = ($cont.width() - $box.outerWidth()) / 2,
+        top = ($cont.height() - $box.outerHeight()) / 2;
+    $box.css({ position: 'absolute', left: `${left}px`, top: `${top}px`, transform: 'rotate(0deg)' });
+
+
+    // 5) Draggable & resizable on the OUTER box
+    $box.draggable({ containment: '#canvasContainer', handle: '.drag-handle' })
+        .resizable({
+            containment: '#canvasContainer',
+            handles: 'n,e,s,w,ne,se,sw,nw',
+            resize() {
+                // grow the outer box to fit its content
+                $box.css('height', 'auto');
+                $box.css('height', $content[0].scrollHeight + 10 + 'px');
+            }
+        });
+
+    // 6) Rotate logic
+    let rotating = false, center = {};
+    $rotate.on('mousedown', e => {
+        e.preventDefault();
+        rotating = true;
+        const offs = $box.offset();
+        center = {
+            x: offs.left + $box.outerWidth() / 2,
+            y: offs.top + $box.outerHeight() / 2
+        };
+        $(document).on('mousemove.rotate', e => {
+            if (!rotating) return;
+            const angle = Math.atan2(e.pageY - center.y, e.pageX - center.x) * 180 / Math.PI;
+            $box.css('transform', `rotate(${angle}deg)`);
+        }).on('mouseup.rotate', () => {
+            rotating = false;
+            $(document).off('.rotate');
+        });
+    });
+
+    // 7) Delete
+    $del.on('click', e => {
+        e.stopPropagation();
+        $box.remove();
+    });
+
+   
+}
+function addHandlesAndListeners(box) {
+    const rotateHandle = box.find('.rotate-handle');
+    const dragHandle = box.find('.drag-handle');
+    const deleteHandle = box.find('.delete-handle');
+    const resizeHandles = box.find('.resize-handle');
+
+    dragHandle.on('mousedown', startDrag);
+    rotateHandle.on('mousedown', startRotate);
+
+    deleteHandle.on('click', function (e) {
+        e.stopPropagation();
+        box.remove();
+    });
+
+    resizeHandles.each(function () {
+        $(this).on('mousedown', startResize);
+    });
+}
 // ─── 2) Clone helpers ────────────────────────────────────────────────
 function cloneTextObject(srcObj) {
     return {
