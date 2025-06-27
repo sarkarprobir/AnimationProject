@@ -116,33 +116,7 @@
             right: -5px !important;
         }
 
-        /* Top center */
-        .ui-resizable-n {
-            top: -5px !important;
-            left: 50% !important;
-            transform: translateX(-50%);
-        }
-
-        /* Bottom center */
-        .ui-resizable-s {
-            bottom: -5px !important;
-            left: 50% !important;
-            transform: translateX(-50%);
-        }
-
-        /* Left center */
-        .ui-resizable-w {
-            left: -5px !important;
-            top: 50% !important;
-            transform: translateY(-50%);
-        }
-
-        /* Right center */
-        .ui-resizable-e {
-            right: -5px !important;
-            top: 50% !important;
-            transform: translateY(-50%);
-        }
+       
 
         
         .ui-resizable {
@@ -1425,14 +1399,7 @@
                     <input type="number" id="lineHeight" step="0.1" value="1.2" style="width: 60px;" />
                 </label>
             </div>
-                    <div class="canvas-top-btn" style="display:none">
-                        
-                        <div class="toggle-container">
-                            <button class="toggle-btn" data-mode="graphic">Graphic</button>
-                    <button class="toggle-btn active" data-mode="animation">Animation</button>
-                        </div>
-
-                    </div>
+                   
            
                     <canvas id="myCanvas" class="clsmyCanvas"></canvas>
                             <!-- Custom context menu for deletion -->
@@ -1449,7 +1416,14 @@
                     <p class="middle-resulation">Final Output 1080x1920</p>
                     <textarea wrap="hard" style="display:none;" id="textEditor"></textarea>
         </div>
+         <div class="canvas-top-btn" style="display:block">
 
+                        <div class="toggle-container">
+                            <button class="toggle-btn" data-mode="graphic">Graphic</button>
+                    <button class="toggle-btn active" data-mode="animation">Animation</button>
+                        </div>
+
+                    </div>
         <div class="panel-right content" id="divpanelright">
         </div>
     </div>
