@@ -2240,66 +2240,187 @@ function startResize(e) {
     document.addEventListener('mouseup', stopResize);
 }
 
+//const $canvas = $(canvas);
+//const offs = $canvas.offset();
+//const cW = $canvas.width();    // use CSS-rendered size
+//const cH = $canvas.height();
+//const containment = [
+//    offs.left,
+//    offs.top,
+//    offs.left + cW,
+//    offs.top + cH
+//];
+
+//function makeBoxDraggableAndResizable($box) {
+//  // 1) Measure the canvas in viewport pixels
+//  const rect = canvas.getBoundingClientRect();
+
+//  // 2) Compute draggable containment so the box’s top/left
+//  //    never slide outside [rect.left, rect.top] → 
+//  //    [rect.right - boxWidth, rect.bottom - boxHeight]
+//  const boxW = $box.outerWidth();
+//  const boxH = $box.outerHeight();
+//  const minX = rect.left;
+//  const minY = rect.top;
+//  const maxX = rect.left + rect.width  - boxW;
+//  const maxY = rect.top  + rect.height - boxH;
+
+//    const $canvas = $(canvas);
+//    const cW = $canvas.width();
+//    const cH = $canvas.height();
+//    console.log("width", cW);
+//    console.log("height", cH)
+
+//    console.log("rect.left", rect.left);
+//    console.log("rect.top", rect.top)
+
+
+//  // 3) Apply draggable with that exact containment
+//  $box.draggable({
+//    handle:      '.drag-handle',
+//    containment: [minX, minY, maxX, maxY]
+//  });
+
+
+
+//  // 4) Apply resizable—but we’ll clamp in the resize callback
+//  $box.resizable({
+//    handles: 'n,e,s,w,ne,se,sw,nw',
+//    // no native containment, we do our own:
+//    resize(event, ui) {
+//      // clamp width so the right edge never > canvas right
+//      const maxWidth  = rect.left + rect.width  - ui.position.left;
+//        const maxHeight = rect.top + rect.height - ui.position.top;
+
+//        console.log("maxWidth", maxWidth);
+//        console.log("maxHeight", maxHeight)
+
+//      ui.size.width  = Math.min(ui.size.width,  maxWidth);
+//      ui.size.height = Math.min(ui.size.height, maxHeight);
+//    }
+//  });
+//}
+
+function makeBoxDraggableAndResizable($box) {
+    const $canvas = $('#myCanvas');
+    const rect = canvas.getBoundingClientRect();
+    // 1) Get the canvas position relative to its offset parent (#canvasContainer)
+    const canvasPos = $canvas.position();
+    const cLeft = canvasPos.left;
+    const cTop = canvasPos.top;
+
+    // 2) Get the canvas size (CSS pixels)
+    const cW = $canvas.width();
+    const cH = $canvas.height();
+
+    // 3) Now measure the box itself
+    const boxW = $box.outerWidth();
+    const boxH = $box.outerHeight();
+
+    // 4) Compute the min/max for the box’s top-left so it never leaves the canvas
+    const minX = cLeft;           // left edge of canvas
+    const minY = cTop;            // top edge
+    const maxX = cLeft + cW - boxW; // far right the box’s left can go
+    const maxY = cTop + cH - boxH; // far bottom the box’s top can go
+
+
+
+   
+    const minX_d = rect.left;
+    const minY_d = rect.top;
+    const maxX_d = rect.left + rect.width - boxW;
+    const maxY_d = rect.top + rect.height - boxH;
+
+    // 3) Apply draggable with that exact containment
+    $box.draggable({
+        handle: '.drag-handle',
+        containment: [minX_d, minY_d, maxX_d, maxY_d]
+    });
+
+
+    $box.resizable({
+        handles: 'n,e,s,w,ne,se,sw,nw',
+        resize(event, ui) {
+            // Clamp position
+            ui.position.left = Math.min(Math.max(ui.position.left, minX), maxX);
+            ui.position.top = Math.min(Math.max(ui.position.top, minY), maxY);
+
+            // Clamp size
+            ui.size.width = Math.min(ui.size.width, cW - (ui.position.left - cLeft));
+            ui.size.height = Math.min(ui.size.height, cH - (ui.position.top - cTop));
+
+            // Force height to fit content
+            const $content = ui.element.find('.text-content');
+            ui.element.css('height', 'auto'); // let it grow
+            const requiredHeight = $content[0].scrollHeight + 10; // some padding
+            ui.element.css('height', requiredHeight + 'px');
+        }
+    });
+
+}
 function addDefaultText() {
     images.forEach(img => img.selected = false);
-    const fs = 30;
-    const factor = 1.2;        // 120% of fontSize
-    const buttons = document.querySelectorAll('.toggle-btn');
-    const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]');
-    const text = "Default Text";
-    // 2) Clear `active` from all
-    buttons.forEach(b => b.classList.remove('active'));
+    ///Start KD Blocked///
+    //const fs = 30;
+    //const factor = 1.2;        // 120% of fontSize
+    //const buttons = document.querySelectorAll('.toggle-btn');
+    //const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]');
+    //const text = "Default Text";
+    //// 2) Clear `active` from all
+    //buttons.forEach(b => b.classList.remove('active'));
 
-    // 3) Activate only the Graphic button
-    graphicBtn.classList.add('active');
-    // 1) Create with defaults
-    const newObj = {
-        text,
-        x: 92,
-        y: 100,
-        selected: false,
-        editing: false,
-        fontFamily: "Arial",
-        textColor: "#000000",
-        textAlign: "left",
-        fontSize: fs,
+    //// 3) Activate only the Graphic button
+    //graphicBtn.classList.add('active');
+    //// 1) Create with defaults
+    //const newObj = {
+    //    text,
+    //    x: 92,
+    //    y: 100,
+    //    selected: false,
+    //    editing: false,
+    //    fontFamily: "Arial",
+    //    textColor: "#000000",
+    //    textAlign: "left",
+    //    fontSize: fs,
 
-        // store only the factor
-        lineSpacing: factor,
+    //    // store only the factor
+    //    lineSpacing: factor,
 
-        // bounding box placeholders—will be set below
-        boundingWidth: 0,
-        boundingHeight: 0,
-        noAnim: false,
-        groupId: null,
-        rotation: 0,
-        isBold: false,
-        isItalic: false,
-        type: 'text',
-        zIndex: getNextZIndex(),
-        opacity:100
-    };
+    //    // bounding box placeholders—will be set below
+    //    boundingWidth: 0,
+    //    boundingHeight: 0,
+    //    noAnim: false,
+    //    groupId: null,
+    //    rotation: 0,
+    //    isBold: false,
+    //    isItalic: false,
+    //    type: 'text',
+    //    zIndex: getNextZIndex(),
+    //    opacity:100
+    //};
 
-    // 2) Measure it
-    ctx.font = `${newObj.fontSize}px ${newObj.fontFamily}`;
-    const metrics = ctx.measureText(text);
-    const width = metrics.width;
-    const ascent = metrics.actualBoundingBoxAscent || fs * 0.8;
-    const descent = metrics.actualBoundingBoxDescent || fs * 0.2;
-    const height = ascent + descent;
+    //// 2) Measure it
+    //ctx.font = `${newObj.fontSize}px ${newObj.fontFamily}`;
+    //const metrics = ctx.measureText(text);
+    //const width = metrics.width;
+    //const ascent = metrics.actualBoundingBoxAscent || fs * 0.8;
+    //const descent = metrics.actualBoundingBoxDescent || fs * 0.2;
+    //const height = ascent + descent;
 
-    // 3) Tiny padding around
-    const offsetX = 20;
-    const offsetY = 25;
+    //// 3) Tiny padding around
+    //const offsetX = 20;
+    //const offsetY = 25;
 
-    // 4) Assign your bounding dimensions
-    newObj.boundingWidth = width + offsetX;
-    newObj.boundingHeight = height + offsetY;
+    //// 4) Assign your bounding dimensions
+    //newObj.boundingWidth = width + offsetX;
+    //newObj.boundingHeight = height + offsetY;
 
-    // 5) Make it the only selected object
-    textObjects.forEach(o => o.selected = false);
-    newObj.selected = true;
-    textObjects.push(newObj);
+    //// 5) Make it the only selected object
+    //textObjects.forEach(o => o.selected = false);
+    //newObj.selected = true;
+    //textObjects.push(newObj);
+
+    ///END KD Blocked///
 
     // 6) Redraw
     drawCanvas('Common');
@@ -2309,38 +2430,29 @@ function addDefaultText() {
    
 
 
-    const $box = $(`<div class="text-box selected"></div>`)
+    // 1) Create outer box
+    const $box = $('<div class="text-box selected"></div>')
         .appendTo('#canvasContainer');
 
     // 2) Create inner editable area
-    const $content = $(`<div class="text-content" contenteditable="true">Default Text</div>`)
+    const $content = $('<div class="text-content" contenteditable="true">Default Text</div>')
         .appendTo($box);
 
-    // 3) Create handles and append
-    const $drag = $(`<div class="drag-handle"><i class="fas fa-arrows-alt"></i></div>`).appendTo($box);
-    const $rotate = $(`<div class="rotate-handle"></div>`).appendTo($box);
-    const $del = $(`<div class="delete-handle"><i class="fas fa-trash"></i></div>`).appendTo($box);
+    // 3) Append your custom handles
+    const $drag = $('<div class="drag-handle"><i class="fas fa-arrows-alt"></i></div>').appendTo($box);
+    const $rotate = $('<div class="rotate-handle"></div>').appendTo($box);
+    const $del = $('<div class="delete-handle"><i class="fas fa-trash"></i></div>').appendTo($box);
 
-    // 4) Center it
-    const $cont = $('#canvasContainer'),
-        left = ($cont.width() - $box.outerWidth()) / 2,
-        top = ($cont.height() - $box.outerHeight()) / 2;
+    // 4) Position in center of container
+    const $cont = $('#canvasContainer');
+    const left = ($cont.width() - $box.outerWidth()) / 2;
+    const top = ($cont.height() - $box.outerHeight()) / 2;
     $box.css({ position: 'absolute', left: `${left}px`, top: `${top}px`, transform: 'rotate(0deg)' });
 
+    // 5) **Only once**: make it draggable/resizable using the canvas‐based containment
+    makeBoxDraggableAndResizable($box);
 
-    // 5) Draggable & resizable on the OUTER box
-    $box.draggable({ containment: '#canvasContainer', handle: '.drag-handle' })
-        .resizable({
-            containment: '#canvasContainer',
-            handles: 'n,e,s,w,ne,se,sw,nw',
-            resize() {
-                // grow the outer box to fit its content
-                $box.css('height', 'auto');
-                $box.css('height', $content[0].scrollHeight + 10 + 'px');
-            }
-        });
-
-    // 6) Rotate logic
+    // 6) Rotate logic (unchanged)
     let rotating = false, center = {};
     $rotate.on('mousedown', e => {
         e.preventDefault();
@@ -2350,9 +2462,9 @@ function addDefaultText() {
             x: offs.left + $box.outerWidth() / 2,
             y: offs.top + $box.outerHeight() / 2
         };
-        $(document).on('mousemove.rotate', e => {
+        $(document).on('mousemove.rotate', e2 => {
             if (!rotating) return;
-            const angle = Math.atan2(e.pageY - center.y, e.pageX - center.x) * 180 / Math.PI;
+            const angle = Math.atan2(e2.pageY - center.y, e2.pageX - center.x) * 180 / Math.PI;
             $box.css('transform', `rotate(${angle}deg)`);
         }).on('mouseup.rotate', () => {
             rotating = false;
@@ -2360,7 +2472,7 @@ function addDefaultText() {
         });
     });
 
-    // 7) Delete
+    // 7) Delete logic (unchanged)
     $del.on('click', e => {
         e.stopPropagation();
         $box.remove();

@@ -55,8 +55,11 @@
             color: black;
             white-space: pre-wrap;
             word-break: break-word;
+            overflow: auto; /* hides overflow */
             outline: none;
+             /*    line-height: 1.2;  */  
         }
+
 
         .rotate-handle {
             width: 16px;
@@ -1370,7 +1373,7 @@
 
         <div class="panel-middle d-flex align-items-center justify-content-center" id="canvasContainer">
             <div id="controls" style="margin-bottom: 10px;">
-                 <button id="addText" onclick="addDefaultText()">Add Text Box</button> 
+               @*   <button id="addText" onclick="addDefaultText()">Add Text Box</button>  *@
                 <label>
                     Font Size:
                     <input type="number" id="fontSize" value="24" style="width: 60px;" />
@@ -1444,12 +1447,12 @@
 
 
 
-    $(document).on('keydown', '.text-box', function (e) {
-      if (e.key === 'Enter') {
-        document.execCommand('insertHTML', false, '<br>');
-        e.preventDefault();
-      }
-    });
+    // $(document).on('keydown', '.text-box', function (e) {
+    //   if (e.key === 'Enter') {
+    //     document.execCommand('insertHTML', false, '<br>');
+    //     e.preventDefault();
+    //   }
+    // });
     // Auto-resize height as user types or applies styles
     $(document).on('input', '.text-box', function () {
       this.style.height = 'auto'; // reset height
@@ -1458,22 +1461,110 @@
 
 </script>
 <script>
-    $(document).on('click', '.text-box', function () {
-      $('.text-box').removeClass('selected');
-      $(this).addClass('selected');
-      selectedBox = $(this);
+  $(document).on('click', '.text-box', function (e) {
+  e.stopPropagation();
+  $(this).find('.text-content').focus();
+  const $clicked = $(this);
 
-      // Load current styles into controls
-      $('#fontSize').val(parseInt(selectedBox.css('font-size')));
-      $('#textColor').val(rgbToHex(selectedBox.css('color')));
-     // $('#fontFamily').val(selectedBox.css('font-family'));
-      
-    const lhPx = parseFloat(selectedBox.css('line-height'));
-    const fsPx = parseFloat(selectedBox.css('font-size'));
-    const multiplier = lhPx / fsPx;
-    $('#lineHeight').val(multiplier.toFixed(2));
+  // 1) Teardown all other boxes
+  $('.text-box').not($clicked).each(function() {
+    const $other = $(this);
 
+    $other.removeClass('selected');
+    if ($other.data('ui-draggable')) $other.draggable('destroy');
+    if ($other.data('ui-resizable'))  $other.resizable('destroy');
+
+    // remove your custom handles
+    $other.find('.drag-handle, .rotate-handle, .delete-handle').remove();
+    // remove leftover jQuery UI handles
+    $other.find('.ui-resizable-handle').remove();
+  });
+
+  // 2) Mark THIS one as selected
+  $clicked.addClass('selected');
+  selectedBox = $clicked;
+
+
+  // 3) Setup the chrome (handles + interactions) on the clicked box
+
+  // a) append handles
+  const $drag   = $('<div class="drag-handle"><i class="fas fa-arrows-alt"></i></div>').appendTo($clicked);
+  const $rotate = $('<div class="rotate-handle"></div>').appendTo($clicked);
+  const $del    = $('<div class="delete-handle"><i class="fas fa-trash"></i></div>').appendTo($clicked);
+
+  // // b) make it draggable & resizable
+  // $clicked
+  //   .draggable({ containment: '#canvasContainer', handle: '.drag-handle' })
+  //   .resizable({
+  //     containment: '#canvasContainer',
+  //     handles: 'n,e,s,w,ne,se,sw,nw',
+  //     resize() {
+  //       this.style.height = 'auto';
+  //       this.style.height = this.scrollHeight + 'px';
+  //     }
+  //   });
+  // const canvasRect = canvas.getBoundingClientRect();
+  // const contRect   = $('#canvasContainer').offset();
+  // const minLeft    = canvasRect.left - contRect.left;
+  // const minTop     = canvasRect.top  - contRect.top;
+  // const cw         = canvasRect.width;
+  // const ch         = canvasRect.height;
+  // const maxLeft    = minLeft + cw - $clicked.outerWidth();
+  // const maxTop     = minTop + ch - $clicked.outerHeight();
+
+  // // draggable + resizable against the canvas
+  // $clicked
+  //   .draggable({
+  //     handle:      '.drag-handle',
+  //     containment: [minLeft, minTop, maxLeft, maxTop]
+  //   })
+  //   .resizable({
+  //     handles: 'n,e,s,w,ne,se,sw,nw',
+  //     resize(event, ui) {
+  //       // clamp the position
+  //       ui.position.left = Math.min(Math.max(ui.position.left, minLeft),  maxLeft);
+  //       ui.position.top  = Math.min(Math.max(ui.position.top,  minTop),   maxTop);
+
+  //       // clamp the size
+  //       ui.size.width  = Math.min(ui.size.width,  cw - (ui.position.left - minLeft));
+  //       ui.size.height = Math.min(ui.size.height, ch - (ui.position.top  - minTop));
+  //     }
+  //   });
+  // c) wire up rotation
+  let rotating = false, center = {};
+  $rotate.on('mousedown', function(ev) {
+    ev.preventDefault();
+    rotating = true;
+    const offs = $clicked.offset();
+    center = {
+      x: offs.left + $clicked.outerWidth()/2,
+      y: offs.top  + $clicked.outerHeight()/2
+    };
+    $(document).on('mousemove.rotate', function(e2) {
+      if (!rotating) return;
+      const angle = Math.atan2(e2.pageY - center.y, e2.pageX - center.x) * 180/Math.PI;
+      $clicked.css('transform', `rotate(${angle}deg)`);
+    }).on('mouseup.rotate', function() {
+      rotating = false;
+      $(document).off('.rotate');
     });
+  });
+   makeBoxDraggableAndResizable($clicked);
+  // d) wire up delete
+  $del.on('click', function(ev) {
+    ev.stopPropagation();
+    $clicked.remove();
+    selectedBox = null;
+  });
+
+  // 4) Sync the controls UI
+  $('#fontSize').val(parseInt($clicked.css('font-size')));
+  $('#textColor').val(rgbToHex($clicked.css('color')));
+  const lhPx = parseFloat($clicked.css('line-height'));
+  const fsPx = parseFloat($clicked.css('font-size'));
+  $('#lineHeight').val((lhPx/fsPx).toFixed(2));
+});
+
 
     // ✅ Font Size
     function applyFontSize(size) {
@@ -1582,29 +1673,7 @@
       }
     }
 
-    /*// Bold
-    $('#boldBtn').on('click', function () {
-      if (selectedBox) {
-        const current = selectedBox.css('font-weight');
-        selectedBox.css('font-weight', current === '700' || current === 'bold' ? 'normal' : 'bold');
-      }
-    });
-
-    // Italic
-    $('#italicBtn').on('click', function () {
-      if (selectedBox) {
-        const current = selectedBox.css('font-style');
-        selectedBox.css('font-style', current === 'italic' ? 'normal' : 'italic');
-      }
-    });
-
-    // Underline
-    $('#underlineBtn').on('click', function () {
-      if (selectedBox) {
-        const current = selectedBox.css('text-decoration-line');
-        selectedBox.css('text-decoration', current === 'underline' ? 'none' : 'underline');
-      }
-    });*/
+    
 
     // Bold
     $('#boldBtn').on('click', function (e) {
@@ -1757,27 +1826,165 @@
     });
 
     // Line Height
-       $('#lineHeight').on('input', function() {
-      if (!selectedBox) return;
+$('#lineHeight').on('input', function() {
+    debugger;
+    if (!selectedBox) return;
 
-      const multiplier = parseFloat($(this).val());
-      selectedBox.css('line-height', multiplier);
+    const multiplier = parseFloat($(this).val());
+    selectedBox.css('line-height', multiplier);
 
-      // now re-flow the height
-      selectedBox.css('height', 'auto');                    // reset
-      const needed = selectedBox.prop('scrollHeight') + 'px';
-      selectedBox.css('height', needed);                     // fit content
-    });
+    // Adjust the height based on the inner text content
+    const $content = selectedBox.find('.text-content');
+
+    // Always reset first to auto, to allow shrink
+    selectedBox.css('height', 'auto');
+
+    // Calculate actual required height
+    const neededHeight = $content[0].scrollHeight + 10; // Add small padding
+
+    // Apply the new height
+    selectedBox.css('height', neededHeight + 'px');
+});
+
+
 
         // 3) After a paste or input, re-sync the control too
-    $(document).on('input paste', '.text-box', function() {
-      if (this !== selectedBox[0]) return;
+    // $(document).on('input paste', '.text-box', function() {
+    //   if (this !== selectedBox[0]) return;
 
-      const lhPx = parseFloat(selectedBox.css('line-height'));
-      const fsPx = parseFloat(selectedBox.css('font-size'));
-      const multiplier = lhPx / fsPx;
-      $('#lineHeight').val(multiplier.toFixed(2));
-    });
+    //   const lhPx = parseFloat(selectedBox.css('line-height'));
+    //   const fsPx = parseFloat(selectedBox.css('font-size'));
+    //   const multiplier = lhPx / fsPx;
+    //   $('#lineHeight').val(multiplier.toFixed(2));
+    // });
+// //   $(document).on('input paste', '.text-box', function () {
+// //   if (this !== selectedBox[0]) return;
+
+// //   // 1) Update your control panel
+// //   const lhPx       = parseFloat(selectedBox.css('line-height'));
+// //   const fsPx       = parseFloat(selectedBox.css('font-size'));
+// //   const multiplier = lhPx / fsPx;
+// //   $('#lineHeight').val(multiplier.toFixed(2));
+
+// //   // 2) Fit box to new content
+// //   const $content = selectedBox.find('.text-content');
+// //   selectedBox.css('height', 'auto');                    // allow growth
+// //   const requiredHeight = $content[0].scrollHeight + 10;  // some padding
+// //   selectedBox.css('height', requiredHeight + 'px');
+
+// //   // 3) Now clamp against the canvas viewport rect
+// //   const rect  = canvas.getBoundingClientRect();
+// //   const boxW  = selectedBox.outerWidth();
+// //   const boxH  = selectedBox.outerHeight();
+// //   const pos   = selectedBox.offset();  // viewport coords
+// //   let left    = pos.left;
+// //   let top     = pos.top;
+
+// //   // draggable‐style containment:
+// //   const minX = rect.left;
+// //   const minY = rect.top;
+// //   const maxX = rect.left + rect.width  - boxW;
+// //   const maxY = rect.top  + rect.height - boxH;
+
+// //   // clamp position
+// //   left = Math.min(Math.max(left, minX), maxX);
+// //   top  = Math.min(Math.max(top,  minY), maxY);
+
+// //   // clamp size so bottom/right never cross
+// //   const maxW = rect.left + rect.width  - left;
+// //   const maxH = rect.top  + rect.height - top;
+// //   const finalW = Math.min(boxW, maxW);
+// //   const finalH = Math.min(boxH, maxH);
+
+// //   // 4) Apply clamped size & position
+// //   selectedBox
+// //     .outerWidth(finalW)
+// //     .outerHeight(finalH)
+// //     .offset({ left, top });
+// // });
+$(document).on('keydown', '.text-content', function(e) {
+
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.execCommand('insertLineBreak');   // single <br>
+  }
+  // if (e.key === 'Backspace'|| 'Delete'|| 'Tab'||
+  //       'ArrowLeft'|| 'ArrowRight'|| 'ArrowUp'|| 'ArrowDown') {
+  //   //e.preventDefault();
+  //   return;
+  // }
+  //    if (e.ctrlKey || e.metaKey) {
+  //       return; // allow copy, paste, cut etc.
+  //   }
+  //  const allowedKeys = [
+  //       'Backspace', 'Delete', 'Tab',
+  //       'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown','Enter'
+  //   ];
+
+  //   // Allow arrow keys, backspace, delete, tab
+  //   if (allowedKeys.includes(e.key)) {
+  //       return; // allow default behavior
+  //   }
+
+  //   // Allow control keys like Ctrl+C, Ctrl+V, Ctrl+X
+  //   if (e.ctrlKey || e.metaKey) {
+  //       return; // allow copy, paste, cut etc.
+  //   }
+  //     if (e.key === 'Enter') {
+  //   e.preventDefault();
+  //   document.execCommand('insertLineBreak');   // single <br>
+  // }
+  //   // Prevent all other keys
+  //   e.preventDefault();
+});
+
+$(document).on('input paste', '.text-box', function () {
+  if (this !== selectedBox[0]) return;
+ 
+  // 1) Update your controls
+  const lhPx       = parseFloat(selectedBox.css('line-height'));
+  const fsPx       = parseFloat(selectedBox.css('font-size'));
+  $('#lineHeight').val((lhPx/fsPx).toFixed(2));
+
+  // 2) FORCE the box to grow to fit new content
+  const $content = selectedBox.find('.text-content');
+  selectedBox.css('height', 'auto');
+  const requiredH = $content[0].scrollHeight ;  // padding +10
+  selectedBox.css('height', requiredH + 'px');
+
+  // 3) Now APPLY the **exact same** viewport‐based clamp you use in draggable:
+  const rect = canvas.getBoundingClientRect();
+  const boxW = selectedBox.outerWidth();
+  const boxH = selectedBox.outerHeight();
+  const offs = selectedBox.offset();  // page coords
+  let left  = offs.left;
+  let top   = offs.top;
+
+  // the boundaries:
+  const minX = rect.left;
+  const minY = rect.top;
+  const maxX = rect.left + rect.width  - boxW;
+  const maxY = rect.top  + rect.height - boxH;
+
+  // clamp position
+  left = Math.min(Math.max(left, minX), maxX);
+  top  = Math.min(Math.max(top, minY), maxY);
+
+  // clamp size so bottom/right stay inside
+  const maxW = rect.left + rect.width  - left;
+  const maxH = rect.top  + rect.height - top;
+  const finalW = Math.min(boxW, maxW);
+  const finalH = Math.min(boxH, maxH);
+
+  // 4) APPLY both size & position in one go
+  selectedBox
+    .outerWidth(finalW)
+    .outerHeight(finalH)
+    .offset({ left, top });
+});
+
+
+
 </script>
 
 <script>
