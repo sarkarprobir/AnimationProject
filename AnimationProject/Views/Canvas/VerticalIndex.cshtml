@@ -7,7 +7,69 @@
 
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+       
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
     <style>
+            /* ——— CSS ——— */
+           .image-box {
+      position: absolute;
+      box-sizing: border-box;
+      /* remove overflow:hidden here so handles show */
+      overflow: visible;    
+    }
+
+    /* wrap the actual <img> in a clip‐container if you still need hidden overflow on the image */
+    .image-box .img-clip {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;    /* clip the image only */
+    }
+
+    .image-box .img-clip img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+        .image-box img {
+      width: 100%;
+      height: auto;          /* preserve aspect ratio */
+      display: block;
+    }
+
+    /* selection outline */
+    .image-box.selected {
+      border: 1px solid #2196F3;
+    }
+
+    /* drag, rotate, delete handles */
+    .image-box .drag-handle,
+    .image-box .rotate-handle,
+    .image-box .delete-handle {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: #2196F3;
+      border: 2px solid white;
+      border-radius: 4px;
+      cursor: pointer;
+      z-index: 1000;
+    }
+
+    /* position the handles */
+    .drag-handle { top: -24px; left: -24px; cursor: move; }
+    .rotate-handle { top: -24px; right: -24px; border-radius: 50%; }
+    .delete-handle { bottom: -24px; right: -24px; background: red; }
+
+    /* resize handles */
+    .image-box .ui-resizable-handle {
+      background: #2196F3;
+      border: 1px solid #fff;
+      width: 8px;
+      height: 8px;
+      z-index: 10;
+    }
+
         .rotate-line {
             position: absolute;
             width: 1px;
@@ -1373,7 +1435,10 @@
 
         <div class="panel-middle d-flex align-items-center justify-content-center" id="canvasContainer">
             <div id="controls" style="margin-bottom: 10px;">
-               @*   <button id="addText" onclick="addDefaultText()">Add Text Box</button>  *@
+                  @* <button id="Animate" onclick="Animate()">Add Text Box</button>   *@
+                   <button id="Animate1" onclick="Animate()">A1</button>  
+                    <button id="Animate2" onclick="Animate1()">A2</button>  
+                     <button id="Animate3" onclick="Animate2()">A3</button>  
                 <label>
                     Font Size:
                     <input type="number" id="fontSize" value="24" style="width: 60px;" />
@@ -1461,6 +1526,41 @@
 
 </script>
 <script>
+    // 1) Click outside any .text-box ⇒ teardown current selection
+// $(document).on('mousedown', function(e) {
+//   // if the click target isn't inside a .text-box **or** inside your toolbar, clear selection
+//   if (!$(e.target).closest('.text-box, #controls, .font-control, .toggle-btn').length) {
+//     if (selectedBox) {
+//       selectedBox.removeClass('selected');
+
+//       if (selectedBox.data('ui-draggable')) selectedBox.draggable('destroy');
+//       if (selectedBox.data('ui-resizable'))  selectedBox.resizable('destroy');
+
+//       selectedBox.find('.drag-handle, .rotate-handle, .delete-handle').remove();
+//       selectedBox.find('.ui-resizable-handle').remove();
+
+//       selectedBox = null;
+//     }
+//   }
+// });
+$(document).on('mousedown', function (e) {
+    // If the clicked element is NOT inside a .text-box
+    if (!$(e.target).closest('.text-box').length) {
+        if (selectedBox) {
+            selectedBox.removeClass('selected');
+
+            if (selectedBox.data('ui-draggable')) selectedBox.draggable('destroy');
+            if (selectedBox.data('ui-resizable')) selectedBox.resizable('destroy');
+
+            selectedBox.find('.drag-handle, .rotate-handle, .delete-handle').remove();
+            selectedBox.find('.ui-resizable-handle').remove();
+
+            selectedBox = null;
+        }
+    }
+});
+
+
   $(document).on('click', '.text-box', function (e) {
   e.stopPropagation();
   $(this).find('.text-content').focus();

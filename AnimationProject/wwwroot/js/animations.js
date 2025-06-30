@@ -2428,7 +2428,15 @@ function addDefaultText() {
     $("#elementsPopup").hide();
 
    
-
+    // 0) Deselect any previously selected box
+    $('.text-box').each(function () {
+        const $old = $(this);
+        $old.removeClass('selected');
+        if ($old.data('ui-draggable')) $old.draggable('destroy');
+        if ($old.data('ui-resizable')) $old.resizable('destroy');
+        $old.find('.drag-handle, .rotate-handle, .delete-handle').remove();
+        $old.find('.ui-resizable-handle').remove();
+    });
 
     // 1) Create outer box
     const $box = $('<div class="text-box selected"></div>')
@@ -5234,78 +5242,78 @@ canvas.addEventListener('dragover', e => {
 ////    }
 ////});
 canvas.addEventListener('drop', e => {
-    e.preventDefault();
+    //e.preventDefault();
 
-    let src = "";
+    //let src = "";
 
-    // 1) Preferred: a real URI (e.g. dragging from another site)
-    // try text/uri-list first (for standards-compliant browsers)
-    if (e.dataTransfer.types.includes('text/uri-list')) {
-        src = e.dataTransfer.getData('text/uri-list').trim();
-    }
-    // fallback: if plain text *looks* like an http URL
-    else {
-        const plain = e.dataTransfer.getData('text/plain').trim();
-        if (/^https?:\/\//i.test(plain)) {
-            src = plain;
-        }
-    }
+    //// 1) Preferred: a real URI (e.g. dragging from another site)
+    //// try text/uri-list first (for standards-compliant browsers)
+    //if (e.dataTransfer.types.includes('text/uri-list')) {
+    //    src = e.dataTransfer.getData('text/uri-list').trim();
+    //}
+    //// fallback: if plain text *looks* like an http URL
+    //else {
+    //    const plain = e.dataTransfer.getData('text/plain').trim();
+    //    if (/^https?:\/\//i.test(plain)) {
+    //        src = plain;
+    //    }
+    //}
 
-    // 2) If that fails, check for File objects (drag from Finder or Explorer)
-    if (!src && e.dataTransfer.files.length > 0) {
-        const file = e.dataTransfer.files[0];
-        if (file.type.startsWith('image/')) {
-            src = URL.createObjectURL(file);
-        }
-    }
+    //// 2) If that fails, check for File objects (drag from Finder or Explorer)
+    //if (!src && e.dataTransfer.files.length > 0) {
+    //    const file = e.dataTransfer.files[0];
+    //    if (file.type.startsWith('image/')) {
+    //        src = URL.createObjectURL(file);
+    //    }
+    //}
 
-    // 3) Nothing valid? bail out
-    if (!src) return;
+    //// 3) Nothing valid? bail out
+    //if (!src) return;
 
-    const img = new Image();
-    img.onload = () => {
-        // maximum dimension on drop
-        const MAX_DIM = 200;
+    //const img = new Image();
+    //img.onload = () => {
+    //    // maximum dimension on drop
+    //    const MAX_DIM = 200;
 
-        // compute ratio so the longest side is MAX_DIM
-        const ratio = img.width > img.height
-            ? MAX_DIM / img.width
-            : MAX_DIM / img.height;
+    //    // compute ratio so the longest side is MAX_DIM
+    //    const ratio = img.width > img.height
+    //        ? MAX_DIM / img.width
+    //        : MAX_DIM / img.height;
 
-        // never upscale small images
-        const scale = Math.min(ratio, 1);
+    //    // never upscale small images
+    //    const scale = Math.min(ratio, 1);
 
-        // new “design-space” dimensions
-        const newWidth = img.width * scale;
-        const newHeight = img.height * scale;
+    //    // new “design-space” dimensions
+    //    const newWidth = img.width * scale;
+    //    const newHeight = img.height * scale;
 
-        images.push({
-            img,
-            src,
-            x: e.offsetX,
-            y: e.offsetY,
-            // assign downsized values here:
-            width: newWidth,
-            height: newHeight,
-            // keep these at 1 so drawCanvas draws at exactly width×height:
-            scaleX: 1,
-            scaleY: 1,
-            opacity: 100,
-            selected: false,
-            noAnim: false,
-            groupId: null,
-            rotation: 0,
-            type: "image",
-            zIndex: getNextZIndex(),
-            fillNoColorStatus: false,
-            strokeNoColorStatus: false,
-            fillNoColor: "#FFFFFF",
-            strokeNoColor: "#FFFFFF",
-            strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 3
-        });
-        drawCanvas('Common');
-    };
-    img.src = src;
+    //    images.push({
+    //        img,
+    //        src,
+    //        x: e.offsetX,
+    //        y: e.offsetY,
+    //        // assign downsized values here:
+    //        width: newWidth,
+    //        height: newHeight,
+    //        // keep these at 1 so drawCanvas draws at exactly width×height:
+    //        scaleX: 1,
+    //        scaleY: 1,
+    //        opacity: 100,
+    //        selected: false,
+    //        noAnim: false,
+    //        groupId: null,
+    //        rotation: 0,
+    //        type: "image",
+    //        zIndex: getNextZIndex(),
+    //        fillNoColorStatus: false,
+    //        strokeNoColorStatus: false,
+    //        fillNoColor: "#FFFFFF",
+    //        strokeNoColor: "#FFFFFF",
+    //        strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 3
+    //    });
+    //    drawCanvas('Common');
+    //};
+    //img.src = src;
 });
 function updateSelectedImageColorsOld(newFill, newStroke) {
     if (activeImage && activeImage.src && activeImage.src.endsWith('.svg')) {
@@ -6286,3 +6294,402 @@ duplicateOption.addEventListener('click', () => {
 
 ////    console.log('Stroke width changed to:', widthNum);
 ////}
+
+function Animate1() {
+    //Simple Fade and Scale In
+    gsap.fromTo('.text-box',
+        { opacity: 0, scale: 0.8 }, // Starting state
+        { opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' } // Animation
+    );
+
+    //Type
+    setTimeout(() => {
+        gsap.from('.text-content', {
+            text: "",
+            duration: 2,
+            ease: 'none'
+        });
+
+    }, 1000);
+}
+
+function Animate() {
+    //Simple Fade and Scale In
+    gsap.fromTo('.text-box',
+        { opacity: 0, scale: 0.8 }, // Starting state
+        { opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' } // Animation
+    );
+    //Animate Opacity / Slide / Scale
+
+    setTimeout(() => {
+       
+        gsap.from('.text-content', {
+            opacity: 0,
+            y: -20,
+            duration: 0.5,
+            ease: 'power2.out'
+        });
+
+    }, 1000);
+}
+function Animate2() {
+    //Simple Fade and Scale In
+    gsap.from('.text-content', {
+        opacity: 0,
+        y: -20,
+        duration: 0.5,
+        ease: 'power2.out'
+    });
+    
+    //Animate Opacity / Slide / Scale
+
+    setTimeout(() => {
+
+        gsap.fromTo('.text-box',
+            { opacity: 0, scale: 0.8 }, // Starting state
+            { opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' } // Animation
+        );
+
+    }, 1000);
+}
+//function Animate10() {
+//    gsap.fromTo('.text-box',
+//        { opacity: 0, scale: 0.8 }, // Starting state
+//        { opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' } // Animation
+//    );
+   
+
+//    setTimeout(() => {
+//        //gsap.from('.text-content', {
+//        //    text: "",
+//        //    duration: 2,
+//        //    ease: 'none'
+//        //});
+//        gsap.from('.text-content', {
+//            opacity: 0,
+//            y: -20,
+//            duration: 0.5,
+//            ease: 'power2.out'
+//        });
+
+//    }, 1000);
+
+
+
+    ////setTimeout(() => {
+    ////    gsap.fromTo('.text-box',
+    ////        { opacity: 0, scale: 0.9, y: -10 },
+    ////        { opacity: 1, scale: 1, y: 0, duration: 0.4, ease: 'power2.out' }
+    ////    );
+
+    ////}, 1000);
+
+
+    //gsap.fromTo('.text-box',
+    //    { opacity: 0, scale: 0.9, y: -10 },
+    //    { opacity: 1, scale: 1, y: 0, duration: 0.4, ease: 'power2.out' }
+    //);
+    
+    //setTimeout(() => {
+    //    gsap.from('.text-content', {
+    //        text: "",
+    //        duration: 2,
+    //        ease: 'none'
+    //    });
+
+    //}, 1000);
+//}
+
+// 1) Prevent default browser behavior for all drag/drop on the container
+$(document).on('dragover drop', '#canvasContainer', function (e) {
+    e.preventDefault();
+});
+
+// 2) Drop INTO .text-content: insert inline at the caret
+$(document).on('drop', '.text-content', function (e) {
+    e.preventDefault();
+
+    const dt = e.originalEvent.dataTransfer;
+    if (!dt.files.length) return;
+    const file = Array.from(dt.files).find(f => f.type.startsWith('image/'));
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = evt => insertImageAtCursor(evt.target.result);
+    reader.readAsDataURL(file);
+});
+
+// 3) Drop ONTO canvas (outside text): create a new image box
+// 3) Drop ON canvas ⇒ new image box
+$(document).on('drop', '#canvasContainer', e => {
+    e.preventDefault();
+
+    // if we dropped *into* text-content, bail out
+    if ($(e.target).closest('.text-content').length) return;
+
+
+    const dt = e.originalEvent.dataTransfer;
+    const file = Array.from(dt.files).find(f => f.type.startsWith('image/'));
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = evt => {
+        // key: always call createImageBox(url)
+        createImageBox(evt.target.result);
+    };
+    reader.readAsDataURL(file);
+});
+
+
+// 4) Helper: insert an <img> at the caret inside .text-content
+function insertImageAtCursor(dataUrl) {
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return;
+
+    const range = sel.getRangeAt(0);
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    img.style.maxWidth = '100%';
+    img.style.display = 'block';
+
+    range.deleteContents();
+    range.insertNode(img);
+
+    // move caret after the image
+    range.setStartAfter(img);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+}
+
+// 5) Helper: create a draggable/resizable image box on the canvas
+//function createImageBox(dataUrl) {
+//    teardownSelection();  // clear any previous selection
+
+//    // 1) Create the box and insert it (but keep it invisible until we size it)
+//    const $box = $(`
+//    <div class="image-box selected" style="position:absolute; visibility:hidden;">
+//      <img src="${dataUrl}" style="width:100%; height:auto; display:block;">
+//      <div class="drag-handle"><i class="fas fa-arrows-alt"></i></div>
+//      <div class="rotate-handle"></div>
+//      <div class="delete-handle"><i class="fas fa-trash"></i></div>
+//    </div>
+//  `).appendTo('#canvasContainer');
+
+//    // 2) Once the image has loaded, size & center the box
+//    const $img = $box.find('img');
+//    $img.on('load', () => {
+//        const defaultW = 150;                     // your small width
+//        const aspect = $img[0].naturalHeight / $img[0].naturalWidth;
+//        const defaultH = defaultW * aspect;
+
+//        // center
+//        const $cont = $('#canvasContainer');
+//        const left = ($cont.width() - defaultW) / 2;
+//        const top = ($cont.height() - defaultH) / 2;
+
+//        // apply size & position
+//        $box.css({
+//            width: `${defaultW}px`,
+//            height: `${defaultH}px`,
+//            left: `${left}px`,
+//            top: `${top}px`,
+//            visibility: 'visible'  // now show it
+//        });
+
+//        // 3) hook up behaviors
+//        wireUpDeleteAndRotate($box);
+//        makeBoxDraggableAndResizable($box);
+//    });
+//}
+// ——— Helper to wire up delete & rotate on image (or text) boxes ———
+function wireUpDeleteAndRotate($box) {
+    // Delete on click
+    $box.find('.delete-handle').on('click', e => {
+        e.stopPropagation();
+        $box.remove();
+    });
+
+    // Rotate logic
+    const $rotate = $box.find('.rotate-handle');
+    let rotating = false, center = {};
+    $rotate.on('mousedown', e => {
+        e.preventDefault();
+        rotating = true;
+        const offs = $box.offset();
+        center = {
+            x: offs.left + $box.outerWidth() / 2,
+            y: offs.top + $box.outerHeight() / 2
+        };
+        $(document).on('mousemove.rotate', ev => {
+            if (!rotating) return;
+            const angle = Math.atan2(ev.pageY - center.y, ev.pageX - center.x) * 180 / Math.PI;
+            $box.css('transform', `rotate(${angle}deg)`);
+        }).on('mouseup.rotate', () => {
+            rotating = false;
+            $(document).off('.rotate');
+        });
+    });
+}
+
+
+
+function createImageBox(imageSrc) {
+    // Unselect all boxes
+    /* $('.text-box').removeClass('selected');*/
+    $('.text-box').each(function () {
+        const $old = $(this);
+        $old.removeClass('selected');
+        if ($old.data('ui-draggable')) $old.draggable('destroy');
+        if ($old.data('ui-resizable')) $old.resizable('destroy');
+        $old.find('.drag-handle, .rotate-handle, .delete-handle').remove();
+        $old.find('.ui-resizable-handle').remove();
+    });
+
+
+    // 1) Create outer box
+    const $box = $('<div class="text-box selected"></div>')
+        .appendTo('#canvasContainer');
+
+    // 2) Insert the image
+    const $img = $('<img src="' + imageSrc + '" style="width:150px; height:auto;">').appendTo($box);
+
+    // 3) Add control handles
+    const $drag = $('<div class="drag-handle"><i class="fas fa-arrows-alt"></i></div>').appendTo($box);
+    const $rotate = $('<div class="rotate-handle"></div>').appendTo($box);
+    const $del = $('<div class="delete-handle"><i class="fas fa-trash"></i></div>').appendTo($box);
+
+    // 4) Position the image in the center
+    const $cont = $('#canvasContainer');
+    const left = ($cont.width() - $box.outerWidth()) / 2;
+    const top = ($cont.height() - $box.outerHeight()) / 2;
+    $box.css({ position: 'absolute', left: `${left}px`, top: `${top}px`, transform: 'rotate(0deg)' });
+
+    // 5) Make it draggable and resizable
+    makeBoxDraggableAndResizableImage($box);
+
+    // 6) Set as the currently selected box
+    selectedBox = $box;
+
+    // 7) Setup delete & rotate (optional)
+    wireUpDeleteAndRotate($box);
+
+    // 8) Image click should select this box
+    $box.on('mousedown', function (e) {
+        e.stopPropagation(); // prevent global click handler
+        $('.text-box').removeClass('selected');
+        $(this).addClass('selected');
+        selectedBox = $(this);
+    });
+}
+
+
+// clamp helper
+function clamp(v, min, max) {
+    return Math.min(Math.max(v, min), max);
+}
+
+
+function makeBoxDraggableAndResizableImage($box) {
+    const $canvas = $('#myCanvas');
+    const rect = canvas.getBoundingClientRect();
+
+    // 1) Get the canvas position relative to its offset parent (#canvasContainer)
+    const canvasPos = $canvas.position();
+    const cLeft = canvasPos.left;
+    const cTop = canvasPos.top;
+
+    // 2) Get the canvas size (CSS pixels)
+    const cW = $canvas.width();
+    const cH = $canvas.height();
+
+    // 3) Measure the box itself
+    const boxW = $box.outerWidth();
+    const boxH = $box.outerHeight();
+
+    // 4) Compute min/max for draggable
+    const minX = cLeft;
+    const minY = cTop;
+    const maxX = cLeft + cW - boxW;
+    const maxY = cTop + cH - boxH;
+
+    // For jQuery UI draggable containment (viewport coords)
+    const minX_d = rect.left;
+    const minY_d = rect.top;
+    const maxX_d = rect.left + rect.width - boxW;
+    const maxY_d = rect.top + rect.height - boxH;
+    const $img = $box.find('img');
+
+    // ✅ Key: Ensure the image does NOT trigger drag events
+    $img.css('pointer-events', 'none');
+    // Draggable - same as text
+    $box.draggable({
+        handle: '.drag-handle',
+       
+        containment: [minX_d, minY_d, maxX_d, maxY_d]
+    });
+
+    // Resizable - same as text
+    $box.resizable({
+        handles: 'n,e,s,w,ne,se,sw,nw',
+        resize(event, ui) {
+            // Clamp position (prevent dragging outside)
+            ui.position.left = Math.min(Math.max(ui.position.left, minX), maxX);
+            ui.position.top = Math.min(Math.max(ui.position.top, minY), maxY);
+
+            // Clamp size so it doesn't exceed canvas
+            ui.size.width = Math.min(ui.size.width, cW - (ui.position.left - cLeft));
+            ui.size.height = Math.min(ui.size.height, cH - (ui.position.top - cTop));
+
+            // Minimum size limit for image
+            const minWidth = 50;
+            const minHeight = 50;
+            if (ui.size.width < minWidth) ui.size.width = minWidth;
+            if (ui.size.height < minHeight) ui.size.height = minHeight;
+
+            // Apply scaling to image
+            const $img = ui.element.find('img');
+            $img.css({
+                width: ui.size.width + 'px',
+                height: ui.size.height + 'px'
+            });
+        }
+    });
+}
+
+
+
+
+
+function teardownSelection() {
+    $('.text-box.selected, .image-box.selected').each(function () {
+        const $o = $(this);
+        $o.removeClass('selected')
+            .draggable('destroy')
+            .resizable('destroy')
+            .find('.drag-handle, .rotate-handle, .delete-handle').remove()
+            .end().find('.ui-resizable-handle').remove();
+    });
+}
+
+function wireUpRotate($box) {
+    const $rotate = $box.find('.rotate-handle');
+    let rotating = false, center = {};
+    $rotate.on('mousedown', e => {
+        e.preventDefault();
+        rotating = true;
+        const offs = $box.offset();
+        center = {
+            x: offs.left + $box.outerWidth() / 2,
+            y: offs.top + $box.outerHeight() / 2
+        };
+        $(document).on('mousemove.rotate', ev => {
+            if (!rotating) return;
+            const angle = Math.atan2(ev.pageY - center.y, ev.pageX - center.x) * 180 / Math.PI;
+            $box.css('transform', `rotate(${angle}deg)`);
+        }).on('mouseup.rotate', () => {
+            rotating = false;
+            $(document).off('.rotate');
+        });
+    });
+}
