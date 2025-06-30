@@ -1544,6 +1544,10 @@
 //   }
 // });
 $(document).on('mousedown', function (e) {
+     if ($(e.target).closest('.text-box').length) return;
+
+    // If the clicked target is inside any control buttons, don't deselect
+    if ($(e.target).closest('#fontSize, #textColor, #fontFamily, #boldBtn, #italicBtn, #underlineBtn, #caseToggleBtn, #alignBtn, #lineHeight').length) return;
     // If the clicked element is NOT inside a .text-box
     if (!$(e.target).closest('.text-box').length) {
         if (selectedBox) {
