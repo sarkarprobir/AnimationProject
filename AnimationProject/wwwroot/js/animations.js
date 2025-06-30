@@ -6296,62 +6296,71 @@ duplicateOption.addEventListener('click', () => {
 ////}
 
 function Animate1() {
-    //Simple Fade and Scale In
-    gsap.fromTo('.text-box',
-        { opacity: 0, scale: 0.8 }, // Starting state
-        { opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' } // Animation
-    );
+    // Animate Fade and Scale In without resetting rotation
+    $('.text-box').each(function () {
+        gsap.fromTo(this,
+            { opacity: 0, scale: 0.8, transformOrigin: "50% 50%" }, // Starting state
+            { opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' } // Animate to normal
+        );
+    });
 
-    //Type
+    // Typewriter animation after delay
     setTimeout(() => {
-        gsap.from('.text-content', {
-            text: "",
-            duration: 2,
-            ease: 'none'
+        $('.text-content').each(function () {
+            gsap.from(this, {
+                text: "",
+                duration: 2,
+                ease: 'none'
+            });
         });
-
     }, 1000);
 }
 
-function Animate() {
-    //Simple Fade and Scale In
-    gsap.fromTo('.text-box',
-        { opacity: 0, scale: 0.8 }, // Starting state
-        { opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' } // Animation
-    );
-    //Animate Opacity / Slide / Scale
 
+function Animate() {
+    // Animate opacity and scale using transform: scale, preserving rotation
+    $('.text-box').each(function () {
+        gsap.fromTo(this,
+            { opacity: 0, scale: 0.8, transformOrigin: "50% 50%" }, // Starting state
+            { opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' } // Animate to normal
+        );
+    });
+
+    // Animate text content sliding in
     setTimeout(() => {
-       
-        gsap.from('.text-content', {
+        $('.text-content').each(function () {
+            gsap.from(this, {
+                opacity: 0,
+                y: -20,
+                duration: 0.5,
+                ease: 'power2.out'
+            });
+        });
+    }, 1000);
+}
+
+function Animate2() {
+    // Animate text-content sliding in
+    $('.text-content').each(function () {
+        gsap.from(this, {
             opacity: 0,
             y: -20,
             duration: 0.5,
             ease: 'power2.out'
         });
-
-    }, 1000);
-}
-function Animate2() {
-    //Simple Fade and Scale In
-    gsap.from('.text-content', {
-        opacity: 0,
-        y: -20,
-        duration: 0.5,
-        ease: 'power2.out'
     });
-    
-    //Animate Opacity / Slide / Scale
 
+    // Animate Fade and Scale In without resetting rotation after delay
     setTimeout(() => {
-
-        gsap.fromTo('.text-box',
-            { opacity: 0, scale: 0.8 }, // Starting state
-            { opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' } // Animation
-        );
-
+        $('.text-box').each(function () {
+            gsap.fromTo(this,
+                { opacity: 0, scale: 0.8, transformOrigin: "50% 50%" },
+                { opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' }
+            );
+        });
     }, 1000);
 }
+
 //function Animate10() {
 //    gsap.fromTo('.text-box',
 //        { opacity: 0, scale: 0.8 }, // Starting state
