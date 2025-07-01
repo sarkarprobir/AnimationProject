@@ -4850,7 +4850,9 @@ canvasContainer.addEventListener("dblclick", function (e) {
             obj.editing = false;
             textEditor.style.display = "none";
 
-            const ctx = canvas.getContext("2d");
+            const 
+            
+            = canvas.getContext("2d");
             const padding = obj.padding || 10; // default padding if not set on obj
             const fontSize = obj.fontSize;
             ctx.font = `${fontSize}px ${obj.fontFamily}`;
