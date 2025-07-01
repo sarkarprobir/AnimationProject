@@ -77,7 +77,12 @@ $(document).on('click', '.text-box', function (e) {
             $(document).off('.rotate');
         });
     });
-    makeBoxDraggableAndResizable($clicked);
+    /*  makeBoxDraggableAndResizable($clicked);*/
+    if ($clicked.find('svg, img').length) {
+        makeBoxDraggableAndResizableImage($clicked);
+    } else {
+        makeBoxDraggableAndResizable($clicked);
+    }
     // d) wire up delete
     $del.on('click', function (ev) {
         ev.stopPropagation();
@@ -919,6 +924,97 @@ function wireUpDeleteAndRotate($box) {
 
 
 // Unified createImageBox: handles both raster images and SVG data-urls
+function createImageBoxOLD1(imageSrc) {
+  // 0) Deselect and teardown existing boxes
+  $('.text-box').each(function () {
+    const $old = $(this);
+    $old.removeClass('selected');
+    if ($old.data('ui-draggable')) $old.draggable('destroy');
+    if ($old.data('ui-resizable')) $old.resizable('destroy');
+    $old.find('.drag-handle, .rotate-handle, .delete-handle').remove();
+    $old.find('.ui-resizable-handle').remove();
+  });
+
+  // 1) Create outer container
+  const $box = $('<div class="text-box selected"></div>').appendTo('#canvasContainer');
+
+  // 2) Insert content: either inline SVG or <img>
+  if (imageSrc.startsWith('data:image/svg+xml')) {
+    // Inline SVG path
+    const rawBase64 = imageSrc.split(',')[1];
+    const xmlStr    = atob(rawBase64).trim();
+    const parser   = new DOMParser();
+    const svgDoc   = parser.parseFromString(xmlStr, 'image/svg+xml');
+    if (svgDoc.querySelector('parsererror')) {
+      console.error('SVG parse error');
+      return;
+    }
+
+    // Wrap in jQuery for convenience
+      const $svg = $(svgDoc.documentElement);
+      // ✅ Add this here:
+      if (!$svg.attr('viewBox')) {
+          const width = $svg.attr('width') || 100;  // fallback if missing
+          const height = $svg.attr('height') || 100;
+          $svg.attr('viewBox', `0 0 ${width} ${height}`);
+      }
+
+    // 2a) Append off-screen so computed styles are available
+    $svg
+      .css({ position: 'fixed', left: '-9999px', top: '-9999px', visibility: 'hidden' })
+      .appendTo(document.body);
+
+    // 2b) For each shape we *might* recolor, grab its computed fill
+    $svg.find('circle, path, rect').each(function() {
+      const realFill = window.getComputedStyle(this).fill;
+      $(this)
+        .attr('fill', realFill)  // inline the “true” fill
+        .addClass('recolor');     // mark for later recolor
+    });
+
+    // 2c) Now remove any embedded <style> so no surprises
+    $svg.find('style').remove();
+
+    // 2d) Move into your visible canvas box
+    const $clip = $('<div class="img-clip"></div>')
+        .css({ width: '150px', height: 'auto', overflow: 'visible' })
+      .appendTo($box);
+
+    // Reset positioning and append
+    $svg.css({ position: '', left: '', top: '', visibility: '', width: '100%', height: 'auto', display: 'block' });
+    $clip.append($svg);
+
+  } else {
+    // Raster image path
+    $('<img />')
+      .attr('src', imageSrc)
+      .css({ width: '150px', height: 'auto', pointerEvents: 'none' })
+      .appendTo($box);
+  }
+
+  // 3) Add control handles
+  $('<div class="drag-handle"><i class="fas fa-arrows-alt"></i></div>').appendTo($box);
+  $('<div class="rotate-handle"></div>').appendTo($box);
+  $('<div class="delete-handle"><i class="fas fa-trash"></i></div>').appendTo($box);
+
+  // 4) Center the box
+  const $cont = $('#canvasContainer');
+  const left = ($cont.width() - $box.outerWidth()) / 2;
+  const top  = ($cont.height() - $box.outerHeight()) / 2;
+  $box.css({ position: 'absolute', left: `${left}px`, top: `${top}px`, transform: 'rotate(0deg)' });
+
+  // 5) Initialize interactions
+  makeBoxDraggableAndResizableImage($box);
+  wireUpDeleteAndRotate($box);
+
+  // 6) Click to select
+  $box.on('mousedown', function (e) {
+    e.stopPropagation();
+    $('.text-box').removeClass('selected');
+    $(this).addClass('selected');
+    selectedBox = $(this);
+  });
+}
 function createImageBox(imageSrc) {
     // 0) Deselect and teardown existing boxes
     $('.text-box').each(function () {
@@ -933,34 +1029,59 @@ function createImageBox(imageSrc) {
     // 1) Create outer container
     const $box = $('<div class="text-box selected"></div>').appendTo('#canvasContainer');
 
+    // ✅ Select the new box immediately (this fixes your color picker issue)
+    $('.text-box').removeClass('selected');
+    $box.addClass('selected');
+    selectedBox = $box;
+
+    let isImage = false;
+
     // 2) Insert content: either inline SVG or <img>
     if (imageSrc.startsWith('data:image/svg+xml')) {
-        // Inline SVG path
         const rawBase64 = imageSrc.split(',')[1];
-        let xmlStr = atob(rawBase64).trim();
+        const xmlStr = atob(rawBase64).trim();
         const parser = new DOMParser();
         const svgDoc = parser.parseFromString(xmlStr, 'image/svg+xml');
         if (svgDoc.querySelector('parsererror')) {
             console.error('SVG parse error');
             return;
         }
+
         const $svg = $(svgDoc.documentElement);
-        // strip pre-existing fill/style
-        $svg.find('[fill]').removeAttr('fill');
+
+        // ✅ Ensure viewBox is present
+        if (!$svg.attr('viewBox')) {
+            const width = $svg.attr('width') || 100;
+            const height = $svg.attr('height') || 100;
+            $svg.attr('viewBox', `0 0 ${width} ${height}`);
+        }
+
+        // Append off-screen to capture computed fill
+        $svg.css({ position: 'fixed', left: '-9999px', top: '-9999px', visibility: 'hidden' }).appendTo(document.body);
+
+        $svg.find('circle, path, rect').each(function () {
+            const realFill = window.getComputedStyle(this).fill;
+            $(this).attr('fill', realFill).addClass('recolor');
+        });
+
         $svg.find('style').remove();
-        // mark shapes for recolor
-        $svg.find('circle, path, rect').addClass('recolor');
-        // wrap and append
+
         const $clip = $('<div class="img-clip"></div>')
-            .css({ width: '150px', height: 'auto', overflow: 'hidden' })
+            .css({ width: '150px', height: 'auto', overflow: 'visible' }) // overflow visible to allow proper scaling
             .appendTo($box);
-        $svg.css({ width: '100%', height: 'auto', display: 'block' }).appendTo($clip);
+
+        $svg.css({ position: '', left: '', top: '', visibility: '', width: '100%', height: 'auto', display: 'block' });
+        $clip.append($svg);
+
+        isImage = true; // mark as image/svg
     } else {
         // Raster image path
         $('<img />')
             .attr('src', imageSrc)
             .css({ width: '150px', height: 'auto', pointerEvents: 'none' })
             .appendTo($box);
+
+        isImage = true; // mark as image
     }
 
     // 3) Add control handles
@@ -975,10 +1096,15 @@ function createImageBox(imageSrc) {
     $box.css({ position: 'absolute', left: `${left}px`, top: `${top}px`, transform: 'rotate(0deg)' });
 
     // 5) Initialize interactions
-    makeBoxDraggableAndResizableImage($box);
+    if (isImage) {
+        makeBoxDraggableAndResizableImage($box);
+    } else {
+        makeBoxDraggableAndResizable($box);
+    }
+
     wireUpDeleteAndRotate($box);
 
-    // 6) Click to select
+    // 6) Click to select (still needed for later selections)
     $box.on('mousedown', function (e) {
         e.stopPropagation();
         $('.text-box').removeClass('selected');
@@ -989,10 +1115,10 @@ function createImageBox(imageSrc) {
 
 // Hook color picker to inline SVG elements on change only
 $('#textColor').on('input', function () {
-    if (!selectedBox) return;
-    // only change SVGs in the selected box
-    selectedBox.find('svg .recolor').attr('fill', $(this).val());
+  if (!selectedBox) return;
+  selectedBox.find('svg .recolor').attr('fill', $(this).val());
 });
+
 
 // Remove previous mouseenter/mouseleave hover logic (no hover coloring)
 
@@ -1005,7 +1131,7 @@ function clamp(v, min, max) {
 }
 
 
-function makeBoxDraggableAndResizableImage($box) {
+function makeBoxDraggableAndResizableImageOLD($box) {
     const $canvas = $('#myCanvas');
     const rect = canvas.getBoundingClientRect();
 
@@ -1073,6 +1199,77 @@ function makeBoxDraggableAndResizableImage($box) {
 }
 
 
+function makeBoxDraggableAndResizableImage($box) {
+    const $canvas = $('#myCanvas');
+    const rect = $canvas[0].getBoundingClientRect();
+
+    const canvasPos = $canvas.position();
+    const cLeft = canvasPos.left;
+    const cTop = canvasPos.top;
+
+    const cW = $canvas.width();
+    const cH = $canvas.height();
+
+    const boxW = $box.outerWidth();
+    const boxH = $box.outerHeight();
+
+    const minX = cLeft;
+    const minY = cTop;
+    const maxX = cLeft + cW - boxW;
+    const maxY = cTop + cH - boxH;
+
+    const minX_d = rect.left;
+    const minY_d = rect.top;
+    const maxX_d = rect.left + rect.width - boxW;
+    const maxY_d = rect.top + rect.height - boxH;
+
+    const $img = $box.find('img');
+    const $svg = $box.find('svg');
+
+    // Disable drag events on image/SVG directly
+    $img.css('pointer-events', 'none');
+    $svg.css('pointer-events', 'none');
+
+    $box.draggable({
+        handle: '.drag-handle',
+        containment: [minX_d, minY_d, maxX_d, maxY_d]
+    });
+
+    $box.resizable({
+        handles: 'n,e,s,w,ne,se,sw,nw',
+        resize(event, ui) {
+            // Clamp position
+            ui.position.left = Math.min(Math.max(ui.position.left, minX), maxX);
+            ui.position.top = Math.min(Math.max(ui.position.top, minY), maxY);
+
+            // Clamp size within canvas
+            ui.size.width = Math.min(ui.size.width, cW - (ui.position.left - cLeft));
+            ui.size.height = Math.min(ui.size.height, cH - (ui.position.top - cTop));
+
+            // Minimum size
+            const minWidth = 50;
+            const minHeight = 50;
+            if (ui.size.width < minWidth) ui.size.width = minWidth;
+            if (ui.size.height < minHeight) ui.size.height = minHeight;
+
+            // Resize image
+            if ($img.length) {
+                $img.css({
+                    width: ui.size.width + 'px',
+                    height: ui.size.height + 'px'
+                });
+            }
+
+            // Resize SVG (important)
+            if ($svg.length) {
+                $svg.css({
+                    width: ui.size.width + 'px',
+                    height: ui.size.height + 'px'
+                });
+            }
+        }
+    });
+}
 
 
 
