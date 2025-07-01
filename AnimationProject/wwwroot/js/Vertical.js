@@ -918,10 +918,9 @@ function wireUpDeleteAndRotate($box) {
 }
 
 
-
+// Unified createImageBox: handles both raster images and SVG data-urls
 function createImageBox(imageSrc) {
-    // Unselect all boxes
-    /* $('.text-box').removeClass('selected');*/
+    // 0) Deselect and teardown existing boxes
     $('.text-box').each(function () {
         const $old = $(this);
         $old.removeClass('selected');
@@ -931,42 +930,73 @@ function createImageBox(imageSrc) {
         $old.find('.ui-resizable-handle').remove();
     });
 
+    // 1) Create outer container
+    const $box = $('<div class="text-box selected"></div>').appendTo('#canvasContainer');
 
-    // 1) Create outer box
-    const $box = $('<div class="text-box selected"></div>')
-        .appendTo('#canvasContainer');
-
-    // 2) Insert the image
-    const $img = $('<img src="' + imageSrc + '" style="width:150px; height:auto;">').appendTo($box);
+    // 2) Insert content: either inline SVG or <img>
+    if (imageSrc.startsWith('data:image/svg+xml')) {
+        // Inline SVG path
+        const rawBase64 = imageSrc.split(',')[1];
+        let xmlStr = atob(rawBase64).trim();
+        const parser = new DOMParser();
+        const svgDoc = parser.parseFromString(xmlStr, 'image/svg+xml');
+        if (svgDoc.querySelector('parsererror')) {
+            console.error('SVG parse error');
+            return;
+        }
+        const $svg = $(svgDoc.documentElement);
+        // strip pre-existing fill/style
+        $svg.find('[fill]').removeAttr('fill');
+        $svg.find('style').remove();
+        // mark shapes for recolor
+        $svg.find('circle, path, rect').addClass('recolor');
+        // wrap and append
+        const $clip = $('<div class="img-clip"></div>')
+            .css({ width: '150px', height: 'auto', overflow: 'hidden' })
+            .appendTo($box);
+        $svg.css({ width: '100%', height: 'auto', display: 'block' }).appendTo($clip);
+    } else {
+        // Raster image path
+        $('<img />')
+            .attr('src', imageSrc)
+            .css({ width: '150px', height: 'auto', pointerEvents: 'none' })
+            .appendTo($box);
+    }
 
     // 3) Add control handles
-    const $drag = $('<div class="drag-handle"><i class="fas fa-arrows-alt"></i></div>').appendTo($box);
-    const $rotate = $('<div class="rotate-handle"></div>').appendTo($box);
-    const $del = $('<div class="delete-handle"><i class="fas fa-trash"></i></div>').appendTo($box);
+    $('<div class="drag-handle"><i class="fas fa-arrows-alt"></i></div>').appendTo($box);
+    $('<div class="rotate-handle"></div>').appendTo($box);
+    $('<div class="delete-handle"><i class="fas fa-trash"></i></div>').appendTo($box);
 
-    // 4) Position the image in the center
+    // 4) Center the box
     const $cont = $('#canvasContainer');
     const left = ($cont.width() - $box.outerWidth()) / 2;
     const top = ($cont.height() - $box.outerHeight()) / 2;
     $box.css({ position: 'absolute', left: `${left}px`, top: `${top}px`, transform: 'rotate(0deg)' });
 
-    // 5) Make it draggable and resizable
+    // 5) Initialize interactions
     makeBoxDraggableAndResizableImage($box);
-
-    // 6) Set as the currently selected box
-    selectedBox = $box;
-
-    // 7) Setup delete & rotate (optional)
     wireUpDeleteAndRotate($box);
 
-    // 8) Image click should select this box
+    // 6) Click to select
     $box.on('mousedown', function (e) {
-        e.stopPropagation(); // prevent global click handler
+        e.stopPropagation();
         $('.text-box').removeClass('selected');
         $(this).addClass('selected');
         selectedBox = $(this);
     });
 }
+
+// Hook color picker to inline SVG elements on change only
+$('#textColor').on('input', function () {
+    if (!selectedBox) return;
+    // only change SVGs in the selected box
+    selectedBox.find('svg .recolor').attr('fill', $(this).val());
+});
+
+// Remove previous mouseenter/mouseleave hover logic (no hover coloring)
+
+
 
 
 // clamp helper
