@@ -54,6 +54,10 @@ namespace AnimationProject.Controllers
         {
             return View();
         }
+        public IActionResult Vertical()
+        {
+            return View();
+        }
         public IActionResult HorizontalIndex()
         {
             return View();
