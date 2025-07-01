@@ -79,6 +79,27 @@
             top: -20px;
             margin-left: -0.5px;
         }
+    /* base styling for every handle */
+    .text-box .ui-resizable-handle {
+      width: 10px;
+      height: 10px;
+      background: #4faaff;
+      border: 2px solid white;
+      box-sizing: border-box;
+      position: absolute;
+      z-index: 2;
+    }
+
+    /* corner handles (you probably already see these) */
+    .text-box .ui-resizable-nw { top: -6px;  left: -6px;  cursor: nw-resize; }
+    .text-box .ui-resizable-ne { top: -6px;  right: -6px; cursor: ne-resize; }
+    .text-box .ui-resizable-sw { bottom: -6px; left: -6px;  cursor: sw-resize; }
+    .text-box .ui-resizable-se { bottom: -6px; right: -6px; cursor: se-resize; }
+
+    /* middle‑of‑edge handles */
+
+    .text-box .ui-resizable-e  { right: -6px;  top: 50%; transform: translateY(-50%); cursor: e-resize; }
+    .text-box .ui-resizable-w  { left: -6px;   top: 50%; transform: translateY(-50%); cursor: w-resize; }
 
         /* .text-box {
             position: absolute;
@@ -100,8 +121,8 @@
 
         .text-box {
             position: absolute;
-            min-width: 150px;
-            min-height: 60px;
+            min-width:  0 !important;
+                min-height: 0 !important;
            /*  border: 0.5px solid #2196F3 !important; */
             background: white;
             box-sizing: border-box;

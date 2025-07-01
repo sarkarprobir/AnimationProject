@@ -644,7 +644,85 @@ function TabShowHide(type) {
     }
 
 }
+
+
+
 function makeBoxDraggableAndResizable($box) {
+    // 1) Grab the container div and its metrics
+    const $canvas = $('#myCanvas');
+    const canvasRect = $canvas[0].getBoundingClientRect();  // use the DOM node
+    const canvasPos = $canvas.position();
+    const cLeft = canvasPos.left;
+    const cTop = canvasPos.top;
+    const cW = $canvas.width();
+    const cH = $canvas.height();
+
+    // 2) Draggable, contained within the div
+    $box.draggable({
+        handle: '.drag-handle',
+        containment: [
+            canvasRect.left,
+            canvasRect.top,
+            canvasRect.left + canvasRect.width - $box.outerWidth(),
+            canvasRect.top + canvasRect.height - $box.outerHeight()
+        ]
+    });
+
+    // 3) Resizable: side handles + corner handles
+    $box.resizable({
+        handles: 'e,w,ne,se,sw,nw',
+        minWidth: 20,
+        minHeight: 20,
+
+        // 3A) On start, remember original size/font/textHeight
+        start(event, ui) {
+            $box.data('orig', {
+                boxW: ui.size.width,
+                boxH: ui.size.height,
+                font: parseFloat($box.css('font-size')),
+                textH: $box.find('.text-content')[0].scrollHeight
+            });
+        },
+
+        // 3B) On each resize
+        resize(event, ui) {
+            // — clamp box position & size inside the div
+            ui.position.left = Math.min(Math.max(ui.position.left, cLeft), cLeft + cW - ui.size.width);
+            ui.position.top = Math.min(Math.max(ui.position.top, cTop), cTop + cH - ui.size.height);
+            ui.size.width = Math.min(ui.size.width, cW - (ui.position.left - cLeft));
+            ui.size.height = Math.min(ui.size.height, cH - (ui.position.top - cTop));
+
+            // — find which handle is active
+            const inst = ui.element.resizable('instance')
+                || ui.element.data('ui-resizable')
+                || ui.element.data('resizable');
+            const axis = inst && inst.axis;  // "e","w","ne","nw","se","sw"
+
+            if (axis && axis.length === 2) {
+                // CORNER drag: scale font to fill
+                const orig = $box.data('orig');
+                const scaleW = ui.size.width / orig.boxW;
+                const scaleH = ui.size.height / orig.boxH;
+                const maxText = (ui.size.height - 10) / orig.textH;
+                const scale = Math.min(scaleW, scaleH, maxText, 1);
+                const newFont = Math.max(8, orig.font * scale);
+
+                $box.css('font-size', newFont + 'px');
+                $box.css('height', 'auto');
+                const neededH = $box.find('.text-content')[0].scrollHeight + 10;
+                $box.css('height', neededH + 'px');
+            } else {
+                // SIDE drag: keep font, just reflow text
+                $box.css('height', 'auto');
+                const neededH = $box.find('.text-content')[0].scrollHeight + 10;
+                $box.css('height', neededH + 'px');
+            }
+        }
+    });
+}
+
+
+function makeBoxDraggableAndResizableNewOLD($box) {
     const $canvas = $('#myCanvas');
     const rect = canvas.getBoundingClientRect();
     // 1) Get the canvas position relative to its offset parent (#canvasContainer)
@@ -682,7 +760,9 @@ function makeBoxDraggableAndResizable($box) {
 
 
     $box.resizable({
-        handles: 'n,e,s,w,ne,se,sw,nw',
+        handles: 'e,w,ne,se,sw,nw',
+        minWidth: 0,       // ← allow it to shrink to zero
+        minHeight: 0,      // ← likewise for height, if needed
         resize(event, ui) {
             // Clamp position
             ui.position.left = Math.min(Math.max(ui.position.left, minX), maxX);
