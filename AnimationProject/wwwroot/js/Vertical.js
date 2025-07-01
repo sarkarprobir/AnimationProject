@@ -1,7 +1,7 @@
 ﻿let savedSelection = null;
 let selectedBox = null;
 const canvas = document.getElementById("myCanvas");
-const ctx = canvas.getContext("2d");
+//const ctx = canvas.getContext("2d");
 
 
 $(document).on('mousedown', function (e) {

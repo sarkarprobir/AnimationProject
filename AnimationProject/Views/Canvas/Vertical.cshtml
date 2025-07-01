@@ -991,66 +991,48 @@
 
 
     <script>
-            (function(){
-          const canvas    = document.getElementById('myCanvas');
+        (function () {
+          const div       = document.getElementById('myCanvas');
           const container = document.getElementById('canvasContainer');
-          const ctx       = canvas.getContext('2d');
           const dpr       = window.devicePixelRatio || 1;
 
-          //──────────────────────────────────────────────────────────
-          // STATE: these will be set dynamically on first resize
           let DESIGN_W, DESIGN_H;
           let scaleX = 1, scaleY = 1;
           let firstRun = true;
-          //──────────────────────────────────────────────────────────
 
-          function resizeCanvas() {
-             // console.log("resizeCanvas");
-            // 1) Figure out how big the canvas *looks* on the page (CSS px)
+          function resizeDiv() {
+            if (!div || !container) return;
+
             const containerW = container.clientWidth;
-            const cssW       = containerW * 0.34;          // e.g. 32% of container
-            const cssH       = cssW * (16/9);              // your chosen aspect
+            const cssW = containerW * 0.34;
+            const cssH = cssW * (16 / 9);
 
-            canvas.style.width  = cssW + 'px';
-            canvas.style.height = cssH + 'px';
+            div.style.width = cssW + 'px';
+            div.style.height = cssH + 'px';
 
-            // 2) Resize the internal buffer for HiDPI
-            const bufW = Math.round(cssW * dpr);
-            const bufH = Math.round(cssH * dpr);
-            if (canvas.width !== bufW || canvas.height !== bufH) {
-              canvas.width  = bufW;
-              canvas.height = bufH;
-            }
+            const screenW = cssW;
+            const screenH = cssH;
 
-            // 3) Compute the *actual* drawing‐space size in CSS pixels
-            const screenW = canvas.width  / dpr;
-            const screenH = canvas.height / dpr;
-
-            // 4) On very first run, “lock in” your design resolution
             if (firstRun) {
-              DESIGN_W  = screenW;
-              DESIGN_H  = screenH;
-              firstRun  = false;
+              DESIGN_W = screenW;
+              DESIGN_H = screenH;
+              firstRun = false;
               console.log(`Captured design size: ${DESIGN_W}×${DESIGN_H}`);
             }
 
-            // 5) Now compute how much to scale your design → screen
             scaleX = screenW / DESIGN_W;
             scaleY = screenH / DESIGN_H;
 
-            // 6) Reset any old transforms, then apply:
-            //   a) dpr for HiDPI (1 unit → 1 CSS px)
-            //   b) design→screen scale
-            ctx.resetTransform();
-            ctx.scale(dpr, dpr);
-            ctx.scale(scaleX, scaleY);
+            // Optionally apply transform scale if you’re positioning content inside the div
+            div.style.transformOrigin = "top left";
+            div.style.transform = `scale(${scaleX}, ${scaleY})`;
           }
 
-          // expose & hook up
-          window.resizeCanvas = resizeCanvas;
-          window.addEventListener('resize',  resizeCanvas);
-          window.addEventListener('DOMContentLoaded', resizeCanvas);
+          window.resizeDiv = resizeDiv;
+          window.addEventListener('resize', resizeDiv);
+          window.addEventListener('DOMContentLoaded', resizeDiv);
         })();
+
     </script>
         }
 <div class="text-center" style="position:relative">
@@ -1166,7 +1148,8 @@
             </div>
 
 
-            <canvas id="myCanvas" class="clsmyCanvas"></canvas>
+            @* <canvas id="myCanvas" class="clsmyCanvas"></canvas> *@
+            <div id="myCanvas" class="clsmyCanvas"></div>
             <!-- Custom context menu for deletion -->
             <div id="contextMenu">
                 <ul>
