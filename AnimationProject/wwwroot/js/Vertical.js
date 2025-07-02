@@ -55,7 +55,7 @@ $(document).on('click', '.text-box', function (e) {
     // a) append handles
     /*const $drag = $('<div class="drag-handle"><i class="fas fa-arrows-alt"></i></div>').appendTo($clicked);*/
     const $rotate = $('<div class="rotate-handle"></div>').appendTo($clicked);
-    const $del = $('<div class="delete-handle"><i class="fas fa-trash"></i></div>').appendTo($clicked);
+   /* const $del = $('<div class="delete-handle"><i class="fas fa-trash"></i></div>').appendTo($clicked);*/
 
     
     // c) wire up rotation
@@ -84,11 +84,11 @@ $(document).on('click', '.text-box', function (e) {
         makeBoxDraggableAndResizable($clicked);
     }
     // d) wire up delete
-    $del.on('click', function (ev) {
-        ev.stopPropagation();
-        $clicked.remove();
-        selectedBox = null;
-    });
+    //$del.on('click', function (ev) {
+    //    ev.stopPropagation();
+    //    $clicked.remove();
+    //    selectedBox = null;
+    //});
 
     // 4) Sync the controls UI
     $('#fontSize').val(parseInt($clicked.css('font-size')));
@@ -965,7 +965,7 @@ function addDefaultText() {
     // 3) Append your custom handles
    /* const $drag = $('<div class="drag-handle"><i class="fas fa-arrows-alt"></i></div>').appendTo($box);*/
     const $rotate = $('<div class="rotate-handle"></div>').appendTo($box);
-    const $del = $('<div class="delete-handle"><i class="fas fa-trash"></i></div>').appendTo($box);
+    //const $del = $('<div class="delete-handle"><i class="fas fa-trash"></i></div>').appendTo($box);
 
     // 4) Position in center of container
     const $cont = $('#canvasContainer');
@@ -975,6 +975,34 @@ function addDefaultText() {
 
     // 5) **Only once**: make it draggable/resizable using the canvas‐based containment
     makeBoxDraggableAndResizable($box);
+    $box.on('contextmenu', function (e) {
+        e.preventDefault();
+        // remove any old menu
+        $('.custom-ctx-menu').remove();
+
+        // build menu
+        const $menu = $(`
+    <ul class="custom-ctx-menu">
+      <li class="ctx-delete">Delete</li>
+    </ul>
+  `).appendTo('body');
+
+        // position it
+        $menu.css({
+            top: e.pageY + 'px',
+            left: e.pageX + 'px'
+        });
+
+        // click handler
+        $menu.on('click', '.ctx-delete', () => {
+            $box.remove();
+            $menu.remove();
+        });
+
+        // hide if you click elsewhere
+        $(document).one('click', () => $menu.remove());
+    });
+
 
     // 6) Rotate logic (unchanged)
     let rotating = false, center = {};
@@ -997,10 +1025,10 @@ function addDefaultText() {
     });
 
     // 7) Delete logic (unchanged)
-    $del.on('click', e => {
-        e.stopPropagation();
-        $box.remove();
-    });
+    //$del.on('click', e => {
+    //    e.stopPropagation();
+    //    $box.remove();
+    //});
 
 
 }
