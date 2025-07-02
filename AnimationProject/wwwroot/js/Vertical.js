@@ -53,7 +53,7 @@ $(document).on('click', '.text-box', function (e) {
     // 3) Setup the chrome (handles + interactions) on the clicked box
 
     // a) append handles
-    const $drag = $('<div class="drag-handle"><i class="fas fa-arrows-alt"></i></div>').appendTo($clicked);
+    /*const $drag = $('<div class="drag-handle"><i class="fas fa-arrows-alt"></i></div>').appendTo($clicked);*/
     const $rotate = $('<div class="rotate-handle"></div>').appendTo($clicked);
     const $del = $('<div class="delete-handle"><i class="fas fa-trash"></i></div>').appendTo($clicked);
 
@@ -664,10 +664,26 @@ function makeBoxDraggableAndResizable($box) {
 
     const $text = $box.find('.text-content');
 
-    $box.draggable({
-        handle: '.drag-handle',
-        containment: [minX_d, minY_d, maxX_d - $box.outerWidth(), maxY_d - $box.outerHeight()]
-    });
+    //$box.draggable({
+    //    handle: '.drag-handle',
+    //    containment: [minX_d, minY_d, maxX_d - $box.outerWidth(), maxY_d - $box.outerHeight()]
+    //});
+    $box
+        .draggable({
+            containment: [minX_d, minY_d, maxX_d - $box.outerWidth(), maxY_d - $box.outerHeight()],
+            cancel: '.text-content', 
+           /* handle: '.text-box',*/
+           /* distance: 10,    */// ← only start dragging after 10px of movement
+            // delay: 100,   // ← or you can add a small delay instead
+            start: function () {
+                $('.text-box').removeClass('selected');
+                $box.addClass('selected');
+                $('body').addClass('disable-select');
+            },
+            stop: function () {
+                $('body').removeClass('disable-select');
+            }
+        })
 
     $box.resizable({
         handles: 'e,w,ne,se,sw,nw',
@@ -734,6 +750,7 @@ function makeBoxDraggableAndResizable($box) {
             }
         }
     });
+   
 }
 
 
@@ -856,6 +873,10 @@ function makeBoxDraggableAndResizableFInal($box) {
 
 
 
+
+
+
+
 function makeBoxDraggableAndResizableNEWOLD($box) {
     const $canvas = $('#myCanvas');
     const rect = canvas.getBoundingClientRect();
@@ -915,6 +936,8 @@ function makeBoxDraggableAndResizableNEWOLD($box) {
     });
 
 }
+
+
 function addDefaultText() {
     
     $("#opengl_popup").hide();
@@ -940,7 +963,7 @@ function addDefaultText() {
         .appendTo($box);
 
     // 3) Append your custom handles
-    const $drag = $('<div class="drag-handle"><i class="fas fa-arrows-alt"></i></div>').appendTo($box);
+   /* const $drag = $('<div class="drag-handle"><i class="fas fa-arrows-alt"></i></div>').appendTo($box);*/
     const $rotate = $('<div class="rotate-handle"></div>').appendTo($box);
     const $del = $('<div class="delete-handle"><i class="fas fa-trash"></i></div>').appendTo($box);
 
@@ -1138,97 +1161,7 @@ function wireUpDeleteAndRotate($box) {
 
 
 // Unified createImageBox: handles both raster images and SVG data-urls
-function createImageBoxOLD1(imageSrc) {
-  // 0) Deselect and teardown existing boxes
-  $('.text-box').each(function () {
-    const $old = $(this);
-    $old.removeClass('selected');
-    if ($old.data('ui-draggable')) $old.draggable('destroy');
-    if ($old.data('ui-resizable')) $old.resizable('destroy');
-    $old.find('.drag-handle, .rotate-handle, .delete-handle').remove();
-    $old.find('.ui-resizable-handle').remove();
-  });
 
-  // 1) Create outer container
-  const $box = $('<div class="text-box selected"></div>').appendTo('#canvasContainer');
-
-  // 2) Insert content: either inline SVG or <img>
-  if (imageSrc.startsWith('data:image/svg+xml')) {
-    // Inline SVG path
-    const rawBase64 = imageSrc.split(',')[1];
-    const xmlStr    = atob(rawBase64).trim();
-    const parser   = new DOMParser();
-    const svgDoc   = parser.parseFromString(xmlStr, 'image/svg+xml');
-    if (svgDoc.querySelector('parsererror')) {
-      console.error('SVG parse error');
-      return;
-    }
-
-    // Wrap in jQuery for convenience
-      const $svg = $(svgDoc.documentElement);
-      // ✅ Add this here:
-      if (!$svg.attr('viewBox')) {
-          const width = $svg.attr('width') || 100;  // fallback if missing
-          const height = $svg.attr('height') || 100;
-          $svg.attr('viewBox', `0 0 ${width} ${height}`);
-      }
-
-    // 2a) Append off-screen so computed styles are available
-    $svg
-      .css({ position: 'fixed', left: '-9999px', top: '-9999px', visibility: 'hidden' })
-      .appendTo(document.body);
-
-    // 2b) For each shape we *might* recolor, grab its computed fill
-    $svg.find('circle, path, rect').each(function() {
-      const realFill = window.getComputedStyle(this).fill;
-      $(this)
-        .attr('fill', realFill)  // inline the “true” fill
-        .addClass('recolor');     // mark for later recolor
-    });
-
-    // 2c) Now remove any embedded <style> so no surprises
-    $svg.find('style').remove();
-
-    // 2d) Move into your visible canvas box
-    const $clip = $('<div class="img-clip"></div>')
-        .css({ width: '150px', height: 'auto', overflow: 'visible' })
-      .appendTo($box);
-
-    // Reset positioning and append
-    $svg.css({ position: '', left: '', top: '', visibility: '', width: '100%', height: 'auto', display: 'block' });
-    $clip.append($svg);
-
-  } else {
-    // Raster image path
-    $('<img />')
-      .attr('src', imageSrc)
-      .css({ width: '150px', height: 'auto', pointerEvents: 'none' })
-      .appendTo($box);
-  }
-
-  // 3) Add control handles
-  $('<div class="drag-handle"><i class="fas fa-arrows-alt"></i></div>').appendTo($box);
-  $('<div class="rotate-handle"></div>').appendTo($box);
-  $('<div class="delete-handle"><i class="fas fa-trash"></i></div>').appendTo($box);
-
-  // 4) Center the box
-  const $cont = $('#canvasContainer');
-  const left = ($cont.width() - $box.outerWidth()) / 2;
-  const top  = ($cont.height() - $box.outerHeight()) / 2;
-  $box.css({ position: 'absolute', left: `${left}px`, top: `${top}px`, transform: 'rotate(0deg)' });
-
-  // 5) Initialize interactions
-  makeBoxDraggableAndResizableImage($box);
-  wireUpDeleteAndRotate($box);
-
-  // 6) Click to select
-  $box.on('mousedown', function (e) {
-    e.stopPropagation();
-    $('.text-box').removeClass('selected');
-    $(this).addClass('selected');
-    selectedBox = $(this);
-  });
-}
 function createImageBox(imageSrc) {
     // 0) Deselect and teardown existing boxes
     $('.text-box').each(function () {

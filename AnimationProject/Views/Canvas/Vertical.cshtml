@@ -118,6 +118,12 @@
             overflow-wrap: break-word;
             
         } */
+               .disable-select {
+      user-select: none !important;
+    }
+       .text-content {
+      cursor: text;        /* text‑select cursor (I‑beam) */
+    }
 
         .text-box {
             position: absolute;
@@ -128,6 +134,8 @@
             box-sizing: border-box;
             overflow-wrap: break-word;
             background-color: transparent;
+                cursor: move;
+                     position: absolute;
         }
 
         .text-content {
