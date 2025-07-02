@@ -645,84 +645,218 @@ function TabShowHide(type) {
 
 }
 
-
+// Final Solution Based on Your Exact Requirements
 
 function makeBoxDraggableAndResizable($box) {
-    // 1) Grab the container div and its metrics
     const $canvas = $('#myCanvas');
-    const canvasRect = $canvas[0].getBoundingClientRect();  // use the DOM node
+    const rect = $canvas[0].getBoundingClientRect();
     const canvasPos = $canvas.position();
+
     const cLeft = canvasPos.left;
     const cTop = canvasPos.top;
     const cW = $canvas.width();
     const cH = $canvas.height();
 
-    // 2) Draggable, contained within the div
+    const minX_d = rect.left;
+    const minY_d = rect.top;
+    const maxX_d = rect.left + rect.width;
+    const maxY_d = rect.top + rect.height;
+
+    const $text = $box.find('.text-content');
+
     $box.draggable({
         handle: '.drag-handle',
-        containment: [
-            canvasRect.left,
-            canvasRect.top,
-            canvasRect.left + canvasRect.width - $box.outerWidth(),
-            canvasRect.top + canvasRect.height - $box.outerHeight()
-        ]
+        containment: [minX_d, minY_d, maxX_d - $box.outerWidth(), maxY_d - $box.outerHeight()]
     });
 
-    // 3) Resizable: side handles + corner handles
     $box.resizable({
         handles: 'e,w,ne,se,sw,nw',
         minWidth: 20,
         minHeight: 20,
 
-        // 3A) On start, remember original size/font/textHeight
         start(event, ui) {
-            $box.data('orig', {
-                boxW: ui.size.width,
-                boxH: ui.size.height,
-                font: parseFloat($box.css('font-size')),
-                textH: $box.find('.text-content')[0].scrollHeight
+            $box.data('resizeData', {
+                startWidth: ui.size.width,
+                startFontSize: parseFloat($text.css('font-size'))
             });
         },
 
-        // 3B) On each resize
         resize(event, ui) {
-            // — clamp box position & size inside the div
-            ui.position.left = Math.min(Math.max(ui.position.left, cLeft), cLeft + cW - ui.size.width);
-            ui.position.top = Math.min(Math.max(ui.position.top, cTop), cTop + cH - ui.size.height);
-            ui.size.width = Math.min(ui.size.width, cW - (ui.position.left - cLeft));
-            ui.size.height = Math.min(ui.size.height, cH - (ui.position.top - cTop));
+            // Clamp within canvas
+            const canvasPos2 = $canvas.position();
+            const maxAllowedWidth = cW - (ui.position.left - cLeft);
+            const maxAllowedHeight = cH - (ui.position.top - cTop);
 
-            // — find which handle is active
-            const inst = ui.element.resizable('instance')
-                || ui.element.data('ui-resizable')
-                || ui.element.data('resizable');
-            const axis = inst && inst.axis;  // "e","w","ne","nw","se","sw"
+            ui.size.width = Math.min(ui.size.width, maxAllowedWidth);
+            ui.size.height = Math.min(ui.size.height, maxAllowedHeight);
 
-            if (axis && axis.length === 2) {
-                // CORNER drag: scale font to fill
-                const orig = $box.data('orig');
-                const scaleW = ui.size.width / orig.boxW;
-                const scaleH = ui.size.height / orig.boxH;
-                const maxText = (ui.size.height - 10) / orig.textH;
-                const scale = Math.min(scaleW, scaleH, maxText, 1);
-                const newFont = Math.max(8, orig.font * scale);
+            const inst = ui.element.resizable('instance') || ui.element.data('ui-resizable');
+            const axis = inst && inst.axis;
+            const resizeData = $box.data('resizeData');
 
-                $box.css('font-size', newFont + 'px');
+            if (axis && ['ne', 'nw', 'se', 'sw'].includes(axis)) {
+                // Corner handles: always scale font size
+                const widthScale = ui.size.width / resizeData.startWidth;
+                const newFontSize = Math.max(8, resizeData.startFontSize * widthScale);
+
+                $text.css({
+                    'font-size': newFontSize + 'px',
+                    'white-space': 'pre-wrap',     // ← preserve your breaks, still wrap long lines
+                    'word-break': 'break-word',    // ← break long words if they exceed box
+                    'overflow-wrap': 'break-word',
+
+                    //'word-break': 'normal',
+                    //'overflow-wrap': 'normal',
+                    'overflow': 'hidden'
+                });
+
+                $box.css({
+                    width: ui.size.width + 'px',
+                    height: 'auto'
+                });
+
+                const requiredHeight = $text[0].scrollHeight + 10;
+                const maxPossibleHeight = cH - (ui.position.top - cTop);
+                $box.css('height', Math.min(requiredHeight, maxPossibleHeight) + 'px');
+
+            } else if (axis && ['e', 'w'].includes(axis)) {
+                // Side handles: box resize only, font unchanged
+                $text.css({
+                    'white-space': 'normal',
+                    'overflow': 'visible',
+                    'text-overflow': 'clip'
+                });
+
                 $box.css('height', 'auto');
-                const neededH = $box.find('.text-content')[0].scrollHeight + 10;
-                $box.css('height', neededH + 'px');
-            } else {
-                // SIDE drag: keep font, just reflow text
-                $box.css('height', 'auto');
-                const neededH = $box.find('.text-content')[0].scrollHeight + 10;
-                $box.css('height', neededH + 'px');
+                const requiredHeight = $text[0].scrollHeight + 10;
+                const maxPossibleHeight = cH - (ui.position.top - cTop);
+                $box.css('height', Math.min(requiredHeight, maxPossibleHeight) + 'px');
             }
         }
     });
 }
 
 
-function makeBoxDraggableAndResizableNewOLD($box) {
+
+
+
+function makeBoxDraggableAndResizableFInal($box) {
+    const $canvas = $('#myCanvas');
+    const rect = $canvas[0].getBoundingClientRect();
+
+    const canvasPos = $canvas.position();
+    const cLeft = canvasPos.left;
+    const cTop = canvasPos.top;
+
+    const cW = $canvas.width();
+    const cH = $canvas.height();
+
+    const minX_d = rect.left;
+    const minY_d = rect.top;
+    const maxX_d = rect.left + rect.width;
+    const maxY_d = rect.top + rect.height;
+
+    const $text = $box.find('.text-content');
+
+    $box.draggable({
+        handle: '.drag-handle',
+        containment: [minX_d, minY_d, maxX_d - $box.outerWidth(), maxY_d - $box.outerHeight()]
+    });
+
+    $box.resizable({
+        handles: 'e,w,ne,se,sw,nw',
+        minWidth: 20,
+        minHeight: 20,
+        start(event, ui) {
+            $box.data('resizeData', {
+                startWidth: ui.size.width,
+                startHeight: ui.size.height,
+                startFontSize: parseFloat($text.css('font-size'))
+            });
+        },
+        resize(event, ui) {
+            const resizeData = $box.data('resizeData');
+
+            const maxAllowedWidth = cW - (ui.position.left - cLeft);
+            const maxAllowedHeight = cH - (ui.position.top - cTop);
+
+            ui.size.width = Math.min(ui.size.width, maxAllowedWidth);
+            ui.size.height = Math.min(ui.size.height, maxAllowedHeight);
+
+            const inst = ui.element.resizable('instance') || ui.element.data('ui-resizable');
+            const axis = inst && inst.axis;
+
+            if (axis && ['ne', 'nw', 'se', 'sw'].includes(axis)) {
+                // 🔥 Corner resize: scale font proportionally, NO wrapping
+                const widthScale = ui.size.width / resizeData.startWidth;
+                const heightScale = ui.size.height / resizeData.startHeight;
+                const scale = Math.min(widthScale, heightScale);
+
+                const newFontSize = Math.max(8, resizeData.startFontSize * scale);
+                $text.css({
+                    'font-size': newFontSize + 'px',
+                    'white-space': 'pre', // ❗ prevent wrapping but respect line breaks
+                    'word-break': 'keep-all', // ❗ prevent breaking long words
+                    'overflow-wrap': 'normal'
+                });
+
+                // 🔒 Prevent the box from becoming smaller than the widest text line
+                let maxLineWidth = 0;
+                const lines = $text.text().split('\n');
+                const tempSpan = $('<span></span>').css({
+                    'font-size': newFontSize + 'px',
+                    'position': 'absolute',
+                    'visibility': 'hidden',
+                    'white-space': 'pre'
+                }).appendTo('body');
+
+                lines.forEach(line => {
+                    tempSpan.text(line);
+                    maxLineWidth = Math.max(maxLineWidth, tempSpan[0].offsetWidth);
+                });
+
+                tempSpan.remove();
+
+                const minRequiredWidth = maxLineWidth + 10; // padding
+                if (ui.size.width < minRequiredWidth) {
+                    ui.size.width = minRequiredWidth;
+                }
+
+                // 🔒 Prevent exceeding canvas width
+                if (ui.position.left + ui.size.width > cLeft + cW) {
+                    ui.size.width = (cLeft + cW) - ui.position.left;
+                }
+
+                $box.css('width', ui.size.width + 'px');
+                $box.css('height', 'auto');
+
+                const requiredHeight = $text[0].scrollHeight + 10;
+                const maxPossibleHeight = cH - (ui.position.top - cTop);
+                $box.css('height', Math.min(requiredHeight, maxPossibleHeight) + 'px');
+            } else if (axis && ['e', 'w'].includes(axis)) {
+                // 🔥 Side resize: font-size fixed, allow wrapping
+                $text.css({
+                    'white-space': 'normal',
+                    'word-break': '',
+                    'overflow-wrap': ''
+                });
+
+                $box.css('height', 'auto');
+                const requiredHeight = $text[0].scrollHeight + 10;
+                const maxPossibleHeight = cH - (ui.position.top - cTop);
+                $box.css('height', Math.min(requiredHeight, maxPossibleHeight) + 'px');
+            }
+        }
+    });
+}
+
+
+
+
+
+
+
+function makeBoxDraggableAndResizableNEWOLD($box) {
     const $canvas = $('#myCanvas');
     const rect = canvas.getBoundingClientRect();
     // 1) Get the canvas position relative to its offset parent (#canvasContainer)
