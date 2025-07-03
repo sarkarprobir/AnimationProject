@@ -1,4 +1,5 @@
-﻿@{
+﻿
+@{
     Layout = null;
 }
 @* <script>
@@ -1073,30 +1074,9 @@ function moveCaretToEnd(el) {
         </div>
     </div>
 
-    <div class="col-md-12 mb-3" style="display:none;">
-        <div class="row FontSize">
-            <div class="col-md-6 ">
-                <label>Size</label>
-            </div>
-            <div class="col-md-6  text-end">
-                <select id="fontSize" onchange="ChangeStyle()">
-
-                    <option value="18">18</option>
-                    <option value="20">20</option>
-                    <option value="25">25</option>
-                    <option value="30">30</option>
-                    <option value="35" selected>35</option>
-                    <option value="40">40</option>
-                    <option value="45">45</option>
-                    <option value="50">50</option>
-                    <option value="60">60</option>
-                </select>
-            </div>
-
-        </div>
-    </div>
+    
     <div id="text_decoration_tool">
-        <button id="boldBtn" onclick="boldText();" class="text_decoration"><i class="fa-solid fa-bold"></i></button>
+        <button id="boldBtn" onclick="boldText1();" class="text_decoration toggle"><i class="fa-solid fa-bold"></i></button>
         <button id="italicBtn" onclick="italicText();" class="text_decoration"><i class="fa-solid fa-italic"></i></button>
         <button class="text_decoration">aA</button>
     </div>
@@ -1107,13 +1087,38 @@ function moveCaretToEnd(el) {
             </div>
             <div class="col-md-6 text-end d-flex align-items-center justify-content-end">
                 <div class="color-palette">
-                    <input type="hidden" id="hdnTextColor" />
+                    @* <input type="hidden" id="hdnTextColor" />
                     <form action="/action_page.php" class="d-flex">
                         <input type="color" id="favcolor" name="favcolor" oninput="ChangeColor()" value="#000000">
-                    </form>
+                    </form> *@
+                    <input type="color" id="textColor" oninput="ChangeColorNew()" value="#000000" />
+
                 </div>
             </div>
+        </div>
+        <div class="col-md-12 mb-3">
+            <div class="row FontSize">
+                <div class="col-md-6 ">
+                    <label>Fnot Size</label>
+                </div>
+                <div class="col-md-6  text-end">
+                    @* <select id="fontSize" onchange="ChangeStyle()">
 
+                    <option value="18">18</option>
+                    <option value="20">20</option>
+                    <option value="25">25</option>
+                    <option value="30">30</option>
+                    <option value="35" selected>35</option>
+                    <option value="40">40</option>
+                    <option value="45">45</option>
+                    <option value="50">50</option>
+                    <option value="60">60</option>
+                </select> *@
+                    <input class="font_size" type="number" id="fontSize" oninput="ChangeFontSize();" value="24" />
+
+                </div>
+
+            </div>
         </div>
     </div>
 
@@ -1121,8 +1126,8 @@ function moveCaretToEnd(el) {
         <div class="d-flex justify-content-between align-items-center">
             <p class="spacing_title m-0">Line Spacing</p>
             <div class="d-flex justify-content-between spacing_buttons">
-                <a class="spacing_button" onclick="changeLineSpacing(-FACTOR_INCREMENT)">-</a>
-                <a class="spacing_button" onclick="changeLineSpacing(FACTOR_INCREMENT)">+</a>
+                <a class="spacing_button" id="DLineSpacing" onclick="addLineSpacing(-0.1)">-</a>
+                <a class="spacing_button" id="ILineSpacing" onclick="addLineSpacing(0.1)">+</a>
             </div>
         </div>
     </div>

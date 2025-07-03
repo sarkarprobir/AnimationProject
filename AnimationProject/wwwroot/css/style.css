@@ -1705,3 +1705,10 @@ body {
     border-radius: 3px;
     padding: 3px 6px;
 }
+.font_size {
+    width: 50px;
+    border: 2px solid #ccc;
+    padding: 2px 4px;
+    border-radius: var(--border-radius6);
+    font-size: var(--font-size14);
+}
