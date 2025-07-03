@@ -8,7 +8,7 @@ $(document).on('mousedown', function (e) {
     if ($(e.target).closest('.text-box').length) return;
 
     // If the clicked target is inside any control buttons, don't deselect
-    if ($(e.target).closest('#fontSize, #textColor, #fontFamily, #boldBtn, #italicBtn, #underlineBtn, #caseToggleBtn, #alignBtn, #lineHeight').length) return;
+    if ($(e.target).closest('#fontSize, #textColor, #fontFamily, #boldBtn, #italicBtn, #underlineBtn, #caseToggleBtn, #alignBtn, #lineHeight,#DLineSpacing,#ILineSpacing').length) return;
     // If the clicked element is NOT inside a .text-box
     if (!$(e.target).closest('.text-box').length) {
         if (selectedBox) {
@@ -134,16 +134,27 @@ function applyFontSize(size) {
         console.warn('Font size error:', e);
     }
 }
-$('#fontSize').on('input', function () {
-    const size = parseInt($(this).val());
+function ChangeColorNew() {
+    const colorPicker = document.getElementById("textColor");
+    const color = colorPicker.value;
+    applyStyleValue('foreColor', 'color', color);
+}
+//$('#fontSize').on('input', function () {
+//    const size = parseInt($(this).val());
+//    applyFontSize(size);
+//});
+function ChangeFontSize() {
+    const size_input = document.getElementById("fontSize");
+    const size = size_input.value;
     applyFontSize(size);
-});
+
+}
 
 // ✅ Text Color
-$('#textColor').on('input', function () {
-    const color = $(this).val();
-    applyStyleValue('foreColor', 'color', color);
-});
+//$('#textColor').on('input', function () {
+//    const color = $(this).val();
+//    applyStyleValue('foreColor', 'color', color);
+//});
 
 
 // ✅ Font Family
@@ -346,26 +357,65 @@ $('#alignBtn').on('click', function () {
 });
 
 // Line Height
-$('#lineHeight').on('input', function () {
-    debugger;
-    if (!selectedBox) return;
+//$('#lineHeight').on('input', function () {
+//    debugger;
+//    if (!selectedBox) return;
 
-    const multiplier = parseFloat($(this).val());
-    selectedBox.css('line-height', multiplier);
+//    const multiplier = parseFloat($(this).val());
+//    selectedBox.css('line-height', multiplier);
 
-    // Adjust the height based on the inner text content
-    const $content = selectedBox.find('.text-content');
+//    // Adjust the height based on the inner text content
+//    const $content = selectedBox.find('.text-content');
 
-    // Always reset first to auto, to allow shrink
-    selectedBox.css('height', 'auto');
+//    // Always reset first to auto, to allow shrink
+//    selectedBox.css('height', 'auto');
 
-    // Calculate actual required height
-    const neededHeight = $content[0].scrollHeight + 10; // Add small padding
+//    // Calculate actual required height
+//    const neededHeight = $content[0].scrollHeight + 10; // Add small padding
 
-    // Apply the new height
-    selectedBox.css('height', neededHeight + 'px');
-});
+//    // Apply the new height
+//    selectedBox.css('height', neededHeight + 'px');
+//});
 
+
+let currentLineHeight = 1.2;
+
+function addLineSpacing(delta) {
+    const $selectedBox = $('.text-box.selected');
+    if (!$selectedBox) return;
+
+    currentLineHeight = parseFloat(currentLineHeight) || 1.2;
+    currentLineHeight = delta < 0
+        ? Math.max(0.2, currentLineHeight + delta)
+        : currentLineHeight + delta;
+
+    $selectedBox.css('line-height', currentLineHeight);
+
+    const $content = $selectedBox.find('.text-content');
+    $selectedBox.css('height', 'auto');
+
+    const neededHeight = $content[0].scrollHeight + 10;
+    $selectedBox.css('height', neededHeight + 'px');
+}
+//function addLineSpacing2(delta) {
+//  const $box = $('.text-box.selected');
+//  if (!$box.length) return;                      // no box is selected
+ 
+//  // read its current line-height if you like:
+//  const lh = parseFloat($box.find('.text-content').css('line-height')) || 1.2;
+//  const newLH = delta < 0
+//    ? Math.max(0.2, lh + delta)
+//    : lh + delta;
+ 
+//  // apply the new value
+//  $box.css('line-height', newLH);
+ 
+//  // resize to fit
+//  const $content = $box.find('.text-content');
+//  $box.css('height', 'auto');
+//  const neededHeight = $content[0].scrollHeight + 10;
+//  $box.css('height', neededHeight + 'px');
+//}
 
 
 $(document).on('keydown', '.text-content', function (e) {
