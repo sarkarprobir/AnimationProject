@@ -1,7 +1,7 @@
 ﻿let savedSelection = null;
 let selectedBox = null;
 const canvas = document.getElementById("myCanvas");
-//const ctx = canvas.getContext("2d");
+
 
 
 $(document).on('mousedown', function (e) {
@@ -1225,7 +1225,7 @@ function AnimateSkewStretch() {
 }
 
 // 4) Staggered Entrance
-function AnimateStagger() {
+function Animate122() {
     // Animate text-content sliding up in stagger
     gsap.from('.text-content', {
         opacity: 0,
@@ -1235,17 +1235,85 @@ function AnimateStagger() {
         stagger: 0.2
     });
 
-    // Animate text-box sliding up in stagger after delay
-    setTimeout(() => {
-        gsap.from('.text-box', {
-            opacity: 0,
-            y: 30,
-            duration: 0.5,
-            ease: 'power2.out',
-            stagger: 0.2
-        });
-    }, 1000);
+    //// Animate text-box sliding up in stagger after delay
+    //setTimeout(() => {
+    //    gsap.from('.text-box', {
+    //        opacity: 0,
+    //        y: 30,
+    //        duration: 0.5,
+    //        ease: 'power2.out',
+    //        stagger: 0.2
+    //    });
+    //}, 1000);
 }
+function Animate2(direction) {
+    // parse your timing inputs (in seconds)
+    const inTime = parseFloat(selectedInSpeed) || 4;
+    const stayTime = parseFloat(selectedStaySpeed) || 3;
+    const outTime = parseFloat(selectedOutSpeed) || 4;
+
+    // grab canvas dimensions
+    const $canvas = $('#myCanvas');
+    const cw = $canvas.width();
+    const ch = $canvas.height();
+
+    // figure out our start (off‑screen) and end (on‑screen) offsets
+    let fromVars = { opacity: 0 },
+        toVars = { opacity: 1 },
+        outVars = { opacity: 0 };
+
+    switch (direction) {
+        case "top":
+            fromVars.y = -ch;      // start above
+            toVars.y = 0;        // end at normal y
+            outVars.y = -ch;      // exit back up
+            break;
+        case "bottom":
+            fromVars.y = ch;       // start below
+            toVars.y = 0;
+            outVars.y = ch;       // exit back down
+            break;
+        case "left":
+            fromVars.x = -cw;      // start left of screen
+            toVars.x = 0;
+            outVars.x = -cw;      // exit left
+            break;
+        case "right":
+            fromVars.x = cw;       // start right of screen
+            toVars.x = 0;
+            outVars.x = cw;       // exit right
+            break;
+        default:
+            fromVars.x = cw;
+            toVars.x = 0;
+            outVars.x = cw;
+    }
+
+    // build a timeline: in → stay → out
+    const tl = gsap.timeline();
+
+    // 1) bring in
+    tl.from('.text-content', {
+        ...fromVars,
+        duration: inTime,
+        ease: 'power2.out',
+        stagger: 0.2
+    });
+
+    // 2) optional stay (just hold final state)
+    tl.to('.text-content', {
+        // no change, just a delay
+        duration: stayTime
+    });
+
+    // 3) move out
+    tl.to('.text-content', {
+        ...outVars,
+        duration: outTime,
+        ease: 'power2.in'
+    });
+}
+
 
 // 5) Pulse / Heartbeat
 function AnimatePulse() {
@@ -2053,7 +2121,33 @@ function AnimateSlideSkew() {
     }, 1000);
 }
 
+function updateEffectButtons(type) {
+    // 1) pick the right hidden‑field based on In vs Out
+    const hiddenField = (type === 'In')
+        ? `#hdnEffectSlide${activeSlide}`
+        : `#hdnOutEffectSlide${activeSlide}`;
+    const effectType = $(hiddenField).val();
 
+    // 2) clear any previously active button
+    // $('.effect_btn').removeClass('active_effect');
+
+    // 3) pick the button selector
+    let btnSelector = null;
+    if (type === 'In') {
+        $('.effectIn_btn').removeClass('active_effect');
+        if (effectType === 'delaylinear') btnSelector = '#adelaylinear';
+        else if (effectType === 'delaylinear2') btnSelector = '#adelaylinear2';
+    } else {
+        $('.effectOut_btn').removeClass('active_effect');
+        if (effectType === 'delaylinear') btnSelector = '#adelaylinearOut1';
+        else if (effectType === 'delaylinear2') btnSelector = '#adelaylinearOut2';
+    }
+
+    // 4) activate it (if any)
+    if (btnSelector) {
+        $(btnSelector).addClass('active_effect');
+    }
+}
 // 1) Prevent default browser behavior for all drag/drop on the container
 $(document).on('dragover drop', '#canvasContainer', function (e) {
     e.preventDefault();
