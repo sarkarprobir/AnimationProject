@@ -888,6 +888,82 @@ function applyAnimations(direction, condition, loopCount) {
 
         return popTL;
     }
+    else if (animationType === "glitch") {
+        // ────────────────────────────
+        // Glitch Jitter (direction‑aware)
+        const glitchTL = gsap.timeline();
+        const distance = 50;
+
+        $('.text-box').each(function (i, el) {
+            let fromX = 0, fromY = 0, outX = 0, outY = 0;
+
+            // compute directional offsets
+            switch (direction) {
+                case 'left':
+                    fromX = -distance; outX = distance;
+                    break;
+                case 'right':
+                    fromX = distance; outX = -distance;
+                    break;
+                case 'top':
+                    fromY = -distance; outY = distance;
+                    break;
+                case 'bottom':
+                    fromY = distance; outY = -distance;
+                    break;
+                default:
+                // no offset
+            }
+
+            if (tabType === 'In') {
+                // 1) Move in from offset
+                glitchTL.fromTo(el,
+                    { opacity: 0, x: fromX, y: fromY },
+                    { opacity: 1, x: 0, y: 0, duration: inTime * 0.3, ease: 'power2.out', stagger: 0.1 },
+                    0
+                );
+
+                // 2) Glitch Effect
+                glitchTL.to(el, {
+                    x: () => gsap.utils.random(-5, 5),
+                    y: () => gsap.utils.random(-3, 3),
+                    repeat: 10,
+                    yoyo: true,
+                    duration: 0.05,
+                    ease: 'rough({strength: 8, points: 20, clamp: true})',
+                    stagger: 0.1
+                }, inTime * 0.3);
+
+                // 3) STAY
+                glitchTL.to(el, { duration: stayTime }, inTime * 0.3 + 0.05 * 20);
+            } else {
+                // 1) STAY
+                glitchTL.to(el, { duration: stayTime }, 0);
+
+                // 2) Glitch before exit
+                glitchTL.to(el, {
+                    x: () => gsap.utils.random(-5, 5),
+                    y: () => gsap.utils.random(-3, 3),
+                    repeat: 10,
+                    yoyo: true,
+                    duration: 0.05,
+                    ease: 'rough({strength: 8, points: 20, clamp: true})',
+                    stagger: 0.1
+                }, stayTime);
+
+                // 3) OUT: slide out
+                glitchTL.to(el,
+                    { opacity: 0, x: outX, y: outY, duration: outTime * 0.3, ease: 'power2.in', stagger: 0.1 },
+                    stayTime + 0.05 * 20
+                );
+
+                // 4) RESET
+                glitchTL.set(el, { x: 0, y: 0, opacity: 1 }, stayTime + 0.05 * 20 + outTime * 0.3);
+            }
+        });
+
+        return glitchTL;
+    }
 
 
 

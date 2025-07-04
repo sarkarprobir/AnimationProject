@@ -2144,6 +2144,7 @@ function updateEffectButtons(type) {
         else if (effectType === 'curtain') btnSelector = '#acurtain';
         else if (effectType === 'blurFlash') btnSelector = '#ablurFlash';
         else if (effectType === 'popcorn') btnSelector = '#apopcorn';
+        else if (effectType === 'glitch') btnSelector = '#aglitch';
         
         
     } else {
@@ -2157,6 +2158,7 @@ function updateEffectButtons(type) {
         else if (effectType === 'curtain') btnSelector = '#acurtainOut';
         else if (effectType === 'blurFlash') btnSelector = '#ablurFlashOut';
         else if (effectType === 'popcorn') btnSelector = '#apopcornOut';
+        else if (effectType === 'glitch') btnSelector = '#aglitchOut';
     }
 
     // 4) activate it (if any)
