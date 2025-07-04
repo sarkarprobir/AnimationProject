@@ -1,7 +1,7 @@
 ﻿let savedSelection = null;
 let selectedBox = null;
 const canvas = document.getElementById("myCanvas");
-//const ctx = canvas.getContext("2d");
+
 
 
 $(document).on('mousedown', function (e) {
@@ -1259,7 +1259,7 @@ function Animate() {
     }, 1000);
 }
 
-function Animate2() {
+function Animate21() {
     // Animate text-content sliding in
     $('.text-content').each(function () {
         gsap.from(this, {
@@ -1279,6 +1279,1025 @@ function Animate2() {
             );
         });
     }, 1000);
+}
+function Animate22() {
+    const tl = gsap.timeline();
+    tl.from(".text-box", { opacity: 0, scale: 0.8, duration: 0.5 });
+    tl.to(".text-box", { scale: 1.05, duration: 0.3, yoyo: true, repeat: 1 });
+    tl.from(".text-content", { y: -20, opacity: 0, duration: 0.4 }, "-=0.3");
+    tl.to(".text-box", { clipPath: "inset(0% 0% 0% 0%)", duration: 0.6 }, "+=0.2");
+
+}
+// 1) Bounce In
+function AnimateBounce() {
+    // Animate text-content bouncing in
+    $('.text-content').each(function () {
+        gsap.fromTo(this,
+            { opacity: 0, scale: 0.5, transformOrigin: "50% 50%" },
+            { opacity: 1, scale: 1, duration: 0.6, ease: 'bounce.out' }
+        );
+    });
+
+    // Animate text-box bouncing in after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.fromTo(this,
+                { opacity: 0, scale: 0.5, transformOrigin: "50% 50%" },
+                { opacity: 1, scale: 1, duration: 0.6, ease: 'bounce.out' }
+            );
+        });
+    }, 1000);
+}
+
+// 2) Flip In 3D
+function AnimateFlip3D() {
+    // Animate text-content flipping in on Y axis
+    $('.text-content').each(function () {
+        gsap.from(this, {
+            opacity: 0,
+            rotationY: 90,
+            transformPerspective: 600,
+            duration: 0.6,
+            ease: 'power2.out'
+        });
+    });
+
+    // Animate text-box flipping in on Y axis after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.from(this, {
+                opacity: 0,
+                rotationY: 90,
+                transformPerspective: 600,
+                duration: 0.6,
+                ease: 'power2.out'
+            });
+        });
+    }, 1000);
+}
+
+// 3) Skew & Stretch
+function AnimateSkewStretch() {
+    // Animate text-content skewing & stretching in
+    $('.text-content').each(function () {
+        gsap.fromTo(this,
+            { opacity: 0, skewX: 20, scaleY: 0.8 },
+            { opacity: 1, skewX: 0, scaleY: 1, duration: 0.5, ease: 'back.out(1.7)' }
+        );
+    });
+
+    // Animate text-box skewing & stretching in after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.fromTo(this,
+                { opacity: 0, skewX: 20, scaleY: 0.8 },
+                { opacity: 1, skewX: 0, scaleY: 1, duration: 0.5, ease: 'back.out(1.7)' }
+            );
+        });
+    }, 1000);
+}
+
+// 4) Staggered Entrance
+function Animate122() {
+    // Animate text-content sliding up in stagger
+    gsap.from('.text-content', {
+        opacity: 0,
+        y: 30,
+        duration: 0.5,
+        ease: 'power2.out',
+        stagger: 0.2
+    });
+
+    //// Animate text-box sliding up in stagger after delay
+    //setTimeout(() => {
+    //    gsap.from('.text-box', {
+    //        opacity: 0,
+    //        y: 30,
+    //        duration: 0.5,
+    //        ease: 'power2.out',
+    //        stagger: 0.2
+    //    });
+    //}, 1000);
+}
+function Animate2ALl(direction) {
+    // parse your timing inputs (in seconds)
+    const inTime = parseFloat(selectedInSpeed) || 4;
+    const stayTime = parseFloat(selectedStaySpeed) || 3;
+    const outTime = parseFloat(selectedOutSpeed) || 4;
+
+    // grab canvas dimensions
+    const $canvas = $('#myCanvas');
+    const cw = $canvas.width();
+    const ch = $canvas.height();
+
+    // figure out our start (off‑screen) and end (on‑screen) offsets
+    let fromVars = { opacity: 0 },
+        toVars = { opacity: 1 },
+        outVars = { opacity: 0 };
+
+    switch (direction) {
+        case "top":
+            fromVars.y = -ch;      // start above
+            toVars.y = 0;        // end at normal y
+            outVars.y = -ch;      // exit back up
+            break;
+        case "bottom":
+            fromVars.y = ch;       // start below
+            toVars.y = 0;
+            outVars.y = ch;       // exit back down
+            break;
+        case "left":
+            fromVars.x = -cw;      // start left of screen
+            toVars.x = 0;
+            outVars.x = -cw;      // exit left
+            break;
+        case "right":
+            fromVars.x = cw;       // start right of screen
+            toVars.x = 0;
+            outVars.x = cw;       // exit right
+            break;
+        default:
+            fromVars.x = cw;
+            toVars.x = 0;
+            outVars.x = cw;
+    }
+
+    // build a timeline: in → stay → out
+    const tl = gsap.timeline();
+
+    // 1) bring in
+    tl.from('.text-content', {
+        ...fromVars,
+        duration: inTime,
+        ease: 'power2.out',
+        stagger: 0.2
+    });
+
+    // 2) optional stay (just hold final state)
+    tl.to('.text-content', {
+        // no change, just a delay
+        duration: stayTime
+    });
+
+    // 3) move out
+    tl.to('.text-content', {
+        ...outVars,
+        duration: outTime,
+        ease: 'power2.in'
+    });
+}
+
+
+// 5) Pulse / Heartbeat
+function AnimatePulse() {
+    // Animate a quick pulse on text-content
+    $('.text-content').each(function () {
+        gsap.to(this, {
+            scale: 1.05,
+            repeat: 1,
+            yoyo: true,
+            duration: 0.3,
+            ease: 'power1.inOut'
+        });
+    });
+
+    // Animate a quick pulse on text-box after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.to(this, {
+                scale: 1.05,
+                repeat: 1,
+                yoyo: true,
+                duration: 0.3,
+                ease: 'power1.inOut'
+            });
+        });
+    }, 1000);
+}
+
+// 6) Color Glow / Tint
+function AnimateColorGlow() {
+    // Animate text-content background tint
+    $('.text-content').each(function () {
+        gsap.fromTo(this,
+            { backgroundColor: '#ffffff' },
+            { backgroundColor: '#ffeb3b', duration: 0.8, ease: 'power1.inOut' }
+        );
+    });
+
+    // Animate text-box background tint after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.fromTo(this,
+                { backgroundColor: '#ffffff' },
+                { backgroundColor: '#ffeb3b', duration: 0.8, ease: 'power1.inOut' }
+            );
+        });
+    }, 1000);
+}
+
+// 7) Mask / Clip‑Path Reveal
+function AnimateMaskReveal() {
+    // Animate text-content with clip-path reveal
+    $('.text-content').each(function () {
+        gsap.from(this, {
+            clipPath: 'inset(0% 100% 0% 0%)',
+            duration: 0.6,
+            ease: 'power2.out'
+        });
+    });
+
+    // Animate text-box with clip-path reveal after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.from(this, {
+                clipPath: 'inset(0% 100% 0% 0%)',
+                duration: 0.6,
+                ease: 'power2.out'
+            });
+        });
+    }, 1000);
+}
+
+// 8) Text‑Scramble / Flicker (requires GSAP TextPlugin)
+function AnimateTextScramble() {
+    // Animate text-content scramble
+    $('.text-content').each(function () {
+        gsap.to(this, {
+            text: { value: $(this).text(), scrambleText: true },
+            duration: 1.2,
+            ease: 'none'
+        });
+    });
+
+    // Animate text-box scramble after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.to(this, {
+                text: { value: $(this).text(), scrambleText: true },
+                duration: 1.2,
+                ease: 'none'
+            });
+        });
+    }, 1000);
+}
+// 9) Wobble In
+function AnimateWobble() {
+    // text-content wobbles (rotates back‑and‑forth)
+    $('.text-content').each(function () {
+        gsap.fromTo(this,
+            { rotationZ: -10 },
+            { rotationZ: 10, duration: 0.15, yoyo: true, repeat: 5, ease: 'sine.inOut', transformOrigin: '50% 50%' }
+        );
+    });
+
+    // text-box wobble after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.fromTo(this,
+                { rotationZ: -10 },
+                { rotationZ: 10, duration: 0.15, yoyo: true, repeat: 5, ease: 'sine.inOut', transformOrigin: '50% 50%' }
+            );
+        });
+    }, 1000);
+}
+
+// 10) Shake In
+function AnimateShake() {
+    // text-content shakes horizontally
+    $('.text-content').each(function () {
+        gsap.fromTo(this,
+            { x: -10 },
+            { x: 10, duration: 0.1, yoyo: true, repeat: 8, ease: 'power1.inOut' }
+        );
+    });
+
+    // text-box shake after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.fromTo(this,
+                { x: -10 },
+                { x: 10, duration: 0.1, yoyo: true, repeat: 8, ease: 'power1.inOut' }
+            );
+        });
+    }, 1000);
+}
+
+// 11) Spin In
+function AnimateSpin() {
+    // text-content spins 360°
+    $('.text-content').each(function () {
+        gsap.from(this, {
+            opacity: 0,
+            rotation: 360,
+            duration: 0.6,
+            ease: 'power2.out',
+            transformOrigin: '50% 50%'
+        });
+    });
+
+    // text-box spin after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.from(this, {
+                opacity: 0,
+                rotation: 360,
+                duration: 0.6,
+                ease: 'power2.out',
+                transformOrigin: '50% 50%'
+            });
+        });
+    }, 1000);
+}
+
+// 12) Blur‑to‑Clear
+function AnimateBlurIn() {
+    // text-content fades in from blur
+    $('.text-content').each(function () {
+        gsap.fromTo(this,
+            { opacity: 0, filter: 'blur(10px)' },
+            { opacity: 1, filter: 'blur(0px)', duration: 0.8, ease: 'power2.out' }
+        );
+    });
+
+    // text-box blur‑to‑clear after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.fromTo(this,
+                { opacity: 0, filter: 'blur(10px)' },
+                { opacity: 1, filter: 'blur(0px)', duration: 0.8, ease: 'power2.out' }
+            );
+        });
+    }, 1000);
+}
+
+// 13) Path Motion In
+function AnimatePathMotion() {
+    // text-content moves along a curved path
+    $('.text-content').each(function () {
+        gsap.from(this, {
+            opacity: 0,
+            motionPath: {
+                path: [
+                    { x: -100, y: -50 },
+                    { x: 20, y: 0 },
+                    { x: 0, y: 0 }
+                ],
+                curviness: 1.5
+            },
+            duration: 1,
+            ease: 'power2.out'
+        });
+    });
+
+    // text-box path motion after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.from(this, {
+                opacity: 0,
+                motionPath: {
+                    path: [
+                        { x: -200, y: -100 },
+                        { x: 20, y: 0 },
+                        { x: 0, y: 0 }
+                    ],
+                    curviness: 1.5
+                },
+                duration: 1,
+                ease: 'power2.out'
+            });
+        });
+    }, 1000);
+}
+// 14) Roll In
+function AnimateRollIn() {
+    // text-content rolls in from the left
+    $('.text-content').each(function () {
+        gsap.from(this, {
+            opacity: 0,
+            x: -100,
+            rotation: -90,
+            transformOrigin: '0% 50%',
+            duration: 0.6,
+            ease: 'power2.out'
+        });
+    });
+
+    // text-box rolls in after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.from(this, {
+                opacity: 0,
+                x: -100,
+                rotation: -90,
+                transformOrigin: '0% 50%',
+                duration: 0.6,
+                ease: 'power2.out'
+            });
+        });
+    }, 1000);
+}
+
+// 15) Swing In
+function AnimateSwingIn() {
+    // text-content swings down from top
+    $('.text-content').each(function () {
+        gsap.from(this, {
+            opacity: 0,
+            rotationX: -90,
+            transformOrigin: '50% 0%',
+            duration: 0.6,
+            ease: 'back.out(1.2)'
+        });
+    });
+
+    // text-box swings in after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.from(this, {
+                opacity: 0,
+                rotationX: -90,
+                transformOrigin: '50% 0%',
+                duration: 0.6,
+                ease: 'back.out(1.2)'
+            });
+        });
+    }, 1000);
+}
+
+// 16) Curtain Reveal
+function AnimateCurtain() {
+    // text-content “curtain” opens vertically
+    $('.text-content').each(function () {
+        gsap.from(this, {
+            opacity: 0,
+            scaleY: 0,
+            transformOrigin: '50% 0%',
+            duration: 0.6,
+            ease: 'power2.out'
+        });
+    });
+
+    // text-box curtain after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.from(this, {
+                opacity: 0,
+                scaleY: 0,
+                transformOrigin: '50% 0%',
+                duration: 0.6,
+                ease: 'power2.out'
+            });
+        });
+    }, 1000);
+}
+
+// 17) Ripple In
+function AnimateRippleIn() {
+    // text-content expands with a subtle ripple
+    $('.text-content').each(function () {
+        gsap.fromTo(this,
+            { opacity: 0, scale: 0.8 },
+            { opacity: 1, scale: 1.05, duration: 0.4, ease: 'power1.out', yoyo: true, repeat: 1 }
+        );
+    });
+
+    // text-box ripple after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.fromTo(this,
+                { opacity: 0, scale: 0.8 },
+                { opacity: 1, scale: 1.05, duration: 0.4, ease: 'power1.out', yoyo: true, repeat: 1 }
+            );
+        });
+    }, 1000);
+}
+
+// 18) Ghost Fade
+function AnimateGhostFade() {
+    // text-content ghost‑fades—quick flash then settle
+    $('.text-content').each(function () {
+        gsap.fromTo(this,
+            { opacity: 0 },
+            {
+                opacity: 0.3, duration: 0.2, yoyo: true, repeat: 1, ease: 'power1.inOut', onComplete: () => {
+                    gsap.to(this, { opacity: 1, duration: 0.4, ease: 'power2.out' });
+                }
+            }
+        );
+    });
+
+    // text-box ghost fade after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.fromTo(this,
+                { opacity: 0 },
+                {
+                    opacity: 0.3, duration: 0.2, yoyo: true, repeat: 1, ease: 'power1.inOut', onComplete: () => {
+                        gsap.to(this, { opacity: 1, duration: 0.4, ease: 'power2.out' });
+                    }
+                }
+            );
+        });
+    }, 1000);
+}
+// 19) Wave In
+function AnimateWaveIn() {
+    // text-content waves in (skew + horizontal move)
+    $('.text-content').each(function () {
+        gsap.fromTo(this,
+            { opacity: 0, x: -50, skewX: 30 },
+            { opacity: 1, x: 0, skewX: 0, duration: 0.8, ease: 'elastic.out(1, 0.5)' }
+        );
+    });
+
+    // text-box waves in after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.fromTo(this,
+                { opacity: 0, x: -50, skewX: 30 },
+                { opacity: 1, x: 0, skewX: 0, duration: 0.8, ease: 'elastic.out(1, 0.5)' }
+            );
+        });
+    }, 1000);
+}
+
+// 20) Flip X In
+function AnimateFlipXIn() {
+    // text-content flips in around the X axis
+    $('.text-content').each(function () {
+        gsap.from(this, {
+            opacity: 0,
+            rotationX: -180,
+            transformPerspective: 400,
+            duration: 0.6,
+            ease: 'back.out(1)'
+        });
+    });
+
+    // text-box flips in after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.from(this, {
+                opacity: 0,
+                rotationX: -180,
+                transformPerspective: 400,
+                duration: 0.6,
+                ease: 'back.out(1)'
+            });
+        });
+    }, 1000);
+}
+
+// 21) Blur Flash
+function AnimateBlurFlash() {
+    // text-content flashes from heavy blur to clear
+    $('.text-content').each(function () {
+        gsap.fromTo(this,
+            { opacity: 0, filter: 'blur(20px)' },
+            { opacity: 1, filter: 'blur(0px)', duration: 0.4, ease: 'power2.out', yoyo: true, repeat: 1 }
+        );
+    });
+
+    // text-box blur flash after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.fromTo(this,
+                { opacity: 0, filter: 'blur(20px)' },
+                { opacity: 1, filter: 'blur(0px)', duration: 0.4, ease: 'power2.out', yoyo: true, repeat: 1 }
+            );
+        });
+    }, 1000);
+}
+
+// 22) Popcorn Pop
+function AnimatePopcorn() {
+    // text-content pops in with a quick overshoot
+    $('.text-content').each(function () {
+        gsap.fromTo(this,
+            { opacity: 0, scale: 0.3 },
+            {
+                opacity: 1, scale: 1.2, duration: 0.2, ease: 'power1.out', onComplete: () => {
+                    gsap.to(this, { scale: 1, duration: 0.1, ease: 'power1.in' });
+                }
+            }
+        );
+    });
+
+    // text-box popcorn pop after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.fromTo(this,
+                { opacity: 0, scale: 0.3 },
+                {
+                    opacity: 1, scale: 1.2, duration: 0.2, ease: 'power1.out', onComplete: () => {
+                        gsap.to(this, { scale: 1, duration: 0.1, ease: 'power1.in' });
+                    }
+                }
+            );
+        });
+    }, 1000);
+}
+
+// 23) Light Sweep
+function AnimateLightSweep() {
+    // text-content with a subtle gradient sweep
+    $('.text-content').each(function () {
+        gsap.fromTo(this,
+            { '--highlight': '-50%' },
+            {
+                '--highlight': '150%', duration: 1.2, ease: 'power2.out',
+                onStart: () => {
+                    // ensure CSS variable and mask are set
+                    $(this).css({
+                        'background-image': 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) var(--highlight), rgba(255,255,255,0) 100%)',
+                        'background-clip': 'text',
+                        '-webkit-background-clip': 'text',
+                        color: 'transparent'
+                    });
+                },
+                onComplete: () => {
+                    // clear the mask
+                    $(this).css({ backgroundImage: '', color: '' });
+                }
+            }
+        );
+    });
+
+    // text-box light sweep after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.fromTo(this,
+                { '--highlight': '-50%' },
+                {
+                    '--highlight': '150%', duration: 1.2, ease: 'power2.out',
+                    onStart: () => {
+                        $(this).css({
+                            'background-image': 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) var(--highlight), rgba(255,255,255,0) 100%)',
+                            'background-clip': 'text',
+                            '-webkit-background-clip': 'text',
+                            color: 'transparent'
+                        });
+                    },
+                    onComplete: () => {
+                        $(this).css({ backgroundImage: '', color: '' });
+                    }
+                }
+            );
+        });
+    }, 1000);
+}
+// 24) SVG Path Draw (requires DrawSVGPlugin)
+function AnimateSVGDraw() {
+    // Draw text-content outlines as SVG paths
+    $('.text-content svg path').each(function () {
+        gsap.fromTo(this,
+            { drawSVG: "0%" },
+            { drawSVG: "100%", duration: 1, ease: "power1.inOut" }
+        );
+    });
+
+    // Draw text-box outlines after delay
+    setTimeout(() => {
+        $('.text-box svg path').each(function () {
+            gsap.fromTo(this,
+                { drawSVG: "0%" },
+                { drawSVG: "100%", duration: 1, ease: "power1.inOut" }
+            );
+        });
+    }, 1000);
+}
+
+// 25) Letter‑by‑Letter Fall In (requires SplitText)
+function AnimateLetterFall() {
+    // Split and drop in letters of text-content
+    const split1 = new SplitText(".text-content", { type: "chars" });
+    gsap.from(split1.chars, {
+        opacity: 0,
+        y: -50,
+        rotation: 90,
+        duration: 0.6,
+        ease: "back.out(1.5)",
+        stagger: 0.05
+    });
+
+    // After delay, do same on text-box
+    setTimeout(() => {
+        const split2 = new SplitText(".text-box .text-content", { type: "chars" });
+        gsap.from(split2.chars, {
+            opacity: 0,
+            y: -50,
+            rotation: 90,
+            duration: 0.6,
+            ease: "back.out(1.5)",
+            stagger: 0.05
+        });
+    }, 1000);
+}
+
+// 26) Parallax Tilt In
+function AnimateParallaxTilt() {
+    // Tilt text-content from extremes
+    $('.text-content').each(function () {
+        gsap.fromTo(this,
+            { rotationX: 45, rotationY: -45, opacity: 0 },
+            { rotationX: 0, rotationY: 0, opacity: 1, duration: 0.8, ease: "power2.out", transformPerspective: 800 }
+        );
+    });
+
+    // Tilt text-box after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.fromTo(this,
+                { rotationX: 45, rotationY: -45, opacity: 0 },
+                { rotationX: 0, rotationY: 0, opacity: 1, duration: 0.8, ease: "power2.out", transformPerspective: 800 }
+            );
+        });
+    }, 1000);
+}
+
+// 27) Liquid Morph In (requires MorphSVGPlugin)
+function AnimateLiquidMorph() {
+    // Morph text-content shape from blob to normal
+    $('.text-content svg path').each(function () {
+        const start = this.getAttribute('d‑blob'); // assume you stored a blob “d” in data‑blob attribute
+        const end = this.getAttribute('d');
+        gsap.fromTo(this,
+            { attr: { d: start } },
+            { attr: { d: end }, duration: 1, ease: "elastic.out(1, 0.5)" }
+        );
+    });
+
+    // Morph text-box after delay
+    setTimeout(() => {
+        $('.text-box svg path').each(function () {
+            const start = this.getAttribute('d‑blob');
+            const end = this.getAttribute('d');
+            gsap.fromTo(this,
+                { attr: { d: start } },
+                { attr: { d: end }, duration: 1, ease: "elastic.out(1, 0.5)" }
+            );
+        });
+    }, 1000);
+}
+
+// 28) Neon Flicker
+function AnimateNeonFlicker() {
+    // Flicker text-content glow
+    $('.text-content').each(function () {
+        gsap.fromTo(this,
+            { textShadow: "0 0 2px #fff, 0 0 4px #0ff" },
+            {
+                textShadow: "0 0 8px #0ff, 0 0 12px #0ff",
+                duration: 0.2,
+                yoyo: true,
+                repeat: 5,
+                ease: "sine.inOut"
+            }
+        );
+    });
+
+    // Flicker text-box after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.fromTo(this,
+                { boxShadow: "0 0 4px #fff" },
+                {
+                    boxShadow: "0 0 16px #0ff",
+                    duration: 0.2,
+                    yoyo: true,
+                    repeat: 5,
+                    ease: "sine.inOut"
+                }
+            );
+        });
+    }, 1000);
+}
+
+// 29) Perspective Depth Pop
+function AnimateDepthPop() {
+    // Pop forward from Z‑axis for text-content
+    $('.text-content').each(function () {
+        gsap.from(this, {
+            opacity: 0,
+            z: -200,
+            duration: 0.7,
+            ease: "power3.out",
+            transformPerspective: 1000,
+            transformOrigin: "50% 50% -200px"
+        });
+    });
+
+    // Depth pop for text-box after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.from(this, {
+                opacity: 0,
+                z: -200,
+                duration: 0.7,
+                ease: "power3.out",
+                transformPerspective: 1000,
+                transformOrigin: "50% 50% -200px"
+            });
+        });
+    }, 1000);
+}
+
+// 30) Spiral In
+function AnimateSpiralIn() {
+    // Spiral in text-content
+    $('.text-content').each(function () {
+        gsap.from(this, {
+            opacity: 0,
+            rotation: 720,
+            scale: 0,
+            duration: 1,
+            ease: "power2.inOut",
+            transformOrigin: "50% 50%"
+        });
+    });
+
+    // Spiral in text-box after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.from(this, {
+                opacity: 0,
+                rotation: 720,
+                scale: 0,
+                duration: 1,
+                ease: "power2.inOut",
+                transformOrigin: "50% 50%"
+            });
+        });
+    }, 1000);
+}
+// 31) Glitch Jitter
+function AnimateGlitch() {
+    // text-content rapid random jitter
+    $('.text-content').each(function () {
+        gsap.to(this, {
+            x: () => gsap.utils.random(-5, 5),
+            y: () => gsap.utils.random(-3, 3),
+            repeat: 10,
+            yoyo: true,
+            duration: 0.05,
+            ease: 'rough({strength: 8, points: 20, clamp: true})'
+        });
+    });
+
+    // text-box glitch after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.to(this, {
+                x: () => gsap.utils.random(-5, 5),
+                y: () => gsap.utils.random(-3, 3),
+                repeat: 10,
+                yoyo: true,
+                duration: 0.05,
+                ease: 'rough({strength: 8, points: 20, clamp: true})'
+            });
+        });
+    }, 1000);
+}
+
+// 32) Circle Clip Reveal
+function AnimateCircleReveal() {
+    // text-content circle‑mask expand
+    $('.text-content').each(function () {
+        gsap.fromTo(this,
+            { clipPath: 'circle(0% at 50% 50%)' },
+            { clipPath: 'circle(150% at 50% 50%)', duration: 0.8, ease: 'power2.out' }
+        );
+    });
+
+    // text-box circle reveal after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.fromTo(this,
+                { clipPath: 'circle(0% at 50% 50%)' },
+                { clipPath: 'circle(150% at 50% 50%)', duration: 0.8, ease: 'power2.out' }
+            );
+        });
+    }, 1000);
+}
+
+// 33) Hue‑Rotate Color Cycle
+function AnimateColorCycle() {
+    // text-content hue‑rotate cycle
+    $('.text-content').each(function () {
+        gsap.fromTo(this,
+            { filter: 'hue-rotate(0deg)' },
+            { filter: 'hue-rotate(360deg)', duration: 1.5, ease: 'none', repeat: 0 }
+        );
+    });
+
+    // text-box color cycle after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.fromTo(this,
+                { filter: 'hue-rotate(0deg)' },
+                { filter: 'hue-rotate(360deg)', duration: 1.5, ease: 'none', repeat: 0 }
+            );
+        });
+    }, 1000);
+}
+
+// 34) Character Pop Cascade (requires SplitText)
+function AnimateCharCascade() {
+    // text-content each char pops in
+    const split = new SplitText(".text-content", { type: "chars" });
+    gsap.from(split.chars, {
+        opacity: 0,
+        scale: 0,
+        duration: 0.4,
+        ease: 'back.out(1.7)',
+        stagger: 0.05
+    });
+
+    // text-box cascade after delay
+    setTimeout(() => {
+        const split2 = new SplitText(".text-box .text-content", { type: "chars" });
+        gsap.from(split2.chars, {
+            opacity: 0,
+            scale: 0,
+            duration: 0.4,
+            ease: 'back.out(1.7)',
+            stagger: 0.05
+        });
+    }, 1000);
+}
+
+// 35) Slide & Skew In
+function AnimateSlideSkew() {
+    // text-content slides and skews in
+    $('.text-content').each(function () {
+        gsap.from(this, {
+            opacity: 0,
+            x: -100,
+            skewY: 15,
+            duration: 0.7,
+            ease: 'power3.out'
+        });
+    });
+
+    // text-box slide & skew after delay
+    setTimeout(() => {
+        $('.text-box').each(function () {
+            gsap.from(this, {
+                opacity: 0,
+                x: -100,
+                skewY: 15,
+                duration: 0.7,
+                ease: 'power3.out'
+            });
+        });
+    }, 1000);
+}
+
+function updateEffectButtons(type) {
+    // 1) pick the right hidden‑field based on In vs Out
+    const hiddenField = (type === 'In')
+        ? `#hdnEffectSlide${activeSlide}`
+        : `#hdnOutEffectSlide${activeSlide}`;
+    const effectType = $(hiddenField).val();
+
+    // 2) clear any previously active button
+    // $('.effect_btn').removeClass('active_effect');
+
+    // 3) pick the button selector
+    let btnSelector = null;
+    if (type === 'In') {
+        $('.effectIn_btn').removeClass('active_effect');
+        if (effectType === 'delaylinear') btnSelector = '#adelaylinear';
+        else if (effectType === 'delaylinear2') btnSelector = '#adelaylinear2';
+        else if (effectType === 'mask') btnSelector = '#amask';
+        else if (effectType === 'shake') btnSelector = '#ashake';
+        else if (effectType === 'blur') btnSelector = '#ablur';
+        else if (effectType === 'roll') btnSelector = '#aroll';
+        else if (effectType === 'curtain') btnSelector = '#acurtain';
+        else if (effectType === 'blurFlash') btnSelector = '#ablurFlash';
+        else if (effectType === 'popcorn') btnSelector = '#apopcorn';
+        else if (effectType === 'glitch') btnSelector = '#aglitch';
+        
+        
+    } else {
+        $('.effectOut_btn').removeClass('active_effect');
+        if (effectType === 'delaylinear') btnSelector = '#adelaylinearOut1';
+        else if (effectType === 'delaylinear2') btnSelector = '#adelaylinearOut2';
+        else if (effectType === 'mask') btnSelector = '#amaskOut';
+        else if (effectType === 'shake') btnSelector = '#ashakeOut';
+        else if (effectType === 'blur') btnSelector = '#ablurOut';
+        else if (effectType === 'roll') btnSelector = '#arollOut';
+        else if (effectType === 'curtain') btnSelector = '#acurtainOut';
+        else if (effectType === 'blurFlash') btnSelector = '#ablurFlashOut';
+        else if (effectType === 'popcorn') btnSelector = '#apopcornOut';
+        else if (effectType === 'glitch') btnSelector = '#aglitchOut';
+    }
+
+    // 4) activate it (if any)
+    if (btnSelector) {
+        $(btnSelector).addClass('active_effect');
+    }
 }
 // 1) Prevent default browser behavior for all drag/drop on the container
 $(document).on('dragover drop', '#canvasContainer', function (e) {
