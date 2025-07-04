@@ -774,11 +774,21 @@ function applyAnimations(direction, condition, loopCount) {
                     yoyo: true,
                     repeat: 1,
                     stagger: 0.2
-                }, 0
-                );
-                // 2) STAY: hold final state
+                }, 0);
+
+                // ✅ 2) RESET to ensure visible and clear (this is what was missing)
+                flashTL.set(el, {
+                    opacity: 1,
+                    filter: 'blur(0px)',
+                    x: 0,
+                    y: 0
+                }, inTime / 5 * 2);
+
+                // 3) STAY: hold final state
                 flashTL.to(el, { duration: stayTime }, inTime / 5 * 2);
-            } else {
+            }
+
+            else {
                 // 1) STAY: hold
                 flashTL.to(el, { duration: stayTime }, 0);
                 // 2) OUT: reverse flash + shift away
