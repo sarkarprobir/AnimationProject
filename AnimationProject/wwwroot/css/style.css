@@ -93,9 +93,9 @@ p.collapsed{    font-size: var(--font-size14);}
     margin-top: 10px;
     font-size: var(--font-size14);
     position: absolute;
-    /*    transform: translate(838px, -12px);*/
-    top: 0px;
-    right: 18px;
+    /*transform: translate(838px, -12px);*/
+    top: 2px;
+    right: 280px;
 }
 .Graphic-More {
     width: 128px;
@@ -567,14 +567,25 @@ ul.TextStyle li {list-style-type:none; float:left; width:100%; margin-bottom:10p
     ul.TextStyle li a.arial {
         font-family: 'Arial', sans-serif;
     }
-ul.TextStyle li a.anton{font-family: "Anton", sans-serif; font-weight: normal; font-style: normal; }
+        ul.TextStyle li a.poppins {
+            font-family: "Poppins", sans-serif;
+        }
+        ul.TextStyle li a.georgia {
+            font-family: Georgia, Times, "Times New Roman", serif;
+        }
+        ul.TextStyle li a.courier {
+            font-family: "Courier New", Courier, monospace;
+        }
+
+
+/*ul.TextStyle li a.anton{font-family: "Anton", sans-serif; font-weight: normal; font-style: normal; }
 ul.TextStyle li a.bebes{ font-family: "Bebas Neue", sans-serif; font-weight: normal; font-style: normal;}
 ul.TextStyle li a.monstro{ font-family: "Monstro"; font-style: normal;}
 ul.TextStyle li a.Montserrat{ font-family: "Montserrat", sans-serif; font-style: normal;} 
 ul.TextStyle li a.neto{ font-family: 'Noto Sans'; font-weight: normal; font-style: normal;}
 ul.TextStyle li a.pacifico{ font-family: "Pacifico", cursive; font-weight: normal; font-style: normal;}
 ul.TextStyle li a.Roboto{ font-family: "Roboto", sans-serif; font-weight: bold;}
-
+*/
 .middle-resulation {
     width: 146px;
     padding: 15px 0px !important;
@@ -1711,4 +1722,13 @@ body {
     padding: 2px 4px;
     border-radius: var(--border-radius6);
     font-size: var(--font-size14);
+}
+.alignment_btn {
+    width: 42px;
+    height: 35px;
+    font-size: 21px;
+    background-color: transparent;
+    color: #000;
+    border-radius: 3px;
+    border: 2px solid #ccc;
 }

@@ -1057,7 +1057,7 @@ function moveCaretToEnd(el) {
     <div id="shape_heading" class="headtext">Shape</div> *@
 
     <div id="text_alignment_tool" class="col-md-12 mb-3">
-        <div class="row alignment-img">
+        @* <div class="row alignment-img">
             <ul class="d-flex justify-content-between mb-0">
                 <li>
                     <a onclick="ChangeAlignStyle('left')"> <img src="~/images/icons/icon-align-left.png" title="Alignleft" alt="Icon-alignleft"></a>
@@ -1071,7 +1071,9 @@ function moveCaretToEnd(el) {
 
             </ul>
             <input type="hidden" id="textAlign" />
-        </div>
+        </div> *@
+        <button class="toggle alignment_btn" onclick="toggleAlignment(event, this)" id="alignBtn"><i class="fas fa-align-left"></i></button>
+
     </div>
 
     
@@ -1448,14 +1450,20 @@ function moveCaretToEnd(el) {
                 <div class="col-md-12">
                     <div class="row" style=" margin-left:-30px;">
                         <ul class="TextStyle ms-1 mt-2">
-                            <li><a class="arial" onclick="OnChangefontFamily('Arial')">Arial</a></li>
-                            <li><a class="anton" onclick="OnChangefontFamily('Anton')">Anton</a></li>
+                            <li><a class="arial fontFamBtn" onclick="OnChangefontFamily('Arial')">Arial</a></li>
+                            <li><a class="poppins fontFamBtn" onclick="OnChangefontFamily('Poppins')">Poppins</a></li>
+                            <li><a class="georgia fontFamBtn" onclick="OnChangefontFamily('Georgia')">Georgia</a></li>
+                            <li><a class="courier fontFamBtn" onclick="OnChangefontFamily('Courier New')">Courier New</a></li>
+
+
+
+                            @* <li><a class="anton" onclick="OnChangefontFamily('Anton')">Anton</a></li>
                             <li><a class="bebes" onclick="OnChangefontFamily('BEBES')">BEBES</a></li>
                             <li><a class="monstro" onclick="OnChangefontFamily('monstro')">MONSTRO</a></li>
                             <li><a class="Montserrat" onclick="OnChangefontFamily('Montserrat')">Montserrat</a></li>
                             <li><a class="neto" onclick="OnChangefontFamily('neto')">Neto</a></li>
                             <li><a class="pacifico" onclick="OnChangefontFamily('Pacifico')">Pacifico</a></li>
-                            <li><a class="Roboto" onclick="OnChangefontFamily('Roboto')">Roboto</a></li>
+                            <li><a class="Roboto" onclick="OnChangefontFamily('Roboto')">Roboto</a></li> *@
                         </ul>
                         <input type="hidden" id="fontFamily" />
                     </div>

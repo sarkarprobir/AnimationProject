@@ -8,7 +8,7 @@ $(document).on('mousedown', function (e) {
     if ($(e.target).closest('.text-box').length) return;
 
     // If the clicked target is inside any control buttons, don't deselect
-    if ($(e.target).closest('#fontSize, #textColor, #fontFamily, #boldBtn, #italicBtn, #underlineBtn, #caseToggleBtn, #alignBtn, #lineHeight,#DLineSpacing,#ILineSpacing,#casingBtn').length) return;
+    if ($(e.target).closest('#fontSize, #textColor, #fontFamily, #boldBtn, #italicBtn, #underlineBtn, #caseToggleBtn, #alignBtn, #lineHeight,#DLineSpacing,#ILineSpacing,#casingBtn, .fontFamBtn').length) return;
     // If the clicked element is NOT inside a .text-box
     if (!$(e.target).closest('.text-box').length) {
         if (selectedBox) {
@@ -143,12 +143,20 @@ function ChangeColorNew() {
 //    const size = parseInt($(this).val());
 //    applyFontSize(size);
 //});
-function ChangeFontSize() {
-    const size_input = document.getElementById("fontSize");
-    const size = size_input.value;
-    applyFontSize(size);
+//function ChangeFontSize() {
+//    const size_input = document.getElementById("fontSize");
+//    const size = size_input.value;
+//    applyFontSize(size);
 
+//}
+function ChangeFontSize() {
+    const sizeInput = document.getElementById("fontSize");
+    if (!sizeInput || !selectedBox) return;
+
+    const size = sizeInput.value || "24px";  // Default to 24px
+    applyFontSize(size);
 }
+
 
 // ✅ Text Color
 //$('#textColor').on('input', function () {
@@ -194,10 +202,17 @@ function applyFontFamily(font) {
     }
 }
 
-$('#fontFamily').on('change', function () {
-    const family = $(this).val();
+//$('#fontFamily').on('change', function () {
+//    const family = $(this).val();
+//    applyStyleValue('fontName', 'font-family', family);
+//});
+
+function OnChangefontFamily(family) {
+    const $selectedBox = $('.text-box.selected');
+    if (!$selectedBox) return;
+
     applyStyleValue('fontName', 'font-family', family);
-});
+}
 
 
 function applyStyleValue(cmd, cssProp, value) {
@@ -396,59 +411,83 @@ function toggleCase(e) {
 
 
 // Text Alignment (toggle between left, center, right, justify)
+//const alignments = ['left', 'center', 'right', 'justify'];
+//let alignIndex = 0;
+
+//$('#alignBtn').on('click', function () {
+//    if (selectedBox) {
+//        alignIndex = (alignIndex + 1) % alignments.length;
+//        const align = alignments[alignIndex];
+//        selectedBox.css('text-align', align);
+
+//        const iconMap = {
+//            left: 'fa-align-left',
+//            center: 'fa-align-center',
+//            right: 'fa-align-right',
+//            justify: 'fa-align-justify'
+//        };
+//        //$('#caseToggleBtn').on('click', function (e) {
+//        //    e.preventDefault();
+//        //    if (!selectedBox) return;
+
+//        //    selectedBox[0].focus();
+//        //    restoreSelection();
+
+//        //    const sel = window.getSelection();
+//        //    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+
+//        //    const range = sel.getRangeAt(0);
+//        //    const selectedText = range.toString();
+//        //    const isUpper = selectedText === selectedText.toUpperCase();
+//        //    const toggledText = isUpper ? selectedText.toLowerCase() : selectedText.toUpperCase();
+
+//        //    // Create text node with toggled text
+//        //    const toggledNode = document.createTextNode(toggledText);
+
+//        //    // Replace original text with toggled version
+//        //    range.deleteContents();
+//        //    range.insertNode(toggledNode);
+
+//        //    // 🔁 Rebuild the new selection range on the newly inserted text
+//        //    const newRange = document.createRange();
+//        //    newRange.setStart(toggledNode, 0);
+//        //    newRange.setEnd(toggledNode, toggledText.length);
+
+//        //    sel.removeAllRanges();
+//        //    sel.addRange(newRange);
+
+//        //    // ✅ Now save the NEW selection properly
+//        //    savedSelection = newRange.cloneRange();
+//        //});
+
+//        const $icon = $(this).find('i');
+//        $icon.removeClass().addClass(`fas ${iconMap[align]}`);
+//    }
+//});
+
 const alignments = ['left', 'center', 'right', 'justify'];
 let alignIndex = 0;
 
-$('#alignBtn').on('click', function () {
-    if (selectedBox) {
-        alignIndex = (alignIndex + 1) % alignments.length;
-        const align = alignments[alignIndex];
-        selectedBox.css('text-align', align);
+function toggleAlignment(e, btn) {
+    if (e) e.preventDefault();
+    const $selectedBox = $('.text-box.selected');
+    if (!$selectedBox) return;
 
-        const iconMap = {
-            left: 'fa-align-left',
-            center: 'fa-align-center',
-            right: 'fa-align-right',
-            justify: 'fa-align-justify'
-        };
-        $('#caseToggleBtn').on('click', function (e) {
-            e.preventDefault();
-            if (!selectedBox) return;
+    alignIndex = (alignIndex + 1) % alignments.length;
+    const align = alignments[alignIndex];
+    selectedBox.css('text-align', align);
 
-            selectedBox[0].focus();
-            restoreSelection();
+    const iconMap = {
+        left: 'fa-align-left',
+        center: 'fa-align-center',
+        right: 'fa-align-right',
+        justify: 'fa-align-justify'
+    };
 
-            const sel = window.getSelection();
-            if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    const $icon = $(btn).find('i');
+    $icon.removeClass().addClass(`fas ${iconMap[align]}`);
+}
 
-            const range = sel.getRangeAt(0);
-            const selectedText = range.toString();
-            const isUpper = selectedText === selectedText.toUpperCase();
-            const toggledText = isUpper ? selectedText.toLowerCase() : selectedText.toUpperCase();
-
-            // Create text node with toggled text
-            const toggledNode = document.createTextNode(toggledText);
-
-            // Replace original text with toggled version
-            range.deleteContents();
-            range.insertNode(toggledNode);
-
-            // 🔁 Rebuild the new selection range on the newly inserted text
-            const newRange = document.createRange();
-            newRange.setStart(toggledNode, 0);
-            newRange.setEnd(toggledNode, toggledText.length);
-
-            sel.removeAllRanges();
-            sel.addRange(newRange);
-
-            // ✅ Now save the NEW selection properly
-            savedSelection = newRange.cloneRange();
-        });
-
-        const $icon = $(this).find('i');
-        $icon.removeClass().addClass(`fas ${iconMap[align]}`);
-    }
-});
 
 // Line Height
 //$('#lineHeight').on('input', function () {
