@@ -1076,9 +1076,11 @@ function moveCaretToEnd(el) {
 
     
     <div id="text_decoration_tool">
-        <button id="boldBtn" onclick="toggleBold();" class="text_decoration toggle"><i class="fa-solid fa-bold"></i></button>
-        <button id="italicBtn" onclick="italicText();" class="text_decoration"><i class="fa-solid fa-italic"></i></button>
-        <button class="text_decoration">aA</button>
+        <button id="boldBtn" onclick="toggleBold(event);" class="text_decoration toggle"><i class="fa-solid fa-bold"></i></button>
+        <button id="italicBtn" onclick="toggleItalic(event);" class="text_decoration italic"><i class="fa-solid fa-italic"></i></button>
+        <button id="underlineBtn" onclick="toggleUnderline(event);" class="text_decoration underline"><i class="fa-solid fa-underline"></i></button>
+
+        <button id="casingBtn" onclick="toggleCase(event);" class="text_decoration case-toggle">aA</button>
     </div>
     <div id="text_color_tool" class="col-md-12 mb-3">
         <div class="row FontSize my-4">

@@ -8,7 +8,7 @@ $(document).on('mousedown', function (e) {
     if ($(e.target).closest('.text-box').length) return;
 
     // If the clicked target is inside any control buttons, don't deselect
-    if ($(e.target).closest('#fontSize, #textColor, #fontFamily, #boldBtn, #italicBtn, #underlineBtn, #caseToggleBtn, #alignBtn, #lineHeight,#DLineSpacing,#ILineSpacing').length) return;
+    if ($(e.target).closest('#fontSize, #textColor, #fontFamily, #boldBtn, #italicBtn, #underlineBtn, #caseToggleBtn, #alignBtn, #lineHeight,#DLineSpacing,#ILineSpacing,#casingBtn').length) return;
     // If the clicked element is NOT inside a .text-box
     if (!$(e.target).closest('.text-box').length) {
         if (selectedBox) {
@@ -243,15 +243,46 @@ function toggleBold(e) {
 
 
 
-$('#italicBtn').on('click', function (e) {
-    e.preventDefault(); // don't steal focus
-    applyStyleCommand('italic', 'font-style', 'italic');
-});
+//$('#italicBtn').on('click', function (e) {
+//    e.preventDefault(); // don't steal focus
+//    applyStyleCommand('italic', 'font-style', 'italic');
+//});
+function toggleItalic(e) {
+    if (e) e.preventDefault();
 
-$('#underlineBtn').on('click', function (e) {
-    e.preventDefault(); // don't steal focus
+    // Apply italic style
+    applyStyleCommand('italic', 'font-style', 'italic');
+
+    // Check if the current selection is italic
+    const isItalic = document.queryCommandState('italic');
+
+    //// Toggle .active class on the italic button
+    //const btn = document.querySelector('.text_decoration.italic');
+    //if (btn) {
+    //    btn.classList.toggle('active', isItalic);
+    //}
+}
+
+
+//$('#underlineBtn').on('click', function (e) {
+//    e.preventDefault(); // don't steal focus
+//    applyStyleCommand('underline', 'text-decoration', 'underline');
+//});
+function toggleUnderline(e) {
+    if (e) e.preventDefault();
+
+    // Apply underline command
     applyStyleCommand('underline', 'text-decoration', 'underline');
-});
+
+    // Check if the selection is underlined
+    const isUnderlined = document.queryCommandState('underline');
+
+    //// Toggle .active class on the underline button
+    //const btn = document.querySelector('.text_decoration.underline');
+    //if (btn) {
+    //    btn.classList.toggle('active', isUnderlined);
+    //}
+}
 
 
 // Use execCommand after restoring selection
@@ -281,9 +312,46 @@ function applyStyleCommand(cmd, cssProp, cssToggleValue) {
 
 
 
-$('#caseToggleBtn').on('click', function (e) {
-    e.preventDefault();
-    if (!selectedBox) return;
+//$('#caseToggleBtn').on('click', function (e) {
+//    e.preventDefault();
+//    if (!selectedBox) return;
+
+//    selectedBox[0].focus();
+
+//    const sel = window.getSelection();
+//    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+
+//    const range = sel.getRangeAt(0);
+//    const selectedText = range.toString();
+//    if (!selectedText.trim()) return;
+
+//    const isUpper = selectedText === selectedText.toUpperCase();
+//    const toggledText = isUpper ? selectedText.toLowerCase() : selectedText.toUpperCase();
+
+//    // Preserve formatting by inserting span with toggled content
+//    const span = document.createElement('span');
+//    span.textContent = toggledText;
+
+//    range.deleteContents();
+//    range.insertNode(span);
+
+//    // Reselect toggled text
+//    const newRange = document.createRange();
+//    newRange.setStart(span.firstChild, 0);
+//    newRange.setEnd(span.firstChild, toggledText.length);
+
+//    sel.removeAllRanges();
+//    sel.addRange(newRange);
+
+//    // Save selection for future reuse (optional)
+//    savedSelection = newRange.cloneRange();
+//});
+
+function toggleCase(e) {
+    if (e) e.preventDefault();
+    const $selectedBox = $('.text-box.selected');
+    if (!$selectedBox) return;
+
 
     selectedBox[0].focus();
 
@@ -297,14 +365,15 @@ $('#caseToggleBtn').on('click', function (e) {
     const isUpper = selectedText === selectedText.toUpperCase();
     const toggledText = isUpper ? selectedText.toLowerCase() : selectedText.toUpperCase();
 
-    // Preserve formatting by inserting span with toggled content
+    // Create span to preserve formatting
     const span = document.createElement('span');
     span.textContent = toggledText;
 
+    // Replace selected text
     range.deleteContents();
     range.insertNode(span);
 
-    // Reselect toggled text
+    // Reselect new text
     const newRange = document.createRange();
     newRange.setStart(span.firstChild, 0);
     newRange.setEnd(span.firstChild, toggledText.length);
@@ -312,9 +381,16 @@ $('#caseToggleBtn').on('click', function (e) {
     sel.removeAllRanges();
     sel.addRange(newRange);
 
-    // Save selection for future reuse (optional)
+    // Save for reuse if needed
     savedSelection = newRange.cloneRange();
-});
+
+//    // OPTIONAL: Toggle active class if you want visual feedback
+//    const btn = document.querySelector('.text_decoration.case-toggle');
+//    if (btn) {
+//        btn.classList.toggle('active', !isUpper);  // active if now uppercase
+//    }
+}
+
 
 
 
