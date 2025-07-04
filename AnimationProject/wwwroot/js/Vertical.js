@@ -2138,12 +2138,25 @@ function updateEffectButtons(type) {
         if (effectType === 'delaylinear') btnSelector = '#adelaylinear';
         else if (effectType === 'delaylinear2') btnSelector = '#adelaylinear2';
         else if (effectType === 'mask') btnSelector = '#amask';
+        else if (effectType === 'shake') btnSelector = '#ashake';
+        else if (effectType === 'blur') btnSelector = '#ablur';
+        else if (effectType === 'roll') btnSelector = '#aroll';
+        else if (effectType === 'curtain') btnSelector = '#acurtain';
+        else if (effectType === 'blurFlash') btnSelector = '#ablurFlash';
+        else if (effectType === 'popcorn') btnSelector = '#apopcorn';
+        
         
     } else {
         $('.effectOut_btn').removeClass('active_effect');
         if (effectType === 'delaylinear') btnSelector = '#adelaylinearOut1';
         else if (effectType === 'delaylinear2') btnSelector = '#adelaylinearOut2';
         else if (effectType === 'mask') btnSelector = '#amaskOut';
+        else if (effectType === 'shake') btnSelector = '#ashakeOut';
+        else if (effectType === 'blur') btnSelector = '#ablurOut';
+        else if (effectType === 'roll') btnSelector = '#arollOut';
+        else if (effectType === 'curtain') btnSelector = '#acurtainOut';
+        else if (effectType === 'blurFlash') btnSelector = '#ablurFlashOut';
+        else if (effectType === 'popcorn') btnSelector = '#apopcornOut';
     }
 
     // 4) activate it (if any)
