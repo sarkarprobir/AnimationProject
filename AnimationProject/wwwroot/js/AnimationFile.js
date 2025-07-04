@@ -136,96 +136,277 @@ function applyAnimations(direction, condition, loopCount) {
     const ch = $canvas.height();
     const canvasOffset = $canvas.offset();
 
-    if (animationType !== "delaylinear") {
-        console.log("Only ‘delaylinear’ is handled here");
-        return;
+    if (animationType == "delaylinear") {
+
+        // 4) Build a master timeline
+        const mainTL = gsap.timeline();
+
+        // 5) For each box, compute its own animation
+        $('.text-box').each(function (i, el) {
+            const $el = $(el);
+            const offset = $el.offset();
+            const elW = $el.outerWidth();
+            const elH = $el.outerHeight();
+
+            // natural positions
+            const naturalX = offset.left - canvasOffset.left;
+            const naturalY = offset.top - canvasOffset.top;
+
+            // compute fromX/fromY so that the element is just outside the canvas
+            let fromX = naturalX, fromY = naturalY;
+            let outX = naturalX, outY = naturalY;
+
+            if (tabType === 'In') {
+                switch (direction) {
+                    case 'left':
+                        fromX = -elW;
+                        break;
+                    case 'right':
+                        fromX = cw;
+                        break;
+                    case 'top':
+                        fromY = -elH;
+                        break;
+                    case 'bottom':
+                        fromY = ch;
+                        break;
+                }
+                // IN: from outside → natural
+                mainTL.from(el, {
+                    x: fromX - naturalX,
+                    y: fromY - naturalY,
+                    opacity: 0,
+                    duration: inTime,
+                    ease: 'power2.out',
+                    stagger: 0.2
+                }, 0); // all start at time 0
+
+                // STAY: just hold at natural
+                mainTL.to(el, {
+                    duration: stayTime
+                }, inTime); // begin after inTime
+
+            } else { // tabType === 'Out'
+                switch (direction) {
+                    case 'left':
+                        outX = cw;
+                        break;
+                    case 'right':
+                        outX = -elW;
+                        break;
+                    case 'top':
+                        outY = ch;
+                        break;
+                    case 'bottom':
+                        outY = -elH;
+                        break;
+                }
+                // STAY: hold natural
+                mainTL.to(el, {
+                    duration: stayTime
+                }, 0); // start immediately
+
+                // OUT: natural → outside
+                mainTL.to(el, {
+                    x: outX - naturalX,
+                    y: outY - naturalY,
+                    opacity: 0,
+                    duration: outTime,
+                    ease: 'power2.in',
+                    stagger: 0.2
+                }, stayTime); // begin after stayTime
+
+                // RESET: snap back
+                mainTL.set(el, {
+                    x: 0, y: 0, opacity: 1
+                }, stayTime + outTime);
+            }
+        });
+
+        return mainTL;
     }
+    else if (animationType === "delaylinear2") {
+        const waveTL = gsap.timeline();
 
-    // 4) Build a master timeline
-    const mainTL = gsap.timeline();
+        // Precompute some constants
+        const waveDistance = 50;
+        const waveSkew = 30;
 
-    // 5) For each box, compute its own animation
-    $('.text-box').each(function (i, el) {
-        const $el = $(el);
-        const offset = $el.offset();
-        const elW = $el.outerWidth();
-        const elH = $el.outerHeight();
+        // Loop over each box just like in delaylinear
+        $('.text-box').each(function (i, el) {
+            const $el = $(el);
+            const offset = $el.offset();
+            const elW = $el.outerWidth();
+            const elH = $el.outerHeight();
 
-        // natural positions
-        const naturalX = offset.left - canvasOffset.left;
-        const naturalY = offset.top - canvasOffset.top;
+            // natural on‑screen position relative to canvas
+            const naturalX = offset.left - canvasOffset.left;
+            const naturalY = offset.top - canvasOffset.top;
 
-        // compute fromX/fromY so that the element is just outside the canvas
-        let fromX = naturalX, fromY = naturalY;
-        let outX = naturalX, outY = naturalY;
+            // compute start and exit offsets for this direction
+            let fromX = 0, fromY = 0, outX = 0, outY = 0;
 
-        if (tabType === 'In') {
             switch (direction) {
                 case 'left':
                     fromX = -elW;
-                    break;
-                case 'right':
-                    fromX = cw;
-                    break;
-                case 'top':
-                    fromY = -elH;
-                    break;
-                case 'bottom':
-                    fromY = ch;
-                    break;
-            }
-            // IN: from outside → natural
-            mainTL.from(el, {
-                x: fromX - naturalX,
-                y: fromY - naturalY,
-                opacity: 0,
-                duration: inTime,
-                ease: 'power2.out',
-                stagger: 0.2
-            }, 0); // all start at time 0
-
-            // STAY: just hold at natural
-            mainTL.to(el, {
-                duration: stayTime
-            }, inTime); // begin after inTime
-
-        } else { // tabType === 'Out'
-            switch (direction) {
-                case 'left':
                     outX = cw;
                     break;
                 case 'right':
+                    fromX = cw;
                     outX = -elW;
                     break;
                 case 'top':
+                    fromY = -elH;
                     outY = ch;
                     break;
                 case 'bottom':
+                    fromY = ch;
                     outY = -elH;
                     break;
+                default:
+                    fromX = -elW;
+                    outX = cw;
             }
-            // STAY: hold natural
-            mainTL.to(el, {
-                duration: stayTime
-            }, 0); // start immediately
 
-            // OUT: natural → outside
-            mainTL.to(el, {
-                x: outX - naturalX,
-                y: outY - naturalY,
-                opacity: 0,
-                duration: outTime,
-                ease: 'power2.in',
-                stagger: 0.2
-            }, stayTime); // begin after stayTime
+            if (tabType === 'In') {
+                // 1) WAVE‑IN
+                waveTL.from(el, {
+                    x: fromX - naturalX,
+                    y: fromY - naturalY,
+                    skewX: (direction === 'left' ? waveSkew :
+                        direction === 'right' ? -waveSkew : 0),
+                    skewY: (direction === 'top' ? -waveSkew :
+                        direction === 'bottom' ? waveSkew : 0),
+                    opacity: 0,
+                    duration: inTime,
+                    ease: 'elastic.out(1, 0.5)',
+                    stagger: 0.2
+                }, 0);
 
-            // RESET: snap back
-            mainTL.set(el, {
-                x: 0, y: 0, opacity: 1
-            }, stayTime + outTime);
-        }
-    });
+                // 2) STAY
+                waveTL.to(el, { duration: stayTime }, inTime);
 
-    return mainTL;
+            } else {
+                // 1) STAY
+                waveTL.to(el, { duration: stayTime }, 0);
+
+                // 2) WAVE‑OUT
+                waveTL.to(el, {
+                    x: outX - naturalX,
+                    y: outY - naturalY,
+                    skewX: (direction === 'left' ? -waveSkew :
+                        direction === 'right' ? waveSkew : 0),
+                    skewY: (direction === 'top' ? waveSkew :
+                        direction === 'bottom' ? -waveSkew : 0),
+                    opacity: 0,
+                    duration: outTime,
+                    ease: 'power2.in',
+                    stagger: 0.2
+                }, stayTime);
+
+                // 3) RESET
+                waveTL.set(el, { x: 0, y: 0, skewX: 0, skewY: 0, opacity: 1 },
+                    stayTime + outTime);
+            }
+        });
+
+        return waveTL;
+    }
+    else if (animationType === "mask") {
+        const maskTL = gsap.timeline();
+
+        $('.text-box').each(function (i, el) {
+            // Determine what “hidden” clip looks like for In vs Out
+            let inClip, exitClip;
+           
+
+            if (tabType === 'In') {
+                switch (direction) {
+                    case 'left':
+                        inClip = 'inset(0% 100% 0% 0%)'; // hidden at right
+                        exitClip = 'inset(0% 100% 0% 0%)';
+                        break;
+                    case 'right':
+                        inClip = 'inset(0% 0% 0% 100%)'; // hidden at left
+                        exitClip = 'inset(0% 0% 0% 100%)'; // hide again at left
+                        break;
+                    case 'top':
+                        inClip = 'inset(0% 0% 100% 0%)'; // hidden at bottom
+                        exitClip = 'inset(0% 0% 100% 0%)';
+                        break;
+                    case 'bottom':
+                        inClip = 'inset(100% 0% 0% 0%)'; // hidden at top
+                        exitClip = 'inset(100% 0% 0% 0%)';
+
+                        break;
+                    default:
+                        inClip = 'inset(0% 100% 0% 0%)';
+                        exitClip = 'inset(0% 100% 0% 0%)';
+                }
+                // 1) IN: from clipped → fully visible
+                maskTL.from(el, {
+                    clipPath: inClip,
+                    duration: inTime,
+                    ease: 'power2.out',
+                    stagger: 0.2
+                }, 0);
+
+                // 2) STAY: hold visible
+                maskTL.to(el, {
+                    duration: stayTime
+                }, inTime);
+            }
+            else {
+                switch (direction) {
+                    case 'left':
+                        inClip = 'inset(0% 0% 0% 100%)'; // hidden at left
+                        exitClip = 'inset(0% 0% 0% 100%)'; // hide again at left
+                        break;
+                    case 'right':
+                        inClip = 'inset(0% 100% 0% 0%)'; // hidden at right
+                        exitClip = 'inset(0% 100% 0% 0%)';
+                        break;
+                    case 'top':
+                        inClip = 'inset(100% 0% 0% 0%)'; // hidden at top
+                        exitClip = 'inset(100% 0% 0% 0%)';
+                        break;
+                    case 'bottom':
+                        inClip = 'inset(0% 0% 100% 0%)'; // hidden at bottom
+                        exitClip = 'inset(0% 0% 100% 0%)';
+                        break;
+                    default:
+                        inClip = 'inset(0% 100% 0% 0%)';
+                        exitClip = 'inset(0% 100% 0% 0%)';
+                }
+                // 1) STAY: hold visible
+                maskTL.to(el, {
+                    duration: stayTime
+                }, 0);
+
+                // 2) OUT: animate to clipped (hides it)
+                maskTL.to(el, {
+                    clipPath: exitClip,
+                    duration: outTime,
+                    ease: 'power2.in',
+                    stagger: 0.2
+                }, stayTime);
+
+                // 3) RESET: restore fully visible and original transform
+                maskTL.set(el, {
+                    clipPath: 'inset(0% 0% 0% 0%)',
+                    x: 0,
+                    y: 0,
+                    skewX: 0,
+                    skewY: 0
+                }, stayTime + outTime);
+            }
+        });
+
+        return maskTL;
+    }
+
+
+
+
 }
 

@@ -1246,7 +1246,7 @@ function Animate122() {
     //    });
     //}, 1000);
 }
-function Animate2(direction) {
+function Animate2ALl(direction) {
     // parse your timing inputs (in seconds)
     const inTime = parseFloat(selectedInSpeed) || 4;
     const stayTime = parseFloat(selectedStaySpeed) || 3;
@@ -2137,10 +2137,13 @@ function updateEffectButtons(type) {
         $('.effectIn_btn').removeClass('active_effect');
         if (effectType === 'delaylinear') btnSelector = '#adelaylinear';
         else if (effectType === 'delaylinear2') btnSelector = '#adelaylinear2';
+        else if (effectType === 'mask') btnSelector = '#amask';
+        
     } else {
         $('.effectOut_btn').removeClass('active_effect');
         if (effectType === 'delaylinear') btnSelector = '#adelaylinearOut1';
         else if (effectType === 'delaylinear2') btnSelector = '#adelaylinearOut2';
+        else if (effectType === 'mask') btnSelector = '#amaskOut';
     }
 
     // 4) activate it (if any)
