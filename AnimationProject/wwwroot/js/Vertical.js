@@ -220,10 +220,28 @@ function applyStyleValue(cmd, cssProp, value) {
 
 
 // Bold
-$('#boldBtn').on('click', function (e) {
-    e.preventDefault(); // don't steal focus
+//$('#boldBtn').on('click', function (e) {
+//    e.preventDefault(); // don't steal focus
+//    applyStyleCommand('bold', 'font-weight', 'bold');
+//});
+function toggleBold(e) {
+    if (e) e.preventDefault();
+
+    // Apply bold command
     applyStyleCommand('bold', 'font-weight', 'bold');
-});
+
+    // Check if the selected text is now bold
+    const isBold = document.queryCommandState('bold');
+
+    // Toggle class based on bold state
+    const btn = document.querySelector('.text_decoration');
+    if (btn) {
+        btn.classList.toggle('active', isBold);
+    }
+}
+
+
+
 
 $('#italicBtn').on('click', function (e) {
     e.preventDefault(); // don't steal focus

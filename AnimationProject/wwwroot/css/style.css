@@ -1407,10 +1407,10 @@ body {
     height: 35px;
     border-radius: 3px;
 }
-    .text_decoration:active, .text_decoration:focus {
-        color: #6214fe;
-        background-color: #4e43e136;
-    }
+.text_decoration.active {
+    color: #6214fe;
+    background-color: #4e43e136;
+}
 .slider_label{
     font-size: var(--font-size14);
 }
