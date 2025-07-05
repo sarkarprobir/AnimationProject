@@ -1344,10 +1344,11 @@ function applyAnimationsForPublish(inDirection, inAnimationType, outDirection, o
         }
         const inOffset = computeOffset(inDirection, true);
         const outOffset = computeOffset(outDirection, false);
-        function computeOffsetWebIn(direction, elW, elH, cw, ch) {
-            let fromX = 0, fromY = 0, outX = 0, outY = 0;
+        let fromX = 0, fromY = 0, outX = 0, outY = 0;
+        function computeOffsetWebIn(inDirection, elW, elH, cw, ch) {
+          
 
-            switch (direction) {
+            switch (inDirection) {
                 case 'left':
                     fromX = -elW;
                     outX = cw;
@@ -1371,27 +1372,47 @@ function applyAnimationsForPublish(inDirection, inAnimationType, outDirection, o
 
             return { fromX, fromY, outX, outY };
         }
-        function computeOffsetWebOut(direction, elW, elH, cw, ch) {
-            let fromX = 0, fromY = 0, outX = 0, outY = 0;
+        function computeOffsetWebOut(outDirection, elW, elH, cw, ch) {
+           /* let fromX = 0, fromY = 0, outX = 0, outY = 0;*/
 
-            switch (direction) {
+            switch (outDirection) {
+                //case 'left':
+                //    fromX = cw;
+                //    outX = -elW;
+                //    break;
+                //case 'right':
+                //    fromX = -elW;
+                //    outX = cw;
+
+                //    break;
+                //case 'top':
+                //    fromY = -elH;
+                //    outY = ch;
+
+                //    break;
+                //case 'bottom':
+
+                //    fromY = ch;
+                //    outY = -elH;
+                //    break;
+                //default:
+                //    fromX = -elW;
+                //    outX = cw;
                 case 'left':
+                    fromX = -elW;
+                    outX = cw;
+                    break;
+                case 'right':
                     fromX = cw;
                     outX = -elW;
                     break;
-                case 'right':
-                    fromX = -elW;
-                    outX = cw;
-                   
-                    break;
-                case 'top':
-                    fromY = ch;
+                case 'bottom':
+                    fromY = ch ;
                     outY = -elH;
                     break;
-                case 'bottom':
+                case 'top':
                     fromY = -elH;
                     outY = ch;
-                   
                     break;
                 default:
                     fromX = -elW;
@@ -1403,7 +1424,7 @@ function applyAnimationsForPublish(inDirection, inAnimationType, outDirection, o
         const naturalX = offset.left - canvasOffset.left;
         const naturalY = offset.top - canvasOffset.top;
         const webInOffset = computeOffsetWebIn(inDirection, elW, elH, cw, ch);
-        const webOutOffset = computeOffsetWebOut(inDirection, elW, elH, cw, ch);
+        const webOutOffset = computeOffsetWebOut(outDirection, elW, elH, cw, ch);
 
         // --- IN PHASE ---
         switch (inAnimationType) {
