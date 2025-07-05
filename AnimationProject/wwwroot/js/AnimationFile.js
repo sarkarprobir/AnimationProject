@@ -1320,6 +1320,7 @@ function applyAnimationsForPublish(inDirection, inAnimationType, outDirection, o
         const elH = $el.outerHeight();
         const natX = off.left - canvasOffset.left;
         const natY = off.top - canvasOffset.top;
+        const offset = $el.offset();
 
         // Helpers to compute IN and OUT offsets
         function computeOffset(dir, isIn) {
@@ -1341,9 +1342,68 @@ function applyAnimationsForPublish(inDirection, inAnimationType, outDirection, o
             }
             return { x, y };
         }
-
         const inOffset = computeOffset(inDirection, true);
         const outOffset = computeOffset(outDirection, false);
+        function computeOffsetWebIn(direction, elW, elH, cw, ch) {
+            let fromX = 0, fromY = 0, outX = 0, outY = 0;
+
+            switch (direction) {
+                case 'left':
+                    fromX = -elW;
+                    outX = cw;
+                    break;
+                case 'right':
+                    fromX = cw;
+                    outX = -elW;
+                    break;
+                case 'top':
+                    fromY = -elH;
+                    outY = ch;
+                    break;
+                case 'bottom':
+                    fromY = ch;
+                    outY = -elH;
+                    break;
+                default:
+                    fromX = -elW;
+                    outX = cw;
+            }
+
+            return { fromX, fromY, outX, outY };
+        }
+        function computeOffsetWebOut(direction, elW, elH, cw, ch) {
+            let fromX = 0, fromY = 0, outX = 0, outY = 0;
+
+            switch (direction) {
+                case 'left':
+                    fromX = cw;
+                    outX = -elW;
+                    break;
+                case 'right':
+                    fromX = -elW;
+                    outX = cw;
+                   
+                    break;
+                case 'top':
+                    fromY = ch;
+                    outY = -elH;
+                    break;
+                case 'bottom':
+                    fromY = -elH;
+                    outY = ch;
+                   
+                    break;
+                default:
+                    fromX = -elW;
+                    outX = cw;
+            }
+
+            return { fromX, fromY, outX, outY };
+        }
+        const naturalX = offset.left - canvasOffset.left;
+        const naturalY = offset.top - canvasOffset.top;
+        const webInOffset = computeOffsetWebIn(inDirection, elW, elH, cw, ch);
+        const webOutOffset = computeOffsetWebOut(inDirection, elW, elH, cw, ch);
 
         // --- IN PHASE ---
         switch (inAnimationType) {
@@ -1361,15 +1421,15 @@ function applyAnimationsForPublish(inDirection, inAnimationType, outDirection, o
             case 'delaylinear2': { // wave
                 const skew = 30;
                 tl.from(el, {
-                    x: inOffset.x - natX,
-                    y: inOffset.y - natY,
-                    skewX: inDirection === 'left' ? skew
-                        : inDirection === 'right' ? -skew : 0,
-                    skewY: inDirection === 'top' ? -skew
-                        : inDirection === 'bottom' ? skew : 0,
+                    x: webInOffset.fromX - naturalX,
+                    y: webInOffset.fromY - naturalY,
+                    skewX: inDirection === 'left' ? skew :
+                        inDirection === 'right' ? -skew : 0,
+                    skewY: inDirection === 'top' ? -skew :
+                        inDirection === 'bottom' ? skew : 0,
                     opacity: 0,
                     duration: inTime,
-                    ease: 'elastic.out(1,0.5)',
+                    ease: 'elastic.out(1, 0.5)',
                     stagger: 0.2
                 }, 0);
                 break;
@@ -1562,12 +1622,12 @@ function applyAnimationsForPublish(inDirection, inAnimationType, outDirection, o
             case 'delaylinear2': {
                 const skew = 30;
                 tl.to(el, {
-                    x: outOffset.x - natX,
-                    y: outOffset.y - natY,
-                    skewX: outDirection === 'left' ? -skew
-                        : outDirection === 'right' ? skew : 0,
-                    skewY: outDirection === 'top' ? skew
-                        : outDirection === 'bottom' ? -skew : 0,
+                    x: webOutOffset.outX - naturalX,
+                    y: webOutOffset.outY - naturalY,
+                    skewX: outDirection === 'left' ? -skew :
+                        outDirection === 'right' ? skew : 0,
+                    skewY: outDirection === 'top' ? skew :
+                        outDirection === 'bottom' ? -skew : 0,
                     opacity: 0,
                     duration: outTime,
                     ease: 'power2.in',
