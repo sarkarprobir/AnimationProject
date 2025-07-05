@@ -178,8 +178,8 @@ ul.right-listone li {
         font-weight: 400;
         text-decoration: none;
         color: #000;
-        width: 53px;
-        height: 46px;
+        width: 68px;
+        height: 50px;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -578,14 +578,14 @@ ul.TextStyle li {list-style-type:none; float:left; width:100%; margin-bottom:10p
         }
 
 
-/*ul.TextStyle li a.anton{font-family: "Anton", sans-serif; font-weight: normal; font-style: normal; }
+ul.TextStyle li a.anton{font-family: "Anton", sans-serif; font-weight: normal; font-style: normal; }
 ul.TextStyle li a.bebes{ font-family: "Bebas Neue", sans-serif; font-weight: normal; font-style: normal;}
 ul.TextStyle li a.monstro{ font-family: "Monstro"; font-style: normal;}
 ul.TextStyle li a.Montserrat{ font-family: "Montserrat", sans-serif; font-style: normal;} 
 ul.TextStyle li a.neto{ font-family: 'Noto Sans'; font-weight: normal; font-style: normal;}
 ul.TextStyle li a.pacifico{ font-family: "Pacifico", cursive; font-weight: normal; font-style: normal;}
 ul.TextStyle li a.Roboto{ font-family: "Roboto", sans-serif; font-weight: bold;}
-*/
+
 .middle-resulation {
     width: 146px;
     padding: 15px 0px !important;

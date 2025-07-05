@@ -2696,3 +2696,98 @@ function elementsTogglePopup() {
     // Toggle the target popup
     popup.style.display = (popup.style.display === 'block') ? 'none' : 'block';
 }
+
+
+// Graphic/ anumation mode toggle
+function initModeToggle() {
+    const buttons = document.querySelectorAll('.toggle-container .toggle-btn');
+
+    function applyModeOld(mode) {
+        if (mode === 'graphic') {
+            document.getElementById('opengl_popup').style.display = 'none';
+            document.getElementById('fontstyle_popup').style.display = 'block';
+            document.querySelector('.right-sec-one').style.display = 'none';
+            document.querySelector('.right-sec-two').style.display = 'block';
+
+        } else {
+
+            document.getElementById('opengl_popup').style.display = 'none';
+            document.getElementById('fontstyle_popup').style.display = 'none';
+            document.querySelector('.right-sec-one').style.display = 'block';
+            document.querySelector('.right-sec-two').style.display = 'none';
+        }
+    }
+    function applyMode(mode) {
+        const openglPopup = document.getElementById('opengl_popup');
+        const fontstylePopup = document.getElementById('fontstyle_popup');
+        const rightSecOne = document.querySelector('.right-sec-one');
+        const rightSecTwo = document.querySelector('.right-sec-two');
+
+        if (mode === 'graphic') {
+            if (openglPopup) openglPopup.style.display = 'none';
+            if (fontstylePopup) fontstylePopup.style.display = 'block';
+            if (rightSecOne) rightSecOne.style.display = 'none';
+            if (rightSecTwo) rightSecTwo.style.display = 'block';
+        } else {
+            if (openglPopup) openglPopup.style.display = 'none';
+            if (fontstylePopup) fontstylePopup.style.display = 'none';
+            if (rightSecOne) rightSecOne.style.display = 'block';
+            if (rightSecTwo) rightSecTwo.style.display = 'none';
+        }
+    }
+
+
+    buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // toggle active class
+            buttons.forEach(b => b.classList.toggle('active', b === btn));
+
+            // apply mode for the newly clicked button
+            applyMode(btn.dataset.mode);
+        });
+    });
+
+    // on load: find the one already marked .active
+    const defaultBtn = document.querySelector('.toggle-btn.active');
+    if (defaultBtn) {
+        applyMode(defaultBtn.dataset.mode);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', initModeToggle);
+
+//background color change for canvas
+function ChangeSpecificBackgroundColor(controlid) {
+    const backgroundSpecificColorPicker = document.getElementById("favBackgroundSpecificcolor");
+    if (!backgroundSpecificColorPicker) return;
+
+    const selectedColor = backgroundSpecificColorPicker.value;
+    $("#hdnBackgroundSpecificColor").val(selectedColor);
+
+    // Remove any background image from the <div>
+    const targetDiv = document.getElementById(controlid);
+    if (targetDiv) {
+        targetDiv.style.backgroundImage = 'none';
+        targetDiv.style.backgroundColor = selectedColor;
+    }
+
+    // Redraw logic (if needed for your layout)
+    drawCanvas('Common'); // Can be renamed if not canvas-related anymore
+}
+
+// Set background color for a specific <div>
+function setCanvasBackground(divId, color) {
+    const div = document.getElementById(divId);
+    if (div) {
+        div.style.backgroundColor = color;
+    }
+}
+
+// Set background color for all matching <div>s
+function setAllCanvasesBackground(selector, color) {
+    const divs = document.querySelectorAll(selector);
+    divs.forEach(div => {
+        div.style.backgroundColor = color;
+    });
+}
+
