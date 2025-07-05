@@ -743,43 +743,43 @@ function moveCaretToEnd(el) {
                             <div class="clear"></div>
                         </li>
                         <li>
-                            <a class="effectIn_btn active_effect" id="adelaylinear" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear','In')" title="linear">Linear1</a>
+                            <a class="effectIn_btn active_effect" id="adelaylinear" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear','In');SetAnimationType('delaylinear','In');" title="linear">Linear1</a>
                             <div class="clear"></div>
                         </li>
                          <li>
-                            <a class="effectIn_btn" id="adelaylinear2" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear2','In')" title="linear">Wave In</a>
+                            <a class="effectIn_btn" id="adelaylinear2" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear2','In');SetAnimationType('delaylinear2','In');" title="linear">Wave In</a>
                             <div class="clear"></div>
                         </li>
                         <li>
-                            <a class="effectIn_btn" id="amask" href="javascript:void(0)" onclick="textAnimationClick(this, 'mask','In')" title="mask">Mask</a>
+                            <a class="effectIn_btn" id="amask" href="javascript:void(0)" onclick="textAnimationClick(this, 'mask','In');SetAnimationType('mask','In');" title="mask">Mask</a>
                             <div class="clear"></div>
                         </li>
                         <li>
-                            <a class="effectIn_btn" id="ashake" href="javascript:void(0)" onclick="textAnimationClick(this, 'shake','In')" title="shake">Shake</a>
+                            <a class="effectIn_btn" id="ashake" href="javascript:void(0)" onclick="textAnimationClick(this, 'shake','In');SetAnimationType('shake','In');" title="shake">Shake</a>
                             <div class="clear"></div>
                         </li>
                         <li>
-                            <a class="effectIn_btn" id="ablur" href="javascript:void(0)" onclick="textAnimationClick(this, 'blur','In')" title="blur">Blur</a>
+                            <a class="effectIn_btn" id="ablur" href="javascript:void(0)" onclick="textAnimationClick(this, 'blur','In');SetAnimationType('blur','In');" title="blur">Blur</a>
                             <div class="clear"></div>
                         </li>
                         <li>
-                            <a class="effectIn_btn" id="aroll" href="javascript:void(0)" onclick="textAnimationClick(this, 'roll','In')" title="roll">Roll In</a>
+                            <a class="effectIn_btn" id="aroll" href="javascript:void(0)" onclick="textAnimationClick(this, 'roll','In');SetAnimationType('roll','In');" title="roll">Roll In</a>
                             <div class="clear"></div>
                         </li>
                         <li>
-                            <a class="effectIn_btn" id="acurtain" href="javascript:void(0)" onclick="textAnimationClick(this, 'curtain','In')" title="curtain">Curtain</a>
+                            <a class="effectIn_btn" id="acurtain" href="javascript:void(0)" onclick="textAnimationClick(this, 'curtain','In');SetAnimationType('curtain','In');" title="curtain">Curtain</a>
                             <div class="clear"></div>
                         </li>
                         <li>
-                            <a class="effectIn_btn" id="ablurFlash" href="javascript:void(0)" onclick="textAnimationClick(this, 'blurFlash','In')" title="blurFlash">BlurFlash</a>
+                            <a class="effectIn_btn" id="ablurFlash" href="javascript:void(0)" onclick="textAnimationClick(this, 'blurFlash','In');SetAnimationType('blurFlash','In');" title="blurFlash">BlurFlash</a>
                             <div class="clear"></div>
                         </li>
                         <li>
-                            <a class="effectIn_btn" id="apopcorn" href="javascript:void(0)" onclick="textAnimationClick(this, 'popcorn','In')" title="popcorn">Popcorn</a>
+                            <a class="effectIn_btn" id="apopcorn" href="javascript:void(0)" onclick="textAnimationClick(this, 'popcorn','In');SetAnimationType('popcorn','In');" title="popcorn">Popcorn</a>
                             <div class="clear"></div>
                         </li>
                         <li>
-                            <a class="effectIn_btn" id="aglitch" href="javascript:void(0)" onclick="textAnimationClick(this, 'glitch','In')" title="glitch">Glitch</a>
+                            <a class="effectIn_btn" id="aglitch" href="javascript:void(0)" onclick="textAnimationClick(this, 'glitch','In');SetAnimationType('glitch','In');" title="glitch">Glitch</a>
                             <div class="clear"></div>
                         </li>
                         
@@ -822,12 +822,29 @@ function moveCaretToEnd(el) {
                     <input type="hidden" id="hdnOutDirectiontSlide1" />
                     <input type="hidden" id="hdnOutDirectiontSlide2" />
                     <input type="hidden" id="hdnOutDirectiontSlide3" />
+
+
+                    <input type="hidden" id="hdnInEffectSlide1" />
+                    <input type="hidden" id="hdnInDirectiontSlide1" />
+                    <input type="hidden" id="hdnInEffectSlide2" />
+                    <input type="hidden" id="hdnInDirectiontSlide2" />
+                    <input type="hidden" id="hdnInEffectSlide3" />
+                    <input type="hidden" id="hdnInDirectiontSlide3" />
+
+                     <input type="hidden" id="hdnEffectSlide1Out" />
+                    <input type="hidden" id="hdnDirectiontSlide1Out" />
+                    <input type="hidden" id="hdnEffectSlide2Out" />
+                    <input type="hidden" id="hdnDirectiontSlide2Out" />
+                    <input type="hidden" id="hdnEffectSlide3Out" />
+                    <input type="hidden" id="hdnDirectiontSlide3Out" />
+
+
                     <h2>In</h2>
                     <ul class="right-listone d-flex justify-content-between align-items-center" id="uldirection">
                         <li>
                             <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                                 <!-- hide the <a> by default -->
-                                <a class="direction_link" id="aleft" href="javascript:void(0)" onclick="setCoordinate(this,'left',100,20,50,50,'In'); toggleDirectionActive(this);"
+                                <a class="direction_link" id="aleft" href="javascript:void(0)" onclick="setCoordinate(this,'left',100,20,50,50,'In'); toggleDirectionActive(this);SetDirectionType('left','In');"
                                    style=" width:100%; height:100%;">
                                     <img src="/images/icons/right arrow.svg" alt="Left to Center">
                                 </a>
@@ -842,7 +859,7 @@ function moveCaretToEnd(el) {
                         <li>
                             <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                                 <!-- hide the <a> by default -->
-                                <a class="direction_link" id="aright" href="javascript:void(0)" onclick="setCoordinate(this,'right',400,0,50,50,'In'); toggleDirectionActive(this);"
+                                <a class="direction_link" id="aright" href="javascript:void(0)" onclick="setCoordinate(this,'right',400,0,50,50,'In'); toggleDirectionActive(this);SetDirectionType('right','In');"
                                    style=" width:100%; height:100%;">
                                     <img src="/images/icons/right arrow.svg" alt="right to Center"
                                          style=" transform: rotate(180deg);">
@@ -860,7 +877,7 @@ function moveCaretToEnd(el) {
                             <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                                 <!-- hide the <a> by default -->
                                 <a class="direction_link" id="abottom" href="javascript:void(0)"
-                                   onclick="setCoordinate(this,'bottom',800,0,50,50,'In'); toggleDirectionActive(this);"
+                                   onclick="setCoordinate(this,'bottom',800,0,50,50,'In'); toggleDirectionActive(this);SetDirectionType('bottom','In');"
                                    style=" width:100%; height:100%;">
                                     <img src="/images/icons/right arrow.svg" alt="bottom to Center"
                                          style=" transform: rotate(270deg);">
@@ -877,7 +894,7 @@ function moveCaretToEnd(el) {
                         <li>
                             <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                                 <!-- hide the <a> by default -->
-                                <a class="direction_link" id="atop" href="javascript:void(0)" onclick="setCoordinate(this,'top',400,0,50,50,'In'); toggleDirectionActive(this);"
+                                <a class="direction_link" id="atop" href="javascript:void(0)" onclick="setCoordinate(this,'top',400,0,50,50,'In'); toggleDirectionActive(this);SetDirectionType('top','In');"
                                    style=" width:100%; height:100%;">
                                     <img src="/images/icons/right arrow.svg" alt="top to Center"
                                          style=" transform: rotate(90deg);">
@@ -961,43 +978,43 @@ function moveCaretToEnd(el) {
                         <div class="clear"></div>
                     </li> *@
                     <li>
-                        <a class="effectOut_btn active_effect" id="adelaylinearOut1" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear','Out')" title="linear1">Linear1</a>
+                        <a class="effectOut_btn active_effect" id="adelaylinearOut1" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear','Out');SetAnimationType('delaylinear','Out');" title="linear1">Linear1</a>
                         <div class="clear"></div>
                     </li>
                     <li>
-                        <a class="effectOut_btn" id="adelaylinearOut2" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear2','Out')" title="linear2">Wave In</a>
+                        <a class="effectOut_btn" id="adelaylinearOut2" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear2','Out');SetAnimationType('delaylinear2','Out');" title="linear2">Wave In</a>
                         <div class="clear"></div>
                     </li>
                     <li>
-                        <a class="effectOut_btn" id="amaskOut" href="javascript:void(0)" onclick="textAnimationClick(this, 'mask','Out')" title="mask">Mask</a>
+                        <a class="effectOut_btn" id="amaskOut" href="javascript:void(0)" onclick="textAnimationClick(this, 'mask','Out');SetAnimationType('mask','Out');" title="mask">Mask</a>
                         <div class="clear"></div>
                     </li>
                     <li>
-                        <a class="effectOut_btn" id="ashakeOut" href="javascript:void(0)" onclick="textAnimationClick(this, 'shake','Out')" title="shake">Shake</a>
+                        <a class="effectOut_btn" id="ashakeOut" href="javascript:void(0)" onclick="textAnimationClick(this, 'shake','Out');SetAnimationType('shake','Out');" title="shake">Shake</a>
                         <div class="clear"></div>
                     </li>
                     <li>
-                        <a class="effectOut_btn" id="ablurOut" href="javascript:void(0)" onclick="textAnimationClick(this, 'blur','Out')" title="blur">Blur</a>
+                        <a class="effectOut_btn" id="ablurOut" href="javascript:void(0)" onclick="textAnimationClick(this, 'blur','Out');SetAnimationType('blur','Out');" title="blur">Blur</a>
                         <div class="clear"></div>
                     </li>
                     <li>
-                        <a class="effectOut_btn" id="arollOut" href="javascript:void(0)" onclick="textAnimationClick(this, 'roll','Out')" title="roll">Roll In</a>
+                        <a class="effectOut_btn" id="arollOut" href="javascript:void(0)" onclick="textAnimationClick(this, 'roll','Out');SetAnimationType('roll','Out');" title="roll">Roll In</a>
                         <div class="clear"></div>
                     </li>
                     <li>
-                        <a class="effectOut_btn" id="acurtainOut" href="javascript:void(0)" onclick="textAnimationClick(this, 'curtain','Out')" title="curtain">Curtain</a>
+                        <a class="effectOut_btn" id="acurtainOut" href="javascript:void(0)" onclick="textAnimationClick(this, 'curtain','Out');SetAnimationType('curtain','Out');" title="curtain">Curtain</a>
                         <div class="clear"></div>
                     </li>
                     <li>
-                        <a class="effectOut_btn" id="ablurFlashOut" href="javascript:void(0)" onclick="textAnimationClick(this, 'blurFlash','Out')" title="blurFlash">BlurFlash</a>
+                        <a class="effectOut_btn" id="ablurFlashOut" href="javascript:void(0)" onclick="textAnimationClick(this, 'blurFlash','Out');SetAnimationType('blurFlash','Out');" title="blurFlash">BlurFlash</a>
                         <div class="clear"></div>
                     </li>
                     <li>
-                        <a class="effectOut_btn" id="apopcornOut" href="javascript:void(0)" onclick="textAnimationClick(this, 'popcorn','Out')" title="popcorn">Popcorn</a>
+                        <a class="effectOut_btn" id="apopcornOut" href="javascript:void(0)" onclick="textAnimationClick(this, 'popcorn','Out');SetAnimationType('popcorn','Out');" title="popcorn">Popcorn</a>
                         <div class="clear"></div>
                     </li>
                     <li>
-                        <a class="effectOut_btn" id="aglitchOut" href="javascript:void(0)" onclick="textAnimationClick(this, 'glitch','Out')" title="glitch">Glitch</a>
+                        <a class="effectOut_btn" id="aglitchOut" href="javascript:void(0)" onclick="textAnimationClick(this, 'glitch','Out');SetAnimationType('glitch','Out');" title="glitch">Glitch</a>
                         <div class="clear"></div>
                     </li>
                     
@@ -1044,7 +1061,7 @@ function moveCaretToEnd(el) {
                     <li>
                         <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                             <!-- hide the <a> by default -->
-                            <a class="direction_link out_link" id="oleft" href="javascript:void(0)" onclick="setCoordinate(this,'left',100,20,50,50,'Out'); toggleDirectionOutActive(this);"
+                            <a class="direction_link out_link" id="oleft" href="javascript:void(0)" onclick="setCoordinate(this,'left',100,20,50,50,'Out'); toggleDirectionOutActive(this);SetDirectionType('left','Out');"
                                style=" width:100%; height:100%;">
                                 <img src="/images/icons/right arrow.svg" alt="Center to Left">
                             </a>
@@ -1055,7 +1072,7 @@ function moveCaretToEnd(el) {
                     <li>
                         <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                             <!-- hide the <a> by default -->
-                            <a class="direction_link out_link" id="oright" href="javascript:void(0)" onclick="setCoordinate(this,'right',400,0,50,50,'Out'); toggleDirectionOutActive(this);"
+                            <a class="direction_link out_link" id="oright" href="javascript:void(0)" onclick="setCoordinate(this,'right',400,0,50,50,'Out'); toggleDirectionOutActive(this);SetDirectionType('right','Out');"
                                style=" width:100%; height:100%;">
                                 <img src="/images/icons/right arrow.svg" alt="Center to Right"
                                      style=" transform: rotate(180deg);">
@@ -1069,7 +1086,7 @@ function moveCaretToEnd(el) {
                         <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                             <!-- hide the <a> by default -->
                             <a class="direction_link out_link" id="obottom" href="javascript:void(0)"
-                               onclick="setCoordinate(this,'bottom',800,0,50,50,'Out'); toggleDirectionOutActive(this);"
+                               onclick="setCoordinate(this,'bottom',800,0,50,50,'Out'); toggleDirectionOutActive(this);SetDirectionType('bottom','Out');"
                                style=" width:100%; height:100%;">
                                 <img src="/images/icons/right arrow.svg" alt="Center to Bottom"
                                      style=" transform: rotate(270deg);">
@@ -1081,7 +1098,7 @@ function moveCaretToEnd(el) {
                     <li>
                         <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                             <!-- hide the <a> by default -->
-                            <a class="direction_link out_link" id="otop" href="javascript:void(0)" onclick="setCoordinate(this,'top',400,0,50,50,'Out'); toggleDirectionOutActive(this);"
+                            <a class="direction_link out_link" id="otop" href="javascript:void(0)" onclick="setCoordinate(this,'top',400,0,50,50,'Out'); toggleDirectionOutActive(this);SetDirectionType('top','Out');"
                                style=" width:100%; height:100%;">
                                 <img src="/images/icons/right arrow.svg" alt="Center to Top"
                                      style=" transform: rotate(90deg);">

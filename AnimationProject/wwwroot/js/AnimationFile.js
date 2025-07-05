@@ -32,6 +32,91 @@ function textAnimationClick(clickedElement, type, from) {
         clickedElement.classList.add("active_effect");
     }
 }
+function SetAnimationType(AnimationTypeType, from) {
+    if (from == 'In') {
+        if (activeSlide === 1) {
+            $("#hdnInEffectSlide1").val(AnimationTypeType);
+            if ($("#hdnInDirectiontSlide1").val() == '') {
+                $("#hdnInDirectiontSlide1").val('left');
+            }
+        }
+        else if (activeSlide === 2) {
+            $("#hdnInEffectSlide2").val(AnimationTypeType);
+            if ($("#hdnInDirectiontSlide2").val() == '') {
+                $("#hdnInDirectiontSlide2").val('left');
+            }
+        }
+        else if (activeSlide === 3) {
+            $("#hdnInEffectSlide3").val(AnimationTypeType);
+            if ($("#hdnInDirectiontSlide3").val() == '') {
+                $("#hdnInDirectiontSlide3").val('left');
+            }
+        }
+    }
+    else if(from == 'Out') {
+        if (activeSlide === 1) {
+            $("#hdnEffectSlide1Out").val(AnimationTypeType);
+            if ($("#hdnDirectiontSlide1Out").val() == '') {
+                $("#hdnDirectiontSlide1Out").val('left');
+            }
+        }
+        else if (activeSlide === 2) {
+            $("#hdnEffectSlide2Out").val(AnimationTypeType);
+            if ($("#hdnDirectiontSlide2Out").val() == '') {
+                $("#hdnDirectiontSlide2Out").val('left');
+            }
+        }
+        else if (activeSlide === 3) {
+            $("#hdnEffectSlide3Out").val(AnimationTypeType);
+            if ($("#hdnDirectiontSlide3Out").val() == '') {
+                $("#hdnDirectiontSlide3Out").val('left');
+            }
+        }
+    }
+}
+function SetDirectionType(DirectionType, from) {
+    if (from == 'In') {
+        if (activeSlide === 1) {
+            $("#hdnInDirectiontSlide1").val(DirectionType);
+            if ($("#hdnInEffectSlide1").val() == '') {
+                $("#hdnInEffectSlide1").val('delaylinear');
+            }
+           
+        }
+        else if (activeSlide === 2) {
+            $("#hdnInDirectiontSlide2").val(DirectionType);
+            if ($("#hdnInEffectSlide2").val() == '') {
+                $("#hdnInEffectSlide2").val('delaylinear');
+            }
+        }
+        else if (activeSlide === 3) {
+            $("#hdnInDirectiontSlide3").val(DirectionType);
+            if ($("#hdnInEffectSlide3").val() == '') {
+                $("#hdnInEffectSlide3").val('delaylinear');
+            }
+        }
+    }
+    else if (from == 'Out') {
+        if (activeSlide === 1) {
+            $("#hdnDirectiontSlide1Out").val(DirectionType);
+            if ($("#hdnEffectSlide1Out").val() == '') {
+                $("#hdnEffectSlide1Out").val('delaylinear');
+            }
+        }
+        else if (activeSlide === 2) {
+            $("#hdnDirectiontSlide2Out").val(DirectionType);
+            if ($("#hdnEffectSlide2Out").val() == '') {
+                $("#hdnEffectSlide2Out").val('delaylinear');
+            }
+        }
+        else if (activeSlide === 3) {
+            $("#hdnDirectiontSlide3Out").val(DirectionType);
+            if ($("#hdnEffectSlide3Out").val() == '') {
+                $("#hdnEffectSlide3Out").val('delaylinear');
+            }
+        }
+    }
+}
 function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imageEndX, imageEndY, from) {
     // Get the container using its ID.
     var ulDirection = document.getElementById("uldirection");
@@ -979,4 +1064,762 @@ function applyAnimations(direction, condition, loopCount) {
 
 
 }
+
+function applyAnimationsForPublish11(inDirection, inAnimationType, outDirection, outAnimationType) {
+    clearSelectedBox();
+
+    const inTime = parseFloat(selectedInSpeed) || 4;
+    const stayTime = parseFloat(selectedStaySpeed) || 3;
+    const outTime = parseFloat(selectedOutSpeed) || 4;
+
+    const $canvas = $('#myCanvas');
+    const cw = $canvas.width();
+    const ch = $canvas.height();
+    const canvasOffset = $canvas.offset();
+
+    const masterTL = gsap.timeline();
+
+    $('.text-box').each(function (i, el) {
+        const $el = $(el);
+        const offset = $el.offset();
+        const elW = $el.outerWidth();
+        const elH = $el.outerHeight();
+
+        const naturalX = offset.left - canvasOffset.left;
+        const naturalY = offset.top - canvasOffset.top;
+
+        let fromX = naturalX, fromY = naturalY;
+        let outX = naturalX, outY = naturalY;
+
+        // Calculate offsets based on animation type and phase
+        const fromOffset = calculateOffset(elW, elH, cw, ch, inDirection, inAnimationType, 'in', naturalX, naturalY);
+        const outOffset = calculateOffset(elW, elH, cw, ch, outDirection, outAnimationType, 'out', naturalX, naturalY);
+
+        fromX = fromOffset.x;
+        fromY = fromOffset.y;
+        outX = outOffset.x;
+        outY = outOffset.y;
+        const staggerPerElement = 0.2;
+        const totalInTime = inTime + staggerPerElement * ($('.text-box').length - 1);
+
+        // IN Animation
+        masterTL.add(buildAnimation(el, inAnimationType, {
+            x: fromX - naturalX,
+            y: fromY - naturalY,
+            inTime,
+            direction: inDirection,
+            phase: 'in'
+        }), 0);
+
+        // STAY (No extra wait, exactly after IN finishes)
+        masterTL.to(el, { x: '+=0', y: '+=0', opacity: 1, duration: stayTime }, "+=" + inTime);
+
+        // OUT Animation
+        masterTL.add(buildAnimation(el, outAnimationType, {
+            x: outX - naturalX,
+            y: outY - naturalY,
+            outTime,
+            direction: outDirection,
+            phase: 'out'
+        }), "+=" + stayTime);
+
+        // RESET
+       // masterTL.set(el, { x: 0, y: 0, opacity: 1 }, "+=" + outTime);
+
+
+        // RESET
+       // masterTL.set(el, { x: 0, y: 0, opacity: 1 }, "+=" + outTime);
+    });
+
+    return masterTL;
+}
+
+function calculateOffset(elW, elH, cw, ch, direction, animationType, phase, naturalX, naturalY) {
+    let x = naturalX;
+    let y = naturalY;
+
+    if (animationType === 'delaylinear') {
+        if (phase === 'in') {
+            switch (direction) {
+                case 'left': x = -elW; break;
+                case 'right': x = cw; break;
+                case 'top': y = -elH; break;
+                case 'bottom': y = ch; break;
+            }
+        } else if (phase === 'out') {
+            // reverse for out phase
+            switch (direction) {
+                case 'left': x = cw; break;
+                case 'right': x = -elW; break;
+                case 'top': y = ch; break;
+                case 'bottom': y = -elH; break;
+            }
+        }
+    }
+    else if (animationType === 'delaylinear2' || animationType === 'blur' || animationType === 'roll' || animationType === 'popcorn' || animationType === 'glitch') {
+        switch (direction) {
+            case 'left': x = -elW; break;
+            case 'right': x = cw; break;
+            case 'top': y = -elH; break;
+            case 'bottom': y = ch; break;
+        }
+    }
+    else if (animationType === 'shake' || animationType === 'blurFlash') {
+        const distance = 20;
+        switch (direction) {
+            case 'left': x = naturalX - distance; break;
+            case 'right': x = naturalX + distance; break;
+            case 'top': y = naturalY - distance; break;
+            case 'bottom': y = naturalY + distance; break;
+        }
+    }
+    else if (animationType === 'mask' || animationType === 'curtain') {
+        // No position offset needed
+        x = naturalX;
+        y = naturalY;
+    }
+
+    return { x, y };
+}
+
+
+//function applyAnimationsForPublish(inDirection, inAnimationType, outDirection, outAnimationType, condition, loopCount) {
+//    clearSelectedBox();
+
+//    const inTime = parseFloat(selectedInSpeed) || 4;
+//    const stayTime = parseFloat(selectedStaySpeed) || 3;
+//    const outTime = parseFloat(selectedOutSpeed) || 4;
+
+//    const $canvas = $('#myCanvas');
+//    const cw = $canvas.width();
+//    const ch = $canvas.height();
+//    const canvasOffset = $canvas.offset();
+
+//    const masterTL = gsap.timeline();
+
+//    $('.text-box').each(function (i, el) {
+//        const $el = $(el);
+//        const offset = $el.offset();
+//        const elW = $el.outerWidth();
+//        const elH = $el.outerHeight();
+
+//        const naturalX = offset.left - canvasOffset.left;
+//        const naturalY = offset.top - canvasOffset.top;
+
+//        let fromX = naturalX, fromY = naturalY, outX = naturalX, outY = naturalY;
+
+//        // Calculate IN direction offsets
+//        switch (inDirection) {
+//            case 'left': fromX = -elW; break;
+//            case 'right': fromX = cw; break;
+//            case 'top': fromY = -elH; break;
+//            case 'bottom': fromY = ch; break;
+//        }
+
+//        // Calculate OUT direction offsets
+//        switch (outDirection) {
+//            case 'left': outX = -elW; break;
+//            case 'right': outX = cw; break;
+//            case 'top': outY = -elH; break;
+//            case 'bottom': outY = ch; break;
+//        }
+
+//        // IN Animation
+//        masterTL.add(buildAnimation(el, inAnimationType, {
+//            x: fromX - naturalX,
+//            y: fromY - naturalY,
+//            inTime,
+//            direction: inDirection,
+//            phase: 'in'
+//        }), 0);
+
+//        // STAY
+//        masterTL.to(el, { duration: stayTime }, "+=" + inTime);
+
+//        // OUT Animation
+//        masterTL.add(buildAnimation(el, outAnimationType, {
+//            x: outX - naturalX,
+//            y: outY - naturalY,
+//            outTime,
+//            direction: outDirection,
+//            phase: 'out'
+//        }), "+=" + stayTime);
+
+//        // RESET
+//        masterTL.set(el, { x: 0, y: 0, opacity: 1 }, "+=" + outTime);
+//    });
+
+//    return masterTL;
+//}
+
+function buildAnimation(el, animationType, { x, y, inTime, outTime, direction, phase }) {
+    const tl = gsap.timeline();
+    const skew = 30;
+    const easeIn = 'power2.out';
+    const easeOut = 'power2.in';
+
+    const duration = phase === 'in' ? inTime : outTime;
+    const ease = phase === 'in' ? easeIn : easeOut;
+
+    if (animationType === 'delaylinear') {
+        tl.fromTo(el, {
+            x: phase === 'in' ? x : 0,
+            y: phase === 'in' ? y : 0,
+            opacity: phase === 'in' ? 0 : 1
+        }, {
+            x: phase === 'in' ? 0 : x,
+            y: phase === 'in' ? 0 : y,
+            opacity: phase === 'in' ? 1 : 0,
+            duration,
+            ease,
+            stagger: 0.2
+        });
+    }
+    else if (animationType === 'delaylinear2') {
+        tl.fromTo(el, {
+            x: phase === 'in' ? x : 0,
+            y: phase === 'in' ? y : 0,
+            skewX: (direction === 'left' ? skew : direction === 'right' ? -skew : 0) * (phase === 'in' ? 1 : -1),
+            skewY: (direction === 'top' ? -skew : direction === 'bottom' ? skew : 0) * (phase === 'in' ? 1 : -1),
+            opacity: phase === 'in' ? 0 : 1
+        }, {
+            x: phase === 'in' ? 0 : x,
+            y: phase === 'in' ? 0 : y,
+            skewX: 0,
+            skewY: 0,
+            opacity: phase === 'in' ? 1 : 0,
+            duration,
+            ease: phase === 'in' ? 'elastic.out(1,0.5)' : 'power2.in',
+            stagger: 0.2
+        });
+    }
+    // Additional animations can be added here in similar format.
+
+    return tl;
+}
+
+
+function applyAnimationsForPublish(inDirection, inAnimationType, outDirection, outAnimationType, condition, loopCount) {
+    clearSelectedBox();
+
+    const inTime = parseFloat(selectedInSpeed) || 4;
+    const stayTime = parseFloat(selectedStaySpeed) || 3;
+    const outTime = parseFloat(selectedOutSpeed) || 4;
+
+    const $canvas = $('#myCanvas');
+    const cw = $canvas.width();
+    const ch = $canvas.height();
+    const canvasOffset = $canvas.offset();
+
+    const tl = gsap.timeline();
+
+    $('.text-box').each(function (i, el) {
+        const $el = $(el);
+        const off = $el.offset();
+        const elW = $el.outerWidth();
+        const elH = $el.outerHeight();
+        const natX = off.left - canvasOffset.left;
+        const natY = off.top - canvasOffset.top;
+
+        // Helpers to compute IN and OUT offsets
+        function computeOffset(dir, isIn) {
+            let x = natX, y = natY;
+            if (isIn) {
+                switch (dir) {
+                    case 'left': x = -elW; break;
+                    case 'right': x = cw; break;
+                    case 'top': y = -elH; break;
+                    case 'bottom': y = ch; break;
+                }
+            } else {
+                switch (dir) {
+                    case 'left': x = cw; break;
+                    case 'right': x = -elW; break;
+                    case 'top': y = ch; break;
+                    case 'bottom': y = -elH; break;
+                }
+            }
+            return { x, y };
+        }
+
+        const inOffset = computeOffset(inDirection, true);
+        const outOffset = computeOffset(outDirection, false);
+
+        // --- IN PHASE ---
+        switch (inAnimationType) {
+            case 'delaylinear':
+                tl.from(el, {
+                    x: inOffset.x - natX,
+                    y: inOffset.y - natY,
+                    opacity: 0,
+                    duration: inTime,
+                    ease: 'power2.out',
+                    stagger: 0.2
+                }, 0);
+                break;
+
+            case 'delaylinear2': { // wave
+                const skew = 30;
+                tl.from(el, {
+                    x: inOffset.x - natX,
+                    y: inOffset.y - natY,
+                    skewX: inDirection === 'left' ? skew
+                        : inDirection === 'right' ? -skew : 0,
+                    skewY: inDirection === 'top' ? -skew
+                        : inDirection === 'bottom' ? skew : 0,
+                    opacity: 0,
+                    duration: inTime,
+                    ease: 'elastic.out(1,0.5)',
+                    stagger: 0.2
+                }, 0);
+                break;
+            }
+
+            case 'mask': {
+                const clips = {
+                    left: 'inset(0% 0% 0% 100%)',
+                    right: 'inset(0% 100% 0% 0%)',
+                    top: 'inset(100% 0% 0% 0%)',
+                    bottom: 'inset(0% 0% 100% 0%)'
+                };
+                tl.from(el, {
+                    clipPath: clips[inDirection] || clips.right,
+                    duration: inTime,
+                    ease: 'power2.out',
+                    stagger: 0.2
+                }, 0);
+                break;
+            }
+
+            case 'shake': {
+                let from = {}, to = {};
+                if (/left|right/.test(inDirection)) {
+                    from.x = inDirection === 'left' ? -10 : 10;
+                    to.x = inDirection === 'left' ? 10 : -10;
+                } else {
+                    from.y = inDirection === 'top' ? -10 : 10;
+                    to.y = inDirection === 'top' ? 10 : -10;
+                }
+                tl.fromTo(el, from, {
+                    ...to,
+                    duration: inTime / 8,
+                    yoyo: true,
+                    repeat: 8,
+                    ease: 'power1.inOut'
+                }, 0);
+                break;
+            }
+
+            case 'blur':
+                tl.fromTo(el, {
+                    opacity: 0,
+                    filter: 'blur(10px)',
+                    x: inOffset.x - natX,
+                    y: inOffset.y - natY
+                }, {
+                    opacity: 1,
+                    filter: 'blur(0px)',
+                    x: 0,
+                    y: 0,
+                    duration: inTime,
+                    ease: 'power2.out',
+                    stagger: 0.2
+                }, 0);
+                break;
+
+            case 'roll': {
+                const angle = 90, dist = 100;
+                const rX = inDirection === 'left' ? -dist
+                    : inDirection === 'right' ? dist : 0;
+                const rY = inDirection === 'top' ? -dist
+                    : inDirection === 'bottom' ? dist : 0;
+                const rRot = inDirection === 'left' ? -angle
+                    : inDirection === 'right' ? angle
+                        : inDirection === 'top' ? angle : -angle;
+                tl.from(el, {
+                    opacity: 0,
+                    x: rX,
+                    y: rY,
+                    rotation: rRot,
+                    transformOrigin: '0% 50%',
+                    duration: inTime,
+                    ease: 'power2.out',
+                    stagger: 0.2
+                }, 0);
+                break;
+            }
+
+            case 'curtain': {
+                let origin, fromVars = { opacity: 0 }, outVars = {};
+                switch (inDirection) {
+                    case 'top': origin = '50% 0%'; fromVars.scaleY = 0; break;
+                    case 'bottom': origin = '50% 100%'; fromVars.scaleY = 0; break;
+                    case 'left': origin = '0% 50%'; fromVars.scaleX = 0; break;
+                    case 'right': origin = '100% 50%'; fromVars.scaleX = 0; break;
+                }
+                fromVars.transformOrigin = origin;
+                tl.from(el, {
+                    ...fromVars,
+                    duration: inTime,
+                    ease: 'power2.out',
+                    stagger: 0.2
+                }, 0);
+                break;
+            }
+
+            case 'blurFlash':
+                tl.fromTo(el, {
+                    opacity: 0,
+                    filter: 'blur(20px)',
+                    x: inOffset.x - natX,
+                    y: inOffset.y - natY
+                }, {
+                    opacity: 1,
+                    filter: 'blur(0px)',
+                    x: 0,
+                    y: 0,
+                    duration: inTime / 5,
+                    ease: 'power2.out',
+                    yoyo: true,
+                    repeat: 1,
+                    stagger: 0.2
+                }, 0)
+                    .set(el, { opacity: 1, filter: 'blur(0px)', x: 0, y: 0 }, inTime / 5 * 2);
+                break;
+
+            case 'popcorn': {
+                const pd = 50;
+                const pX = inDirection === 'left' ? -pd
+                    : inDirection === 'right' ? pd : 0;
+                const pY = inDirection === 'top' ? -pd
+                    : inDirection === 'bottom' ? pd : 0;
+                tl.fromTo(el, {
+                    opacity: 0,
+                    scale: 0.3,
+                    x: pX,
+                    y: pY
+                }, {
+                    opacity: 1,
+                    scale: 1.2,
+                    x: 0,
+                    y: 0,
+                    duration: inTime * 0.25,
+                    ease: 'power1.out',
+                    onComplete: () => gsap.to(el, { scale: 1, duration: inTime * 0.125, ease: 'power1.in' }),
+                    stagger: 0.1
+                }, 0);
+                break;
+            }
+
+            case 'glitch': {
+                const gd = 50;
+                const gX = inDirection === 'left' ? -gd
+                    : inDirection === 'right' ? gd : 0;
+                const gY = inDirection === 'top' ? -gd
+                    : inDirection === 'bottom' ? gd : 0;
+                tl.fromTo(el, {
+                    opacity: 0,
+                    x: gX,
+                    y: gY
+                }, {
+                    opacity: 1,
+                    x: 0,
+                    y: 0,
+                    duration: inTime * 0.3,
+                    ease: 'power2.out',
+                    stagger: 0.1
+                }, 0)
+                    .to(el, {
+                        x: () => gsap.utils.random(-5, 5),
+                        y: () => gsap.utils.random(-3, 3),
+                        repeat: 10,
+                        yoyo: true,
+                        duration: 0.05,
+                        ease: 'rough({strength:8,points:20,clamp:true})',
+                        stagger: 0.1
+                    }, inTime * 0.3);
+                break;
+            }
+        }
+
+        // --- STAY ---
+        tl.to(el, { duration: stayTime }, inTime);
+
+        // --- OUT PHASE ---
+        switch (outAnimationType) {
+            case 'delaylinear':
+                tl.to(el, {
+                    x: outOffset.x - natX,
+                    y: outOffset.y - natY,
+                    opacity: 0,
+                    duration: outTime,
+                    ease: 'power2.in',
+                    stagger: 0.2
+                }, inTime + stayTime)
+                    .set(el, { x: 0, y: 0, opacity: 1 }, inTime + stayTime + outTime);
+                break;
+
+            case 'delaylinear2': {
+                const skew = 30;
+                tl.to(el, {
+                    x: outOffset.x - natX,
+                    y: outOffset.y - natY,
+                    skewX: outDirection === 'left' ? -skew
+                        : outDirection === 'right' ? skew : 0,
+                    skewY: outDirection === 'top' ? skew
+                        : outDirection === 'bottom' ? -skew : 0,
+                    opacity: 0,
+                    duration: outTime,
+                    ease: 'power2.in',
+                    stagger: 0.2
+                }, inTime + stayTime)
+                    .set(el, { x: 0, y: 0, skewX: 0, skewY: 0, opacity: 1 }, inTime + stayTime + outTime);
+                break;
+            }
+
+            case 'mask': {
+                const clips = {
+                    left: 'inset(0% 0% 0% 100%)',
+                    right: 'inset(0% 100% 0% 0%)',
+                    top: 'inset(100% 0% 0% 0%)',
+                    bottom: 'inset(0% 0% 100% 0%)'
+                };
+                tl.to(el, {
+                    clipPath: clips[outDirection] || clips.right,
+                    duration: outTime,
+                    ease: 'power2.in',
+                    stagger: 0.2
+                }, inTime + stayTime)
+                    .set(el, { clipPath: 'inset(0% 0% 0% 0%)' }, inTime + stayTime + outTime);
+                break;
+            }
+
+            case 'shake': {
+                let from = {}, to = {};
+                if (/left|right/.test(outDirection)) {
+                    from.x = outDirection === 'left' ? -10 : 10;
+                    to.x = outDirection === 'left' ? 10 : -10;
+                } else {
+                    from.y = outDirection === 'top' ? -10 : 10;
+                    to.y = outDirection === 'top' ? 10 : -10;
+                }
+                tl.fromTo(el, from, {
+                    ...to,
+                    duration: outTime / 8,
+                    yoyo: true,
+                    repeat: 8,
+                    ease: 'power1.inOut'
+                }, inTime + stayTime)
+                    .set(el, { x: 0, y: 0 }, inTime + stayTime + outTime / 8 * 8);
+                break;
+            }
+
+            case 'blur':
+                tl.to(el, {
+                    opacity: 0,
+                    filter: 'blur(10px)',
+                    x: outOffset.x - natX,
+                    y: outOffset.y - natY,
+                    duration: outTime,
+                    ease: 'power2.in',
+                    stagger: 0.2
+                }, inTime + stayTime)
+                    .set(el, { opacity: 1, filter: 'blur(0px)', x: 0, y: 0 }, inTime + stayTime + outTime);
+                break;
+
+            case 'roll': {
+                const angle = 90, dist = 100;
+                const rX = outDirection === 'left' ? -dist
+                    : outDirection === 'right' ? dist : 0;
+                const rY = outDirection === 'top' ? -dist
+                    : outDirection === 'bottom' ? dist : 0;
+                const rRot = outDirection === 'left' ? angle
+                    : outDirection === 'right' ? -angle
+                        : outDirection === 'top' ? -angle : angle;
+                tl.to(el, {
+                    opacity: 0,
+                    x: rX,
+                    y: rY,
+                    rotation: rRot,
+                    transformOrigin: '0% 50%',
+                    duration: outTime,
+                    ease: 'power2.in',
+                    stagger: 0.2
+                }, inTime + stayTime)
+                    .set(el, { x: 0, y: 0, rotation: 0, opacity: 1 }, inTime + stayTime + outTime);
+                break;
+            }
+
+            case 'curtain': {
+                let origin, vars = { opacity: 0 };
+                switch (outDirection) {
+                    case 'top': origin = '50% 100%'; vars.scaleY = 0; break;
+                    case 'bottom': origin = '50% 0%'; vars.scaleY = 0; break;
+                    case 'left': origin = '100% 50%'; vars.scaleX = 0; break;
+                    case 'right': origin = '0% 50%'; vars.scaleX = 0; break;
+                }
+                vars.transformOrigin = origin;
+                tl.to(el, {
+                    ...vars,
+                    duration: outTime,
+                    ease: 'power2.in',
+                    stagger: 0.2
+                }, inTime + stayTime)
+                    .set(el, { scaleX: 1, scaleY: 1, opacity: 1, transformOrigin: origin }, inTime + stayTime + outTime);
+                break;
+            }
+
+            case 'blurFlash':
+                tl.fromTo(el, {
+                    opacity: 1,
+                    filter: 'blur(0px)',
+                    x: 0,
+                    y: 0
+                }, {
+                    opacity: 0,
+                    filter: 'blur(20px)',
+                    x: outOffset.x - natX,
+                    y: outOffset.y - natY,
+                    duration: outTime / 5,
+                    ease: 'power2.in',
+                    yoyo: true,
+                    repeat: 1,
+                    stagger: 0.2
+                }, inTime + stayTime)
+                    .set(el, { opacity: 1, filter: 'blur(0px)', x: 0, y: 0 }, inTime + stayTime + outTime / 5 * 2);
+                break;
+
+            case 'popcorn': {
+                const pd = 50;
+                const pX = outDirection === 'left' ? -pd
+                    : outDirection === 'right' ? pd : 0;
+                const pY = outDirection === 'top' ? -pd
+                    : outDirection === 'bottom' ? pd : 0;
+                tl.fromTo(el, {
+                    opacity: 1,
+                    scale: 1,
+                    x: 0,
+                    y: 0
+                }, {
+                    opacity: 0,
+                    scale: 0.3,
+                    x: pX,
+                    y: pY,
+                    duration: outTime * 0.25,
+                    ease: 'power1.in',
+                    onComplete: () => gsap.set(el, { scale: 1 }),
+                    stagger: 0.1
+                }, inTime + stayTime)
+                    .set(el, { x: 0, y: 0, opacity: 1 }, inTime + stayTime + outTime * 0.25);
+                break;
+            }
+
+            case 'glitch': {
+                const gd = 50;
+                const gX = outDirection === 'left' ? -gd
+                    : outDirection === 'right' ? gd : 0;
+                const gY = outDirection === 'top' ? -gd
+                    : outDirection === 'bottom' ? gd : 0;
+                tl.to(el, {
+                    x: () => gsap.utils.random(-5, 5),
+                    y: () => gsap.utils.random(-3, 3),
+                    repeat: 10,
+                    yoyo: true,
+                    duration: 0.05,
+                    ease: 'rough({strength:8,points:20,clamp:true})',
+                    stagger: 0.1
+                }, inTime + stayTime)
+                    .to(el, {
+                        opacity: 0,
+                        x: gX,
+                        y: gY,
+                        duration: outTime * 0.3,
+                        ease: 'power2.in',
+                        stagger: 0.1
+                    }, inTime + stayTime + 0.05 * 20)
+                    .set(el, { x: 0, y: 0, opacity: 1 }, inTime + stayTime + 0.05 * 20 + outTime * 0.3);
+                break;
+            }
+        }
+
+    });
+
+    return tl;
+}
+
+
+//function applyAnimationsForPublish(inDirection, inAnimationType, outDirection, outAnimationType, condition, loopCount) {
+//    clearSelectedBox();
+
+//    const inTime = parseFloat(selectedInSpeed) || 4;
+//    const stayTime = parseFloat(selectedStaySpeed) || 3;
+//    const outTime = parseFloat(selectedOutSpeed) || 4;
+
+//    const $canvas = $('#myCanvas');
+//    const cw = $canvas.width();
+//    const ch = $canvas.height();
+//    const canvasOffset = $canvas.offset();
+
+//    const tl = gsap.timeline();
+
+//    $('.text-box').each(function (i, el) {
+//        const $el = $(el);
+//        const off = $el.offset();
+//        const elW = $el.outerWidth();
+//        const elH = $el.outerHeight();
+//        const natX = off.left - canvasOffset.left;
+//        const natY = off.top - canvasOffset.top;
+
+//        // --- IN PHASE ---
+//        if (inAnimationType === 'delaylinear') {
+//            // compute start off‑screen
+//            let fromX = natX, fromY = natY;
+//            switch (inDirection) {
+//                case 'left': fromX = -elW; break;
+//                case 'right': fromX = cw; break;
+//                case 'top': fromY = -elH; break;
+//                case 'bottom': fromY = ch; break;
+//            }
+//            // 1) IN: slide in
+//            tl.from(el, {
+//                x: fromX - natX,
+//                y: fromY - natY,
+//                opacity: 0,
+//                duration: inTime,
+//                ease: 'power2.out',
+//                stagger: 0.2
+//            }, 0);
+
+//            // 2) STAY
+//            tl.to(el, { duration: stayTime }, inTime);
+
+//            // compute exit off‑screen
+//            let outX = natX, outY = natY;
+//            switch (outDirection) {
+//                case 'left': outX = cw; break;
+//                case 'right': outX = -elW; break;
+//                case 'top': outY = ch; break;
+//                case 'bottom': outY = -elH; break;
+//            }
+//            // 3) OUT: slide out
+//            tl.to(el, {
+//                x: outX - natX,
+//                y: outY - natY,
+//                opacity: 0,
+//                duration: outTime,
+//                ease: 'power2.in',
+//                stagger: 0.2
+//            }, inTime + stayTime);
+
+//            // 4) RESET
+//            tl.set(el, { x: 0, y: 0, opacity: 1 }, inTime + stayTime + outTime);
+//        }
+       
+//    });
+
+//    return tl;
+//}
+
+
+
 
