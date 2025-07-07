@@ -1299,7 +1299,8 @@ function buildAnimation(el, animationType, { x, y, inTime, outTime, direction, p
 }
 
 
-function applyAnimationsForPublish(inDirection, inAnimationType, outDirection, outAnimationType, condition, loopCount) {
+async function applyAnimationsForPublish(inDirection, inAnimationType, outDirection, outAnimationType, condition, loopCount) {
+  
     clearSelectedBox();
 
     const inTime = parseFloat(selectedInSpeed) || 4;
@@ -1824,8 +1825,7 @@ function applyAnimationsForPublish(inDirection, inAnimationType, outDirection, o
         }
 
     });
-
-    return tl;
+            return tl;
 }
 
 

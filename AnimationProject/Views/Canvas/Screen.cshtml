@@ -1,85 +1,883 @@
-﻿@{
-    ViewData["Title"] = "Screen";
-}
+﻿ @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
-@{
-    Layout = null;
-}
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"]</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
+  <script src="~/js/animation_min.js"></script>
+<script src="~/js/AnimationFile.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
+ <style>
+            /* ——— CSS ——— */
+           .image-box {
+      position: absolute;
+      box-sizing: border-box;
+      /* remove overflow:hidden here so handles show */
+      overflow: visible;    
+    }
+
+    /* wrap the actual <img> in a clip‐container if you still need hidden overflow on the image */
+    .image-box .img-clip {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;    /* clip the image only */
+    }
+
+    .image-box .img-clip img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+        .image-box img {
+      width: 100%;
+      height: auto;          /* preserve aspect ratio */
+      display: block;
+    }
+
+    /* selection outline */
+    .image-box.selected {
+      border: 1px solid #2196F3;
+    }
+
+    /* drag, rotate, delete handles */
+    .image-box .drag-handle,
+    .image-box .rotate-handle,
+    .image-box .delete-handle {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: #2196F3;
+      border: 2px solid white;
+      border-radius: 4px;
+      cursor: pointer;
+      z-index: 1000;
+    }
+
+    /* position the handles */
+    .drag-handle { top: -24px; left: -24px; cursor: move; }
+    .rotate-handle { top: -24px; right: -24px; border-radius: 50%; }
+    .delete-handle { bottom: -24px; right: -24px; background: red; }
+
+    /* resize handles */
+    .image-box .ui-resizable-handle {
+      background: #2196F3;
+      border: 1px solid #fff;
+      width: 8px;
+      height: 8px;
+      z-index: 10;
+    }
+
+        .rotate-line {
+            position: absolute;
+            width: 1px;
+            height: 20px;
+            background: #2196F3;
+            left: 50%;
+            top: -20px;
+            margin-left: -0.5px;
+        }
+    /* base styling for every handle */
+    .text-box .ui-resizable-handle {
+      width: 10px;
+      height: 10px;
+      background: #4faaff;
+      border: 2px solid white;
+      box-sizing: border-box;
+      position: absolute;
+      z-index: 2;
+    }
+
+    /* corner handles (you probably already see these) */
+    .text-box .ui-resizable-nw { top: -6px;  left: -6px;  cursor: nw-resize; }
+    .text-box .ui-resizable-ne { top: -6px;  right: -6px; cursor: ne-resize; }
+    .text-box .ui-resizable-sw { bottom: -6px; left: -6px;  cursor: sw-resize; }
+    .text-box .ui-resizable-se { bottom: -6px; right: -6px; cursor: se-resize; }
+
+    /* middle‑of‑edge handles */
+
+    .text-box .ui-resizable-e  { right: -6px;  top: 50%; transform: translateY(-50%); cursor: e-resize; }
+    .text-box .ui-resizable-w  { left: -6px;   top: 50%; transform: translateY(-50%); cursor: w-resize; }
+
+        /* .text-box {
+            position: absolute;
+            min-width: 150px;
+            min-height: 60px;
+            padding: 5px;
+            font-size: 24px;
+            border: 1px solid #2196F3;
+            outline: none;
+            background-color: transparent;
+            color: black;
+            white-space: pre-wrap;
+            word-break: break-word;
+            transform-origin: center center;
+            box-sizing: border-box;
+            overflow-wrap: break-word;
+
+        } */
+
+            .custom-ctx-menu {
+      position: absolute;
+      list-style: none;
+      margin: 0;
+      padding: 4px 0;
+      background: white;
+      border: 1px solid #ccc;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      z-index: 9999;
+    }
+    .custom-ctx-menu li {
+      padding: 6px 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .custom-ctx-menu li:hover {
+      background: #f0f0f0;
+    }
+
+               .disable-select {
+      user-select: none !important;
+    }
+       .text-content {
+      cursor: text;        /* text‑select cursor (I‑beam) */
+    }
+
+        .text-box {
+            position: absolute;
+            min-width:  0 !important;
+                min-height: 0 !important;
+           /*  border: 0.5px solid #2196F3 !important; */
+            background: white;
+            box-sizing: border-box;
+            overflow-wrap: break-word;
+            background-color: transparent;
+                cursor: move;
+                     position: absolute;
+        }
+
+        .text-content {
+            width: 100%;
+            height: 100%;
+            padding: 5px;
+            font-size: 24px;
+            color: black;
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-wrap:break-word;
+            overflow: auto; /* hides overflow */
+            outline: none;
+             /*    line-height: 1.2;  */  
+        }
+
+
+        .rotate-handle {
+            width: 16px;
+            height: 16px;
+            background: #2196F3;
+            border: 2px solid white;
+            border-radius: 50%;
+            position: absolute;
+            top: -28px;
+            left: 50%;
+            margin-left: -8px;
+            cursor: grab;
+            z-index: 1000;
+        }
+
+
+            .ui-resizable-ne, .ui-resizable-nw, .ui-resizable-se, .ui-resizable-sw {
+        cursor: nwse-resize;
+    }
+
+    .ui-resizable-e, .ui-resizable-w {
+        cursor: ew-resize;
+    }
+
+        /* Universal handle size and color */
+        .ui-resizable-handle {
+            width: 10px !important;
+            height: 10px !important;
+            background: #2196F3;
+            border: none;
+            z-index: 10;
+        }
+
+        /* Top-left (perfect) */
+        .ui-resizable-nw {
+            top: -5px !important;
+            left: -5px !important;
+        }
+
+        /* Top-right */
+        .ui-resizable-ne {
+            top: -5px !important;
+            right: -5px !important;
+        }
+
+        /* Bottom-left */
+        .ui-resizable-sw {
+            bottom: -5px !important;
+            left: -5px !important;
+        }
+
+        /* Bottom-right */
+        .ui-resizable-se {
+            bottom: -5px !important;
+            right: -5px !important;
+        }
+
+
+
+
+        .ui-resizable {
+            padding: 0 !important; /* This limits the grab area */
+        }
+
+        .text-box:focus {
+            outline: none !important;
+        }
+        .drag-handle {
+            width: 16px;
+            height: 16px;
+            position: absolute;
+            top: -28px;
+            left: -28px;
+            background: #2196F3;
+            border-radius: 4px;
+            cursor: move;
             display: flex;
-            justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            background-color: #f0f0f0;
-        }
-
-        .container {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            padding: 20px;
-        }
-
-        .box {
-            width: 200px;
-            height: 150px;
-            background-color: #4CAF50;
+            justify-content: center;
             color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            border-radius: 10px;
-            font-size: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-size: 12px;
         }
 
-            .box.fullscreen {
-                width: 100vw;
-                height: 100vh;
-                position: fixed;
-                top: 0;
-                left: 0;
-                z-index: 9999;
-                border-radius: 0;
-                font-size: 28px;
-            }
+        .delete-handle {
+            width: 18px;
+            height: 18px;
+            background: red;
+            color: white;
+            position: absolute;
+            top: -28px;
+            right: -28px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .selected {
+            border: 3px solid #2196F3 !important; /* Very thin dashed border */
+            box-sizing: border-box;
+        }
     </style>
 
 
-<div class="container">
-    <div class="box" data-original="Link 1">Link 1</div>
-    <div class="box" data-original="Link 2">Link 2</div>
-    <div class="box" data-original="Link 3">Link 3</div>
-    <div class="box" data-original="Link 4">Link 4</div>
-    <div class="box" data-original="Link 5">Link 5</div>
-    <div class="box" data-original="Link 6">Link 6</div>
-</div>
+    <style>
+        #canvasContainer {
+            position: relative;
+            display: inline-block;
+            height: 97vh;
+        }
+        /* Canvas styling */
+        #myCanvas {
+            background-color: #fff;
+            cursor: pointer;
+        }
+        /* Hidden input for text editing added*/
+        #textEditor {
+            position: absolute;
+            display: none;
+            outline: none;
+            background: linear-gradient(135deg, #ffffff, #f9f9f9);
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 16px;
+            color: #333;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+           z-index: 100;
+        }
 
-    <script>
+            #textEditor:focus {
+                box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+                transform: scale(1.02);
+            }
+    </style>
 
-    const boxes = document.querySelectorAll('.box');
+    <style>
 
-      boxes.forEach(box => {
-          box.addEventListener('click', () => {
-              if (box.classList.contains('fullscreen')) {
-                  // Minimize: restore original text
-                  box.classList.remove('fullscreen');
-                  box.textContent = box.getAttribute('data-original');
-              } else {
-                  // Expand: show minimize text
-                  box.classList.add('fullscreen');
-                  box.textContent = 'Click to Minimize';
-              }
-          });
-      });
+        input[type="color" i] {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            /* border: none; */
+            border-radius: 3px;
+        }
+
+        .color-swatch {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+            .color-swatch:hover {
+                transform: scale(1.1);
+                border-color: #666;
+            }
+
+            .color-swatch.selected {
+                border-color: #000;
+                box-shadow: 0 0 5px rgba(0,0,0,0.3);
+            }
+        /* Custom context menu styling */
+        #contextMenu {
+            position: absolute;
+            display: none;
+            z-index: 1000;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+            #contextMenu ul {
+                list-style: none;
+                margin: 0;
+                padding: 0;
+            }
+
+            #contextMenu li {
+                padding: 5px 10px;
+                cursor: pointer;
+                border-radius: 3px;
+            }
+
+            #contextMenu li:hover {
+                background-color: #eee;
+            }
+
+        .dropdown-toggle {
+            text-decoration: none;
+            color: #777b7c;
+        }
+
+        .dropdown-menu.show {
+            background: #fff;
+            border-radius: 3px;
+            border: 0px;
+            height: auto !important;
+            width: 210px;
+            -webkit-box-shadow: 0px 0px 7px #c1bbbb;
+            box-shadow: 0px 0px 7px #c1bbbb;
+            overflow: hidden !important;
+        }
+
+        .dropdown {
+            color: #000000 !important;
+        }
+
+            .dropdown:hover {
+                color: #212529 !important;
+            }
+
+        .dropdown-item {
+            color: #212529 !important;
+        }
+
+            .dropdown-item:hover {
+                color: #fff !important;
+                background-color: #6214fe !important;
+            }
+
+
+
+        /* gallery styles */
+
+        :root {
+            --font-mont: "Montserrat", sans-serif;
+            --font-nunito: "Nunito Sans", sans-serif;
+            --color-white: #fff;
+            --color-blue: #6214fe;
+            --color-muted-grey: #777b7c;
+            --color-border-grey: #00000036;
+        }
+
+        body {
+            font-family: var(--font-nunito);
+            margin: 0;
+            padding: 0;
+            font-size: 1rem;
+        }
+
+        .panel-left-gallery {
+            width: 500px;
+            height: 100vh;
+            background: var(--color-white);
+            /* z-index: 9; */
+            padding: 25px 30px;
+            position: absolute;
+            left: 0px;
+            top: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: space-between;
+            /* width: 47%; */
+        }
+
+        .tab {
+            padding: 3px 7px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            border: 1px solid transparent;
+            border-radius: 3px !important;
+        }
+
+            .tab:hover {
+                border: 1px solid #08080836;
+                border-radius: 5px;
+            }
+
+
+
+        .cross:hover {
+            color: red;
+        }
+
+        .tab.active {
+            background: var(--color-blue);
+            color: var(--color-white);
+            border-radius: 3px;
+        }
+
+        .left_content {
+            display: none;
+        }
+
+            .left_content.active {
+                display: block;
+            }
+
+        .search-box {
+            display: flex;
+        }
+
+            .search-box input {
+                flex: 1;
+                padding: 3px 5px;
+            }
+
+        .gallery {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            min-height: 432px;
+        }
+
+        .my_img_gal {
+            min-height: 430.7px;
+        }
+
+        .gallery img {
+            width: 110px;
+            height: 110px;
+            object-fit: contain;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 24px;
+        }
+
+            .pagination span {
+                margin: 0 9px;
+                cursor: pointer;
+                font-size: 14px;
+                right-listone
+            }
+
+        .shapes_drop {
+            text-decoration: none;
+            color: var(--color-muted-grey);
+        }
+
+        /* .shapes_tabs a {
+            font-size: 14px;
+            text-decoration: none;
+            color: black;
+        } */
+
+        .left-panel-imput {
+            flex: 1;
+            padding: 5px;
+            border-radius: 5px;
+            border-color: #00000036;
+        }
+
+        .search-box{
+            margin-top: 15px;
+        }
+
+        .file_upload {
+            border-radius: 5px !important;
+        }
+
+        .temp_gallery {
+            /* display: flex;
+            gap: 8px;
+            flex-wrap: wrap; */
+            overflow-y: hidden;
+            min-height: 432px;
+        }
+
+            /* .temp_gallery img {
+                width: auto;
+                height: 147px;
+            } */
+
+        .gallery_head {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .gallery_type {
+            font-size: 15px;
+        }
+        /* file upload css */
+        .custom-file-input {
+            display: flex;
+            align-items: center;
+            opacity: unset !important;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 2px solid #00000036 !important;
+            font-family: Arial, sans-serif;
+        }
+
+            .custom-file-input label {
+                background-color: #e6f4ea;
+                padding: 5px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: bold;
+                color: #333;
+                margin-bottom: 0 !important;
+            }
+
+            .custom-file-input span {
+                flex: 1;
+                padding: 5px;
+                font-size: 14px;
+                color: #888;
+                background-color: #f9f9f9;
+            }
+
+            .custom-file-input input {
+                display: none;
+            }
+        /* background image upload */
+        #background_popup {
+            display: none;
+            width: 254px;
+            height: 100%;
+            background-color: #fff;
+            padding: 20px;
+            position: absolute;
+            top: 3px;
+            left: 0;
+        }
+
+        #close_button {
+            border: 0px solid #ddd;
+            float: right;
+            background: transparent;
+            font-weight: bold;
+            font-size: 15px;
+            border-radius: 3px;
+            padding-top: 2.3px;
+        }
+
+        .back_label {
+            font-size: 15px;
+        }
+
+        .background_edit {
+            font-family: "Nunito Sans", sans-serif;
+            font-size: 15px;
+        }
+
+        .texture_img {
+            width: 75px;
+            height: 75px;
+        }
+
+        .texture_images {
+            min-height: 469px;
+        }
+
+        .texture_palette {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            border: 2px solid #000000 !important;
+            border-radius: 7px;
+            overflow: hidden;
+        }
+
+            .texture_palette img {
+                width: 30px;
+                height: 30px;
+            }
+
+        #texture_box {
+            display: block;
+        }
+
+
+
+        /* play modal */
+
+        .play_modal_body .modal-content {
+            border-radius: 10px;
+            width: 411px !important;
+            height: 704px !important;
+            transform: translate(295px, -180px);
+        }
+
+        .play_modal_body .modal-body img {
+            width: 100%;
+        }
+
+        .modal-open .modal {
+            overflow-y: hidden !important;
+        }
+
+        .play_modal_body .modal.show .modal-dialog {
+            max-width: 1000px !important;
+        }
+
+        .play_modal_btn {
+            position: absolute;
+            top: -16px;
+            right: -16px;
+            background-color: #ff0000 !important;
+            opacity: 1 !important;
+            border-radius: 100% !important;
+            padding: 7px !important;
+            color: #fff !important;
+        }
+
+        .menuboard-vertical-thum .active {
+            border: 2px solid #0000ff80;
+        }
+
+        .miniCanvas {
+            border-radius: 5px;
+            width: 40px;
+            height: 40px;
+        }
+
+            .miniCanvas:hover {
+                border: 2px solid #ccc;
+            }
+
+
+        .miniCanvas_active {
+            border: 2px solid #ccc;
+        }
+        /* all time deropdown */
+        .time_dropdown {
+            font-size: 14.8px !important;
+            font-weight: 400 !important;
+            color: #212529;
+        }
+        /* canvas size */
+        .vertical_canvas{
+            width: 32%;
+            aspect-ratio: 9/16;
+        }
+
+        .inside_wrapper{
+            height: fit-content !important;
+            display: flex;
+            justify-content: center;
+        }
+
+        .context-options{
+            text-align: left;
+            font-size: 14px;
+            font-family: "Nunito", sans-serif;
+        }
+        /* toggle button css */
+        .toggle-container {
+            display: inline-flex;
+            background-color: #fff;
+            padding: 4px;
+            border-radius: 3px;
+        }
+
+        .toggle-btn {
+            padding: 7px 16px;
+            font-size: 14px;
+            font-family: var(--font-nunito);
+            font-weight: 400;
+            color: #000;
+            background-color: #fff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            width: 101px;
+        }
+
+            .toggle-btn.active {
+                background-color: black;
+                color: white;
+            }
+
+    </style>
+    <div class="text-center" style="position:relative; background-color: black !important;">
+     <div class="d-flex align-items-stretch  main-canvas-content" style="background-color: black !important;">
+
+        <div class="panel-left " id="divpanelleft"  style="background-color: black !important;">
+        </div>
+         <div class="panel-middle d-flex align-items-center justify-content-center" id="canvasContainer" style="background-color: black !important;overflow:hidden;">
+
+
+            <div id="myCanvas" class="clsmyCanvas"></div>
+           
+            </div>
+     
+     
+              <div class="panel-right content" id="divpanelright"  style="background-color: black !important;">
+              </div>
+    </div>
+     </div>
+      <script>
+       function disableTextEditing() {
+    const textElements = document.querySelectorAll('.text-content');
+    textElements.forEach(el => {
+        el.removeAttribute('contenteditable');
+    });
+}
+        async function loadCanvasContainer() {
+    return new Promise((resolve) => {
+        const container = document.getElementById('canvasContainer');
+        container.innerHTML = '';
+
+        const savedData = JSON.parse(localStorage.getItem('canvasData'));
+
+        if (!savedData) {
+            console.log('No data to load.');
+            return resolve(); // Even if no data, finish the step
+        }
+
+        savedData.forEach(item => {
+            const el = document.createElement('div');
+            el.id = item.id;
+            el.className = item.class;
+
+            for (const key in item.style) {
+                el.style[key] = item.style[key];
+            }
+
+            el.innerHTML = item.html;
+
+            container.appendChild(el);
+        });
+ applyAnimationsForPublish("left", "delaylinear2",  "top", "delaylinear2", "", 1);
+       
+        resolve(); // ✅ Tell the system that loading is finished
+    });
+}
+
+
+    async function startLoop() {
+    while (true) {
+        await loadCanvasContainer();   // Wait until loading is fully done
+        disableTextEditing();          // Then lock editing
+        await new Promise(res => setTimeout(res, 10500));  // Wait before next cycle
+    }
+}
+
+// Start on page load
+window.onload = startLoop;
+window.onbeforeunload = function () {
+    localStorage.removeItem('canvasData');
+};
     </script>
+    <script>
+  window.addEventListener('load', () => {
+    const docEl = document.documentElement;
+
+    // Try the standard API
+    if (docEl.requestFullscreen) {
+      docEl.requestFullscreen().catch(err => {
+        console.warn('Fullscreen request failed:', err);
+      });
+    }
+    // Firefox
+    else if (docEl.mozRequestFullScreen) {
+      docEl.mozRequestFullScreen();
+    }
+    // Chrome, Safari & Opera
+    else if (docEl.webkitRequestFullscreen) {
+      docEl.webkitRequestFullscreen();
+    }
+    // IE/Edge
+    else if (docEl.msRequestFullscreen) {
+      docEl.msRequestFullscreen();
+    }
+  });
+</script>
+
+<script>
+;(function() {
+  const canvas      = document.getElementById('myCanvas');
+  if (!canvas) return;
+
+  // 1) Capture the original viewport size on page load
+  const originalW   = window.innerWidth;
+  const originalH   = window.innerHeight;
+
+  // 2) Decide what “significant” means (e.g. 20% change or a fixed px)
+  const THRESHOLD_PX = 100;
+
+  // 3) Handler for viewport changes
+  function onResize() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+
+    // If either dimension changed by more than our threshold, treat it as fullscreen toggle
+    const widthDiff  = Math.abs(w - originalW);
+    const heightDiff = Math.abs(h - originalH);
+
+    if (widthDiff > THRESHOLD_PX || heightDiff > THRESHOLD_PX) {
+      // Entered fullscreen (UI hidden)
+      canvas.style.height = h + 'px';
+      canvas.style.width  = w + 'px';
+      console.log('▶ Entered “TV fullscreen” mode');
+    } else {
+      // Exited fullscreen (UI shown)
+      canvas.style.height = '';  // restore via CSS or inline style
+      canvas.style.width  = '';
+      console.log('◀ Exited “TV fullscreen” mode');
+    }
+  }
+
+  // 4) Listen for all resize events
+  window.addEventListener('resize', onResize);
+})();
+</script>
+
+
+
+
+
