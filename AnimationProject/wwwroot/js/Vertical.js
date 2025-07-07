@@ -1,6 +1,6 @@
 ﻿let savedSelection = null;
 let selectedBox = null;
-const canvas = document.getElementById("myCanvas");
+
 
 
 
@@ -1137,6 +1137,7 @@ function addDefaultText() {
         $old.find('.ui-resizable-handle').remove();
     });
 
+    
     // 1) Create outer box
     const $box = $('<div class="text-box selected"></div>')
         .appendTo('#canvasContainer');

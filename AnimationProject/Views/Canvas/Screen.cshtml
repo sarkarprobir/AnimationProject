@@ -1,0 +1,85 @@
+﻿@{
+    ViewData["Title"] = "Screen";
+}
+
+@{
+    Layout = null;
+}
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .box {
+            width: 200px;
+            height: 150px;
+            background-color: #4CAF50;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            border-radius: 10px;
+            font-size: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+            .box.fullscreen {
+                width: 100vw;
+                height: 100vh;
+                position: fixed;
+                top: 0;
+                left: 0;
+                z-index: 9999;
+                border-radius: 0;
+                font-size: 28px;
+            }
+    </style>
+
+
+<div class="container">
+    <div class="box" data-original="Link 1">Link 1</div>
+    <div class="box" data-original="Link 2">Link 2</div>
+    <div class="box" data-original="Link 3">Link 3</div>
+    <div class="box" data-original="Link 4">Link 4</div>
+    <div class="box" data-original="Link 5">Link 5</div>
+    <div class="box" data-original="Link 6">Link 6</div>
+</div>
+
+    <script>
+
+    const boxes = document.querySelectorAll('.box');
+
+      boxes.forEach(box => {
+          box.addEventListener('click', () => {
+              if (box.classList.contains('fullscreen')) {
+                  // Minimize: restore original text
+                  box.classList.remove('fullscreen');
+                  box.textContent = box.getAttribute('data-original');
+              } else {
+                  // Expand: show minimize text
+                  box.classList.add('fullscreen');
+                  box.textContent = 'Click to Minimize';
+              }
+          });
+      });
+    </script>

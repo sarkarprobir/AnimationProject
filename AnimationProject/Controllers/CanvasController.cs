@@ -103,6 +103,10 @@ namespace AnimationProject.Controllers
         {
             return View();
         }
+        public IActionResult Screen(int companyId)
+        {
+            return View(companyId);
+        }
         [HttpPost]
         public IActionResult CreateHeaderSectionhtml()
         {
