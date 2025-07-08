@@ -66,7 +66,7 @@ async function GetDesignBoardByIdForDownloadNew(condition) {
                 if (id === '') {// need to change
                     try {
                         var data = {
-                            DesignBoardId: id,
+                            DesignBoardId: '904A244F-9D14-4075-BE33-99E6C7E812DB',//3664686F-7007-401A-850C-24916D63BD7A for local
                             DesignBoardPublishId: designBoardPublishId,
                             Jsondata: JSON.stringify(localStorage.getItem('canvasData'), null, 2)
                         };
