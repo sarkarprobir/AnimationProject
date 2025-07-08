@@ -2791,3 +2791,23 @@ function setAllCanvasesBackground(selector, color) {
     });
 }
 
+//bacgorund image logic
+function setCanvasBackgroundImage(imgElement) {
+    const imageSrc = imgElement.src;
+
+    const targetDiv = document.getElementById("myCanvas"); // renamed from 'canvas'
+
+    // Set the background using CSS
+    targetDiv.style.backgroundImage = `url('${imageSrc}')`;
+    targetDiv.style.backgroundSize = 'cover';
+    targetDiv.style.backgroundRepeat = 'no-repeat';
+    targetDiv.style.backgroundPosition = 'center';
+
+    // Store background image source for reference
+    targetDiv._bgImg = imageSrc;
+
+    // Update hidden form values
+    $("#hdnBackgroundImage").val(imageSrc);
+    $('#chkRemoveBackground').prop('checked', true);
+    $("#hdnBackgroundSpecificColor").val("rgba(255, 255, 255, 0.95)");
+}
