@@ -8,7 +8,7 @@ $(document).on('mousedown', function (e) {
     if ($(e.target).closest('.text-box').length) return;
 
     // If the clicked target is inside any control buttons, don't deselect
-    if ($(e.target).closest('#fontSize, #textColor, #fontFamily, #boldBtn, #italicBtn, #underlineBtn, #caseToggleBtn, #alignBtn, #lineHeight,#DLineSpacing,#ILineSpacing,#casingBtn, .fontFamBtn').length) return;
+    if ($(e.target).closest('#fontSize, #textColor, #fontFamily, #boldBtn, #italicBtn, #underlineBtn, #caseToggleBtn, #alignBtn, #lineHeight,#DLineSpacing,#ILineSpacing,#casingBtn, .fontFamBtn, #rotation_tool').length) return;
     // If the clicked element is NOT inside a .text-box
     if (!$(e.target).closest('.text-box').length) {
         if (selectedBox) {
@@ -2360,14 +2360,49 @@ function insertImageAtCursor(dataUrl) {
     sel.removeAllRanges();
     sel.addRange(range);
 }
+//function wireUpDeleteAndRotate($box) {
+//    // Delete on click
+//    $box.find('.delete-handle').on('click', e => {
+//        e.stopPropagation();
+//        $box.remove();
+//    });
+
+//    // Rotate logic
+//    const $rotate = $box.find('.rotate-handle');
+//    let rotating = false, center = {};
+//    $rotate.on('mousedown', e => {
+//        e.preventDefault();
+//        rotating = true;
+//        const offs = $box.offset();
+//        center = {
+//            x: offs.left + $box.outerWidth() / 2,
+//            y: offs.top + $box.outerHeight() / 2
+//        };
+//        $(document).on('mousemove.rotate', ev => {
+//            if (!rotating) return;
+//            const angle = Math.atan2(ev.pageY - center.y, ev.pageX - center.x) * 180 / Math.PI;
+//            $box.css('transform', `rotate(${angle}deg)`);
+//        }).on('mouseup.rotate', () => {
+//            rotating = false;
+//            $(document).off('.rotate');
+//        });
+//    });
+//}
+
 function wireUpDeleteAndRotate($box) {
-    // Delete on click
+    // Delete logic
     $box.find('.delete-handle').on('click', e => {
         e.stopPropagation();
         $box.remove();
     });
 
-    // Rotate logic
+    // Make this box the active one
+    $box.on('click', function () {
+        $('.text-box').removeClass('active'); // clear others
+        $box.addClass('active');
+    });
+
+    // Rotate logic (via drag handle)
     const $rotate = $box.find('.rotate-handle');
     let rotating = false, center = {};
     $rotate.on('mousedown', e => {
@@ -2382,12 +2417,44 @@ function wireUpDeleteAndRotate($box) {
             if (!rotating) return;
             const angle = Math.atan2(ev.pageY - center.y, ev.pageX - center.x) * 180 / Math.PI;
             $box.css('transform', `rotate(${angle}deg)`);
+
+            // Sync UI
+            $('#rotationSlider').val(Math.round(angle));
+            $('#rotationValue').text(Math.round(angle));
+            $('#rotationBadge').text(Math.round(angle));
         }).on('mouseup.rotate', () => {
             rotating = false;
             $(document).off('.rotate');
         });
     });
+
+    // Rotation via slider — only for active box
+    $('#rotationSlider').off('input').on('input', function () {
+        const activeBox = $('.text-box.active');
+        if (activeBox.length === 0) return;
+
+        const angle = parseInt(this.value, 10) || 0;
+        activeBox.css('transform', `rotate(${angle}deg)`);
+
+        $('#rotationValue').text(angle);
+        $('#rotationBadge').text(angle);
+    });
+
+    // Manual badge input — only for active box
+    $('#rotationBadge').off('input').on('input', function () {
+        const activeBox = $('.text-box.active');
+        if (activeBox.length === 0) return;
+
+        const angle = parseInt($(this).text(), 10) || 0;
+        const clamped = Math.max(-180, Math.min(180, angle));
+        activeBox.css('transform', `rotate(${clamped}deg)`);
+
+        $('#rotationSlider').val(clamped);
+        $('#rotationValue').text(clamped);
+        $(this).text(clamped);
+    });
 }
+
 
 
 // Unified createImageBox: handles both raster images and SVG data-urls
