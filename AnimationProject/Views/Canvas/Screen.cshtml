@@ -767,36 +767,117 @@
         el.removeAttribute('contenteditable');
     });
 }
-        async function loadCanvasContainer() {
-    return new Promise((resolve) => {
-        const container = document.getElementById('canvasContainer');
-        container.innerHTML = '';
+          // Modified loadCanvasContainer maintaining Promise-based API
+          async function loadCanvasContainer() {
+              return new Promise((resolve) => {
+                  const container = document.getElementById('canvasContainer');
+                  container.innerHTML = '';
 
-        const savedData = JSON.parse(localStorage.getItem('canvasData'));
+                  // 1) Try localStorage first (same as before)…
+                  let raw = localStorage.getItem('canvasData') || '[]';
+                  let savedData;
+                  try {
+                      savedData = JSON.parse(raw);
+                      if (typeof savedData === 'string') savedData = JSON.parse(savedData);
+                  } catch {
+                      savedData = [];
+                  }
 
-        if (!savedData) {
-            console.log('No data to load.');
-            return resolve(); // Even if no data, finish the step
-        }
+                  const designBoardId = sessionStorage.getItem("DesignBoardPublishId");
 
-        savedData.forEach(item => {
-            const el = document.createElement('div');
-            el.id = item.id;
-            el.className = item.class;
+                  function renderItems(data) {
+                      data.forEach(item => {
+                          const el = document.createElement('div');
+                          el.id = item.id;
+                          el.className = item.class;
+                          Object.assign(el.style, item.style);
+                          el.innerHTML = item.html;
+                          container.appendChild(el);
+                      });
+                  }
 
-            for (const key in item.style) {
-                el.style[key] = item.style[key];
-            }
+                  function finish() {
+                      // disable editing…
+                      document.querySelectorAll('#canvasContainer [contenteditable]')
+                          .forEach(el => el.removeAttribute('contenteditable'));
+                      resolve();
+                  }
 
-            el.innerHTML = item.html;
+                  function runAnimation() {
+                      const p = applyAnimationsForPublish("left", "delaylinear2", "top", "delaylinear2", "", 1);
+                      if (p && typeof p.then === 'function') p.then(finish);
+                      else setTimeout(finish, 2000);
+                  }
 
-            container.appendChild(el);
-        });
- applyAnimationsForPublish("left", "delaylinear2",  "top", "delaylinear2", "", 1);
-       
-        resolve(); // ✅ Tell the system that loading is finished
-    });
-}
+                  // 2) If no local data, fetch from server
+                  if (!savedData.length) {
+                      $.ajax({
+                          url: `${baseURL}Canvas/GetResponseDesignBoardDetailsPublishById`,
+                          type: "POST",
+                          dataType: "json",
+                          data: { DesignBoardPublishId: designBoardId },
+                          success: (responseArray) => {
+                              // 1) Ensure we have an array
+                              if (!Array.isArray(responseArray) || !responseArray.length) {
+                                  console.warn('Empty or invalid response:', responseArray);
+                                  renderItems([]);
+                                  runAnimation();
+                                  return;
+                              }
+
+                              // 2) Extract the jsonFile from the first element (or loop if needed)
+                              let raw = responseArray[0].jsonFile;
+
+                              // 3) Normalize into a JS array
+                              let dataArray = [];
+                              if (Array.isArray(raw)) {
+                                  // case: already an array
+                                  dataArray = raw;
+                              } else if (typeof raw === 'string') {
+                                  try {
+                                      // maybe plain JSON string?
+                                      if (raw.trim().startsWith('[')) {
+                                          dataArray = JSON.parse(raw);
+                                      } else {
+                                          // double‑quoted, escaped string
+                                          const unquoted = JSON.parse(raw);
+                                          dataArray = JSON.parse(unquoted);
+                                      }
+                                  } catch (err) {
+                                      console.error('Parsing jsonFile failed:', err, raw);
+                                  }
+                              }
+                              try {
+                                  savedData = JSON.parse(raw);
+                                  if (typeof savedData === 'string') savedData = JSON.parse(savedData);
+                              } catch {
+                                  savedData = [];
+                              }
+                              localStorage.setItem('canvasData', JSON.stringify(dataArray));
+                              // 4) Render and animate
+                              renderItems(dataArray);
+                              runAnimation();
+                          },
+                          error: (err) => {
+                              console.error('Fetch error:', err);
+                              resolve();
+                          }
+                      });
+                  }
+
+
+                  else {
+                      // 3) Use local data
+                      renderItems(savedData);
+                      runAnimation();
+                  }
+              });
+          }
+
+
+
+
+
 
 
     async function startLoop() {

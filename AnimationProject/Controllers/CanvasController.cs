@@ -480,6 +480,45 @@ namespace AnimationProject.Controllers
             }
 
         }
+        [HttpPost]
+        public async Task<IActionResult> PublishDesignSlideBoard(RequestDesignBoardSlideDetailForPublish request)
+        {
+            //if (!_checkSession.IsSession()) return Ok("login");
+            var response = new Response<ResponseSaveDesignBoardSlideDetailPublish>();
+            try
+            {
+                request.DesignBoardId = Guid.Parse("3664686F-7007-401A-850C-24916D63BD7A");
+                request.CustomerId = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
+                request.CompanyId = Guid.Parse("F174A15A-76B7-4E19-BE4B-4E240983DE55");
+                request.CreatedBy = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
+                var PublishDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/PublishDesignSlideBoard", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<ResponseSaveDesignBoardSlideDetailPublish>>(PublishDesignSlideBoard);
+                return Json(response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***PublishDesignSlideBoard*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return Json("NO");
+            }
+
+        }
+        [HttpPost]
+        public async Task<IActionResult> GetResponseDesignBoardDetailsPublishById(RequestDesignBoardDetailsPublish request)
+        {
+            var response = new Response<List<ResponseDesignBoardDetailsPublish>>();
+           
+            try
+            {
+                var ResponseDesignBoardJsonList = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetResponseDesignBoardDetailsPublishById", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<List<ResponseDesignBoardDetailsPublish>>>(ResponseDesignBoardJsonList);
+                return Json(response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***GetResponseDesignBoardDetailsPublishById*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return Json("NO");
+            }
+        }
         #endregion
     }
 }

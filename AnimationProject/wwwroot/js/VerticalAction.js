@@ -60,6 +60,41 @@ async function GetDesignBoardByIdForDownloadNew(condition) {
                // publishWithRecording($("#hdnInDirectiontSlide1").val(), $("#hdnInEffectSlide1").val(), $("#hdnDirectiontSlide1Out").val(), $("#hdnEffectSlide1Out").val(), '', 1);
               await  applyAnimationsForPublish($("#hdnInDirectiontSlide1").val(), $("#hdnInEffectSlide1").val(), $("#hdnDirectiontSlide1Out").val(), $("#hdnEffectSlide1Out").val(), '', 1);
                 saveCanvasContainer();
+                
+                var id = $('#hdnDesignBoardId').val(); // get GUID value
+                var designBoardPublishId = $('#hdnDesignBoardPublishId').val() ||'00000000-0000-0000-0000-000000000000'; // get GUID value
+                if (id === '') {// need to change
+                    try {
+                        var data = {
+                            DesignBoardId: id,
+                            DesignBoardPublishId: designBoardPublishId,
+                            Jsondata: JSON.stringify(localStorage.getItem('canvasData'), null, 2)
+                        };
+
+                        ShowLoader();
+                      
+                        const result = await $.ajax({
+                            url: baseURL + "Canvas/PublishDesignSlideBoard",
+                            type: "POST",
+                            dataType: "json",
+                            data: data,
+                            success: function (result) {
+                                $("#hdnDesignBoardPublishId").val(result.result);
+                                sessionStorage.setItem("DesignBoardPublishId", $("#hdnDesignBoardPublishId").val());
+                                HideLoader();
+                            },
+                            error: function (data) {
+                                console.log("error");
+                                console.log(data);
+                                HideLoader();
+                            }
+                        });
+                            
+                    } catch (e) {
+                        console.log("catch", e);
+                        HideLoader();
+                    }
+                }
 
                 const companyUniqueId = getCompanyIdFromUrl();
                         window.open(`${window.location.origin}/Screen/${companyUniqueId}`, "_blank");
@@ -103,7 +138,7 @@ function saveCanvasContainer() {
     });
 
     localStorage.setItem('canvasData', JSON.stringify(saveData));
-    console.log('Saved:', saveData);
+    console.log('Saved:', JSON.stringify(saveData, null, 2));
 }
 
 function loadCanvasContainer() {
