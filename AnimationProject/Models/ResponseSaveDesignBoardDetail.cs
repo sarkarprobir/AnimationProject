@@ -71,4 +71,13 @@ namespace AnimationProject.Models
         public string TransitionType { get; set; }
         public string TransitionColor { get; set; }
     }
+    public class ResponseSaveDesignBoardSlideDetailPublish
+    {
+        public string Response { get; set; }
+        public Guid Result { get; set; }
+    }
+    public class ResponseDesignBoardDetailsPublish
+    {
+        public string JsonFile { get; set; }
+    }
 }

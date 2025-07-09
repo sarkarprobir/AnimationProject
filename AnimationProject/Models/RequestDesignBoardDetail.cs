@@ -85,4 +85,18 @@
         public Guid DesignBoardDetailsId { get; set; }
         public Guid UpdatedBy { get; set; }
     }
+    public class RequestDesignBoardSlideDetailForPublish
+    {
+        public Guid DesignBoardPublishId { get; set; }
+        public Guid DesignBoardId { get; set; }
+        public Guid CustomerId { get; set; }
+        public Guid CompanyId { get; set; }
+        public Guid CreatedBy { get; set; }
+        public string Jsondata { get; set; }
+    }
+    public class RequestDesignBoardDetailsPublish
+    {
+        public Guid DesignBoardPublishId { get; set; }
+
+    }
 }

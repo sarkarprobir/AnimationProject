@@ -1,6 +1,6 @@
 ﻿let savedSelection = null;
 let selectedBox = null;
-const canvas = document.getElementById("myCanvas");
+let boxCounter = 1;
 
 
 
@@ -1137,10 +1137,12 @@ function addDefaultText() {
         $old.find('.ui-resizable-handle').remove();
     });
 
+    
     // 1) Create outer box
     const $box = $('<div class="text-box selected"></div>')
+        .attr('id', 'box-' + boxCounter) // Set unique ID like box-1, box-2, etc.
         .appendTo('#canvasContainer');
-
+    boxCounter++; // Increment for the next box
     // 2) Create inner editable area
     const $content = $('<div class="text-content" contenteditable="true">Default Text</div>')
         .appendTo($box);
@@ -2471,8 +2473,8 @@ function createImageBox(imageSrc) {
     });
 
     // 1) Create outer container
-    const $box = $('<div class="text-box selected"></div>').appendTo('#canvasContainer');
-
+    const $box = $('<div class="text-box selected"></div>').attr('id', 'box-' + boxCounter).appendTo('#canvasContainer');
+    boxCounter++; // Increment for the next box
     // ✅ Select the new box immediately (this fixes your color picker issue)
     $('.text-box').removeClass('selected');
     $box.addClass('selected');

@@ -855,6 +855,9 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" rel="stylesheet">
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ccapture.js@1.1.0/build/CCapture.all.min.js"></script>
+
 
     <script>
         function opengl()
@@ -1163,44 +1166,11 @@
         </div>
 
         <div class="panel-middle d-flex align-items-center justify-content-center" id="canvasContainer">
-            <div id="controls" style="margin-bottom: 10px; display: none;">
-                @* <button id="Animate" onclick="Animate()">Add Text Box</button>   *@
-                <button id="Animate1" onclick="Animate()">A1</button>
-                <button id="Animate2" onclick="Animate1()">A2</button>
-                <button id="Animate3" onclick="Animate2()">A3</button>
-                @* <label>
-                    Font Size:
-                    <input type="number" id="fontSize" value="24" style="width: 60px;" />
-                </label> *@
-                @*  <label>
-                    Text Color:
-                    <input type="color" id="textColor1" value="#000000" />
-                </label>  *@
-                @* <label>
-                    Font Family:
-                    <select id="fontFamily">
-                        <option value="Arial">Arial</option>
-                        <option value="Poppins">Poppins</option>
-                        <option value="Georgia">Georgia</option>
-                        <option value="Courier New">Courier New</option>
-                    </select>
-                </label> *@
-                @* <button class="toggle" id="boldBtn"><b>B</b></button> *@
-                @* <button class="toggle" id="italicBtn"><em>I</em></button> *@
-                @* <button class="toggle" id="underlineBtn"><u>U</u></button> *@
-                @* <button class="toggle" id="caseToggleBtn">Aa</button> *@
-                @* <button class="toggle" id="alignBtn"><i class="fas fa-align-left"></i></button> *@
-
-                @* <label>
-                    Line Height:
-                    <input type="number" id="lineHeight" step="0.1" value="1.2" style="width: 60px;" />
-                </label> *@
-            </div>
-
-
-            @* <canvas id="myCanvas" class="clsmyCanvas"></canvas> *@
+            <input type="hidden" id="hdnDesignBoardPublishId" />
+          
             <div id="myCanvas" class="clsmyCanvas"></div>
-            <!-- Custom context menu for deletion -->
+          @*   <canvas id="recordCanvas"  width="1920" height="1280"  style="display:none;"></canvas>
+           
             <div id="contextMenu">
                 <ul>
                     <li class="context-options" id="copyOption">Copy</li>
@@ -1210,7 +1180,7 @@
                     <li class="context-options" id="sendBackOption">Send Back</li>
                     <li class="context-options" id="deleteOption">Delete</l>
                 </ul>
-            </div>
+            </div> *@
             <p class="middle-resulation">Final Output 1080x1920</p>
             <textarea wrap="hard" style="display:none;" id="textEditor"></textarea>
         </div>
