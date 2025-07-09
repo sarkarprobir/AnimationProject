@@ -102,7 +102,7 @@ async function GetDesignBoardByIdForDownloadNew(condition) {
                         HideLoader();
                     }
                 }
-
+                localStorage.removeItem('canvasData');
                 const companyUniqueId = getCompanyIdFromUrl();
                 const projectId = $("#hdnPublishBoardUniqueId").val();
                 window.open(`${window.location.origin}/Screen/${companyUniqueId}/${projectId}`, "_blank");
