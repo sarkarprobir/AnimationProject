@@ -749,7 +749,19 @@
         <div class="panel-left " id="divpanelleft"  style="background-color: black !important;">
         </div>
          <div class="panel-middle d-flex align-items-center justify-content-center" id="canvasContainer" style="background-color: black !important;overflow:hidden;">
+          @*   <input type="hidden" id="hdnInEffectSlide1" />
+            <input type="hidden" id="hdnInDirectiontSlide1" />
+            <input type="hidden" id="hdnInEffectSlide2" />
+            <input type="hidden" id="hdnInDirectiontSlide2" />
+            <input type="hidden" id="hdnInEffectSlide3" />
+            <input type="hidden" id="hdnInDirectiontSlide3" />
 
+            <input type="hidden" id="hdnEffectSlide1Out" />
+            <input type="hidden" id="hdnDirectiontSlide1Out" />
+            <input type="hidden" id="hdnEffectSlide2Out" />
+            <input type="hidden" id="hdnDirectiontSlide2Out" />
+            <input type="hidden" id="hdnEffectSlide3Out" />
+            <input type="hidden" id="hdnDirectiontSlide3Out" /> *@
 
             <div id="myCanvas" class="clsmyCanvas"></div>
            
@@ -767,7 +779,17 @@
         el.removeAttribute('contenteditable');
     });
 }
-          // Modified loadCanvasContainer maintaining Promise-based API
+        const pathParts = window.location.pathname.split('/');
+        const companyId = pathParts[2]; // '1'
+        const projectId = pathParts[3]; // '4'
+        let InDirectiontSlide1 = "left";
+            let InEffectSlide1 = "delaylinear2";
+                let DirectiontSlide1Out = "top";
+                let EffectSlide1Out = "delaylinear2";
+
+
+
+              // Modified loadCanvasContainer maintaining Promise-based API
           async function loadCanvasContainer() {
               return new Promise((resolve) => {
                   const container = document.getElementById('canvasContainer');
@@ -804,7 +826,7 @@
                   }
 
                   function runAnimation() {
-                      const p = applyAnimationsForPublish("left", "delaylinear2", "top", "delaylinear2", "", 1);
+                                          const p = applyAnimationsForPublish(InDirectiontSlide1, InEffectSlide1, DirectiontSlide1Out, EffectSlide1Out,  "", 1);
                       if (p && typeof p.then === 'function') p.then(finish);
                       else setTimeout(finish, 2000);
                   }
@@ -815,18 +837,23 @@
                           url: `${baseURL}Canvas/GetResponseDesignBoardDetailsPublishById`,
                           type: "POST",
                           dataType: "json",
-                          data: { DesignBoardPublishId: designBoardId },
+                                      data: { PublishBoardUniqueId: projectId,CompanyUniqueId:companyId },
                           success: (responseArray) => {
+                                  
                               // 1) Ensure we have an array
                               if (!Array.isArray(responseArray) || !responseArray.length) {
                                   console.warn('Empty or invalid response:', responseArray);
-                                  renderItems([]);
+                                  renderItems([]);   
                                   runAnimation();
                                   return;
                               }
 
                               // 2) Extract the jsonFile from the first element (or loop if needed)
                               let raw = responseArray[0].jsonFile;
+                                               InDirectiontSlide1= responseArray[0].inDirection;
+                                               InEffectSlide1= responseArray[0].inEffect;
+                                               DirectiontSlide1Out= responseArray[0].outDirection;
+                                               EffectSlide1Out= responseArray[0].outEffect;
 
                               // 3) Normalize into a JS array
                               let dataArray = [];

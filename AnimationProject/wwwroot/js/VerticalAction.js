@@ -66,11 +66,16 @@ async function GetDesignBoardByIdForDownloadNew(condition) {
                 if (id === '') {// need to change
                     try {
                         var data = {
-                            DesignBoardId: '904A244F-9D14-4075-BE33-99E6C7E812DB',//3664686F-7007-401A-850C-24916D63BD7A for local
+                            DesignBoardId: 'D83CD53F-FB40-41BD-9B17-31CECE2232B1',//3664686F-7007-401A-850C-24916D63BD7A  or D83CD53F-FB40-41BD-9B17-31CECE2232B1 for local //904A244F-9D14-4075-BE33-99E6C7E812DB lIVE
                             DesignBoardPublishId: designBoardPublishId,
-                            Jsondata: JSON.stringify(localStorage.getItem('canvasData'), null, 2)
+                            Jsondata: JSON.stringify(localStorage.getItem('canvasData'), null, 2),
+                            InEffect: $("#hdnInEffectSlide1").val() ||'delaylinear2',
+                            InDirection: $("#hdnInDirectiontSlide1").val() ||'left',
+                            OutEffect: $("#hdnEffectSlide1Out").val() ||'delaylinear2',
+                            OutDirection: $("#hdnDirectiontSlide1Out").val() || 'top',
+                            CompanyUniqueId:1
                         };
-
+                       
                         ShowLoader();
                       
                         const result = await $.ajax({
@@ -80,7 +85,9 @@ async function GetDesignBoardByIdForDownloadNew(condition) {
                             data: data,
                             success: function (result) {
                                 $("#hdnDesignBoardPublishId").val(result.result);
-                                sessionStorage.setItem("DesignBoardPublishId", $("#hdnDesignBoardPublishId").val());
+                                $("#hdnPublishBoardUniqueId").val(result.publishBoardUniqueId);
+                                
+                               // sessionStorage.setItem("DesignBoardPublishId", $("#hdnDesignBoardPublishId").val());
                                 HideLoader();
                             },
                             error: function (data) {
@@ -97,7 +104,8 @@ async function GetDesignBoardByIdForDownloadNew(condition) {
                 }
 
                 const companyUniqueId = getCompanyIdFromUrl();
-                        window.open(`${window.location.origin}/Screen/${companyUniqueId}`, "_blank");
+                const projectId = $("#hdnPublishBoardUniqueId").val();
+                window.open(`${window.location.origin}/Screen/${companyUniqueId}/${projectId}`, "_blank");
 
             }
             //else if (i == 2) {
@@ -136,7 +144,7 @@ function saveCanvasContainer() {
             }
         });
     });
-
+    //need to delete
     localStorage.setItem('canvasData', JSON.stringify(saveData));
     console.log('Saved:', JSON.stringify(saveData, null, 2));
 }

@@ -68,7 +68,7 @@ app.MapControllerRoute(
 // 1) Specific “screen” route:
 app.MapControllerRoute(
     name: "animationScreen",
-    pattern: "screen/{companyId:int}",
+    pattern: "screen/{companyId:int}/{projectId:int}",
     defaults: new { controller = "Canvas", action = "Screen" }
 );
 

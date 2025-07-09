@@ -93,10 +93,16 @@
         public Guid CompanyId { get; set; }
         public Guid CreatedBy { get; set; }
         public string Jsondata { get; set; }
+        public string InEffect { get; set; }
+        public string InDirection { get; set; }
+        public string OutEffect { get; set; }
+        public string OutDirection { get; set; }
+        public long CompanyUniqueId { get; set; }
     }
     public class RequestDesignBoardDetailsPublish
     {
-        public Guid DesignBoardPublishId { get; set; }
+        public long PublishBoardUniqueId { get; set; }
+        public long CompanyUniqueId { get; set; }
 
     }
 }

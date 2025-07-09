@@ -75,9 +75,14 @@ namespace AnimationProject.Models
     {
         public string Response { get; set; }
         public Guid Result { get; set; }
+        public long PublishBoardUniqueId { get; set; }
     }
     public class ResponseDesignBoardDetailsPublish
     {
         public string JsonFile { get; set; }
+        public string InEffect { get; set; }
+        public string InDirection { get; set; }
+        public string OutEffect { get; set; }
+        public string OutDirection { get; set; }
     }
 }

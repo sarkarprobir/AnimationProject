@@ -103,9 +103,11 @@ namespace AnimationProject.Controllers
         {
             return View();
         }
-        public IActionResult Screen(int companyId)
+        public IActionResult Screen(int companyId, int projectId)
         {
-            return View(companyId);
+            ViewBag.CompanyId = companyId;
+            ViewBag.ProjectId = projectId;
+            return View();
         }
         [HttpPost]
         public IActionResult CreateHeaderSectionhtml()
