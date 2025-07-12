@@ -4906,10 +4906,12 @@ function updateEffectButtons(type) {
         $('.effectIn_btn').removeClass('active_effect');
         if (effectType === 'delaylinear') btnSelector = '#adelaylinear';
         else if (effectType === 'delaylinear2') btnSelector = '#adelaylinear2';
+        else if (effectType === 'webIn') btnSelector = '#awebIn';
     } else {
         $('.effectOut_btn').removeClass('active_effect');
         if (effectType === 'delaylinear') btnSelector = '#adelaylinearOut1';
         else if (effectType === 'delaylinear2') btnSelector = '#adelaylinearOut2';
+        else if (effectType === 'webIn') btnSelector = '#awebInOut';
     }
 
     // 4) activate it (if any)
