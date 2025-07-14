@@ -2163,6 +2163,20 @@ function textAnimationClick(clickedElement, type, from) {
         $('.effectIn_btn').removeClass('active_effect');
         clickedElement.classList.add("active_effect");
     }
+    if (type === 'roll') {
+        document.getElementById('abottom')?.classList.add('disabled-ani-button');
+        document.getElementById('atop')?.classList.add('disabled-ani-button');
+        document.getElementById('obottom')?.classList.add('disabled-ani-button');
+        document.getElementById('otop')?.classList.add('disabled-ani-button');
+        
+        
+    } else {
+        document.getElementById('abottom')?.classList.remove('disabled-ani-button');
+        document.getElementById('atop')?.classList.remove('disabled-ani-button');
+        document.getElementById('obottom')?.classList.remove('disabled-ani-button');
+        document.getElementById('otop')?.classList.remove('disabled-ani-button');
+    }
+
     // Get the container using its ID.
     //var ulEffects = document.getElementById("ulEffects");
 
@@ -2187,7 +2201,7 @@ function textAnimationClick(clickedElement, type, from) {
     //for (var i = 0; i < links.length; i++) {
     //    links[i].classList.remove("active_effect");
     //}
-    initMiniCanvasHandlers();
+   // initMiniCanvasHandlers();
 }
 // miniCanvasHandlers.js
 
@@ -5399,7 +5413,19 @@ function updateEffectButtons(type) {
         else if (effectType === 'delaylinear2') btnSelector = '#adelaylinearOut2';
         else if (effectType === 'roll') btnSelector = '#arollOut';
     }
+    if (effectType === 'roll') {
+        document.getElementById('abottom')?.classList.add('disabled-ani-button');
+        document.getElementById('atop')?.classList.add('disabled-ani-button');
+        document.getElementById('obottom')?.classList.add('disabled-ani-button');
+        document.getElementById('otop')?.classList.add('disabled-ani-button');
 
+
+    } else {
+        document.getElementById('abottom')?.classList.remove('disabled-ani-button');
+        document.getElementById('atop')?.classList.remove('disabled-ani-button');
+        document.getElementById('obottom')?.classList.remove('disabled-ani-button');
+        document.getElementById('otop')?.classList.remove('disabled-ani-button');
+    }
     // 4) activate it (if any)
     if (btnSelector) {
         $(btnSelector).addClass('active_effect');
