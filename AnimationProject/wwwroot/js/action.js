@@ -2839,6 +2839,8 @@ async function drawCanvasForDownload(condition) {
             ctxElementForDownload.font = parts.join(' ');
             ctxElementForDownload.fillStyle = item.textColor;
             ctxElementForDownload.textBaseline = 'top';
+            const scaleX = item.scaleX || 1;
+            const scaleY = item.scaleY || 1;
 
             const raw = item.text;
             let lines = raw.includes('\n') ? raw.split('\n') : wrapText(ctxElementForDownload, raw, item.boundingWidth  * padding);
@@ -2856,6 +2858,7 @@ async function drawCanvasForDownload(condition) {
             const rot = (item.rotation || 0) * Math.PI / 180;
             ctxElementForDownload.translate(cx, cy);
             ctxElementForDownload.rotate(rot);
+            ctxElementForDownload.scale(scaleX, scaleY);  //  Apply scaling here
             ctxElementForDownload.translate(-cx, -cy);
 
             // draw text lines
@@ -4406,84 +4409,75 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 drawCanvasForDownload(condition);
             });
         }
+        // Popcorn Canvas Animation
+        else if (animationType === "popcorn") {
+            const animItems = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+            const staticItems = [...images.filter(i => i.noAnim), ...textObjects.filter(t => t.noAnim)];
 
+            animItems.forEach(o => {
+                o.x = o.finalX;
+                o.y = o.finalY;
+                o.scaleX = 0.5;
+                o.scaleY = 0.5;
+            });
+            staticItems.forEach(o => {
+                o.x = o.finalX;
+                o.y = o.finalY;
+                o.scaleX = 1;
+                o.scaleY = 1;
+            });
 
-        //else if (animationType === "roll") {
-        //    const allItems = [
-        //        ...images.filter(i => !i.noAnim),
-        //        ...textObjects.filter(t => !t.noAnim)
-        //    ];
+            const groupMap = new Map();
+            const units = [];
+            animItems.forEach(item => {
+                const gid = item.groupId;
+                if (gid != null) {
+                    if (!groupMap.has(gid)) {
+                        groupMap.set(gid, []);
+                        units.push(groupMap.get(gid));
+                    }
+                    groupMap.get(gid).push(item);
+                } else {
+                    units.push([item]);
+                }
+            });
 
-        //    // Group items by groupId
-        //    const groupMap = new Map();
-        //    const units = [];
-        //    allItems.forEach(item => {
-        //        const gid = item.groupId;
-        //        if (gid != null) {
-        //            if (!groupMap.has(gid)) {
-        //                groupMap.set(gid, []);
-        //                units.push(groupMap.get(gid));
-        //            }
-        //            groupMap.get(gid).push(item);
-        //        } else {
-        //            units.push([item]);
-        //        }
-        //    });
+            const tl = gsap.timeline({
+                repeat: loopCount - 1,
+                onUpdate: () => drawCanvasForDownload(condition),
+                onComplete: () => {
+                    [...animItems, ...staticItems].forEach(o => {
+                        o.scaleX = 1;
+                        o.scaleY = 1;
+                    });
+                    drawCanvasForDownload(condition);
+                }
+            });
 
-        //    allItems.forEach(o => {
-        //        o.x = o.finalX;
-        //        o.y = o.finalY;
-        //        o.rotation = 0;
-        //    });
+            staticItems.forEach(o => {
+                tl.set(o, { scaleX: 1, scaleY: 1 }, 0);
+            });
 
-        //    const inRotationAmount = (direction === "left") ? 360 : (direction === "right") ? -360 : 360;
-         
+            // IN phase: small to large (stay large)
+            tl.to(animItems, {
+                scaleX: 1.2,
+                scaleY: 1.2,
+                duration: inTime,
+                ease: "power2.out"
+            }, 0);
 
-        //    const tweenIn = 0.15 * inTime;
-        //    const tweenOut = 0.15 * outTime;
-        //    const overlapIn = tweenIn / 6;
-        //    const overlapOut = tweenOut / 6;
+            // STAY phase: hold the large size
+            tl.to({}, { duration: stayTime });
 
-        //    const tl = gsap.timeline({
-        //        repeat: loopCount - 1,
-        //        onRepeat: () => {
-        //            allItems.forEach(o => o.rotation = 0);
-        //            drawCanvasForDownload(condition);
-        //        },
-        //        onUpdate: () => drawCanvasForDownload(condition)
-        //    });
+            // OUT phase: large to small
+            tl.to(animItems, {
+                scaleX: 0.5,
+                scaleY: 0.5,
+                duration: outTime,
+                ease: "power2.in"
+            });
+        }
 
-        //    // Animate IN phase (per group)
-        //    units.forEach((unit, idx) => {
-        //        tl.to(unit, {
-        //            rotation: inRotationAmount,
-        //            duration: inTime,
-        //            ease: "power2.out"
-        //        }, "+=0");
-        //    });
-
-        //    const inEndTime = (units.length - 1) * overlapIn + tweenIn;
-
-        //    // STAY phase
-        //    tl.to({}, { duration: stayTime });
-
-        //    const outRotationAmount = (direction === "right") ? 360 : -360;
-
-        //    units.forEach((unit, idx) => {
-        //        tl.to(unit, {
-        //            rotation: `+=${outRotationAmount}`,
-        //            duration: outTime,
-        //            ease: "power2.out"
-        //        }, "+=0");
-        //    });
-
-        //    tl.eventCallback("onComplete", () => {
-        //        allItems.forEach(o => o.rotation = 0);
-        //        drawCanvasForDownload(condition);
-        //    });
-        //}
-
-   
       
        
         });
