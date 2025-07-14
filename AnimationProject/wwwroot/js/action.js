@@ -4358,11 +4358,133 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             //    drawCanvasForDownload(condition);
             //});
         }
+        else if (animationType === "roll") {
+            const allItems = [
+                ...images.filter(i => !i.noAnim),
+                ...textObjects.filter(t => !t.noAnim)
+            ];
+
+            // Grouping (if needed later)
+            allItems.forEach(o => {
+                o.x = o.finalX;
+                o.y = o.finalY;
+                o.rotation = 0;
+            });
+
+            const inRotationAmount = (direction === "left") ? 360 : (direction === "right") ? -360 : 360;
+            const outRotationAmount = (direction === "right") ? 360 : -360;
+
+            const tl = gsap.timeline({
+                repeat: loopCount - 1,
+                onRepeat: () => {
+                    allItems.forEach(o => o.rotation = 0);
+                    drawCanvasForDownload(condition);
+                },
+                onUpdate: () => drawCanvasForDownload(condition)
+            });
+
+            // IN: Rotate all items together
+            tl.to(allItems, {
+                rotation: inRotationAmount,
+                duration: inTime,
+                ease: "power2.out"
+            });
+
+            // STAY: Hold
+            tl.to({}, { duration: stayTime });
+
+            // OUT: Rotate all items together (new rotation amount)
+            tl.to(allItems, {
+                rotation: `+=${outRotationAmount}`,
+                duration: outTime,
+                ease: "power2.out"
+            });
+
+            // Reset after full animation
+            tl.eventCallback("onComplete", () => {
+                allItems.forEach(o => o.rotation = 0);
+                drawCanvasForDownload(condition);
+            });
+        }
 
 
+        //else if (animationType === "roll") {
+        //    const allItems = [
+        //        ...images.filter(i => !i.noAnim),
+        //        ...textObjects.filter(t => !t.noAnim)
+        //    ];
 
+        //    // Group items by groupId
+        //    const groupMap = new Map();
+        //    const units = [];
+        //    allItems.forEach(item => {
+        //        const gid = item.groupId;
+        //        if (gid != null) {
+        //            if (!groupMap.has(gid)) {
+        //                groupMap.set(gid, []);
+        //                units.push(groupMap.get(gid));
+        //            }
+        //            groupMap.get(gid).push(item);
+        //        } else {
+        //            units.push([item]);
+        //        }
+        //    });
 
-     //   console.log("TL duration:", tlText.duration(), "seconds");
+        //    allItems.forEach(o => {
+        //        o.x = o.finalX;
+        //        o.y = o.finalY;
+        //        o.rotation = 0;
+        //    });
+
+        //    const inRotationAmount = (direction === "left") ? 360 : (direction === "right") ? -360 : 360;
+         
+
+        //    const tweenIn = 0.15 * inTime;
+        //    const tweenOut = 0.15 * outTime;
+        //    const overlapIn = tweenIn / 6;
+        //    const overlapOut = tweenOut / 6;
+
+        //    const tl = gsap.timeline({
+        //        repeat: loopCount - 1,
+        //        onRepeat: () => {
+        //            allItems.forEach(o => o.rotation = 0);
+        //            drawCanvasForDownload(condition);
+        //        },
+        //        onUpdate: () => drawCanvasForDownload(condition)
+        //    });
+
+        //    // Animate IN phase (per group)
+        //    units.forEach((unit, idx) => {
+        //        tl.to(unit, {
+        //            rotation: inRotationAmount,
+        //            duration: inTime,
+        //            ease: "power2.out"
+        //        }, "+=0");
+        //    });
+
+        //    const inEndTime = (units.length - 1) * overlapIn + tweenIn;
+
+        //    // STAY phase
+        //    tl.to({}, { duration: stayTime });
+
+        //    const outRotationAmount = (direction === "right") ? 360 : -360;
+
+        //    units.forEach((unit, idx) => {
+        //        tl.to(unit, {
+        //            rotation: `+=${outRotationAmount}`,
+        //            duration: outTime,
+        //            ease: "power2.out"
+        //        }, "+=0");
+        //    });
+
+        //    tl.eventCallback("onComplete", () => {
+        //        allItems.forEach(o => o.rotation = 0);
+        //        drawCanvasForDownload(condition);
+        //    });
+        //}
+
+   
+      
        
         });
     

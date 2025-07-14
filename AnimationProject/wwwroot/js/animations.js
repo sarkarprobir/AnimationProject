@@ -1373,6 +1373,9 @@ function animateText(direction, condition, loopCount) {
         }
     });
 
+
+  
+
     if (animationType === "delaylinear") {
         // 1) Collect animatable items
         const allItems = [
@@ -1397,6 +1400,9 @@ function animateText(direction, condition, loopCount) {
             }
         });
 
+
+        
+
         // 3) Compute timings
         const scaleInText = inTime;
         const scaleOutText = outTime;
@@ -1412,11 +1418,12 @@ function animateText(direction, condition, loopCount) {
             onUpdate: () => drawCanvas(condition),
         });
 
-        // Pin noAnim items at t=0
+        // ✅ Pin noAnim items at t=0 — ensure they are visible always
         images.filter(i => i.noAnim).forEach(imgObj => {
             tlText.set(imgObj, {
-                x: imgObj.x,
-                y: imgObj.y,
+                x: imgObj.finalX,
+                y: imgObj.finalY,
+                rotation: 0,
                 opacity: imgObj.opacity ?? 100
             }, 0);
         });
@@ -1424,9 +1431,13 @@ function animateText(direction, condition, loopCount) {
             tlText.set(txtObj, {
                 x: txtObj.finalX,
                 y: txtObj.finalY,
+                rotation: 0,
                 opacity: txtObj.opacity ?? 100
             }, 0);
         });
+
+        // 🔥 Force immediate draw, outside GSAP
+        drawCanvas(condition);
 
         // ── IN ── (only when tabType === "In")
         if (tabType === "In") {
@@ -1442,8 +1453,7 @@ function animateText(direction, condition, loopCount) {
         }
 
         // ── STAY ── (runs for both "Stay" and "Out")
-        if (tabType === "Stay" || tabType === "Out") {
-            // Place a zero‐target tween at the end of the “In” block (or at t=0 if no In)
+        if (tabType === "Stay") {
             const startStayTime = (tabType === "In")
                 ? (units.length * staggerIn)
                 : 0;
@@ -1455,54 +1465,42 @@ function animateText(direction, condition, loopCount) {
         }
 
         // ── OUT ── (only when tabType === "Out")
+        // ── OUT ── (only when tabType === "Out")
         if (tabType === "Out") {
-            // 1) Immediately snap everything to its final position at t=0,
-            //    so there is no visible “In” animation.
+            // Snap everything to final immediately at t=0
             tlText.set([...textObjects, ...images], {
                 x: (i, target) => target.finalX,
                 y: (i, target) => target.finalY,
                 opacity: (i, target) => target.opacity ?? 100
             }, 0);
 
-            // 2) Schedule each unit’s Out tween right after the Stay block:
-            const outStartBase = stayTime;
-            // (since “In” is skipped, stay starts at t=0, so Out starts at t=stayTime)
-
+            // OUT starts immediately (no artificial delay)
             units.forEach((unit, idx) => {
-                const beginAt = outStartBase + idx * staggerOut;
                 tlText.to(unit, {
                     x: (i, target) => target.exitX,
                     y: (i, target) => target.exitY,
                     duration: individualOut,
                     ease: "power1.out",
                     onUpdate: () => drawCanvas(condition)
-                }, beginAt);
+                }, idx * staggerOut);
             });
         }
 
         // ── RESET ──
-        // Place the final “snap‐back” at the very end of the entire sequence.
-        // Compute how long this timeline actually is:
         let totalDuration;
         if (tabType === "In") {
-            // In runs (units.length * staggerIn), then Stay (stayTime), then Out (units.length * staggerOut)
             totalDuration = (units.length * staggerIn) + stayTime + (units.length * staggerOut);
         } else if (tabType === "Stay") {
-            // Only Stay is playing
             totalDuration = stayTime;
         } else {
-            // tabType === "Out": no In, so Stay (stayTime) + Out (units.length * staggerOut)
-            totalDuration = stayTime + (units.length * staggerOut);
+            totalDuration = (units.length * staggerOut);
         }
 
-        // Schedule the final reset at `totalDuration`
         tlText.set([...textObjects, ...images], {
             x: (i, target) => target.finalX,
             y: (i, target) => target.finalY
         }, totalDuration);
 
-        // Ensure that, when the timeline finishes completely, 
-        // we force all objects back to finalX/finalY.
         tlText.eventCallback("onComplete", () => {
             images.forEach(img => {
                 img.x = img.finalX;
@@ -1557,14 +1555,27 @@ function animateText(direction, condition, loopCount) {
             },
             onUpdate: () => drawCanvas(condition)
         });
+        // ✅ Pin noAnim items at t=0 — ensure they are visible always
+        images.filter(i => i.noAnim).forEach(imgObj => {
+            tlText.set(imgObj, {
+                x: imgObj.finalX,
+                y: imgObj.finalY,
+                rotation: 0,
+                opacity: imgObj.opacity ?? 100
+            }, 0);
+        });
+        textObjects.filter(t => t.noAnim).forEach(txtObj => {
+            tlText.set(txtObj, {
+                x: txtObj.finalX,
+                y: txtObj.finalY,
+                rotation: 0,
+                opacity: txtObj.opacity ?? 100
+            }, 0);
+        });
 
-        // Pin noAnim items at t=0
-        images.filter(i => i.noAnim).forEach(img =>
-            tlText.set(img, { x: img.x, y: img.y, opacity: img.opacity ?? 100 }, 0)
-        );
-        textObjects.filter(t => t.noAnim).forEach(txt =>
-            tlText.set(txt, { x: txt.finalX, y: txt.finalY, opacity: txt.opacity ?? 100 }, 0)
-        );
+        // 🔥 Force immediate draw, outside GSAP
+        drawCanvas(condition);
+
 
         // ── IN ── (only if requested)
         if (tabType === "In") {
@@ -1584,7 +1595,7 @@ function animateText(direction, condition, loopCount) {
             : 0;
 
         // ── STAY ── (for both Stay and Out)
-        if (tabType === "Stay" || tabType === "Out") {
+        if (tabType === "Stay" ) {
             tlText.to({}, {
                 duration: stayTime,
                 ease: "none"
@@ -1593,7 +1604,6 @@ function animateText(direction, condition, loopCount) {
 
         // ── OUT ── (only if requested)
         if (tabType === "Out") {
-            // snap all to final at t=0
             tlText.set([...images, ...textObjects], {
                 x: (i, t) => t.finalX,
                 y: (i, t) => t.finalY,
@@ -1607,12 +1617,12 @@ function animateText(direction, condition, loopCount) {
                 ease: "power1.out",
                 stagger: staggerOut,
                 onUpdate: () => drawCanvas(condition)
-            }, inEndTime + stayTime);
+            }, 0);
         }
 
         // ── RESET “snap‐back” at end ──
         // total duration = inEndTime + stayTime + (if Out) last exit end
-        let totalDuration = inEndTime + stayTime;
+        let totalDuration = inEndTime ;
         if (tabType === "Out") {
             totalDuration += (units.length - 1) * staggerOut + individualOut;
         }
@@ -1637,6 +1647,482 @@ function animateText(direction, condition, loopCount) {
         // const ratio     = tlText.duration() / slideExec;
         // tlText.timeScale(ratio);
     }
+    // ── Fade (canvas-only) ───────────────────────────
+    //else if (animationType === "fadeCanvas") {
+    //    const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+    //    // Reset to final and directional offset
+    //    items.forEach(o => { o.x = o.finalX; o.y = o.finalY; });
+    //    // Initialize opacity
+    //    if (tabType === "In") items.forEach(o => o.opacity = 0);
+    //    else items.forEach(o => o.opacity = 1);
+
+    //    const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+
+    //    // IN fade in
+    //    if (tabType === "In") {
+    //        tl.to(items, {
+    //            opacity: 1,
+    //            duration: inTime,
+    //            ease: "power2.out",
+    //            stagger: 0.1
+    //        }, 0);
+    //    }
+
+    //    // STAY
+    //    const fadeDelay = (tabType === "In") ? inTime : 0;
+    //    if (["Stay", "Out"].includes(tabType)) {
+    //        tl.to({}, { duration: stayTime, ease: "none" }, fadeDelay);
+    //    }
+
+    //    // OUT fade out
+    //    if (tabType === "Out") {
+    //        tl.to(items, {
+    //            opacity: 0,
+    //            duration: outTime,
+    //            ease: "power2.in",
+    //            stagger: 0.1
+    //        }, fadeDelay);
+    //    }
+
+    //    // RESET
+    //    tl.eventCallback("onComplete", () => {
+    //        items.forEach(o => o.opacity = 1);
+    //        drawCanvas(condition);
+    //    });
+    //}
+
+    // ── Fade (canvas-only)  not working───────────────────────────
+    else if (animationType === "fadeCanvas") {
+        const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+        // Reset to final and directional offset
+        items.forEach(o => { o.x = o.finalX; o.y = o.finalY; });
+        // Initialize opacity
+        if (tabType === "In") items.forEach(o => o.opacity = 0);
+        else items.forEach(o => o.opacity = 1);
+
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+
+        // IN fade in
+        if (tabType === "In") {
+            tl.to(items, {
+                opacity: 1,
+                duration: inTime,
+                ease: "power2.out",
+                stagger: 0.1
+            }, 0);
+        }
+
+        // STAY
+        const fadeDelay = (tabType === "In") ? inTime : 0;
+        if (["Stay", "Out"].includes(tabType)) {
+            tl.to({}, { duration: stayTime, ease: "none" }, fadeDelay);
+        }
+
+        // OUT fade out
+        if (tabType === "Out") {
+            tl.to(items, {
+                opacity: 0,
+                duration: outTime,
+                ease: "power2.in",
+                stagger: 0.1
+            }, fadeDelay);
+        }
+
+        // RESET
+        tl.eventCallback("onComplete", () => {
+            items.forEach(o => o.opacity = 1);
+            drawCanvas(condition);
+        });
+    }
+
+    // ── Bounce (canvas-only, directional) not working ────────────
+    else if (animationType === "bounceCanvas") {
+        const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+        // Reset to final and record start offsets
+        items.forEach(o => {
+            o.x = o.finalX;
+            o.y = o.finalY;
+            // apply initial offset saved earlier in precompute (exitX/exitY serve as offset direction)
+            o.startX = o.exitX || o.finalX;
+            o.startY = o.exitY || o.finalY;
+        });
+
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+
+        // IN bounce from startX/startY to finalX/finalY
+        if (tabType === "In") {
+            tl.fromTo(items,
+                { x: i => items[i].startX, y: i => items[i].startY },
+                { x: i => items[i].finalX, y: i => items[i].finalY, duration: inTime, ease: "bounce.out", stagger: 0.1 }
+                , 0);
+        }
+
+        // STAY
+        const bounceDelay = (tabType === "In")
+            ? inTime + 0.1 * (items.length - 1)
+            : 0;
+        if (["Stay", "Out"].includes(tabType)) {
+            tl.to({}, { duration: stayTime, ease: "none" }, bounceDelay);
+        }
+
+        // OUT bounce back to start positions
+        if (tabType === "Out") {
+            tl.to(items, {
+                x: i => items[i].startX,
+                y: i => items[i].startY,
+                duration: outTime,
+                ease: "bounce.in",
+                stagger: 0.1
+            }, bounceDelay);
+        }
+
+        // RESET
+        tl.eventCallback("onComplete", () => {
+            items.forEach(o => { o.x = o.finalX; o.y = o.finalY; });
+            drawCanvas(condition);
+        });
+    }
+    // ── Zoom (canvas-only) In working Out not working also only image working for In ───────────────────────────
+    else if (animationType === "zoomCanvas") {
+        const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+        // reset home & init small
+        items.forEach(o => {
+            o.x = o.finalX; o.y = o.finalY;
+            o.scaleX = o.scaleY = 0.1;
+            o.opacity = (tabType === "In" ? 0 : 1);
+        });
+
+        const tl = gsap.timeline({ repeat: loopCount - 1, onStart: () => drawCanvas(condition), onUpdate: () => drawCanvas(condition) });
+
+        if (tabType === "In") {
+            tl.to(items, {
+                scaleX: 1, scaleY: 1, opacity: 1,
+                duration: inTime, ease: "power2.out", stagger: 0.1
+            }, 0);
+        }
+        const delayZ = (tabType === "In") ? inTime + 0.1 * (items.length - 1) : 0;
+        if (["Stay", "Out"].includes(tabType)) {
+            tl.to({}, { duration: stayTime, ease: "none" }, delayZ);
+        }
+        if (tabType === "Out") {
+            tl.to(items, {
+                scaleX: 0.1, scaleY: 0.1, opacity: 0,
+                duration: outTime, ease: "power2.in", stagger: 0.1
+            }, delayZ);
+        }
+        tl.eventCallback("onComplete", () => {
+            items.forEach(o => { o.scaleX = 1; o.scaleY = 1; o.opacity = 1; });
+            drawCanvas(condition);
+        });
+    }
+
+    // ── Mask Reveal (canvas-only) not working────────────────────
+    else if (animationType === "maskCanvas") {
+        const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+        // reset & init full clip
+        items.forEach(o => { o.x = o.finalX; o.y = o.finalY; o.clip = 1; });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+
+        if (tabType === "In") {
+            tl.to(items, { clip: 0, duration: inTime, ease: "power2.out", stagger: 0.1 }, 0);
+        }
+        const delayM = (tabType === "In") ? inTime : 0;
+        if (["Stay", "Out"].includes(tabType)) {
+            tl.to({}, { duration: stayTime, ease: "none" }, delayM);
+        }
+        if (tabType === "Out") {
+            tl.to(items, { clip: 1, duration: outTime, ease: "power2.in", stagger: 0.1 }, delayM);
+        }
+        tl.eventCallback("onComplete", () => {
+            items.forEach(o => o.clip = 0);
+            drawCanvas(condition);
+        });
+    }
+
+    // ── Shake (canvas-only) working but direction not working all──────────────────────────
+    else if (animationType === "shakeCanvas") {
+        const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+        // reset home
+        items.forEach(o => { o.x = o.finalX; o.y = o.finalY; });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+
+        if (tabType === "In") {
+            tl.to(items, {
+                x: '+=10', duration: 0.05, yoyo: true, repeat: 5, stagger: 0.05
+            }, 0);
+        }
+        const delayS = (tabType === "In") ? 0.05 * 5 : 0;
+        if (["Stay", "Out"].includes(tabType)) {
+            tl.to({}, { duration: stayTime, ease: "none" }, delayS);
+        }
+        if (tabType === "Out") {
+            tl.to(items, {
+                x: '+=10', duration: 0.05, yoyo: true, repeat: 5, stagger: 0.05
+            }, delayS);
+        }
+        tl.eventCallback("onComplete", () => {
+            items.forEach(o => { o.x = o.finalX; o.y = o.finalY; });
+            drawCanvas(condition);
+        });
+    }
+
+    // ── Blur (canvas-only) not working───────────────────────────
+    else if (animationType === "blurCanvas") {
+        const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+        items.forEach(o => { o.x = o.finalX; o.y = o.finalY; o.blur = 20; });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+
+        if (tabType === "In") {
+            tl.to(items, { blur: 0, duration: inTime, ease: "power2.out", stagger: 0.1 }, 0);
+        }
+        const delayB = (tabType === "In") ? inTime : 0;
+        if (["Stay", "Out"].includes(tabType)) {
+            tl.to({}, { duration: stayTime, ease: "none" }, delayB);
+        }
+        if (tabType === "Out") {
+            tl.to(items, { blur: 20, duration: outTime, ease: "power2.in", stagger: 0.1 }, delayB);
+        }
+        tl.eventCallback("onComplete", () => {
+            items.forEach(o => o.blur = 0);
+            drawCanvas(condition);
+        });
+    }
+
+        // ── Roll (canvas-only) working───────────────────────────
+    else if (animationType === "roll") {
+        const animItems = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+        const staticItems = [...images.filter(i => i.noAnim), ...textObjects.filter(t => t.noAnim)];
+
+        // Grouping (logical only — no sequential staggering)
+        const groupMap = new Map();
+        const units = [];
+
+        animItems.forEach(item => {
+            const gid = item.groupId;
+            if (gid != null) {
+                if (!groupMap.has(gid)) {
+                    groupMap.set(gid, []);
+                    units.push(groupMap.get(gid));
+                }
+                groupMap.get(gid).push(item);
+            } else {
+                units.push([item]);
+            }
+        });
+
+        // Reset all
+        animItems.forEach(o => {
+            o.x = o.finalX;
+            o.y = o.finalY;
+            o.rotation = 0;
+        });
+        staticItems.forEach(o => {
+            o.x = o.finalX;
+            o.y = o.finalY;
+            o.rotation = 0;
+        });
+
+        // Set static items immediately
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+        staticItems.forEach(o => {
+            tl.set(o, { x: o.finalX, y: o.finalY, rotation: 0 }, 0);
+        });
+
+        const inRotationAmount = (direction === "left") ? 360 : (direction === "right") ? -360 : 360;
+        const outRotationAmount = (direction === "right") ? -360 : (direction === "left") ? 360 : -360;
+
+        // 🔵 IN phase — all animate together
+        if (tabType === "In") {
+            tl.to(animItems, {
+                rotation: inRotationAmount,
+                duration: inTime,
+                ease: "power2.out"
+            }, 0);
+        }
+
+        // 🟡 STAY phase (fixed to 1 second)
+        const delayR = (tabType === "In") ? inTime : 0;
+        if (["Stay"].includes(tabType)) {
+            tl.to({}, { duration: .5, ease: "none" }, delayR);  // Stay phase fixed to 1 second
+        }
+
+
+        //// 🔴 OUT phase — all animate together
+        //if (tabType === "Out") {
+        //    tl.to(animItems, {
+        //        rotation: `+=${outRotationAmount}`,
+        //        duration: outTime,
+        //        ease: "power2.out"
+        //    }, delayR + stayTime);
+        //}
+        if (tabType === "Out") {
+            tl.to(animItems, {
+                rotation: `+=${outRotationAmount}`,
+                duration: outTime,
+                ease: "power2.out"
+            }, 0);  // zero delay – OUT should fire immediately
+        }
+
+        // 🔄 Reset after loop
+        tl.eventCallback("onComplete", () => {
+            [...animItems, ...staticItems].forEach(o => o.rotation = 0);
+            drawCanvas(condition);
+        });
+    }
+
+    //else if (animationType === "roll") {
+    //    const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+    //    items.forEach(o => {
+    //        o.x = o.finalX;
+    //        o.y = o.finalY;
+    //        o.rotation = 0;
+    //    });
+
+    //    const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+
+    //    const inRotationAmount = (direction === "left") ? 360 : (direction === "right") ? -360 : 360;
+    //    const outRotationAmount = (direction === "right") ? -360 : (direction === "left") ? 360 : -360;
+
+    //    if (tabType === "In") {
+    //        tl.to(items, {
+    //            rotation: inRotationAmount,
+    //            duration: inTime,
+    //            ease: "power2.out",  // Consistent easing
+    //            stagger: 0.1
+    //        }, 0);
+    //    }
+
+    //    const delayR = (tabType === "In") ? inTime : 0;
+    //    if (["Stay", "Out"].includes(tabType)) {
+    //        tl.to({}, { duration: stayTime, ease: "none" }, delayR);
+    //    }
+
+    //    if (tabType === "Out") {
+    //        tl.to(items, {
+    //            rotation: outRotationAmount,
+    //            duration: outTime,
+    //            ease: "power2.out",  // Make OUT same as IN
+    //            stagger: 0.1
+    //        });
+    //    }
+
+    //    tl.eventCallback("onComplete", () => {
+    //        items.forEach(o => o.rotation = 0);
+    //        drawCanvas(condition);
+    //    });
+    //}
+
+
+
+
+    // ── Curtain (canvas-only) In working not OUt and only image works────────────────────────
+    else if (animationType === "curtainCanvas") {
+        const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+        items.forEach(o => { o.x = o.finalX; o.y = o.finalY; o.scaleY = 0; });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+
+        if (tabType === "In") {
+            tl.to(items, { scaleY: 1, duration: inTime, ease: "power2.out", stagger: 0.1 }, 0);
+        }
+        const delayC = (tabType === "In") ? inTime : 0;
+        if (["Stay", "Out"].includes(tabType)) {
+            tl.to({}, { duration: stayTime, ease: "none" }, delayC);
+        }
+        if (tabType === "Out") {
+            tl.to(items, { scaleY: 0, duration: outTime, ease: "power2.in", stagger: 0.1 }, delayC);
+        }
+        tl.eventCallback("onComplete", () => {
+            items.forEach(o => o.scaleY = 1);
+            drawCanvas(condition);
+        });
+    }
+
+    // ── BlurFlash (canvas-only) working───────────────────────
+    else if (animationType === "blurFlashCanvas") {
+        const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+        items.forEach(o => { o.x = o.finalX; o.y = o.finalY; o.blur = 0; o.opacity = 1; });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+
+        if (tabType === "In") {
+            tl.to(items, {
+                blur: 10, opacity: 0.5,
+                duration: inTime / 2, yoyo: true, repeat: 1, stagger: 0.1
+            }, 0);
+        }
+        const delayBF = (tabType === "In") ? inTime : 0;
+        if (["Stay", "Out"].includes(tabType)) {
+            tl.to({}, { duration: stayTime, ease: "none" }, delayBF);
+        }
+        if (tabType === "Out") {
+            tl.to(items, {
+                blur: 10, opacity: 0.5,
+                duration: outTime / 2, yoyo: true, repeat: 1, stagger: 0.1
+            }, delayBF);
+        }
+        tl.eventCallback("onComplete", () => {
+            items.forEach(o => { o.blur = 0; o.opacity = 1; });
+            drawCanvas(condition);
+        });
+    }
+
+    // ── Popcorn (canvas-only) In working Out not working and only Image working not tex ────────────────────────
+    else if (animationType === "popcornCanvas") {
+        const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+        items.forEach(o => { o.x = o.finalX; o.y = o.finalY; o.scaleX = 0.5; o.scaleY = 0.5; });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+
+        if (tabType === "In") {
+            tl.to(items, {
+                scaleX: 1.2, scaleY: 1.2,
+                duration: inTime / 2, yoyo: true, repeat: 1, stagger: 0.1
+            }, 0);
+        }
+        const delayP = (tabType === "In") ? inTime : 0;
+        if (["Stay", "Out"].includes(tabType)) {
+            tl.to({}, { duration: stayTime, ease: "none" }, delayP);
+        }
+        if (tabType === "Out") {
+            tl.to(items, {
+                scaleX: 0.5, scaleY: 0.5,
+                duration: outTime / 2, yoyo: true, repeat: 1, stagger: 0.1
+            }, delayP);
+        }
+        tl.eventCallback("onComplete", () => {
+            items.forEach(o => { o.scaleX = 1; o.scaleY = 1; });
+            drawCanvas(condition);
+        });
+    }
+
+    // ── Glitch (canvas-only) working ─────────────────────────
+    else if (animationType === "glitchCanvas") {
+        const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+        items.forEach(o => { o.x = o.finalX; o.y = o.finalY; });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+
+        if (tabType === "In") {
+            tl.to(items, {
+                x: i => items[i].finalX + gsap.utils.random(-10, 10),
+                duration: 0.1, repeat: 10, yoyo: true, stagger: 0.05
+            }, 0);
+        }
+        const delayG = (tabType === "In") ? 10 * 0.1 : 0;
+        if (["Stay", "Out"].includes(tabType)) {
+            tl.to({}, { duration: stayTime, ease: "none" }, delayG);
+        }
+        if (tabType === "Out") {
+            tl.to(items, {
+                x: i => items[i].finalX + gsap.utils.random(-10, 10),
+                duration: 0.1, repeat: 10, yoyo: true, stagger: 0.05
+            }, delayG);
+        }
+        tl.eventCallback("onComplete", () => {
+            items.forEach(o => { o.x = o.finalX; });
+            drawCanvas(condition);
+        });
+    }
+
+
+
 
    
    
@@ -4906,12 +5392,12 @@ function updateEffectButtons(type) {
         $('.effectIn_btn').removeClass('active_effect');
         if (effectType === 'delaylinear') btnSelector = '#adelaylinear';
         else if (effectType === 'delaylinear2') btnSelector = '#adelaylinear2';
-        else if (effectType === 'webIn') btnSelector = '#awebIn';
+        else if (effectType === 'roll') btnSelector = '#aroll';
     } else {
         $('.effectOut_btn').removeClass('active_effect');
         if (effectType === 'delaylinear') btnSelector = '#adelaylinearOut1';
         else if (effectType === 'delaylinear2') btnSelector = '#adelaylinearOut2';
-        else if (effectType === 'webIn') btnSelector = '#awebInOut';
+        else if (effectType === 'roll') btnSelector = '#arollOut';
     }
 
     // 4) activate it (if any)
