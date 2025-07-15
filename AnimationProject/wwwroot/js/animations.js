@@ -578,7 +578,13 @@ function initializeLayers() {
     allItems.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
     reindex();
 }
-
+function invertDirection(direction) {
+    if (direction === "left") return "right";
+    if (direction === "right") return "left";
+    if (direction === "top") return "bottom";
+    if (direction === "bottom") return "top";
+    return direction;
+}
 function drawCanvas(condition) {
     initializeLayers();
     resizeCanvas();
@@ -630,6 +636,53 @@ function drawCanvas(condition) {
 
     allItems.forEach(item => {
         ctx.save();
+
+        if (item.clip >= 1) {
+            ctx.restore();
+            return;
+        }
+
+        if (item.clip > 0 && item.clip < 1) {
+            const originalDir = item.clipDirection || "top";
+
+            // If clip is increasing (masking), invert direction automatically
+            const isHiding = item.clip > item.previousClip;
+            const effectiveDirection = isHiding ? invertDirection(originalDir) : originalDir;
+
+            item.previousClip = item.clip;   // Track for next render frame
+
+            const isImage = item.type === 'image';
+            const width = isImage ? item.width : item.boundingWidth;
+            const height = isImage ? item.height : item.boundingHeight;
+            const x = item.x;
+            const y = item.y;
+
+            ctx.beginPath();
+
+            if (effectiveDirection === "top") {
+                const visibleHeight = height * (1 - item.clip);
+                ctx.rect(x, y, width, visibleHeight);
+
+            } else if (effectiveDirection === "bottom") {
+                const visibleHeight = height * (1 - item.clip);
+                ctx.rect(x, y + height - visibleHeight, width, visibleHeight);
+
+            } else if (effectiveDirection === "left") {
+                const visibleWidth = width * (1 - item.clip);
+                ctx.rect(x, y, visibleWidth, height);
+
+            } else if (effectiveDirection === "right") {
+                const visibleWidth = width * (1 - item.clip);
+                ctx.rect(x + width - visibleWidth, y, visibleWidth, height);
+            }
+
+            ctx.clip();
+        }
+
+
+
+
+
         ctx.globalAlpha = item.opacity || 100;
 
         if (item.type === 'image') {
@@ -761,58 +814,7 @@ function drawCanvas(condition) {
         });
     });
 
-    // Text Selection
-    //toPixelSpace(() => {
-    //    textObjects.forEach(obj => {
-    //        if (!obj.selected) return;
-
-    //        const xPx = obj.x * scaleX;
-    //        const yPx = obj.y * scaleY;
-    //        const wPx = obj.boundingWidth * scaleX;
-    //        const hPx = obj.boundingHeight * scaleY;
-    //        const rotation = (obj.rotation || 0) * Math.PI / 180;
-
-    //        ctx.save();
-    //        ctx.translate(xPx + wPx / 2, yPx + hPx / 2); // center
-    //        ctx.rotate(rotation);
-
-    //        // draw rotated rounded rect (relative to center)
-    //        drawRoundedRect(
-    //            ctx,
-    //            -wPx / 2 - padding * scaleX,
-    //            -hPx / 2 - padding * scaleY,
-    //            wPx + 2 * padding * scaleX - RECT_WIDTH_ADJUST * scaleX,
-    //            hPx + 2 * padding * scaleY - RECT_HEIGHT_ADJUST * scaleY,
-    //            10 * scaleX
-    //        );
-
-    //        // draw rotated handles
-    //        ctx.fillStyle = "#FF7F50";
-    //        const halfW = handleSize / 2;
-    //        const liftY = 2;
-
-    //        const bottomHandleLift = 8;    // move bottom handles upward
-    //        const bottomHandleShiftX = 2;  // move bottom handles slightly left
-    //        const topleftHandleShiftX = -2;  // rightward shift for top handles
-    //        const topleftHandleLift = -2;   // downward lift for top handles (negative = down)
-    //        const toprightHandleShiftX = -4;  // rightward shift for top handles
-    //        const toprightHandleLift = 4;   // downward lift for top handles (negative = down)
-    //        const handlePoints = [
-    //            { x: -wPx / 2 + topleftHandleShiftX, y: -hPx / 2 + topleftHandleLift },          // top-left (right + down)
-    //            { x: wPx / 2 + toprightHandleShiftX, y: -hPx / 2 + toprightHandleLift },           // top-right (right + down)
-    //            { x: -wPx / 2 + bottomHandleShiftX, y: hPx / 2 - bottomHandleLift }, // bottom-left (adjusted)
-    //            { x: wPx / 2 - bottomHandleShiftX, y: hPx / 2 - bottomHandleLift },  // bottom-right (adjusted)
-    //            { x: -wPx / 2, y: 0 },                                               // mid-left
-    //            { x: wPx / 2, y: 0 }                                                 // mid-right
-    //        ];
-
-    //        handlePoints.forEach(pt => {
-    //            ctx.fillRect(pt.x - halfW, pt.y - halfW - liftY, handleSize, handleSize);
-    //        });
-
-    //        ctx.restore();
-    //    });
-    //});
+   
     toPixelSpace(() => {
         textObjects.forEach(obj => {
             if (!obj.selected || obj.type !== 'text') return;
@@ -1821,27 +1823,100 @@ function animateText(direction, condition, loopCount) {
     }
 
     // ── Mask Reveal (canvas-only) not working────────────────────
-    else if (animationType === "maskCanvas") {
-        const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
-        // reset & init full clip
-        items.forEach(o => { o.x = o.finalX; o.y = o.finalY; o.clip = 1; });
-        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+    else if (animationType === "mask") {
+        if (window.currentPopcornTimeline) {
+            window.currentPopcornTimeline.kill();
+        }
+        const animItems = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+        const staticItems = [...images.filter(i => i.noAnim), ...textObjects.filter(t => t.noAnim)];
+
+        // Group items by groupId
+        const groupMap = new Map();
+        const units = [];
+        animItems.forEach(item => {
+            const gid = item.groupId;
+            if (gid != null) {
+                if (!groupMap.has(gid)) {
+                    groupMap.set(gid, []);
+                    units.push(groupMap.get(gid));
+                }
+                groupMap.get(gid).push(item);
+            } else {
+                units.push([item]);
+            }
+        });
+
+        // Initialize
+        animItems.forEach(o => {
+            o.x = o.finalX;
+            o.y = o.finalY;
+            o.clip = (tabType === "In") ? 1 : 0;   // Fully masked if entering, visible if exiting
+
+            o.clipDirection = (tabType === "Out")
+                ? invertDirection(direction)
+                : direction;
+        });
+
+        staticItems.forEach(o => {
+            o.x = o.finalX;
+            o.y = o.finalY;
+            o.clip = 0;   // Always fully visible
+        });
+
+        const tl = gsap.timeline({
+            repeat: loopCount - 1,
+            onUpdate: () => drawCanvas(condition)
+        });
+
+        // Static items pinned
+        staticItems.forEach(o => {
+            tl.set(o, { clip: 0 }, 0);
+        });
 
         if (tabType === "In") {
-            tl.to(items, { clip: 0, duration: inTime, ease: "power2.out", stagger: 0.1 }, 0);
+            units.forEach(unit => {
+                tl.to(unit, {
+                    clip: 0,
+                    duration: inTime,
+                    ease: "power2.out",
+                    onUpdate: () => drawCanvas(condition)
+                }, 0);
+            });
         }
+
         const delayM = (tabType === "In") ? inTime : 0;
+
         if (["Stay", "Out"].includes(tabType)) {
             tl.to({}, { duration: stayTime, ease: "none" }, delayM);
         }
+
         if (tabType === "Out") {
-            tl.to(items, { clip: 1, duration: outTime, ease: "power2.in", stagger: 0.1 }, delayM);
+            units.forEach(unit => {
+                tl.to(unit, {
+                    clip: 1,
+                    duration: outTime,
+                    ease: "power2.out",
+                    onUpdate: () => drawCanvas(condition)
+                }, delayM);
+            });
         }
+
         tl.eventCallback("onComplete", () => {
-            items.forEach(o => o.clip = 0);
+            animItems.forEach(o => {
+                o.clip = 0;  // Always fully visible after IN or OUT
+                o.x = o.finalX;
+                o.y = o.finalY;
+            });
+
+            [...animItems, ...staticItems].forEach(o => o.rotation = 0);
+
             drawCanvas(condition);
         });
+
     }
+
+
+
 
     // ── Shake (canvas-only) working but direction not working all──────────────────────────
     else if (animationType === "shakeCanvas") {
@@ -5444,12 +5519,14 @@ function updateEffectButtons(type) {
         else if (effectType === 'delaylinear2') btnSelector = '#adelaylinear2';
         else if (effectType === 'roll') btnSelector = '#aroll';
         else if (effectType === 'popcorn') btnSelector = '#apopcorn';
+        else if (effectType === 'mask') btnSelector = '#amask';
     } else {
         $('.effectOut_btn').removeClass('active_effect');
         if (effectType === 'delaylinear') btnSelector = '#adelaylinearOut1';
         else if (effectType === 'delaylinear2') btnSelector = '#adelaylinearOut2';
         else if (effectType === 'roll') btnSelector = '#arollOut';
         else if (effectType === 'popcorn') btnSelector = '#apopcornOut';
+        else if (effectType === 'mask') btnSelector = '#amaskOut';
     }
     if (effectType === 'roll') {
         document.getElementById('abottom')?.classList.add('disabled-ani-button');
