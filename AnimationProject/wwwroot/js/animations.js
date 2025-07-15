@@ -2074,14 +2074,14 @@ function animateText(direction, condition, loopCount) {
         tl.set(o, { x: o.finalX, y: o.finalY, scaleX: 1, scaleY: 1 }, 0);
     });
 
-        if (tabType === "In") {
-            // 1️⃣ Ensure items start small
+        if(tabType === "In") {
+            // Start small (or invisible)
             tl.set(units.flat(), {
-                scaleX: 0.5,
-                scaleY: 0.5
+                scaleX: 0.1,
+                scaleY: 0.1
             }, 0);
 
-            // 2️⃣ Animate smoothly to large size (no reverse)
+            // Animate to large size and stop there
             tl.to(units.flat(), {
                 scaleX: 1.2,
                 scaleY: 1.2,
@@ -2099,34 +2099,34 @@ function animateText(direction, condition, loopCount) {
         tl.to({}, { duration: stayTime, ease: "none" }, delayP);
     }
 
-        // OUT phase (smooth shrink from full size to small)
         if (tabType === "Out") {
-            // 1️⃣ Ensure all items are at full size before starting OUT
+            // Ensure full size before starting OUT
             tl.set(units.flat(), {
-                scaleX: 1,
-                scaleY: 1
+                scaleX: 1.2,   // Or 1.0 depending on your entry state
+                scaleY: 1.2
             }, 0);
 
-            // 2️⃣ Animate smoothly from full size to small
+            // Animate shrink to invisible
             tl.to(units.flat(), {
-                scaleX: 0.5,
-                scaleY: 0.5,
+                scaleX: 0,
+                scaleY: 0,
                 duration: outTime / 2,
                 ease: "power2.inOut",
                 onUpdate: () => drawCanvas(condition)
-            }, 0);  // Start immediately
+            }, 0);
+            
         }
 
 
 
     // Reset at end
-    tl.eventCallback("onComplete", () => {
-        [...animItems, ...staticItems].forEach(o => {
-            o.scaleX = 1;
-            o.scaleY = 1;
-        });
-        drawCanvas(condition);
-    });
+    //tl.eventCallback("onComplete", () => {
+    //    [...animItems, ...staticItems].forEach(o => {
+    //        o.scaleX = 1;
+    //        o.scaleY = 1;
+    //    });
+    //    drawCanvas(condition);
+    //});
 }
 
     // ── Glitch (canvas-only) working ─────────────────────────
