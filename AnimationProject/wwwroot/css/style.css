@@ -528,7 +528,8 @@ ul.speed-list li:hover{background:#f5f5f5; border-radius:6px; cursor:pointer;}
 
 .collapse.show-texteditor {
     position: absolute;
-    left: 0px;
+/*    left: 0px;*/
+    left: 266px;
     top: 0px;
     bottom: 0px;
     background-color: transparent;
@@ -1220,7 +1221,8 @@ body {
     padding: 20px;
     position: absolute;
     top: 0;
-    left: 0;
+    /*    left: 0;*/
+    left: 266px;
 }
 
 #close_button {
