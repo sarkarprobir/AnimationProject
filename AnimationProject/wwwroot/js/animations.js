@@ -5969,6 +5969,43 @@ function setCanvasBackgroundImage(imageSrc) {
     $('#chkRemoveBackground').prop('checked', true);
     $("#hdnBackgroundSpecificColor").val("rgba(255, 255, 255, 0.95)");
 }
+
+//function setCanvasBackgroundImage(imageSrc) {
+//    const bgImage = new Image();
+//    bgImage.onload = function () {
+//        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+//        // Calculate scale while preserving aspect ratio
+//        const imageAspectRatio = bgImage.width / bgImage.height;
+//        const canvasAspectRatio = canvas.width / canvas.height;
+
+//        let drawWidth, drawHeight, offsetX, offsetY;
+
+//        if (imageAspectRatio > canvasAspectRatio) {
+//            // Image is wider than canvas
+//            drawHeight = canvas.height;
+//            drawWidth = bgImage.width * (canvas.height / bgImage.height);
+//            offsetX = -(drawWidth - canvas.width) / 2;
+//            offsetY = 0;
+//        } else {
+//            // Image is taller than canvas
+//            drawWidth = canvas.width;
+//            drawHeight = bgImage.height * (canvas.width / bgImage.width);
+//            offsetX = 0;
+//            offsetY = -(drawHeight - canvas.height) / 2;
+//        }
+
+//        ctx.drawImage(bgImage, offsetX, offsetY, drawWidth, drawHeight);
+
+//        canvas._bgImg = bgImage;
+//    };
+//    bgImage.src = imageSrc;
+
+//    $("#hdnBackgroundImage").val(imageSrc);
+//    $('#chkRemoveBackground').prop('checked', true);
+//    $("#hdnBackgroundSpecificColor").val("rgba(255, 255, 255, 0.95)");
+//}
+
 function RemoveBackgroundImage() {
     canvas._bgImg = null;
     drawCanvas('Common'); // Redraw the canvas without the background image.
