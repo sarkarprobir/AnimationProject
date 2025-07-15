@@ -94,8 +94,8 @@ p.collapsed{    font-size: var(--font-size14);}
     font-size: var(--font-size14);
     position: absolute;
     /*    transform: translate(838px, -12px);*/
-    top: 0px;
-    right: 18px;
+    top: 2px;
+    right: 10px;
 }
 .Graphic-More {
     width: 128px;
