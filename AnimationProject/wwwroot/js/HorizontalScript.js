@@ -9,7 +9,7 @@ $(document).on('click', '#toggle_img', function (e) {
     e.preventDefault();
     CreateHeaderSectionHorizontalhtml();
     $('#background_popup').show();
-});
+}); 
 
 // hide the popup when the close button is clicked
 $(document).on('click', '#close_button', function (e) {
@@ -25,7 +25,6 @@ function opengl() {
     }
 }
 function switchTab(tabElement, tabName) {
-    console.log("Arghadeep");  // Debugging log
 
     let tabs = document.querySelectorAll(".tab");
     let contents = document.querySelectorAll(".left_content");
