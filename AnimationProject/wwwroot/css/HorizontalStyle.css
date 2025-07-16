@@ -67,7 +67,7 @@
     overflow: hidden !important;
 }
 
-/*.dropdown {
+.dropdown {
     color: #000000 !important;
 }
 
@@ -83,7 +83,7 @@
         color: #fff !important;
         background-color: #6214fe !important;
     }
-*/
+
 :root {
     --font-mont: "Montserrat", sans-serif;
     --font-nunito: "Nunito Sans", sans-serif;
@@ -160,7 +160,7 @@ body {
         padding: 3px 5px;
     }
 
-.gallery {
+/*.gallery {
     display: flex;
     flex-wrap: wrap;
     margin-top: 10px;
@@ -199,7 +199,7 @@ body {
     font-size: 14px;
     text-decoration: none;
     color: black;
-}
+}*/
 
 .left-panel-imput {
     flex: 1;
@@ -283,7 +283,7 @@ body {
 }
 
 #close_button {
-    border: 0px solid #ddd;
+    /*border: 0px solid #ddd;*/
     float: right;
     background: transparent;
     font-weight: bold;
