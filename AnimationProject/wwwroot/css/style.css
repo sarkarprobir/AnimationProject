@@ -686,12 +686,12 @@ svg:hover {
 .vertical-Mboard img{width:auto;   }
 .vertical-Mboard p{text-align:center;}
 .panel-vertical-scroll li{text-align: center;}
-.panel-vertical-scroll .menuboard-vertical-thum{
-    margin-bottom:10px; 
-    width:100px; 
-    border: 2px solid #ddd; 
-    padding:4px;
-    height:158px;
+.panel-left-scroll .menuboard-vertical-thum {
+    margin-bottom: 10px;
+    width: 100px;
+    border: 2px solid #ddd;
+    padding: 4px;
+    height: 158px;
 }
     .panel-vertical-scroll .menuboard-vertical-thum:hover {
         border: 2px solid #4e43e191;
@@ -1718,3 +1718,34 @@ body {
     color: #8b8585;
     font-size: 14px;
 }
+.slide-icon:hover{
+    color: var(--color-blue)
+}
+    .slide-icon.delete:hover {
+        color: red;
+    }
+/* toggle button css */
+.toggle-container {
+    display: inline-flex;
+    background-color: #fff;
+    padding: 4px;
+    border-radius: 3px;
+}
+
+.toggle-btn {
+    padding: 7px 16px;
+    font-size: 14px;
+    font-family: var(--font-nunito);
+    font-weight: 400;
+    color: #000;
+    background-color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    width: 101px;
+}
+
+    .toggle-btn.active {
+        background-color: black;
+        color: white;
+    }

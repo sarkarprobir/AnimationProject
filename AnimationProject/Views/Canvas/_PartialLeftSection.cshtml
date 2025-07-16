@@ -26,18 +26,18 @@
     });
 </script> *@
 
-<div class="panel-left-scroll panel-vertical-scroll">
+<div class="panel-left-scroll">
+    <button onclick="tranTogglePopup(); transitionSelected(this);" class="sd-btn-right mb-3"> <img src="~/images/icon-01.png" alt="Banner" style="width: 19px;">Transition</button>
+
     @if (mode == "Vertical")
     {
-        <button onclick="tranTogglePopup(); transitionSelected(this);" class="sd-btn-right mb-3"> <img src="~/images/icon-01.png" alt="Banner" style="width: 19px;">Transition</button>
         <ul>
-            
             <li>
                 <img src="~/images/Default_Slide_Image.jpeg" id="imageVertical1" class="menuboard-vertical-thum active_border" alt="Banner" onclick="SaveDesignBoardSlide(1); handleThumbClick(this);TabShowHide('In');updateEffectButtons('In');updateEffectButtons('Out');updateDirectionButtons('In');updateDirectionButtons('Out');">
                 <div class="d-flex justify-content-center align-items-center gap-2">
                     <span>Slide-1</span>
                     <div class="slide-icon"><i class="fa-regular fa-clone"  title="Duplicate" onclick="DuplicateSlide();"></i></div>
-                    <div class="slide-icon"><i class="fa-regular fa-trash-can"  title="Delete" onclick="DeleteSlide();"></i></div>
+                    <div class="slide-icon delete"><i class="fa-regular fa-trash-can"  title="Delete" onclick="DeleteSlide();"></i></div>
                     <div class="clear"></div>
                 </div>
             </li>
@@ -46,7 +46,7 @@
                 <div class="d-flex justify-content-center align-items-center gap-2">
                     <span>Slide-2</span>
                     <div class="slide-icon"><i class="fa-regular fa-clone"  title="Duplicate" onclick="DuplicateSlide();"></i></div>
-                    <div class="slide-icon"><i class="fa-regular fa-trash-can"  title="Delete" onclick="DeleteSlide();"></i></div>
+                    <div class="slide-icon delete"><i class="fa-regular fa-trash-can" title="Delete" onclick="DeleteSlide();"></i></div>
                     <div class="clear"></div>
                 </div>
             </li>
@@ -55,7 +55,7 @@
                 <div class="d-flex justify-content-center align-items-center gap-2">
                     <span>Slide-3</span>
                     <div class="slide-icon"><i class="fa-regular fa-clone" title="Duplicate" onclick="DuplicateSlide();"></i></div>
-                    <div class="slide-icon"><i class="fa-regular fa-trash-can" title="Delete" onclick="DeleteSlide();"></i></div>
+                    <div class="slide-icon delete"><i class="fa-regular fa-trash-can" title="Delete" onclick="DeleteSlide();"></i></div>
                     <div class="clear"></div>
                 </div>
             </li>
@@ -63,42 +63,36 @@
     }
     else if (mode == "Horizontal")
     {
-        <div class="panel-left-scroll ">
                 <ul>
                     <li>
-                        <img src="~/images/banner.png" class="menuboard-thum" alt="Banner" style="width: 80%; height: auto;">
-                        <div class="d-flex justify-content-center align-items-center gap-3">
-                            <span>Slide 1</span>
-                            <button  class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
+                        <img src="~/images/Default_Slide_Image.jpeg" id="imageHorizontal1" class="menuboard-horizontal-thum active_border" alt="Banner" onclick="handleVThumbClick(this)">
+                        <div class="d-flex justify-content-center align-items-center gap-2">
+                            <span>Slide-1</span>
+                            <div class="slide-icon"><i class="fa-regular fa-clone" title="Duplicate"></i></div>
+                            <div class="slide-icon delete"><i class="fa-regular fa-trash-can" title="Delete"></i></div>
                             <div class="clear"></div>
                         </div>
                     </li>
                     <li>
-                        <img src="~/images/banner-old.png" class="menuboard-thum" alt="Banner" style="width: 80%; height: auto;">
-                        <div class="d-flex justify-content-center align-items-center gap-3">
-                            <span>Slide 2</span>
-                            <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
+                        <img src="~/images/Default_Slide_Image.jpeg" id="imageHorizontal2" class="menuboard-horizontal-thum" alt="Banner" onclick="handleVThumbClick(this)">
+                        <div class="d-flex justify-content-center align-items-center gap-2">
+                            <span>Slide-2</span>
+                            <div class="slide-icon"><i class="fa-regular fa-clone" title="Duplicate"></i></div>
+                            <div class="slide-icon delete"><i class="fa-regular fa-trash-can" title="Delete"></i></div>
                             <div class="clear"></div>
                         </div>
                     </li>
                     <li>
-                        <img src="~/images/banner.png" class="menuboard-thum" alt="Banner" style="width: 80%; height: auto;">
-                        <div class="d-flex justify-content-center align-items-center gap-3">
-                            <span>Slide 3</span>
-                            <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
+                        <img src="~/images/Default_Slide_Image.jpeg" id="imageHorizontal3" class="menuboard-horizontal-thum" alt="Banner" onclick="handleVThumbClick(this)">
+                        <div class="d-flex justify-content-center align-items-center gap-2">
+                            <span>Slide-3</span>
+                            <div class="slide-icon"><i class="fa-regular fa-clone" title="Duplicate"></i></div>
+                            <div class="slide-icon delete"><i class="fa-regular fa-trash-can" title="Delete"></i></div>
                             <div class="clear"></div>
                         </div>
                     </li>
 
                 </ul>
-            </div>
     }
-
-    @* <div class="slide-options" id="slideOptions">
-        <p class="mb-1">Slide</p>
-        <button class="slide-option" onclick="DuplicateSlide();"><i class="fa-regular fa-clone"></i> Clone</button>
-        <button class="slide-option" onclick="DeleteSlide();"><i class="fa-regular fa-trash-can"></i> Delete</button>
-    </div> *@
-
 </div>
 
