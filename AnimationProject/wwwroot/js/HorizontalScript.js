@@ -49,16 +49,6 @@ document.querySelectorAll('.H-link, .V-link').forEach(link => {
         link.classList.add('active');
     });
 });
-
-//function opengl() {
-//    $("#opengl_popup").toggle();
-//    if (document.getElementById("fontstyle_popup").style.display == "block") {
-//        $("#fontstyle_popup").hide();
-//        $(".right-sec-two").toggle();
-//        $(".right-sec-one").toggle();
-//    }
-//}
-
 function opentl() {
     if (document.getElementById("opengl_popup").style.display == "block") {
         $("#opengl_popup").hide();
