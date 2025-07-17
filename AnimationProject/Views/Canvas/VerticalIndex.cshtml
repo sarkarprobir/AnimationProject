@@ -696,6 +696,12 @@
           if(document.getElementById("elementsPopup").style.display == "block"){
               $("#elementsPopup").hide();
           }
+          if(document.getElementById("tranPopup").style.display == "block"){
+              $("#tranPopup").hide();
+          }
+           if(document.getElementById("background_popup").style.display == "block"){
+              $("#background_popup").hide();
+          }
          }
     </script>
 
@@ -723,6 +729,12 @@
             // document.getElementById("modeButton").innerText = "Animation Mode";
             if(document.getElementById("opengl_popup").style.display == "block"){
                 $("#opengl_popup").hide();
+            }
+            if(document.getElementById("background_popup").style.display == "block"){
+                $("#background_popup").hide();
+            }
+            if(document.getElementById("tranPopup").style.display == "block"){
+                $("#tranPopup").hide();
             }
           $("#fontstyle_popup").toggle();
           $(".right-sec-two").toggle();
@@ -784,6 +796,7 @@
           $('#fontstyle_popup').hide();
           $('#opengl_popup').hide();
           $('#elementsPopup').hide();
+          $('#tranPopup').hide();
         });
 
         // hide the popup when the close button is clicked
@@ -801,12 +814,19 @@
         });
 
         // nav item active function
-        function handleNavButtonClick(clickedElement) {
-            document.querySelectorAll('.nav_button').forEach(btn => {
-                btn.classList.remove('active_nav_button');
-            });
-            clickedElement.classList.add('active_nav_button');
-        }
+        // function handleNavButtonClick(clickedElement) {
+        //     document.querySelectorAll('.nav_button').forEach(btn => {
+        //         btn.classList.remove('active_nav_button');
+        //     });
+        //     clickedElement.classList.add('active_nav_button');
+        // }
+           function handleNavButtonClick(event) {
+                document.querySelectorAll('.nav_button').forEach(btn => {
+                    btn.classList.remove('active_nav_button');
+                });
+                event.currentTarget.classList.add('active_nav_button');
+           }
+
 
               
 

@@ -403,7 +403,7 @@ ul.top-left-icon li {
 .nav-right{padding:0px;}
 .navbar {padding:0px;}
 .p-r-0{padding-right:0px; justify-content:center;}
- 
+
 .panel-left-gallery {
     width: 100%;
     min-height: 685px;
@@ -414,7 +414,7 @@ ul.top-left-icon li {
     position: absolute;
     left: 0px;
     top: 3px;
-    border-right: none;
+    border-right: 1px solid #E4E3E7;
 }
 .panel-left-fonts {
     width: 100%;
@@ -1479,7 +1479,7 @@ body {
     position: absolute;
     left: 0px;
     top: 3px;
-    border-right: none;
+    border-right: 1px solid #E4E3E7;
 }
 @media (min-width: 1900px) {
     .elements-popup {
@@ -1529,9 +1529,9 @@ body {
     z-index: 9;
     padding: 20px;
     position: absolute;
-    left: 0px;
+    left: 262px;
     top: 4px;
-    border-right: none;
+    border-right: 1px solid #e4e3e6;
     overflow: hidden;
 }
 .tran_button {

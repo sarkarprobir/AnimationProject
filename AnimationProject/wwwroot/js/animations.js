@@ -6490,7 +6490,8 @@ function elementsTogglePopup() {
     const otherPopups = [
         document.getElementById('opengl_popup'),
         document.getElementById('fontstyle_popup'),
-        document.getElementById('background_popup')
+        document.getElementById('background_popup'),
+        document.getElementById('tranPopup')
     ];
 
     // Hide all other popups
