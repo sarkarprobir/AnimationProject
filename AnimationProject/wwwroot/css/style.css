@@ -1225,6 +1225,7 @@ body {
     /*    left: 0;*/
     left: 262px;
     border-right: 1px solid #e4e3e6;
+    height: 100%;
 }
 
 #close_button {

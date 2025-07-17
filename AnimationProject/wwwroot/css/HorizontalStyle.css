@@ -143,14 +143,14 @@ body {
     border-radius: 3px;
 }
 
-.left_content {
+/*.left_content {
     display: none;
 }
 
     .left_content.active {
         display: block;
     }
-
+*/
 .search-box {
     display: flex;
 }
@@ -271,16 +271,6 @@ body {
         display: none;
     }
 /* background image upload */
-#background_popup {
-    display: none;
-    width: 254px;
-    height: 100%;
-    background-color: #fff;
-    padding: 20px;
-    position: absolute;
-    top: 3px;
-    left: 0;
-}
 
 #close_button {
     /*border: 0px solid #ddd;*/
@@ -293,11 +283,6 @@ body {
 }
 
 .back_label {
-    font-size: 15px;
-}
-
-.background_edit {
-    font-family: "Nunito Sans", sans-serif;
     font-size: 15px;
 }
 
