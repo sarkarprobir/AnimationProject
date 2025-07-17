@@ -16,15 +16,15 @@ $(document).on('click', '#close_button', function (e) {
     e.preventDefault();
     $('#background_popup').hide();
 });
-//function opengl() {
-//    $("#opengl_popup").toggle();
-//    if (document.getElementById("fontstyle_popup").style.display == "block") {
-//        $("#fontstyle_popup").hide();
-//        $("#background_popup").hide();
-//        $(".right-sec-two").toggle();
-//        $(".right-sec-one").toggle();
-//    }
-//}
+function opengl() {
+    $("#opengl_popup").toggle();
+    if (document.getElementById("fontstyle_popup").style.display == "block") {
+        $("#fontstyle_popup").hide();
+        $("#background_popup").hide();
+        $(".right-sec-two").toggle();
+        $(".right-sec-one").toggle();
+    }
+}
 function switchTab(tabElement, tabName) {
 
     let tabs = document.querySelectorAll(".tab");
@@ -220,19 +220,19 @@ function CreateBackgroundSectionhtml() {
     }
 }
 
-//function opengl() {
-//    // document.getElementById("modeButton").innerText = "Graphic Mode";
-//    $("#opengl_popup").toggle();
+function opengl() {
+    // document.getElementById("modeButton").innerText = "Graphic Mode";
+    $("#opengl_popup").toggle();
 
-//    if (document.getElementById("fontstyle_popup").style.display == "block") {
-//        $("#fontstyle_popup").hide();
-//        $(".right-sec-two").toggle();
-//        $(".right-sec-one").toggle();
-//    }
-//    if (document.getElementById("elementsPopup").style.display == "block") {
-//        $("#elementsPopup").hide();
-//    }
-//}
+    if (document.getElementById("fontstyle_popup").style.display == "block") {
+        $("#fontstyle_popup").hide();
+        $(".right-sec-two").toggle();
+        $(".right-sec-one").toggle();
+    }
+    if (document.getElementById("elementsPopup").style.display == "block") {
+        $("#elementsPopup").hide();
+    }
+}
 // {{{{{{{<<<<<<<<<<<<<<<<<<<<--------------WORKING FUNCTIONS-------------->>>>>>>>>>>>>>>>>>}}}}}}}
 
 //experimental js load
@@ -330,16 +330,16 @@ function CreateBackgroundSectionhtml() {
                 button.innerText = "Animation Mode";
             }
         }
-        //function opentl()
-        // {
-        //    // document.getElementById("modeButton").innerText = "Animation Mode";
-        //    if(document.getElementById("opengl_popup").style.display == "block"){
-        //        $("#opengl_popup").hide();
-        //    }
-        //  $("#fontstyle_popup").toggle();
-        //  $(".right-sec-two").toggle();
-        //  $(".right-sec-one").toggle();
-        // }
+        function opentl()
+         {
+            // document.getElementById("modeButton").innerText = "Animation Mode";
+            if(document.getElementById("opengl_popup").style.display == "block"){
+                $("#opengl_popup").hide();
+            }
+          $("#fontstyle_popup").toggle();
+          $(".right-sec-two").toggle();
+          $(".right-sec-one").toggle();
+         }
           function opentlClose(){
              const animationBtn = document.querySelector('.toggle-btn[data-mode="animation"]')
              const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]')
