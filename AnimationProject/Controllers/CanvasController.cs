@@ -406,6 +406,7 @@ namespace AnimationProject.Controllers
                 {
                     return Json("NO");
                 }
+                request.Type = "Direct";
                 var getDesignBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetLoadPlaylist", JsonConvert.SerializeObject(request), user.token);
                 response = JsonConvert.DeserializeObject<Response<List<ResponseGetPlayList>>>(getDesignBoard);
                 return Json(response.Data[0].VideoPath);

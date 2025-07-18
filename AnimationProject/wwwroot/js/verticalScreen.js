@@ -60,22 +60,26 @@
     function loadPlaylist(sqlFormattedDateTime, startTime, endTime) {
         console.log(`Loading playlist for the time slot: ${startTime} - ${endTime}`);
 
-        const getUrlParameter = url => {
-            const segments = url.split('/').filter(segment => segment !== '');
-            return segments.pop();
-        };
+        //const getUrlParameter = url => {
+        //    const segments = url.split('/').filter(segment => segment !== '');
+        //    return segments.pop();
+        //};
+        const pathParts = window.location.pathname.split('/');
+        const companyId = pathParts[2]; // '1'
+        const boardUniqueId = pathParts[3]; // '4'
 
-        const currentUrl = window.location.href;
-        const id = getUrlParameter(currentUrl);
-        if (!id) return;
+      
+     
+        if (!companyId) return;
 
         const dataVideoPlayList = {
             PlayDate: sqlFormattedDateTime,
             PlayStartTime: startTime,
             PlayEndTime: endTime,
-            CompanyUniqueId: id,
+            CompanyUniqueId: companyId,
             ScreenType: 'Vertical',
-            ScreenNo: 1
+            ScreenNo: 1,
+            PublishBoardUniqueId: boardUniqueId
         };
 
         $.ajax({

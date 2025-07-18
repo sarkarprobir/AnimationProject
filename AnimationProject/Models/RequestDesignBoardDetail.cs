@@ -67,6 +67,9 @@
         public long CompanyUniqueId { get; set; }
         public string ScreenType { get; set; }
         public int ScreenNo { get; set; }
+        public long PublishBoardUniqueId { get; set; }
+        public string Type { get; set; }
+
 
     }
     public class ScreenRefreshInterval
