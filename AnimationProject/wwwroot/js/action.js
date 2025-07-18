@@ -1009,6 +1009,37 @@ function hideDownloadPanel() {
     main.classList.add('hidden');
     container.classList.add('hidden');
 }
+function SaveDesignBoardInPublishTable() {
+    var designBoardPublishId = $('#hdnDesignBoardPublishId').val() || '00000000-0000-0000-0000-000000000000'; // get GUID value
+    try {
+        var data = {
+            DesignBoardId: 'D83CD53F-FB40-41BD-9B17-31CECE2232B1',//3664686F-7007-401A-850C-24916D63BD7A  or D83CD53F-FB40-41BD-9B17-31CECE2232B1 for local //904A244F-9D14-4075-BE33-99E6C7E812DB lIVE
+            DesignBoardPublishId: designBoardPublishId,
+            CompanyUniqueId: 1
+        };
+
+
+        const result = await $.ajax({
+            url: baseURL + "Canvas/PublishDesignSlideBoard",
+            type: "POST",
+            dataType: "json",
+            data: data,
+            success: function (result) {
+                $("#hdnDesignBoardPublishId").val(result.result);
+                $("#hdnPublishBoardUniqueId").val(result.publishBoardUniqueId);
+            },
+            error: function (data) {
+                console.log("error");
+                console.log(data);
+            }
+        });
+    }
+
+ catch (e) {
+    console.log("catch", e);
+}
+           
+}
 async function GetDesignBoardByIdForDownload(condition) {
     publishDownloadcondition = condition;
     var id = $('#hdnDesignBoardId').val(); // get GUID value
