@@ -2158,8 +2158,8 @@ function animateText(direction, condition, loopCount) {
 
             // Animate to large size and stop there
             tl.to(units.flat(), {
-                scaleX: 1.2,
-                scaleY: 1.2,
+                scaleX: 0.8,
+                scaleY: 0.8,
                 duration: inTime / 2,
                 ease: "power2.out",
                 onUpdate: () => drawCanvas(condition)
@@ -2177,8 +2177,8 @@ function animateText(direction, condition, loopCount) {
         if (tabType === "Out") {
             // Ensure full size before starting OUT
             tl.set(units.flat(), {
-                scaleX: 1.2,   // Or 1.0 depending on your entry state
-                scaleY: 1.2
+                scaleX: 0.8,   // Or 1.0 depending on your entry state
+                scaleY: 0.8
             }, 0);
 
             // Animate shrink to invisible

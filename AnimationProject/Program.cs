@@ -65,6 +65,12 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Canvas}/{action=Login}/{id?}");
+// 1) Specific “screen” route:
+app.MapControllerRoute(
+    name: "animationScreen",
+    pattern: "s/{companyId:int}/{projectId:int}",
+    defaults: new { controller = "Canvas", action = "Screen" }
+);
 
 app.MapGet("/sse", async (HttpContext context) =>
 {

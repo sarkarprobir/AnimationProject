@@ -482,7 +482,9 @@ function GetDesignBoardById(id) {
                 if (result) { 
                     $("#hdnDesignBoardId").val(result.designBoardId);
                     $("#txtSaveDesignBoardName").val(result.designBoardName);
-                   
+                    $('#designboardLink').text(result.designBoardURL);
+                    $('#designBoardName').text(result.designBoardName);
+                    
 
                 if ( Array.isArray(result.designBoardDetailsList) && result.designBoardDetailsList.length > 0) {
                     // Reset global variables first to avoid stale data
@@ -1009,7 +1011,42 @@ function hideDownloadPanel() {
     main.classList.add('hidden');
     container.classList.add('hidden');
 }
+async function SaveDesignBoardInPublishTable() {
+    var designBoardPublishId = $('#hdnDesignBoardPublishId').val() || '00000000-0000-0000-0000-000000000000'; // get GUID value
+    try {
+        var designBoardId = $('#hdnDesignBoardId').val(); // get GUID value
+        if (designBoardId !== '') {
+
+        var data = {
+            DesignBoardId: designBoardId,
+            DesignBoardPublishId: designBoardPublishId
+        };
+
+
+        const result = await $.ajax({
+            url: baseURL + "Canvas/PublishDesignSlideBoard",
+            type: "POST",
+            dataType: "json",
+            data: data,
+            success: function (result) {
+                $("#hdnDesignBoardPublishId").val(result.result);
+                $("#hdnPublishBoardUniqueId").val(result.publishBoardUniqueId);
+            },
+            error: function (data) {
+                console.log("error");
+                console.log(data);
+            }
+        });
+    }
+    }
+
+ catch (e) {
+    console.log("catch", e);
+}
+           
+}
 async function GetDesignBoardByIdForDownload(condition) {
+    SaveDesignBoardInPublishTable();
     publishDownloadcondition = condition;
     var id = $('#hdnDesignBoardId').val(); // get GUID value
     if (id !== '') {
@@ -1028,6 +1065,10 @@ async function GetDesignBoardByIdForDownload(condition) {
                 dataType: "json",
                 data: data
             });
+            if (result) {
+                $('#designboardLink').text(result.designBoardURL);
+            }
+
 
             if (result && Array.isArray(result.designBoardDetailsList) && result.designBoardDetailsList.length > 0) {
                 // Create the jsonArray from the designBoardDetailsList items.
@@ -1583,7 +1624,12 @@ function startVideoCapture() {
         recorder.stop();
     }, 8000);
 }
-
+function getCompanyIdFromUrl() {
+    return 1;
+    //const segments = window.location.pathname.split('/').filter(segment => segment !== '');
+    //// Assuming the last segment is the company ID.
+    //return segments.length ? segments[segments.length - 1] : null;
+}
 
 function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
     const formData = new FormData();
@@ -1613,13 +1659,18 @@ function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
                         //Need to remove as this is temporary
                         hideDownloadPanel();
                       
-                        const targetUrl = window.location.origin + "/Canvas/VScreen1/1";
-                        window.open(targetUrl, "_blank");
+                        //const targetUrl = window.location.origin + "/Canvas/VScreen1/1";
+                        //window.open(targetUrl, "_blank");
+                        const companyUniqueId = getCompanyIdFromUrl();
+                        const projectId = $("#hdnPublishBoardUniqueId").val();
+                        window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
+
                         RedirectToVerticalPageWithQueryString();
-                        HideLoader();
+                        //HideLoader();
                     },
                     error: function (data) {
                         console.log("error in saving Image " + activeSlide);
+                        HideLoader();
                     }
 
 
@@ -1627,6 +1678,7 @@ function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
         })
         .catch(error => {
             console.error('Error saving video:', error);
+            HideLoader();
         });
 }
 function triggerAutorefresh() {
@@ -2727,8 +2779,58 @@ function drawHandles(ctx, objects, getBounds, handleColor) {
         });
     });
 }
+function invertDirection(direction) {
+    if (direction === "left") return "right";
+    if (direction === "right") return "left";
+    if (direction === "top") return "bottom";
+    if (direction === "bottom") return "top";
+    return direction;
+}
+function applyClipMask(ctx, item) {
+    if (typeof item.clip !== "number") return false;
+
+    if (item.clip >= 1) {
+        return true;  // Fully masked – skip drawing
+    }
+
+    if (item.clip > 0 && item.clip < 1) {
+        const direction = item.clipDirection || "top";
+
+        const isImage = item.type === 'image';
+        const width = isImage ? item.width : item.boundingWidth;
+        const height = isImage ? item.height : item.boundingHeight;
+        const x = item.x;
+        const y = item.y;
+
+        ctx.beginPath();
+
+        if (direction === "top") {
+            const visibleHeight = height * (1 - item.clip);
+            ctx.rect(x, y, width, visibleHeight);
+
+        } else if (direction === "bottom") {
+            const visibleHeight = height * (1 - item.clip);
+            ctx.rect(x, y + height - visibleHeight, width, visibleHeight);
+
+        } else if (direction === "left") {
+            const visibleWidth = width * (1 - item.clip);
+            ctx.rect(x, y, visibleWidth, height);
+
+        } else if (direction === "right") {
+            const visibleWidth = width * (1 - item.clip);
+            ctx.rect(x + width - visibleWidth, y, visibleWidth, height);
+        }
+
+        ctx.clip();
+    }
+
+    return false;
+}
+
+
 
 async function drawCanvasForDownload(condition) {
+   
     initializeLayers();
     const dpr = window.devicePixelRatio || 1;
     const wPx = canvasForDownload.width;
@@ -2757,6 +2859,18 @@ async function drawCanvasForDownload(condition) {
     allItems.forEach(item => {
         ctxElementForDownload.save();
         ctxElementForDownload.globalAlpha = item.opacity || 1;
+        if (item.scaleX === 0 && item.scaleY === 0) {
+            ctxElementForDownload.restore();
+            return;
+        }
+      
+        if (item.clipDirection != undefined) {
+            if (applyClipMask(ctxElementForDownload, item)) {
+                ctxElementForDownload.restore();
+                return;
+            }
+        }
+        
         // **1) if noAnim, draw immediately and skip the rest**
         if (item.noAnim) {
             if (item.type === 'image') {
@@ -4417,8 +4531,8 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             animItems.forEach(o => {
                 o.x = o.finalX;
                 o.y = o.finalY;
-                o.scaleX = 0.5;
-                o.scaleY = 0.5;
+                o.scaleX = 0;
+                o.scaleY = 0;
             });
             staticItems.forEach(o => {
                 o.x = o.finalX;
@@ -4444,14 +4558,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
 
             const tl = gsap.timeline({
                 repeat: loopCount - 1,
-                onUpdate: () => drawCanvasForDownload(condition),
-                onComplete: () => {
-                    [...animItems, ...staticItems].forEach(o => {
-                        o.scaleX = 1;
-                        o.scaleY = 1;
-                    });
-                    drawCanvasForDownload(condition);
-                }
+                onUpdate: () => drawCanvasForDownload(condition)
             });
 
             staticItems.forEach(o => {
@@ -4460,9 +4567,9 @@ async function animateTextForDownload(animationType, direction, condition, loopC
 
             // IN phase: small to large (stay large)
             tl.to(animItems, {
-                scaleX: 1.2,
-                scaleY: 1.2,
-                duration: inTime,
+                scaleX: 1.0,
+                scaleY: 1.0,
+                duration: inTime/2,
                 ease: "power2.out"
             }, 0);
 
@@ -4471,12 +4578,97 @@ async function animateTextForDownload(animationType, direction, condition, loopC
 
             // OUT phase: large to small
             tl.to(animItems, {
-                scaleX: 0.5,
-                scaleY: 0.5,
-                duration: outTime,
+                scaleX: 0,
+                scaleY: 0,
+                duration: outTime/2,
                 ease: "power2.in"
             });
+           
+            //tl.eventCallback("onComplete", () => {
+            //    ctxElementForDownload.restore();
+            //    return;
+            //    //animItems.forEach(o => {
+            //    //    o.scaleX = 0;  // Stay hidden after OUT
+            //    //    o.scaleY = 0;
+            //    //});
+            //    //drawCanvasForDownload(condition);
+            //});
         }
+        else if (animationType === "mask") {
+
+            //if (window.currentMaskTimeline) {
+            //    window.currentMaskTimeline.kill();
+            //}
+
+           // const animItems = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+            const staticItems = [...images.filter(i => i.noAnim), ...textObjects.filter(t => t.noAnim)];
+
+           
+
+            allItems.forEach(o => {
+                o.x = o.finalX;
+                o.y = o.finalY;
+                o.clip = 1;
+                o.clipDirection = direction;  // IN direction
+            });
+
+            staticItems.forEach(o => {
+                o.x = o.finalX;
+                o.y = o.finalY;
+                o.clip = 0;
+            });
+
+            const tl = gsap.timeline({
+                repeat: loopCount - 1,
+                onRepeat: () => {
+                    allItems.forEach(o => {
+                        o.clip = 1;
+                        o.clipDirection = direction;
+                    });
+                    drawCanvasForDownload(condition);
+                },
+                onUpdate: () => drawCanvasForDownload(condition)
+            });
+
+            window.currentMaskTimeline = tl;
+
+            // IN: Reveal
+            tl.to(allItems, {
+                clip: 0,
+                duration: inTime,
+                ease: "power2.out",
+                onUpdate: () => drawCanvasForDownload(condition)
+            });
+
+            // STAY: Hold visible
+            tl.to({}, { duration: stayTime });
+
+            // OUT: At this moment, switch clipDirection
+            tl.add(() => {
+                allItems.forEach(o => {
+                    o.clipDirection = invertDirection(Outdirection);
+                });
+            });
+
+            // OUT: Mask again
+            tl.to(allItems, {
+                clip: 1,
+                duration: outTime,
+                ease: "power2.out",
+                onUpdate: () => drawCanvasForDownload(condition)
+            });
+
+            // Final Reset
+            tl.eventCallback("onComplete", () => {
+                allItems.forEach(o => {
+                    o.clip = 1;
+                    o.clipDirection = Outdirection;  // Reset for next replay
+                });
+                drawCanvasForDownload(condition);
+            });
+
+        }
+
 
       
        

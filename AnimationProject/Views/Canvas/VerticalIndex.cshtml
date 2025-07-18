@@ -1056,6 +1056,8 @@
                     <button type="button" class="btn-close play_modal_btn" data-bs-dismiss="modal" aria-label="Close"></button>
                     <input type="hidden" id="hdnBackgroundSpecificColor" />
                     <input type="hidden" id="hdnBackgroundSpecificColorDownload" />
+                    <input type="hidden" id="hdnPublishBoardUniqueId" />
+                    <input type="hidden" id="hdnDesignBoardPublishId" />
                     <div class="modal-body">
                         <canvas id="myCanvasElement"
                                 class="clsmyCanvas"
@@ -1175,9 +1177,9 @@
                 </div>
 
                 <div class="modal-body text-start">
-                    <p class="fileName"> File : Sunday Adboard v01</p>
+                    <p class="fileName" id="designBoardName"></p>
                     <div class="fileLink">
-                        <span class="aniLink">https://aniboard.com/v20560</span> 
+                        <span class="aniLink" id="designboardLink"></span> 
                         <button class="copy-link-btn ms-2" onclick="copyLink(this)"><i class="fa-regular fa-copy"></i></button>
                     </div>
 
