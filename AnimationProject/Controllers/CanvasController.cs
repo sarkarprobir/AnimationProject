@@ -143,7 +143,13 @@ namespace AnimationProject.Controllers
         {
             return PartialView("_PartialRightSection");
         }
-        
+        public IActionResult Screen(int companyId, int projectId)
+        {
+            ViewBag.CompanyId = companyId;
+            ViewBag.ProjectId = projectId;
+            return View();
+        }
+
         public async Task<IActionResult> BoardsNew()
         {
             //if (!_checkSession.IsSession()) return Ok("login");

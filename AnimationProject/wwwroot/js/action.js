@@ -1583,7 +1583,12 @@ function startVideoCapture() {
         recorder.stop();
     }, 8000);
 }
-
+function getCompanyIdFromUrl() {
+    return 1;
+    //const segments = window.location.pathname.split('/').filter(segment => segment !== '');
+    //// Assuming the last segment is the company ID.
+    //return segments.length ? segments[segments.length - 1] : null;
+}
 
 function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
     const formData = new FormData();
@@ -1613,8 +1618,12 @@ function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
                         //Need to remove as this is temporary
                         hideDownloadPanel();
                       
-                        const targetUrl = window.location.origin + "/Canvas/VScreen1/1";
-                        window.open(targetUrl, "_blank");
+                        //const targetUrl = window.location.origin + "/Canvas/VScreen1/1";
+                        //window.open(targetUrl, "_blank");
+                        const companyUniqueId = getCompanyIdFromUrl();
+                        const projectId = $("#hdnPublishBoardUniqueId").val();
+                        window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
+
                         RedirectToVerticalPageWithQueryString();
                         HideLoader();
                     },
