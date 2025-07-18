@@ -47,6 +47,7 @@ namespace AnimationProject.Models
         public string DesignBoardName { get; set; }
         public string SlideType { get; set; }
         public List<DesignBoardDetailsList> DesignBoardDetailsList { get; set; }
+        public string DesignBoardURL { get; set; }
     }
     public class ResponseGetPlayList
     {
@@ -71,4 +72,12 @@ namespace AnimationProject.Models
         public string TransitionType { get; set; }
         public string TransitionColor { get; set; }
     }
+    public class ResponseSaveDesignBoardSlideDetailPublish
+    {
+        public string Response { get; set; }
+        public Guid Result { get; set; }
+        public long PublishBoardUniqueId { get; set; }
+    }
+
+
 }

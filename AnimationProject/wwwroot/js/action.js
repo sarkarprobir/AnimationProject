@@ -482,7 +482,9 @@ function GetDesignBoardById(id) {
                 if (result) { 
                     $("#hdnDesignBoardId").val(result.designBoardId);
                     $("#txtSaveDesignBoardName").val(result.designBoardName);
-                   
+                    $('#designboardLink').text(result.designBoardURL);
+                    $('#designBoardName').text(result.designBoardName);
+                    
 
                 if ( Array.isArray(result.designBoardDetailsList) && result.designBoardDetailsList.length > 0) {
                     // Reset global variables first to avoid stale data
@@ -1009,13 +1011,15 @@ function hideDownloadPanel() {
     main.classList.add('hidden');
     container.classList.add('hidden');
 }
-function SaveDesignBoardInPublishTable() {
+async function SaveDesignBoardInPublishTable() {
     var designBoardPublishId = $('#hdnDesignBoardPublishId').val() || '00000000-0000-0000-0000-000000000000'; // get GUID value
     try {
+        var designBoardId = $('#hdnDesignBoardId').val(); // get GUID value
+        if (designBoardId !== '') {
+
         var data = {
-            DesignBoardId: 'D83CD53F-FB40-41BD-9B17-31CECE2232B1',//3664686F-7007-401A-850C-24916D63BD7A  or D83CD53F-FB40-41BD-9B17-31CECE2232B1 for local //904A244F-9D14-4075-BE33-99E6C7E812DB lIVE
-            DesignBoardPublishId: designBoardPublishId,
-            CompanyUniqueId: 1
+            DesignBoardId: designBoardId,
+            DesignBoardPublishId: designBoardPublishId
         };
 
 
@@ -1034,6 +1038,7 @@ function SaveDesignBoardInPublishTable() {
             }
         });
     }
+    }
 
  catch (e) {
     console.log("catch", e);
@@ -1041,6 +1046,7 @@ function SaveDesignBoardInPublishTable() {
            
 }
 async function GetDesignBoardByIdForDownload(condition) {
+    SaveDesignBoardInPublishTable();
     publishDownloadcondition = condition;
     var id = $('#hdnDesignBoardId').val(); // get GUID value
     if (id !== '') {
@@ -1059,6 +1065,10 @@ async function GetDesignBoardByIdForDownload(condition) {
                 dataType: "json",
                 data: data
             });
+            if (result) {
+                $('#designboardLink').text(result.designBoardURL);
+            }
+
 
             if (result && Array.isArray(result.designBoardDetailsList) && result.designBoardDetailsList.length > 0) {
                 // Create the jsonArray from the designBoardDetailsList items.
@@ -1656,10 +1666,11 @@ function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
                         window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
 
                         RedirectToVerticalPageWithQueryString();
-                        HideLoader();
+                        //HideLoader();
                     },
                     error: function (data) {
                         console.log("error in saving Image " + activeSlide);
+                        HideLoader();
                     }
 
 
@@ -1667,6 +1678,7 @@ function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
         })
         .catch(error => {
             console.error('Error saving video:', error);
+            HideLoader();
         });
 }
 function triggerAutorefresh() {
