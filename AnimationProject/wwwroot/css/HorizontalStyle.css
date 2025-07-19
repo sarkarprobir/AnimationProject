@@ -405,10 +405,3 @@ body {
     padding: 4px;
     width: 158px;
 }
-.zoom_scale {
-    text-align: center;
-    margin-bottom: 10px;
-    position: absolute;
-    bottom: 11px;
-    right: 34px;
-}

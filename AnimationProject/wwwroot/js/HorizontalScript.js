@@ -465,32 +465,32 @@ document.addEventListener('click', function (event) {
 
 //zoom function
 
-//let scale = 1;
-//const scaleStep = 0.1;
-//const maxScale = 3;
-//const minScale = 0.5;
+let scale = 1;
+const scaleStep = 0.1;
+const maxScale = 3;
+const minScale = 0.5;
 
-//const canvas = document.getElementById("myHorizCanvas");
-//const scaleText = document.getElementById("scaleValue");
+const canvas = document.getElementById("myHorizCanvas");
+const scaleText = document.getElementById("scaleValue");
 
-//function applyScale() {
-//    canvas.style.transform = `scale(${scale})`;
-//    scaleText.textContent = `Scale: ${scale.toFixed(1)}`;
-//}
+function applyScale() {
+    canvas.style.transform = `scale(${scale})`;
+    scaleText.textContent = `Scale: ${scale.toFixed(1)}`;
+}
 
-//function zoomIn() {
-//    if (scale < maxScale) {
-//        scale += scaleStep;
-//        applyScale();
-//    }
-//}
+function zoomIn() {
+    if (scale < maxScale) {
+        scale += scaleStep;
+        applyScale();
+    }
+}
 
-//function zoomOut() {
-//    if (scale > minScale) {
-//        scale -= scaleStep;
-//        applyScale();
-//    }
-//}
+function zoomOut() {
+    if (scale > minScale) {
+        scale -= scaleStep;
+        applyScale();
+    }
+}
 
 
 //zoom function end
