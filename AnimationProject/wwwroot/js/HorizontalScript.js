@@ -1,9 +1,4 @@
-﻿$(document).ready(function () {
-    CreateHeaderSectionHorizontalhtml();
-    CreateBackgroundSectionHorizontalhtml();
-    CreateLeftSectionHorizontalhtml();
-    CreateRightSectionHorizontalhtml()
-});
+﻿
 // show the popup when the pattern icon is clicked
 $(document).on('click', '#toggle_img', function (e) {
     e.preventDefault();
@@ -99,14 +94,14 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
 });
-const buttons = document.querySelectorAll('.toggle-btn');
+//const buttons = document.querySelectorAll('.toggle-btn');
 
-buttons.forEach(button => {
-    button.addEventListener('click', () => {
-        buttons.forEach(btn => btn.classList.remove('active'));
-        button.classList.add('active');
-    });
-});
+//buttons.forEach(button => {
+//    button.addEventListener('click', () => {
+//        buttons.forEach(btn => btn.classList.remove('active'));
+//        button.classList.add('active');
+//    });
+//});
 
 function handleVThumbClick(clickedElement) {
     const items = document.querySelectorAll('.menuboard-horizontal-thum');
@@ -223,87 +218,10 @@ function opengl() {
         $("#elementsPopup").hide();
     }
 }
-// {{{{{{{<<<<<<<<<<<<<<<<<<<<--------------WORKING FUNCTIONS-------------->>>>>>>>>>>>>>>>>>}}}}}}}
-
-//experimental js load
-
-
-
-//let currentZIndex = 0;
-//function getNextZIndex() {
-//    return ++currentZIndex;
-//}
-
-//function addDefaultText() {
-//    images.forEach(img => img.selected = false);
-//    const fs = 30;
-//    const factor = 1.2;        // 120% of fontSize
-//    const buttons = document.querySelectorAll('.toggle-btn');
-//    const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]');
-//    const text = "Default Text";
-//    // 2) Clear `active` from all
-//    buttons.forEach(b => b.classList.remove('active'));
-
-//    // 3) Activate only the Graphic button
-//    graphicBtn.classList.add('active');
-//    // 1) Create with defaults
-//    const newObj = {
-//        text,
-//        x: 92,
-//        y: 100,
-//        selected: false,
-//        editing: false,
-//        fontFamily: "Arial",
-//        textColor: "#000000",
-//        textAlign: "left",
-//        fontSize: fs,
-
-//        // store only the factor
-//        lineSpacing: factor,
-
-//        // bounding box placeholders—will be set below
-//        boundingWidth: 0,
-//        boundingHeight: 0,
-//        noAnim: false,
-//        groupId: null,
-//        rotation: 0,
-//        isBold: false,
-//        isItalic: false,
-//        type: 'text',
-//        zIndex: getNextZIndex(),
-//        opacity: 100
-//    };
-
-//    // 2) Measure it
-//    ctx.font = `${newObj.fontSize}px ${newObj.fontFamily}`;
-//    const metrics = ctx.measureText(text);
-//    const width = metrics.width;
-//    const ascent = metrics.actualBoundingBoxAscent || fs * 0.8;
-//    const descent = metrics.actualBoundingBoxDescent || fs * 0.2;
-//    const height = ascent + descent;
-
-//    // 3) Tiny padding around
-//    const offsetX = 20;
-//    const offsetY = 25;
-
-//    // 4) Assign your bounding dimensions
-//    newObj.boundingWidth = width + offsetX;
-//    newObj.boundingHeight = height + offsetY;
-
-//    // 5) Make it the only selected object
-//    textObjects.forEach(o => o.selected = false);
-//    newObj.selected = true;
-//    textObjects.push(newObj);
-
-//    // 6) Redraw
-//    drawCanvas('Common');
-//    $("#opengl_popup").hide();
-//    $("#elementsPopup").hide();
-//}
-        
+ 
 
             function toggleMode() {
-           // let button = document.getElementById("modeButton");
+            let button = document.getElementById("modeButton");
 
             // Toggle visibility of elements
             if (document.getElementById("opengl_popup").style.display == "block") {
@@ -380,7 +298,7 @@ function opengl() {
         // show the popup when the pattern icon is clicked
         $(document).on('click', '#toggle_img', function(e) {
           e.preventDefault();
-          CreateBackgroundSectionhtml();
+            CreateBackgroundSectionHorizontalhtml();
           $('#background_popup').show();
           $('#fontstyle_popup').hide();
           $('#opengl_popup').hide();
@@ -388,27 +306,7 @@ function opengl() {
           $('#tranPopup').hide();
         });
 
-        //// hide the popup when the close button is clicked
-        //$(document).on('click', '#close_button', function(e) {
-        //  e.preventDefault();
-        //  $('#background_popup').hide();
-        //});
-
-        //// texture popuo show
-        //document.querySelectorAll(".texture_palette").forEach(element => {
-        //    element.addEventListener("click", function() {
-        //        let box = document.getElementById("texture_box");
-        //        box.style.display = (box.style.display === "none" || box.style.display === "") ? "block" : "none";
-        //    });
-        //});
-
-        // nav item active function
-        //function handleNavButtonClick(clickedElement) {
-        //    document.querySelectorAll('.nav_button').forEach(btn => {
-        //        btn.classList.remove('active_nav_button');
-        //    });
-        //    clickedElement.classList.add('active_nav_button');
-        //}
+        
 function handleNavButtonClick(event) {
     document.querySelectorAll('.nav_button').forEach(btn => {
         btn.classList.remove('active_nav_button');
@@ -462,7 +360,6 @@ document.addEventListener('click', function (event) {
         popup.style.display = 'none';
     }
 });
-
 //zoom function
 
 let scale = 1;
@@ -470,12 +367,13 @@ const scaleStep = 0.1;
 const maxScale = 3;
 const minScale = 0.5;
 
-const canvas = document.getElementById("myHorizCanvas");
 const scaleText = document.getElementById("scaleValue");
 
 function applyScale() {
+    /*   resizeCanvas();*/
     canvas.style.transform = `scale(${scale})`;
     scaleText.textContent = `Scale: ${scale.toFixed(1)}`;
+    /* drawCanvas("Common");*/
 }
 
 function zoomIn() {
@@ -494,3 +392,62 @@ function zoomOut() {
 
 
 //zoom function end
+
+function initModeToggle() {
+    const buttons = document.querySelectorAll('.toggle-container .toggle-btn');
+
+    function applyModeOld(mode) {
+        if (mode === 'graphic') {
+            document.getElementById('opengl_popup').style.display = 'none';
+            document.getElementById('fontstyle_popup').style.display = 'block';
+            document.querySelector('.right-sec-one').style.display = 'none';
+            document.querySelector('.right-sec-two').style.display = 'block';
+
+        } else {
+
+            document.getElementById('opengl_popup').style.display = 'none';
+            document.getElementById('fontstyle_popup').style.display = 'none';
+            document.querySelector('.right-sec-one').style.display = 'block';
+            document.querySelector('.right-sec-two').style.display = 'none';
+        }
+    }
+    function applyMode(mode) {
+        const openglPopup = document.getElementById('opengl_popup');
+        const fontstylePopup = document.getElementById('fontstyle_popup');
+        const rightSecOne = document.querySelector('.right-sec-one');
+        const rightSecTwo = document.querySelector('.right-sec-two');
+
+        if (mode === 'graphic') {
+            if (openglPopup) openglPopup.style.display = 'none';
+            if (fontstylePopup) fontstylePopup.style.display = 'block';
+            if (rightSecOne) rightSecOne.style.display = 'none';
+            if (rightSecTwo) rightSecTwo.style.display = 'block';
+        } else {
+            if (openglPopup) openglPopup.style.display = 'none';
+            if (fontstylePopup) fontstylePopup.style.display = 'none';
+            if (rightSecOne) rightSecOne.style.display = 'block';
+            if (rightSecTwo) rightSecTwo.style.display = 'none';
+        }
+    }
+
+
+    buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // toggle active class
+            buttons.forEach(b => b.classList.toggle('active', b === btn));
+
+            // apply mode for the newly clicked button
+            applyMode(btn.dataset.mode);
+        });
+    });
+
+    // on load: find the one already marked .active
+    const defaultBtn = document.querySelector('.toggle-btn.active');
+    if (defaultBtn) {
+        applyMode(defaultBtn.dataset.mode);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', initModeToggle);
+
+

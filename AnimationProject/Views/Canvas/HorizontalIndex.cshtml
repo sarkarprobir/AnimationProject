@@ -21,8 +21,279 @@
     <link href="~/css/style.css" rel="stylesheet">
     <script src="~/js/HorizontalScript.js"></script>
 }
+@* <script>
+        (function(){
+      const canvas    = document.getElementById('myCanvas');
+      const container = document.getElementById('canvasContainer');
+      const ctx       = canvas.getContext('2d');
+      const dpr       = window.devicePixelRatio || 1;
 
+      //──────────────────────────────────────────────────────────
+      // STATE: these will be set dynamically on first resize
+      let DESIGN_W, DESIGN_H;
+      let scaleX = 1, scaleY = 1;
+      let firstRun = true;
+      //──────────────────────────────────────────────────────────
 
+      function resizeCanvas() {
+         // console.log("resizeCanvas");
+        // 1) Figure out how big the canvas *looks* on the page (CSS px)
+        const containerW = container.clientWidth;
+        const cssW       = containerW * 0.34;          // e.g. 32% of container
+        const cssH       = cssW * (9/16);              // your chosen aspect
+
+        canvas.style.width  = cssW + 'px';
+        canvas.style.height = cssH + 'px';
+
+        // 2) Resize the internal buffer for HiDPI
+        const bufW = Math.round(cssW * dpr);
+        const bufH = Math.round(cssH * dpr);
+        if (canvas.width !== bufW || canvas.height !== bufH) {
+          canvas.width  = bufW;
+          canvas.height = bufH;
+        }
+
+        // 3) Compute the *actual* drawing‐space size in CSS pixels
+        const screenW = canvas.width  / dpr;
+        const screenH = canvas.height / dpr;
+
+        // 4) On very first run, “lock in” your design resolution
+        if (firstRun) {
+          DESIGN_W  = screenW;
+          DESIGN_H  = screenH;
+          firstRun  = false;
+          console.log(`Captured design size: ${DESIGN_W}×${DESIGN_H}`);
+        }
+
+        // 5) Now compute how much to scale your design → screen
+        scaleX = screenW / DESIGN_W;
+        scaleY = screenH / DESIGN_H;
+
+        // 6) Reset any old transforms, then apply:
+        //   a) dpr for HiDPI (1 unit → 1 CSS px)
+        //   b) design→screen scale
+        ctx.resetTransform();
+        ctx.scale(dpr, dpr);
+        ctx.scale(scaleX, scaleY);
+      }
+
+      // expose & hook up
+      window.resizeCanvas = resizeCanvas;
+      window.addEventListener('resize',  resizeCanvas);
+      window.addEventListener('DOMContentLoaded', resizeCanvas);
+    })();
+</script> *@
+<script>
+      $(document).ready(function(){
+      (async () => {
+        try {
+                const savedHtml = sessionStorage.getItem("leftPanelHtml");
+        let leftPanelPromise;
+        if (savedHtml) {
+          document.getElementById("divpanelleft").innerHTML = savedHtml;
+          sessionStorage.removeItem("leftPanelHtml"); // optional cleanup
+          leftPanelPromise = Promise.resolve(); // no async work needed
+        } else {
+          // Make sure CreateLeftSectionhtml returns a Promise
+          leftPanelPromise = CreateLeftSectionHorizontalhtml();
+        }
+          // 1) Load all four panels in parallel
+          await Promise.all([
+              leftPanelPromise,
+            CreateHeaderSectionHorizontalhtml(),
+    CreateBackgroundSectionHorizontalhtml(),
+    CreateLeftSectionHorizontalhtml(),
+    CreateRightSectionHorizontalhtml()
+            //CreateLeftSectionhtml()
+
+          ]);
+
+              // await Promise.all([
+              //   CreateLeftSectionhtml(),
+              //   CreateRightSectionhtml(),
+              //   CreateHeaderSectionhtml(),
+              //   CreateBackgroundSectionhtml()
+
+              // ]);
+          await document.fonts.ready;
+
+          // 3) Now your controls can be initialized
+          $("#hdnlLoopControl").val(1);
+          $("#hdnfillColor").val('#42b3f5');
+          $("#hdnStrockColor").val('#78f542');
+         // document.getElementById("modeButton").innerText = "Graphic Mode";
+
+          // 4) Pull the `id` from the URL and initialize your canvas
+          const params = new URLSearchParams(window.location.search);
+          const id     = params.get('id');
+          if (id) {
+            GetDesignBoardById(id);
+
+            // Wire up your custom context‑menu
+            // const canvas      = document.getElementById("myCanvas");
+            // const contextMenu = document.getElementById("contextMenu");
+            canvas.addEventListener("contextmenu", e => {
+              e.preventDefault();
+              const rect    = canvas.getBoundingClientRect();
+              const offsetX = e.clientX - rect.left;
+              const offsetY = e.clientY - rect.top;
+
+              const found = getObjectAtcontextmenu(offsetX, offsetY);
+              if (found) {
+                const adjustX = 280, adjustY = 64;
+                selectedForContextMenu = found.obj;
+                selectedType           = found.type;
+                contextMenu.style.left    = (offsetX + adjustX) + "px";
+                contextMenu.style.top     = (offsetY + adjustY) + "px";
+                contextMenu.style.display = "block";
+              } else {
+                contextMenu.style.display = "none";
+              }
+            });
+          }
+
+          // 5) Optionally auto‑open the modal
+          if (params.get('openModal') === 'true') {
+            const modalEl = document.getElementById('exampleModal');
+            new bootstrap.Modal(modalEl).show();
+          }
+        }
+        catch (err) {
+          console.error("Initialization failed:", err);
+          // fallback: at least try to draw board even if fonts or panels didn't load
+          const fallbackId = new URLSearchParams(window.location.search).get('id');
+          if (fallbackId) GetDesignBoardById(fallbackId);
+        }
+      })();
+    });
+
+        const buttons = document.querySelectorAll('.toggle-btn');
+
+        buttons.forEach(button => {
+          button.addEventListener('click', () => {
+            buttons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+          });
+        });
+        async function DeleteSlide() {
+            try {
+                // const confirmDelete = confirm("Do you want to delete this slide?");
+                const confirmDelete = await customConfirm("Do you want to delete slide-"+activeSlide+"?");
+            if (!confirmDelete) return;
+
+                     let slideId;
+            if (activeSlide === 1) {
+                    slideId = $(`#hdnDesignBoardDetailsIdSlide1`).val();
+            } else if (activeSlide === 2) {
+                    slideId = $(`#hdnDesignBoardDetailsIdSlide2`).val();
+                }else if (activeSlide === 3) {
+                        slideId = $(`#hdnDesignBoardDetailsIdSlide3`).val();
+                }
+
+            // Check for blank, undefined, or default GUID
+            const isDefaultOrBlank = !slideId || slideId.trim() === "" || slideId === "00000000-0000-0000-0000-000000000000";
+
+            if (isDefaultOrBlank) {
+                // Delete only the in-memory saved JSON based on activeSlide
+                if (activeSlide === 1) {
+                    verticalSlide1 = "";
+                } else if (activeSlide === 2) {
+                    verticalSlide2 = "";
+                } else if (activeSlide === 3) {
+                    verticalSlide3 = "";
+                }
+
+                    MessageShow('RedirectToVerticalPageWithQueryString()', 'Slide deleted from memory.', 'success');
+                return;
+            }
+
+            // If slideId is valid, continue with server delete
+            ShowLoader();
+
+            const dataSlide = {
+                DesignBoardDetailsId: slideId
+            };
+
+            $.ajax({
+                url: baseURL + "Canvas/DeleteDesignSlideBoard",
+                type: "POST",
+                dataType: "json",
+                data: dataSlide,
+                success: function (slideResult) {
+                    HideLoader();
+                    if (slideResult.response === 'ok') {
+                        MessageShow('RedirectToVerticalPageWithQueryString()', 'Slide deleted successfully!', 'success');
+                    } else {
+                        MessageShow('', 'Failed to delete slide.', 'error');
+                    }
+                },
+                error: function (data) {
+                    console.log("Error in delete slide", data);
+                    HideLoader();
+                    MessageShow('', 'Error deleting slide.', 'error');
+                }
+            });
+
+        } catch (e) {
+            console.log("catch", e);
+            HideLoader();
+        }
+        }
+
+     async function DuplicateSlide()
+        {
+             // const confirmduplicate = confirm("Do you want to duplicate "+activeSlide+" slide?");
+                 const confirmduplicate = await customConfirm("Do you want to duplicate slide-"+activeSlide+"?");
+                    if (!confirmduplicate) return;
+
+            if($(`#hdnDesignBoardDetailsIdSlide3`).val() !=='')
+            {
+                    MessageShow('', 'Already 3 slide created.Delete any one and then duplicate!', 'error');
+                        return;
+            }
+        let DesignBoardDetailsId;
+        if (activeSlide === 1) {
+            DesignBoardDetailsId = $(`#hdnDesignBoardDetailsIdSlide1`).val();
+        } else if (activeSlide === 2) {
+            DesignBoardDetailsId = $(`#hdnDesignBoardDetailsIdSlide2`).val();
+        }
+
+            const isDefaultOrBlank = !DesignBoardDetailsId || DesignBoardDetailsId.trim() === "" || DesignBoardDetailsId === "00000000-0000-0000-0000-000000000000";
+
+        if (!isDefaultOrBlank) {
+            try {
+            ShowLoader();
+            const dataSlide = {
+                    DesignBoardDetailsId: DesignBoardDetailsId
+            };
+
+            $.ajax({
+                url: baseURL + "Canvas/DuplicateDesignSlideBoard",
+                type: "POST",
+                dataType: "json",
+                data: dataSlide,
+                success: function (slideResult) {
+                    HideLoader();
+                    if (slideResult.response === 'ok') {
+                        MessageShow('RedirectToVerticalPageWithQueryString()', 'Slide duplicate successfully!', 'success');
+                    } else {
+                        MessageShow('', 'Failed to duplicate slide.', 'error');
+                    }
+                },
+                error: function (data) {
+                    console.log("Error in delete slide", data);
+                    HideLoader();
+                    MessageShow('', 'Error duplicate slide.', 'error');
+                }
+            });
+
+        } catch (e) {
+            console.log("catch", e);
+            HideLoader();
+        }
+        }
+        }
+</script>
 
     
 
@@ -95,8 +366,8 @@
         <div class="panel-left " id="divpanelleftH">
 
         </div>
-
-        <div class="panel-middle d-flex justify-content-center">
+        <input type="hidden" id="hdnBackgroundSpecificColor" />
+        <div class="panel-middle d-flex align-items-center justify-content-center" id="canvasContainer">
             <div class="canvas-top-btn">
                 <div class="toggle-container">
                     <button class="toggle-btn" data-mode="graphic">Graphic</button>
@@ -104,9 +375,18 @@
                 </div>
 
             </div>
-              <div id="canvasContainer">
-                    <canvas class="hori_canvas" id="myHorizCanvas" style="background-color:#fff"></canvas>
-              </div>
+            <canvas  id="myCanvas"></canvas>
+            <div id="contextMenu">
+                <ul>
+                    <li class="context-options" id="copyOption">Copy</li>
+                    <li class="context-options" id="pasteOption">Paste</li>
+                    <li class="context-options" id="duplicateOption">Duplicate</li>
+                    <li class="context-options" id="bringFrontOption">Bring Front</li>
+                    <li class="context-options" id="sendBackOption">Send Back</li>
+                    <li class="context-options" id="deleteOption">Delete</li>
+                </ul>
+            </div>
+
               <p class="middle-resulation">Final Output 1920x1080</p>
              @*  zoom div *@
             <div class="zoom_scale">
@@ -115,6 +395,7 @@
                 <button onclick="zoomIn()">+</button>
             </div>
             @*  zoom div *@
+            <textarea wrap="hard" style="display:none;" id="textEditor"></textarea>
         </div>
 
         <div class="panel-right content" id="divpanelrightH">
@@ -147,4 +428,17 @@
         </div>
     </div>
 </div>
+<img src="/images/stripe.svg"
+     id="transition1"
+     data-color="#d6d61e"
+     style="display:none"
+     data-width="210" />
+<input type="hidden" id="hdnTransition1" />
+<input type="hidden" id="hdnTransition2" />
+<img src="/images/stripe2.svg"
+     id="transition2"
+     data-color="#1ed633"
+     data-width="300"
+     style="display:none" />
+<input type="hidden" id="hdntransition" />
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

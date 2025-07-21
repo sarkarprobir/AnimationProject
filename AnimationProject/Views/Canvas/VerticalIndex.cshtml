@@ -1153,9 +1153,9 @@
                             <div class="landscape-icon"></div>
                             <span>Horizontal / Landscape</span>
                         </div>
-                        <span>1920x1080</span>
+                        <span>1920x1080</span>                
                     </div>
-
+                    
                    
                 </div>
 
@@ -1203,11 +1203,7 @@
         <div class="panel-middle d-flex align-items-center justify-content-center" id="canvasContainer">
                 
                     <div class="canvas-top-btn">
-                        @* <button id="modeButton" class="Graphic-More active" onclick="toggleMode();"></button> *@
-                       @*  <div class="toggle-container">
-                            <button class="toggle-btn active">Graphic</button>
-                            <button class="toggle-btn ">Animation</button>
-                        </div> *@
+                       
                         <div class="toggle-container">
                             <button class="toggle-btn" data-mode="graphic">Graphic</button>
                             <button class="toggle-btn active" data-mode="animation">Animation</button>
@@ -1227,6 +1223,13 @@
                                 </ul>
                             </div>
                     <p class="middle-resulation">Final Output 1080x1920</p>
+            @*  zoom div *@
+            <div class="zoom_scale" style="display:none;">
+                <button onclick="zoomOut()">-</button>
+                <span id="scaleValue">Scale: 1</span>
+                <button onclick="zoomIn()">+</button>
+            </div>
+            @*  zoom div *@
                     <textarea wrap="hard" style="display:none;" id="textEditor"></textarea>
         </div>
 

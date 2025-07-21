@@ -405,3 +405,37 @@ body {
     padding: 4px;
     width: 158px;
 }
+#canvasContainer {
+    position: relative;
+    display: inline-block;
+    height: 97vh;
+}
+/* Canvas styling */
+#myCanvas {
+    background-color: #fff;
+    cursor: pointer;
+}
+/* Hidden input for text editing added*/
+#textEditor {
+    position: absolute;
+    display: none;
+    outline: none;
+    background: linear-gradient(135deg, #ffffff, #f9f9f9);
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    color: #333;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+    z-index: 100;
+}
+
+    #textEditor:focus {
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        transform: scale(1.02);
+    }
+.hidden {
+    display: none !important;
+}

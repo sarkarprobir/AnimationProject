@@ -6753,3 +6753,35 @@ duplicateOption.addEventListener('click', () => {
 
 ////    console.log('Stroke width changed to:', widthNum);
 ////}
+//zoom function
+
+let scale = 1;
+const scaleStep = 0.1;
+const maxScale = 3;
+const minScale = 0.5;
+
+const scaleText = document.getElementById("scaleValue");
+
+function applyScale() {
+ /*   resizeCanvas();*/
+    canvas.style.transform = `scale(${scale})`;
+    scaleText.textContent = `Scale: ${scale.toFixed(1)}`;
+   /* drawCanvas("Common");*/
+}
+
+function zoomIn() {
+    if (scale < maxScale) {
+        scale += scaleStep;
+        applyScale();
+    }
+}
+
+function zoomOut() {
+    if (scale > minScale) {
+        scale -= scaleStep;
+        applyScale();
+    }
+}
+
+
+//zoom function end
