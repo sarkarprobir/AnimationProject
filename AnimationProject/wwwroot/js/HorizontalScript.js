@@ -1,4 +1,108 @@
-﻿
+﻿var activeSlide = 1;  // initially, assume slide 1 is active
+var verticalSlide1 = null;
+var verticalSlide2 = null;
+var verticalSlide3 = null;
+var canvasBgColor = null;
+
+let currentIndex = 0;
+let videoSaveForOnetime = 1;
+let jsonArray = []; // Global array to store JSON objects
+//const canvasElement = document.getElementById("myCanvasElement");
+//const ctxElement = canvasElement.getContext("2d");
+//const stream = canvasElement.captureStream(7); // Capture at 30 fps
+//const recorder = new MediaRecorder(stream);
+//const chunks = [];
+//let publishDownloadcondition = '';
+//const transitionState = { x: 0, y: 0, scale: 1, opacity: 1 };
+//const options = {
+//    mimeType: 'video/webm; codecs=vp9',
+//    videoBitsPerSecond: 10_000_000  // 10 Mbps; adjust as needed
+//};
+//let currentIndexForDownload = 0;
+//const canvasForDownload = document.getElementById("myCanvasElementDownload");
+//const ctxElementForDownload = canvasForDownload.getContext("2d");
+//const streamForDownload = canvasForDownload.captureStream(60); // Capture at 120 fps
+//const recorderForDownload = new MediaRecorder(streamForDownload, options);
+//const chunksForDownload = [];
+
+
+
+function updateEffectButtons(type) {
+    // 1) pick the right hidden‑field based on In vs Out
+    const hiddenField = (type === 'In')
+        ? `#hdnEffectSlide${activeSlide}`
+        : `#hdnOutEffectSlide${activeSlide}`;
+    const effectType = $(hiddenField).val();
+
+    // 2) clear any previously active button
+    // $('.effect_btn').removeClass('active_effect');
+
+    // 3) pick the button selector
+    let btnSelector = null;
+    if (type === 'In') {
+        $('.effectIn_btn').removeClass('active_effect');
+        if (effectType === 'delaylinear') btnSelector = '#adelaylinear';
+        else if (effectType === 'delaylinear2') btnSelector = '#adelaylinear2';
+        else if (effectType === 'roll') btnSelector = '#aroll';
+        else if (effectType === 'popcorn') btnSelector = '#apopcorn';
+        else if (effectType === 'mask') btnSelector = '#amask';
+    } else {
+        $('.effectOut_btn').removeClass('active_effect');
+        if (effectType === 'delaylinear') btnSelector = '#adelaylinearOut1';
+        else if (effectType === 'delaylinear2') btnSelector = '#adelaylinearOut2';
+        else if (effectType === 'roll') btnSelector = '#arollOut';
+        else if (effectType === 'popcorn') btnSelector = '#apopcornOut';
+        else if (effectType === 'mask') btnSelector = '#amaskOut';
+    }
+    if (effectType === 'roll') {
+        document.getElementById('abottom')?.classList.add('disabled-ani-button');
+        document.getElementById('atop')?.classList.add('disabled-ani-button');
+        document.getElementById('obottom')?.classList.add('disabled-ani-button');
+        document.getElementById('otop')?.classList.add('disabled-ani-button');
+
+
+    } else {
+        document.getElementById('abottom')?.classList.remove('disabled-ani-button');
+        document.getElementById('atop')?.classList.remove('disabled-ani-button');
+        document.getElementById('obottom')?.classList.remove('disabled-ani-button');
+        document.getElementById('otop')?.classList.remove('disabled-ani-button');
+    }
+    // 4) activate it (if any)
+    if (btnSelector) {
+        $(btnSelector).addClass('active_effect');
+    }
+}
+function TabShowHide(type) {
+    if (type === 'In') {
+        $("#hdnTabType").val('In');
+        $("#marzen").css("display", "block");
+        $("#rauchbier").css("display", "none");
+        $("#dunkles").css("display", "none");
+    }
+    else if (type === 'Stay') {
+        $("#hdnTabType").val('Stay');
+        $("#marzen").css("display", "none");
+        $("#rauchbier").css("display", "block");
+        $("#dunkles").css("display", "none");
+    }
+    else if (type === 'Out') {
+        $("#hdnTabType").val('Out');
+        $("#marzen").css("display", "none");
+        $("#rauchbier").css("display", "none");
+        $("#dunkles").css("display", "block");
+    }
+    // Set the corresponding radio button as checked
+    if (type === 'In') {
+        document.getElementById("tab1").checked = true;
+    } else if (type === 'Stay') {
+        document.getElementById("tab2").checked = true;
+    } else if (type === 'Out') {
+        document.getElementById("tab3").checked = true;
+    }
+
+}
+
+
 // show the popup when the pattern icon is clicked
 $(document).on('click', '#toggle_img', function (e) {
     e.preventDefault();

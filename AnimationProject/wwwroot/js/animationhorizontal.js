@@ -37,6 +37,23 @@ let layers = []; // global
 //const stream = canvas.captureStream(7); // Capture at 30 fps
 //const recorder = new MediaRecorder(stream);
 //const chunks = [];
+const canvasElement = document.getElementById("myCanvasElement");
+const ctxElement = canvasElement.getContext("2d");
+const stream = canvasElement.captureStream(7); // Capture at 30 fps
+const recorder = new MediaRecorder(stream);
+const chunks = [];
+let publishDownloadcondition = '';
+const transitionState = { x: 0, y: 0, scale: 1, opacity: 1 };
+const options = {
+    mimeType: 'video/webm; codecs=vp9',
+    videoBitsPerSecond: 10_000_000  // 10 Mbps; adjust as needed
+};
+let currentIndexForDownload = 0;
+const canvasForDownload = document.getElementById("myCanvasElementDownload");
+const ctxElementForDownload = canvasForDownload.getContext("2d");
+const streamForDownload = canvasForDownload.captureStream(60); // Capture at 120 fps
+const recorderForDownload = new MediaRecorder(streamForDownload, options);
+const chunksForDownload = [];
 const HANDLE_SIZE = 12;
 const HANDLE_HITAREA = 20;
 let activeText,      // the text object under manipulation
@@ -122,6 +139,18 @@ let selectionStart = { x: 0, y: 0 };
 let selectionEnd = { x: 0, y: 0 };
 let skipNextClick = false;
 var activeSlide = 1;
+
+const canvas_d = document.getElementById('myCanvasElementDownload');
+const container_d = document.getElementById('canvasContainerDownload');
+const ctx_d = canvas_d.getContext('2d');
+const dpr_d = window.devicePixelRatio || 1;
+
+//──────────────────────────────────────────────────────────
+// STATE: these will be set dynamically on first resize
+let DESIGN_W_d, DESIGN_H_d;
+let scaleX_d = 1, scaleY_d = 1;
+let firstRun_d = true;
+//──────────────────────────────────────────────────────────
 
 function CreateHeaderSectionHorizontalhtml() {
     try {
@@ -296,43 +325,43 @@ function TabShowHide(type) {
         $("#dunkles").css("display", "block");
     }
 }
-function textAnimationClick(clickedElement, type) {
-    $("#hdnTextAnimationType").val(type);
-    animationMode = type;
-    if (activeSlide === 1) {
-        $("#hdnEffectSlide1").val(type);
-    }
-    else if (activeSlide === 2) {
-        $("#hdnEffectSlide2").val(type);
-    }
-    else if (activeSlide === 3) {
-        $("#hdnEffectSlide3").val(type);
-    }
-    // Get the container using its ID.
-    var ulEffects = document.getElementById("ulEffects");
+//function textAnimationClick(clickedElement, type) {
+//    $("#hdnTextAnimationType").val(type);
+//    animationMode = type;
+//    if (activeSlide === 1) {
+//        $("#hdnEffectSlide1").val(type);
+//    }
+//    else if (activeSlide === 2) {
+//        $("#hdnEffectSlide2").val(type);
+//    }
+//    else if (activeSlide === 3) {
+//        $("#hdnEffectSlide3").val(type);
+//    }
+//    // Get the container using its ID.
+//    var ulEffects = document.getElementById("ulEffects");
 
-    // Select all <a> elements within the container.
-    var links = ulEffects.getElementsByTagName("a");
+//    // Select all <a> elements within the container.
+//    var links = ulEffects.getElementsByTagName("a");
 
-    // Remove the active_effect class from all links.
-    for (var i = 0; i < links.length; i++) {
-        links[i].classList.remove("active_effect");
-    }
+//    // Remove the active_effect class from all links.
+//    for (var i = 0; i < links.length; i++) {
+//        links[i].classList.remove("active_effect");
+//    }
 
-    // Add the active_effect class to the clicked element.
-    clickedElement.classList.add("active_effect");
+//    // Add the active_effect class to the clicked element.
+//    clickedElement.classList.add("active_effect");
 
-    // Get the container using its ID.
-    var ulDirection = document.getElementById("uldirection");
+//    // Get the container using its ID.
+//    var ulDirection = document.getElementById("uldirection");
 
-    // Select all <a> elements within the container.
-    var links = ulDirection.getElementsByTagName("a");
+//    // Select all <a> elements within the container.
+//    var links = ulDirection.getElementsByTagName("a");
 
-    // Remove the active_effect class from all links.
-    for (var i = 0; i < links.length; i++) {
-        links[i].classList.remove("active_effect");
-    }
-}
+//    // Remove the active_effect class from all links.
+//    for (var i = 0; i < links.length; i++) {
+//        links[i].classList.remove("active_effect");
+//    }
+//}
 function hideBack() {
     const popup = document.getElementById("background_popup");
     if (popup) {
@@ -866,6 +895,58 @@ function resizeCanvas() {
     ctx.resetTransform();
     ctx.scale(dpr, dpr);
     ctx.scale(scaleX, scaleY);
+}
+
+
+
+window.addEventListener('DOMContentLoaded', () => {
+    // 3) hook up events and initial draw
+    window.resizeCanvas = resizeCanvas_d;
+    window.addEventListener('resize', resizeCanvas_d);
+    window.addEventListener('DOMContentLoaded', resizeCanvas_d);
+    resizeCanvas_d();
+});
+
+function resizeCanvas_d() {
+    //console.log("resizeCanvas_d");
+    // 1) Figure out how big the canvas *looks* on the page (CSS px)
+    const containerW_d = container_d.clientWidth;
+    const cssW_d = containerW_d * 0.66;          // e.g. 23% of container containerW_d this is different 
+    const cssH_d = cssW_d * (9 / 16);              // your chosen aspect
+
+    canvas_d.style.width = cssW_d + 'px';
+    canvas_d.style.height = cssH_d + 'px';
+
+    // 2) Resize the internal buffer for HiDPI
+    const bufW_d = Math.round(cssW_d * dpr_d);
+    const bufH_d = Math.round(cssH_d * dpr_d);
+    if (canvas_d.width !== bufW_d || canvas_d.height !== bufH_d) {
+        canvas_d.width = bufW_d;
+        canvas_d.height = bufH_d;
+    }
+
+    // 3) Compute the *actual* drawing‐space size in CSS pixels
+    const screenW_d = canvas_d.width / dpr_d;
+    const screenH_d = canvas_d.height / dpr_d;
+
+    // 4) On very first run, “lock in” your design resolution
+    if (firstRun_d) {
+        DESIGN_W_d = screenW_d;
+        DESIGN_H_d = screenH_d;
+        firstRun_d = false;
+        console.log(`Captured design size: ${DESIGN_W_d}×${DESIGN_H_d}`);
+    }
+
+    // 5) Now compute how much to scale your design → screen
+    scaleX_d = screenW_d / DESIGN_W_d;
+    scaleY_d = screenH_d / DESIGN_H_d;
+
+    // 6) Reset any old transforms, then apply:
+    //   a) dpr for HiDPI (1 unit → 1 CSS px)
+    //   b) design→screen scale
+    ctx_d.resetTransform();
+    ctx_d.scale(dpr_d, dpr_d);
+    ctx_d.scale(scaleX_d, scaleY_d);
 }
 // helper: hit­test a point against all your shapes
 function hitTest(x, y) {
@@ -2129,15 +2210,15 @@ function animateText(direction, condition, loopCount) {
 function textAnimationClick(clickedElement, type, from) {
     $("#hdnTextAnimationType").val(type);
     animationMode = type;
-    if (activeSlide === 1) {
-        $("#hdnEffectSlide1").val(type);
-    }
-    else if (activeSlide === 2) {
-        $("#hdnEffectSlide2").val(type);
-    }
-    else if (activeSlide === 3) {
-        $("#hdnEffectSlide3").val(type);
-    }
+    //if (activeSlide === 1) {
+    //    $("#hdnEffectSlide1").val(type);
+    //}
+    //else if (activeSlide === 2) {
+    //    $("#hdnEffectSlide2").val(type);
+    //}
+    //else if (activeSlide === 3) {
+    //    $("#hdnEffectSlide3").val(type);
+    //}
     if (from == 'Out') {
         if (activeSlide === 1) {
             $("#hdnOutEffectSlide1").val(type);
@@ -2152,6 +2233,15 @@ function textAnimationClick(clickedElement, type, from) {
         clickedElement.classList.add("active_effect");
     }
     else if (from == 'In') {
+        if (activeSlide === 1) {
+            $("#hdnEffectSlide1").val(type);
+        }
+        else if (activeSlide === 2) {
+            $("#hdnEffectSlide2").val(type);
+        }
+        else if (activeSlide === 3) {
+            $("#hdnEffectSlide3").val(type);
+        }
         $('.effectIn_btn').removeClass('active_effect');
         clickedElement.classList.add("active_effect");
     }
@@ -4286,80 +4376,8 @@ function strokeWidthChanges() {
     selectEl.options[selectEl.selectedIndex].classList.add("selected");
 }
 
-function TabShowHide(type) {
-    if (type === 'In') {
-        $("#hdnTabType").val('In');
-        $("#marzen").css("display", "block");
-        $("#rauchbier").css("display", "none");
-        $("#dunkles").css("display", "none");
-    }
-    else if (type === 'Stay') {
-        $("#hdnTabType").val('Stay');
-        $("#marzen").css("display", "none");
-        $("#rauchbier").css("display", "block");
-        $("#dunkles").css("display", "none");
-    }
-    else if (type === 'Out') {
-        $("#hdnTabType").val('Out');
-        $("#marzen").css("display", "none");
-        $("#rauchbier").css("display", "none");
-        $("#dunkles").css("display", "block");
-    }
-    // Set the corresponding radio button as checked
-    if (type === 'In') {
-        document.getElementById("tab1").checked = true;
-    } else if (type === 'Stay') {
-        document.getElementById("tab2").checked = true;
-    } else if (type === 'Out') {
-        document.getElementById("tab3").checked = true;
-    }
-
-}
-function updateEffectButtons(type) {
-    // 1) pick the right hidden‑field based on In vs Out
-    const hiddenField = (type === 'In')
-        ? `#hdnEffectSlide${activeSlide}`
-        : `#hdnOutEffectSlide${activeSlide}`;
-    const effectType = $(hiddenField).val();
-
-    // 2) clear any previously active button
-    // $('.effect_btn').removeClass('active_effect');
-
-    // 3) pick the button selector
-    let btnSelector = null;
-    if (type === 'In') {
-        $('.effectIn_btn').removeClass('active_effect');
-        if (effectType === 'delaylinear') btnSelector = '#adelaylinear';
-        else if (effectType === 'delaylinear2') btnSelector = '#adelaylinear2';
-        else if (effectType === 'roll') btnSelector = '#aroll';
-        else if (effectType === 'popcorn') btnSelector = '#apopcorn';
-        else if (effectType === 'mask') btnSelector = '#amask';
-    } else {
-        $('.effectOut_btn').removeClass('active_effect');
-        if (effectType === 'delaylinear') btnSelector = '#adelaylinearOut1';
-        else if (effectType === 'delaylinear2') btnSelector = '#adelaylinearOut2';
-        else if (effectType === 'roll') btnSelector = '#arollOut';
-        else if (effectType === 'popcorn') btnSelector = '#apopcornOut';
-        else if (effectType === 'mask') btnSelector = '#amaskOut';
-    }
-    if (effectType === 'roll') {
-        document.getElementById('abottom')?.classList.add('disabled-ani-button');
-        document.getElementById('atop')?.classList.add('disabled-ani-button');
-        document.getElementById('obottom')?.classList.add('disabled-ani-button');
-        document.getElementById('otop')?.classList.add('disabled-ani-button');
 
 
-    } else {
-        document.getElementById('abottom')?.classList.remove('disabled-ani-button');
-        document.getElementById('atop')?.classList.remove('disabled-ani-button');
-        document.getElementById('obottom')?.classList.remove('disabled-ani-button');
-        document.getElementById('otop')?.classList.remove('disabled-ani-button');
-    }
-    // 4) activate it (if any)
-    if (btnSelector) {
-        $(btnSelector).addClass('active_effect');
-    }
-}
 function updateDirectionButtons(type) {
     // 1) pick the right hidden‑field based on In vs Out
     const hiddenField = (type === 'In')
@@ -4943,7 +4961,7 @@ duplicateOption.addEventListener('click', () => {
                 success: function (slideResult) {
                     HideLoader();
                     if (slideResult.response === 'ok') {
-                        MessageShow('RedirectToVerticalPageWithQueryString()', 'Slide duplicate successfully!', 'success');
+                        MessageShow('RedirectToHorizontalPageWithQueryString()', 'Slide duplicate successfully!', 'success');
                     } else {
                         MessageShow('', 'Failed to duplicate slide.', 'error');
                     }
@@ -4961,3 +4979,3577 @@ duplicateOption.addEventListener('click', () => {
         }
     }
 });
+function SaveDesignBoard() {
+    try {
+        ShowLoader();
+        textObjects.forEach(o => o.selected = false);
+        images.forEach(img => img.selected = false);
+
+        // Save the current slide before proceeding (if you have an active slide mechanism)
+        saveCurrentSlide();
+
+        var boardName = $("#txtSaveDesignBoardName").val().trim();
+        if (!boardName) {
+            MessageShow('', 'Design Board name can not be blank', 'error');
+            return false; // Halt execution if needed
+        }
+        // Build the main design board data object.
+        var boardData = {
+            DesignBoardId: $("#hdnDesignBoardId").val() || '00000000-0000-0000-0000-000000000000',
+            CustomerId: '4DB56C68-0291-497B-BBCF-955609284A70',
+            CompanyId: 'F174A15A-76B7-4E19-BE4B-4E240983DE55',
+            DesignBoardName: $("#txtSaveDesignBoardName").val(),
+            SlideType: 'Horizontal'
+        };
+
+
+        $.ajax({
+            url: baseURL + "Canvas/SaveUpdateDesignBoard",
+            type: "POST",
+            dataType: "json",
+            data: boardData,
+            success: function (result) {
+                // Update the hidden design board id
+                $("#hdnDesignBoardId").val(result.result);
+
+                // Prepare a default id constant to check new vs. update
+                var defaultId = '00000000-0000-0000-0000-000000000000';
+                var defaultEffect = 'delaylinear';
+                var defaultDirection = 'left';
+                var defaultAnimationVideoPath = '';
+                var defaultAnimationImagePath = '';
+
+                // Prepare slide data for each slide
+                var slides = [
+                    { slideSeq: 1, json: verticalSlide1, hdnField: "#hdnDesignBoardDetailsIdSlide1", slideName: 'Slide-1', effect: "#hdnEffectSlide1", direction: "#hdnDirectiontSlide1", outEffect: "#hdnOutEffectSlide1", outDirection: "#hdnOutDirectiontSlide1", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath1", animationImagePath: "#hdnDesignBoardDetailsIdSlideImageFilePath1" },
+                    { slideSeq: 2, json: verticalSlide2, hdnField: "#hdnDesignBoardDetailsIdSlide2", slideName: 'Slide-2', effect: "#hdnEffectSlide2", direction: "#hdnDirectiontSlide2", outEffect: "#hdnOutEffectSlide2", outDirection: "#hdnOutDirectiontSlide2", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath2", animationImagePath: "#hdnDesignBoardDetailsIdSlideImageFilePath2" },
+                    { slideSeq: 3, json: verticalSlide3, hdnField: "#hdnDesignBoardDetailsIdSlide3", slideName: 'Slide-3', effect: "#hdnEffectSlide3", direction: "#hdnDirectiontSlide3", outEffect: "#hdnOutEffectSlide3", outDirection: "#hdnOutDirectiontSlide3", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath3", animationImagePath: "#hdnDesignBoardDetailsIdSlideImageFilePath3" }
+                ];
+
+                // Function to save/update one slide
+                function saveSlide(slide) {
+                    // Get current slide detail id from the hidden field
+                    var currentDetailId = $(slide.hdnField).val() || defaultId;
+                    var currentEffect = $(slide.effect).val() || defaultEffect;
+                    var currentDirection = $(slide.direction).val() || defaultDirection;
+
+                    var currentOutEffect = $(slide.outEffect).val() || defaultEffect;
+                    var currentOutDirection = $(slide.outDirection).val() || defaultDirection;
+
+                    var currentAnimationVideoPath = $(slide.animationVideoPath).val() || defaultAnimationVideoPath;
+                    var currentAnimationImagePath = $(slide.animationImagePath).val() || defaultAnimationImagePath;
+
+                    const els = [
+                        document.getElementById('hdnTransition1'),
+                        document.getElementById('hdnTransition2'),
+                    ];
+
+                    const stripescolor = els
+                        .map(el => el.value)
+                        .join('~');
+
+
+
+                    var dataSlide = {
+                        DesignBoardDetailsId: currentDetailId,  // if new, this is default, if update, this is the actual id
+                        DesignBoardId: $("#hdnDesignBoardId").val(),
+                        SlideSequence: slide.slideSeq,
+                        JsonFile: slide.json,
+                        SlideName: slide.slideName,
+                        Effect: currentEffect,
+                        Direction: currentDirection,
+                        OutEffect: currentOutEffect,
+                        OutDirection: currentOutDirection,
+                        AnimationVideoPath: currentAnimationVideoPath,
+                        AnimationImagePath: currentAnimationImagePath,
+                        TransitionType: $("#hdntransition").val() || 'slideLeft',
+                        TransitionColor: stripescolor
+                    };
+
+                    $.ajax({
+                        url: baseURL + "Canvas/SaveUpdateDesignSlideBoard",
+                        type: "POST",
+                        dataType: "json",
+                        data: dataSlide,
+                        success: function (slideResult) {
+                            // Update the hidden field with returned id so that future updates know this record exists
+                            $(slide.hdnField).val(slideResult.result);
+
+
+                            if (slideResult.result !== '' && $(`#hdnDesignBoardDetailsIdSlide${activeSlide}`).val() === slideResult.result) {
+                                const canvas = document.getElementById('myCanvas'); // Your canvas element
+                                const ctx = canvas.getContext('2d');
+
+                                // Ensure all images & SVGs are fully loaded before capturing
+                                //  const images = document.querySelectorAll("img, svg");
+                                let loadedCount = 0;
+                                images.forEach(img => {
+                                    if (!img.img.complete) {
+                                        img.onload = () => {
+                                            loadedCount++;
+                                            if (loadedCount === images.length) captureSlide(activeSlide, slideResult);
+                                        };
+                                        img.onerror = () => {
+                                            console.warn("Failed to load image:", img.src);
+                                            loadedCount++;
+                                        };
+                                    } else {
+                                        loadedCount++;
+                                    }
+                                });
+
+                                if (loadedCount === images.length) captureSlide(activeSlide, slideResult); // If all images are already loaded
+
+                            }
+                        },
+                        error: function (data) {
+                            console.log("error in saving slide " + slide.slideSeq, data);
+                            HideLoader();
+                        }
+                    });
+                }
+
+                // Save each slide one by one (you can also loop through slides if needed)
+                slides.forEach(function (slide) {
+                    // Only send the slide data if there's something in the JSON
+                    // You might want to add extra checks if needed
+                    if (slide.json) {
+                        saveSlide(slide);
+                    }
+                });
+
+                // Optionally, reset the main design board hidden field here or later, based on your flow.
+                // $("#hdnDesignBoardId").val(defaultId);
+
+                // HideLoader();
+
+                // Check for login response or success message as needed.
+                if (result === "login") {
+                    window.location.href = baseURL + 'Login/Index';
+                    return false;
+                }
+                if (result !== null) {
+
+
+                    // MessageShow('RedirectToVerticalPageWithQueryString()', 'Design Board saved successfully!', 'success');
+                    // $("#hdnBackgroundSpecificColor").val("rgba(255, 255, 255, 0.95)");
+                }
+                // HideLoader();
+            },
+            error: function (data) {
+                console.log("error", data);
+                HideLoader();
+            }
+        });
+    } catch (e) {
+        console.log("catch", e);
+        HideLoader();
+    }
+}
+async function captureSlide(activeSlide, slideResult) {
+    const canvas = document.getElementById("myCanvas");
+    const ctx = canvas.getContext("2d");
+    // 1) Update your canvas one last time:
+    drawCanvas("Common");
+    // 2) Wait for any <img> or <svg> in the DOM to be fully loaded:
+    const imgs = images;//Array.from(document.querySelectorAll("img, svg"));
+    await Promise.all(imgs.map(el => {
+        if (el.img.complete) return Promise.resolve();
+        return new Promise(res => {
+            el.onload = () => res();
+            el.onerror = () => {
+                console.warn("Image failed to load before capture:", el.src);
+                res();
+            };
+        });
+    }));
+
+    // 3) Wait for the next paint so the drawCanvas changes actually hit the GPU/composite:
+    await new Promise(requestAnimationFrame);
+
+    // 4) Now safely snapshot the canvas:
+    canvas.toBlob(async blob => {
+        if (!blob) {
+            console.error("Canvas capture failed: empty blob");
+            return;
+        }
+
+        // upload the blob
+        const formData = new FormData();
+        formData.append("image", blob, "canvas.png");
+        formData.append("folderId", slideResult.result || "new");
+
+        try {
+            const resp = await fetch(baseURL + "video/save-image", {
+                method: "POST", body: formData
+            });
+            const data = await resp.json();
+            console.log("Image saved:", data);
+
+            // build absolute URL and cache-bust
+            const imgUrl = new URL(data.filePath, window.location.origin);
+            imgUrl.searchParams.set("t", Date.now());
+
+            // update your hidden field & thumbnail
+            $(`#hdnDesignBoardDetailsIdSlideImageFilePath${activeSlide}`)
+                .val(data.filePath);
+            $(`#imageHorizontal${activeSlide}`)
+                .attr("src", imgUrl.toString());
+
+            // finally persist the path in your DB
+            await $.ajax({
+                url: baseURL + "Canvas/UpdateDesignDesignBoardDetailsImagePath",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    DesignBoardDetailsId: slideResult.result,
+                    ImagePath: data.filePath
+                },
+                success: function (response) {
+                    sessionStorage.setItem("leftPanelHtml", document.getElementById("divpanelleftH").innerHTML);
+                    MessageShow('RedirectToHorizontalPageWithQueryString()', 'Design Board saved successfully!', 'success');
+                },
+                error: function (xhr, status, error) {
+                    HideLoader();
+                    console.error("Failed to update image path:", error);
+                    MessageShow(null, 'Failed to save Design Board.', 'error');
+                }
+            });
+
+        } catch (err) {
+            console.error("Error saving or updating image:", err);
+            HideLoader();
+        }
+    }, "image/png");
+}
+function RedirectToHorizontalPageWithQueryString() {
+    // Get the GUID from the hidden field
+    var boardId = $("#hdnDesignBoardId").val();
+    HideLoader();
+    window.location = `${baseURL}Canvas/HorizontalIndex?id=${boardId}`;
+}
+function saveCurrentSlide() {
+    var currentState = saveCanvasData();
+    // Parse the JSON string to an object.
+    var stateObj;
+    try {
+        stateObj = JSON.parse(currentState);
+    } catch (e) {
+        console.error("Error parsing currentState", e);
+        return;
+    }
+
+    // Determine if the state is effectively "blank".
+    var isBlankState = (
+        (!stateObj.canvasBgImage || stateObj.canvasBgImage.trim() === "") &&
+        (!stateObj.slideEffect || stateObj.slideEffect.trim() === "") &&
+        (!stateObj.slideDedirection || stateObj.slideDedirection.trim() === "") &&
+        (!stateObj.text || stateObj.text.length === 0) &&
+        (!stateObj.images || stateObj.images.length === 0)
+    );
+    // Only update the slide if the state isn't blank.
+    if (!isBlankState) {
+        if (activeSlide === 1) {
+            verticalSlide1 = currentState;
+        } else if (activeSlide === 2) {
+            verticalSlide2 = currentState;
+        } else if (activeSlide === 3) {
+            verticalSlide3 = currentState;
+        }
+    }
+}
+function SaveDesignBoardSlide(newSlideNumber) {
+    // Save the current slide state (if it's not blank).
+    saveCurrentSlide();
+
+
+
+
+    // Create a helper to get a deep copy of a JSON string.
+    function getDeepCopy(jsonStr) {
+        try {
+            return JSON.stringify(JSON.parse(jsonStr));
+        } catch (e) {
+            console.error("Error creating deep copy:", e);
+            return jsonStr;
+        }
+    }
+    // Update the active slide number.
+    activeSlide = newSlideNumber;
+    // Load the saved state for the new active slide using your loadCanvasFromJson function.
+    if (activeSlide === 1 && verticalSlide1) {
+        // Pass a deep copy so the original remains intact.
+        loadCanvasFromJson(getDeepCopy(verticalSlide1), 'Common');
+    } else if (activeSlide === 2 && verticalSlide2) {
+        loadCanvasFromJson(getDeepCopy(verticalSlide2), 'Common');
+    } else if (activeSlide === 3 && verticalSlide3) {
+        loadCanvasFromJson(getDeepCopy(verticalSlide3), 'Common');
+    } else {
+        // If no saved state exists for this slide, clear the canvas.
+        clearCanvas();
+    }
+    SelectionOfEffectandDirection(activeSlide);
+}
+function SelectionOfEffectandDirection(activeSlide) {
+    // Get the container using its ID.
+    var ulEffects = document.getElementById("ulEffects");
+
+    // Select all <a> elements within the container.
+    var links = ulEffects.getElementsByTagName("a");
+
+    // Remove the active_effect class from all links.
+    for (var i = 0; i < links.length; i++) {
+        links[i].classList.remove("active_effect");
+    }
+
+    var ulDirection = document.getElementById("uldirection");
+    // Select all <a> elements within the container.
+    var links = ulDirection.getElementsByTagName("a");
+
+    // Remove the active_effect class from all links.
+    for (var i = 0; i < links.length; i++) {
+        links[i].classList.remove("active_effect");
+    }
+
+
+    if (activeSlide === 1) {
+        if ($("#hdnEffectSlide1").val() !== '') {
+            document.getElementById("a" + $("#hdnEffectSlide1").val() + "").classList.add("active_effect");
+            document.getElementById("a" + $("#hdnDirectiontSlide1").val() + "").classList.add("active_effect");
+        }
+        if ($("#hdnOutEffectSlide1").val() !== '') {
+            document.getElementById("a" + $("#hdnOutEffectSlide1").val() + "").classList.add("active_effect");
+            document.getElementById("a" + $("#hdnOutDirectiontSlide1").val() + "").classList.add("active_effect");
+        }
+    }
+    else if (activeSlide === 2) {
+        if ($("#hdnEffectSlide2").val() !== '') {
+            document.getElementById("a" + $("#hdnEffectSlide2").val() + "").classList.add("active_effect");
+            document.getElementById("a" + $("#hdnDirectiontSlide2").val() + "").classList.add("active_effect");
+        }
+        if ($("#hdnOutEffectSlide2").val() !== '') {
+            document.getElementById("a" + $("#hdnOutEffectSlide2").val() + "").classList.add("active_effect");
+            document.getElementById("a" + $("#hdnOutDirectiontSlide2").val() + "").classList.add("active_effect");
+        }
+    }
+    else if (activeSlide === 3) {
+        if ($("#hdnEffectSlide3").val() !== '') {
+            document.getElementById("a" + $("#hdnEffectSlide3").val() + "").classList.add("active_effect");
+            document.getElementById("a" + $("#hdnDirectiontSlide3").val() + "").classList.add("active_effect");
+        }
+        if ($("#hdnOutEffectSlide3").val() !== '') {
+            document.getElementById("a" + $("#hdnOutEffectSlide3").val() + "").classList.add("active_effect");
+            document.getElementById("a" + $("#hdnOutDirectiontSlide3").val() + "").classList.add("active_effect");
+        }
+    }
+    resizeCanvas();
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// 1) SAVE: record everything as relative % of the canvas
+// ──────────────────────────────────────────────────────────────────────
+function saveCanvasData() {
+    const dpr = window.devicePixelRatio || 1;
+    // current “logical” canvas size in CSS‑pixels
+    const screenW = canvas.width / dpr;
+    const screenH = canvas.height / dpr;
+
+    // background
+    const canvasBgColor = canvas.style.backgroundColor || "#ffffff";
+    const canvasBgImage = canvas._bgImg ? canvas._bgImg.src : "";
+
+    const data = {
+        canvasBgColor: canvasBgColor,
+        canvasBgImage: canvasBgImage,
+        slideEffect: $("#hdnTextAnimationType").val(),
+        slideDedirection: $("#hdnslideDedirection").val(),
+
+        // store text blocks as percentages + their static style
+        text: textObjects.map(obj => {
+            return {
+                text: obj.text,
+                x: obj.x / screenW,
+                y: obj.y / screenH,
+                boundingWidth: obj.boundingWidth / screenW,
+                boundingHeight: obj.boundingHeight / screenH,
+                fontSize: obj.fontSize,
+                fontFamily: obj.fontFamily,
+                textColor: obj.textColor,
+                textAlign: obj.textAlign,
+                opacity: obj.opacity,
+                lineSpacing: obj.lineSpacing,
+                noAnim: obj.noAnim,
+                groupId: obj.groupId,
+                rotation: obj.rotation,
+                isBold: obj.isBold || false,
+                isItalic: obj.isItalic || false,
+                type: obj.type || 'text',
+                zIndex: obj.zIndex || getNextZIndex()
+            };
+        }),
+
+        // store images likewise
+        images: images.map(imgObj => {
+            // actual displayed width/height after per‑object scale:
+            const dispW = (imgObj.width * (imgObj.scaleX || 1));
+            const dispH = (imgObj.height * (imgObj.scaleY || 1));
+            return {
+                src: imgObj.svgData || imgObj.src,
+                x: imgObj.x / screenW,
+                y: imgObj.y / screenH,
+                width: dispW / screenW,
+                height: dispH / screenH,
+                opacity: imgObj.opacity,
+                noAnim: imgObj.noAnim,
+                groupId: imgObj.groupId,
+                rotation: imgObj.rotation,
+                type: imgObj.type || 'image',
+                zIndex: imgObj.zIndex || getNextZIndex(),
+                fillNoColorStatus: $("#hdnfillNoColorStatus").val(),
+                strokeNoColorStatus: $("#hdnstrokeNoColorStatus").val(),
+                fillNoColor: $("#hdnfillColor").val(),
+                strokeNoColor: $("#hdnStrockColor").val(),
+                strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 3
+            };
+        })
+    };
+
+    return JSON.stringify(data, null, 2);
+}
+function GetDesignBoardById(id) {
+
+    try {
+        var data = {
+            DesignBoardId: id
+        }
+        ShowLoader();
+        $.ajax({
+            url: baseURL + "Canvas/GetDesignBoardDetailsById",
+            type: "POST",
+            dataType: "json",
+            data: data,
+            success: function (result) {
+                if (result) {
+                    $("#hdnDesignBoardId").val(result.designBoardId);
+                    $("#txtSaveDesignBoardName").val(result.designBoardName);
+                    $('#designboardLink').text(result.designBoardURL);
+                    $('#designBoardName').text(result.designBoardName);
+
+
+                    if (Array.isArray(result.designBoardDetailsList) && result.designBoardDetailsList.length > 0) {
+                        // Reset global variables first to avoid stale data
+                        $("#hdntransition").val(result.designBoardDetailsList[0].transitionType);
+
+                        // read the current transition type
+                        const t = $('#hdntransition').val();
+
+                        // clear any previously active transition buttons
+                        $('.tran_button').removeClass('active');
+
+                        // if it’s slideLeft, add `.active` to the #TslideLeft button
+                        if (t === 'slideLeft') {
+                            $('#TslideLeft').addClass('active');
+                        }
+                        // (repeat for other types if you want)
+                        else if (t === 'slideRight') {
+                            $('#TslideRight').addClass('active');
+                        }
+                        else {
+                            $('.tran_button').removeClass('active');
+                        }
+
+
+                        const [beforeTilde, afterTilde] = result.designBoardDetailsList[0].transitionColor.split('~');
+
+
+                        $('#hdnTransition1').val(beforeTilde);
+                        $('#hdnTransition2').val(afterTilde);
+                        document.getElementById('targetDiv1').style.backgroundColor = beforeTilde;
+                        document.getElementById('targetDiv2').style.backgroundColor = afterTilde;
+
+                        $("#tranColor1").val(beforeTilde);
+                        $("#tranColor2").val(afterTilde);
+
+                        // Destructure first 3 elements with null coalescing
+                        [verticalSlide1, verticalSlide2, verticalSlide3] = result.designBoardDetailsList
+                            .slice(0, 3)
+                            .map(item => item?.jsonFile || null);
+                        // Update hidden fields with safety checks
+                        const setHiddenField = (index, selector) => {
+                            const value = result.designBoardDetailsList[index]?.designBoardDetailsId || '';
+                            $(selector).val(value);
+                        };
+
+                        setHiddenField(0, '#hdnDesignBoardDetailsIdSlide1');
+                        setHiddenField(1, '#hdnDesignBoardDetailsIdSlide2');
+                        setHiddenField(2, '#hdnDesignBoardDetailsIdSlide3');
+
+                        // Update hidden fields with safety checks
+                        const setHiddenFieldeffect = (index, selector) => {
+                            const value = result.designBoardDetailsList[index]?.effect || '';
+                            $(selector).val(value);
+
+                        };
+
+                        setHiddenFieldeffect(0, '#hdnEffectSlide1');
+                        setHiddenFieldeffect(1, '#hdnEffectSlide2');
+                        setHiddenFieldeffect(2, '#hdnEffectSlide3');
+
+                        // Update hidden fields with safety checks
+                        const setHiddenFielddirection = (index, selector) => {
+                            const value = result.designBoardDetailsList[index]?.direction || '';
+                            $(selector).val(value);
+                        };
+
+                        setHiddenFielddirection(0, '#hdnDirectiontSlide1');
+                        setHiddenFielddirection(1, '#hdnDirectiontSlide2');
+                        setHiddenFielddirection(2, '#hdnDirectiontSlide3');
+
+
+                        // Update hidden fields with safety checks
+                        const setHiddenFieldOuteffect = (index, selector) => {
+                            const value = result.designBoardDetailsList[index]?.outEffect || '';
+                            $(selector).val(value);
+
+                        };
+
+                        setHiddenFieldOuteffect(0, '#hdnOutEffectSlide1');
+                        setHiddenFieldOuteffect(1, '#hdnOutEffectSlide2');
+                        setHiddenFieldOuteffect(2, '#hdnOutEffectSlide3');
+
+                        // Update hidden fields with safety checks
+                        const setHiddenFieldOutdirection = (index, selector) => {
+                            const value = result.designBoardDetailsList[index]?.outDirection || '';
+                            $(selector).val(value);
+                        };
+
+                        setHiddenFieldOutdirection(0, '#hdnOutDirectiontSlide1');
+                        setHiddenFieldOutdirection(1, '#hdnOutDirectiontSlide2');
+                        setHiddenFieldOutdirection(2, '#hdnOutDirectiontSlide3');
+
+
+
+
+
+                        // Update hidden fields with safety checks hdnDesignBoardDetailsIdSlideFilePath1
+                        const setHiddenSlideFilePath = (index, selector, videoSelector) => {
+                            if (!result || !result.designBoardDetailsList || !Array.isArray(result.designBoardDetailsList)) {
+                                console.error("Invalid result object");
+                                return;
+                            }
+
+                            const value = result.designBoardDetailsList[index]?.animationVideoPath || '';
+                            $(selector).val(value);
+                        };
+                        setHiddenSlideFilePath(0, '#hdnDesignBoardDetailsIdSlideFilePath1');
+                        setHiddenSlideFilePath(1, '#hdnDesignBoardDetailsIdSlideFilePath2');
+                        setHiddenSlideFilePath(2, '#hdnDesignBoardDetailsIdSlideFilePath3');
+
+                        // Update hidden fields with safety checks hdnDesignBoardDetailsIdSlideFilePath1
+                        const setHiddenSlideImageFilePath = (index, selector, videoSelector) => {
+                            if (!result || !result.designBoardDetailsList || !Array.isArray(result.designBoardDetailsList)) {
+                                console.error("Invalid result object");
+                                return;
+                            }
+
+                            const value = result.designBoardDetailsList[index]?.animationImagePath || '';
+                            $(selector).val(value);
+                            if (value != '')
+                                $(`#imageHorizontal${index + 1}`).attr('src', `${value}`);
+                            console.log(`${value}`);
+                        };
+                        setHiddenSlideImageFilePath(0, '#hdnDesignBoardDetailsIdSlideImageFilePath1');
+                        setHiddenSlideImageFilePath(1, '#hdnDesignBoardDetailsIdSlideImageFilePath2');
+                        setHiddenSlideImageFilePath(2, '#hdnDesignBoardDetailsIdSlideImageFilePath3');
+
+
+
+                        // Optionally, load one of the slides into the canvas
+                        // For example, load slide 1's JSON data if available:
+                        // Load first slide if available
+                        if (verticalSlide1) {
+                            // wait for fonts to finish loading before we draw:
+                            document.fonts.ready
+                                .then(() => {
+                                    loadCanvasFromJson(verticalSlide1, 'Common');
+                                })
+                                .catch((err) => {
+                                    console.warn("Fonts failed to load, drawing anyway:", err);
+                                    loadCanvasFromJson(verticalSlide1, 'Common');
+                                });
+                        }
+
+                        updateEffectButtons('In');
+                        updateEffectButtons('Out');
+                        updateDirectionButtons('In');
+                        updateDirectionButtons('Out');
+                        transitionSelected(this);
+                    }
+
+                }
+                HideLoader();
+            },
+            error: function (data) {
+                console.log("error");
+                console.log(data);
+                HideLoader();
+            }
+        });
+
+    } catch (e) {
+        console.log("catch", e);
+        HideLoader();
+    }
+};
+function ensureFontsInitialized() {
+    if (!window.__allFontsReady) {
+        const families = [
+            'Arial', 'Anton', 'Bebas Neue', 'monstro', 'Montserrat', 'neto', 'Pacifico', 'Roboto'
+        ];
+        window.__fontFamilyPromises = families.map(fam => {
+            // console.log(`vertical Preloading font family: ${fam}`);
+            return document.fonts.load(`1em ${fam}`);
+        });
+        window.__allFontsReady = Promise.all(window.__fontFamilyPromises)
+            .then(() => console.log('All font families loaded'))
+            .catch(err => console.warn('Error loading fonts:', err));
+    }
+    return window.__allFontsReady;
+}
+async function loadCanvasFromJson(jsonData, condition = 'Common') {
+    //await window.__allFontsReady;
+    await ensureFontsInitialized();
+    // Clear existing canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    currentCondition = condition;
+
+    // If no JSON data, wait for fonts then draw default
+    if (!jsonData) {
+        document.fonts.ready.then(() => drawCanvas(condition));
+        return;
+    }
+
+    // Parse JSON data
+    const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+    slideData = data;
+
+    // Set background color
+    canvasBgColor = data.canvasBgColor || '#ffffff';
+    document.getElementById('hdnBackgroundSpecificColor').value = canvasBgColor;
+    canvas.style.backgroundColor = canvasBgColor;
+
+    // Preload background image if provided
+    if (data.canvasBgImage) {
+        canvas._bgImg = new Image();
+        canvas._bgImg.crossOrigin = 'anonymous';
+        canvas._bgImg.src = data.canvasBgImage;
+    } else {
+        canvas._bgImg = null;
+    }
+
+    // Compute actual display size of the canvas
+    const rect = canvas.getBoundingClientRect();
+    const screenW = rect.width;
+    const screenH = rect.height;
+
+    // Convert & store text objects, adjust for manual breaks and clamp within canvas
+    textObjects = (data.text || []).map(obj => {
+        const bw_norm = obj.boundingWidth * screenW;
+        const bh_norm = obj.boundingHeight * screenH;
+        const fontPx = obj.fontSize;
+        const lineH = fontPx * 1.2;
+
+        // Split on manual \n
+        const manualLines = obj.text.split("\n");
+        const hasManual = manualLines.length > 1;
+
+        // Compute required height
+        const neededHeight = hasManual
+            ? (manualLines.length * lineH + 2 * padding)
+            : bh_norm;
+        const finalHeight = Math.max(bh_norm, neededHeight);
+        const finalWidth = bw_norm;
+
+        // Compute initial Y
+        let ty = obj.y * screenH;
+
+        // If content overflows bottom edge, clamp up
+        if (ty + finalHeight + padding > screenH) {
+            ty = screenH - finalHeight - padding;
+        }
+
+
+        return {
+            text: obj.text,
+            x: obj.x * screenW,
+            y: ty,
+            boundingWidth: finalWidth,
+            boundingHeight: finalHeight,
+            fontSize: fontPx,
+            fontFamily: obj.fontFamily,
+            textColor: obj.textColor,
+            textAlign: obj.textAlign,
+            opacity: obj.opacity || 100,
+            selected: false,
+            _hasManualBreaks: hasManual,
+            // ← RIGHT HERE: hydrate or default lineSpacing
+            lineSpacing: (typeof obj.lineSpacing === 'number')
+                ? obj.lineSpacing
+                : obj.fontSize * 1.2,
+            noAnim: obj.noAnim,
+            groupId: obj.groupId,
+            rotation: obj.rotation,
+            isBold: obj.isBold || false,
+            isItalic: obj.isItalic || false,
+            type: obj.type || 'text',
+            zIndex: obj.zIndex || getNextZIndex(),
+        };
+    });
+
+    // Preload images (unchanged)
+    images = (data.images || []).map(imgObj => {
+        const o = { ...imgObj };
+        o.x *= screenW;
+        o.y *= screenH;
+        o.width *= screenW;
+        o.height *= screenH;
+        o.selected = false;
+        o.img = new Image();
+        o.img.crossOrigin = 'anonymous';
+        o.img.src = imgObj.src;
+        o.img.onload = () => drawCanvas(condition);
+        o.img.onerror = () => drawCanvas(condition);
+        o.noAnim = imgObj.noAnim;
+        o.groupId = imgObj.groupId;
+        o.rotation = imgObj.rotation;
+        o.type = imgObj.type || 'image';
+        o.zIndex = imgObj.zIndex || getNextZIndex();
+        o.fillNoColorStatus = imgObj.fillNoColorStatus || false;
+        o.strokeNoColorStatus = imgObj.strokeNoColorStatus || false;
+        o.fillNoColor = imgObj.fillNoColor || "#FFFFFF";
+        o.strokeNoColor = imgObj.strokeNoColor || "#FFFFFF";
+        o.strokeWidth = imgObj.strokeWidth || 3;
+        return o;
+    });
+
+    // Preload fonts and draw
+    const fontPromises = textObjects.map(o =>
+        document.fonts.load(`${o.fontSize}px ${o.fontFamily}`)
+    );
+
+
+    Promise.all(fontPromises).finally(() => {
+        // Only auto-fit for those without manual breaks
+        textObjects.forEach(obj => {
+            //if (!obj._hasManualBreaks) {
+            //    autoFitTextNew(obj, padding);
+            //}
+            autoFitTextNew(obj, padding);
+        });
+        console.log('drawCanvas calling after Promise');
+        drawCanvas(condition);
+        // resizeCanvas();
+    });
+}
+
+
+function autoFitTextNew(obj, padding = 5) {
+    const ctx2 = canvas.getContext('2d');
+    const maxW = obj.boundingWidth - 2 * padding;
+    const maxH = obj.boundingHeight - 2 * padding;
+
+    // Your designer’s raw text, split on real newlines:
+    const rawLines = obj.text.replace(/\r/g, '').split('\n');
+
+    // Given font-size fs, wrap every rawLine to fit maxW, return the full array of wrapped lines:
+    function wrapAllLines(fs) {
+        ctx2.font = `${fs}px ${obj.fontFamily}`;
+        return rawLines.flatMap(line => wrapText(ctx2, line, maxW));
+    }
+
+    // Given fs, compute block dims for the wrapped lines at that size:
+    function measure(fs) {
+        const lines = wrapAllLines(fs);
+        const widths = lines.map(l => ctx2.measureText(l).width);
+        const blockW = Math.max(...widths, 0);
+        const lineH = fs * 1.2;
+        const blockH = lines.length * lineH;
+        return { blockW, blockH, lines };
+    }
+
+    // 1) start at designer fontSize
+    let fs = Math.floor(obj.fontSize);
+    let { blockW, blockH, lines } = measure(fs);
+
+    // 2) shrink while too big
+    while ((blockW > maxW || blockH > maxH) && fs > 1) {
+        fs--;
+        ({ blockW, blockH, lines } = measure(fs));
+    }
+
+    // 3) grow while it still fits
+    while (true) {
+        const next = measure(fs + 1);
+        if (next.blockW <= maxW && next.blockH <= maxH) {
+            fs++;
+            blockW = next.blockW;
+            blockH = next.blockH;
+            lines = next.lines;
+        } else {
+            break;
+        }
+    }
+
+    // 4) commit: final fs + its wrapped lines + new boundingHeight
+    obj.fontSize = fs;
+    obj._wrappedLines = lines;
+    // obj.boundingHeight = lines.length * fs * 1.3 + 2 * padding;
+    const measuredWidths = lines.map(l => ctx2.measureText(l).width);
+    obj.boundingWidth = Math.max(...measuredWidths, 0) + 2 * padding;
+
+}
+
+
+
+// helper: shrink font and wrap text to fit bounding box
+function autoFitText(obj, padding) {
+    const ctx2 = canvas.getContext('2d');
+    const maxW = obj.boundingWidth - 2 * padding;
+    let fs = obj.fontSize;
+    ctx2.font = `${fs}px ${obj.fontFamily}`;
+    let raw = obj.text.replace(/\r/g, '');
+    let lines;
+    if (!raw.includes('\n')) {
+        let w = ctx2.measureText(raw).width;
+        while (w > maxW && fs > 6) {
+            fs--;
+            ctx2.font = `${fs}px ${obj.fontFamily}`;
+            w = ctx2.measureText(raw).width;
+        }
+        lines = wrapText(ctx2, raw, maxW);
+    } else {
+        lines = [];
+        raw.split('\n').forEach(line => {
+            lines.push(...wrapText(ctx2, line, maxW));
+        });
+    }
+    obj.fontSize = fs;
+    obj.text = lines.join('\n');
+    obj.boundingHeight = lines.length * fs * 1.2 + 2 * padding;
+}
+
+function autoFitTextForDownload(obj, padding) {
+    const ctx2 = canvasForDownload.getContext('2d');
+    const maxW = obj.boundingWidth - 2 * padding;
+    let fs = obj.fontSize;
+    ctx2.font = `${fs}px ${obj.fontFamily}`;
+    let raw = obj.text.replace(/\r/g, '');
+    let lines;
+    if (!raw.includes('\n')) {
+        let w = ctx2.measureText(raw).width;
+        while (w > maxW && fs > 6) {
+            fs--;
+            ctx2.font = `${fs}px ${obj.fontFamily}`;
+            w = ctx2.measureText(raw).width;
+        }
+        lines = wrapText(ctx2, raw, maxW);
+    } else {
+        lines = [];
+        raw.split('\n').forEach(line => {
+            lines.push(...wrapText(ctx2, line, maxW));
+        });
+    }
+    obj.fontSize = fs;
+    obj.text = lines.join('\n');
+    obj.boundingHeight = lines.length * fs * 1.2 + 2 * padding;
+}
+async function GetDesignBoardByIdForPublish() {
+    var id = $('#hdnDesignBoardId').val(); // get GUID value
+    if (id !== '') {
+        try {
+            var data = {
+                DesignBoardId: id
+            };
+            ShowLoader();
+
+            // Await the ajax call which returns a promise (jQuery 3+)
+            const result = await $.ajax({
+                url: baseURL + "Canvas/GetDesignBoardDetailsById",
+                type: "POST",
+                dataType: "json",
+                data: data
+            });
+
+            if (result && Array.isArray(result.designBoardDetailsList) && result.designBoardDetailsList.length > 0) {
+                // Create the jsonArray from the designBoardDetailsList items.
+                // Each item.jsonFile is assumed to be a JSON string.
+                jsonArray = result.designBoardDetailsList.map(item => {
+                    let jsonObj;
+                    try {
+                        jsonObj = JSON.parse(item.jsonFile);
+                    } catch (e) {
+                        console.error("Error parsing jsonFile:", item.jsonFile, e);
+                        jsonObj = {}; // fallback to an empty object if parsing fails
+                    }
+                    // Ensure default values for effect and direction
+                    jsonObj.effect = item.effect || "delaylinear";
+                    jsonObj.direction = item.direction || "left";
+                    return jsonObj;
+                });
+                console.log("jsonArray:", jsonArray);
+                loadJsonFile();
+            }
+            setTimeout(() => { GetDesignBoardByIdForDownload(''); }, 25000);
+            // HideLoader();
+        } catch (e) {
+            console.log("catch", e);
+            HideLoader();
+        }
+    }
+    else {
+        MessageShow('', 'Before Publish Must Save Board', 'error');
+    }
+}
+function showDownloadPanel() {
+    const main = document.getElementById('canvasMainContainerDownload');
+    const container = document.getElementById('canvasContainerDownload');
+    main.classList.remove('hidden');
+    container.classList.remove('hidden');
+
+    resizeCanvas_d();
+}
+function hideDownloadPanel() {
+    const main = document.getElementById('canvasMainContainerDownload');
+    const container = document.getElementById('canvasContainerDownload');
+
+    // add the “hidden” class back
+    main.classList.add('hidden');
+    container.classList.add('hidden');
+}
+async function SaveDesignBoardInPublishTable() {
+    var designBoardPublishId = $('#hdnDesignBoardPublishId').val() || '00000000-0000-0000-0000-000000000000'; // get GUID value
+    try {
+        var designBoardId = $('#hdnDesignBoardId').val(); // get GUID value
+        if (designBoardId !== '') {
+
+            var data = {
+                DesignBoardId: designBoardId,
+                DesignBoardPublishId: designBoardPublishId
+            };
+
+
+            const result = await $.ajax({
+                url: baseURL + "Canvas/PublishDesignSlideBoard",
+                type: "POST",
+                dataType: "json",
+                data: data,
+                success: function (result) {
+                    $("#hdnDesignBoardPublishId").val(result.result);
+                    $("#hdnPublishBoardUniqueId").val(result.publishBoardUniqueId);
+                },
+                error: function (data) {
+                    console.log("error");
+                    console.log(data);
+                }
+            });
+        }
+    }
+
+    catch (e) {
+        console.log("catch", e);
+    }
+
+}
+async function GetDesignBoardByIdForDownload(condition) {
+    SaveDesignBoardInPublishTable();
+    publishDownloadcondition = condition;
+    var id = $('#hdnDesignBoardId').val(); // get GUID value
+    if (id !== '') {
+        try {
+            var data = {
+                DesignBoardId: id
+            };
+
+            ShowLoader();
+            showDownloadPanel();
+            //ShowLoader();
+            // Await the ajax call which returns a promise (jQuery 3+)
+            const result = await $.ajax({
+                url: baseURL + "Canvas/GetDesignBoardDetailsById",
+                type: "POST",
+                dataType: "json",
+                data: data
+            });
+            if (result) {
+                $('#designboardLink').text(result.designBoardURL);
+            }
+
+
+            if (result && Array.isArray(result.designBoardDetailsList) && result.designBoardDetailsList.length > 0) {
+                // Create the jsonArray from the designBoardDetailsList items.
+                // Each item.jsonFile is assumed to be a JSON string.
+                jsonArray = result.designBoardDetailsList.map(item => {
+                    let jsonObj;
+                    try {
+                        jsonObj = JSON.parse(item.jsonFile);
+                    } catch (e) {
+                        console.error("Error parsing jsonFile:", item.jsonFile, e);
+                        jsonObj = {}; // fallback to an empty object if parsing fails
+                    }
+                    // Ensure default values for effect and direction
+                    jsonObj.effect = item.effect || "delaylinear";
+                    jsonObj.direction = item.direction || "left";
+                    jsonObj.outEffect = item.outEffect || "delaylinear";
+                    jsonObj.outDirection = item.outDirection || "left";
+                    return jsonObj;
+                });
+                console.log("jsonArray:", jsonArray);
+                loadJsonFileForDownload();
+            }
+            //HideLoader();
+        } catch (e) {
+            console.log("catch", e);
+            HideLoader();
+        }
+    }
+    else {
+        MessageShow('', 'Before Download Must Save Board', 'error');
+    }
+}
+function loadJsonFile() {
+    recorder.start();
+    currentIndex = 0; // Reset index when button is clicked
+    loadNextJson();   // Start loading the first JSON object
+    setTimeout(() => {
+        recorder.stop();
+    }, 15000);
+}
+function loadJsonFileForDownload() {
+    recorderForDownload.start();
+    currentIndexForDownload = 0; // Reset index when button is clicked
+    loadNextJsonForDownload();   // Start loading the first JSON object
+}
+async function showSlide(index) {
+    const state = jsonArray[index];
+    const inTime = parseFloat(selectedInSpeed) || 4;
+    const stayTime = parseFloat(selectedStaySpeed) || 3;
+    const outTime = parseFloat(selectedOutSpeed) || 4;
+    const slideExecutionTime = inTime + stayTime + outTime;
+
+    // 1) draw & animate this slide’s in→stay→out
+    loadCanvasFromJsonForDownload(state, 'Common');
+    await applyAnimationsforDownload(
+        state.effect,
+        state.direction,
+        'applyAnimations',
+        state
+    );
+
+    // 2) wait out its full duration (no stripe here yet)
+    await new Promise(r => setTimeout(r, slideExecutionTime * 1000));
+}
+async function loadNextJsonForDownload() {
+    const transitionType = $("#hdntransition").val() || 'slideLeft';
+    const stripeDuration = 2;     // total stripe time in seconds
+
+    // decide when (ms) into the stripe to swap bg
+    const overlapColor = transitionType === 'slideRight' ? 1050 : 1250;
+
+    if (!jsonArray.length) return;
+
+    // Show the very first slide
+    await showSlide(0);
+
+    // Loop through each “next” slide
+    for (let i = 0; i < jsonArray.length - 1; i++) {
+        const nextIdx = i + 1;
+        const { canvasBgColor: nextBgColor, canvasBgImage: nextBgImage } = jsonArray[nextIdx];
+
+        // 1) kick off the stripe (non‑blocking)
+        const stripePromise = runStripeTransition(transitionType, stripeDuration);
+
+        // 2) mid‑stripe, swap background (image or color)
+        setTimeout(() => {
+            if (nextBgImage) {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    canvas._bgImg = img;
+                    drawCanvasForDownload('Common');
+                };
+                img.onerror = () => {
+                    canvas._bgImg = null;
+                    $("#hdnBackgroundSpecificColorDownload").val(nextBgColor);
+                    drawCanvasForDownload('Common');
+                };
+                img.src = nextBgImage;
+            } else {
+                canvas._bgImg = null;
+                $("#hdnBackgroundSpecificColorDownload").val(nextBgColor);
+                drawCanvasForDownload('Common');
+            }
+        }, overlapColor);
+
+        // 3) wait for stripe to finish
+        await stripePromise;
+
+        // 4) now that stripe is done, load the next JSON fully
+        await loadCanvasFromJsonForDownload(jsonArray[nextIdx], 'Common');
+
+        // 5) redraw (in case loadCanvasFromJsonForDownload didn’t auto‑draw)
+        if (nextBgImage) {
+            drawCanvasForDownload('Common');
+        } else {
+            canvas._bgImg = null;
+            $("#hdnBackgroundSpecificColorDownload").val(nextBgColor);
+            drawCanvasForDownload('Common');
+        }
+
+        // 6) finally run the IN→STAY→OUT for that slide
+        await showSlide(nextIdx);
+    }
+
+    // All done
+    recorderForDownload.stop();
+}
+async function runStripeTransition(type = 'slideLeft', duration = 2) {
+
+    //$('#hdnTransition1').val('#b42ce7');
+    //$('#hdnTransition2').val('#611d7a');
+    // grab your dynamic colors
+    const dynamicColors = [
+        $('#hdnTransition1').val(),   // for transition1
+        $('#hdnTransition2').val(),   // for transition2
+        // if you had a third stripe, add its hidden input here
+    ];
+
+    // collect your stripe <img>s
+    const els = [
+        document.getElementById('transition1'),
+        document.getElementById('transition2'),
+        // …etc
+    ];
+
+    // build tinted stripes, injecting dynamic color only when present
+    const stripes = await Promise.all(
+        els.map((el, idx) => {
+            // prefer the hidden-input value if it's non-empty; otherwise use the existing data-color
+            const dyn = dynamicColors[idx];
+            const color = (typeof dyn === 'string' && dyn.trim() !== '')
+                ? dyn.trim()
+                : el.dataset.color;
+
+            // keep the DOM in sync (in case you read it elsewhere)
+            el.dataset.color = color;
+
+            return buildTintedStripe(el, {
+                color,
+                width: parseInt(el.dataset.width, 10)
+            });
+        })
+    );
+
+    // position them off-canvas
+    let currentX = canvasForDownload.width;
+    const temps = stripes.map(s => {
+        const t = {
+            type: 'image',
+            img: s.img,
+            width: s.width,
+            height: s.height,
+            x: currentX,
+            y: 0,
+            scaleX: 1,
+            scaleY: 1,
+            opacity: 1
+        };
+        currentX += s.width;
+        return t;
+    });
+
+    // add, render, animate, cleanup…
+    temps.forEach(t => images.push(t));
+    drawCanvasForDownload('Common');
+
+    await Promise.all(
+        temps.map((t, i) =>
+            animateCanvasImage(t, type, duration, i * 0.10)
+        )
+    );
+
+    temps.forEach(() => images.pop());
+}
+
+function applyAnimationsforPublish(animationType, direction, conditionValue) {
+    drawCanvasPublish(conditionValue);
+    animateTextForPublish(animationType, direction, conditionValue, parseInt($("#hdnlLoopControl").val()) || 1);
+}
+recorder.ondataavailable = (e) => chunks.push(e.data);
+// Example usage inside your MediaRecorder's onstop callback
+recorder.onstop = () => {
+    const blob = new Blob(chunks, { type: 'video/mp4; codecs=vp9' });
+
+    const existingFolderId = $(`#hdnDesignBoardDetailsIdSlide${activeSlide}`).val() || 'new';
+
+    uploadVideo(blob, existingFolderId, currentIndex);
+};
+async function applyAnimationsforDownload(animationType, direction, conditionValue, state) {
+    await drawCanvasForDownload(conditionValue);
+    await animateTextForDownload(animationType, direction, conditionValue, parseInt($("#hdnlLoopControl").val()) || 1, state);
+
+}
+recorderForDownload.ondataavailable = (e) => chunksForDownload.push(e.data);
+// Example usage inside your MediaRecorder's onstop callback
+recorderForDownload.onstop = () => {
+    const blob = new Blob(chunksForDownload, { type: 'video/webm' });
+    const existingFolderId = $(`#hdnDesignBoardId`).val() || 'new';
+
+    if (publishDownloadcondition !== 'download') {
+        //// Call the upload function with the blob and folder ID (if any)
+        uploadLargeVideo(blob, existingFolderId, currentIndex);
+    }
+
+    if (publishDownloadcondition === 'download') {
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'animation.webm'; // Download as .webm file
+        a.click();
+    }
+    HideLoader();
+};
+function startVideoCapture() {
+    // Ensure your canvas is set to 1920 x 1080 if you need HD quality.
+    canvasForDownload.width = 1920;
+    canvasForDownload.height = 1080;
+
+    recorder.ondataavailable = (e) => chunks.push(e.data);
+    recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'animation.webm'; // Download as .webm file
+        a.click();
+    };
+
+    recorder.start();
+
+    // Stop recording after 8 seconds (adjust as needed)
+    setTimeout(() => {
+        recorder.stop();
+    }, 8000);
+}
+function getCompanyIdFromUrl() {
+    return 1;
+    //const segments = window.location.pathname.split('/').filter(segment => segment !== '');
+    //// Assuming the last segment is the company ID.
+    //return segments.length ? segments[segments.length - 1] : null;
+}
+
+function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
+    const formData = new FormData();
+    formData.append('video', blob, 'animation.mp4');
+
+    formData.append('folderId', existingFolderId);
+
+    fetch(baseURL + "video/save-Large-video", {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log('large Video saved successfully:', data);
+            var dataVideoPath = {
+                DesignBoardId: $(`#hdnDesignBoardId`).val(),
+                VideoPath: data.filePath
+            };
+
+            $.ajax({
+                url: baseURL + "Canvas/UpdateDesignBoardLargeVideoPath",
+                type: "POST",
+                dataType: "json",
+                data: dataVideoPath,
+                success: function (slideResult) {
+                    // triggerAutorefresh();
+                    //Need to remove as this is temporary
+                    hideDownloadPanel();
+
+                    //const targetUrl = window.location.origin + "/Canvas/VScreen1/1";
+                    //window.open(targetUrl, "_blank");
+                    const companyUniqueId = getCompanyIdFromUrl();
+                    const projectId = $("#hdnPublishBoardUniqueId").val();
+                    window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
+
+                    RedirectToHorizontalPageWithQueryString();
+                    //HideLoader();
+                },
+                error: function (data) {
+                    console.log("error in saving Image " + activeSlide);
+                    HideLoader();
+                }
+
+
+            })
+        })
+        .catch(error => {
+            console.error('Error saving video:', error);
+            HideLoader();
+        });
+}
+function triggerAutorefresh() {
+    var dataVideoAutorefresh = {
+        CompanyUniqueId: 0
+    };
+
+    $.ajax({
+        url: baseURL + "Canvas/TriggerAutorefresh",
+        type: "POST",
+        dataType: "json",
+        data: dataVideoAutorefresh,
+        success: function (autoTriggerResult) {
+        },
+        error: function (data) {
+            console.log("error in Trigger Autorefresh " + activeSlide);
+        }
+    });
+}
+
+function uploadVideo(blob, existingFolderId = 'new', currentIndex = 1) {
+    const formData = new FormData();
+    formData.append('video', blob, 'animation.mp4');
+
+    formData.append('folderId', existingFolderId);
+
+    fetch(baseURL + "video/save-video", {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Video saved successfully:', data);
+            $(`#hdnDesignBoardDetailsIdSlideFilePath${activeSlide}`).val('');
+            $(`#hdnDesignBoardDetailsIdSlideFilePath${activeSlide}`).val(data.filePath);
+            if (videoSaveForOnetime === 1) {
+                var dataVideoPath = {
+                    DesignBoardDetailsId: $(`#hdnDesignBoardDetailsIdSlide1`).val(),
+                    VideoPath: data.filePath
+                };
+
+                $.ajax({
+                    url: baseURL + "Canvas/UpdateDesignDesignBoardDetailsVideoPath",
+                    type: "POST",
+                    dataType: "json",
+                    data: dataVideoPath,
+                    success: function (slideResult) {
+                        videoSaveForOnetime++;
+                        //startVideoCapture();
+                    },
+                    error: function (data) {
+                        console.log("error in saving Image " + activeSlide);
+                    }
+
+
+                })
+            }
+        })
+        .catch(error => {
+            console.error('Error saving video:', error);
+        });
+}
+function loadCanvasFromJsonForPublish(jsonData, condition) {
+    // Clear the canvas first.
+    ctxElement.clearRect(0, 0, canvas.width, canvas.height);
+
+    let data;
+    // If jsonData is a string, parse it; otherwise assume it's an object.
+    if (typeof jsonData === "string") {
+        try {
+            data = JSON.parse(jsonData);
+        } catch (e) {
+            console.error("Error parsing canvas JSON:", e);
+            drawCanvasPublish(condition);
+            return;
+        }
+    } else {
+        data = jsonData;
+    }
+
+    // Set the canvas background color.
+    canvasBgColor = data.canvasBgColor || "#ffffff";
+    $("#hdnBackgroundSpecificColor").val(canvasBgColor);
+    canvas.style.backgroundColor = canvasBgColor;
+
+    // Load the background image if provided; otherwise, clear any previous background image.
+    if (data.canvasBgImage) {
+        canvas.bgImage = new Image();
+        canvas.bgImage.src = data.canvasBgImage;
+    } else {
+        canvas.bgImage = null;
+    }
+
+    // Process text objects.
+    textObjects = data.text || [];
+
+    // Process image objects.
+    images = []; // Reset images array
+    var imageLoadCount = 0;
+    var totalImages = (data.images ? data.images.length : 0);
+
+    // A helper function to check if all images are loaded.
+    function checkAllImagesLoadedPublish() {
+        var bgLoaded = true;
+        if (canvas.bgImage) {
+            bgLoaded = canvas.bgImage.complete;
+        }
+        if (imageLoadCount >= totalImages && bgLoaded) {
+            // Once all images are loaded, call drawCanvasPublish.
+            drawCanvasPublish(condition);
+        }
+    }
+
+    // Process each image in the JSON.
+    if (data.images && data.images.length) {
+        data.images.forEach(function (imgObj) {
+            var newImgObj = Object.assign({}, imgObj);
+            var imgElement = new Image();
+            if (imgObj.src.trim().charAt(0) === "<") {
+                var blob = new Blob([imgObj.src], { type: "image/svg+xml" });
+                imgElement.src = URL.createObjectURL(blob);
+            } else {
+                imgElement.src = imgObj.src;
+            }
+            newImgObj.img = imgElement;
+
+            imgElement.onload = function () {
+                imageLoadCount++;
+                checkAllImagesLoadedPublish();
+            };
+            imgElement.onerror = function () {
+                console.error("Error loading image", imgObj.src);
+                imageLoadCount++;
+                checkAllImagesLoadedPublish();
+            };
+
+            images.push(newImgObj);
+        });
+    } else {
+        // No images in JSON.
+        checkAllImagesLoadedPublish();
+    }
+
+    // Handle the background image load.
+    if (canvas.bgImage) {
+        canvas.bgImage.onload = function () {
+            checkAllImagesLoadedPublish();
+        };
+        canvas.bgImage.onerror = function () {
+            console.error("Error loading canvas background image", data.canvasBgImage);
+            canvas.bgImage = null;
+            checkAllImagesLoadedPublish();
+        };
+    } else {
+        checkAllImagesLoadedPublish();
+    }
+}
+function buildTintedStripe(imgEl, opts = {}) {
+    const width = parseInt(opts.width, 10);
+    const color = opts.color;
+
+    return new Promise(resolve => {
+        const draw = () => {
+            const off = document.createElement('canvas');
+            off.width = width;
+            off.height = canvasForDownload.height;
+            const octx = off.getContext('2d');
+
+            // draw the already‐loaded <img>
+            octx.drawImage(imgEl, 0, 0, width, off.height);
+            octx.globalCompositeOperation = 'source-in';
+            octx.fillStyle = color;
+            octx.fillRect(0, 0, width, off.height);
+
+            const tinted = new Image();
+            tinted.onload = () => resolve({ img: tinted, width, height: off.height });
+            tinted.src = off.toDataURL();
+        };
+
+        if (imgEl.complete && imgEl.naturalWidth) {
+            draw();
+        } else {
+            imgEl.onload = draw;
+        }
+    });
+}
+function animateCanvasImage(obj, type, duration = 2, delay = 0) {
+    return new Promise(resolve => {
+        const dispW = obj.width * (obj.scaleX || 1);
+        const dispH = obj.height * (obj.scaleY || 1);
+        let toVars = { duration, ease: 'power1.inOut', delay };
+
+        switch (type) {
+            case 'slideLeft':
+                toVars.x = -dispW - 5;
+                break;
+            case 'slideRight':
+                // start just off the left edge
+                obj.x = -dispW - 5;
+                toVars.x = canvasForDownload.width + 5;
+                break;
+
+            case 'slideUp':
+                // start just below the bottom edge
+                obj.y = canvasForDownload.height + 5;
+                toVars.y = -dispH - 5;
+                break;
+
+            case 'slideDown':
+                // start just above the top edge
+                obj.y = -dispH - 5;
+                toVars.y = canvasForDownload.height + 5;
+                break;
+
+            case 'fadeIn':
+                obj.opacity = 0;
+                toVars.opacity = obj.opacity || 1;
+                break;
+
+            case 'fadeOut':
+                toVars.opacity = 0;
+                break;
+
+            case 'zoomIn':
+                obj.scaleX = obj.scaleY = 0.5;
+                toVars.scaleX = toVars.scaleY = 1;
+                break;
+
+            case 'zoomOut':
+                obj.scaleX = obj.scaleY = 1.5;
+                toVars.scaleX = toVars.scaleY = 1;
+                break;
+
+            case 'dissolve':
+                toVars.opacity = 0;
+                break;
+            default:
+                console.warn(`Unknown canvas animation type: ${type}`);
+        }
+
+        gsap.to(obj, {
+            ...toVars,
+            onUpdate: () => drawCanvasForDownload(currentCondition),
+            onComplete: resolve
+        });
+    });
+}
+
+/**
+* Animate a DOM image or a full‐canvas color overlay inside the canvas.
+* @param {HTMLImageElement|string} imgOrColor – <img> element or CSS color code (e.g. '#fff')
+* @param {string} type – slideLeft|slideRight|slideUp|slideDown|fadeIn|fadeOut|zoomIn|zoomOut|dissolve
+* @param {number} duration – seconds
+* @returns {Promise}
+*/
+/**
+ * Animate a canvas rectangle item by tweening its props.
+ * @param {Object} shape – rectangle item with x,y,width,height,fillColor,opacity,scaleX/scaleY
+ * @param {string} type
+ * @param {number} duration
+ * @returns {Promise}
+ */
+/**
+ * Animate a DOM element in the page.
+ * @param {string} selector  – CSS selector for your <img> (or any block element)
+ * @param {string} type      – 'slideLeft'|'slideRight'|'slideUp'|'slideDown'|
+ *                             'zoomIn'|'zoomOut'|'fadeIn'|'fadeOut'
+ * @param {number} duration  – animation length in seconds (default: 3)
+ */
+function loadCanvasFromJsonForDownload(jsonData, condition = 'Common') {
+    // await ensureFontsInitialized();
+    // Clear download canvas
+    ctxElementForDownload.clearRect(0, 0, canvasForDownload.width, canvasForDownload.height);
+    currentConditionForDownload = condition;
+
+    // No data: wait for fonts then draw
+    if (!jsonData) {
+        document.fonts.ready.then(() => drawCanvasForDownload(condition));
+        return;
+    }
+
+    // Parse JSON
+    const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+    slideDataForDownload = data;
+
+    // Compute actual display size (CSS pixels)
+    const rect = canvasForDownload.getBoundingClientRect();
+    const screenW = rect.width;
+    const screenH = rect.height;
+
+    // Build text objects, adjust for manual line breaks and clamp at bottom
+    const textObjectsForDownload = (data.text || []).map(obj => {
+        const bw = obj.boundingWidth * screenW;
+        const bh = obj.boundingHeight * screenH;
+        const fontPx = obj.fontSize;
+        const lineH = fontPx * 1.2;
+
+        // Manual split
+        const lines = obj.text.split("\n");
+        const hasManual = lines.length > 1;
+
+        // Compute needed height
+        const neededH = hasManual
+            ? (lines.length * lineH + 2 * padding)
+            : bh;
+        const finalH = Math.max(bh, neededH);
+        const finalW = bw;
+
+        // Initial Y position
+        let ty = obj.y * screenH;
+        // Clamp to bottom if overflowing
+        if (ty + finalH + padding > screenH) {
+            ty = screenH - finalH - padding;
+        }
+
+        return {
+            text: obj.text,
+            x: obj.x * screenW,
+            y: ty,
+            boundingWidth: finalW,
+            boundingHeight: finalH,
+            fontSize: fontPx,
+            fontFamily: obj.fontFamily,
+            textColor: obj.textColor,
+            textAlign: obj.textAlign,
+            opacity: obj.opacity || 1,
+            selected: false,
+            _hasManualBreaks: hasManual,
+            // ← RIGHT HERE: hydrate or default lineSpacing
+            lineSpacing: (typeof obj.lineSpacing === 'number')
+                ? obj.lineSpacing
+                : obj.fontSize * 1.2,
+            noAnim: obj.noAnim,
+            groupId: obj.groupId,
+            rotation: obj.rotation,
+            isBold: obj.isBold || false,
+            isItalic: obj.isItalic || false,
+            type: obj.type || 'text',
+            zIndex: obj.zIndex || getNextZIndex()
+        };
+    });
+
+    // Build images
+    const imagesForDownload = (data.images || []).map(o => {
+        const obj = { ...o };
+        obj.x = o.x * screenW;
+        obj.y = o.y * screenH;
+        obj.width = o.width * screenW;
+        obj.height = o.height * screenH;
+        // Default rotation to 0 if not provided
+        obj.rotation = (typeof o.rotation === 'number') ? o.rotation : 0;
+        obj.selected = false;
+        obj.img = new Image();
+        obj.img.crossOrigin = 'anonymous';
+        obj.img.onload = () => drawCanvasForDownload(condition);
+        obj.img.onerror = () => drawCanvasForDownload(condition);
+        obj.img.src = o.src;
+        obj.type = o.type || 'image';
+        obj.zIndex = o.zIndex || getNextZIndex();
+        return obj;
+    });
+
+    // Mirror into globals and set background
+    textObjects = textObjectsForDownload;
+    images = imagesForDownload;
+    const bg = data.canvasBgColor || '#ffffff';
+    document.getElementById('hdnBackgroundSpecificColorDownload').value = bg;
+    canvasForDownload.style.backgroundColor = bg;
+
+    // Preload background image if any
+    if (data.canvasBgImage) {
+        canvasForDownload._bgImg = new Image();
+        canvasForDownload._bgImg.crossOrigin = 'anonymous';
+        canvasForDownload._bgImg.onload = () => drawCanvasForDownload(condition);
+        canvasForDownload._bgImg.onerror = () => drawCanvasForDownload(condition);
+        canvasForDownload._bgImg.src = data.canvasBgImage;
+    } else {
+        canvasForDownload._bgImg = null;
+    }
+
+
+    // Load fonts, auto-fit (skip manual breaks), then draw
+    const fontPromises = textObjects.map(o =>
+        document.fonts.load(`${o.fontSize}px ${o.fontFamily}`)
+    );
+    Promise.all(fontPromises).finally(() => {
+        textObjects.forEach(obj => {
+            //if (!obj._hasManualBreaks) {
+            //    autoFitText(obj, padding);
+            //}
+            // autoFitTextNewDownload(obj, padding);
+            const fitResult = autoFitTextNewDownload(obj, padding);
+            //obj.fontSize = fitResult.fontSize;
+            obj._wrappedLines = fitResult.wrappedLines;
+            obj.boundingWidth = fitResult.boundingWidth;
+            obj.boundingHeight = fitResult.boundingHeight;
+        });
+        drawCanvasForDownload(condition);
+    });
+}
+
+
+function autoFitTextNewDownload(obj, padding = 5) {
+    const ctx2 = canvasForDownload.getContext('2d');
+    const maxW = obj.boundingWidth - 2 * padding;
+    const maxH = obj.boundingHeight - 2 * padding;
+
+    // Your designer’s raw text, split on real newlines:
+    const rawLines = obj.text.replace(/\r/g, '').split('\n');
+
+    // Given font-size fs, wrap every rawLine to fit maxW, return the full array of wrapped lines:
+    function wrapAllLines(fs) {
+        ctx2.font = `${fs}px ${obj.fontFamily}`;
+        return rawLines.flatMap(line => wrapText(ctx2, line, maxW));
+    }
+
+    // Given fs, compute block dims for the wrapped lines at that size:
+    function measure(fs) {
+        const lines = wrapAllLines(fs);
+        const widths = lines.map(l => ctx2.measureText(l).width);
+        const blockW = Math.max(...widths, 0);
+        const lineH = fs * 1.2;
+        const blockH = lines.length * lineH;
+        return { blockW, blockH, lines };
+    }
+
+    // 1) start at designer fontSize
+    let fs = Math.floor(obj.fontSize);
+    let { blockW, blockH, lines } = measure(fs);
+
+    // 2) shrink while too big
+    while ((blockW > maxW || blockH > maxH) && fs > 1) {
+        fs--;
+        ({ blockW, blockH, lines } = measure(fs));
+    }
+
+    // 3) grow while it still fits
+    while (true) {
+        const next = measure(fs + 1);
+        if (next.blockW <= maxW && next.blockH <= maxH) {
+            fs++;
+            blockW = next.blockW;
+            blockH = next.blockH;
+            lines = next.lines;
+        } else {
+            break;
+        }
+    }
+
+   
+
+    // Return new values instead of mutating the object
+    return {
+        fontSize: fs,
+        wrappedLines: lines,
+        boundingWidth: blockW + 2 * padding,
+        boundingHeight: blockH + 2 * padding
+    };
+}
+// load all unresolved images before drawing
+async function preloadImages(items) {
+    const loads = items
+        .filter(item => item.type === 'image' && !item.img)
+        .map(item => {
+            return new Promise(resolve => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => { item.img = img; resolve(); };
+                img.onerror = () => { console.warn('Image load failed:', item.src || item.svgData); resolve(); };
+                img.src = item.svgData || item.src;
+            });
+        });
+    await Promise.all(loads);
+}
+function setCanvasTransform(ctx, dpr, scaleX, scaleY) {
+    ctx.resetTransform();
+    ctx.scale(dpr, dpr);
+    ctx.scale(scaleX, scaleY);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+}
+
+function drawHandles(ctx, objects, getBounds, handleColor) {
+    objects.forEach(obj => {
+        if (!obj.selected) return;
+        const { xPx, yPx, wPx, hPx } = getBounds(obj);
+        // stroke around
+        ctx.strokeStyle = handleColor.stroke;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(xPx, yPx, wPx, hPx);
+        // resize handles
+        ctx.fillStyle = handleColor.fill;
+        const half = handleSize / 2;
+        getResizePoints(obj).forEach(pt => {
+            ctx.fillRect(pt.x * scaleX - half, pt.y * scaleY - half, handleSize, handleSize);
+        });
+    });
+}
+function invertDirection(direction) {
+    if (direction === "left") return "right";
+    if (direction === "right") return "left";
+    if (direction === "top") return "bottom";
+    if (direction === "bottom") return "top";
+    return direction;
+}
+function applyClipMask(ctx, item) {
+    if (typeof item.clip !== "number") return false;
+
+    if (item.clip >= 1) {
+        return true;  // Fully masked – skip drawing
+    }
+
+    if (item.clip > 0 && item.clip < 1) {
+        const direction = item.clipDirection || "top";
+
+        const isImage = item.type === 'image';
+        const width = isImage ? item.width : item.boundingWidth;
+        const height = isImage ? item.height : item.boundingHeight;
+        const x = item.x;
+        const y = item.y;
+
+        ctx.beginPath();
+
+        if (direction === "top") {
+            const visibleHeight = height * (1 - item.clip);
+            ctx.rect(x, y, width, visibleHeight);
+
+        } else if (direction === "bottom") {
+            const visibleHeight = height * (1 - item.clip);
+            ctx.rect(x, y + height - visibleHeight, width, visibleHeight);
+
+        } else if (direction === "left") {
+            const visibleWidth = width * (1 - item.clip);
+            ctx.rect(x, y, visibleWidth, height);
+
+        } else if (direction === "right") {
+            const visibleWidth = width * (1 - item.clip);
+            ctx.rect(x + width - visibleWidth, y, visibleWidth, height);
+        }
+
+        ctx.clip();
+    }
+
+    return false;
+}
+async function drawCanvasForDownload(condition) {
+
+    initializeLayers();
+    const dpr = window.devicePixelRatio || 1;
+    const wPx = canvasForDownload.width;
+    const hPx = canvasForDownload.height;
+    const designW = wPx / dpr / scaleX;
+    const designH = hPx / dpr / scaleY;
+
+    // ensure images are loaded
+    await preloadImages(allItems);
+
+    // 1) set transform & clear
+    setCanvasTransform(ctxElementForDownload, dpr, scaleX, scaleY);
+    ctxElementForDownload.clearRect(0, 0, designW, designH);
+
+    // 2) background color or image
+    const bgColor = document.getElementById('hdnBackgroundSpecificColorDownload').value.trim();
+    if (bgColor) {
+        ctxElementForDownload.fillStyle = bgColor;
+        ctxElementForDownload.fillRect(0, 0, designW, designH);
+    }
+    if (canvas._bgImg) {
+        ctxElementForDownload.drawImage(canvas._bgImg, 0, 0, designW, designH);
+    }
+
+    // 3) draw items
+    allItems.forEach(item => {
+        ctxElementForDownload.save();
+        ctxElementForDownload.globalAlpha = item.opacity || 1;
+        if (item.scaleX === 0 && item.scaleY === 0) {
+            ctxElementForDownload.restore();
+            return;
+        }
+
+        if (item.clipDirection != undefined) {
+            if (applyClipMask(ctxElementForDownload, item)) {
+                ctxElementForDownload.restore();
+                return;
+            }
+        }
+
+        // **1) if noAnim, draw immediately and skip the rest**
+        if (item.noAnim) {
+            if (item.type === 'image') {
+                // same as your image‑draw code
+                const x = item.finalX, y = item.finalY;
+                const w = item.width, h = item.height;
+                const rot = (item.rotation || 0) * Math.PI / 180;
+                ctxElementForDownload.translate(x + w / 2, y + h / 2);
+                ctxElementForDownload.rotate(rot);
+                ctxElementForDownload.scale(item.scaleX || 1, item.scaleY || 1);
+                try {
+                    ctxElementForDownload.drawImage(item.img, -w / 2, -h / 2, w, h);
+                } catch (e) {
+                    console.warn('drawImage error', e);
+                }
+            }
+            else if (item.type === 'text') {
+                // same as your text‑draw code, but unconditionally
+                const parts = [];
+                if (item.isItalic) parts.push('italic');
+                if (item.isBold) parts.push('bold');
+                parts.push(`${item.fontSize}px`, item.fontFamily);
+                ctxElementForDownload.font = parts.join(' ');
+                ctxElementForDownload.fillStyle = item.textColor;
+                ctxElementForDownload.textBaseline = 'top';
+
+                const raw = item.text;
+                let lines = raw.includes('\n')
+                    ? raw.split('\n')
+                    : wrapText(ctxElementForDownload, raw, item.boundingWidth - 2 * padding);
+                const fs = item.fontSize;
+                const lineH = item.lineSpacing * fs;
+
+                // adjust for rotation & padding exactly as you do below
+                const maxW = Math.max(...lines.map(l => ctxElementForDownload.measureText(l).width));
+                const boxW = Math.ceil(maxW + 2 * padding);
+                const boxH = Math.ceil(lines.length * lineH + 2 * padding);
+                item.boundingWidth = boxW;
+                item.boundingHeight = boxH;
+
+                const cx = item.x + boxW / 2;
+                const cy = item.y + boxH / 2;
+                const rot = (item.rotation || 0) * Math.PI / 180;
+                ctxElementForDownload.translate(cx, cy);
+                ctxElementForDownload.rotate(rot);
+                ctxElementForDownload.translate(-cx, -cy);
+
+                lines.slice(0, Math.floor((boxH - 2 * padding) / lineH))
+                    .forEach((line, i) => {
+                        let offsetX = item.x + padding;
+                        const lw = ctxElementForDownload.measureText(line).width;
+                        if (item.textAlign === 'center') offsetX = item.x + (boxW - lw) / 2;
+                        if (item.textAlign === 'right') offsetX = item.x + boxW - lw - padding;
+                        ctxElementForDownload.fillText(line, offsetX, item.y + padding + i * lineH);
+                    });
+            }
+
+            ctxElementForDownload.restore();
+            return;  // skip the rest of the logic for this item
+        }
+        if (item.type === 'image') {
+            const x = item.x, y = item.y;
+            const w = item.width, h = item.height;
+            const rot = (item.rotation || 0) * Math.PI / 180;
+            ctxElementForDownload.translate(x + w / 2, y + h / 2);
+            ctxElementForDownload.rotate(rot);
+            ctxElementForDownload.scale(item.scaleX || 1, item.scaleY || 1);
+            try {
+                ctxElementForDownload.drawImage(item.img, -w / 2, -h / 2, w, h);
+            } catch (e) {
+                console.warn('drawImage error', e);
+            }
+        }
+        else if (item.type === 'text' && ['Common', 'ChangeStyle', 'applyAnimations'].includes(condition)) {
+            // font setup
+            const parts = [];
+            if (item.isItalic) parts.push('italic');
+            if (item.isBold) parts.push('bold');
+            parts.push(`${item.fontSize}px`, item.fontFamily);
+            ctxElementForDownload.font = parts.join(' ');
+            ctxElementForDownload.fillStyle = item.textColor;
+            ctxElementForDownload.textBaseline = 'top';
+            const scaleX = item.scaleX || 1;
+            const scaleY = item.scaleY || 1;
+
+            const raw = item.text;
+            let lines = raw.includes('\n') ? raw.split('\n') : wrapText(ctxElementForDownload, raw, item.boundingWidth * padding);
+            const fs = item.fontSize;
+            const lineH = item.lineSpacing * fs;
+            // compute box dims
+            const maxW = Math.max(...lines.map(l => ctxElementForDownload.measureText(l).width));
+            const boxW = Math.ceil(maxW + 2 * padding);
+            const boxH = Math.ceil(lines.length * lineH + 2 * padding);
+            item.boundingWidth = boxW;
+            item.boundingHeight = boxH;
+
+            const cx = item.x + boxW / 2;
+            const cy = item.y + boxH / 2;
+            const rot = (item.rotation || 0) * Math.PI / 180;
+            ctxElementForDownload.translate(cx, cy);
+            ctxElementForDownload.rotate(rot);
+            ctxElementForDownload.scale(scaleX, scaleY);  //  Apply scaling here
+            ctxElementForDownload.translate(-cx, -cy);
+
+            // draw text lines
+            lines.slice(0, Math.floor((boxH - 2 * padding) / lineH)).forEach((line, i) => {
+                let offsetX = item.x + padding;
+                const lw = ctxElementForDownload.measureText(line).width;
+                if (item.textAlign === 'center') offsetX = item.x + (boxW - lw) / 2;
+                if (item.textAlign === 'right') offsetX = item.x + boxW - lw - padding;
+                ctxElementForDownload.fillText(line, offsetX, item.y + padding + i * lineH);
+            });
+
+        }
+
+        ctxElementForDownload.restore();
+    });
+
+    // 4) draw selection handles in pixel-space
+    ctxElementForDownload.globalAlpha = 1;
+    ctxElementForDownload.save();
+    ctxElementForDownload.resetTransform();
+    ctxElementForDownload.scale(dpr, dpr);
+
+    drawHandles(ctxElementForDownload, images,
+        img => ({
+            xPx: img.x * scaleX, yPx: img.y * scaleY,
+            wPx: img.width * (img.scaleX || 1) * scaleX,
+            hPx: img.height * (img.scaleY || 1) * scaleX
+        }),
+        { stroke: 'blue', fill: 'red' }
+    );
+
+    drawHandles(ctxElementForDownload, textObjects,
+        txt => ({
+            xPx: txt.x * scaleX, yPx: txt.y * scaleY,
+            wPx: txt.boundingWidth * scaleX, hPx: txt.boundingHeight * scaleY
+        }),
+        { stroke: '#00f', fill: '#FF7F50' }
+    );
+
+    ctxElementForDownload.restore();
+}
+function drawCanvasPublish(condition) {
+    ctxElement.clearRect(0, 0, canvas.width, canvas.height); // Clear entire canvas
+    const bgColor = $("#hdnBackgroundSpecificColor").val();
+    if (bgColor && bgColor.trim() !== "") {
+        ctxElement.fillStyle = bgColor;
+        ctxElement.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Draw background image if available.
+    if (canvas.bgImage) {
+        ctxElement.drawImage(canvas.bgImage, 0, 0, canvas.width, canvas.height);
+    }
+
+    // --- Draw multiple images from the images array ---
+    if (images && images.length) {
+        images.forEach(imgObj => {
+            ctxElement.save();
+            ctxElement.globalAlpha = imgObj.opacity || 1;
+            const scaleX = imgObj.scaleX || 1;
+            const scaleY = imgObj.scaleY || 1;
+            ctxElement.translate(imgObj.x, imgObj.y);
+            ctxElement.scale(scaleX, scaleY);
+            // Draw the image at (0,0) because translation has already been applied.
+            ctxElement.drawImage(imgObj.img, 0, 0, imgObj.width, imgObj.height);
+            ctxElement.restore();
+
+            // If this image is selected, draw a border and four resize handles.
+            if (imgObj.selected) {
+                ctxElement.save();
+                ctxElement.strokeStyle = "blue";
+                ctxElement.lineWidth = 2;
+                const dispW = imgObj.width * scaleX;
+                const dispH = imgObj.height * scaleY;
+                ctxElement.strokeRect(imgObj.x, imgObj.y, dispW, dispH);
+                // Draw handles at the four corners
+                const handles = getImageResizeHandles(imgObj); // Make sure this function uses your dynamic dimensions
+                ctxElement.fillStyle = "red";
+                handles.forEach(handle => {
+                    ctxElement.fillRect(handle.x - handleSize / 2, handle.y - handleSize / 2, handleSize, handleSize);
+                });
+                ctxElement.restore();
+            }
+        });
+    }
+
+    ctxElement.save();
+    ctxElement.globalAlpha = textPosition.opacity || 1; // Apply text opacity
+
+    if (condition === 'Common' || condition === 'ChangeStyle') {
+        textObjects.forEach(obj => {
+            ctxElement.save();
+            // If selected, draw the bounding box and handles.
+            if (obj.selected) {
+                // Constrain the box if it goes beyond canvas boundaries.
+                if (obj.x < 0) obj.x = 0;
+                if (obj.x + obj.boundingWidth > canvas.width) {
+                    obj.boundingWidth = canvas.width - obj.x;
+                }
+                const boxX = obj.x - padding;
+                const boxY = obj.y - padding;
+                const boxWidth = obj.boundingWidth + 2 * padding;
+                const boxHeight = obj.boundingHeight + 2 * padding;
+                //drawRoundedRect(ctxElement, boxX, boxY, boxWidth, boxHeight, 5);
+
+                // Draw eight handles: four corners and four midpoints.
+                const handles = [
+                    { x: boxX, y: boxY }, // top-left
+                    { x: boxX + boxWidth / 2, y: boxY }, // top-middle
+                    { x: boxX + boxWidth, y: boxY }, // top-right
+                    { x: boxX + boxWidth, y: boxY + boxHeight / 2 }, // right-middle
+                    { x: boxX + boxWidth, y: boxY + boxHeight }, // bottom-right
+                    { x: boxX + boxWidth / 2, y: boxY + boxHeight }, // bottom-middle
+                    { x: boxX, y: boxY + boxHeight }, // bottom-left
+                    { x: boxX, y: boxY + boxHeight / 2 }  // left-middle
+                ];
+                ctxElement.fillStyle = "#FF7F50";
+                handles.forEach(handle => {
+                    ctxElement.fillRect(handle.x - handleSize / 2, handle.y - handleSize / 2, handleSize, handleSize);
+                });
+            }
+
+            // Set text properties.
+            ctxElement.font = `${obj.fontSize}px ${obj.fontFamily}`;
+            ctxElement.fillStyle = obj.textColor;
+            ctxElement.textBaseline = "top";
+
+            // Determine the maximum text width for wrapping.
+            const maxTextWidth = obj.boundingWidth - 2 * padding;
+            let lines;
+            // If the text contains newline characters, use them; otherwise, wrap.
+            if (obj.text.indexOf("\n") !== -1) {
+                lines = obj.text.split("\n");
+            } else {
+                lines = wrapText(ctxElement, obj.text, maxTextWidth);
+            }
+            const lineHeight = obj.fontSize * 1.2;
+            const availableHeight = obj.boundingHeight - 2 * padding;
+            const maxLines = Math.floor(availableHeight / lineHeight);
+            const startY = obj.y + padding;
+
+            // Draw each line with the correct horizontal offset based on alignment.
+            for (let i = 0; i < Math.min(lines.length, maxLines); i++) {
+                const line = lines[i];
+                const lineWidth = ctxElement.measureText(line).width;
+                let offsetX;
+                if (obj.textAlign === "center") {
+                    offsetX = obj.x + (obj.boundingWidth - lineWidth) / 2;
+                } else if (obj.textAlign === "right") {
+                    offsetX = obj.x + obj.boundingWidth - lineWidth - padding;
+                } else { // left alignment
+                    offsetX = obj.x + padding;
+                }
+                ctxElement.fillText(line, offsetX, startY + i * lineHeight);
+            }
+            ctxElement.restore();
+        });
+    }
+
+    if (condition === 'applyAnimations') {
+        textObjects.forEach(obj => {
+            ctxElement.save();
+            ctxElement.font = `${obj.fontSize}px ${obj.fontFamily}`;
+            ctxElement.fillStyle = obj.textColor;
+            ctxElement.textBaseline = "top";
+
+            const maxTextWidth = obj.boundingWidth - 2 * padding;
+            let lines;
+            if (obj.text.indexOf("\n") !== -1) {
+                lines = obj.text.split("\n");
+            } else {
+                lines = wrapText(ctxElement, obj.text, maxTextWidth);
+            }
+            const lineHeight = obj.fontSize * 1.2;
+            const availableHeight = obj.boundingHeight - 2 * padding;
+            const maxLines = Math.floor(availableHeight / lineHeight);
+            const startY = obj.y + padding;
+
+            for (let i = 0; i < Math.min(lines.length, maxLines); i++) {
+                const line = lines[i];
+                const lineWidth = ctxElement.measureText(line).width;
+                let offsetX;
+                if (obj.textAlign === "center") {
+                    offsetX = obj.x + (obj.boundingWidth - lineWidth) / 2;
+                } else if (obj.textAlign === "right") {
+                    offsetX = obj.x + obj.boundingWidth - lineWidth - padding;
+                } else {
+                    offsetX = obj.x + padding;
+                }
+                ctxElement.fillText(line, offsetX, startY + i * lineHeight);
+            }
+            ctxElement.restore();
+        });
+    }
+
+    ctxElement.globalAlpha = 1;
+    ctxElement.restore();
+}
+function animateTextForPublish(animationType, direction, condition, loopCount) {
+
+    // Global timing settings (from your selected speeds).
+    const inTime = parseFloat(selectedInSpeed) || 4;   // e.g. 4 seconds for all "in"
+    const outTime = parseFloat(selectedOutSpeed) || 4;   // e.g. 3 seconds for all "out"
+    const stayTime = parseFloat(selectedStaySpeed) || 3; // Overall stay time (applied globally if desired)
+
+    // ----- TEXT ANIMATION SECTION -----
+    // Pre-calculate final positions and offscreen positions.
+    textObjects.forEach((obj) => {
+
+        // Save the final (target) position.
+        obj.finalX = obj.x;
+        obj.finalY = obj.y;
+
+        // Compute the starting (offscreen) and exit positions based on the direction.
+        switch (direction) {
+            case "top":
+                obj.x = obj.finalX;
+                obj.y = -(obj.boundingHeight + 5);
+                obj.exitX = obj.finalX;
+                obj.exitY = -(obj.boundingHeight + 5);
+                break;
+            case "bottom":
+                obj.x = obj.finalX;
+                obj.y = canvas.height + 5;
+                obj.exitX = obj.finalX;
+                obj.exitY = canvas.height + 5;
+                break;
+            case "left":
+                obj.x = -(obj.boundingWidth + 5);
+                obj.y = obj.finalY;
+                obj.exitX = -(obj.boundingWidth + 5);
+                obj.exitY = obj.finalY;
+                break;
+            case "right":
+                obj.x = canvas.width + 5;
+                obj.y = obj.finalY;
+                obj.exitX = canvas.width + 5;
+                obj.exitY = obj.finalY;
+                break;
+            default:
+                // Default: animate offscreen to the right.
+                obj.x = obj.finalX;
+                obj.y = obj.finalY;
+                obj.exitX = window.innerWidth;
+                obj.exitY = obj.finalY;
+        }
+    });
+
+    if (animationType === "delaylinear") {
+        const nominalPerObj = .50;
+        const countText = textObjects.length;
+
+        const scaleInText = inTime / (countText * nominalPerObj);
+        const scaleOutText = outTime / (countText * nominalPerObj);
+
+        const individualTweenText = 0.15 * scaleInText;
+        const individualTweenOutText = 0.15 * scaleOutText;
+
+        let tlText = gsap.timeline({
+            repeat: loopCount - 1,
+            onUpdate: () => drawCanvasPublish(condition)
+        });
+
+        // --- Text IN ---
+        tlText.to(textObjects, {
+            x: (i, target) => target.finalX,
+            y: (i, target) => target.finalY,
+            duration: individualTweenText,
+            ease: "power1.in",
+            stagger: individualTweenText * .70,
+            onUpdate: () => drawCanvasPublish(condition)
+        });
+
+
+
+        // --- Image IN ---
+        images.forEach((imgObj) => {
+            tlText.to(imgObj, {
+                x: (i, target) => target.finalX,
+                y: (i, target) => target.finalY,
+                duration: individualTweenText,
+                ease: "power1.in",
+                stagger: individualTweenText * .70,
+                onUpdate: () => drawCanvasPublish(condition)
+            });
+        });
+
+        // --- Stay Time ---
+        tlText.to({}, { duration: stayTime, ease: "none" });
+
+        // --- Image OUT (First!) ---
+        [...images].reverse().forEach((imgObj) => {
+            tlText.to(imgObj, {
+                //x: imgObj.exitX,
+                //y: imgObj.exitY,
+                x: (i, target) => target.exitX,
+                y: (i, target) => target.exitY,
+                duration: individualTweenOutText,
+                ease: "power1.out",
+                stagger: individualTweenOutText * 0.70,
+                onUpdate: () => drawCanvasPublish(condition)
+            });
+        });
+
+        // --- Text OUT (After Image) ---
+        tlText.to([...textObjects].reverse(), {
+            x: (i, target) => target.exitX,
+            y: (i, target) => target.exitY,
+            duration: individualTweenOutText,
+            ease: "power1.out",
+            stagger: individualTweenOutText * .70,
+            onUpdate: () => drawCanvasPublish(condition)
+        });
+
+        //// --- Reset text to final position only (leave image off-screen) ---
+        //tlText.set([...textObjects, ...images], {
+        //    x: (i, target) => target.finalX,
+        //    y: (i, target) => target.finalY,
+        //    duration: 0,
+        //    onUpdate: () => drawCanvas(condition)
+        //});
+        tlText.eventCallback("onComplete", () => {
+            images.forEach(img => {
+                img.x = img.finalX;
+                img.y = img.finalY;
+            });
+            textObjects.forEach(txt => {
+                txt.x = txt.finalX;
+                txt.y = txt.finalY;
+            });
+
+            drawCanvasPublish(condition); // Force redraw
+        });
+
+    }
+
+
+    else if (animationType === "linear" || animationType === "zoom" ||
+        animationType === "bounce" || animationType === "blur") {
+        // Keep your existing implementation for these cases.
+        textObjects.forEach((obj) => {
+            const endX = obj.finalX;
+            const endY = obj.finalY;
+            let exitX, exitY;
+            switch (direction) {
+                case "top":
+                    exitX = endX;
+                    exitY = -(obj.boundingHeight + 5);
+                    break;
+                case "bottom":
+                    exitX = endX;
+                    exitY = canvas.height + 5;
+                    break;
+                case "left":
+                    exitX = -(obj.boundingWidth + 5);
+                    exitY = endY;
+                    break;
+                case "right":
+                    exitX = canvas.width + 5;
+                    exitY = endY;
+                    break;
+                default:
+                    exitX = window.innerWidth;
+                    exitY = endY;
+            }
+            if (animationType === "linear" || animationType === "zoom") {
+                let tl = gsap.timeline({
+                    repeat: loopCount - 1,
+                    onUpdate: function () {
+                        drawCanvasPublish(condition);
+                    }
+                });
+
+                tl.to(obj, {
+                    x: endX,
+                    y: endY,
+                    duration: inTime,
+                    ease: "power1.in"
+                });
+                tl.to(obj, {
+                    duration: stayTime,
+                    ease: "none"
+                });
+                tl.to(obj, {
+                    x: exitX,
+                    y: exitY,
+                    duration: outTime,
+                    ease: "power1.out"
+                });
+                tl.set(obj, {
+                    x: endX,
+                    y: endY,
+                    duration: 0,
+                    ease: "power1.inOut",
+                    onUpdate: () => drawCanvasPublish(condition)
+                });
+            }
+            else if (animationType === "bounce" || animationType === "blur") {
+
+                ////This section is for in out and stay
+                let tl = gsap.timeline({
+                    repeat: loopCount - 1,
+                    onUpdate: function () {
+                        drawCanvasPublish(condition);
+                    }
+                });
+
+                // "In" phase: Animate the object onto the canvas.
+                tl.to(obj, {
+                    x: endX,
+                    y: endY,
+                    duration: inTime,
+                    ease: "bounce.out"
+                });
+
+                // "Stay" phase: Hold the object in place for the stay duration.
+                // This tween doesn't change any properties; it just acts as a pause.
+                tl.to(obj, {
+                    duration: stayTime,
+                    ease: "none"
+                });
+
+                // "Out" phase: Animate the object off the canvas.
+                tl.to(obj, {
+                    x: exitX,
+                    y: exitY,
+                    duration: outTime,
+                    ease: "bounce.out"
+                });
+                // Final phase: Reset the object to the final position with text.
+                // This sets the object’s position to (endX, endY) after the out tween completes.
+                tl.set(obj, {
+                    x: endX,
+                    y: endY,
+                    duration: 0,
+                    ease: "bounce.out",
+                    onUpdate: () => drawCanvasPublish(condition),
+
+
+                });
+
+
+                ////This is default effect of bounce
+                //gsap.to(obj, {
+                //    x: endX,
+                //    y: endY,
+                //    duration: parseFloat(selectedInSpeed) || 2,
+                //    ease: "bounce.out",
+                //    onUpdate: () => drawCanvas(condition),
+                //});
+            }
+
+        });
+    }
+
+    // ----- IMAGE ANIMATION SECTION -----
+    // (A similar approach can be applied to images.)
+    images.forEach((imgObj) => {
+        imgObj.finalX = imgObj.x;
+        imgObj.finalY = imgObj.y;
+        const dispWidth = imgObj.width * (imgObj.scaleX || 1);
+        const dispHeight = imgObj.height * (imgObj.scaleY || 1);
+        switch (direction) {
+            case "top":
+                imgObj.x = imgObj.finalX;
+                imgObj.y = -(dispHeight + 5);
+                imgObj.exitX = imgObj.finalX;
+                imgObj.exitY = -(dispHeight + 5);
+                break;
+            case "bottom":
+                imgObj.x = imgObj.finalX;
+                imgObj.y = canvas.height + 5;
+                imgObj.exitX = imgObj.finalX;
+                imgObj.exitY = canvas.height + 5;
+                break;
+            case "left":
+                imgObj.x = -(dispWidth + 5);
+                imgObj.y = imgObj.finalY;
+                imgObj.exitX = -(dispWidth + 5);
+                imgObj.exitY = imgObj.finalY;
+                break;
+            case "right":
+                imgObj.x = canvas.width + 5;
+                imgObj.y = imgObj.finalY;
+                imgObj.exitX = canvas.width + 5;
+                imgObj.exitY = imgObj.finalY;
+                break;
+            default:
+                imgObj.x = imgObj.finalX;
+                imgObj.y = imgObj.finalY;
+                imgObj.exitX = window.innerWidth;
+                imgObj.exitY = imgObj.finalY;
+        }
+    });
+
+
+    if (animationType === "linear" || animationType === "zoom" ||
+        animationType === "bounce" || animationType === "blur") {
+        // Keep the existing branches for images.
+        let exitX, exitY;
+        images.forEach((imgObj) => {
+            const endX = imgObj.finalX;
+            const endY = imgObj.finalY;
+            let tl = gsap.timeline({
+                repeat: loopCount - 1,
+                onUpdate: function () {
+                    drawCanvasPublish(condition);
+                }
+            });
+
+            if (animationType === "linear") {
+                tl.to(imgObj, {
+                    x: endX,
+                    y: endY,
+                    duration: inTime,
+                    ease: "power1.in"
+                });
+                tl.to(imgObj, {
+                    duration: stayTime,
+                    ease: "none"
+                });
+                tl.to(imgObj, {
+                    x: exitX,
+                    y: exitY,
+                    duration: outTime,
+                    ease: "power1.out"
+                });
+                tl.set(imgObj, {
+                    x: endX,
+                    y: endY,
+                    duration: 0,
+                    ease: "power1.inOut",
+                    onUpdate: () => drawCanvasPublish(condition)
+                });
+            }
+            else if (animationType === "bounce") {
+                tl.to(imgObj, {
+                    x: endX,
+                    y: endY,
+                    duration: inTime,
+                    ease: "bounce.out"
+                });
+                tl.to(imgObj, {
+                    duration: stayTime,
+                    ease: "none"
+                });
+                tl.to(imgObj, {
+                    x: exitX,
+                    y: exitY,
+                    duration: outTime,
+                    ease: "bounce.out"
+                });
+                tl.set(imgObj, {
+                    x: endX,
+                    y: endY,
+                    duration: 0,
+                    ease: "bounce.out",
+                    onUpdate: () => drawCanvasPublish(condition)
+                });
+            }
+            else if (animationType === "zoom") {
+                // Zoom in then out.
+                tl.fromTo(
+                    imgObj,
+                    { scaleX: 0, scaleY: 0, x: startX, y: startY },
+                    {
+                        scaleX: originalScaleX,
+                        scaleY: originalScaleY,
+                        x: endX,
+                        y: endY,
+                        duration: inTime,
+                        ease: "power2.out",
+                        onUpdate: () => drawCanvasPublish(condition)
+                    }
+                );
+                tl.to(imgObj, {
+                    duration: stayTime,
+                    ease: "none"
+                });
+                tl.to(imgObj, {
+                    scaleX: 0,
+                    scaleY: 0,
+                    x: exitX,
+                    y: exitY,
+                    duration: outTime,
+                    ease: "power2.in",
+                    onUpdate: () => drawCanvasPublish(condition)
+                });
+                tl.set(imgObj, {
+                    x: endX,
+                    y: endY,
+                    scaleX: originalScaleX,
+                    scaleY: originalScaleY,
+                    duration: 0,
+                    ease: "none",
+                    onUpdate: () => drawCanvasPublish(condition)
+                });
+            }
+            else if (animationType === "blur") {
+                imgObj.blur = 5;
+                tl.fromTo(
+                    imgObj,
+                    { blur: 5, x: startX, y: startY },
+                    {
+                        blur: 0,
+                        x: endX,
+                        y: endY,
+                        duration: inTime + 2,
+                        ease: "power2.out",
+                        onUpdate: () => {
+                            ctx.filter = `blur(${imgObj.blur}px)`;
+                            drawCanvasPublish(condition);
+                        },
+                        onComplete: () => {
+                            ctx.filter = "none";
+                            drawCanvasPublish(condition);
+                        }
+                    }
+                );
+                tl.to(imgObj, {
+                    duration: stayTime,
+                    ease: "none",
+                    onUpdate: () => {
+                        ctx.filter = "none";
+                        drawCanvasPublish(condition);
+                    }
+                });
+                tl.to(imgObj, {
+                    x: exitX,
+                    y: exitY,
+                    duration: outTime,
+                    ease: "power2.in",
+                    onUpdate: () => {
+                        ctx.filter = "none";
+                        drawCanvasPublish(condition);
+                    }
+                });
+                tl.set(imgObj, {
+                    x: endX,
+                    y: endY,
+                    duration: 0,
+                    ease: "none",
+                    onUpdate: () => {
+                        ctx.filter = "none";
+                        drawCanvasPublish(condition);
+                    }
+                });
+            }
+        });
+    }
+}
+
+async function animateTextForDownload(animationType, direction, condition, loopCount, state) {
+
+    selectedInSpeed = parseInt(document.getElementById('lblSpeed').textContent);
+    selectedOutSpeed = parseInt(document.getElementById('lblOutSpeed').textContent);
+    selectedStaySpeed = parseInt(document.getElementById('lblSeconds').textContent);
+    // Global timing settings (from your selected speeds).
+    const inTime = parseFloat(selectedInSpeed) || 4; // seconds
+    const outTime = parseFloat(selectedOutSpeed) || 4;
+    const stayTime = parseFloat(selectedStaySpeed) || 3;
+    const Outdirection = state.outDirection || 'right'
+    const offscreenMargin = 80;
+    const margin = 40;
+    // ----- TEXT ANIMATION SECTION -----
+
+    textObjects.forEach((obj) => {
+        obj.finalX = obj.x;
+        obj.finalY = obj.y;
+
+        // 1) ENTRY (based on `direction`)
+        switch (direction) {
+            case "top":
+                obj.x = obj.finalX;
+                obj.y = -(obj.boundingHeight + 5);
+                break;
+            case "bottom":
+                obj.x = obj.finalX;
+                obj.y = canvasForDownload.height + 5;
+                break;
+            case "left":
+                obj.x = -canvasForDownload.width / 2;
+                obj.y = obj.finalY;
+                break;
+            case "right":
+                obj.x = canvasForDownload.width + 5;
+                obj.y = obj.finalY;
+                break;
+            default:
+                // fallback: slide in from right
+                obj.x = canvasForDownload.width + 5;
+                obj.y = obj.finalY;
+        }
+
+        // 2) EXIT (based on `Outdirection`)
+        switch (Outdirection) {
+            case "top":
+                obj.exitX = obj.finalX;
+                obj.exitY = canvasForDownload.height + 5;
+
+                break;
+            case "bottom":
+                obj.exitX = obj.finalX;
+                obj.exitY = -(obj.boundingHeight + 25);
+                break;
+            case "left":
+                obj.exitX = canvasForDownload.width + margin;;
+                obj.exitY = obj.finalY;
+                break;
+            case "right":
+                obj.exitX = canvasForDownload.width + 5;
+                obj.exitY = obj.finalY;
+                break;
+            default:
+                // fallback: slide out to right
+                obj.exitX = canvasForDownload.width + 5;
+                obj.exitY = obj.finalY;
+        }
+    });
+
+
+
+
+    //textObjects.forEach((obj) => {
+    //    obj.finalX = obj.x;
+    //    obj.finalY = obj.y;
+
+    //    // 1) ENTRY (based on `direction`)
+    //    switch (direction) {
+    //        case "top":
+    //            obj.x = obj.finalX;
+    //            obj.y = -(obj.boundingHeight + 5);
+    //            break;
+    //        case "bottom":
+    //            obj.x = obj.finalX;
+    //            obj.y = canvasForDownload.height + 5;
+    //            break;
+    //        case "left":
+    //            obj.x = -(obj.boundingWidth + 5);
+    //            obj.y = obj.finalY;
+    //            break;
+    //        case "right":
+    //            obj.x = canvasForDownload.width + 5;
+    //            obj.y = obj.finalY;
+    //            break;
+    //        default:
+    //            // fallback: slide in from right
+    //            obj.x = canvasForDownload.width + 5;
+    //            obj.y = obj.finalY;
+    //    }
+
+    //    // 2) EXIT (based on `Outdirection`)
+    //    switch (Outdirection) {
+    //        case "top":
+    //            obj.exitX = obj.finalX;
+    //            obj.exitY = -(obj.boundingHeight + 25);
+    //            break;
+    //        case "bottom":
+    //            obj.exitX = obj.finalX;
+    //            obj.exitY = canvasForDownload.height + 5;
+    //            break;
+    //        case "left":
+    //            obj.exitX = -(obj.boundingWidth + 5);
+    //            obj.exitY = obj.finalY;
+    //            break;
+    //        case "right":
+    //            obj.exitX = canvasForDownload.width + 5;
+    //            obj.exitY = obj.finalY;
+    //            break;
+    //        default:
+    //            // fallback: slide out to right
+    //            obj.exitX = canvasForDownload.width + 5;
+    //            obj.exitY = obj.finalY;
+    //    }
+    //});
+
+
+
+    return new Promise(resolve => {
+        // copy your existing animateTextForDownload code,
+        // but in the GSAP timeline's onComplete call resolve()
+        const tl = gsap.timeline({
+            repeat: loopCount - 1,
+            onUpdate: () => drawCanvasForDownload(condition),
+            onComplete: resolve
+        });
+
+
+        // ----- IMAGE ANIMATION SECTION -----
+        images.forEach((imgObj) => {
+            imgObj.finalX = imgObj.x;
+            imgObj.finalY = imgObj.y;
+
+            // Take into account any scaling:
+            const dispWidth = imgObj.width * (imgObj.scaleX || 1);
+            const dispHeight = imgObj.height * (imgObj.scaleY || 1);
+
+            // 1) ENTRY (based on `direction`)
+            switch (direction) {
+                case "top":
+                    imgObj.x = imgObj.finalX;
+                    imgObj.y = -(dispHeight + 5);
+                    break;
+                case "bottom":
+                    imgObj.x = imgObj.finalX;
+                    imgObj.y = canvasForDownload.height + 5;
+                    break;
+                case "left":
+                    imgObj.x = -(dispWidth + 5);
+                    imgObj.y = imgObj.finalY;
+                    break;
+                case "right":
+                    imgObj.x = canvasForDownload.width + 5;
+                    imgObj.y = imgObj.finalY;
+                    break;
+                default:
+                    // fallback: slide in from right
+                    imgObj.x = canvasForDownload.width + 5;
+                    imgObj.y = imgObj.finalY;
+            }
+
+            // 2) EXIT (based on `Outdirection`)
+            switch (Outdirection) {
+                case "top":
+                    imgObj.exitX = imgObj.finalX;
+                    imgObj.exitY = canvasForDownload.height + 5;
+
+                    break;
+                case "bottom":
+                    imgObj.exitX = imgObj.finalX;
+                    imgObj.exitY = -(dispHeight + 55);
+                    break;
+                case "left":
+                    imgObj.exitX = -(dispWidth + 55);
+                    imgObj.exitY = imgObj.finalY;
+                    break;
+                case "right":
+                    imgObj.exitX = canvasForDownload.width + 5;
+                    imgObj.exitY = imgObj.finalY;
+                    break;
+                default:
+                    // fallback: slide out to right
+                    imgObj.exitX = canvasForDownload.width + 5;
+                    imgObj.exitY = imgObj.finalY;
+            }
+        });
+
+        if (animationType === "delaylinear") {
+            // 1) Gather animatable items
+            const allItems = [
+                ...images.filter(i => !i.noAnim),
+                ...textObjects.filter(t => !t.noAnim)
+            ];
+
+            // 2) Bucket into “units” by groupId
+            const groupMap = new Map();
+            const units = [];
+            allItems.forEach(item => {
+                const gid = item.groupId;
+                if (gid != null) {
+                    if (!groupMap.has(gid)) {
+                        groupMap.set(gid, []);
+                        units.push(groupMap.get(gid));
+                    }
+                    groupMap.get(gid).push(item);
+                } else {
+                    units.push([item]);
+                }
+            });
+
+            // 3) Timings
+            const tweenIn = 0.15 * inTime;
+            const tweenOut = 0.15 * outTime;
+
+            // 4) Build timeline
+            const tlText = gsap.timeline({
+                repeat: loopCount - 1,
+                repeatDelay: 0,
+                onRepeat: () => {
+                    images.forEach(img => { img.x = img.startX; img.y = img.startY; });
+                    textObjects.forEach(txt => { txt.x = txt.startX; txt.y = txt.startY; });
+                    drawCanvasForDownload(condition);
+                },
+                onUpdate: () => drawCanvasForDownload(condition)
+            });
+
+            // Pin noAnim images/text at fixed positions
+            images.filter(i => i.noAnim).forEach(img => {
+                tlText.set(img, { x: img.x, y: img.y, opacity: img.opacity ?? 1 }, 0);
+            });
+            textObjects.filter(t => t.noAnim).forEach(txt => {
+                tlText.set(txt, {
+                    x: txt.finalX,
+                    y: txt.finalY,
+                    opacity: txt.opacity ?? 1
+                }, 0);
+            });
+
+            // --- IN: one tween per unit ---
+            units.forEach((unit, idx) => {
+                tlText.to(unit, {
+                    x: (i, t) => t.finalX,
+                    y: (i, t) => t.finalY,
+                    duration: tweenIn,
+                    ease: "power1.in",
+                    onUpdate: () => drawCanvasForDownload(condition)
+                }, idx * tweenIn);
+            });
+
+            // 1) STAY tween
+            const totalIn = units.length * tweenIn;
+            tlText.to({}, { duration: stayTime, ease: "none" }, totalIn);
+
+            // 2) OUT tweens
+            const outStart = totalIn + stayTime;
+            units.forEach((unit, idx) => {
+                tlText.to(unit, {
+                    x: (i, t) => t.exitX,
+                    y: (i, t) => t.exitY,
+                    duration: tweenOut,
+                    ease: "power1.out",
+                    onUpdate: () => drawCanvasForDownload(condition)
+                }, outStart + idx * tweenOut);
+            });
+
+            // ──────────────────────────────────────────────────────────────────
+            // 3) Pad or compress to exactly slideExecutionTime
+            const slideExecutionTime = inTime + stayTime + outTime;  // e.g. 11
+            const actualDuration = tlText.duration();            // e.g. 12.6
+            const playbackRatio = actualDuration / slideExecutionTime;
+            tlText.timeScale(playbackRatio);
+
+            // --- STRIPE/CROSS-FADE: removed from here! ---
+            // call your external runStripeTransition(...) after this timeline completes
+        }
+        else if (animationType === "delaylinear2") {
+            // 1) Gather animatable items
+            const allItems = [
+                ...images.filter(i => !i.noAnim),
+                ...textObjects.filter(t => !t.noAnim)
+            ];
+
+            // 2) Bucket into “units” by groupId
+            const groupMap = new Map();
+            const units = [];
+            allItems.forEach(item => {
+                const gid = item.groupId;
+                if (gid != null) {
+                    if (!groupMap.has(gid)) {
+                        groupMap.set(gid, []);
+                        units.push(groupMap.get(gid));
+                    }
+                    groupMap.get(gid).push(item);
+                } else {
+                    units.push([item]);
+                }
+            });
+
+            // 3) Timings
+            const tweenIn = 0.15 * inTime;
+            const tweenOut = 0.15 * outTime;
+            const overlapIn = tweenIn / 6;   // each next In starts 50% in
+            const overlapOut = tweenOut / 7;   // each next Out starts 50% in
+
+            // 4) Build timeline
+            const tlText = gsap.timeline({
+                repeat: loopCount - 1,
+                repeatDelay: 0,
+                onRepeat: () => {
+                    // reset positions on loop
+                    images.forEach(img => { img.x = img.startX; img.y = img.startY; });
+                    textObjects.forEach(txt => { txt.x = txt.startX; txt.y = txt.startY; });
+                    drawCanvasForDownload(condition);
+                },
+                onUpdate: () => drawCanvasForDownload(condition)
+            });
+
+            // Pin noAnim items
+            images.filter(i => i.noAnim).forEach(img =>
+                tlText.set(img, { x: img.x, y: img.y, opacity: img.opacity ?? 1 }, 0)
+            );
+            textObjects.filter(t => t.noAnim).forEach(txt =>
+                tlText.set(txt, { x: txt.finalX, y: txt.finalY, opacity: txt.opacity ?? 1 }, 0)
+            );
+
+            // ── IN ──
+            tlText.to(units, {
+                x: (i, t) => t.finalX,
+                y: (i, t) => t.finalY,
+                duration: tweenIn,
+                ease: "power1.in",
+                stagger: overlapIn,
+                onUpdate: () => drawCanvasForDownload(condition)
+            }, 0);
+
+            // compute when the last IN actually ends:
+            // starts at (units.length-1)*overlapIn, runs tweenIn
+            const inEndTime = (units.length - 1) * overlapIn + tweenIn;
+
+            // ── STAY ──
+            tlText.to({}, {
+                duration: stayTime,
+                ease: "none"
+            }, inEndTime);
+
+            // ── OUT ──
+            tlText.to(units, {
+                x: (i, t) => t.exitX,
+                y: (i, t) => t.exitY,
+                duration: tweenOut,
+                ease: "power1.out",
+                stagger: overlapOut,
+                onUpdate: () => drawCanvasForDownload(condition)
+            }, inEndTime + stayTime);
+
+            // ── NORMALIZE TIMING ──
+            const slideExecutionTime = inTime + stayTime + outTime;
+            const actualDuration = tlText.duration();
+            tlText.timeScale(actualDuration / slideExecutionTime);
+
+            //// (Optional) reset all to final positions on complete
+            //tlText.eventCallback("onComplete", () => {
+            //    images.forEach(img => {
+            //        img.x = img.finalX; img.y = img.finalY; img.opacity = img.opacity ?? 1;
+            //    });
+            //    textObjects.forEach(txt => {
+            //        txt.x = txt.finalX; txt.y = txt.finalY;
+            //    });
+            //    drawCanvasForDownload(condition);
+            //});
+        }
+        else if (animationType === "roll") {
+            const allItems = [
+                ...images.filter(i => !i.noAnim),
+                ...textObjects.filter(t => !t.noAnim)
+            ];
+
+            // Grouping (if needed later)
+            allItems.forEach(o => {
+                o.x = o.finalX;
+                o.y = o.finalY;
+                o.rotation = 0;
+            });
+
+            const inRotationAmount = (direction === "left") ? 360 : (direction === "right") ? -360 : 360;
+            const outRotationAmount = (direction === "right") ? 360 : -360;
+
+            const tl = gsap.timeline({
+                repeat: loopCount - 1,
+                onRepeat: () => {
+                    allItems.forEach(o => o.rotation = 0);
+                    drawCanvasForDownload(condition);
+                },
+                onUpdate: () => drawCanvasForDownload(condition)
+            });
+
+            // IN: Rotate all items together
+            tl.to(allItems, {
+                rotation: inRotationAmount,
+                duration: inTime,
+                ease: "power2.out"
+            });
+
+            // STAY: Hold
+            tl.to({}, { duration: stayTime });
+
+            // OUT: Rotate all items together (new rotation amount)
+            tl.to(allItems, {
+                rotation: `+=${outRotationAmount}`,
+                duration: outTime,
+                ease: "power2.out"
+            });
+
+            // Reset after full animation
+            tl.eventCallback("onComplete", () => {
+                allItems.forEach(o => o.rotation = 0);
+                drawCanvasForDownload(condition);
+            });
+        }
+        // Popcorn Canvas Animation
+        else if (animationType === "popcorn") {
+            const animItems = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+            const staticItems = [...images.filter(i => i.noAnim), ...textObjects.filter(t => t.noAnim)];
+
+            animItems.forEach(o => {
+                o.x = o.finalX;
+                o.y = o.finalY;
+                o.scaleX = 0;
+                o.scaleY = 0;
+            });
+            staticItems.forEach(o => {
+                o.x = o.finalX;
+                o.y = o.finalY;
+                o.scaleX = 1;
+                o.scaleY = 1;
+            });
+
+            const groupMap = new Map();
+            const units = [];
+            animItems.forEach(item => {
+                const gid = item.groupId;
+                if (gid != null) {
+                    if (!groupMap.has(gid)) {
+                        groupMap.set(gid, []);
+                        units.push(groupMap.get(gid));
+                    }
+                    groupMap.get(gid).push(item);
+                } else {
+                    units.push([item]);
+                }
+            });
+
+            const tl = gsap.timeline({
+                repeat: loopCount - 1,
+                onUpdate: () => drawCanvasForDownload(condition)
+            });
+
+            staticItems.forEach(o => {
+                tl.set(o, { scaleX: 1, scaleY: 1 }, 0);
+            });
+
+            // IN phase: small to large (stay large)
+            tl.to(animItems, {
+                scaleX: 1.0,
+                scaleY: 1.0,
+                duration: inTime / 2,
+                ease: "power2.out"
+            }, 0);
+
+            // STAY phase: hold the large size
+            tl.to({}, { duration: stayTime });
+
+            // OUT phase: large to small
+            tl.to(animItems, {
+                scaleX: 0,
+                scaleY: 0,
+                duration: outTime / 2,
+                ease: "power2.in"
+            });
+
+            //tl.eventCallback("onComplete", () => {
+            //    ctxElementForDownload.restore();
+            //    return;
+            //    //animItems.forEach(o => {
+            //    //    o.scaleX = 0;  // Stay hidden after OUT
+            //    //    o.scaleY = 0;
+            //    //});
+            //    //drawCanvasForDownload(condition);
+            //});
+        }
+        else if (animationType === "mask") {
+
+            //if (window.currentMaskTimeline) {
+            //    window.currentMaskTimeline.kill();
+            //}
+
+            // const animItems = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+            const staticItems = [...images.filter(i => i.noAnim), ...textObjects.filter(t => t.noAnim)];
+
+
+
+            allItems.forEach(o => {
+                o.x = o.finalX;
+                o.y = o.finalY;
+                o.clip = 1;
+                o.clipDirection = direction;  // IN direction
+            });
+
+            staticItems.forEach(o => {
+                o.x = o.finalX;
+                o.y = o.finalY;
+                o.clip = 0;
+            });
+
+            const tl = gsap.timeline({
+                repeat: loopCount - 1,
+                onRepeat: () => {
+                    allItems.forEach(o => {
+                        o.clip = 1;
+                        o.clipDirection = direction;
+                    });
+                    drawCanvasForDownload(condition);
+                },
+                onUpdate: () => drawCanvasForDownload(condition)
+            });
+
+            window.currentMaskTimeline = tl;
+
+            // IN: Reveal
+            tl.to(allItems, {
+                clip: 0,
+                duration: inTime,
+                ease: "power2.out",
+                onUpdate: () => drawCanvasForDownload(condition)
+            });
+
+            // STAY: Hold visible
+            tl.to({}, { duration: stayTime });
+
+            // OUT: At this moment, switch clipDirection
+            tl.add(() => {
+                allItems.forEach(o => {
+                    o.clipDirection = invertDirection(Outdirection);
+                });
+            });
+
+            // OUT: Mask again
+            tl.to(allItems, {
+                clip: 1,
+                duration: outTime,
+                ease: "power2.out",
+                onUpdate: () => drawCanvasForDownload(condition)
+            });
+
+            // Final Reset
+            tl.eventCallback("onComplete", () => {
+                allItems.forEach(o => {
+                    o.clip = 1;
+                    o.clipDirection = Outdirection;  // Reset for next replay
+                });
+                drawCanvasForDownload(condition);
+            });
+
+        }
+
+
+
+
+    });
+
+
+    if (animationType === "linear" || animationType === "zoom" ||
+        animationType === "bounce" || animationType === "blur") {
+        // Keep your existing implementation for these cases.
+        textObjects.forEach((obj) => {
+            const endX = obj.finalX;
+            const endY = obj.finalY;
+            let exitX, exitY;
+            switch (direction) {
+                case "top":
+                    exitX = endX;
+                    exitY = -(obj.boundingHeight + 5);
+                    break;
+                case "bottom":
+                    exitX = endX;
+                    exitY = canvas.height + 5;
+                    break;
+                case "left":
+                    exitX = -(obj.boundingWidth + 5);
+                    exitY = endY;
+                    break;
+                case "right":
+                    exitX = canvas.width + 5;
+                    exitY = endY;
+                    break;
+                default:
+                    exitX = window.innerWidth;
+                    exitY = endY;
+            }
+            if (animationType === "linear" || animationType === "zoom") {
+                let tl = gsap.timeline({
+                    repeat: loopCount - 1,
+                    onUpdate: function () {
+                        drawCanvasForDownload(condition);
+                    }
+                });
+
+                tl.to(obj, {
+                    x: endX,
+                    y: endY,
+                    duration: inTime,
+                    ease: "power1.in"
+                });
+                tl.to(obj, {
+                    duration: stayTime,
+                    ease: "none"
+                });
+                tl.to(obj, {
+                    x: exitX,
+                    y: exitY,
+                    duration: outTime,
+                    ease: "power1.out"
+                });
+                tl.set(obj, {
+                    x: endX,
+                    y: endY,
+                    duration: 0,
+                    ease: "power1.inOut",
+                    onUpdate: () => drawCanvasForDownload(condition)
+                });
+            }
+            else if (animationType === "bounce" || animationType === "blur") {
+
+                ////This section is for in out and stay
+                let tl = gsap.timeline({
+                    repeat: loopCount - 1,
+                    onUpdate: function () {
+                        drawCanvasForDownload(condition);
+                    }
+                });
+
+                // "In" phase: Animate the object onto the canvas.
+                tl.to(obj, {
+                    x: endX,
+                    y: endY,
+                    duration: inTime,
+                    ease: "bounce.out"
+                });
+
+                // "Stay" phase: Hold the object in place for the stay duration.
+                // This tween doesn't change any properties; it just acts as a pause.
+                tl.to(obj, {
+                    duration: stayTime,
+                    ease: "none"
+                });
+
+                // "Out" phase: Animate the object off the canvas.
+                tl.to(obj, {
+                    x: exitX,
+                    y: exitY,
+                    duration: outTime,
+                    ease: "bounce.out"
+                });
+                // Final phase: Reset the object to the final position with text.
+                // This sets the object’s position to (endX, endY) after the out tween completes.
+                tl.set(obj, {
+                    x: endX,
+                    y: endY,
+                    duration: 0,
+                    ease: "bounce.out",
+                    onUpdate: () => drawCanvasForDownload(condition),
+
+
+                });
+
+
+                ////This is default effect of bounce
+                //gsap.to(obj, {
+                //    x: endX,
+                //    y: endY,
+                //    duration: parseFloat(selectedInSpeed) || 2,
+                //    ease: "bounce.out",
+                //    onUpdate: () => drawCanvas(condition),
+                //});
+            }
+
+        });
+    }
+
+
+
+    if (animationType === "linear" || animationType === "zoom" ||
+        animationType === "bounce" || animationType === "blur") {
+        // Keep the existing branches for images.
+        let exitX, exitY;
+        images.forEach((imgObj) => {
+            const endX = imgObj.finalX;
+            const endY = imgObj.finalY;
+            let tl = gsap.timeline({
+                repeat: loopCount - 1,
+                onUpdate: function () {
+                    drawCanvasForDownload(condition);
+                }
+            });
+
+            if (animationType === "linear") {
+                tl.to(imgObj, {
+                    x: endX,
+                    y: endY,
+                    duration: inTime,
+                    ease: "power1.in"
+                });
+                tl.to(imgObj, {
+                    duration: stayTime,
+                    ease: "none"
+                });
+                tl.to(imgObj, {
+                    x: exitX,
+                    y: exitY,
+                    duration: outTime,
+                    ease: "power1.out"
+                });
+                tl.set(imgObj, {
+                    x: endX,
+                    y: endY,
+                    duration: 0,
+                    ease: "power1.inOut",
+                    onUpdate: () => drawCanvasForDownload(condition)
+                });
+            }
+            else if (animationType === "bounce") {
+                tl.to(imgObj, {
+                    x: endX,
+                    y: endY,
+                    duration: inTime,
+                    ease: "bounce.out"
+                });
+                tl.to(imgObj, {
+                    duration: stayTime,
+                    ease: "none"
+                });
+                tl.to(imgObj, {
+                    x: exitX,
+                    y: exitY,
+                    duration: outTime,
+                    ease: "bounce.out"
+                });
+                tl.set(imgObj, {
+                    x: endX,
+                    y: endY,
+                    duration: 0,
+                    ease: "bounce.out",
+                    onUpdate: () => drawCanvasForDownload(condition)
+                });
+            }
+            else if (animationType === "zoom") {
+                // Zoom in then out.
+                tl.fromTo(
+                    imgObj,
+                    { scaleX: 0, scaleY: 0, x: startX, y: startY },
+                    {
+                        scaleX: originalScaleX,
+                        scaleY: originalScaleY,
+                        x: endX,
+                        y: endY,
+                        duration: inTime,
+                        ease: "power2.out",
+                        onUpdate: () => drawCanvasForDownload(condition)
+                    }
+                );
+                tl.to(imgObj, {
+                    duration: stayTime,
+                    ease: "none"
+                });
+                tl.to(imgObj, {
+                    scaleX: 0,
+                    scaleY: 0,
+                    x: exitX,
+                    y: exitY,
+                    duration: outTime,
+                    ease: "power2.in",
+                    onUpdate: () => drawCanvasForDownload(condition)
+                });
+                tl.set(imgObj, {
+                    x: endX,
+                    y: endY,
+                    scaleX: originalScaleX,
+                    scaleY: originalScaleY,
+                    duration: 0,
+                    ease: "none",
+                    onUpdate: () => drawCanvasForDownload(condition)
+                });
+            }
+            else if (animationType === "blur") {
+                imgObj.blur = 5;
+                tl.fromTo(
+                    imgObj,
+                    { blur: 5, x: startX, y: startY },
+                    {
+                        blur: 0,
+                        x: endX,
+                        y: endY,
+                        duration: inTime + 2,
+                        ease: "power2.out",
+                        onUpdate: () => {
+                            ctx.filter = `blur(${imgObj.blur}px)`;
+                            drawCanvasForDownload(condition);
+                        },
+                        onComplete: () => {
+                            ctx.filter = "none";
+                            drawCanvasForDownload(condition);
+                        }
+                    }
+                );
+                tl.to(imgObj, {
+                    duration: stayTime,
+                    ease: "none",
+                    onUpdate: () => {
+                        ctx.filter = "none";
+                        drawCanvasForDownload(condition);
+                    }
+                });
+                tl.to(imgObj, {
+                    x: exitX,
+                    y: exitY,
+                    duration: outTime,
+                    ease: "power2.in",
+                    onUpdate: () => {
+                        ctx.filter = "none";
+                        drawCanvasForDownload(condition);
+                    }
+                });
+                tl.set(imgObj, {
+                    x: endX,
+                    y: endY,
+                    duration: 0,
+                    ease: "none",
+                    onUpdate: () => {
+                        ctx.filter = "none";
+                        drawCanvasForDownload(condition);
+                    }
+                });
+            }
+        });
+    }
+}
+function initModeToggle() {
+    const buttons = document.querySelectorAll('.toggle-container .toggle-btn');
+
+    function applyModeOld(mode) {
+        if (mode === 'graphic') {
+            document.getElementById('opengl_popup').style.display = 'none';
+            document.getElementById('fontstyle_popup').style.display = 'block';
+            document.querySelector('.right-sec-one').style.display = 'none';
+            document.querySelector('.right-sec-two').style.display = 'block';
+
+        } else {
+
+            document.getElementById('opengl_popup').style.display = 'none';
+            document.getElementById('fontstyle_popup').style.display = 'none';
+            document.querySelector('.right-sec-one').style.display = 'block';
+            document.querySelector('.right-sec-two').style.display = 'none';
+        }
+    }
+    function applyMode(mode) {
+        const openglPopup = document.getElementById('opengl_popup');
+        const fontstylePopup = document.getElementById('fontstyle_popup');
+        const rightSecOne = document.querySelector('.right-sec-one');
+        const rightSecTwo = document.querySelector('.right-sec-two');
+
+        if (mode === 'graphic') {
+            if (openglPopup) openglPopup.style.display = 'none';
+            if (fontstylePopup) fontstylePopup.style.display = 'block';
+            if (rightSecOne) rightSecOne.style.display = 'none';
+            if (rightSecTwo) rightSecTwo.style.display = 'block';
+        } else {
+            if (openglPopup) openglPopup.style.display = 'none';
+            if (fontstylePopup) fontstylePopup.style.display = 'none';
+            if (rightSecOne) rightSecOne.style.display = 'block';
+            if (rightSecTwo) rightSecTwo.style.display = 'none';
+        }
+    }
+
+
+    buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // toggle active class
+            buttons.forEach(b => b.classList.toggle('active', b === btn));
+
+            // apply mode for the newly clicked button
+            applyMode(btn.dataset.mode);
+        });
+    });
+
+    // on load: find the one already marked .active
+    const defaultBtn = document.querySelector('.toggle-btn.active');
+    if (defaultBtn) {
+        applyMode(defaultBtn.dataset.mode);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', initModeToggle);
+
+//// initialize on DOM ready
+//document.addEventListener('DOMContentLoaded', initModeToggle);
+function tranTypeSet(type) {
+    $("#hdntransition").val(type);
+}

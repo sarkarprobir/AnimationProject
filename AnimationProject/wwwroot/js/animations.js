@@ -2248,15 +2248,15 @@ function animateText(direction, condition, loopCount) {
 function textAnimationClick(clickedElement, type, from) {
     $("#hdnTextAnimationType").val(type);
     animationMode = type;
-    if (activeSlide === 1) {
-        $("#hdnEffectSlide1").val(type);
-    }
-    else if (activeSlide === 2) {
-        $("#hdnEffectSlide2").val(type);
-    }
-    else if (activeSlide === 3) {
-        $("#hdnEffectSlide3").val(type);
-    }
+    //if (activeSlide === 1) {
+    //    $("#hdnEffectSlide1").val(type);
+    //}
+    //else if (activeSlide === 2) {
+    //    $("#hdnEffectSlide2").val(type);
+    //}
+    //else if (activeSlide === 3) {
+    //    $("#hdnEffectSlide3").val(type);
+    //}
     if (from == 'Out') {
         if (activeSlide === 1) {
             $("#hdnOutEffectSlide1").val(type);
@@ -2271,6 +2271,16 @@ function textAnimationClick(clickedElement, type, from) {
         clickedElement.classList.add("active_effect");
     }
     else if (from == 'In') {
+       
+        if (activeSlide === 1) {
+            $("#hdnEffectSlide1").val(type);
+        }
+        else if (activeSlide === 2) {
+            $("#hdnEffectSlide2").val(type);
+        }
+        else if (activeSlide === 3) {
+            $("#hdnEffectSlide3").val(type);
+        }
         $('.effectIn_btn').removeClass('active_effect');
         clickedElement.classList.add("active_effect");
     }
