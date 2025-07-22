@@ -5464,8 +5464,11 @@ function GetDesignBoardById(id) {
 
                         $('#hdnTransition1').val(beforeTilde);
                         $('#hdnTransition2').val(afterTilde);
-                        document.getElementById('targetDiv1').style.backgroundColor = beforeTilde;
-                        document.getElementById('targetDiv2').style.backgroundColor = afterTilde;
+                        //document.getElementById('targetDiv1').style.backgroundColor = beforeTilde;
+                        //document.getElementById('targetDiv2').style.backgroundColor = afterTilde;
+                        document.getElementById('targetDiv1')?.style?.setProperty('background-color', beforeTilde);
+                        document.getElementById('targetDiv2')?.style?.setProperty('background-color', afterTilde);
+
 
                         $("#tranColor1").val(beforeTilde);
                         $("#tranColor2").val(afterTilde);
