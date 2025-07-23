@@ -5949,6 +5949,11 @@ async function SaveDesignBoardInPublishTable() {
                 success: function (result) {
                     $("#hdnDesignBoardPublishId").val(result.result);
                     $("#hdnPublishBoardUniqueId").val(result.publishBoardUniqueId);
+                    const companyUniqueId = getCompanyIdFromUrl();
+                    const projectId = $("#hdnPublishBoardUniqueId").val();
+                    window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
+
+                    RedirectToHorizontalPageWithQueryString();
                 },
                 error: function (data) {
                     console.log("error");
@@ -5961,10 +5966,9 @@ async function SaveDesignBoardInPublishTable() {
     catch (e) {
         console.log("catch", e);
     }
-
 }
 async function GetDesignBoardByIdForDownload(condition) {
-    SaveDesignBoardInPublishTable();
+    
     publishDownloadcondition = condition;
     var id = $('#hdnDesignBoardId').val(); // get GUID value
     if (id !== '') {
@@ -6111,7 +6115,7 @@ async function loadNextJsonForDownload() {
         // 6) finally run the IN→STAY→OUT for that slide
         await showSlide(nextIdx);
     }
-
+    
     // All done
     recorderForDownload.stop();
 }
@@ -6275,18 +6279,16 @@ function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
                 dataType: "json",
                 data: dataVideoPath,
                 success: function (slideResult) {
-                    // triggerAutorefresh();
-                    //Need to remove as this is temporary
+                      SaveDesignBoardInPublishTable();
                     hideDownloadPanel();
 
-                    //const targetUrl = window.location.origin + "/Canvas/VScreen1/1";
-                    //window.open(targetUrl, "_blank");
-                    const companyUniqueId = getCompanyIdFromUrl();
-                    const projectId = $("#hdnPublishBoardUniqueId").val();
-                    window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
+                    
+                    //const companyUniqueId = getCompanyIdFromUrl();
+                    //const projectId = $("#hdnPublishBoardUniqueId").val();
+                    //window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
 
-                    RedirectToHorizontalPageWithQueryString();
-                    //HideLoader();
+                    //RedirectToHorizontalPageWithQueryString();
+                    ////HideLoader();
                 },
                 error: function (data) {
                     console.log("error in saving Image " + activeSlide);
@@ -7711,59 +7713,6 @@ async function animateTextForDownload(animationType, direction, condition, loopC
 
 
 
-    //textObjects.forEach((obj) => {
-    //    obj.finalX = obj.x;
-    //    obj.finalY = obj.y;
-
-    //    // 1) ENTRY (based on `direction`)
-    //    switch (direction) {
-    //        case "top":
-    //            obj.x = obj.finalX;
-    //            obj.y = -(obj.boundingHeight + 5);
-    //            break;
-    //        case "bottom":
-    //            obj.x = obj.finalX;
-    //            obj.y = canvasForDownload.height + 5;
-    //            break;
-    //        case "left":
-    //            obj.x = -(obj.boundingWidth + 5);
-    //            obj.y = obj.finalY;
-    //            break;
-    //        case "right":
-    //            obj.x = canvasForDownload.width + 5;
-    //            obj.y = obj.finalY;
-    //            break;
-    //        default:
-    //            // fallback: slide in from right
-    //            obj.x = canvasForDownload.width + 5;
-    //            obj.y = obj.finalY;
-    //    }
-
-    //    // 2) EXIT (based on `Outdirection`)
-    //    switch (Outdirection) {
-    //        case "top":
-    //            obj.exitX = obj.finalX;
-    //            obj.exitY = -(obj.boundingHeight + 25);
-    //            break;
-    //        case "bottom":
-    //            obj.exitX = obj.finalX;
-    //            obj.exitY = canvasForDownload.height + 5;
-    //            break;
-    //        case "left":
-    //            obj.exitX = -(obj.boundingWidth + 5);
-    //            obj.exitY = obj.finalY;
-    //            break;
-    //        case "right":
-    //            obj.exitX = canvasForDownload.width + 5;
-    //            obj.exitY = obj.finalY;
-    //            break;
-    //        default:
-    //            // fallback: slide out to right
-    //            obj.exitX = canvasForDownload.width + 5;
-    //            obj.exitY = obj.finalY;
-    //    }
-    //});
-
 
 
     return new Promise(resolve => {
@@ -8219,280 +8168,280 @@ async function animateTextForDownload(animationType, direction, condition, loopC
     });
 
 
-    if (animationType === "linear" || animationType === "zoom" ||
-        animationType === "bounce" || animationType === "blur") {
-        // Keep your existing implementation for these cases.
-        textObjects.forEach((obj) => {
-            const endX = obj.finalX;
-            const endY = obj.finalY;
-            let exitX, exitY;
-            switch (direction) {
-                case "top":
-                    exitX = endX;
-                    exitY = -(obj.boundingHeight + 5);
-                    break;
-                case "bottom":
-                    exitX = endX;
-                    exitY = canvas.height + 5;
-                    break;
-                case "left":
-                    exitX = -(obj.boundingWidth + 5);
-                    exitY = endY;
-                    break;
-                case "right":
-                    exitX = canvas.width + 5;
-                    exitY = endY;
-                    break;
-                default:
-                    exitX = window.innerWidth;
-                    exitY = endY;
-            }
-            if (animationType === "linear" || animationType === "zoom") {
-                let tl = gsap.timeline({
-                    repeat: loopCount - 1,
-                    onUpdate: function () {
-                        drawCanvasForDownload(condition);
-                    }
-                });
+    //if (animationType === "linear" || animationType === "zoom" ||
+    //    animationType === "bounce" || animationType === "blur") {
+    //    // Keep your existing implementation for these cases.
+    //    textObjects.forEach((obj) => {
+    //        const endX = obj.finalX;
+    //        const endY = obj.finalY;
+    //        let exitX, exitY;
+    //        switch (direction) {
+    //            case "top":
+    //                exitX = endX;
+    //                exitY = -(obj.boundingHeight + 5);
+    //                break;
+    //            case "bottom":
+    //                exitX = endX;
+    //                exitY = canvas.height + 5;
+    //                break;
+    //            case "left":
+    //                exitX = -(obj.boundingWidth + 5);
+    //                exitY = endY;
+    //                break;
+    //            case "right":
+    //                exitX = canvas.width + 5;
+    //                exitY = endY;
+    //                break;
+    //            default:
+    //                exitX = window.innerWidth;
+    //                exitY = endY;
+    //        }
+    //        if (animationType === "linear" || animationType === "zoom") {
+    //            let tl = gsap.timeline({
+    //                repeat: loopCount - 1,
+    //                onUpdate: function () {
+    //                    drawCanvasForDownload(condition);
+    //                }
+    //            });
 
-                tl.to(obj, {
-                    x: endX,
-                    y: endY,
-                    duration: inTime,
-                    ease: "power1.in"
-                });
-                tl.to(obj, {
-                    duration: stayTime,
-                    ease: "none"
-                });
-                tl.to(obj, {
-                    x: exitX,
-                    y: exitY,
-                    duration: outTime,
-                    ease: "power1.out"
-                });
-                tl.set(obj, {
-                    x: endX,
-                    y: endY,
-                    duration: 0,
-                    ease: "power1.inOut",
-                    onUpdate: () => drawCanvasForDownload(condition)
-                });
-            }
-            else if (animationType === "bounce" || animationType === "blur") {
+    //            tl.to(obj, {
+    //                x: endX,
+    //                y: endY,
+    //                duration: inTime,
+    //                ease: "power1.in"
+    //            });
+    //            tl.to(obj, {
+    //                duration: stayTime,
+    //                ease: "none"
+    //            });
+    //            tl.to(obj, {
+    //                x: exitX,
+    //                y: exitY,
+    //                duration: outTime,
+    //                ease: "power1.out"
+    //            });
+    //            tl.set(obj, {
+    //                x: endX,
+    //                y: endY,
+    //                duration: 0,
+    //                ease: "power1.inOut",
+    //                onUpdate: () => drawCanvasForDownload(condition)
+    //            });
+    //        }
+    //        else if (animationType === "bounce" || animationType === "blur") {
 
-                ////This section is for in out and stay
-                let tl = gsap.timeline({
-                    repeat: loopCount - 1,
-                    onUpdate: function () {
-                        drawCanvasForDownload(condition);
-                    }
-                });
+    //            ////This section is for in out and stay
+    //            let tl = gsap.timeline({
+    //                repeat: loopCount - 1,
+    //                onUpdate: function () {
+    //                    drawCanvasForDownload(condition);
+    //                }
+    //            });
 
-                // "In" phase: Animate the object onto the canvas.
-                tl.to(obj, {
-                    x: endX,
-                    y: endY,
-                    duration: inTime,
-                    ease: "bounce.out"
-                });
+    //            // "In" phase: Animate the object onto the canvas.
+    //            tl.to(obj, {
+    //                x: endX,
+    //                y: endY,
+    //                duration: inTime,
+    //                ease: "bounce.out"
+    //            });
 
-                // "Stay" phase: Hold the object in place for the stay duration.
-                // This tween doesn't change any properties; it just acts as a pause.
-                tl.to(obj, {
-                    duration: stayTime,
-                    ease: "none"
-                });
+    //            // "Stay" phase: Hold the object in place for the stay duration.
+    //            // This tween doesn't change any properties; it just acts as a pause.
+    //            tl.to(obj, {
+    //                duration: stayTime,
+    //                ease: "none"
+    //            });
 
-                // "Out" phase: Animate the object off the canvas.
-                tl.to(obj, {
-                    x: exitX,
-                    y: exitY,
-                    duration: outTime,
-                    ease: "bounce.out"
-                });
-                // Final phase: Reset the object to the final position with text.
-                // This sets the object’s position to (endX, endY) after the out tween completes.
-                tl.set(obj, {
-                    x: endX,
-                    y: endY,
-                    duration: 0,
-                    ease: "bounce.out",
-                    onUpdate: () => drawCanvasForDownload(condition),
-
-
-                });
+    //            // "Out" phase: Animate the object off the canvas.
+    //            tl.to(obj, {
+    //                x: exitX,
+    //                y: exitY,
+    //                duration: outTime,
+    //                ease: "bounce.out"
+    //            });
+    //            // Final phase: Reset the object to the final position with text.
+    //            // This sets the object’s position to (endX, endY) after the out tween completes.
+    //            tl.set(obj, {
+    //                x: endX,
+    //                y: endY,
+    //                duration: 0,
+    //                ease: "bounce.out",
+    //                onUpdate: () => drawCanvasForDownload(condition),
 
 
-                ////This is default effect of bounce
-                //gsap.to(obj, {
-                //    x: endX,
-                //    y: endY,
-                //    duration: parseFloat(selectedInSpeed) || 2,
-                //    ease: "bounce.out",
-                //    onUpdate: () => drawCanvas(condition),
-                //});
-            }
-
-        });
-    }
+    //            });
 
 
+    //            ////This is default effect of bounce
+    //            //gsap.to(obj, {
+    //            //    x: endX,
+    //            //    y: endY,
+    //            //    duration: parseFloat(selectedInSpeed) || 2,
+    //            //    ease: "bounce.out",
+    //            //    onUpdate: () => drawCanvas(condition),
+    //            //});
+    //        }
 
-    if (animationType === "linear" || animationType === "zoom" ||
-        animationType === "bounce" || animationType === "blur") {
-        // Keep the existing branches for images.
-        let exitX, exitY;
-        images.forEach((imgObj) => {
-            const endX = imgObj.finalX;
-            const endY = imgObj.finalY;
-            let tl = gsap.timeline({
-                repeat: loopCount - 1,
-                onUpdate: function () {
-                    drawCanvasForDownload(condition);
-                }
-            });
+    //    });
+    //}
 
-            if (animationType === "linear") {
-                tl.to(imgObj, {
-                    x: endX,
-                    y: endY,
-                    duration: inTime,
-                    ease: "power1.in"
-                });
-                tl.to(imgObj, {
-                    duration: stayTime,
-                    ease: "none"
-                });
-                tl.to(imgObj, {
-                    x: exitX,
-                    y: exitY,
-                    duration: outTime,
-                    ease: "power1.out"
-                });
-                tl.set(imgObj, {
-                    x: endX,
-                    y: endY,
-                    duration: 0,
-                    ease: "power1.inOut",
-                    onUpdate: () => drawCanvasForDownload(condition)
-                });
-            }
-            else if (animationType === "bounce") {
-                tl.to(imgObj, {
-                    x: endX,
-                    y: endY,
-                    duration: inTime,
-                    ease: "bounce.out"
-                });
-                tl.to(imgObj, {
-                    duration: stayTime,
-                    ease: "none"
-                });
-                tl.to(imgObj, {
-                    x: exitX,
-                    y: exitY,
-                    duration: outTime,
-                    ease: "bounce.out"
-                });
-                tl.set(imgObj, {
-                    x: endX,
-                    y: endY,
-                    duration: 0,
-                    ease: "bounce.out",
-                    onUpdate: () => drawCanvasForDownload(condition)
-                });
-            }
-            else if (animationType === "zoom") {
-                // Zoom in then out.
-                tl.fromTo(
-                    imgObj,
-                    { scaleX: 0, scaleY: 0, x: startX, y: startY },
-                    {
-                        scaleX: originalScaleX,
-                        scaleY: originalScaleY,
-                        x: endX,
-                        y: endY,
-                        duration: inTime,
-                        ease: "power2.out",
-                        onUpdate: () => drawCanvasForDownload(condition)
-                    }
-                );
-                tl.to(imgObj, {
-                    duration: stayTime,
-                    ease: "none"
-                });
-                tl.to(imgObj, {
-                    scaleX: 0,
-                    scaleY: 0,
-                    x: exitX,
-                    y: exitY,
-                    duration: outTime,
-                    ease: "power2.in",
-                    onUpdate: () => drawCanvasForDownload(condition)
-                });
-                tl.set(imgObj, {
-                    x: endX,
-                    y: endY,
-                    scaleX: originalScaleX,
-                    scaleY: originalScaleY,
-                    duration: 0,
-                    ease: "none",
-                    onUpdate: () => drawCanvasForDownload(condition)
-                });
-            }
-            else if (animationType === "blur") {
-                imgObj.blur = 5;
-                tl.fromTo(
-                    imgObj,
-                    { blur: 5, x: startX, y: startY },
-                    {
-                        blur: 0,
-                        x: endX,
-                        y: endY,
-                        duration: inTime + 2,
-                        ease: "power2.out",
-                        onUpdate: () => {
-                            ctx.filter = `blur(${imgObj.blur}px)`;
-                            drawCanvasForDownload(condition);
-                        },
-                        onComplete: () => {
-                            ctx.filter = "none";
-                            drawCanvasForDownload(condition);
-                        }
-                    }
-                );
-                tl.to(imgObj, {
-                    duration: stayTime,
-                    ease: "none",
-                    onUpdate: () => {
-                        ctx.filter = "none";
-                        drawCanvasForDownload(condition);
-                    }
-                });
-                tl.to(imgObj, {
-                    x: exitX,
-                    y: exitY,
-                    duration: outTime,
-                    ease: "power2.in",
-                    onUpdate: () => {
-                        ctx.filter = "none";
-                        drawCanvasForDownload(condition);
-                    }
-                });
-                tl.set(imgObj, {
-                    x: endX,
-                    y: endY,
-                    duration: 0,
-                    ease: "none",
-                    onUpdate: () => {
-                        ctx.filter = "none";
-                        drawCanvasForDownload(condition);
-                    }
-                });
-            }
-        });
-    }
+
+
+    //if (animationType === "linear" || animationType === "zoom" ||
+    //    animationType === "bounce" || animationType === "blur") {
+    //    // Keep the existing branches for images.
+    //    let exitX, exitY;
+    //    images.forEach((imgObj) => {
+    //        const endX = imgObj.finalX;
+    //        const endY = imgObj.finalY;
+    //        let tl = gsap.timeline({
+    //            repeat: loopCount - 1,
+    //            onUpdate: function () {
+    //                drawCanvasForDownload(condition);
+    //            }
+    //        });
+
+    //        if (animationType === "linear") {
+    //            tl.to(imgObj, {
+    //                x: endX,
+    //                y: endY,
+    //                duration: inTime,
+    //                ease: "power1.in"
+    //            });
+    //            tl.to(imgObj, {
+    //                duration: stayTime,
+    //                ease: "none"
+    //            });
+    //            tl.to(imgObj, {
+    //                x: exitX,
+    //                y: exitY,
+    //                duration: outTime,
+    //                ease: "power1.out"
+    //            });
+    //            tl.set(imgObj, {
+    //                x: endX,
+    //                y: endY,
+    //                duration: 0,
+    //                ease: "power1.inOut",
+    //                onUpdate: () => drawCanvasForDownload(condition)
+    //            });
+    //        }
+    //        else if (animationType === "bounce") {
+    //            tl.to(imgObj, {
+    //                x: endX,
+    //                y: endY,
+    //                duration: inTime,
+    //                ease: "bounce.out"
+    //            });
+    //            tl.to(imgObj, {
+    //                duration: stayTime,
+    //                ease: "none"
+    //            });
+    //            tl.to(imgObj, {
+    //                x: exitX,
+    //                y: exitY,
+    //                duration: outTime,
+    //                ease: "bounce.out"
+    //            });
+    //            tl.set(imgObj, {
+    //                x: endX,
+    //                y: endY,
+    //                duration: 0,
+    //                ease: "bounce.out",
+    //                onUpdate: () => drawCanvasForDownload(condition)
+    //            });
+    //        }
+    //        else if (animationType === "zoom") {
+    //            // Zoom in then out.
+    //            tl.fromTo(
+    //                imgObj,
+    //                { scaleX: 0, scaleY: 0, x: startX, y: startY },
+    //                {
+    //                    scaleX: originalScaleX,
+    //                    scaleY: originalScaleY,
+    //                    x: endX,
+    //                    y: endY,
+    //                    duration: inTime,
+    //                    ease: "power2.out",
+    //                    onUpdate: () => drawCanvasForDownload(condition)
+    //                }
+    //            );
+    //            tl.to(imgObj, {
+    //                duration: stayTime,
+    //                ease: "none"
+    //            });
+    //            tl.to(imgObj, {
+    //                scaleX: 0,
+    //                scaleY: 0,
+    //                x: exitX,
+    //                y: exitY,
+    //                duration: outTime,
+    //                ease: "power2.in",
+    //                onUpdate: () => drawCanvasForDownload(condition)
+    //            });
+    //            tl.set(imgObj, {
+    //                x: endX,
+    //                y: endY,
+    //                scaleX: originalScaleX,
+    //                scaleY: originalScaleY,
+    //                duration: 0,
+    //                ease: "none",
+    //                onUpdate: () => drawCanvasForDownload(condition)
+    //            });
+    //        }
+    //        else if (animationType === "blur") {
+    //            imgObj.blur = 5;
+    //            tl.fromTo(
+    //                imgObj,
+    //                { blur: 5, x: startX, y: startY },
+    //                {
+    //                    blur: 0,
+    //                    x: endX,
+    //                    y: endY,
+    //                    duration: inTime + 2,
+    //                    ease: "power2.out",
+    //                    onUpdate: () => {
+    //                        ctx.filter = `blur(${imgObj.blur}px)`;
+    //                        drawCanvasForDownload(condition);
+    //                    },
+    //                    onComplete: () => {
+    //                        ctx.filter = "none";
+    //                        drawCanvasForDownload(condition);
+    //                    }
+    //                }
+    //            );
+    //            tl.to(imgObj, {
+    //                duration: stayTime,
+    //                ease: "none",
+    //                onUpdate: () => {
+    //                    ctx.filter = "none";
+    //                    drawCanvasForDownload(condition);
+    //                }
+    //            });
+    //            tl.to(imgObj, {
+    //                x: exitX,
+    //                y: exitY,
+    //                duration: outTime,
+    //                ease: "power2.in",
+    //                onUpdate: () => {
+    //                    ctx.filter = "none";
+    //                    drawCanvasForDownload(condition);
+    //                }
+    //            });
+    //            tl.set(imgObj, {
+    //                x: endX,
+    //                y: endY,
+    //                duration: 0,
+    //                ease: "none",
+    //                onUpdate: () => {
+    //                    ctx.filter = "none";
+    //                    drawCanvasForDownload(condition);
+    //                }
+    //            });
+    //        }
+    //    });
+    //}
 }
 function initModeToggle() {
     const buttons = document.querySelectorAll('.toggle-container .toggle-btn');
