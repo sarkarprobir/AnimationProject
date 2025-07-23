@@ -360,9 +360,64 @@ rel="stylesheet">
                     {
                         @foreach (var item in Model)
                         {
+                            int idx = 1;
                             if (item.SlideType == "Horizontal")
                             {
                                 <div class="col-md-6">
+                                    <div id="carousel_@idx"
+                                         class="carousel slide board_verti"
+                                         data-bs-ride="false" @* don’t auto-start *@
+                                         data-bs-interval="2000">
+                                        @* 2s per slide when running *@
+
+                                        <div class="carousel-inner">
+                                            @for (int j = 0; j < (item.DesignBoardDetailsList?.Count ?? 0); j++)
+                                            {
+                                                var detail = item.DesignBoardDetailsList[j];
+                                                <div class="carousel-item @(j == 0 ? "active" : "")">
+                                                    <img src="@Url.Content(detail.AnimationImagePath)"
+                                                         class="d-block w-100"
+                                                         alt="@detail.SlideName" />
+                                                </div>
+                                            }
+                                        </div>
+
+                                        <button class="carousel-control-prev" type="button"
+                                                data-bs-target="#carousel_@idx"
+                                                data-bs-slide="prev">
+                                            <span class="carousel-control-prev-icon"></span>
+                                            <span class="visually-hidden">Previous</span>
+                                        </button>
+                                        <button class="carousel-control-next" type="button"
+                                                data-bs-target="#carousel_@idx"
+                                                data-bs-slide="next">
+                                            <span class="carousel-control-next-icon"></span>
+                                            <span class="visually-hidden">Next</span>
+                                        </button>
+                                    </div>
+
+                                    <div class="d-flex justify-content-center gap-4 mt-1">
+                                        <b title="@item.DesignBoardName">
+                                            @(item.DesignBoardName.Length > 10
+                                                ? item.DesignBoardName.Substring(0, 10) + "…"
+                                                : item.DesignBoardName)
+                                        </b>
+                                    </div>
+                                    <div class="d-flex justify-content-center gap-4 mt-2">
+                                        <a class="board_button"
+                                           onclick="RedirectToHorizontalPage('@item.DesignBoardId')">Edit</a>
+                                        <a class="board_button" href="#">Duplicate</a>
+                                    </div>
+                                    <div class="position-relative board_info_wrapper">
+                                        <div class="board_info_dots d-flex justify-content-center mt-2">
+                                            <div class="board_info_icon d-flex justify-content-center" onclick="toggleBoardInfo(this)">
+                                                <i class="fa-solid fa-ellipsis"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                idx++;
+                              @*   <div class="col-md-6">
                                     <img class="board_hori" src="~/images/banner.png"  alt="Alternate Text" />
                                     <div class="d-flex justify-content-center gap-4 mt-3">
                                         <b>@item.DesignBoardName</b>
@@ -371,12 +426,12 @@ rel="stylesheet">
                                         <a class="board_button" href="#">Edit</a>
                                         <a class="board_button" href="#">Duplicate</a>
                                     </div>
-                                </div>
+                                </div> *@
                             }
 
                         }
                     }
-                    <div class="col-md-6">
+                    @* <div class="col-md-6">
                         <img class="board_hori" src="~/images/banner.png" alt="Alternate Text" />
                         <div class="d-flex justify-content-center gap-4 mt-3">
                             <a class="board_button" href="#">Edit</a>
@@ -389,7 +444,7 @@ rel="stylesheet">
                             <a class="board_button" href="#">Edit</a>
                             <a class="board_button" href="#">Duplicate</a>
                         </div>
-                    </div>
+                    </div> *@
                 </div>
             </div>
             <div class="col-md-6">
@@ -583,7 +638,10 @@ rel="stylesheet">
             // Use encodeURIComponent for URL safety
             window.location = `${baseURL}Canvas/VerticalIndex?id=${encodeURIComponent(id)}`;
         }
-
+          function RedirectToHorizontalPage(id) {
+            // Use encodeURIComponent for URL safety
+            window.location = `${baseURL}Canvas/HorizontalIndex?id=${encodeURIComponent(id)}`;
+        }
         let selectedOption = ""; // Variable to store the selected board type
 
         document.getElementById("horizontal-option").addEventListener("click", function () {
