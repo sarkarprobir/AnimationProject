@@ -101,19 +101,6 @@ function TabShowHide(type) {
 
 }
 
-
-// show the popup when the pattern icon is clicked
-$(document).on('click', '#toggle_img', function (e) {
-    e.preventDefault();
-    CreateHeaderSectionHorizontalhtml();
-    $('#background_popup').show();
-}); 
-
-// hide the popup when the close button is clicked
-$(document).on('click', '#close_button', function (e) {
-    e.preventDefault();
-    $('#background_popup').hide();
-});
 function opengl() {
     $("#opengl_popup").toggle();
     if (document.getElementById("fontstyle_popup").style.display == "block") {
@@ -151,10 +138,13 @@ function opentl() {
     if (document.getElementById("opengl_popup").style.display == "block") {
         $("#opengl_popup").hide();
     }
+    if (document.getElementById("background_popup").style.display == "block") {
+        $("#background_popup").hide();
+    }
     $("#fontstyle_popup").toggle();
+
     $(".right-sec-two").toggle();
     $(".right-sec-one").toggle();
-
 }
 
 // JavaScript for Handling Selection and Redirection 
@@ -355,6 +345,9 @@ function opengl() {
             if(document.getElementById("opengl_popup").style.display == "block"){
                 $("#opengl_popup").hide();
             }
+            if (document.getElementById("background_popup").style.display == "block") {
+                $("#background_popup").hide();
+            }
           $("#fontstyle_popup").toggle();
           $(".right-sec-two").toggle();
           $(".right-sec-one").toggle();
@@ -367,7 +360,10 @@ function opengl() {
              //document.getElementById("modeButton").innerText = "Graphic Mode";
             if(document.getElementById("opengl_popup").style.display == "block"){
                 $("#opengl_popup").hide();
-            }
+              }
+              if (document.getElementById("background_popup").style.display == "block") {
+                  $("#background_popup").hide();
+              }
             $("#fontstyle_popup").toggle();
             $(".right-sec-two").toggle();
             $(".right-sec-one").toggle();
