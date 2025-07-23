@@ -1031,6 +1031,13 @@ async function SaveDesignBoardInPublishTable() {
             success: function (result) {
                 $("#hdnDesignBoardPublishId").val(result.result);
                 $("#hdnPublishBoardUniqueId").val(result.publishBoardUniqueId);
+
+
+                const companyUniqueId = getCompanyIdFromUrl();
+                const projectId = $("#hdnPublishBoardUniqueId").val();
+                window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
+
+                RedirectToVerticalPageWithQueryString();
             },
             error: function (data) {
                 console.log("error");
@@ -1046,7 +1053,7 @@ async function SaveDesignBoardInPublishTable() {
            
 }
 async function GetDesignBoardByIdForDownload(condition) {
-    SaveDesignBoardInPublishTable();
+   
     publishDownloadcondition = condition;
     var id = $('#hdnDesignBoardId').val(); // get GUID value
     if (id !== '') {
@@ -1655,17 +1662,14 @@ function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
                     dataType: "json",
                     data: dataVideoPath,
                     success: function (slideResult) {
-                        // triggerAutorefresh();
-                        //Need to remove as this is temporary
+                        SaveDesignBoardInPublishTable();
                         hideDownloadPanel();
-                      
-                        //const targetUrl = window.location.origin + "/Canvas/VScreen1/1";
-                        //window.open(targetUrl, "_blank");
-                        const companyUniqueId = getCompanyIdFromUrl();
-                        const projectId = $("#hdnPublishBoardUniqueId").val();
-                        window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
+                        
+                        //const companyUniqueId = getCompanyIdFromUrl();
+                        //const projectId = $("#hdnPublishBoardUniqueId").val();
+                        //window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
 
-                        RedirectToVerticalPageWithQueryString();
+                        //RedirectToVerticalPageWithQueryString();
                         //HideLoader();
                     },
                     error: function (data) {
