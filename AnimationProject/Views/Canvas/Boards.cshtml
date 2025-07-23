@@ -364,7 +364,7 @@ rel="stylesheet">
                             if (item.SlideType == "Horizontal")
                             {
                                 <div class="col-md-6">
-                                    <div id="carousel_@idx"
+                                    <div id="carouselH_@idx"
                                          class="carousel slide board_hori"
                                          data-bs-ride="false" @* don’t auto-start *@
                                          data-bs-interval="2000">
@@ -383,13 +383,13 @@ rel="stylesheet">
                                         </div>
 
                                         <button class="carousel-control-prev" type="button"
-                                                data-bs-target="#carousel_@idx"
+                                                data-bs-target="#carouselH_@idx"
                                                 data-bs-slide="prev">
                                             <span class="carousel-control-prev-icon"></span>
                                             <span class="visually-hidden">Previous</span>
                                         </button>
                                         <button class="carousel-control-next" type="button"
-                                                data-bs-target="#carousel_@idx"
+                                                data-bs-target="#carouselH_@idx"
                                                 data-bs-slide="next">
                                             <span class="carousel-control-next-icon"></span>
                                             <span class="visually-hidden">Next</span>
@@ -734,6 +734,19 @@ rel="stylesheet">
         // For each .board_verti carousel, create a Bootstrap Carousel instance,
         // pause it, and wire up hover to cycle/pause THAT carousel only.
         document.querySelectorAll('.board_verti').forEach(function(el) {
+          // init carousel API with the data-bs-interval you set (2000ms)
+          var carousel = bootstrap.Carousel.getOrCreateInstance(el);
+          carousel.pause();
+
+          el.addEventListener('mouseenter', function() {
+            carousel.cycle();
+          });
+          el.addEventListener('mouseleave', function() {
+            carousel.pause();
+          });
+        });
+
+          document.querySelectorAll('.board_hori').forEach(function(el) {
           // init carousel API with the data-bs-interval you set (2000ms)
           var carousel = bootstrap.Carousel.getOrCreateInstance(el);
           carousel.pause();
