@@ -26,7 +26,6 @@ let jsonArray = []; // Global array to store JSON objects
 //const chunksForDownload = [];
 
 
-
 function updateEffectButtons(type) {
     // 1) pick the right hidden‑field based on In vs Out
     const hiddenField = (type === 'In')
@@ -299,7 +298,24 @@ function CreateBackgroundSectionhtml() {
         console.log("catch", e);
     }
 }
+//function CreateLeftSectionhtml() {
+//    try {
+//        $.ajax({
+//            url: baseURL + "Canvas/CreateLeftSectionhtml",
+//            type: "POST",
+//            dataType: "html",
+//            success: function (result) {
+//                $("#divpanelleft").html(result);
 
+//            },
+//            error: function () {
+//            }
+//        })
+
+//    } catch (e) {
+//        console.log("catch", e);
+//    }
+//}
 function opengl() {
     // document.getElementById("modeButton").innerText = "Graphic Mode";
     $("#opengl_popup").toggle();
@@ -401,6 +417,19 @@ function opengl() {
           $('#tranPopup').hide();
         });
 
+// hide the popup when the close button is clicked
+$(document).on('click', '#close_button', function (e) {
+    e.preventDefault();
+    $('#background_popup').hide();
+});
+
+// texture popuo show
+document.querySelectorAll(".texture_palette").forEach(element => {
+    element.addEventListener("click", function () {
+        let box = document.getElementById("texture_box");
+        box.style.display = (box.style.display === "none" || box.style.display === "") ? "block" : "none";
+    });
+});
         
 function handleNavButtonClick(event) {
     document.querySelectorAll('.nav_button').forEach(btn => {
@@ -546,3 +575,20 @@ function initModeToggle() {
 document.addEventListener('DOMContentLoaded', initModeToggle);
 
 
+//copy function
+function copyLink(button) {
+    const linkText = button.closest('.fileLink').querySelector('.aniLink').innerText.trim();
+
+    navigator.clipboard.writeText(linkText).then(() => {
+        // Change icon to check
+        const icon = button.querySelector('i');
+        const originalClass = icon.className;
+
+        icon.className = 'fa-solid fa-check'; // show check icon
+
+        // Revert after 1 second
+        setTimeout(() => {
+            icon.className = originalClass;
+        }, 1000);
+    });
+}
