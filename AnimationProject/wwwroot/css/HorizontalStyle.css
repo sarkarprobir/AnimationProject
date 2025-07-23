@@ -45,11 +45,17 @@
     #contextMenu li {
         padding: 5px 10px;
         cursor: pointer;
+        border-radius: 3px;
     }
 
         #contextMenu li:hover {
             background-color: #eee;
         }
+.context-options {
+    text-align: left;
+    font-size: 14px;
+    font-family: "Nunito", sans-serif;
+}
 
 .dropdown-toggle {
     text-decoration: none;
