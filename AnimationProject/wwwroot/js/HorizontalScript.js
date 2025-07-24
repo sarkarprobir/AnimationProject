@@ -270,24 +270,24 @@ function elementsTogglePopup() {
     popup.style.display = (popup.style.display === 'block') ? 'none' : 'block';
 }
 
-function CreateBackgroundSectionhtml() {
-    try {
-        $.ajax({
-            url: baseURL + "Canvas/CreateBackgroundSectionhtml",
-            type: "POST",
-            dataType: "html",
-            success: function (result) {
-                $("#background_popup").html(result);
-                //  wireUpPopupHandlers();
-            },
-            error: function () {
-            }
-        })
+//function CreateBackgroundSectionhtml() {
+//    try {
+//        $.ajax({
+//            url: baseURL + "Canvas/CreateBackgroundSectionhtml",
+//            type: "POST",
+//            dataType: "html",
+//            success: function (result) {
+//                $("#background_popup").html(result);
+//                //  wireUpPopupHandlers();
+//            },
+//            error: function () {
+//            }
+//        })
 
-    } catch (e) {
-        console.log("catch", e);
-    }
-}
+//    } catch (e) {
+//        console.log("catch", e);
+//    }
+//}
 //function CreateLeftSectionhtml() {
 //    try {
 //        $.ajax({
