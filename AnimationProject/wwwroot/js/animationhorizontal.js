@@ -5101,6 +5101,10 @@ function SaveDesignBoard() {
                                 if (loadedCount === images.length) captureSlide(activeSlide, slideResult); // If all images are already loaded
 
                             }
+                            else {
+                                HideLoader();
+                                MessageShow('RedirectToHorizontalPageWithQueryString()', 'Design Board saved successfully!', 'success');
+                            }
                         },
                         error: function (data) {
                             console.log("error in saving slide " + slide.slideSeq, data);
