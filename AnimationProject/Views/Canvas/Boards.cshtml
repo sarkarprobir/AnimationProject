@@ -137,8 +137,8 @@
 
     }
     .board_hori {
-    width: 263px; 
-    height: auto;
+        width: 263px;
+        aspect-ratio: 16/9;
     }
 
     .board_button {
@@ -377,7 +377,8 @@ rel="stylesheet">
                                                 <div class="carousel-item @(j == 0 ? "active" : "")">
                                                     <img src="@Url.Content(detail.AnimationImagePath)"
                                                          class="d-block w-100"
-                                                         alt="@detail.SlideName" />
+                                                         alt="@detail.SlideName"
+                                                         @* onerror="this.onerror=null; this.src='~/images/placeholder-image-vertical.png';" *@  />
                                                 </div>
                                             }
                                         </div>
@@ -523,7 +524,8 @@ rel="stylesheet">
                                                 <div class="carousel-item @(j == 0 ? "active" : "")">
                                                     <img src="@Url.Content(detail.AnimationImagePath)"
                                                          class="d-block w-100"
-                                                         alt="@detail.SlideName" />
+                                                         alt="@detail.SlideName"
+                                                         @* onerror="this.onerror=null; this.src='~/images/placeholder-image-vertical.png';" *@ />
                                                 </div>
                                             }
                                         </div>

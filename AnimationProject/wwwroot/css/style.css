@@ -185,8 +185,8 @@ ul.right-listone li {
         align-items: center;
     }
 ul.right-listone li a img {
-    width: 20px;
-    height: 20px;
+    width: 17px;
+    height: 17px;
 }
 ul.right-listone li a:hover {
     border: 2px solid #ccc;
