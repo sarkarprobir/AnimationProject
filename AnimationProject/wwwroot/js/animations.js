@@ -1653,49 +1653,7 @@ function animateText(direction, condition, loopCount) {
         // const ratio     = tlText.duration() / slideExec;
         // tlText.timeScale(ratio);
     }
-    // ── Fade (canvas-only) ───────────────────────────
-    //else if (animationType === "fadeCanvas") {
-    //    const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
-    //    // Reset to final and directional offset
-    //    items.forEach(o => { o.x = o.finalX; o.y = o.finalY; });
-    //    // Initialize opacity
-    //    if (tabType === "In") items.forEach(o => o.opacity = 0);
-    //    else items.forEach(o => o.opacity = 1);
-
-    //    const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
-
-    //    // IN fade in
-    //    if (tabType === "In") {
-    //        tl.to(items, {
-    //            opacity: 1,
-    //            duration: inTime,
-    //            ease: "power2.out",
-    //            stagger: 0.1
-    //        }, 0);
-    //    }
-
-    //    // STAY
-    //    const fadeDelay = (tabType === "In") ? inTime : 0;
-    //    if (["Stay", "Out"].includes(tabType)) {
-    //        tl.to({}, { duration: stayTime, ease: "none" }, fadeDelay);
-    //    }
-
-    //    // OUT fade out
-    //    if (tabType === "Out") {
-    //        tl.to(items, {
-    //            opacity: 0,
-    //            duration: outTime,
-    //            ease: "power2.in",
-    //            stagger: 0.1
-    //        }, fadeDelay);
-    //    }
-
-    //    // RESET
-    //    tl.eventCallback("onComplete", () => {
-    //        items.forEach(o => o.opacity = 1);
-    //        drawCanvas(condition);
-    //    });
-    //}
+    
 
     // ── Fade (canvas-only)  not working───────────────────────────
     else if (animationType === "fadeCanvas") {
@@ -1972,7 +1930,7 @@ function animateText(direction, condition, loopCount) {
         const animItems = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
         const staticItems = [...images.filter(i => i.noAnim), ...textObjects.filter(t => t.noAnim)];
 
-        // Grouping (logical only — no sequential staggering)
+        // Grouping
         const groupMap = new Map();
         const units = [];
 
@@ -1988,66 +1946,158 @@ function animateText(direction, condition, loopCount) {
                 units.push([item]);
             }
         });
+        
 
-        // Reset all
-        animItems.forEach(o => {
-            o.x = o.finalX;
-            o.y = o.finalY;
-            o.rotation = 0;
+       
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+
+        const inRotationAmount = direction === "left" ? 360 : direction === "right" ? -360 : 360;
+        const outRotationAmount = direction === "right" ? 360 : -360;
+
+        const tl = gsap.timeline({
+            repeat: loopCount - 1,
+            onRepeat: () => {
+                animItems.forEach(o => {
+                    o.rotation = 0;
+                    if (direction === "left") o.x = -200;
+                    else if (direction === "right") o.x = canvasWidth + 200;
+                    else if (direction === "top") o.y = -200;
+                    else if (direction === "bottom") o.y = canvasHeight + 200;
+                });
+                drawCanvas(condition);
+            },
+            onUpdate: () => drawCanvas(condition)
         });
-        staticItems.forEach(o => {
-            o.x = o.finalX;
-            o.y = o.finalY;
-            o.rotation = 0;
-        });
-
-        // Set static items immediately
-        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
-        staticItems.forEach(o => {
-            tl.set(o, { x: o.finalX, y: o.finalY, rotation: 0 }, 0);
-        });
-
-        const inRotationAmount = (direction === "left") ? 360 : (direction === "right") ? -360 : 360;
-        const outRotationAmount = (direction === "right") ? -360 : (direction === "left") ? 360 : -360;
-
-        // 🔵 IN phase — all animate together
-        if (tabType === "In") {
-            tl.to(animItems, {
-                rotation: inRotationAmount,
-                duration: inTime,
-                ease: "power2.out"
+        // ✅ Pin noAnim items at t=0 — ensure they are visible always
+        images.filter(i => i.noAnim).forEach(imgObj => {
+            tl.set(imgObj, {
+                x: imgObj.finalX,
+                y: imgObj.finalY,
+                rotation: 0,
+                opacity: imgObj.opacity ?? 100
             }, 0);
+        });
+        textObjects.filter(t => t.noAnim).forEach(txtObj => {
+            tl.set(txtObj, {
+                x: txtObj.finalX,
+                y: txtObj.finalY,
+                rotation: 0,
+                opacity: txtObj.opacity ?? 100
+            }, 0);
+        });
+        // 🔥 Force immediate draw, outside GSAP
+        drawCanvas(condition);
+        const tweenIn = 0.15 * inTime;
+        const tweenOut = 0.15 * outTime;
+
+        // 🔵 IN phase — animate grouped units
+        if (tabType === "In") {
+            units.forEach((unit, idx) => {
+                unit.forEach(item => {
+                    if (direction === "left") item.x = -200;
+                    else if (direction === "right") item.x = canvasWidth + 200;
+                    else if (direction === "top") item.y = -200;
+                    else if (direction === "bottom") item.y = canvasHeight + 200;
+                });
+
+                tl.to(unit, {
+                    duration: tweenIn,
+                    ease: "back.inOut(1.7)",
+                    rotation: `+=${inRotationAmount}`,
+                    x: (i, t) => t.finalX,
+                    y: (i, t) => t.finalY,
+                    onUpdate: () => drawCanvas(condition)
+                }, tl.duration() + idx * 0.02);
+            });
         }
 
-        // 🟡 STAY phase (fixed to 1 second)
+        // 🟡 STAY phase
         const delayR = (tabType === "In") ? inTime : 0;
         if (["Stay"].includes(tabType)) {
-            tl.to({}, { duration: .5, ease: "none" }, delayR);  // Stay phase fixed to 1 second
+            tl.to({}, { duration: 0.5, ease: "none" }, delayR);
         }
-
-
-        //// 🔴 OUT phase — all animate together
-        //if (tabType === "Out") {
-        //    tl.to(animItems, {
-        //        rotation: `+=${outRotationAmount}`,
-        //        duration: outTime,
-        //        ease: "power2.out"
-        //    }, delayR + stayTime);
-        //}
+       
+        // 🔴 OUT phase — animate grouped units
         if (tabType === "Out") {
-            tl.to(animItems, {
-                rotation: `+=${outRotationAmount}`,
-                duration: outTime,
-                ease: "power2.out"
-            }, 0);  // zero delay – OUT should fire immediately
+            units.forEach((unit, idx) => {
+                unit.forEach(item => {
+                    // 🟢 Ensure they start from final position
+                    item.x = item.finalX;
+                    item.y = item.finalY;
+
+                    // 🔁 Prepare exitX and exitY if missing
+                    if (item.exitX == null || item.exitY == null) {
+                        if (direction === "left") item.exitX = -200;
+                        else if (direction === "right") item.exitX = canvasWidth + 200;
+                        else item.exitX = item.finalX;
+
+                        if (direction === "top") item.exitY = -200;
+                        else if (direction === "bottom") item.exitY = canvasHeight + 200;
+                        else item.exitY = item.finalY;
+                    }
+                });
+
+                // 🔴 Animate to exit position
+                tl.to(unit, {
+                    duration: tweenOut,
+                    ease: "power1.inOut",
+                    rotation: `+=${outRotationAmount}`,
+                    x: (i, t) => t.exitX,
+                    y: (i, t) => t.exitY,
+                    onUpdate: () => drawCanvas(condition)
+                }, tl.duration() + idx * 0.02);
+            });
+
+            const scaleInText = inTime;
+            const scaleOutText = outTime;
+            const individualIn = 0.15 * scaleInText;
+            const individualOut = 0.15 * scaleOutText;
+            const staggerIn = individualIn;
+            const staggerOut = individualOut;
+
+            const inEndTime = (units.length - 1) * staggerIn + individualIn;
+
+            let totalDuration = inEndTime;
+            if (tabType === "Out") {
+                totalDuration += (units.length - 1) * staggerOut + individualOut;
+            }
+
+            // 🟡 Force TL to run at least totalDuration using dummy tween
+            if (tl.duration() < totalDuration) {
+                tl.to({}, { duration: totalDuration - tl.duration() }, tl.duration());
+            }
+
+            // ✅ Now apply snap-back/reset after everything
+            tl.set([...images, ...textObjects], {
+                x: (i, t) => t.finalX,
+                y: (i, t) => t.finalY
+            }, totalDuration);
+
+            tl.eventCallback("onComplete", () => {
+                images.forEach(img => {
+                    img.x = img.finalX;
+                    img.y = img.finalY;
+                    img.opacity = img.opacity ?? 100;
+                });
+                textObjects.forEach(txt => {
+                    txt.x = txt.finalX;
+                    txt.y = txt.finalY;
+                });
+                drawCanvas(condition);
+            });
         }
 
-        // 🔄 Reset after loop
+
+
+        // 🔄 Reset
         tl.eventCallback("onComplete", () => {
             [...animItems, ...staticItems].forEach(o => o.rotation = 0);
             drawCanvas(condition);
         });
     }
+
+    
 
     
 
@@ -2105,7 +2155,107 @@ function animateText(direction, condition, loopCount) {
     }
 
         // ── Popcorn (canvas-only) In working Out not working and only Image working not tex ────────────────────────
-    else if (animationType === "popcorn") {
+        else if (animationType === "popcorn") {
+    const animItems = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+    const staticItems = [...images.filter(i => i.noAnim), ...textObjects.filter(t => t.noAnim)];
+
+    // Group animatable items by groupId
+    const groupMap = new Map();
+    const units = [];
+    animItems.forEach(item => {
+        const gid = item.groupId;
+        if (gid != null) {
+            if (!groupMap.has(gid)) {
+                groupMap.set(gid, []);
+                units.push(groupMap.get(gid));
+            }
+            groupMap.get(gid).push(item);
+        } else {
+            units.push([item]);
+        }
+    });
+
+    // Set initial positions and scales
+    animItems.forEach(o => {
+        o.x = o.finalX;
+        o.y = o.finalY;
+        o.scaleX = 0;
+        o.scaleY = 0;
+    });
+    staticItems.forEach(o => {
+        o.x = o.finalX;
+        o.y = o.finalY;
+        o.scaleX = 1;
+        o.scaleY = 1;
+    });
+
+    const tl = gsap.timeline({
+        repeat: loopCount - 1,
+        onUpdate: () => drawCanvas(condition)
+    });
+
+    // 🧷 Pin static items immediately
+    staticItems.forEach(o => {
+        tl.set(o, { x: o.finalX, y: o.finalY, scaleX: 1, scaleY: 1 }, 0);
+    });
+
+    const totalUnits = units.length;
+    const staggerIn = (inTime / 2) / totalUnits;
+    const staggerOut = (outTime / 2) / totalUnits;
+
+        if (tabType === "In" || tabType === "Out") {
+        units.forEach((unit, i) => {
+            const start = i * staggerIn;
+            tl.set(unit, { scaleX: 0, scaleY: 0 }, 0);
+
+            tl.to(unit, {
+                scaleX: 1.3,
+                scaleY: 1.3,
+                duration: 0.2,
+                ease: "power2.out"
+            }, start);
+
+            tl.to(unit, {
+                scaleX: 1.0,
+                scaleY: 1.0,
+                duration: 0.3,
+                ease: "bounce.out"
+            }, start + 0.2);
+        });
+    }
+
+    const delayP = (tabType === "In") ? inTime : 0;
+
+    if (["Stay", "Out"].includes(tabType)) {
+        tl.to({}, { duration: stayTime, ease: "none" }, delayP);
+    }
+
+    //if (tabType === "Out") {
+    //    units.slice().reverse().forEach((unit, i) => {
+    //        const start = delayP + i * staggerOut;
+
+    //        tl.to(unit, {
+    //            scaleX: 0,
+    //            scaleY: 0,
+    //            duration: 0.3,
+    //            ease: "back.in"
+    //        }, start);
+    //    });
+    //}
+
+    //// 🔄 Reset everything at end of timeline
+    //tl.eventCallback("onComplete", () => {
+    //    [...animItems, ...staticItems].forEach(o => {
+    //        o.x = o.finalX;
+    //        o.y = o.finalY;
+    //        o.scaleX = 1;
+    //        o.scaleY = 1;
+    //    });
+    //    drawCanvas(condition);
+    //});
+}
+
+    else if (animationType === "zoom") {
     const animItems = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
     const staticItems = [...images.filter(i => i.noAnim), ...textObjects.filter(t => t.noAnim)];
 
@@ -2191,17 +2341,6 @@ function animateText(direction, condition, loopCount) {
             }, 0);
             
         }
-
-
-
-    // Reset at end
-    //tl.eventCallback("onComplete", () => {
-    //    [...animItems, ...staticItems].forEach(o => {
-    //        o.scaleX = 1;
-    //        o.scaleY = 1;
-    //    });
-    //    drawCanvas(condition);
-    //});
 }
 
     // ── Glitch (canvas-only) working ─────────────────────────
@@ -2284,19 +2423,19 @@ function textAnimationClick(clickedElement, type, from) {
         $('.effectIn_btn').removeClass('active_effect');
         clickedElement.classList.add("active_effect");
     }
-    if (type === 'roll') {
-        document.getElementById('abottom')?.classList.add('disabled-ani-button');
-        document.getElementById('atop')?.classList.add('disabled-ani-button');
-        document.getElementById('obottom')?.classList.add('disabled-ani-button');
-        document.getElementById('otop')?.classList.add('disabled-ani-button');
+    //if (type === 'roll') {
+    //    document.getElementById('abottom')?.classList.add('disabled-ani-button');
+    //    document.getElementById('atop')?.classList.add('disabled-ani-button');
+    //    document.getElementById('obottom')?.classList.add('disabled-ani-button');
+    //    document.getElementById('otop')?.classList.add('disabled-ani-button');
         
         
-    } else {
-        document.getElementById('abottom')?.classList.remove('disabled-ani-button');
-        document.getElementById('atop')?.classList.remove('disabled-ani-button');
-        document.getElementById('obottom')?.classList.remove('disabled-ani-button');
-        document.getElementById('otop')?.classList.remove('disabled-ani-button');
-    }
+    //} else {
+    //    document.getElementById('abottom')?.classList.remove('disabled-ani-button');
+    //    document.getElementById('atop')?.classList.remove('disabled-ani-button');
+    //    document.getElementById('obottom')?.classList.remove('disabled-ani-button');
+    //    document.getElementById('otop')?.classList.remove('disabled-ani-button');
+    //}
 
     // Get the container using its ID.
     //var ulEffects = document.getElementById("ulEffects");
@@ -5538,19 +5677,19 @@ function updateEffectButtons(type) {
         else if (effectType === 'popcorn') btnSelector = '#apopcornOut';
         else if (effectType === 'mask') btnSelector = '#amaskOut';
     }
-    if (effectType === 'roll') {
-        document.getElementById('abottom')?.classList.add('disabled-ani-button');
-        document.getElementById('atop')?.classList.add('disabled-ani-button');
-        document.getElementById('obottom')?.classList.add('disabled-ani-button');
-        document.getElementById('otop')?.classList.add('disabled-ani-button');
+    //if (effectType === 'roll') {
+    //    document.getElementById('abottom')?.classList.add('disabled-ani-button');
+    //    document.getElementById('atop')?.classList.add('disabled-ani-button');
+    //    document.getElementById('obottom')?.classList.add('disabled-ani-button');
+    //    document.getElementById('otop')?.classList.add('disabled-ani-button');
 
 
-    } else {
-        document.getElementById('abottom')?.classList.remove('disabled-ani-button');
-        document.getElementById('atop')?.classList.remove('disabled-ani-button');
-        document.getElementById('obottom')?.classList.remove('disabled-ani-button');
-        document.getElementById('otop')?.classList.remove('disabled-ani-button');
-    }
+    //} else {
+    //    document.getElementById('abottom')?.classList.remove('disabled-ani-button');
+    //    document.getElementById('atop')?.classList.remove('disabled-ani-button');
+    //    document.getElementById('obottom')?.classList.remove('disabled-ani-button');
+    //    document.getElementById('otop')?.classList.remove('disabled-ani-button');
+    //}
     // 4) activate it (if any)
     if (btnSelector) {
         $(btnSelector).addClass('active_effect');
