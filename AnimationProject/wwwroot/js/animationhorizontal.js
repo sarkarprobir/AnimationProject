@@ -5043,9 +5043,9 @@ function SaveDesignBoard() {
                         document.getElementById('hdnTransition1'),
                         document.getElementById('hdnTransition2'),
                     ];
-
+                   
                     const stripescolor = els
-                        .map(el => el.value)
+                        .map(el => el.value||"")
                         .join('~');
 
 
@@ -5100,6 +5100,10 @@ function SaveDesignBoard() {
 
                                 if (loadedCount === images.length) captureSlide(activeSlide, slideResult); // If all images are already loaded
 
+                            }
+                            else {
+                                HideLoader();
+                                MessageShow('RedirectToHorizontalPageWithQueryString()', 'Design Board saved successfully!', 'success');
                             }
                         },
                         error: function (data) {
@@ -5459,8 +5463,13 @@ function GetDesignBoardById(id) {
                         }
 
 
-                        const [beforeTilde, afterTilde] = result.designBoardDetailsList[0].transitionColor.split('~');
-
+                        let [beforeTilde, afterTilde] = result.designBoardDetailsList[0].transitionColor.split('~');
+                        if (beforeTilde == "") {
+                            beforeTilde = "#d6d61e";
+                        }
+                        if (afterTilde == "") {
+                            afterTilde = "#1ed633";
+                        }
 
                         $('#hdnTransition1').val(beforeTilde);
                         $('#hdnTransition2').val(afterTilde);
