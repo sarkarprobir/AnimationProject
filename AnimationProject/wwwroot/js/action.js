@@ -4110,6 +4110,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
     const outTime = parseFloat(selectedOutSpeed) || 4;
     const stayTime = parseFloat(selectedStaySpeed) || 3;
     const Outdirection = state.outDirection || 'right'
+    const OutanimationType = state.outEffect || 'delaylinear'
     const offscreenMargin = 80;
     const margin = 40;
     // ----- TEXT ANIMATION SECTION -----
@@ -4154,77 +4155,21 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 obj.exitY = -(obj.boundingHeight + 25);
                 break;
             case "left":
-                obj.exitX = canvasForDownload.width + margin;;
+                obj.exitX = canvasForDownload.width + margin;
                 obj.exitY = obj.finalY;
                 break;
+
             case "right":
-                obj.exitX = canvasForDownload.width + 5;
+                obj.exitX = -obj.boundingWidth - margin;
                 obj.exitY = obj.finalY;
                 break;
+            
             default:
                 // fallback: slide out to right
                 obj.exitX = canvasForDownload.width + 5;
                 obj.exitY = obj.finalY;
         }
     });
-
-
-
-
-    //textObjects.forEach((obj) => {
-    //    obj.finalX = obj.x;
-    //    obj.finalY = obj.y;
-
-    //    // 1) ENTRY (based on `direction`)
-    //    switch (direction) {
-    //        case "top":
-    //            obj.x = obj.finalX;
-    //            obj.y = -(obj.boundingHeight + 5);
-    //            break;
-    //        case "bottom":
-    //            obj.x = obj.finalX;
-    //            obj.y = canvasForDownload.height + 5;
-    //            break;
-    //        case "left":
-    //            obj.x = -(obj.boundingWidth + 5);
-    //            obj.y = obj.finalY;
-    //            break;
-    //        case "right":
-    //            obj.x = canvasForDownload.width + 5;
-    //            obj.y = obj.finalY;
-    //            break;
-    //        default:
-    //            // fallback: slide in from right
-    //            obj.x = canvasForDownload.width + 5;
-    //            obj.y = obj.finalY;
-    //    }
-
-    //    // 2) EXIT (based on `Outdirection`)
-    //    switch (Outdirection) {
-    //        case "top":
-    //            obj.exitX = obj.finalX;
-    //            obj.exitY = -(obj.boundingHeight + 25);
-    //            break;
-    //        case "bottom":
-    //            obj.exitX = obj.finalX;
-    //            obj.exitY = canvasForDownload.height + 5;
-    //            break;
-    //        case "left":
-    //            obj.exitX = -(obj.boundingWidth + 5);
-    //            obj.exitY = obj.finalY;
-    //            break;
-    //        case "right":
-    //            obj.exitX = canvasForDownload.width + 5;
-    //            obj.exitY = obj.finalY;
-    //            break;
-    //        default:
-    //            // fallback: slide out to right
-    //            obj.exitX = canvasForDownload.width + 5;
-    //            obj.exitY = obj.finalY;
-    //    }
-    //});
-
-    
 
     return new Promise(resolve => {
         // copy your existing animateTextForDownload code,
@@ -4256,7 +4201,9 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 imgObj.y = canvasForDownload.height + 5;
                 break;
             case "left":
-                imgObj.x = -(dispWidth + 5);
+                //imgObj.x = -(dispWidth + 5);
+                //imgObj.y = imgObj.finalY;
+                imgObj.x = -canvasForDownload.width / 2;
                 imgObj.y = imgObj.finalY;
                 break;
             case "right":
@@ -4281,11 +4228,12 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 imgObj.exitY = -(dispHeight + 55);
                 break;
             case "left":
-                imgObj.exitX = -(dispWidth + 55);
+                imgObj.exitX = canvasForDownload.width ;
                 imgObj.exitY = imgObj.finalY;
+             
                 break;
             case "right":
-                imgObj.exitX = canvasForDownload.width + 5;
+                imgObj.exitX = -(dispWidth + 55);
                 imgObj.exitY = imgObj.finalY;
                 break;
             default:
@@ -4319,8 +4267,8 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             });
 
             // 3) Timings
-            const tweenIn = 0.15 * inTime;
-            const tweenOut = 0.15 * outTime;
+            const tweenIn = 0.10 * inTime;
+            const tweenOut = 0.10 * outTime;
 
             // 4) Build timeline
             const tlText = gsap.timeline({
@@ -4363,15 +4311,131 @@ async function animateTextForDownload(animationType, direction, condition, loopC
 
             // 2) OUT tweens
             const outStart = totalIn + stayTime;
-            units.forEach((unit, idx) => {
-                tlText.to(unit, {
+            if (OutanimationType === "delaylinear") {
+                units.forEach((unit, idx) => {
+                    tlText.to(unit, {
+                        x: (i, t) => t.exitX,
+                        y: (i, t) => t.exitY,
+                        duration: tweenOut,
+                        ease: "power1.out",
+                        onUpdate: () => drawCanvasForDownload(condition)
+                    }, outStart + idx * tweenOut);
+                });
+            }
+            else if (OutanimationType === "delaylinear2") {
+                
+                // 3) Timings
+               // const tweenIn = 0.15 * inTime;
+                const tweenOut = 0.15 * outTime;
+               // const overlapIn = tweenIn / 6;   // each next In starts 50% in
+                const overlapOut = tweenOut / 7;   // each next Out starts 50% in
+
+               
+                //// compute when the last IN actually ends:
+                //// starts at (units.length-1)*overlapIn, runs tweenIn
+                const inEndTime = (units.length - 1) * overlapOut + tweenOut;
+
+                
+                // ── OUT ──
+                tlText.to(units, {
                     x: (i, t) => t.exitX,
                     y: (i, t) => t.exitY,
                     duration: tweenOut,
                     ease: "power1.out",
+                    stagger: overlapOut,
                     onUpdate: () => drawCanvasForDownload(condition)
-                }, outStart + idx * tweenOut);
-            });
+                }, inEndTime + stayTime);
+
+                
+
+            }
+            else if (OutanimationType === "roll") {
+
+                const inRotationAmount = direction === "left" ? 360 : direction === "right" ? -360 : 360;
+                const outRotationAmount = direction === "right" ? 360 : -360;
+
+
+                const tweenIn = 0.15 * inTime;
+                const tweenOut = 0.15 * outTime;
+
+                // OUT: Rotate and move out
+
+                units.forEach((unit, idx) => {
+                    tlText.to(unit, {
+                        x: (i, t) => t.exitX,
+                        y: (i, t) => t.exitY,
+                        rotation: `+=${outRotationAmount}`,
+                        duration: tweenOut,
+                        ease: "power1.out",
+                        onUpdate: () => drawCanvasForDownload(condition)
+                    }, outStart + idx * tweenOut);
+                });
+
+            }
+            else if (OutanimationType === "popcorn") {
+                const staggerTime = (outTime / 2) / units.length;
+
+                // Ensure all items are at full size before OUT begins
+                units.flat().forEach(item => {
+                    item.scaleX = 1;
+                    item.scaleY = 1;
+                });
+
+                // 🔴 OUT: Pop-out in reverse order AFTER STAY (use outStart)
+                units.slice().reverse().forEach((unit, idx) => {
+                    const delay = outStart + idx * staggerTime;
+
+                    tlText.to(unit, {
+                        scaleX: 1.3,
+                        scaleY: 1.3,
+                        duration: 0.2,
+                        ease: "power2.out",
+                        onUpdate: () => drawCanvasForDownload(condition)
+                    }, delay);
+
+                    tlText.to(unit, {
+                        scaleX: 0,
+                        scaleY: 0,
+                        duration: 0.3,
+                        ease: "back.in",
+                        onUpdate: () => drawCanvasForDownload(condition)
+                    }, delay + 0.2);
+                });
+            }
+            else if (OutanimationType === "mask") {
+                // 1) Make sure all items are fully visible before OUT
+                allItems.forEach(o => {
+                    o.clip = 0; // fully visible
+                    o.clipDirection = direction; // restore to IN direction (optional)
+                });
+
+                // 2) At OUT phase, flip clipDirection to OUT direction
+                tlText.add(() => {
+                    allItems.forEach(o => {
+                        o.clipDirection = invertDirection(Outdirection);
+                    });
+                }, outStart); // ensure this is AFTER stay
+
+                // 3) Animate clip: visible → hidden
+                tlText.to(allItems, {
+                    clip: 1,
+                    duration: outTime,
+                    ease: "power2.out",
+                    onUpdate: () => drawCanvasForDownload(condition)
+                }, outStart);
+
+                // 4) Final reset (optional — useful for loop)
+                tlText.add(() => {
+                    allItems.forEach(o => {
+                        o.clip = 1;
+                        o.clipDirection = Outdirection;
+                    });
+                    drawCanvasForDownload(condition);
+                }, outStart + outTime);
+            }
+
+
+
 
             // ──────────────────────────────────────────────────────────────────
             // 3) Pad or compress to exactly slideExecutionTime
@@ -4479,56 +4543,160 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             //    drawCanvasForDownload(condition);
             //});
         }
-        else if (animationType === "roll") {
+        else if(animationType === "roll") {
             const allItems = [
                 ...images.filter(i => !i.noAnim),
                 ...textObjects.filter(t => !t.noAnim)
             ];
 
-            // Grouping (if needed later)
-            allItems.forEach(o => {
-                o.x = o.finalX;
-                o.y = o.finalY;
-                o.rotation = 0;
-            });
+            // Dimensions of canvasForDownload
+            const canvasWidth = canvasForDownload.width;
+            const canvasHeight = canvasForDownload.height;
 
-            const inRotationAmount = (direction === "left") ? 360 : (direction === "right") ? -360 : 360;
-            const outRotationAmount = (direction === "right") ? 360 : -360;
+            // Rotation values
+            const inRotationAmount = direction === "left" ? 360 : direction === "right" ? -360 : 360;
+            const outRotationAmount = direction === "right" ? 360 : -360;
 
+            // GSAP timeline setup
             const tl = gsap.timeline({
                 repeat: loopCount - 1,
                 onRepeat: () => {
-                    allItems.forEach(o => o.rotation = 0);
+                    allItems.forEach(o => {
+                        o.rotation = 0;
+                        // Reset to outside position for IN phase
+                        if (direction === "left") o.x = -200;
+                        else if (direction === "right") o.x = canvasWidth + 200;
+                        else if (direction === "top") o.y = -200;
+                        else if (direction === "bottom") o.y = canvasHeight + 200;
+                    });
                     drawCanvasForDownload(condition);
                 },
                 onUpdate: () => drawCanvasForDownload(condition)
             });
 
-            // IN: Rotate all items together
-            tl.to(allItems, {
-                rotation: inRotationAmount,
-                duration: inTime,
-                ease: "power2.out"
+            const tweenIn = 0.15 * inTime;
+            const tweenOut = 0.15 * outTime;
+
+            // --- IN: Animate from outside based on direction ---
+            allItems.forEach((item, idx) => {
+                // Start position OUTSIDE canvas based on direction
+                if (direction === "left") item.x = -200;
+                else if (direction === "right") item.x = canvasWidth + 200;
+                else if (direction === "top") item.y = -200;
+                else if (direction === "bottom") item.y = canvasHeight + 200;
+
+                const props = {
+                    duration: tweenIn,
+                    ease: "back.inOut(1.7)",
+                    rotation: `+=${inRotationAmount}`,
+                    x: () => item.finalX,
+                    y: () => item.finalY,
+                    onUpdate: () => drawCanvasForDownload(condition)
+                };
+                tl.to(item, props, tl.duration() + idx * 0.02);
             });
 
-            // STAY: Hold
-            tl.to({}, { duration: stayTime });
+            // --- STAY: Pause ---
+            tl.to({}, { duration: stayTime }, tl.duration());
 
-            // OUT: Rotate all items together (new rotation amount)
-            tl.to(allItems, {
-                rotation: `+=${outRotationAmount}`,
-                duration: outTime,
-                ease: "power2.out"
-            });
-
-            // Reset after full animation
-            tl.eventCallback("onComplete", () => {
-                allItems.forEach(o => o.rotation = 0);
-                drawCanvasForDownload(condition);
+            // --- OUT: Exit with roll (already correct) ---
+            allItems.forEach((item, idx) => {
+                const props = {
+                    duration: tweenOut,
+                    ease: "power1.inOut",
+                    rotation: `+=${outRotationAmount}`,
+                    x: () => item.exitX,
+                    y: () => item.exitY,
+                    onUpdate: () => drawCanvasForDownload(condition)
+                };
+                tl.to(item, props, tl.duration() + idx * 0.02);
             });
         }
-        // Popcorn Canvas Animation
         else if (animationType === "popcorn") {
+            const animItems = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+            const staticItems = [...images.filter(i => i.noAnim), ...textObjects.filter(t => t.noAnim)];
+
+            animItems.forEach(o => {
+                o.x = o.finalX;
+                o.y = o.finalY;
+                o.scaleX = 0;
+                o.scaleY = 0;
+            });
+            staticItems.forEach(o => {
+                o.x = o.finalX;
+                o.y = o.finalY;
+                o.scaleX = 1;
+                o.scaleY = 1;
+            });
+
+            const groupMap = new Map();
+            const units = [];
+            animItems.forEach(item => {
+                const gid = item.groupId;
+                if (gid != null) {
+                    if (!groupMap.has(gid)) {
+                        groupMap.set(gid, []);
+                        units.push(groupMap.get(gid));
+                    }
+                    groupMap.get(gid).push(item);
+                } else {
+                    units.push([item]);
+                }
+            });
+
+            const tl = gsap.timeline({
+                repeat: loopCount - 1,
+                onUpdate: () => drawCanvasForDownload(condition)
+            });
+
+            staticItems.forEach(o => {
+                tl.set(o, { scaleX: 1, scaleY: 1 }, 0);
+            });
+
+            const staggerTime = (inTime / 2) / units.length;
+
+            // 🍿 IN: Pop each unit with pulse
+            units.forEach((unit, idx) => {
+                const start = idx * staggerTime;
+
+                tl.to(unit, {
+                    scaleX: 1.3,
+                    scaleY: 1.3,
+                    duration: 0.2,
+                    ease: "power2.out",
+                    onUpdate: () => drawCanvasForDownload(condition)
+                }, start);
+
+                tl.to(unit, {
+                    scaleX: 1.0,
+                    scaleY: 1.0,
+                    duration: 0.3,
+                    ease: "bounce.out",
+                    onUpdate: () => drawCanvasForDownload(condition)
+                }, start + 0.2);
+            });
+
+            // ⏸ STAY
+            tl.to({}, { duration: stayTime });
+
+            // 🔴 OUT: Pop-out in reverse order
+            const outStagger = (outTime / 2) / units.length;
+            units.slice().reverse().forEach((unit, idx) => {
+                tl.to(unit, {
+                    scaleX: 0,
+                    scaleY: 0,
+                    duration: 0.3,
+                    ease: "back.in",
+                    onUpdate: () => drawCanvasForDownload(condition)
+                }, idx * outStagger + tl.duration());
+            });
+
+        }
+
+
+
+        // zoom Canvas Animation
+        else if (animationType === "zoom") {
             const animItems = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
             const staticItems = [...images.filter(i => i.noAnim), ...textObjects.filter(t => t.noAnim)];
 
@@ -4679,280 +4847,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
         });
     
 
-     if (animationType === "linear" || animationType === "zoom" ||
-        animationType === "bounce" || animationType === "blur") {
-        // Keep your existing implementation for these cases.
-        textObjects.forEach((obj) => {
-            const endX = obj.finalX;
-            const endY = obj.finalY;
-            let exitX, exitY;
-            switch (direction) {
-                case "top":
-                    exitX = endX;
-                    exitY = -(obj.boundingHeight + 5);
-                    break;
-                case "bottom":
-                    exitX = endX;
-                    exitY = canvas.height + 5;
-                    break;
-                case "left":
-                    exitX = -(obj.boundingWidth + 5);
-                    exitY = endY;
-                    break;
-                case "right":
-                    exitX = canvas.width + 5;
-                    exitY = endY;
-                    break;
-                default:
-                    exitX = window.innerWidth;
-                    exitY = endY;
-            }
-            if (animationType === "linear" || animationType === "zoom") {
-                let tl = gsap.timeline({
-                    repeat: loopCount - 1,
-                    onUpdate: function () {
-                        drawCanvasForDownload(condition);
-                    }
-                });
-
-                tl.to(obj, {
-                    x: endX,
-                    y: endY,
-                    duration: inTime,
-                    ease: "power1.in"
-                });
-                tl.to(obj, {
-                    duration: stayTime,
-                    ease: "none"
-                });
-                tl.to(obj, {
-                    x: exitX,
-                    y: exitY,
-                    duration: outTime,
-                    ease: "power1.out"
-                });
-                tl.set(obj, {
-                    x: endX,
-                    y: endY,
-                    duration: 0,
-                    ease: "power1.inOut",
-                    onUpdate: () => drawCanvasForDownload(condition)
-                });
-            }
-            else if (animationType === "bounce" || animationType === "blur") {
-
-                ////This section is for in out and stay
-                let tl = gsap.timeline({
-                    repeat: loopCount - 1,
-                    onUpdate: function () {
-                        drawCanvasForDownload(condition);
-                    }
-                });
-
-                // "In" phase: Animate the object onto the canvas.
-                tl.to(obj, {
-                    x: endX,
-                    y: endY,
-                    duration: inTime,
-                    ease: "bounce.out"
-                });
-
-                // "Stay" phase: Hold the object in place for the stay duration.
-                // This tween doesn't change any properties; it just acts as a pause.
-                tl.to(obj, {
-                    duration: stayTime,
-                    ease: "none"
-                });
-
-                // "Out" phase: Animate the object off the canvas.
-                tl.to(obj, {
-                    x: exitX,
-                    y: exitY,
-                    duration: outTime,
-                    ease: "bounce.out"
-                });
-                // Final phase: Reset the object to the final position with text.
-                // This sets the object’s position to (endX, endY) after the out tween completes.
-                tl.set(obj, {
-                    x: endX,
-                    y: endY,
-                    duration: 0,
-                    ease: "bounce.out",
-                    onUpdate: () => drawCanvasForDownload(condition),
-
-
-                });
-
-
-                ////This is default effect of bounce
-                //gsap.to(obj, {
-                //    x: endX,
-                //    y: endY,
-                //    duration: parseFloat(selectedInSpeed) || 2,
-                //    ease: "bounce.out",
-                //    onUpdate: () => drawCanvas(condition),
-                //});
-            }
-
-        });
-    }
-  
-
-
-    if (animationType === "linear" || animationType === "zoom" ||
-        animationType === "bounce" || animationType === "blur") {
-        // Keep the existing branches for images.
-        let exitX, exitY;
-        images.forEach((imgObj) => {
-            const endX = imgObj.finalX;
-            const endY = imgObj.finalY;
-            let tl = gsap.timeline({
-                repeat: loopCount - 1,
-                onUpdate: function () {
-                    drawCanvasForDownload(condition);
-                }
-            });
-
-            if (animationType === "linear") {
-                tl.to(imgObj, {
-                    x: endX,
-                    y: endY,
-                    duration: inTime,
-                    ease: "power1.in"
-                });
-                tl.to(imgObj, {
-                    duration: stayTime,
-                    ease: "none"
-                });
-                tl.to(imgObj, {
-                    x: exitX,
-                    y: exitY,
-                    duration: outTime,
-                    ease: "power1.out"
-                });
-                tl.set(imgObj, {
-                    x: endX,
-                    y: endY,
-                    duration: 0,
-                    ease: "power1.inOut",
-                    onUpdate: () => drawCanvasForDownload(condition)
-                });
-            }
-            else if (animationType === "bounce") {
-                tl.to(imgObj, {
-                    x: endX,
-                    y: endY,
-                    duration: inTime,
-                    ease: "bounce.out"
-                });
-                tl.to(imgObj, {
-                    duration: stayTime,
-                    ease: "none"
-                });
-                tl.to(imgObj, {
-                    x: exitX,
-                    y: exitY,
-                    duration: outTime,
-                    ease: "bounce.out"
-                });
-                tl.set(imgObj, {
-                    x: endX,
-                    y: endY,
-                    duration: 0,
-                    ease: "bounce.out",
-                    onUpdate: () => drawCanvasForDownload(condition)
-                });
-            }
-            else if (animationType === "zoom") {
-                // Zoom in then out.
-                tl.fromTo(
-                    imgObj,
-                    { scaleX: 0, scaleY: 0, x: startX, y: startY },
-                    {
-                        scaleX: originalScaleX,
-                        scaleY: originalScaleY,
-                        x: endX,
-                        y: endY,
-                        duration: inTime,
-                        ease: "power2.out",
-                        onUpdate: () => drawCanvasForDownload(condition)
-                    }
-                );
-                tl.to(imgObj, {
-                    duration: stayTime,
-                    ease: "none"
-                });
-                tl.to(imgObj, {
-                    scaleX: 0,
-                    scaleY: 0,
-                    x: exitX,
-                    y: exitY,
-                    duration: outTime,
-                    ease: "power2.in",
-                    onUpdate: () => drawCanvasForDownload(condition)
-                });
-                tl.set(imgObj, {
-                    x: endX,
-                    y: endY,
-                    scaleX: originalScaleX,
-                    scaleY: originalScaleY,
-                    duration: 0,
-                    ease: "none",
-                    onUpdate: () => drawCanvasForDownload(condition)
-                });
-            }
-            else if (animationType === "blur") {
-                imgObj.blur = 5;
-                tl.fromTo(
-                    imgObj,
-                    { blur: 5, x: startX, y: startY },
-                    {
-                        blur: 0,
-                        x: endX,
-                        y: endY,
-                        duration: inTime + 2,
-                        ease: "power2.out",
-                        onUpdate: () => {
-                            ctx.filter = `blur(${imgObj.blur}px)`;
-                            drawCanvasForDownload(condition);
-                        },
-                        onComplete: () => {
-                            ctx.filter = "none";
-                            drawCanvasForDownload(condition);
-                        }
-                    }
-                );
-                tl.to(imgObj, {
-                    duration: stayTime,
-                    ease: "none",
-                    onUpdate: () => {
-                        ctx.filter = "none";
-                        drawCanvasForDownload(condition);
-                    }
-                });
-                tl.to(imgObj, {
-                    x: exitX,
-                    y: exitY,
-                    duration: outTime,
-                    ease: "power2.in",
-                    onUpdate: () => {
-                        ctx.filter = "none";
-                        drawCanvasForDownload(condition);
-                    }
-                });
-                tl.set(imgObj, {
-                    x: endX,
-                    y: endY,
-                    duration: 0,
-                    ease: "none",
-                    onUpdate: () => {
-                        ctx.filter = "none";
-                        drawCanvasForDownload(condition);
-                    }
-                });
-            }
-        });
-    }
+     
 }
 
 
