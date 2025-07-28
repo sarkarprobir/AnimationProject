@@ -4433,10 +4433,33 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                     drawCanvasForDownload(condition);
                 }, outStart + outTime);
             }
+            else if (OutanimationType === "zoom") {
+                // ensure everything is at full size
+                units.flat().forEach(item => {
+                    item.scaleX = 1;
+                    item.scaleY = 1;
+                });
 
+                // OUT: shrink each unit from full → zero, staggered
+                units.forEach((unit, idx) => {
+                    tlText.to(unit, {
+                        scaleX: 0,
+                        scaleY: 0,
+                        duration: tweenOut,
+                        ease: "power2.in",
+                        onUpdate: () => drawCanvasForDownload(condition)
+                    }, outStart + idx * tweenOut);
+                });
 
-
-
+                // optional: reset for loop consistency
+                tlText.add(() => {
+                    units.flat().forEach(item => {
+                        item.scaleX = 0;
+                        item.scaleY = 0;
+                    });
+                    drawCanvasForDownload(condition);
+                }, outStart + units.length * tweenOut);
+            }
             // ──────────────────────────────────────────────────────────────────
             // 3) Pad or compress to exactly slideExecutionTime
             const slideExecutionTime = inTime + stayTime + outTime;  // e.g. 11
@@ -4739,8 +4762,8 @@ async function animateTextForDownload(animationType, direction, condition, loopC
 
             // IN phase: small to large (stay large)
             tl.to(animItems, {
-                scaleX: 1.0,
-                scaleY: 1.0,
+                scaleX: 1,
+                scaleY: 1,
                 duration: inTime/2,
                 ease: "power2.out"
             }, 0);

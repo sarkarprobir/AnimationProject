@@ -2308,8 +2308,8 @@ function animateText(direction, condition, loopCount) {
 
             // Animate to large size and stop there
             tl.to(units.flat(), {
-                scaleX: 0.8,
-                scaleY: 0.8,
+                scaleX: 1,
+                scaleY: 1,
                 duration: inTime / 2,
                 ease: "power2.out",
                 onUpdate: () => drawCanvas(condition)
@@ -2327,8 +2327,8 @@ function animateText(direction, condition, loopCount) {
         if (tabType === "Out") {
             // Ensure full size before starting OUT
             tl.set(units.flat(), {
-                scaleX: 0.8,   // Or 1.0 depending on your entry state
-                scaleY: 0.8
+                scaleX: 1,   // Or 1.0 depending on your entry state
+                scaleY: 1
             }, 0);
 
             // Animate shrink to invisible
@@ -5669,6 +5669,7 @@ function updateEffectButtons(type) {
         else if (effectType === 'roll') btnSelector = '#aroll';
         else if (effectType === 'popcorn') btnSelector = '#apopcorn';
         else if (effectType === 'mask') btnSelector = '#amask';
+        else if (effectType === 'zoom') btnSelector = '#azoom';
     } else {
         $('.effectOut_btn').removeClass('active_effect');
         if (effectType === 'delaylinear') btnSelector = '#adelaylinearOut1';
@@ -5676,6 +5677,7 @@ function updateEffectButtons(type) {
         else if (effectType === 'roll') btnSelector = '#arollOut';
         else if (effectType === 'popcorn') btnSelector = '#apopcornOut';
         else if (effectType === 'mask') btnSelector = '#amaskOut';
+        else if (effectType === 'zoom') btnSelector = '#azoomOut';
     }
     //if (effectType === 'roll') {
     //    document.getElementById('abottom')?.classList.add('disabled-ani-button');
