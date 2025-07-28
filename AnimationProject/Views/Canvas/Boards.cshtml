@@ -245,7 +245,9 @@
         border-top: 10px solid #fff;
         /* box-shadow: rgba(0, 0, 0, 0.16) 0px -3px 6px, rgba(0, 0, 0, 0.23) 0px -3px 6px; */
     }
-
+    .board_name p{
+        margin-bottom: 0;
+    }
 </style>
 
 
@@ -396,13 +398,13 @@ rel="stylesheet">
                                             <span class="visually-hidden">Next</span>
                                         </button>
                                     </div>
-                                  <div class="d-flex justify-content-left align-items-center gap-2 mt-2">
-                                    <div class="">
-                                        <b title="@item.DesignBoardName">
+                                  <div class="d-flex justify-content-left align-items-center gap-2 mt-4">
+                                    <div class="board_name">
+                                        <p title="@item.DesignBoardName">
                                             @(item.DesignBoardName.Length > 10
                                                 ? item.DesignBoardName.Substring(0, 10) + "…"
                                                 : item.DesignBoardName)
-                                        </b>
+                                        </p>
                                     </div>
                                     <div class="d-flex justify-content-center gap-2">
                                         <a class="board_button"
@@ -543,13 +545,13 @@ rel="stylesheet">
                                             <span class="visually-hidden">Next</span>
                                         </button>
                                     </div>
-                                  <div class="d-flex justify-content-left align-items-center gap-2 mt-2">
-                                    <div class="">
-                                        <b title="@item.DesignBoardName">
+                                  <div class="d-flex justify-content-left align-items-center gap-2 mt-4">
+                                    <div class="board_name">
+                                        <p title="@item.DesignBoardName">
                                             @(item.DesignBoardName.Length > 8
                                                 ? item.DesignBoardName.Substring(0, 8) + "…"
                                                 : item.DesignBoardName)
-                                        </b>
+                                        </p>
                                     </div>
                                     <div class="d-flex justify-content-center gap-2">
                                         <a class="board_button"
