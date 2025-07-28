@@ -4326,7 +4326,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 
                 // 3) Timings
                // const tweenIn = 0.15 * inTime;
-                const tweenOut = 0.15 * outTime;
+                const tweenOut = 0.20 * outTime;
                // const overlapIn = tweenIn / 6;   // each next In starts 50% in
                 const overlapOut = tweenOut / 3;   // each next Out starts 50% in
 
@@ -4552,7 +4552,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 ease: "none"
             }, inEndTime);
 
-            const delaylineartweenIn = 0.10 * inTime;
+            const delaylineartweenIn = 0.15 * inTime;
             const delaylineartotalIn = units.length * delaylineartweenIn;
 
             // 2) OUT tweens
@@ -4560,7 +4560,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             if (OutanimationType === "delaylinear") {
                
 
-               const delaylineartweenOut = 0.10 * outTime;
+               const delaylineartweenOut = 0.15 * outTime;
                 units.forEach((unit, idx) => {
                     tlText.to(unit, {
                         x: (i, t) => t.exitX,
@@ -4757,8 +4757,8 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 onUpdate: () => drawCanvasForDownload(condition)
             });
 
-            const tweenIn = 0.15 * inTime;
-            const tweenOut = 0.15 * outTime;
+            const tweenIn = 0.20 * inTime;
+            const tweenOut = 0.20 * outTime;
 
             // --- IN: Animate from outside based on direction ---
             allItems.forEach((item, idx) => {
@@ -4783,7 +4783,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             tlText.to({}, { duration: stayTime }, tlText.duration());
 
 
-            const delaylineartweenIn = 0.10 * inTime;
+            const delaylineartweenIn = 0.15 * inTime;
             const delaylineartotalIn = units.length * delaylineartweenIn;
 
             // 2) OUT tweens
@@ -4791,7 +4791,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             if (OutanimationType === "delaylinear") {
 
 
-                const delaylineartweenOut = 0.10 * outTime;
+                const delaylineartweenOut = 0.15 * outTime;
                 units.forEach((unit, idx) => {
                     tlText.to(unit, {
                         x: (i, t) => t.exitX,
@@ -4994,7 +4994,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
 
             // ⏸ STAY
             tlText.to({}, { duration: stayTime });
-            const delaylineartweenIn = 0.10 * inTime;
+            const delaylineartweenIn = 0.15 * inTime;
             const delaylineartotalIn = units.length * delaylineartweenIn;
 
             // 2) OUT tweens
@@ -5002,7 +5002,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             if (OutanimationType === "delaylinear") {
 
 
-                const delaylineartweenOut = 0.10 * outTime;
+                const delaylineartweenOut = 0.15 * outTime;
                 units.forEach((unit, idx) => {
                     tlText.to(unit, {
                         x: (i, t) => t.exitX,
@@ -5014,8 +5014,8 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 });
             }
             else if (OutanimationType === "delaylinear2") {
-                const tweenIn = 0.15 * inTime;
-                const tweenOut = 0.15 * outTime;
+                const tweenIn = 0.20 * inTime;
+                const tweenOut = 0.20 * outTime;
                 const overlapIn = tweenIn / 3;
                 const inEndTime = (units.length - 1) * overlapIn + tweenIn;
                 const overlapOut = tweenOut / 3;   // each next Out starts 50% in
@@ -5223,7 +5223,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                     ease: "power2.in"
                 });
 
-            const delaylineartweenIn = 0.10 * inTime;
+            const delaylineartweenIn = 0.15 * inTime;
             const delaylineartotalIn = units.length * delaylineartweenIn;
 
             // 2) OUT tweens
@@ -5231,7 +5231,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             if (OutanimationType === "delaylinear") {
 
 
-                const delaylineartweenOut = 0.10 * outTime;
+                const delaylineartweenOut = 0.15 * outTime;
                 units.forEach((unit, idx) => {
                     tlText.to(unit, {
                         x: (i, t) => t.exitX,
@@ -5243,8 +5243,8 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 });
             }
             else if (OutanimationType === "delaylinear2") {
-                const tweenIn = 0.15 * inTime;
-                const tweenOut = 0.15 * outTime;
+                const tweenIn = 0.20 * inTime;
+                const tweenOut = 0.20 * outTime;
                 const overlapIn = tweenIn / 3;
                 const inEndTime = (units.length - 1) * overlapIn + tweenIn;
                 const overlapOut = tweenOut / 3;   // each next Out starts 50% in
@@ -5433,7 +5433,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 });
             });
 
-            const delaylineartweenIn = 0.10 * inTime;
+            const delaylineartweenIn = 0.15 * inTime;
             const delaylineartotalIn = units.length * delaylineartweenIn;
 
             // 2) OUT tweens
@@ -5441,7 +5441,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             if (OutanimationType === "delaylinear") {
 
 
-                const delaylineartweenOut = 0.10 * outTime;
+                const delaylineartweenOut = 0.15 * outTime;
                 units.forEach((unit, idx) => {
                     tlText.to(unit, {
                         x: (i, t) => t.exitX,
@@ -5453,8 +5453,8 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 });
             }
             else if (OutanimationType === "delaylinear2") {
-                const tweenIn = 0.15 * inTime;
-                const tweenOut = 0.15 * outTime;
+                const tweenIn = 0.20 * inTime;
+                const tweenOut = 0.20 * outTime;
                 const overlapIn = tweenIn / 3;
                 const inEndTime = (units.length - 1) * overlapIn + tweenIn;
                 const overlapOut = tweenOut / 3;   // each next Out starts 50% in
