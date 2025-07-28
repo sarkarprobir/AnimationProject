@@ -1204,7 +1204,7 @@ async function showSlide(index) {
     const inTime = parseFloat(selectedInSpeed) || 4;
     const stayTime = parseFloat(selectedStaySpeed) || 3;
     const outTime = parseFloat(selectedOutSpeed) || 4;
-    const slideExecutionTime = inTime + stayTime + outTime;
+    const slideExecutionTime = inTime + outTime;/*inTime + stayTime + outTime;*/
 
     // 1) draw & animate this slide’s in→stay→out
     loadCanvasFromJsonForDownload(state, 'Common');
