@@ -4732,6 +4732,10 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                     units.push([item]);
                 }
             });
+            // 3) Precompute half‑time tweens:
+            const halfIn = inTime * 0.5;
+            const halfOut = outTime * 0.5;
+
             // Dimensions of canvasForDownload
             const canvasWidth = canvasForDownload.width;
             const canvasHeight = canvasForDownload.height;
@@ -4754,12 +4758,22 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                     });
                     drawCanvasForDownload(condition);
                 },
-                onUpdate: () => drawCanvasForDownload(condition)
+                onUpdate: () => drawCanvasForDownload(condition),
+                onComplete: () => {
+                    // snap back exactly to startRotation
+                    allItems.concat(staticItems).forEach(o => {
+                        o.x = o.finalX;
+                        o.y = o.finalY;
+                        o.rotation = o.startRotation;
+                    });
+                    drawCanvasForDownload(condition);
+                }
             });
 
             const tweenIn = 0.20 * inTime;
             const tweenOut = 0.20 * outTime;
-
+            const staggerIn = 0.02;
+            const lastInTime = (allItems.length - 1) * staggerIn + halfIn;
             // --- IN: Animate from outside based on direction ---
             allItems.forEach((item, idx) => {
                 // Start position OUTSIDE canvas based on direction
@@ -4769,19 +4783,19 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 else if (direction === "bottom") item.y = canvasHeight + 200;
 
                 const props = {
-                    duration: tweenIn,
+                    duration: halfIn,
                     ease: "back.inOut(1.7)",
                     rotation: `+=${inRotationAmount}`,
                     x: () => item.finalX,
                     y: () => item.finalY,
                     onUpdate: () => drawCanvasForDownload(condition)
                 };
-                tlText.to(item, props, tlText.duration() + idx * 0.02);
+                tlText.to(item, props, tweenIn);
             });
 
             // --- STAY: Pause ---
-            tlText.to({}, { duration: stayTime }, tlText.duration());
-
+            tlText.to({}, { duration: stayTime }, lastInTime);
+           
 
             const delaylineartweenIn = 0.15 * inTime;
             const delaylineartotalIn = units.length * delaylineartweenIn;
@@ -4832,7 +4846,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                         x: (i, t) => t.exitX,
                         y: (i, t) => t.exitY,
                         rotation: `+=${outRotationAmount}`,
-                        duration: tweenOut,
+                        duration: halfOut,
                         ease: "power1.out",
                         onUpdate: () => drawCanvasForDownload(condition)
                     }, OutanimationTypeoutStart + idx * tweenOut);

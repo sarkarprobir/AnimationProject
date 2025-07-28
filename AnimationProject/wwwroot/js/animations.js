@@ -1947,7 +1947,8 @@ function animateText(direction, condition, loopCount) {
             }
         });
         
-
+        const halfIn = inTime * 0.5;
+        const halfOut = outTime * 0.5;
        
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
@@ -1967,7 +1968,16 @@ function animateText(direction, condition, loopCount) {
                 });
                 drawCanvas(condition);
             },
-            onUpdate: () => drawCanvas(condition)
+            onUpdate: () => drawCanvas(condition),
+            onComplete: () => {
+                // snap back exactly to startRotation
+                allItems.concat(staticItems).forEach(o => {
+                    o.x = o.finalX;
+                    o.y = o.finalY;
+                    o.rotation = o.startRotation;
+                });
+               // drawCanvas(condition);
+            }
         });
         // ✅ Pin noAnim items at t=0 — ensure they are visible always
         images.filter(i => i.noAnim).forEach(imgObj => {
@@ -2025,6 +2035,10 @@ function animateText(direction, condition, loopCount) {
                     // 🟢 Ensure they start from final position
                     item.x = item.finalX;
                     item.y = item.finalY;
+
+                    // 🟢 Fix: preserve IN rotation so OUT continues from there
+                    item.rotation = item.rotation ?? 0;
+                    item.rotation += inRotationAmount;
 
                     // 🔁 Prepare exitX and exitY if missing
                     if (item.exitX == null || item.exitY == null) {
@@ -2091,10 +2105,10 @@ function animateText(direction, condition, loopCount) {
 
 
         // 🔄 Reset
-        tl.eventCallback("onComplete", () => {
-            [...animItems, ...staticItems].forEach(o => o.rotation = 0);
-            drawCanvas(condition);
-        });
+        //tl.eventCallback("onComplete", () => {
+        //    [...animItems, ...staticItems].forEach(o => o.rotation = 0);
+        //    drawCanvas(condition);
+        //});
     }
 
     
