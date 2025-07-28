@@ -6848,52 +6848,52 @@ function changeTranBcak2() {
 //const duplicateOption = document.getElementById('duplicateOption');
 
 
-duplicateOption.addEventListener('click', () => {
-    let DesignBoardDetailsId;
-    if (activeSlide === 1) {
-        DesignBoardDetailsId = $(`#hdnDesignBoardDetailsIdSlide1`).val();
-    } else if (activeSlide === 2) {
-        DesignBoardDetailsId = $(`#hdnDesignBoardDetailsIdSlide2`).val();
-    }
-    else if (activeSlide === 3) {
-        MessageShow('', 'Already 3 slide created.Delete any one and then duplicate!', 'error');
-        return;
-    }
-    const isDefaultOrBlank = !slideId || slideId.trim() === "" || slideId === "00000000-0000-0000-0000-000000000000";
+//duplicateOption.addEventListener('click', () => {
+//    let DesignBoardDetailsId;
+//    if (activeSlide === 1) {
+//        DesignBoardDetailsId = $(`#hdnDesignBoardDetailsIdSlide1`).val();
+//    } else if (activeSlide === 2) {
+//        DesignBoardDetailsId = $(`#hdnDesignBoardDetailsIdSlide2`).val();
+//    }
+//    else if (activeSlide === 3) {
+//        MessageShow('', 'Already 3 slide created.Delete any one and then duplicate!', 'error');
+//        return;
+//    }
+//    const isDefaultOrBlank = !slideId || slideId.trim() === "" || slideId === "00000000-0000-0000-0000-000000000000";
 
-    if (!isDefaultOrBlank) {
-        try {
-        ShowLoader();
-        const dataSlide = {
-            DesignBoardDetailsId: slideId
-        };
+//    if (!isDefaultOrBlank) {
+//        try {
+//        ShowLoader();
+//        const dataSlide = {
+//            DesignBoardDetailsId: slideId
+//        };
 
-        $.ajax({
-            url: baseURL + "Canvas/DuplicateDesignSlideBoard",
-            type: "POST",
-            dataType: "json",
-            data: dataSlide,
-            success: function (slideResult) {
-                HideLoader();
-                if (slideResult.response === 'ok') {
-                    MessageShow('RedirectToVerticalPageWithQueryString()', 'Slide duplicate successfully!', 'success');
-                } else {
-                    MessageShow('', 'Failed to duplicate slide.', 'error');
-                }
-            },
-            error: function (data) {
-                console.log("Error in delete slide", data);
-                HideLoader();
-                MessageShow('', 'Error duplicate slide.', 'error');
-            }
-        });
+//        $.ajax({
+//            url: baseURL + "Canvas/DuplicateDesignSlideBoard",
+//            type: "POST",
+//            dataType: "json",
+//            data: dataSlide,
+//            success: function (slideResult) {
+//                HideLoader();
+//                if (slideResult.response === 'ok') {
+//                    MessageShow('RedirectToVerticalPageWithQueryString()', 'Slide duplicate successfully!', 'success');
+//                } else {
+//                    MessageShow('', 'Failed to duplicate slide.', 'error');
+//                }
+//            },
+//            error: function (data) {
+//                console.log("Error in delete slide", data);
+//                HideLoader();
+//                MessageShow('', 'Error duplicate slide.', 'error');
+//            }
+//        });
 
-    } catch (e) {
-        console.log("catch", e);
-        HideLoader();
-    }
-    }
-});
+//    } catch (e) {
+//        console.log("catch", e);
+//        HideLoader();
+//    }
+//    }
+//});
 
 ////function strokeWidthChanges() {
 ////    const ddl = document.getElementById('ddlStrokeWidth');
