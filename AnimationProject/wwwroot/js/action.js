@@ -4358,7 +4358,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
 
                 const tweenIn = 0.15 * inTime;
                 const tweenOut = 0.15 * outTime;
-
+                const halfOut = outTime * 0.5;
                 // OUT: Rotate and move out
 
                 units.forEach((unit, idx) => {
@@ -4366,7 +4366,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                         x: (i, t) => t.exitX,
                         y: (i, t) => t.exitY,
                         rotation: `+=${outRotationAmount}`,
-                        duration: tweenOut,
+                        duration: halfOut,
                         ease: "power1.out",
                         onUpdate: () => drawCanvasForDownload(condition)
                     }, outStart + idx * tweenOut);
@@ -4590,7 +4590,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
 
                 const tweenIn = 0.15 * inTime;
                 const tweenOut = 0.15 * outTime;
-
+                const halfOut = outTime * 0.5;
                 // OUT: Rotate and move out
 
                 units.forEach((unit, idx) => {
@@ -4598,7 +4598,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                         x: (i, t) => t.exitX,
                         y: (i, t) => t.exitY,
                         rotation: `+=${outRotationAmount}`,
-                        duration: tweenOut,
+                        duration: halfOut,
                         ease: "power1.out",
                         onUpdate: () => drawCanvasForDownload(condition)
                     }, OutanimationTypeoutStart + idx * tweenOut);
@@ -5057,7 +5057,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
 
                 const tweenIn = 0.15 * inTime;
                 const tweenOut = 0.15 * outTime;
-
+                const halfOut = outTime * 0.5;
                 // OUT: Rotate and move out
 
                 units.forEach((unit, idx) => {
@@ -5065,7 +5065,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                         x: (i, t) => t.exitX,
                         y: (i, t) => t.exitY,
                         rotation: `+=${outRotationAmount}`,
-                        duration: tweenOut,
+                        duration: halfOut,
                         ease: "power1.out",
                         onUpdate: () => drawCanvasForDownload(condition)
                     }, OutanimationTypeoutStart + idx * tweenOut);
@@ -5286,7 +5286,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
 
                 const tweenIn = 0.15 * inTime;
                 const tweenOut = 0.15 * outTime;
-
+                const halfOut = outTime * 0.5;
                 // OUT: Rotate and move out
 
                 units.forEach((unit, idx) => {
@@ -5294,7 +5294,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                         x: (i, t) => t.exitX,
                         y: (i, t) => t.exitY,
                         rotation: `+=${outRotationAmount}`,
-                        duration: tweenOut,
+                        duration: halfOut,
                         ease: "power1.out",
                         onUpdate: () => drawCanvasForDownload(condition)
                     }, OutanimationTypeoutStart + idx * tweenOut);
@@ -5496,7 +5496,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
 
                 const tweenIn = 0.15 * inTime;
                 const tweenOut = 0.15 * outTime;
-
+                const halfOut = outTime * 0.5;
                 // OUT: Rotate and move out
 
                 units.forEach((unit, idx) => {
@@ -5504,7 +5504,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                         x: (i, t) => t.exitX,
                         y: (i, t) => t.exitY,
                         rotation: `+=${outRotationAmount}`,
-                        duration: tweenOut,
+                        duration: halfOut,
                         ease: "power1.out",
                         onUpdate: () => drawCanvasForDownload(condition)
                     }, OutanimationTypeoutStart + idx * tweenOut);
