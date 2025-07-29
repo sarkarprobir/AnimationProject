@@ -1866,7 +1866,7 @@ function animateText(direction, condition, loopCount) {
                 o.y = o.finalY;
             });
 
-            [...animItems, ...staticItems].forEach(o => o.rotation = 0);
+            [...animItems, ...staticItems].forEach(o => o.rotation = o.rotation);
 
             drawCanvas(condition);
         });
