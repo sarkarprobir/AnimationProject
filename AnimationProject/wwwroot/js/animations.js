@@ -1976,7 +1976,7 @@ function animateText(direction, condition, loopCount) {
                     o.y = o.finalY;
                     o.rotation = o.startRotation;
                 });
-               // drawCanvas(condition);
+               drawCanvas(condition);
             }
         });
         // ✅ Pin noAnim items at t=0 — ensure they are visible always
@@ -1984,7 +1984,7 @@ function animateText(direction, condition, loopCount) {
             tl.set(imgObj, {
                 x: imgObj.finalX,
                 y: imgObj.finalY,
-                rotation: 0,
+                rotation: imgObj.rotation,
                 opacity: imgObj.opacity ?? 100
             }, 0);
         });
@@ -1992,7 +1992,7 @@ function animateText(direction, condition, loopCount) {
             tl.set(txtObj, {
                 x: txtObj.finalX,
                 y: txtObj.finalY,
-                rotation: 0,
+                rotation: txtObj.rotation,
                 opacity: txtObj.opacity ?? 100
             }, 0);
         });
@@ -2012,13 +2012,13 @@ function animateText(direction, condition, loopCount) {
                 });
 
                 tl.to(unit, {
-                    duration: tweenIn,
+                    duration: halfIn,
                     ease: "back.inOut(1.7)",
                     rotation: `+=${inRotationAmount}`,
                     x: (i, t) => t.finalX,
                     y: (i, t) => t.finalY,
                     onUpdate: () => drawCanvas(condition)
-                }, tl.duration() + idx * 0.02);
+                }, tweenIn);
             });
         }
 
@@ -2054,13 +2054,13 @@ function animateText(direction, condition, loopCount) {
 
                 // 🔴 Animate to exit position
                 tl.to(unit, {
-                    duration: tweenOut,
+                    duration: halfOut,
                     ease: "power1.inOut",
                     rotation: `+=${outRotationAmount}`,
                     x: (i, t) => t.exitX,
                     y: (i, t) => t.exitY,
                     onUpdate: () => drawCanvas(condition)
-                }, tl.duration() + idx * 0.02);
+                }, tweenOut);
             });
 
             const scaleInText = inTime;
@@ -2105,10 +2105,10 @@ function animateText(direction, condition, loopCount) {
 
 
         // 🔄 Reset
-        //tl.eventCallback("onComplete", () => {
-        //    [...animItems, ...staticItems].forEach(o => o.rotation = 0);
-        //    drawCanvas(condition);
-        //});
+        tl.eventCallback("onComplete", () => {
+            [...animItems, ...staticItems].forEach(o => o.rotation = o.rotation);
+           
+        });
     }
 
     
