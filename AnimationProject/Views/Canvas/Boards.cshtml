@@ -157,15 +157,17 @@
     height: 299px;
     }
     .board_info_icon{
-        border: 2px solid #5b5b5b;
-        padding: 0px 7px;
+        /* border: 2px solid #5b5b5b; */
+        padding: 0px 5px;
         border-radius: 3px;
     }
     .board_info_icon.active{
-        background-color: #4e43e182;
+        background-color: #000;
+        color: #fff;
     }
     .board_info_icon:hover{
-        background-color: #4e43e182;
+        background-color: #000;
+        color: #fff;
     }
 
     .board_info_btn{
@@ -308,23 +310,23 @@ rel="stylesheet">
                                 </a>
                             </li>
                             <li class="w-100 acc_list">
-                                <a class="dropdown-item d-flex align-items-center text-white" href="/change-password">
+                                <a class="dropdown-item d-flex align-items-center text-white" href="/Canvas/Boards">
                                     Boards
                                 </a>
                             </li>
 
                             <li class="w-100 acc_list">
-                                <a class="dropdown-item d-flex align-items-center text-white" href="/logout">
+                                <a class="dropdown-item d-flex align-items-center text-white" href="">
                                     TV/Screens
                                 </a>
                             </li>
                             <li class="w-100 acc_list">
-                                <a class="dropdown-item d-flex align-items-center text-white" href="/logout">
+                                <a class="dropdown-item d-flex align-items-center text-white" href="">
                                     Billing
                                 </a>
                             </li>
                             <li class="w-100 acc_list">
-                                <a class="dropdown-item d-flex align-items-center text-white" href="/logout">
+                                <a class="dropdown-item d-flex align-items-center text-white" href="/Canvas/Login">
                                     Sign Out
                                 </a>
                             </li>
@@ -408,7 +410,7 @@ rel="stylesheet">
                                     </div>
                                     <div class="d-flex justify-content-center gap-2">
                                         <a class="board_button"
-                                           onclick="RedirectToHorizontalPage('@item.DesignBoardId')"><i class="fa-solid fa-pen"></i>
+                                           onclick="RedirectToHorizontalPage('@item.DesignBoardId')"><i class="fa-regular fa-pen-to-square"></i>
                                         </a>
                                         <a class="board_button" href="#"><i class="fa-regular fa-clone"></i></a>
                                     </div>
@@ -555,7 +557,8 @@ rel="stylesheet">
                                     </div>
                                     <div class="d-flex justify-content-center gap-2">
                                         <a class="board_button"
-                                           onclick="RedirectToVerticalPage('@item.DesignBoardId')"><i class="fa-solid fa-pen"></i>
+                                            onclick="RedirectToVerticalPage('@item.DesignBoardId')">
+                                            <i class="fa-regular fa-pen-to-square"></i>
                                         </a>
                                         <a class="board_button" href="#"><i class="fa-regular fa-clone"></i></a>
                                     </div>
