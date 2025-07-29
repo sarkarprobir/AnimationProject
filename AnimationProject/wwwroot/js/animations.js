@@ -1947,7 +1947,8 @@ function animateText(direction, condition, loopCount) {
             }
         });
         
-
+        const halfIn = inTime * 0.5;
+        const halfOut = outTime * 0.5;
        
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
@@ -1967,7 +1968,16 @@ function animateText(direction, condition, loopCount) {
                 });
                 drawCanvas(condition);
             },
-            onUpdate: () => drawCanvas(condition)
+            onUpdate: () => drawCanvas(condition),
+            onComplete: () => {
+                // snap back exactly to startRotation
+                allItems.concat(staticItems).forEach(o => {
+                    o.x = o.finalX;
+                    o.y = o.finalY;
+                    o.rotation = o.startRotation;
+                });
+               // drawCanvas(condition);
+            }
         });
         // ✅ Pin noAnim items at t=0 — ensure they are visible always
         images.filter(i => i.noAnim).forEach(imgObj => {
@@ -2025,6 +2035,10 @@ function animateText(direction, condition, loopCount) {
                     // 🟢 Ensure they start from final position
                     item.x = item.finalX;
                     item.y = item.finalY;
+
+                    // 🟢 Fix: preserve IN rotation so OUT continues from there
+                    item.rotation = item.rotation ?? 0;
+                    item.rotation += inRotationAmount;
 
                     // 🔁 Prepare exitX and exitY if missing
                     if (item.exitX == null || item.exitY == null) {
@@ -2091,10 +2105,10 @@ function animateText(direction, condition, loopCount) {
 
 
         // 🔄 Reset
-        tl.eventCallback("onComplete", () => {
-            [...animItems, ...staticItems].forEach(o => o.rotation = 0);
-            drawCanvas(condition);
-        });
+        //tl.eventCallback("onComplete", () => {
+        //    [...animItems, ...staticItems].forEach(o => o.rotation = 0);
+        //    drawCanvas(condition);
+        //});
     }
 
     
@@ -2308,8 +2322,8 @@ function animateText(direction, condition, loopCount) {
 
             // Animate to large size and stop there
             tl.to(units.flat(), {
-                scaleX: 0.8,
-                scaleY: 0.8,
+                scaleX: 1,
+                scaleY: 1,
                 duration: inTime / 2,
                 ease: "power2.out",
                 onUpdate: () => drawCanvas(condition)
@@ -2327,8 +2341,8 @@ function animateText(direction, condition, loopCount) {
         if (tabType === "Out") {
             // Ensure full size before starting OUT
             tl.set(units.flat(), {
-                scaleX: 0.8,   // Or 1.0 depending on your entry state
-                scaleY: 0.8
+                scaleX: 1,   // Or 1.0 depending on your entry state
+                scaleY: 1
             }, 0);
 
             // Animate shrink to invisible
@@ -5669,6 +5683,7 @@ function updateEffectButtons(type) {
         else if (effectType === 'roll') btnSelector = '#aroll';
         else if (effectType === 'popcorn') btnSelector = '#apopcorn';
         else if (effectType === 'mask') btnSelector = '#amask';
+        else if (effectType === 'zoom') btnSelector = '#azoom';
     } else {
         $('.effectOut_btn').removeClass('active_effect');
         if (effectType === 'delaylinear') btnSelector = '#adelaylinearOut1';
@@ -5676,6 +5691,7 @@ function updateEffectButtons(type) {
         else if (effectType === 'roll') btnSelector = '#arollOut';
         else if (effectType === 'popcorn') btnSelector = '#apopcornOut';
         else if (effectType === 'mask') btnSelector = '#amaskOut';
+        else if (effectType === 'zoom') btnSelector = '#azoomOut';
     }
     //if (effectType === 'roll') {
     //    document.getElementById('abottom')?.classList.add('disabled-ani-button');
@@ -6848,52 +6864,52 @@ function changeTranBcak2() {
 //const duplicateOption = document.getElementById('duplicateOption');
 
 
-duplicateOption.addEventListener('click', () => {
-    let DesignBoardDetailsId;
-    if (activeSlide === 1) {
-        DesignBoardDetailsId = $(`#hdnDesignBoardDetailsIdSlide1`).val();
-    } else if (activeSlide === 2) {
-        DesignBoardDetailsId = $(`#hdnDesignBoardDetailsIdSlide2`).val();
-    }
-    else if (activeSlide === 3) {
-        MessageShow('', 'Already 3 slide created.Delete any one and then duplicate!', 'error');
-        return;
-    }
-    const isDefaultOrBlank = !slideId || slideId.trim() === "" || slideId === "00000000-0000-0000-0000-000000000000";
+//duplicateOption.addEventListener('click', () => {
+//    let DesignBoardDetailsId;
+//    if (activeSlide === 1) {
+//        DesignBoardDetailsId = $(`#hdnDesignBoardDetailsIdSlide1`).val();
+//    } else if (activeSlide === 2) {
+//        DesignBoardDetailsId = $(`#hdnDesignBoardDetailsIdSlide2`).val();
+//    }
+//    else if (activeSlide === 3) {
+//        MessageShow('', 'Already 3 slide created.Delete any one and then duplicate!', 'error');
+//        return;
+//    }
+//    const isDefaultOrBlank = !slideId || slideId.trim() === "" || slideId === "00000000-0000-0000-0000-000000000000";
 
-    if (!isDefaultOrBlank) {
-        try {
-        ShowLoader();
-        const dataSlide = {
-            DesignBoardDetailsId: slideId
-        };
+//    if (!isDefaultOrBlank) {
+//        try {
+//        ShowLoader();
+//        const dataSlide = {
+//            DesignBoardDetailsId: slideId
+//        };
 
-        $.ajax({
-            url: baseURL + "Canvas/DuplicateDesignSlideBoard",
-            type: "POST",
-            dataType: "json",
-            data: dataSlide,
-            success: function (slideResult) {
-                HideLoader();
-                if (slideResult.response === 'ok') {
-                    MessageShow('RedirectToVerticalPageWithQueryString()', 'Slide duplicate successfully!', 'success');
-                } else {
-                    MessageShow('', 'Failed to duplicate slide.', 'error');
-                }
-            },
-            error: function (data) {
-                console.log("Error in delete slide", data);
-                HideLoader();
-                MessageShow('', 'Error duplicate slide.', 'error');
-            }
-        });
+//        $.ajax({
+//            url: baseURL + "Canvas/DuplicateDesignSlideBoard",
+//            type: "POST",
+//            dataType: "json",
+//            data: dataSlide,
+//            success: function (slideResult) {
+//                HideLoader();
+//                if (slideResult.response === 'ok') {
+//                    MessageShow('RedirectToVerticalPageWithQueryString()', 'Slide duplicate successfully!', 'success');
+//                } else {
+//                    MessageShow('', 'Failed to duplicate slide.', 'error');
+//                }
+//            },
+//            error: function (data) {
+//                console.log("Error in delete slide", data);
+//                HideLoader();
+//                MessageShow('', 'Error duplicate slide.', 'error');
+//            }
+//        });
 
-    } catch (e) {
-        console.log("catch", e);
-        HideLoader();
-    }
-    }
-});
+//    } catch (e) {
+//        console.log("catch", e);
+//        HideLoader();
+//    }
+//    }
+//});
 
 ////function strokeWidthChanges() {
 ////    const ddl = document.getElementById('ddlStrokeWidth');
