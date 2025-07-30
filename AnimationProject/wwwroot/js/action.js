@@ -4583,11 +4583,11 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                     tlText.to(unit, {
                         x: (i, t) => t.exitX,
                         y: (i, t) => t.exitY,
-                        duration: 0.22 * outTime,
+                        duration: delaylineartweenOut,
                         ease: "power1.out",
                         onUpdate: () => drawCanvasForDownload(condition)
                         // }, OutanimationTypeoutStart + idx * delaylineartweenOut);
-                    }, OutanimationTypeoutStart );
+                    }, (inTime + stayTime) *.7);
                 });
             }
             else if (OutanimationType === "delaylinear2") {
