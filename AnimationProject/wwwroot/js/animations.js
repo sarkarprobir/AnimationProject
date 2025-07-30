@@ -1446,18 +1446,28 @@ function animateText(direction, condition, loopCount) {
         drawCanvas(condition);
 
         // ── IN ── (only when tabType === "In")
+        //if (tabType === "In") {
+        //    units.forEach((unit, idx) => {
+        //        tlText.to(unit, {
+        //            x: (i, target) => target.finalX,
+        //            y: (i, target) => target.finalY,
+        //            duration: individualIn,
+        //            ease: "power1.in",
+        //            onUpdate: () => drawCanvas(condition)
+        //        }, idx * staggerIn);
+        //    });
+        //}
         if (tabType === "In") {
             units.forEach((unit, idx) => {
                 tlText.to(unit, {
                     x: (i, target) => target.finalX,
                     y: (i, target) => target.finalY,
-                    duration: individualIn,
+                    duration: scaleInText*.20,
                     ease: "power1.in",
                     onUpdate: () => drawCanvas(condition)
-                }, idx * staggerIn);
+                }, 0);
             });
         }
-
         // ── STAY ── (runs for both "Stay" and "Out")
         if (tabType === "Stay") {
             const startStayTime = (tabType === "In")
@@ -1485,10 +1495,10 @@ function animateText(direction, condition, loopCount) {
                 tlText.to(unit, {
                     x: (i, target) => target.exitX,
                     y: (i, target) => target.exitY,
-                    duration: individualOut,
+                    duration: 0.20 * scaleOutText,
                     ease: "power1.out",
                     onUpdate: () => drawCanvas(condition)
-                }, idx * staggerOut);
+                }, idx * 0);
             });
         }
 

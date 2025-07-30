@@ -4295,6 +4295,15 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             });
 
             // --- IN: one tween per unit ---
+            ////units.forEach((unit, idx) => {
+            ////    tlText.to(unit, {
+            ////        x: (i, t) => t.finalX,
+            ////        y: (i, t) => t.finalY,
+            ////        duration: tweenIn,
+            ////        ease: "power1.in",
+            ////        onUpdate: () => drawCanvasForDownload(condition)
+            ////    }, idx * tweenIn);
+            ////});
             units.forEach((unit, idx) => {
                 tlText.to(unit, {
                     x: (i, t) => t.finalX,
@@ -4302,7 +4311,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                     duration: tweenIn,
                     ease: "power1.in",
                     onUpdate: () => drawCanvasForDownload(condition)
-                }, idx * tweenIn);
+                }, 0);
             });
 
             // 1) STAY tween
@@ -4312,6 +4321,15 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             // 2) OUT tweens
             const outStart = totalIn + stayTime;
             if (OutanimationType === "delaylinear") {
+                //units.forEach((unit, idx) => {
+                //    tlText.to(unit, {
+                //        x: (i, t) => t.exitX,
+                //        y: (i, t) => t.exitY,
+                //        duration: tweenOut,
+                //        ease: "power1.out",
+                //        onUpdate: () => drawCanvasForDownload(condition)
+                //    }, outStart + idx * tweenOut);
+                //});
                 units.forEach((unit, idx) => {
                     tlText.to(unit, {
                         x: (i, t) => t.exitX,
@@ -4319,7 +4337,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                         duration: tweenOut,
                         ease: "power1.out",
                         onUpdate: () => drawCanvasForDownload(condition)
-                    }, outStart + idx * tweenOut);
+                    }, outStart *.7);
                 });
             }
             else if (OutanimationType === "delaylinear2") {
@@ -4565,10 +4583,11 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                     tlText.to(unit, {
                         x: (i, t) => t.exitX,
                         y: (i, t) => t.exitY,
-                        duration: delaylineartweenOut,
+                        duration: 0.22 * outTime,
                         ease: "power1.out",
                         onUpdate: () => drawCanvasForDownload(condition)
-                    }, OutanimationTypeoutStart + idx * delaylineartweenOut);
+                        // }, OutanimationTypeoutStart + idx * delaylineartweenOut);
+                    }, OutanimationTypeoutStart );
                 });
             }
             else if (OutanimationType === "delaylinear2") {
@@ -4801,7 +4820,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             const delaylineartotalIn = units.length * delaylineartweenIn;
 
             // 2) OUT tweens
-            const OutanimationTypeoutStart = delaylineartotalIn + stayTime;
+            const OutanimationTypeoutStart = inTime + stayTime;
             if (OutanimationType === "delaylinear") {
 
 
@@ -4810,10 +4829,11 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                     tlText.to(unit, {
                         x: (i, t) => t.exitX,
                         y: (i, t) => t.exitY,
-                        duration: delaylineartweenOut,
+                        duration: outTime*.6,
                         ease: "power1.out",
                         onUpdate: () => drawCanvasForDownload(condition)
-                    }, OutanimationTypeoutStart + idx * delaylineartweenOut);
+                        // }, OutanimationTypeoutStart + idx * delaylineartweenOut);
+                    }, OutanimationTypeoutStart );
                 });
             }
             else if (OutanimationType === "delaylinear2") {
@@ -5021,10 +5041,11 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                     tlText.to(unit, {
                         x: (i, t) => t.exitX,
                         y: (i, t) => t.exitY,
-                        duration: delaylineartweenOut,
+                        duration: outTime * .6,
                         ease: "power1.out",
                         onUpdate: () => drawCanvasForDownload(condition)
-                    }, OutanimationTypeoutStart + idx * delaylineartweenOut);
+                        /*}, OutanimationTypeoutStart + idx * delaylineartweenOut);*/
+                    }, inTime + stayTime);
                 });
             }
             else if (OutanimationType === "delaylinear2") {
@@ -5250,10 +5271,15 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                     tlText.to(unit, {
                         x: (i, t) => t.exitX,
                         y: (i, t) => t.exitY,
-                        duration: delaylineartweenOut,
+                    //    duration: outTime*.7,
+                    //    ease: "power1.out",
+                    //    onUpdate: () => drawCanvasForDownload(condition)
+                    //    /*}, OutanimationTypeoutStart + idx * delaylineartweenOut);*/
+                        //}, inTime + stayTime);
+                        duration: outTime * .6,
                         ease: "power1.out",
                         onUpdate: () => drawCanvasForDownload(condition)
-                    }, OutanimationTypeoutStart + idx * delaylineartweenOut);
+                    }, OutanimationTypeoutStart + idx * 0);
                 });
             }
             else if (OutanimationType === "delaylinear2") {
@@ -5460,10 +5486,11 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                     tlText.to(unit, {
                         x: (i, t) => t.exitX,
                         y: (i, t) => t.exitY,
-                        duration: delaylineartweenOut,
+                        duration: outTime * .6,
                         ease: "power1.out",
                         onUpdate: () => drawCanvasForDownload(condition)
-                    }, OutanimationTypeoutStart + idx * delaylineartweenOut);
+                        /* }, OutanimationTypeoutStart + idx * delaylineartweenOut);*/
+                    }, inTime + stayTime);
                 });
             }
             else if (OutanimationType === "delaylinear2") {
