@@ -56,6 +56,7 @@
         font-size: 0.9rem;
         transition: background 0.2s;
         font-family: "Nunito Sans", sans-serif;
+        text-decoration: none;
     }
 
         .create-btn:hover {
@@ -269,6 +270,135 @@
     .border3 {
         border-radius: 3px;
     }
+    /* modal */
+
+    .login_modal {
+        background-color: rgba(36, 7, 136, 0.49);
+    }
+
+    .modal-backdrop {
+        background-color: transparent !important;
+    }
+
+    .modal-backdrop {
+        z-index: 1000 !important;
+    }
+
+    .modal-dialog {
+        margin-top: 120px !important;
+        width: 350px;
+    }
+
+    .modal-content {
+        /* height: 315px !important; */
+        border-radius: 3px !important;
+    }
+
+    .modal-title {
+        font-size: 14px !important;
+        font-weight: 700 !important;
+    }
+
+    .modal-header {
+        border: none !important;
+    }
+
+    .modal-footer {
+        border: none !important;
+    }
+
+    .cross:hover {
+        color: red;
+    }
+
+    .download-cross_btn {
+        font-size: 20px;
+        position: absolute;
+        top: 26px;
+        right: 37px;
+        border: none;
+        background-color: transparent;
+    }
+
+    .input {
+        font-size: 14px !important;
+        display: block;
+        width: 100%;
+        padding: 7px 16px;
+        margin-bottom: 15px;
+        border: none;
+        background-color: #e5ebed;
+        font-size: 1rem;
+        border-radius: 0;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 8px 10px;
+        background-color: #6214fe;
+        color: #fff;
+        font-size: 14px;
+        border: none;
+        border-radius: 0;
+        cursor: pointer;
+    }
+
+        .btn:hover {
+            background-color: #000;
+            color: #fff !important;
+        }
+
+    .b_rad4 {
+        border-radius: 3px;
+    }
+
+    .login-box {
+        margin-bottom: 15px;
+    }
+
+    .form-check-input[type=checkbox] {
+        border-radius: 3px;
+        box-shadow: none !important;
+    }
+
+    .form-check-input {
+        width: 1.1rem;
+        height: 1.1rem;
+        border: 2px solid #c4c4c4;
+        margin-top: 0;
+    }
+
+    .login-label {
+        display: inline-block;
+        font-size: 13px !important;
+        margin-left: 4px;
+        color: #000;
+    }
+
+    .forgot {
+        text-decoration: none;
+        color: #000;
+        font-size: 13px !important;
+    }
+
+        .forgot:hover {
+            color: #6214fe;
+        }
+
+    .sign-btn {
+        background-color: #fff;
+        color: #000;
+        border: 2px solid #ccc;
+        padding: 5px 28px;
+        border-radius: 3px;
+        font-size: 14px;
+        margin: 0;
+        text-decoration: none;
+    }
+
+        .sign-btn:hover {
+            background-color: #d1d1d1;
+        }
 </style>
 
 <!-- Navbar -->
@@ -282,7 +412,7 @@
                     <a class="nav-link" id="hoverTarget">Templates  <i class="fa-solid fa-chevron-down"></i></a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Pricing</a>
+                    <a class="nav-link" href="/Canvas/Pricing">Pricing</a>
                 </li>
             </ul>
         </div>
@@ -293,10 +423,41 @@
                 <i class="fa-solid fa-magnifying-glass"></i>
             </span>
             <button class="create-btn">Create New</button>
-            <a href="#">Login</a>
+            <a data-bs-toggle="modal" data-bs-target="#loginModal" href="#">Login</a>
         </div>
     </div>
 </nav>
+<!-- Login Modal Structure -->
+<div class="modal fade login_modal" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content downloadModal-content p-3">
+            <div class="modal-header">
+                <h5 class="modal-title" id="aniBoardModalLabel">Log In</h5>
+                @* <button type="button" class="btn-cross b-radius-6 tab cross download-cross_btn" data-bs-dismiss="modal">x</button> *@
+            </div>
+
+            <div class="modal-body text-start">
+                <div class="login-box">
+                    <input type="email" class="input b_rad4" id="emailInput" placeholder="Email" />
+                    <input type="password" id="passwordInput" class="input b_rad4" placeholder="Password" />
+                    <button type="button" onclick="validateCredentials();" class="btn b_rad4">Log In</button>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="checkDefault">
+                        <label class="form-check-label login-label" for="checkDefault">
+                            Remenber Me
+                        </label>
+                    </div>
+                    <a class="forgot" href="/Canvas/ForgotPassword">Forgot Password?</a>
+                </div>
+            </div>
+            <div class="modal-footer pt-0">
+                <a href="/Canvas/Signup" class="sign-btn">Sign Up</a>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Hover options Section -->
 <div class="option-box-outer" id="hoverBox" style="display:none;">
@@ -433,7 +594,7 @@
             <div class="foot-text py-5">
                 <h2 class="foot-head mb-4">Features</h2>
                 <p class="foot-para">No designer or animator needed... Just design it yourself and the animation will be created automatically.It's super simple to create an animation board for your signage screen.</p>
-                <button class="create-btn register_btn">Register Now</button>
+                <a href="/Canvas/Signup" class="create-btn register_btn">Register Now</a>
             </div>
         </div>
     </div>
@@ -445,9 +606,9 @@
             <div>
                 <ul class="d-flex gap-5 align-items-center">
                     <li class="foot-nav-item"><a class="foot-nav-link" href="#">About Us</a></li>
-                    <li class="foot-nav-item"><a class="foot-nav-link" href="#">Templates</a></li>
-                    <li class="foot-nav-item"><a class="foot-nav-link" href="#">Pricing</a></li>
-                    <li class="foot-nav-item"><a class="foot-nav-link" href="#">Contact</a></li>
+                    <li class="foot-nav-item"><a class="foot-nav-link" href="/Canvas/Templates">Templates</a></li>
+                    <li class="foot-nav-item"><a class="foot-nav-link" href="/Canvas/Pricing">Pricing</a></li>
+                    <li class="foot-nav-item"><a class="foot-nav-link" href="/Canvas/Contactus">Contact</a></li>
                     <a class="foot_brand" href="#">AniBoard</a>
                 </ul>
             </div>
