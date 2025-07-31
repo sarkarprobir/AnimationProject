@@ -368,7 +368,7 @@ rel="stylesheet">
                            
                             if (item.SlideType == "Horizontal")
                             {
-                                <div class="col-md-6">
+                                <div class="col-md-6 horizontal-card">
                                     <div id="carouselH_@idhx"
                                          class="carousel slide board_hori"
                                          data-bs-ride="false" @* don’t auto-start *@
@@ -477,6 +477,8 @@ rel="stylesheet">
                             }
 
                         }
+                        <div id="horizontal-pagination" class="mt-4 d-flex gap-2 flex-wrap align-items-center"></div>
+
                     }
                     
                 </div>
@@ -492,7 +494,7 @@ rel="stylesheet">
                         {
                             if (item.SlideType == "Vertical")
                             {
-                                <div class="col-md-4">
+                                <div class="col-md-4 vertical-card">
                                     <div id="carousel_@idx"
                                          class="carousel slide board_verti"
                                          data-bs-ride="false" @* don’t auto-start *@
@@ -601,6 +603,8 @@ rel="stylesheet">
                                 idx++;
                             }
                             }
+                        <div id="vertical-pagination" class="mt-4 d-flex gap-2 flex-wrap align-items-center"></div>
+
                     }
                 </div>
             </div>
@@ -807,5 +811,83 @@ rel="stylesheet">
 
 
     </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          function setupPagination(cardSelector, paginationId, itemsPerPage = 8) {
+            const cards = document.querySelectorAll(cardSelector);
+            const pagination = document.getElementById(paginationId);
+            const totalPages = Math.ceil(cards.length / itemsPerPage);
+            let currentPage = 1;
+
+            function showPage(page) {
+              const start = (page - 1) * itemsPerPage;
+              const end = start + itemsPerPage;
+
+              cards.forEach((card, index) => {
+                card.style.display = (index >= start && index < end) ? 'block' : 'none';
+              });
+
+              updatePaginationButtons();
+            }
+
+            function updatePaginationButtons() {
+              pagination.innerHTML = '';
+
+              // Prev button
+              const prevBtn = document.createElement('button');
+              prevBtn.innerText = '« Prev';
+              prevBtn.className = 'btn btn-sm btn-outline-dark';
+              prevBtn.disabled = currentPage === 1;
+              prevBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                  currentPage--;
+                  showPage(currentPage);
+                }
+              });
+              pagination.appendChild(prevBtn);
+
+              // Page number buttons
+              for (let i = 1; i <= totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.innerText = i;
+                btn.className = 'btn btn-sm ' + (i === currentPage ? 'btn-dark' : 'btn-outline-dark');
+                btn.addEventListener('click', () => {
+                  currentPage = i;
+                  showPage(currentPage);
+                });
+                pagination.appendChild(btn);
+              }
+
+              // Next button
+              const nextBtn = document.createElement('button');
+              nextBtn.innerText = 'Next »';
+              nextBtn.className = 'btn btn-sm btn-outline-dark';
+              nextBtn.disabled = currentPage === totalPages;
+              nextBtn.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                  currentPage++;
+                  showPage(currentPage);
+                }
+              });
+              pagination.appendChild(nextBtn);
+            }
+
+            if (cards.length > itemsPerPage) {
+              showPage(currentPage);
+            } else {
+              // If few cards, show all and skip pagination
+              cards.forEach(card => card.style.display = 'block');
+              pagination.innerHTML = '';
+            }
+          }
+
+          // Call the function for both sections
+          setupPagination('.vertical-card', 'vertical-pagination', 8);
+          setupPagination('.horizontal-card', 'horizontal-pagination', 8);
+        });
+    </script>
+
+
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 }
