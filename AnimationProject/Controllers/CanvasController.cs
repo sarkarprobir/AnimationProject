@@ -119,7 +119,11 @@ namespace AnimationProject.Controllers
         {
             return PartialView("_PartialBackgroundSection");
         }
-        
+        [HttpPost]
+        public IActionResult CreateLayoutModalSectionhtml()
+        {
+            return PartialView("_PartialLayoutSection");
+        }
         [HttpPost]
         public IActionResult CreateLeftSectionhtml()
         {

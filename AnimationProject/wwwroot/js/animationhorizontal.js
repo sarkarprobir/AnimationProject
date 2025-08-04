@@ -198,6 +198,24 @@ function CreateBackgroundSectionHorizontalhtml() {
         console.log("catch", e);
     }
 }
+function CreateLayoutModalSectionhtml() {
+    try {
+        $.ajax({
+            url: baseURL + "Canvas/CreateLayoutModalSectionhtml",
+            type: "POST",
+            dataType: "html",
+            success: function (result) {
+                $("#exampleModal").html(result);
+                //  wireUpPopupHandlers();
+            },
+            error: function () {
+            }
+        })
+
+    } catch (e) {
+        console.log("catch", e);
+    }
+}
 function CreateLeftSectionHorizontalhtml() {
     try {
         $.ajax({
@@ -11885,3 +11903,4 @@ document.addEventListener('DOMContentLoaded', initModeToggle);
 function tranTypeSet(type) {
     $("#hdntransition").val(type);
 }
+

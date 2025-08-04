@@ -43,6 +43,7 @@
             CreateHeaderSectionHorizontalhtml(),
             CreateBackgroundSectionHorizontalhtml(),
             CreateLeftSectionHorizontalhtml(),
+            CreateLayoutModalSectionhtml(),
            // CreateRightSectionHorizontalhtml()
             //CreateLeftSectionhtml()
 
@@ -270,40 +271,7 @@
 <input type="hidden" id="hdntransition" />
     <!-- Modal Structure -->
     <div class="modal fade layout_modal" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" style="background-color: rgba(36, 7, 136, 0.49) !important;">
-        <div class="modal-dialog">
-            <div class="modal-content p-3">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="aniBoardModalLabel">New AniBoard</h5>
-                </div>
-
-                <div class="modal-body">
-                    <!-- Vertical Option -->
-                    <div class="option-box d-flex justify-content-between align-items-center mb-2" id="vertical-option">
-                        <div class="d-flex align-items-center">
-                            <div class="portrait-icon"></div>
-                            <span class="vertical_option">Vertical / Portrait</span>
-                        </div>
-                        <span>1080x1920</span>
-                    </div>
-
-                    <!-- Horizontal Option -->
-                    <div class="option-box d-flex justify-content-between align-items-center" id="horizontal-option">
-                        <div class="d-flex align-items-center">
-                            <div class="landscape-icon"></div>
-                            <span>Horizontal / Landscape</span>
-                        </div>
-                        <span>1920x1080</span>
-                    </div>
-
-                   
-                </div>
-
-                <div class="modal-footer pt-0">
-                    <button type="button" class="cancel-btn" data-bs-dismiss="modal">Cancel</button>
-                    <button class="create-btn" id="create-button">Create</button>
-                </div>
-            </div>
-        </div>
+        
     </div>
     <!-- The Modal -->
     <div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">

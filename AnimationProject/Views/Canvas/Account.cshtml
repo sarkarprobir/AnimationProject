@@ -164,7 +164,34 @@
     .upload-box.active {
         border-color: #6214fe !important;
     }
+    /*modal check mark*/
+    .option-box .checkmark {
+        width: 20px;
+        height: 20px;
+        display: inline-block;
+        border: 2px solid #ccc;
+        border-radius: 50%;
+        position: relative;
+        transition: all 0.3s ease;
+    }
 
+    .option-box.selected .checkmark {
+        background-color: #6214fe; /* your brand purple */
+        border-color: #6214fe;
+    }
+
+        .option-box.selected .checkmark::after {
+            content: '';
+            position: absolute;
+            top: 2.5px;
+            left: 6px;
+            width: 5px;
+            height: 10px;
+            border: solid #fff;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+    /*modal check mark*/
 </style>
 
 <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
@@ -358,16 +385,22 @@
                         <div class="portrait-icon"></div>
                         <span class="vertical_option">Vertical / Portrait</span>
                     </div>
-                    <span>1080x1920</span>
+                    <div class="d-flex align-items-center gap-3">
+                        <span>1080x1920</span>
+                        <span class="checkmark"></span>
+                    </div>
                 </div>
 
                 <!-- Horizontal Option -->
-                <div class="option-box d-flex justify-content-between align-items-center " id="horizontal-option">
+                <div class="option-box d-flex justify-content-between align-items-center" id="horizontal-option">
                     <div class="d-flex align-items-center">
                         <div class="landscape-icon"></div>
                         <span>Horizontal / Landscape</span>
                     </div>
-                    <span>1920x1080</span>
+                    <div class="d-flex align-items-center gap-3">
+                        <span>1920x1080</span>
+                        <span class="checkmark"></span>
+                    </div>
                 </div>
             </div>
 

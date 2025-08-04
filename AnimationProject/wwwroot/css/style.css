@@ -1346,6 +1346,34 @@ body {
 .layout_modal {
     background-color: rgba(36, 7, 136, 0.49);
 }
+/*modal check mark*/
+.option-box .checkmark {
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.option-box.selected .checkmark {
+    background-color: #6214fe; /* your brand purple */
+    border-color: #6214fe;
+}
+
+    .option-box.selected .checkmark::after {
+        content: '';
+        position: absolute;
+        top: 2.5px;
+        left: 6px;
+        width: 5px;
+        height: 10px;
+        border: solid #fff;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+/*modal check mark*/
 .modal-backdrop {
     background-color: transparent !important;
 }

@@ -147,46 +147,7 @@ function opentl() {
     $(".right-sec-one").toggle();
 }
 
-// JavaScript for Handling Selection and Redirection 
 
-let selectedOption = ""; // Variable to store the selected board type
-
-document.getElementById("horizontal-option").addEventListener("click", function () {
-    selectedOption = "horizontal";
-    highlightSelection("horizontal-option");
-});
-
-document.getElementById("vertical-option").addEventListener("click", function () {
-    selectedOption = "vertical";
-    highlightSelection("vertical-option");
-});
-
-document.getElementById("create-button").addEventListener("click", function () {
-    if (selectedOption === "horizontal") {
-        window.location.href = "/Canvas/HorizontalIndex"; // Redirect to horizontal page
-    } else if (selectedOption === "vertical") {
-        window.location.href = "/Canvas/VerticalIndex"; // Redirect to vertical page
-    } else {
-        // alert("Please select an option before proceeding!");
-        MessageShow('', 'Please select an option before proceeding!', 'error');
-    }
-});
-
-// Function to highlight selected option
-function highlightSelection(selectedId) {
-    document.getElementById("horizontal-option").classList.remove("selected");
-    document.getElementById("vertical-option").classList.remove("selected");
-    document.getElementById(selectedId).classList.add("selected");
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.panel-vertical-scroll .menuboard-vertical-thum')
-        .forEach(item => {
-            item.addEventListener('click', function () {
-                this.classList.toggle('active');
-            });
-        });
-});
 
 function handleVThumbClick(clickedElement) {
     const items = document.querySelectorAll('.menuboard-horizontal-thum');
