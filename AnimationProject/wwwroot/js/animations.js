@@ -3662,277 +3662,277 @@ function isInsideRotatedText(mouseX, mouseY, txt) {
 //        localY <= +h / 2
 //    );
 //}
+////KD Need to be Include in project////////
+////canvas.addEventListener("mousedown", e => {
+////    const rect = canvas.getBoundingClientRect();
+////    const mouseX = e.clientX - rect.left;
+////    const mouseY = e.clientY - rect.top;
+////    const shift = e.shiftKey;
+////    if (document.activeElement === textEditor) return;
 
-canvas.addEventListener("mousedown", e => {
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    const shift = e.shiftKey;
-    if (document.activeElement === textEditor) return;
+////    // ── 1) ROTATION HANDLE CHECK ─────────────────────────────────────
+////    let hitRotate = null;
+////    [...textObjects, ...images].forEach(obj => {
+////        if (!obj.selected || !obj._rotateHandle) return;
+////        const h = obj._rotateHandle; // { x, y, radius }
+////        const dist = Math.hypot(mouseX - h.x, mouseY - h.y);
+////        if (dist < h.radius) hitRotate = obj;
+////    });
+////    if (hitRotate) {
+////        isRotating = true;
+////        rotatingObject = hitRotate;
+////        rotationStartAngle = Math.atan2(mouseY - hitRotate.y, mouseX - hitRotate.x);
+////        rotationStartValue = hitRotate.rotation || 0;
+////        e.preventDefault();
+////        return;
+////    }
 
-    // ── 1) ROTATION HANDLE CHECK ─────────────────────────────────────
-    let hitRotate = null;
-    [...textObjects, ...images].forEach(obj => {
-        if (!obj.selected || !obj._rotateHandle) return;
-        const h = obj._rotateHandle; // { x, y, radius }
-        const dist = Math.hypot(mouseX - h.x, mouseY - h.y);
-        if (dist < h.radius) hitRotate = obj;
-    });
-    if (hitRotate) {
-        isRotating = true;
-        rotatingObject = hitRotate;
-        rotationStartAngle = Math.atan2(mouseY - hitRotate.y, mouseX - hitRotate.x);
-        rotationStartValue = hitRotate.rotation || 0;
-        e.preventDefault();
-        return;
-    }
+////    // ── 2) HIT-TEST FOR TEXT AND IMAGE ───────────────────────────────
+////    let txtHit = null;
+////    for (let i = textObjects.length - 1; i >= 0; i--) {
+////        if (isInsideRotatedText(mouseX, mouseY, textObjects[i])) {
+////            txtHit = textObjects[i];
+////            break;
+////        }
+////    }
 
-    // ── 2) HIT-TEST FOR TEXT AND IMAGE ───────────────────────────────
-    let txtHit = null;
-    for (let i = textObjects.length - 1; i >= 0; i--) {
-        if (isInsideRotatedText(mouseX, mouseY, textObjects[i])) {
-            txtHit = textObjects[i];
-            break;
-        }
-    }
+////    let imgHit = null;
+////    for (let i = images.length - 1; i >= 0; i--) {
+////        if (isInsideRotatedImage(mouseX, mouseY, images[i])) {
+////            imgHit = images[i];
+////            break;
+////        }
+////    }
 
-    let imgHit = null;
-    for (let i = images.length - 1; i >= 0; i--) {
-        if (isInsideRotatedImage(mouseX, mouseY, images[i])) {
-            imgHit = images[i];
-            break;
-        }
-    }
+////    // ── 3) SHIFT-CLICK TOGGLE SELECTION ─────────────────────────────
+////    if (shift) {
+////        if (txtHit) {
+////            toggleSelect(txtHit);
+////            selectedForContextMenu = txtHit.selected ? txtHit : null;
+////            selectedType = txtHit.selected ? "text" : null;
+////        }
+////        if (imgHit) {
+////            toggleSelect(imgHit);
+////            selectedForContextMenu = imgHit.selected ? imgHit : null;
+////            selectedType = imgHit.selected ? "image" : null;
+////        }
+////        drawCanvas("Common");
+////        return;
+////    }
 
-    // ── 3) SHIFT-CLICK TOGGLE SELECTION ─────────────────────────────
-    if (shift) {
-        if (txtHit) {
-            toggleSelect(txtHit);
-            selectedForContextMenu = txtHit.selected ? txtHit : null;
-            selectedType = txtHit.selected ? "text" : null;
-        }
-        if (imgHit) {
-            toggleSelect(imgHit);
-            selectedForContextMenu = imgHit.selected ? imgHit : null;
-            selectedType = imgHit.selected ? "image" : null;
-        }
-        drawCanvas("Common");
-        return;
-    }
+////    // ── 4) RESIZE HANDLE ON SELECTED OBJECT ──────────────────────────
+////    let primary = null;
+////    let handle;
 
-    // ── 4) RESIZE HANDLE ON SELECTED OBJECT ──────────────────────────
-    let primary = null;
-    let handle;
+////    if (txtHit && txtHit.selected) {
+////        handle = getTextHandleUnderMouse(mouseX, mouseY, txtHit);
+////        if (handle && !handle.includes("middle")) {
+////            primary = { obj: txtHit, type: "text", handle };
+////        }
+////    }
+////    if (!primary) {
+////        for (let i = images.length - 1; i >= 0; i--) {
+////            const img = images[i];
+////            if (!img.selected) continue;
+////            handle = getImageHandleUnderMouse(mouseX, mouseY, img);
+////            if (handle) {
+////                primary = { obj: img, type: "image", handle };
+////                break;
+////            }
+////        }
+////    }
 
-    if (txtHit && txtHit.selected) {
-        handle = getTextHandleUnderMouse(mouseX, mouseY, txtHit);
-        if (handle && !handle.includes("middle")) {
-            primary = { obj: txtHit, type: "text", handle };
-        }
-    }
-    if (!primary) {
-        for (let i = images.length - 1; i >= 0; i--) {
-            const img = images[i];
-            if (!img.selected) continue;
-            handle = getImageHandleUnderMouse(mouseX, mouseY, img);
-            if (handle) {
-                primary = { obj: img, type: "image", handle };
-                break;
-            }
-        }
-    }
+////    // ── 5) COUNT SELECTED ITEMS ──────────────────────────────────────
+////    const selectedCount =
+////        textObjects.filter(o => o.selected).length +
+////        images.filter(i => i.selected).length;
 
-    // ── 5) COUNT SELECTED ITEMS ──────────────────────────────────────
-    const selectedCount =
-        textObjects.filter(o => o.selected).length +
-        images.filter(i => i.selected).length;
+////    // Multi-resize or single-resize...
+////    if (primary && selectedCount > 1) {
+////        startMultiResize(primary.obj, e);
+////        e.preventDefault();
+////        return;
+////    }
+////    if (primary && selectedCount === 1) {
+////        if (primary.type === "text") {
+////            // Begin text resize: store starting width/height/font
+////            isResizingText = true;
+////            activeTextHandle = primary.handle;
+////            activeText = primary.obj;
+////            textResizeStart = {
+////                mouseX: e.clientX,
+////                mouseY: e.clientY,
+////                origX: activeText.x,
+////                origY: activeText.y,
+////                origW: activeText.boundingWidth,
+////                origH: activeText.boundingHeight,
+////                origFont: activeText.fontSize
+////            };
+////            // STORE “start‐of‐drag” dims for text:
+////            activeText._resizeStartW = activeText.boundingWidth;
+////            activeText._resizeStartH = activeText.boundingHeight;
+////            activeText._resizeStartFont = activeText.fontSize;
+////        } else {
+////            // Begin image resize: store starting on-canvas width/height & scale
+////            isResizingImage = true;
+////            activeImageHandle = primary.handle;
+////            activeImage = primary.obj;
 
-    // Multi-resize or single-resize...
-    if (primary && selectedCount > 1) {
-        startMultiResize(primary.obj, e);
-        e.preventDefault();
-        return;
-    }
-    if (primary && selectedCount === 1) {
-        if (primary.type === "text") {
-            // Begin text resize: store starting width/height/font
-            isResizingText = true;
-            activeTextHandle = primary.handle;
-            activeText = primary.obj;
-            textResizeStart = {
-                mouseX: e.clientX,
-                mouseY: e.clientY,
-                origX: activeText.x,
-                origY: activeText.y,
-                origW: activeText.boundingWidth,
-                origH: activeText.boundingHeight,
-                origFont: activeText.fontSize
-            };
-            // STORE “start‐of‐drag” dims for text:
-            activeText._resizeStartW = activeText.boundingWidth;
-            activeText._resizeStartH = activeText.boundingHeight;
-            activeText._resizeStartFont = activeText.fontSize;
-        } else {
-            // Begin image resize: store starting on-canvas width/height & scale
-            isResizingImage = true;
-            activeImageHandle = primary.handle;
-            activeImage = primary.obj;
+////            const startSX = (typeof activeImage.scaleX === 'number')
+////                ? activeImage.scaleX : 1;
+////            const startSY = (typeof activeImage.scaleY === 'number')
+////                ? activeImage.scaleY : 1;
 
-            const startSX = (typeof activeImage.scaleX === 'number')
-                ? activeImage.scaleX : 1;
-            const startSY = (typeof activeImage.scaleY === 'number')
-                ? activeImage.scaleY : 1;
+////            activeImage._resizeStartSX = startSX;
+////            activeImage._resizeStartSY = startSY;
+////            activeImage._resizeStartW = activeImage.width * startSX;
+////            activeImage._resizeStartH = activeImage.height * startSY;
+////        }
+////        e.preventDefault();
+////        drawCanvas("Common");
+////        return;
+////    }
 
-            activeImage._resizeStartSX = startSX;
-            activeImage._resizeStartSY = startSY;
-            activeImage._resizeStartW = activeImage.width * startSX;
-            activeImage._resizeStartH = activeImage.height * startSY;
-        }
-        e.preventDefault();
-        drawCanvas("Common");
-        return;
-    }
+////    // ── 6) GROUP-DRAG ────────────────────────────────────────────────
+////    if ((txtHit && txtHit.selected) || (imgHit && imgHit.selected)) {
+////        isDraggingGroup = true;
+////        groupDragStart = { x: e.clientX, y: e.clientY };
+////        groupStarts = [];
+////        textObjects.filter(o => o.selected)
+////            .forEach(o => groupStarts.push({ obj: o, x: o.x, y: o.y }));
+////        images.filter(i => i.selected)
+////            .forEach(i => groupStarts.push({ obj: i, x: i.x, y: i.y }));
+////        e.preventDefault();
+////        return;
+////    }
 
-    // ── 6) GROUP-DRAG ────────────────────────────────────────────────
-    if ((txtHit && txtHit.selected) || (imgHit && imgHit.selected)) {
-        isDraggingGroup = true;
-        groupDragStart = { x: e.clientX, y: e.clientY };
-        groupStarts = [];
-        textObjects.filter(o => o.selected)
-            .forEach(o => groupStarts.push({ obj: o, x: o.x, y: o.y }));
-        images.filter(i => i.selected)
-            .forEach(i => groupStarts.push({ obj: i, x: i.x, y: i.y }));
-        e.preventDefault();
-        return;
-    }
+////    // ── 7) DESELECT ALL BEFORE NEW SELECTION ─────────────────────────
+////    textObjects.forEach(o => o.selected = false);
+////    images.forEach(i => i.selected = false);
+////    selectedForContextMenu = null;
+////    selectedType = null;
+////    activeText = activeImage = null;
 
-    // ── 7) DESELECT ALL BEFORE NEW SELECTION ─────────────────────────
-    textObjects.forEach(o => o.selected = false);
-    images.forEach(i => i.selected = false);
-    selectedForContextMenu = null;
-    selectedType = null;
-    activeText = activeImage = null;
-
-    // ── 8) CLICK-TO-SELECT TEXT ─────────────────────────────────────
-    if (txtHit) {
-        txtHit.selected = true;
-        selectedForContextMenu = txtHit;
-        selectedType = "text";
-        activeText = txtHit;
-        const angle = txtHit.rotation || 0;
-        rotationSlider.value = angle;
-        document.getElementById("rotationValue").textContent = angle + "°";
-        rotationBadge.textContent = angle;
+////    // ── 8) CLICK-TO-SELECT TEXT ─────────────────────────────────────
+////    if (txtHit) {
+////        txtHit.selected = true;
+////        selectedForContextMenu = txtHit;
+////        selectedType = "text";
+////        activeText = txtHit;
+////        const angle = txtHit.rotation || 0;
+////        rotationSlider.value = angle;
+////        document.getElementById("rotationValue").textContent = angle + "°";
+////        rotationBadge.textContent = angle;
 
 
-        var opacity = txtHit.opacity * 100 || 100;
-        if (opacity > 100) opacity = 100;
-        opacitySlider.value = opacity;
-        document.getElementById("opacityValue").textContent = opacity + "";
-        opacityBadge.textContent = opacity;
+////        var opacity = txtHit.opacity * 100 || 100;
+////        if (opacity > 100) opacity = 100;
+////        opacitySlider.value = opacity;
+////        document.getElementById("opacityValue").textContent = opacity + "";
+////        opacityBadge.textContent = opacity;
 
-        handle = getTextHandleUnderMouse(mouseX, mouseY, txtHit);
-        if (handle && !handle.includes("middle")) {
-            isResizingText = true;
-            activeTextHandle = handle;
-            textResizeStart = {
-                mouseX: e.clientX,
-                mouseY: e.clientY,
-                origX: txtHit.x,
-                origY: txtHit.y,
-                origW: txtHit.boundingWidth,
-                origH: txtHit.boundingHeight,
-                origFont: txtHit.fontSize
-            };
-            // Also store “start” values in case user rotates then drags again:
-            txtHit._resizeStartW = txtHit.boundingWidth;
-            txtHit._resizeStartH = txtHit.boundingHeight;
-            txtHit._resizeStartFont = txtHit.fontSize;
-        } else {
-            isDraggingText = true;
-            dragOffsetText = { x: mouseX - txtHit.x, y: mouseY - txtHit.y };
-        }
+////        handle = getTextHandleUnderMouse(mouseX, mouseY, txtHit);
+////        if (handle && !handle.includes("middle")) {
+////            isResizingText = true;
+////            activeTextHandle = handle;
+////            textResizeStart = {
+////                mouseX: e.clientX,
+////                mouseY: e.clientY,
+////                origX: txtHit.x,
+////                origY: txtHit.y,
+////                origW: txtHit.boundingWidth,
+////                origH: txtHit.boundingHeight,
+////                origFont: txtHit.fontSize
+////            };
+////            // Also store “start” values in case user rotates then drags again:
+////            txtHit._resizeStartW = txtHit.boundingWidth;
+////            txtHit._resizeStartH = txtHit.boundingHeight;
+////            txtHit._resizeStartFont = txtHit.fontSize;
+////        } else {
+////            isDraggingText = true;
+////            dragOffsetText = { x: mouseX - txtHit.x, y: mouseY - txtHit.y };
+////        }
 
-        e.preventDefault();
-        drawCanvas("Common");
-        return;
-    }
+////        e.preventDefault();
+////        drawCanvas("Common");
+////        return;
+////    }
 
-    // ── 9) CLICK-TO-SELECT IMAGE ────────────────────────────────────
-    if (imgHit) {
-        images.forEach(i => i.selected = false);
-        imgHit.selected = true;
-        selectedForContextMenu = imgHit;
-        selectedType = "image";
-        activeImage = imgHit;
-        const angle = imgHit.rotation || 0;
-        rotationSlider.value = angle;
-        document.getElementById("rotationValue").textContent = angle + "°";
-        rotationBadge.textContent = angle;
+////    // ── 9) CLICK-TO-SELECT IMAGE ────────────────────────────────────
+////    if (imgHit) {
+////        images.forEach(i => i.selected = false);
+////        imgHit.selected = true;
+////        selectedForContextMenu = imgHit;
+////        selectedType = "image";
+////        activeImage = imgHit;
+////        const angle = imgHit.rotation || 0;
+////        rotationSlider.value = angle;
+////        document.getElementById("rotationValue").textContent = angle + "°";
+////        rotationBadge.textContent = angle;
 
-        var opacity = imgHit.opacity * 100 || 100;
-        if (opacity > 100) opacity = 100;
-        opacitySlider.value = opacity;
-        document.getElementById("opacityValue").textContent = opacity + "";
-        opacityBadge.textContent = opacity;
+////        var opacity = imgHit.opacity * 100 || 100;
+////        if (opacity > 100) opacity = 100;
+////        opacitySlider.value = opacity;
+////        document.getElementById("opacityValue").textContent = opacity + "";
+////        opacityBadge.textContent = opacity;
 
-        isDraggingImage = true;
-        dragOffsetImage = { x: mouseX - imgHit.x, y: mouseY - imgHit.y };
-        enableFillColorDiv();
-        enableStrockColorDiv();
+////        isDraggingImage = true;
+////        dragOffsetImage = { x: mouseX - imgHit.x, y: mouseY - imgHit.y };
+////        enableFillColorDiv();
+////        enableStrockColorDiv();
 
-        e.preventDefault();
-        drawCanvas("Common");
-        return;
-    }
+////        e.preventDefault();
+////        drawCanvas("Common");
+////        return;
+////    }
 
-    //// ── 10) CLICKED EMPTY SPACE ─────────────────────────────────────
-    //textObjects.forEach(o => o.selected = false);
-    //images.forEach(i => i.selected = false);
-    //selectedForContextMenu = null;
-    //selectedType = null;
-    //activeText = activeImage = null;
-    //rotationSlider.value = 0;
-    //rotationBadge.textContent = "0";
+////    //// ── 10) CLICKED EMPTY SPACE ─────────────────────────────────────
+////    //textObjects.forEach(o => o.selected = false);
+////    //images.forEach(i => i.selected = false);
+////    //selectedForContextMenu = null;
+////    //selectedType = null;
+////    //activeText = activeImage = null;
+////    //rotationSlider.value = 0;
+////    //rotationBadge.textContent = "0";
 
-    //e.preventDefault();
-    //drawCanvas("Common");
+////    //e.preventDefault();
+////    //drawCanvas("Common");
 
-    // ── 10) CLICKED EMPTY SPACE ─────────────────────────────────────
-    const clickedEmpty =
-        !hitRotate &&
-        !txtHit &&
-        !imgHit &&
-        !primary;
+////    // ── 10) CLICKED EMPTY SPACE ─────────────────────────────────────
+////    const clickedEmpty =
+////        !hitRotate &&
+////        !txtHit &&
+////        !imgHit &&
+////        !primary;
 
-    if (clickedEmpty) {
-        // clear any existing selection
-        textObjects.forEach(o => o.selected = false);
-        images.forEach(i => i.selected = false);
-        selectedForContextMenu = null;
-        selectedType = null;
-        activeText = activeImage = null;
-        rotationSlider.value = 0;
-        rotationBadge.textContent = "0";
+////    if (clickedEmpty) {
+////        // clear any existing selection
+////        textObjects.forEach(o => o.selected = false);
+////        images.forEach(i => i.selected = false);
+////        selectedForContextMenu = null;
+////        selectedType = null;
+////        activeText = activeImage = null;
+////        rotationSlider.value = 0;
+////        rotationBadge.textContent = "0";
 
-        opacitySlider.value = 100;
-        opacityBadge.textContent = "100";
+////        opacitySlider.value = 100;
+////        opacityBadge.textContent = "100";
        
 
-        // begin drag-to-select
-        isDraggingSelectionBox = true;
-        const rect = canvas.getBoundingClientRect();
-        selectionStart = {
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top
-        };
-        selectionEnd = { ...selectionStart };
+////        // begin drag-to-select
+////        isDraggingSelectionBox = true;
+////        const rect = canvas.getBoundingClientRect();
+////        selectionStart = {
+////            x: e.clientX - rect.left,
+////            y: e.clientY - rect.top
+////        };
+////        selectionEnd = { ...selectionStart };
 
-        e.preventDefault();
-        drawCanvas("Common");
-        return;
-    }
-});
+////        e.preventDefault();
+////        drawCanvas("Common");
+////        return;
+////    }
+////});
 
 
 
@@ -4995,200 +4995,200 @@ function getSelectedType() {
 }
 
 
+////KD Need to be Include in project////////
+//canvas.addEventListener("click", function (e) {
+//    // ignore shift here
+//    if (e.shiftKey) return;
 
-canvas.addEventListener("click", function (e) {
-    // ignore shift here
-    if (e.shiftKey) return;
+//    if (skipNextClick) {
+//        skipNextClick = false;
+//        return;    // swallow this click so it doesn’t clear selection
+//    }
 
-    if (skipNextClick) {
-        skipNextClick = false;
-        return;    // swallow this click so it doesn’t clear selection
-    }
-
-    const buttons = document.querySelectorAll('.toggle-btn');
-    const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]');
+//    const buttons = document.querySelectorAll('.toggle-btn');
+//    const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]');
 
    
    
 
 
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    const pos = { x: mouseX, y: mouseY };
+//    const rect = canvas.getBoundingClientRect();
+//    const mouseX = e.clientX - rect.left;
+//    const mouseY = e.clientY - rect.top;
+//    const pos = { x: mouseX, y: mouseY };
 
-    // helpers to clear selection
-    const clearText = () => textObjects.forEach(o => o.selected = false);
-    const clearImages = () => images.forEach(i => i.selected = false);
+//    // helpers to clear selection
+//    const clearText = () => textObjects.forEach(o => o.selected = false);
+//    const clearImages = () => images.forEach(i => i.selected = false);
 
-    // find what was clicked
-    const txtHit = getTextObjectAt(mouseX, mouseY);
-    let imgHit = null;
-    for (let i = images.length - 1; i >= 0; i--) {
-        if (isMouseOverImage(images[i], pos)) {
-            imgHit = images[i];
-            break;
-        }
-    }
+//    // find what was clicked
+//    const txtHit = getTextObjectAt(mouseX, mouseY);
+//    let imgHit = null;
+//    for (let i = images.length - 1; i >= 0; i--) {
+//        if (isMouseOverImage(images[i], pos)) {
+//            imgHit = images[i];
+//            break;
+//        }
+//    }
 
-    // always start fresh
-    clearText();
-    clearImages();
-    activeText = null;
-    activeImage = null;
+//    // always start fresh
+//    clearText();
+//    clearImages();
+//    activeText = null;
+//    activeImage = null;
 
-    // helper to select a whole group
-    function selectGroup(id) {
-        textObjects.forEach(o => { if (o.groupId === id) o.selected = true; });
-        images.forEach(i => { if (i.groupId === id) i.selected = true; });
-    }
+//    // helper to select a whole group
+//    function selectGroup(id) {
+//        textObjects.forEach(o => { if (o.groupId === id) o.selected = true; });
+//        images.forEach(i => { if (i.groupId === id) i.selected = true; });
+//    }
 
-    // update the groupCheckbox UI
-    const groupCheckbox = document.getElementById("groupCheckbox");
-    function updateCheckboxFor(id) {
-        if (id != null) {
-            groupCheckbox.checked = true;
-        } else {
-            groupCheckbox.checked = false;
-        }
-    }
+//    // update the groupCheckbox UI
+//    const groupCheckbox = document.getElementById("groupCheckbox");
+//    function updateCheckboxFor(id) {
+//        if (id != null) {
+//            groupCheckbox.checked = true;
+//        } else {
+//            groupCheckbox.checked = false;
+//        }
+//    }
 
-    if (txtHit) {
-        // TEXT clicked
-        txtHit.selected = true;
-        activeText = txtHit;
+//    if (txtHit) {
+//        // TEXT clicked
+//        txtHit.selected = true;
+//        activeText = txtHit;
 
-        // if this text is grouped, select its entire group
-        if (txtHit.groupId != null) {
-            selectGroup(txtHit.groupId);
-            updateCheckboxFor(txtHit.groupId);
-        } else {
-            updateCheckboxFor(null);
-        }
+//        // if this text is grouped, select its entire group
+//        if (txtHit.groupId != null) {
+//            selectGroup(txtHit.groupId);
+//            updateCheckboxFor(txtHit.groupId);
+//        } else {
+//            updateCheckboxFor(null);
+//        }
 
-        // update UI panels...
-        $("#favcolor").val(txtHit.textColor);
-        $("#noAnimCheckbox").prop("checked", !!txtHit.noAnim);
-        $("#fontstyle_popup").show();
-        $(".right-sec-two").show();
-        $(".right-sec-one").hide();
-        //document.getElementById("modeButton").innerText = "Animation Mode";
-        $("#opengl_popup").hide();
-        // 2) Clear `active` from all
-        buttons.forEach(b => b.classList.remove('active'));
+//        // update UI panels...
+//        $("#favcolor").val(txtHit.textColor);
+//        $("#noAnimCheckbox").prop("checked", !!txtHit.noAnim);
+//        $("#fontstyle_popup").show();
+//        $(".right-sec-two").show();
+//        $(".right-sec-one").hide();
+//        //document.getElementById("modeButton").innerText = "Animation Mode";
+//        $("#opengl_popup").hide();
+//        // 2) Clear `active` from all
+//        buttons.forEach(b => b.classList.remove('active'));
 
-        // 3) Activate only the Graphic button
-        graphicBtn.classList.add('active');
+//        // 3) Activate only the Graphic button
+//        graphicBtn.classList.add('active');
 
-        var opacity = txtHit.opacity * 100 || 100;
-        if (opacity > 100) opacity = 100;
-        opacitySlider.value = opacity;
-        document.getElementById("opacityValue").textContent = opacity + "";
-        opacityBadge.textContent = opacity;
+//        var opacity = txtHit.opacity * 100 || 100;
+//        if (opacity > 100) opacity = 100;
+//        opacitySlider.value = opacity;
+//        document.getElementById("opacityValue").textContent = opacity + "";
+//        opacityBadge.textContent = opacity;
 
-    }
-    else if (imgHit) {
-        // IMAGE clicked
-        imgHit.selected = true;
-        activeImage = imgHit;
+//    }
+//    else if (imgHit) {
+//        // IMAGE clicked
+//        imgHit.selected = true;
+//        activeImage = imgHit;
 
-        if (imgHit.groupId != null) {
-            selectGroup(imgHit.groupId);
-            updateCheckboxFor(imgHit.groupId);
-        } else {
-            updateCheckboxFor(null);
-        }
+//        if (imgHit.groupId != null) {
+//            selectGroup(imgHit.groupId);
+//            updateCheckboxFor(imgHit.groupId);
+//        } else {
+//            updateCheckboxFor(null);
+//        }
 
-        // update UI panels...
-        $("#noAnimCheckbox").prop("checked", !!imgHit.noAnim);
-        $("#fontstyle_popup").show();
-        $(".right-sec-two").show();
-        $(".right-sec-one").hide();
-        //document.getElementById("modeButton").innerText = "Animation Mode";
-        $("#opengl_popup").hide();
-        // 2) Clear `active` from all
-        buttons.forEach(b => b.classList.remove('active'));
+//        // update UI panels...
+//        $("#noAnimCheckbox").prop("checked", !!imgHit.noAnim);
+//        $("#fontstyle_popup").show();
+//        $(".right-sec-two").show();
+//        $(".right-sec-one").hide();
+//        //document.getElementById("modeButton").innerText = "Animation Mode";
+//        $("#opengl_popup").hide();
+//        // 2) Clear `active` from all
+//        buttons.forEach(b => b.classList.remove('active'));
 
-        // 3) Activate only the Graphic button
-        graphicBtn.classList.add('active');
+//        // 3) Activate only the Graphic button
+//        graphicBtn.classList.add('active');
 
-        var opacity = imgHit.opacity * 100 || 100;
-        if (opacity > 100) opacity = 100;
-        opacitySlider.value = opacity;
-        document.getElementById("opacityValue").textContent = opacity + "";
-        opacityBadge.textContent = opacity;
-        if ($("#hdnFillStrockColorFlag").val() == '1') {
-            $("#hdnfillColor").val(imgHit.fillNoColor || "#FFFFFF");
-            $("#hdnStrockColor").val(imgHit.strokeNoColor || "#FFFFFF");
-            $("#favFillcolor").val($("#hdnfillColor").val());
-            $("#favStrockcolor").val($("#hdnStrockColor").val());
-            $("#hdnFillStrockColorFlag").val('2');
-        }
+//        var opacity = imgHit.opacity * 100 || 100;
+//        if (opacity > 100) opacity = 100;
+//        opacitySlider.value = opacity;
+//        document.getElementById("opacityValue").textContent = opacity + "";
+//        opacityBadge.textContent = opacity;
+//        if ($("#hdnFillStrockColorFlag").val() == '1') {
+//            $("#hdnfillColor").val(imgHit.fillNoColor || "#FFFFFF");
+//            $("#hdnStrockColor").val(imgHit.strokeNoColor || "#FFFFFF");
+//            $("#favFillcolor").val($("#hdnfillColor").val());
+//            $("#favStrockcolor").val($("#hdnStrockColor").val());
+//            $("#hdnFillStrockColorFlag").val('2');
+//        }
        
-    }
-    else {
-                // — clicked empty space —
-                clearText();
-                clearImages();
-                activeText = null;
-                activeImage = null;
-        // no group selected
-        updateCheckboxFor(null);
+//    }
+//    else {
+//                // — clicked empty space —
+//                clearText();
+//                clearImages();
+//                activeText = null;
+//                activeImage = null;
+//        // no group selected
+//        updateCheckboxFor(null);
 
-        // 2) Clear `active` from all
-        buttons.forEach(b => b.classList.remove('active'));
+//        // 2) Clear `active` from all
+//        buttons.forEach(b => b.classList.remove('active'));
 
-        // 3) Activate only the Graphic button
-        graphicBtn.classList.add('active');
+//        // 3) Activate only the Graphic button
+//        graphicBtn.classList.add('active');
 
-        const opacity =  100;
-        opacitySlider.value = opacity;
-        document.getElementById("opacityValue").textContent = opacity + "";
-        opacityBadge.textContent = opacity;
-    }
+//        const opacity =  100;
+//        opacitySlider.value = opacity;
+//        document.getElementById("opacityValue").textContent = opacity + "";
+//        opacityBadge.textContent = opacity;
+//    }
 
-    drawCanvas('Common');
-    updateFontStyleButtons();
-    const selectedType = getSelectedType();
-    if (selectedType == "Shape") {
-        $("#hdnfillNoColorStatus").val(imgHit.fillNoColorStatus || false);
-        $("#hdnstrokeNoColorStatus").val(imgHit.strokeNoColorStatus || false);
-        //if ($("#hdnfillColor").val() == imgHit.fillNoColor) {
-        //    $("#hdnfillColor").val(imgHit.fillNoColor || "#FFFFFF");
-        //}
-        //if ($("#hdnStrockColor").val() == imgHit.strokeNoColor) {
-        //    $("#hdnStrockColor").val(imgHit.strokeNoColor || "#FFFFFF");
-        //}
+//    drawCanvas('Common');
+//    updateFontStyleButtons();
+//    const selectedType = getSelectedType();
+//    if (selectedType == "Shape") {
+//        $("#hdnfillNoColorStatus").val(imgHit.fillNoColorStatus || false);
+//        $("#hdnstrokeNoColorStatus").val(imgHit.strokeNoColorStatus || false);
+//        //if ($("#hdnfillColor").val() == imgHit.fillNoColor) {
+//        //    $("#hdnfillColor").val(imgHit.fillNoColor || "#FFFFFF");
+//        //}
+//        //if ($("#hdnStrockColor").val() == imgHit.strokeNoColor) {
+//        //    $("#hdnStrockColor").val(imgHit.strokeNoColor || "#FFFFFF");
+//        //}
        
-        //$("#favFillcolor").val($("#hdnfillColor").val());
-        //$("#favStrockcolor").val($("#hdnStrockColor").val());
+//        //$("#favFillcolor").val($("#hdnfillColor").val());
+//        //$("#favStrockcolor").val($("#hdnStrockColor").val());
 
-        document.getElementById('ddlStrokeWidth').value = (imgHit.strokeWidth || 3).toString();
-        document.getElementById("noColorCheck").checked = toBool(imgHit.fillNoColorStatus)||false;
-        document.getElementById("noColorCheck2").checked = toBool(imgHit.strokeNoColorStatus) || false;
+//        document.getElementById('ddlStrokeWidth').value = (imgHit.strokeWidth || 3).toString();
+//        document.getElementById("noColorCheck").checked = toBool(imgHit.fillNoColorStatus)||false;
+//        document.getElementById("noColorCheck2").checked = toBool(imgHit.strokeNoColorStatus) || false;
 
-        const noColorChecked = document.getElementById("noColorCheck").checked;
-        const noStrokeChecked = document.getElementById("noColorCheck2").checked;
-        if (noColorChecked) {
-            updateSelectedImageColors(
-                "none", noStrokeChecked ? "none" : $("#hdnStrockColor").val(), document.getElementById("ddlStrokeWidth").value || 2
-            );
-        }
+//        const noColorChecked = document.getElementById("noColorCheck").checked;
+//        const noStrokeChecked = document.getElementById("noColorCheck2").checked;
+//        if (noColorChecked) {
+//            updateSelectedImageColors(
+//                "none", noStrokeChecked ? "none" : $("#hdnStrockColor").val(), document.getElementById("ddlStrokeWidth").value || 2
+//            );
+//        }
 
       
-        if (noStrokeChecked) {
-            updateSelectedImageColors(
-                noColorChecked ? "none" : $("#hdnfillColor").val(),
-                "none", document.getElementById("ddlStrokeWidth").value || 2
-            );
-        }
+//        if (noStrokeChecked) {
+//            updateSelectedImageColors(
+//                noColorChecked ? "none" : $("#hdnfillColor").val(),
+//                "none", document.getElementById("ddlStrokeWidth").value || 2
+//            );
+//        }
 
        
-    }
-    console.log("Selected Type:", selectedType);
-    HideShowRightPannel(selectedType);
+//    }
+//    console.log("Selected Type:", selectedType);
+//    HideShowRightPannel(selectedType);
 
-});
+//});
 function toBool(x) {
     return x === true || x === "true";
 }
@@ -6934,7 +6934,6 @@ let scale = 1;
 const scaleStep = 0.1;
 const maxScale = 3;
 const minScale = 0.5;
-
 const scaleText = document.getElementById("scaleValue");
 
 function applyScale() {
@@ -6960,3 +6959,1046 @@ function zoomOut() {
 
 
 //zoom function end
+
+const textEditorNew = document.getElementById("textEditorNew");
+const colorPickerNew = document.getElementById("colorPickerNew");
+let selectedLineSpacing = 8;
+const fontSizeNew = 30;
+const lineHeight = 20;
+const fontFamilyNew = "Arial";
+
+let boxes = [];
+let activeBox = null;
+let isDraggingNew = false, isResizingNew = false, isEditing = false;
+let resizeDirection = null;
+let prevMouseX = 0, prevMouseY = 0;
+let dragOffsetXNew = 0, dragOffsetYNew = 0;
+let savedRange = null;
+
+// ——————— Helpers ———————
+
+function getCanvasMousePosition(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY
+    };
+}
+
+function getAllHandles(box) {
+    const { x, y, width: w, height: h } = box;
+    return {
+        tl: { x, y }, tm: { x: x + w / 2, y }, tr: { x: x + w, y },
+        ml: { x, y: y + h / 2 }, mr: { x: x + w, y: y + h / 2 },
+        bl: { x, y: y + h }, bm: { x: x + w / 2, y: y + h }, br: { x: x + w, y: y + h }
+    };
+}
+
+function getResizeHandle(box, mx, my) {
+    const hit = 8;
+    for (let [key, h] of Object.entries(getAllHandles(box))) {
+        if (Math.abs(mx - h.x) < hit && Math.abs(my - h.y) < hit) return key;
+    }
+    return null;
+}
+
+function stripHTML(html) {
+    let tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    return tmp.innerText;
+}
+
+
+// ✅ Fixes both issues: font mismatch and color not reflecting in canvas
+
+// ✅ Ensure accurate canvas rendering of colored spans
+
+
+
+// ✅ Fix the issue where text unexpectedly wraps to a new line
+// Ensure line breaking happens only on real <div> or <br>, not on span/text nodes
+
+
+// ✅ Fix: Adjust line gap and prevent selection box unless text box is active
+
+
+
+// ✅ Updated drawText to show selection box even when not editing (for drag/select)
+function drawText() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.textBaseline = "top";
+
+    const defaultStyle = window.getComputedStyle(textEditorNew);
+    const defaultFontSize = defaultStyle.fontSize || "16px";
+    const defaultFontFamily = defaultStyle.fontFamily || "Arial";
+    const defaultFontWeight = defaultStyle.fontWeight || "normal";
+    const defaultFontStyle = defaultStyle.fontStyle || "normal";
+    const defaultColor = defaultStyle.color || "#000";
+    const defaultLineHeight = parseFloat(defaultStyle.lineHeight) || (parseFloat(defaultFontSize) + 8);
+
+    for (const box of boxes) {
+        ctx.save();
+
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = box.text;
+
+        let lines = [];
+        let currentLine = document.createElement("div");
+        lines.push(currentLine);
+
+        wrapper.childNodes.forEach(n => {
+            if (n.nodeType === 1 && n.tagName === "DIV") {
+                if (currentLine.childNodes.length > 0) {
+                    currentLine = document.createElement("div");
+                    lines.push(currentLine);
+                }
+                currentLine.append(...n.childNodes);
+                currentLine = document.createElement("div");
+                lines.push(currentLine);
+            } else if (n.nodeType === 1 && n.tagName === "BR") {
+                currentLine = document.createElement("div");
+                lines.push(currentLine);
+            } else {
+                currentLine.appendChild(n.cloneNode(true));
+            }
+        });
+
+        if (lines.length === 0 || lines[0].childNodes.length === 0) {
+            const d = document.createElement("div");
+            d.textContent = box.text;
+            lines = [d];
+        }
+
+        let cursorY = box.y + 5;
+
+        lines.forEach(lineNode => {
+            let cursorX = box.x + 5;
+            if (box.align === "center") {
+                ctx.textAlign = "center";
+                cursorX = box.x + box.width / 2;
+            } else if (box.align === "right") {
+                ctx.textAlign = "right";
+                cursorX = box.x + box.width - 5;
+            } else {
+                ctx.textAlign = "left";
+            }
+
+            let maxLineHeight = 0;
+
+            (function paint(n, inheritedStyle = {}) {
+                if (n.nodeType === 3) {
+                    const txt = n.nodeValue;
+                    if (txt) {
+                        const fs = inheritedStyle.fontSize || defaultFontSize;
+                        const ff = inheritedStyle.fontFamily || defaultFontFamily;
+                        const fw = inheritedStyle.fontWeight || defaultFontWeight;
+                        const fst = inheritedStyle.fontStyle || defaultFontStyle;
+                        const col = inheritedStyle.color || defaultColor;
+
+                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                        ctx.fillStyle = col;
+
+                        ctx.fillText(txt, cursorX, cursorY);
+                        cursorX += ctx.measureText(txt).width;
+
+                        // Track max height
+                        const px = parseFloat(fs);
+                        if (!isNaN(px)) maxLineHeight = Math.max(maxLineHeight, px);
+                    }
+                } else if (n.nodeType === 1) {
+                    if (n.tagName === "BR") return;
+
+                    const s = n.style;
+                    const style = {
+                        fontSize: s.fontSize || inheritedStyle.fontSize,
+                        fontFamily: s.fontFamily || inheritedStyle.fontFamily,
+                        fontWeight: s.fontWeight || inheritedStyle.fontWeight,
+                        fontStyle: s.fontStyle || inheritedStyle.fontStyle,
+                        color: s.color || inheritedStyle.color,
+                    };
+
+                    n.childNodes.forEach(child => paint(child, style));
+                }
+            })(lineNode);
+
+            // Move down by line-height (can be less than font size to allow overlap)
+            const spacing = parseFloat(defaultStyle.lineHeight) || (maxLineHeight + 4);
+            cursorY += spacing;
+        });
+
+        // ✅ Show selection box if box is active (editing or not)
+        if (box === activeBox) {
+            ctx.strokeStyle = isEditing ? "red" : "red";
+            ctx.lineWidth = isEditing ? 2 : 1;
+            ctx.strokeRect(box.x, box.y, box.width, box.height);
+            ctx.fillStyle = "blue";
+            for (let h of Object.values(getAllHandles(box))) {
+                ctx.fillRect(h.x - 4, h.y - 4, 8, 8);
+            }
+        }
+
+        ctx.restore();
+    }
+}
+
+function drawTextOld() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.textBaseline = "top";
+
+    const defaultStyle = window.getComputedStyle(textEditorNew);
+    const defaultFontSize = defaultStyle.fontSize || "16px";
+    const defaultFontFamily = defaultStyle.fontFamily || "Arial";
+    const defaultFontWeight = defaultStyle.fontWeight || "normal";
+    const defaultFontStyle = defaultStyle.fontStyle || "normal";
+    const defaultColor = defaultStyle.color || "#000";
+    const defaultLineHeight = (parseFloat(defaultStyle.lineHeight) || 24) + 12;
+
+    for (const box of boxes) {
+        ctx.save();
+
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = box.text;
+
+        let lines = [];
+        let currentLine = document.createElement("div");
+        lines.push(currentLine);
+
+        wrapper.childNodes.forEach(n => {
+            if (n.nodeType === 1 && n.tagName === "DIV") {
+                if (currentLine.childNodes.length > 0) {
+                    currentLine = document.createElement("div");
+                    lines.push(currentLine);
+                }
+                currentLine.append(...n.childNodes);
+                currentLine = document.createElement("div");
+                lines.push(currentLine);
+            } else if (n.nodeType === 1 && n.tagName === "BR") {
+                currentLine = document.createElement("div");
+                lines.push(currentLine);
+            } else {
+                currentLine.appendChild(n.cloneNode(true));
+            }
+        });
+
+        if (lines.length === 0 || lines[0].childNodes.length === 0) {
+            const d = document.createElement("div");
+            d.textContent = box.text;
+            lines = [d];
+        }
+
+        lines.forEach((lineNode, row) => {
+            let cursorX = box.x + 5;
+            if (box.align === "center") {
+                ctx.textAlign = "center";
+                cursorX = box.x + box.width / 2;
+            } else if (box.align === "right") {
+                ctx.textAlign = "right";
+                cursorX = box.x + box.width - 5;
+            } else {
+                ctx.textAlign = "left";
+            }
+
+            const baseY = box.y + 5 + row * defaultLineHeight;
+
+            (function paint(n, inheritedStyle = {}) {
+                if (n.nodeType === 3) {
+                    const txt = n.nodeValue;
+                    if (txt) {
+                        const fs = inheritedStyle.fontSize || defaultFontSize;
+                        const ff = inheritedStyle.fontFamily || defaultFontFamily;
+                        const fw = inheritedStyle.fontWeight || defaultFontWeight;
+                        const fst = inheritedStyle.fontStyle || defaultFontStyle;
+                        const col = inheritedStyle.color || defaultColor;
+
+                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                        ctx.fillStyle = col;
+
+                        ctx.fillText(txt, cursorX, baseY);
+                        cursorX += ctx.measureText(txt).width;
+                    }
+                } else if (n.nodeType === 1) {
+                    if (n.tagName === "BR") return;
+
+                    const s = n.style;
+                    const style = {
+                        fontSize: s.fontSize || inheritedStyle.fontSize,
+                        fontFamily: s.fontFamily || inheritedStyle.fontFamily,
+                        fontWeight: s.fontWeight || inheritedStyle.fontWeight,
+                        fontStyle: s.fontStyle || inheritedStyle.fontStyle,
+                        color: s.color || inheritedStyle.color,
+                    };
+
+                    n.childNodes.forEach(child => paint(child, style));
+                }
+            })(lineNode);
+        });
+
+        // ✅ Show selection box if box is active (editing or not)
+        if (box === activeBox) {
+            ctx.strokeStyle = isEditing ? "red" : "red";
+            ctx.lineWidth = isEditing ? 2 : 1;
+            ctx.strokeRect(box.x, box.y, box.width, box.height);
+            ctx.fillStyle = "blue";
+            for (let h of Object.values(getAllHandles(box))) {
+                ctx.fillRect(h.x - 4, h.y - 4, 8, 8);
+            }
+            ////if (isEditing) {
+            ////    ctx.fillStyle = "white";
+            ////    for (let h of Object.values(getAllHandles(box))) {
+            ////        ctx.fillRect(h.x - 4, h.y - 4, 8, 8);
+            ////    }
+            ////}
+        }
+
+        ctx.restore();
+    }
+}
+
+
+
+
+//function drawText() {
+//    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+//    for (const box of boxes) {
+//        ctx.save();
+//        const tempDiv = document.createElement("div");
+//        tempDiv.innerHTML = box.text;
+//        const spans = tempDiv.querySelectorAll("span");
+
+//        let x = box.x;
+//        let y = box.y + fontSizeNew; // adjust for baseline
+//        let lineX = x;
+
+//        for (const span of spans) {
+//            const text = span.innerText;
+//            const style = span.style;
+
+//            const color = style.color || "#000";
+//            const fontSize = style.fontSize || "30px";
+//            const fontFamily = style.fontFamily || "Arial";
+//            const fontWeight = style.fontWeight || "normal";
+//            const fontStyle = style.fontStyle || "normal";
+
+//            ctx.font = `${fontStyle} ${fontWeight} ${fontSize} ${fontFamily}`;
+//            ctx.fillStyle = color;
+
+//            ctx.fillText(text, lineX, y);
+//            const metrics = ctx.measureText(text);
+//            lineX += metrics.width;
+//        }
+
+//        ctx.strokeStyle = "#00f";
+//        ctx.strokeRect(box.x, box.y, box.width, box.height);
+
+//        const size = 8;
+//        const handles = getAllHandles(box);
+//        for (const h of Object.values(handles)) {
+//            ctx.fillStyle = "red";
+//            ctx.fillRect(h.x - size / 2, h.y - size / 2, size, size);
+//        }
+//        ctx.restore();
+//    }
+//}
+
+
+
+function scaleBoxContent(box, scale) {
+    // scale only once per drag, using box._orig.text
+    // here we simply wrap text in span with scaled font-size
+    box.text = `<span style="font-size:${Math.round(fontSizeNew * scale)}px">${box._orig.text}</span>`;
+}
+
+// ——————— Mouse Events ———————
+
+// ✅ Combined: support click-to-select, resize, and drag properly
+canvas.addEventListener("mousedown", e => {
+    const { x: mx, y: my } = getCanvasMousePosition(e);
+    prevMouseX = mx;
+    prevMouseY = my;
+
+    // Finish any editing session
+    if (isEditing && activeBox) {
+        activeBox.text = textEditorNew.innerHTML;
+        textEditorNew.style.display = "none";
+        isEditing = false;
+    }
+
+    // Check resize handles first
+    for (let box of boxes) {
+        let h = getResizeHandle(box, mx, my);
+        if (h) {
+            activeBox = box;
+            resizeDirection = h;
+            isResizingNew = true;
+            box._orig = {
+                x: box.x,
+                y: box.y,
+                width: box.width,
+                height: box.height,
+                text: stripHTML(box.text)
+            };
+            drawText();
+            return;
+        }
+    }
+
+    // Then check for dragging inside box
+    let clicked = boxes.slice().reverse().find(b =>
+        mx >= b.x && mx <= b.x + b.width &&
+        my >= b.y && my <= b.y + b.height
+    );
+
+    if (clicked) {
+        activeBox = clicked;
+        isDraggingNew = true;
+        dragOffsetXNew = mx - clicked.x;
+        dragOffsetYNew = my - clicked.y;
+    } else {
+        activeBox = null;
+        isEditing = false;
+    }
+
+    drawText();
+});
+
+canvas.addEventListener("mousemove", e => {
+    const { x: mx, y: my } = getCanvasMousePosition(e);
+    const dx = mx - prevMouseX, dy = my - prevMouseY;
+
+    // update cursor
+    if (activeBox) {
+        let h = getResizeHandle(activeBox, mx, my);
+        if (["tl", "br"].includes(h)) canvas.style.cursor = "nwse-resize";
+        else if (["tr", "bl"].includes(h)) canvas.style.cursor = "nesw-resize";
+        else if (["tm", "bm"].includes(h)) canvas.style.cursor = "ns-resize";
+        else if (["ml", "mr"].includes(h)) canvas.style.cursor = "ew-resize";
+        else if (
+            mx >= activeBox.x && mx <= activeBox.x + activeBox.width &&
+            my >= activeBox.y && my <= activeBox.y + activeBox.height
+        ) canvas.style.cursor = "move";
+        else canvas.style.cursor = "default";
+    }
+
+    // dragging
+    if (isDraggingNew) {
+        activeBox.x = mx - dragOffsetXNew;
+        activeBox.y = my - dragOffsetYNew;
+    }
+    // resizing
+    else if (isResizingNew && activeBox && resizeDirection) {
+        const o = activeBox._orig;
+        let sX = 1, sY = 1;
+        // corner handles: scale both dims proportionally
+        if (["tl", "tr", "bl", "br"].includes(resizeDirection)) {
+            if (resizeDirection === "tl") {
+                let ndx = mx - o.x, ndy = my - o.y;
+                sX = ndx / o.width;
+                sY = ndy / o.height;
+                activeBox.x = o.x;
+                activeBox.y = o.y;
+            }
+            if (resizeDirection === "tr") {
+                let ndx = mx - o.x, ndy = my - o.y;
+                sX = ndx / o.width;
+                sY = ndy / o.height;
+                activeBox.x = o.x;
+                activeBox.y = o.y;
+            }
+            //… same for bl/br
+            sX = Math.max(0.1, sX);
+            sY = Math.max(0.1, sY);
+            activeBox.width = o.width * sX;
+            activeBox.height = o.height * sY;
+            scaleBoxContent(activeBox, (sX + sY) / 2);
+        }
+        // side handles: only single-dimension
+        else {
+            if (resizeDirection === "tm") { activeBox.y = o.y; activeBox.height = o.height * ((o.y + o.height - my) / o.height); }
+            if (resizeDirection === "bm") { activeBox.height = my - o.y; }
+            if (resizeDirection === "ml") { activeBox.x = o.x; activeBox.width = o.width * ((o.x + o.width - mx) / o.width); }
+            if (resizeDirection === "mr") { activeBox.width = mx - o.x; }
+        }
+    }
+
+    prevMouseX = mx; prevMouseY = my;
+    drawText();
+});
+
+canvas.addEventListener("mouseup", () => {
+    isDraggingNew = false;
+    isResizingNew = false;
+    resizeDirection = null;
+});
+//canvas.addEventListener("dblclick", e => {
+//    const { x: mx, y: my } = getCanvasMousePosition(e);
+//    const box = boxes.find(b => mx >= b.x && mx <= b.x + b.width && my >= b.y && my <= b.y + b.height);
+//    if (!box) return;
+
+//    if (isEditing && activeBox !== box) {
+//        activeBox.text = textEditorNew.innerHTML;
+//    }
+
+//    activeBox = box;
+//    isEditing = true;
+
+//    const container = document.getElementById("canvasContainer");
+//    const crect = container.getBoundingClientRect();
+//    textEditorNew.style.left = crect.left + box.x + "px";
+//    textEditorNew.style.top = crect.top + box.y + "px";
+//    textEditorNew.style.width = box.width + "px";
+//    textEditorNew.style.height = box.height + "px";
+//    textEditorNew.innerHTML = box.text;
+//    textEditorNew.style.display = "block";
+//    textEditorNew.focus();
+
+//    saveSelection();
+//});
+canvas.addEventListener("dblclick", e => {
+    const { x: mx, y: my } = getCanvasMousePosition(e);
+    const box = boxes.find(b =>
+        mx >= b.x && mx <= b.x + b.width &&
+        my >= b.y && my <= b.y + b.height
+    );
+    if (!box) return;
+
+    // If we were editing a different box, save it first
+    if (isEditing && activeBox !== box) {
+        cleanEditorHTMLPreserveCaret();
+        activeBox.text = textEditorNew.innerHTML;
+    }
+
+    activeBox = box;
+    // Now simply call our helper:
+    showEditorAtBox(box);
+
+    // And save the caret/selection if you need it:
+    saveSelection();
+});
+
+
+
+
+// ✅ Simpler click-only selection logic without drag or resize
+//////canvas.addEventListener("click", e => {
+//////    const { x: mx, y: my } = getCanvasMousePosition(e);
+
+//////    let clicked = boxes.slice().reverse().find(b =>
+//////        mx >= b.x && mx <= b.x + b.width &&
+//////        my >= b.y && my <= b.y + b.height
+//////    );
+
+//////    if (clicked) {
+//////        activeBox = clicked;
+//////        isEditing = false; // selection only
+//////    } else {
+//////        activeBox = null;
+//////        isEditing = false;
+//////    }
+
+//////    drawText();
+//////});
+
+// ✅ Apply any text style and reflect in canvas
+function applyStyleToSelection(styleProp, value) {
+    textEditorNew.focus();
+    document.execCommand("styleWithCSS", false, true);
+
+    if (styleProp === "color") {
+        document.execCommand("foreColor", false, value);
+    } else if (styleProp === "bold") {
+        document.execCommand("bold");
+    } else if (styleProp === "italic") {
+        document.execCommand("italic");
+    } else if (styleProp === "fontFamily") {
+        document.execCommand("fontName", false, value);
+    } else if (styleProp === "fontSize") {
+        // Font size using inline span workaround
+        const span = document.createElement("span");
+        span.style.fontSize = value;
+        span.innerHTML = getSelectionText();
+        insertHTML(span.outerHTML);
+    }
+
+
+    // After styling, sync editor content into canvas
+    if (activeBox) {
+        activeBox.text = textEditorNew.innerHTML;
+        drawText();
+    }
+}
+
+// Helper to insert custom HTML at current caret position
+function insertHTML(html) {
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return;
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+
+    const el = document.createElement("div");
+    el.innerHTML = html;
+    const frag = document.createDocumentFragment();
+    let node;
+    while ((node = el.firstChild)) frag.appendChild(node);
+    range.insertNode(frag);
+    sel.collapseToEnd();
+}
+
+function getSelectionText() {
+    const sel = window.getSelection();
+    return sel.rangeCount ? sel.toString() : "";
+}
+
+// ——————— Text Editor Helpers (unchanged) ———————
+function execCommandSafely(cmd, val) { textEditorNew.focus(); document.execCommand(cmd, false, val); }
+function saveSelection() { let s = window.getSelection(); if (s.rangeCount) savedRange = s.getRangeAt(0).cloneRange(); }
+function restoreSelection() { let s = window.getSelection(); s.removeAllRanges(); if (savedRange) s.addRange(savedRange); }
+// … include your cleanEditorHTMLPreserveCaret, applyStyleToSelection, etc …
+
+// ——————— Box Creation & JSON ———————
+// Ensure default text is drawn once at start
+function addNewBox() {
+    boxes.push({
+        x: 120,
+        y: 200,
+        width: 200,
+        height: 38,
+        align: "left",
+        text: "<span style='color:black;font-size:30px;'>Default Text</span>"
+    });
+    activeBox = boxes[boxes.length - 1];
+    drawText();
+}
+
+function generateJson() {
+    console.log(JSON.stringify(boxes, null, 2));
+    alert("See console.");
+}
+
+window.onload = () => {
+    // size canvas to container
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+    addNewBox();
+};
+
+
+
+
+colorPickerNew.addEventListener("input", e => {
+    textEditorNew.focus();
+    applyStyleToSelection("color", e.target.value);
+});
+
+// FONT SIZE LINKS
+document.querySelectorAll("#sizeList a").forEach(link => {
+    link.addEventListener("click", e => {
+        e.preventDefault();
+        const size = e.target.getAttribute("data-size");  // e.g. "16px"
+        textEditorNew.focus();
+        applyStyleToSelection("fontSize", size);
+    });
+});
+
+// FONT FAMILY LINKS
+document.querySelectorAll("#fontList a").forEach(link => {
+    link.addEventListener("click", e => {
+        e.preventDefault();
+        const ff = e.target.getAttribute("data-font");
+        textEditorNew.focus();
+        applyStyleToSelection("fontFamily", ff);
+    });
+});
+
+// ALIGNMENT can still use execCommand,
+// but if you want per-span alignment:
+document.querySelectorAll("#alignList a").forEach(link => {
+    link.addEventListener("click", e => {
+        e.preventDefault();
+        const align = e.target.getAttribute("data-align");
+        textEditorNew.focus();
+        applyStyleToSelection("textAlign", align);
+    });
+});
+
+
+//function showEditorAtBox(box) {
+//    const OFFSET_X = 73;
+//    const OFFSET_Y = 45;
+
+//    const container = document.getElementById("canvasContainer");
+//    const crect = container.getBoundingClientRect();
+
+//    const editorX = crect.left + box.x + OFFSET_X;
+//    const editorY = crect.top + box.y + OFFSET_Y;
+
+//    textEditorNew.innerHTML = box.text;
+//    textEditorNew.style.textAlign = box.align || "left";
+//    textEditorNew.style.left = `${editorX}px`;
+//    textEditorNew.style.top = `${editorY}px`;
+//    textEditorNew.style.width = `${box.width}px`;
+//    //textEditorNew.style.height = `${box.height}px`;
+//    textEditorNew.style.height = (box.height + (typeof selectedLineSpacing === "number" ? selectedLineSpacing : 12)) + "px";
+//    textEditorNew.style.display = "block";
+//    textEditorNew.focus();
+//    isEditing = true;
+//}
+// ✅ showEditorAtBox with correct offset + line spacing support
+const defaultLineSpacing = 8; // Default fallback
+
+//function showEditorAtBox(box) {
+//    if (!box) return;
+
+//    const OFFSET_X = 73;
+//    const OFFSET_Y = 45;
+//    const container = document.getElementById("canvasContainer");
+//    const crect = container.getBoundingClientRect();
+
+//    const editorX = crect.left + box.x + OFFSET_X;
+//    const editorY = crect.top + box.y + OFFSET_Y;
+
+//    const spacing = typeof selectedLineSpacing === "number" ? selectedLineSpacing : defaultLineSpacing;
+
+//    textEditorNew.innerHTML = box.text;
+//    textEditorNew.style.textAlign = box.align || "left";
+//    textEditorNew.style.left = `${editorX}px`;
+//    textEditorNew.style.top = `${editorY}px`;
+//    textEditorNew.style.width = `${box.width}px`;
+//    textEditorNew.style.lineHeight = `calc(1.2em + ${spacing}px)`;
+//    textEditorNew.style.display = "block";
+
+//    applyTextEditorStyleFromBox(box);
+//    textEditorNew.focus();
+//    isEditing = true;
+//}
+function showEditorAtBoxOLD(box) {
+    const OFFSET_X = 73, OFFSET_Y = 45;
+    const container = document.getElementById("canvasContainer");
+    const crect = container.getBoundingClientRect();
+    textEditorNew.innerHTML = box.text;
+
+    textEditorNew.style.textAlign = box.align || "left";
+    textEditorNew.style.left = `${crect.left + box.x + OFFSET_X}px`;
+    textEditorNew.style.top = `${crect.top + box.y + OFFSET_Y}px`;
+    textEditorNew.style.width = `${box.width}px`;
+    textEditorNew.style.display = "block";
+    applyTextEditorStyleFromBox(box);
+    textEditorNew.focus();
+    isEditing = true;
+}
+function showEditorAtBox(box) {
+    const OFFSET_X = 73, OFFSET_Y = 45;
+    const container = document.getElementById("canvasContainer");
+    const crect = container.getBoundingClientRect();
+
+    textEditorNew.innerHTML = box.text;
+    textEditorNew.style.textAlign = box.align || "left";
+    textEditorNew.style.left = `${crect.left + box.x + OFFSET_X}px`;
+    textEditorNew.style.top = `${crect.top + box.y + OFFSET_Y}px`;
+    textEditorNew.style.width = `${box.width}px`;
+    textEditorNew.style.display = "block";
+
+    applyTextEditorStyleFromBox(box);
+    textEditorNew.dispatchEvent(new Event("input")); // ✅ ensure updated height
+    textEditorNew.focus();
+    isEditing = true;
+}
+
+
+//function applyTextEditorStyleFromBox(box) {
+//    if (!box) return;
+
+//    const fontSize = parseFloat(window.getComputedStyle(textEditorNew).fontSize) || 16;
+//    const lineHeight = fontSize + selectedLineSpacing;
+
+//    Object.assign(textEditorNew.style, {
+//        lineHeight: `${lineHeight}px`,
+//        whiteSpace: "pre-wrap",
+//        fontSize: `${fontSize}px`
+//    });
+//}
+
+function applyTextEditorStyleFromBox(box) {
+    if (!box) return;
+
+    const fontSize = parseFloat(getComputedStyle(textEditorNew).fontSize) || 16;
+    const spacingMultiplier = parseFloat(lineSpacingInput.value);
+
+    // 🧮 Safeguard against too-small values causing visual glitches
+    const lineHeightPx = Math.max(fontSize * spacingMultiplier, fontSize * 0.5);
+
+    Object.assign(textEditorNew.style, {
+        fontSize: `${fontSize}px`,
+        lineHeight: `${lineHeightPx}px`,
+        height: "auto"  // ✅ let JS measure height properly again
+    });
+
+    // 🔄 Manually resize box height to fit content
+    const meas = document.createElement("div");
+    Object.assign(meas.style, {
+        position: "absolute",
+        visibility: "hidden",
+        fontSize: `${fontSize}px`,
+        lineHeight: `${lineHeightPx}px`,
+        whiteSpace: "pre-wrap",
+        width: textEditorNew.style.width
+    });
+
+    meas.innerHTML = textEditorNew.innerHTML;
+    document.body.appendChild(meas);
+    const neededHeight = meas.scrollHeight;
+    document.body.removeChild(meas);
+
+    textEditorNew.style.height = neededHeight + "px";
+    activeBox.height = neededHeight;
+}
+
+// (1) helper to measure HTML content size
+function measureHTML(html, maxWidth = 1000) {
+    const temp = document.createElement("div");
+    temp.style.position = "absolute";
+    temp.style.visibility = "hidden";
+    temp.style.whiteSpace = "pre-wrap";
+    temp.style.font = window.getComputedStyle(textEditorNew).font;
+    temp.style.lineHeight = window.getComputedStyle(textEditorNew).lineHeight;
+    temp.style.width = maxWidth + "px";
+    temp.innerHTML = html;
+    document.body.appendChild(temp);
+    const size = { width: temp.scrollWidth + 10, height: temp.scrollHeight + 10 };
+    document.body.removeChild(temp);
+    return size;
+}
+
+// (2) whenever the content changes (including ENTER), resize the box
+// whenever the editor content changes (including Enter/new-line), resize the box
+
+
+//textEditorNew.addEventListener("input", () => {
+//    if (!activeBox || !isEditing) return;
+
+//    // Grab accurate font + size from computed styles
+//    const edStyle = window.getComputedStyle(textEditorNew);
+//    const meas = document.createElement("div");
+//    Object.assign(meas.style, {
+//        position: "absolute",
+//        visibility: "hidden",
+//        whiteSpace: "pre-wrap",
+//        fontFamily: edStyle.fontFamily,
+//        fontSize: edStyle.fontSize,
+//        lineHeight: edStyle.lineHeight,
+//        width: textEditorNew.style.width
+//    });
+
+//    meas.innerHTML = textEditorNew.innerHTML; // ✅ include all <span> with styles
+//    document.body.appendChild(meas);
+
+//    const neededH = meas.scrollHeight + 8;
+//    document.body.removeChild(meas);
+
+//    activeBox.height = Math.max(neededH, 30);
+//    textEditorNew.style.height = activeBox.height + "px";
+
+//    activeBox.text = textEditorNew.innerHTML; // ✅ This must be full styled HTML
+//    drawText();
+//});
+// ✅ Enhance line spacing and increase activeBox height when Enter is pressed
+// ✅ Enhance line spacing and increase activeBox height when Enter is pressed
+textEditorNew.addEventListener("input", () => {
+    if (!activeBox || !isEditing) return;
+
+    const edStyle = window.getComputedStyle(textEditorNew);
+    const lineSpacing = (typeof selectedLineSpacing === "number" ? selectedLineSpacing : 8);
+
+    const meas = document.createElement("div");
+    Object.assign(meas.style, {
+        position: "absolute",
+        visibility: "hidden",
+        whiteSpace: "pre-wrap",
+        fontFamily: edStyle.fontFamily,
+        fontSize: edStyle.fontSize,
+        lineHeight: `${parseFloat(edStyle.lineHeight) + lineSpacing}px`,
+        width: textEditorNew.style.width
+    });
+
+    meas.innerHTML = textEditorNew.innerHTML;
+    document.body.appendChild(meas);
+
+    const lines = meas.querySelectorAll("div").length || 1;
+    const neededH = meas.scrollHeight + lineSpacing * lines;
+
+    document.body.removeChild(meas);
+
+    activeBox.height = Math.max(neededH, 30);
+    textEditorNew.style.height = activeBox.height + "px";
+
+    activeBox.text = textEditorNew.innerHTML;
+    drawText();
+});
+
+
+textEditorNew.addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+        // let the line break happen, then re-fire input
+        setTimeout(() => textEditorNew.dispatchEvent(new Event("input")), 0);
+    }
+});
+
+
+
+boldBtn.addEventListener("click", e => {
+    e.preventDefault();
+    restoreSelection();
+    document.execCommand("bold");
+});
+
+// 3. Italic
+italicBtn.addEventListener("click", e => {
+    e.preventDefault();
+    restoreSelection();
+    document.execCommand("italic");
+});
+
+// 4. Font Change
+fontList.querySelectorAll("a[data-font]").forEach(a => {
+    a.addEventListener("click", e => {
+        e.preventDefault();
+        restoreSelection();
+        const font = a.getAttribute("data-font");
+        document.execCommand("fontName", false, font);
+    });
+});
+
+// 5. Font Size Change
+sizeList.querySelectorAll("a[data-size]").forEach(a => {
+    a.addEventListener("click", e => {
+        e.preventDefault();
+        restoreSelection();
+        const size = a.getAttribute("data-size");
+        const span = document.createElement("span");
+        span.style.fontSize = size;
+        wrapSelectionWithSpan(span);
+    });
+});
+
+// 6. Line Spacing
+//const lineSpacingSelect = document.getElementById("lineSpacingSelect");
+//lineSpacingSelect.addEventListener("change", () => {
+//    const val = parseFloat(lineSpacingSelect.value);
+//    selectedLineSpacing = isNaN(val) ? defaultLineSpacing : val * 8;
+
+//    if (activeBox) {
+//        applyTextEditorStyleFromBox(activeBox);
+//        textEditorNew.dispatchEvent(new Event("input"));
+//    }
+//});
+////lineSpacingSelect.addEventListener("change", () => {
+////    const val = parseFloat(lineSpacingSelect.value);
+////    selectedLineSpacing = isNaN(val) ? defaultLineSpacing : val * 8;
+
+////    // Apply spacing inline using execCommand
+////    applyStyleToSelection("lineSpacing", selectedLineSpacing);
+
+////    // Also refresh editor height for the box
+////    if (activeBox) {
+////        applyTextEditorStyleFromBox(activeBox);
+////        textEditorNew.dispatchEvent(new Event("input"));
+////    }
+////});
+window.addEventListener("DOMContentLoaded", () => {
+    const lineSpacingInput = document.getElementById("lineSpacingInput");
+    //if (!lineSpacingSelect) {
+    //    console.warn("lineSpacingSelect element not found");
+    //    return;
+    //}
+    lineSpacingInput.addEventListener("change", () => {
+        const val = parseFloat(lineSpacingInput.value);
+        if (isNaN(val)) return;
+
+        // Clamp to reasonable values if necessary
+        const clamped = Math.max(-3, Math.min(7, val));
+        selectedLineSpacing = clamped * 8; // convert to px spacing
+
+        const html = textEditorNew.innerHTML;
+        const divCount = (html.match(/<div>|<br>/g) || []).length;
+        const hasMultipleLines = divCount >= 1;
+
+        const sel = window.getSelection();
+
+        // CASE 1: We're editing and no selection but multiple lines present
+        if (activeBox && isEditing) {
+            if (sel && sel.rangeCount === 1 && sel.isCollapsed && hasMultipleLines) {
+                applyTextEditorStyleFromBox(activeBox);
+                textEditorNew.dispatchEvent(new Event("input"));
+                activeBox.text = textEditorNew.innerHTML;
+                drawText();
+            }
+        }
+        // CASE 2: Not editing but activeBox has multiple lines
+        else if (activeBox && !isEditing && hasMultipleLines) {
+            showEditorAtBox(activeBox);
+            applyTextEditorStyleFromBox(activeBox);
+            activeBox.text = textEditorNew.innerHTML;
+            drawText();
+        }
+    });
+    // ✅ Line spacing will apply at box level if a box is active and editor has multiline
+    //lineSpacingSelect.addEventListener("change", () => {
+    //    const val = parseFloat(lineSpacingSelect.value);
+    //    selectedLineSpacing = isNaN(val) ? defaultLineSpacing : val * 8; // px value
+
+    //    // ✅ Apply even when not editing yet
+    //    const html = textEditorNew.innerHTML;
+    //    const divCount = (html.match(/<div>|<br>/g) || []).length;
+    //    const hasMultipleLines = divCount >= 1;
+
+    //    const sel = window.getSelection();
+
+    //    // ✅ CASE 1: If actively editing
+    //    if (activeBox && isEditing) {
+    //        if (sel && sel.rangeCount === 1 && sel.isCollapsed && hasMultipleLines) {
+    //            applyTextEditorStyleFromBox(activeBox);
+    //            textEditorNew.dispatchEvent(new Event("input"));
+    //            activeBox.text = textEditorNew.innerHTML;
+    //            drawText();
+    //        }
+    //        // Optional inline selection logic
+    //        // else if (sel && !sel.isCollapsed) {
+    //        //     applyStyleToSelection("lineSpacing", selectedLineSpacing);
+    //        // }
+    //    }
+
+    //    // ✅ CASE 2: Not editing but we have a multiline activeBox
+    //    else if (activeBox && !isEditing && hasMultipleLines) {
+    //        showEditorAtBox(activeBox);
+    //        applyTextEditorStyleFromBox(activeBox);
+    //        activeBox.text = textEditorNew.innerHTML;
+    //        drawText();
+    //    }
+    //});
+
+});
+
+// 7. Alignment
+alignList.querySelectorAll("a[data-align]").forEach(a => {
+    a.addEventListener("click", e => {
+        e.preventDefault();
+        const align = a.getAttribute("data-align");
+        if (activeBox) {
+            activeBox.align = align;
+            textEditorNew.style.textAlign = align;
+            drawText();
+        }
+    });
+});
+
+
+
+function wrapSelectionWithSpan(span) {
+    restoreSelection();
+    if (!savedRange) return;
+    const range = savedRange.cloneRange();
+    range.surroundContents(span);
+    saveSelection();
+}

@@ -5,7 +5,7 @@
     <script src="~/js/animations.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
     <script src="~/js/action.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
 
-    
+
 
     <style>
         #canvasContainer {
@@ -32,7 +32,7 @@
             color: #333;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             transition: box-shadow 0.3s ease, transform 0.3s ease;
-           z-index: 100;
+            z-index: 100;
         }
 
             #textEditor:focus {
@@ -93,9 +93,9 @@
                 border-radius: 3px;
             }
 
-            #contextMenu li:hover {
-                background-color: #eee;
-            }
+                #contextMenu li:hover {
+                    background-color: #eee;
+                }
 
         .dropdown-toggle {
             text-decoration: none;
@@ -246,10 +246,10 @@
         }
 
         /* .shapes_tabs a {
-            font-size: 14px;
-            text-decoration: none;
-            color: black;
-        } */
+                    font-size: 14px;
+                    text-decoration: none;
+                    color: black;
+                } */
 
         .left-panel-imput {
             flex: 1;
@@ -258,7 +258,7 @@
             border-color: #00000036;
         }
 
-        .search-box{
+        .search-box {
             margin-top: 15px;
         }
 
@@ -268,16 +268,16 @@
 
         .temp_gallery {
             /* display: flex;
-            gap: 8px;
-            flex-wrap: wrap; */
+                    gap: 8px;
+                    flex-wrap: wrap; */
             overflow-y: hidden;
             min-height: 432px;
         }
 
-            /* .temp_gallery img {
-                width: auto;
-                height: 147px;
-            } */
+        /* .temp_gallery img {
+                        width: auto;
+                        height: 147px;
+                    } */
 
         .gallery_head {
             font-size: 18px;
@@ -436,239 +436,258 @@
             color: #212529;
         }
         /* canvas size */
-        .vertical_canvas{
+        .vertical_canvas {
             width: 32%;
             aspect-ratio: 9/16;
         }
 
-        .inside_wrapper{
+        .inside_wrapper {
             height: fit-content !important;
             display: flex;
             justify-content: center;
         }
 
-        .context-options{
+        .context-options {
             text-align: left;
             font-size: 14px;
             font-family: "Nunito", sans-serif;
         }
-        
-
     </style>
     <script>
-      $(document).ready(function(){
-      (async () => {
-        try {
-                const savedHtml = sessionStorage.getItem("leftPanelHtml");
-        let leftPanelPromise;
-        if (savedHtml) {
-          document.getElementById("divpanelleft").innerHTML = savedHtml;
-          sessionStorage.removeItem("leftPanelHtml"); // optional cleanup
-          leftPanelPromise = Promise.resolve(); // no async work needed
-        } else {
-          // Make sure CreateLeftSectionhtml returns a Promise
-          leftPanelPromise = CreateLeftSectionhtml();
-        }
-          // 1) Load all four panels in parallel
-          await Promise.all([
-              leftPanelPromise,
-            CreateRightSectionhtml(),
-            CreateHeaderSectionhtml(),
-            CreateBackgroundSectionhtml()
-            //CreateLeftSectionhtml()
-                  
-          ]);
+          $(document).ready(function(){
+          (async () => {
+            try {
+                    const savedHtml = sessionStorage.getItem("leftPanelHtml");
+            let leftPanelPromise;
+            if (savedHtml) {
+              document.getElementById("divpanelleft").innerHTML = savedHtml;
+              sessionStorage.removeItem("leftPanelHtml"); // optional cleanup
+              leftPanelPromise = Promise.resolve(); // no async work needed
+            } else {
+              // Make sure CreateLeftSectionhtml returns a Promise
+              leftPanelPromise = CreateLeftSectionhtml();
+            }
+              // 1) Load all four panels in parallel
+              await Promise.all([
+                  leftPanelPromise,
+                CreateRightSectionhtml(),
+                CreateHeaderSectionhtml(),
+                CreateBackgroundSectionhtml()
+                //CreateLeftSectionhtml()
 
-              // await Promise.all([
-              //   CreateLeftSectionhtml(),
-              //   CreateRightSectionhtml(),
-              //   CreateHeaderSectionhtml(),
-              //   CreateBackgroundSectionhtml()
-                
-              // ]);
-          await document.fonts.ready;
+              ]);
 
-          // 3) Now your controls can be initialized
-          $("#hdnlLoopControl").val(1);
-          $("#hdnfillColor").val('#42b3f5');
-          $("#hdnStrockColor").val('#78f542');
-         // document.getElementById("modeButton").innerText = "Graphic Mode";
+                  // await Promise.all([
+                  //   CreateLeftSectionhtml(),
+                  //   CreateRightSectionhtml(),
+                  //   CreateHeaderSectionhtml(),
+                  //   CreateBackgroundSectionhtml()
 
-          // 4) Pull the `id` from the URL and initialize your canvas
-          const params = new URLSearchParams(window.location.search);
-          const id     = params.get('id');
-          if (id) {
-            GetDesignBoardById(id);
+                  // ]);
+              await document.fonts.ready;
 
-            // Wire up your custom context‑menu
-            const canvas      = document.getElementById("myCanvas");
-            const contextMenu = document.getElementById("contextMenu");
-            canvas.addEventListener("contextmenu", e => {
-              e.preventDefault();
-              const rect    = canvas.getBoundingClientRect();
-              const offsetX = e.clientX - rect.left;
-              const offsetY = e.clientY - rect.top;
+              // 3) Now your controls can be initialized
+              $("#hdnlLoopControl").val(1);
+              $("#hdnfillColor").val('#42b3f5');
+              $("#hdnStrockColor").val('#78f542');
+             // document.getElementById("modeButton").innerText = "Graphic Mode";
 
-              const found = getObjectAtcontextmenu(offsetX, offsetY);
-              if (found) {
-                const adjustX = 280, adjustY = 64;
-                selectedForContextMenu = found.obj;
-                selectedType           = found.type;
-                contextMenu.style.left    = (offsetX + adjustX) + "px";
-                contextMenu.style.top     = (offsetY + adjustY) + "px";
-                contextMenu.style.display = "block";
-              } else {
-                contextMenu.style.display = "none";
+              // 4) Pull the `id` from the URL and initialize your canvas
+              const params = new URLSearchParams(window.location.search);
+              const id     = params.get('id');
+              if (id) {
+                GetDesignBoardById(id);
+
+                // Wire up your custom context‑menu
+                const canvas      = document.getElementById("myCanvas");
+                const contextMenu = document.getElementById("contextMenu");
+                canvas.addEventListener("contextmenu", e => {
+                  e.preventDefault();
+                  const rect    = canvas.getBoundingClientRect();
+                  const offsetX = e.clientX - rect.left;
+                  const offsetY = e.clientY - rect.top;
+
+                  const found = getObjectAtcontextmenu(offsetX, offsetY);
+                  if (found) {
+                    const adjustX = 280, adjustY = 64;
+                    selectedForContextMenu = found.obj;
+                    selectedType           = found.type;
+                    contextMenu.style.left    = (offsetX + adjustX) + "px";
+                    contextMenu.style.top     = (offsetY + adjustY) + "px";
+                    contextMenu.style.display = "block";
+                  } else {
+                    contextMenu.style.display = "none";
+                  }
+                });
               }
-            });
-          }
 
-          // 5) Optionally auto‑open the modal
-          if (params.get('openModal') === 'true') {
-            const modalEl = document.getElementById('exampleModal');
-            new bootstrap.Modal(modalEl).show();
-          }
-        }
-        catch (err) {
-          console.error("Initialization failed:", err);
-          // fallback: at least try to draw board even if fonts or panels didn't load
-          const fallbackId = new URLSearchParams(window.location.search).get('id');
-          if (fallbackId) GetDesignBoardById(fallbackId);
-        }          
-      })();        
-    });
-       
-        const buttons = document.querySelectorAll('.toggle-btn');
-
-        buttons.forEach(button => {
-          button.addEventListener('click', () => {
-            buttons.forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
-          });
+              // 5) Optionally auto‑open the modal
+              if (params.get('openModal') === 'true') {
+                const modalEl = document.getElementById('exampleModal');
+                new bootstrap.Modal(modalEl).show();
+              }
+            }
+            catch (err) {
+              console.error("Initialization failed:", err);
+              // fallback: at least try to draw board even if fonts or panels didn't load
+              const fallbackId = new URLSearchParams(window.location.search).get('id');
+              if (fallbackId) GetDesignBoardById(fallbackId);
+            }
+          })();
         });
-        async function DeleteSlide() {
-            try {
-                // const confirmDelete = confirm("Do you want to delete this slide?");
-                const confirmDelete = await customConfirm("Do you want to delete slide-"+activeSlide+"?");
-            if (!confirmDelete) return;
 
-                     let slideId;
-            if (activeSlide === 1) {
-                    slideId = $(`#hdnDesignBoardDetailsIdSlide1`).val();
-            } else if (activeSlide === 2) {
-                    slideId = $(`#hdnDesignBoardDetailsIdSlide2`).val();
-                }else if (activeSlide === 3) {
-                        slideId = $(`#hdnDesignBoardDetailsIdSlide3`).val();
-                }
+            const buttons = document.querySelectorAll('.toggle-btn');
 
-            // Check for blank, undefined, or default GUID
-            const isDefaultOrBlank = !slideId || slideId.trim() === "" || slideId === "00000000-0000-0000-0000-000000000000";
+            buttons.forEach(button => {
+              button.addEventListener('click', () => {
+                buttons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+              });
+            });
+            async function DeleteSlide() {
+                try {
+                    // const confirmDelete = confirm("Do you want to delete this slide?");
+                    const confirmDelete = await customConfirm("Do you want to delete slide-"+activeSlide+"?");
+                if (!confirmDelete) return;
 
-            if (isDefaultOrBlank) {
-                // Delete only the in-memory saved JSON based on activeSlide
+                         let slideId;
                 if (activeSlide === 1) {
-                    verticalSlide1 = "";
+                        slideId = $(`#hdnDesignBoardDetailsIdSlide1`).val();
                 } else if (activeSlide === 2) {
-                    verticalSlide2 = "";
-                } else if (activeSlide === 3) {
-                    verticalSlide3 = "";
+                        slideId = $(`#hdnDesignBoardDetailsIdSlide2`).val();
+                    }else if (activeSlide === 3) {
+                            slideId = $(`#hdnDesignBoardDetailsIdSlide3`).val();
+                    }
+
+                // Check for blank, undefined, or default GUID
+                const isDefaultOrBlank = !slideId || slideId.trim() === "" || slideId === "00000000-0000-0000-0000-000000000000";
+
+                if (isDefaultOrBlank) {
+                    // Delete only the in-memory saved JSON based on activeSlide
+                    if (activeSlide === 1) {
+                        verticalSlide1 = "";
+                    } else if (activeSlide === 2) {
+                        verticalSlide2 = "";
+                    } else if (activeSlide === 3) {
+                        verticalSlide3 = "";
+                    }
+
+                        MessageShow('RedirectToVerticalPageWithQueryString()', 'Slide deleted from memory.', 'success');
+                    return;
                 }
 
-                    MessageShow('RedirectToVerticalPageWithQueryString()', 'Slide deleted from memory.', 'success');
-                return;
+                // If slideId is valid, continue with server delete
+                ShowLoader();
+
+                const dataSlide = {
+                    DesignBoardDetailsId: slideId
+                };
+
+                $.ajax({
+                    url: baseURL + "Canvas/DeleteDesignSlideBoard",
+                    type: "POST",
+                    dataType: "json",
+                    data: dataSlide,
+                    success: function (slideResult) {
+                        HideLoader();
+                        if (slideResult.response === 'ok') {
+                            MessageShow('RedirectToVerticalPageWithQueryString()', 'Slide deleted successfully!', 'success');
+                        } else {
+                            MessageShow('', 'Failed to delete slide.', 'error');
+                        }
+                    },
+                    error: function (data) {
+                        console.log("Error in delete slide", data);
+                        HideLoader();
+                        MessageShow('', 'Error deleting slide.', 'error');
+                    }
+                });
+
+            } catch (e) {
+                console.log("catch", e);
+                HideLoader();
+            }
             }
 
-            // If slideId is valid, continue with server delete
-            ShowLoader();
-
-            const dataSlide = {
-                DesignBoardDetailsId: slideId
-            };
-
-            $.ajax({
-                url: baseURL + "Canvas/DeleteDesignSlideBoard",
-                type: "POST",
-                dataType: "json",
-                data: dataSlide,
-                success: function (slideResult) {
-                    HideLoader();
-                    if (slideResult.response === 'ok') {
-                        MessageShow('RedirectToVerticalPageWithQueryString()', 'Slide deleted successfully!', 'success');
-                    } else {
-                        MessageShow('', 'Failed to delete slide.', 'error');
-                    }
-                },
-                error: function (data) {
-                    console.log("Error in delete slide", data);
-                    HideLoader();
-                    MessageShow('', 'Error deleting slide.', 'error');
-                }
-            });
-
-        } catch (e) {
-            console.log("catch", e);
-            HideLoader();
-        }
-        }
-
-     async function DuplicateSlide()
-        {
-             // const confirmduplicate = confirm("Do you want to duplicate "+activeSlide+" slide?");
-                 const confirmduplicate = await customConfirm("Do you want to duplicate slide-"+activeSlide+"?");
-                    if (!confirmduplicate) return;
-
-            if($(`#hdnDesignBoardDetailsIdSlide3`).val() !=='')
+         async function DuplicateSlide()
             {
-                    MessageShow('', 'Already 3 slide created.Delete any one and then duplicate!', 'error');
-                        return;
-            }
-        let DesignBoardDetailsId;
-        if (activeSlide === 1) {
-            DesignBoardDetailsId = $(`#hdnDesignBoardDetailsIdSlide1`).val();
-        } else if (activeSlide === 2) {
-            DesignBoardDetailsId = $(`#hdnDesignBoardDetailsIdSlide2`).val();
-        }
-        
-            const isDefaultOrBlank = !DesignBoardDetailsId || DesignBoardDetailsId.trim() === "" || DesignBoardDetailsId === "00000000-0000-0000-0000-000000000000";
+                 // const confirmduplicate = confirm("Do you want to duplicate "+activeSlide+" slide?");
+                     const confirmduplicate = await customConfirm("Do you want to duplicate slide-"+activeSlide+"?");
+                        if (!confirmduplicate) return;
 
-        if (!isDefaultOrBlank) {
-            try {
-            ShowLoader();
-            const dataSlide = {
-                    DesignBoardDetailsId: DesignBoardDetailsId
-            };
-
-            $.ajax({
-                url: baseURL + "Canvas/DuplicateDesignSlideBoard",
-                type: "POST",
-                dataType: "json",
-                data: dataSlide,
-                success: function (slideResult) {
-                    HideLoader();
-                    if (slideResult.response === 'ok') {
-                        MessageShow('RedirectToVerticalPageWithQueryString()', 'Slide duplicate successfully!', 'success');
-                    } else {
-                        MessageShow('', 'Failed to duplicate slide.', 'error');
-                    }
-                },
-                error: function (data) {
-                    console.log("Error in delete slide", data);
-                    HideLoader();
-                    MessageShow('', 'Error duplicate slide.', 'error');
+                if($(`#hdnDesignBoardDetailsIdSlide3`).val() !=='')
+                {
+                        MessageShow('', 'Already 3 slide created.Delete any one and then duplicate!', 'error');
+                            return;
                 }
-            });
+            let DesignBoardDetailsId;
+            if (activeSlide === 1) {
+                DesignBoardDetailsId = $(`#hdnDesignBoardDetailsIdSlide1`).val();
+            } else if (activeSlide === 2) {
+                DesignBoardDetailsId = $(`#hdnDesignBoardDetailsIdSlide2`).val();
+            }
 
-        } catch (e) {
-            console.log("catch", e);
-            HideLoader();
-        }
-        }
-        }
+                const isDefaultOrBlank = !DesignBoardDetailsId || DesignBoardDetailsId.trim() === "" || DesignBoardDetailsId === "00000000-0000-0000-0000-000000000000";
+
+            if (!isDefaultOrBlank) {
+                try {
+                ShowLoader();
+                const dataSlide = {
+                        DesignBoardDetailsId: DesignBoardDetailsId
+                };
+
+                $.ajax({
+                    url: baseURL + "Canvas/DuplicateDesignSlideBoard",
+                    type: "POST",
+                    dataType: "json",
+                    data: dataSlide,
+                    success: function (slideResult) {
+                        HideLoader();
+                        if (slideResult.response === 'ok') {
+                            MessageShow('RedirectToVerticalPageWithQueryString()', 'Slide duplicate successfully!', 'success');
+                        } else {
+                            MessageShow('', 'Failed to duplicate slide.', 'error');
+                        }
+                    },
+                    error: function (data) {
+                        console.log("Error in delete slide", data);
+                        HideLoader();
+                        MessageShow('', 'Error duplicate slide.', 'error');
+                    }
+                });
+
+            } catch (e) {
+                console.log("catch", e);
+                HideLoader();
+            }
+            }
+            }
     </script>
+    <style>
+        #textEditorNew {
+            position: absolute;
+            display: none;
+            border: 1px solid #aaa;
+            outline: none;
+            padding: 5px;
+            background: #fff;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+            white-space: pre-wrap;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            font-size: 30px;
+            line-height: 20px;
+            overflow-y: auto;
+            max-height: 1000px; /* allow scroll if text overflows manually resized box */
+        }
+
+        #toolbar {
+            margin-bottom: 10px;
+        }
+    </style>
    
 
 
- 
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
     <link href="~/css/animate/animate.min.css" rel="stylesheet">
     <link href="~/css/bootstrap.min.css" rel="stylesheet">
@@ -681,17 +700,17 @@
     <script src='https://code.jquery.com/jquery-3.2.1.slim.min.js'></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js'></script>
     <script src="~/js/wow.min.js"></script>
-    
+
     <script>
         function opengl()
          {
          // document.getElementById("modeButton").innerText = "Graphic Mode";
           $("#opengl_popup").toggle();
-   
+
           if(document.getElementById("fontstyle_popup").style.display == "block"){
                 $("#fontstyle_popup").hide();
                 $(".right-sec-two").toggle();
-                $(".right-sec-one").toggle();   
+                $(".right-sec-one").toggle();
           }
           if(document.getElementById("elementsPopup").style.display == "block"){
               $("#elementsPopup").hide();
@@ -753,9 +772,9 @@
             $("#fontstyle_popup").toggle();
             $(".right-sec-two").toggle();
             $(".right-sec-one").toggle();
-          
+
          }
-         
+
 
             // tab open
             function switchTab(tabElement, tabName) {
@@ -787,7 +806,7 @@
             }
         }
 
-        
+
         // show the popup when the pattern icon is clicked
         $(document).on('click', '#toggle_img', function(e) {
           e.preventDefault();
@@ -828,7 +847,7 @@
            }
 
 
-              
+
 
     </script>
 
@@ -893,7 +912,7 @@
           const container = document.getElementById('canvasContainer');
           const ctx       = canvas.getContext('2d');
           const dpr       = window.devicePixelRatio || 1;
-          
+
           //──────────────────────────────────────────────────────────
           // STATE: these will be set dynamically on first resize
           let DESIGN_W, DESIGN_H;
@@ -907,7 +926,7 @@
             const containerW = container.clientWidth;
             const cssW       = containerW * 0.34;          // e.g. 32% of container
             const cssH       = cssW * (16/9);              // your chosen aspect
-               
+
             canvas.style.width  = cssW + 'px';
             canvas.style.height = cssH + 'px';
 
@@ -967,9 +986,9 @@
               //console.log("resizeCanvas_d");
             // 1) Figure out how big the canvas *looks* on the page (CSS px)
             const containerW_d = container_d.clientWidth;
-            const cssW_d       = containerW_d * 0.34;          // e.g. 23% of container containerW_d this is different 
+            const cssW_d       = containerW_d * 0.34;          // e.g. 23% of container containerW_d this is different
             const cssH_d       = cssW_d * (16/9);              // your chosen aspect
-                            
+
             canvas_d.style.width  = cssW_d + 'px';
             canvas_d.style.height = cssH_d + 'px';
 
@@ -1049,7 +1068,7 @@
 
     <!-- Modal for preview board design-->
     <div class="play_modal_body" style="display:none;">
-        <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true" >
+        <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
 
@@ -1088,7 +1107,7 @@
         </div>
     </div> *@
 
-  
+
 
     <div id="canvasMainContainerDownload" class="d-flex align-items-stretch main-canvas-content hidden">
         <div class="panel-left"></div>
@@ -1100,26 +1119,22 @@
         <div class="panel-right content"></div>
     </div>
 
- 
-   @*  <img src="~/images/stripe.svg" id="transition1" style="display:none" /> *@
 
-    <img
-  src="/images/stripe.svg"
-  id="transition1"
-  data-color="#d6d61e"
-  style="display:none"
-  data-width="210"
-/>
-  <input type="hidden" id="hdnTransition1" />
-  <input type="hidden" id="hdnTransition2" />
-   <img
-  src="/images/stripe2.svg"
-  id="transition2"
-  data-color="#1ed633"
-  data-width="300"
-  style="display:none"
-/>  
-@*    <img
+    @*  <img src="~/images/stripe.svg" id="transition1" style="display:none" /> *@
+
+    <img src="/images/stripe.svg"
+         id="transition1"
+         data-color="#d6d61e"
+         style="display:none"
+         data-width="210" />
+    <input type="hidden" id="hdnTransition1" />
+    <input type="hidden" id="hdnTransition2" />
+    <img src="/images/stripe2.svg"
+         id="transition2"
+         data-color="#1ed633"
+         data-width="300"
+         style="display:none" />
+    @*    <img
   src="/images/stripe3.svg"
   id="transition3"
   data-color="#1b5531"
@@ -1130,7 +1145,7 @@
     <input type="hidden" id="hdntransition" />
 
     <!-- Modal Structure -->
-    <div class="modal fade layout_modal" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" >
+    <div class="modal fade layout_modal" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content p-3">
                 <div class="modal-header">
@@ -1153,10 +1168,10 @@
                             <div class="landscape-icon"></div>
                             <span>Horizontal / Landscape</span>
                         </div>
-                        <span>1920x1080</span>                
+                        <span>1920x1080</span>
                     </div>
-                    
-                   
+
+
                 </div>
 
                 <div class="modal-footer pt-0">
@@ -1179,7 +1194,7 @@
                 <div class="modal-body text-start">
                     <p class="fileName" id="designBoardName"></p>
                     <div class="fileLink">
-                        <span class="aniLink" id="designboardLink"></span> 
+                        <span class="aniLink" id="designboardLink"></span>
                         <button class="copy-link-btn ms-2" onclick="copyLink(this)"><i class="fa-regular fa-copy"></i></button>
                     </div>
 
@@ -1201,28 +1216,77 @@
         </div>
 
         <div class="panel-middle d-flex align-items-center justify-content-center" id="canvasContainer">
-                
-                    <div class="canvas-top-btn">
-                       
-                        <div class="toggle-container">
-                            <button class="toggle-btn" data-mode="graphic">Graphic</button>
-                            <button class="toggle-btn active" data-mode="animation">Animation</button>
-                        </div>
+            <div id="toolbar">
+                <label for="colorPickerNew">Text Color:</label>
+                <input type="color" id="colorPickerNew" value="#000000">
+                <a href="#" id="boldBtn" onmousedown="event.preventDefault(); saveSelection();">Bold</a> |
+                <a href="#" id="italicBtn" onmousedown="event.preventDefault(); saveSelection();">Italic</a>
+                <label>Font:</label>
+                <div id="fontList" style="display:inline-block">
+                    <a href="#" data-font="Arial">Arial</a> |
+                    <a href="#" data-font="'Courier New'">Courier</a> |
+                    <a href="#" data-font="Georgia">Georgia</a> |
+                    <a href="#" data-font="'Times New Roman'">Times</a> |
+                    <a href="#" data-font="Verdana">Verdana</a>
+                </div>
+                <label style="margin-left:10px">Size:</label>
+                <div id="sizeList" style="display:inline-block">
+                    <a href="#" data-size="12px">12</a> |
+                    <a href="#" data-size="14px">14</a> |
+                    <a href="#" data-size="16px">16</a> |
+                    <a href="#" data-size="18px">18</a> |
+                    <a href="#" data-size="24px">24</a> |
+                    <a href="#" data-size="32px">32</a>
+                </div>
+               
+                <label>Align:</label>
+                <div id="alignList" style="display:inline-block">
+                    <a href="#" data-align="left">Left</a> |
+                    <a href="#" data-align="center">Center</a> |
+                    <a href="#" data-align="right">Right</a>
+                </div>
 
-                    </div>
-                    <canvas id="myCanvas" class="clsmyCanvas"></canvas>
-                            <!-- Custom context menu for deletion -->
-                            <div id="contextMenu">
-                                <ul>
-                                    <li class="context-options" id="copyOption">Copy</li>
-                                    <li class="context-options" id="pasteOption">Paste</li>
-                                    @* <li class="context-options" id="duplicateOption">Duplicate</li> *@
-                                    <li class="context-options" id="bringFrontOption">Bring Front</li>
-                                    <li class="context-options" id="sendBackOption">Send Back</li>
-                                    <li class="context-options" id="deleteOption">Delete</li>
-                                </ul>
-                            </div>
-                    <p class="middle-resulation">Final Output 1080x1920</p>
+               <label>Line Spacing:</label>
+                <input id="lineSpacingInput" type="number" step="0.1" min="-3" max="7" value="1.2">
+               @*  <select id="lineSpacingSelect">
+                    <option value="-3">-3.0</option>
+                    <option value="-2">-2.0</option>
+                    <option value="-1">-1.0</option>
+                    <option value=".5">0.5</option>
+                    <option value="1">1.0</option>
+                    <option value="1.2" selected>1.2</option>
+                    <option value="1.5">1.5</option>
+                    <option value="2">2.0</option>
+                    <option value="3">3.0</option>
+                    <option value="4">4.0</option>
+                    <option value="5">5.0</option>
+                    <option value="6">6.0</option>
+                    <option value="7">7.0</option>
+                </select> *@
+                <button onclick="addNewBox()">Add New Box</button>
+                <button onclick="generateJson()">Generate Json</button>
+            </div>
+            <div class="canvas-top-btn">
+
+                <div class="toggle-container">
+                    <button class="toggle-btn" data-mode="graphic">Graphic</button>
+                    <button class="toggle-btn active" data-mode="animation">Animation</button>
+                </div>
+
+            </div>
+            <canvas id="myCanvas" class="clsmyCanvas"></canvas>
+            <!-- Custom context menu for deletion -->
+            <div id="contextMenu">
+                <ul>
+                    <li class="context-options" id="copyOption">Copy</li>
+                    <li class="context-options" id="pasteOption">Paste</li>
+                    @* <li class="context-options" id="duplicateOption">Duplicate</li> *@
+                    <li class="context-options" id="bringFrontOption">Bring Front</li>
+                    <li class="context-options" id="sendBackOption">Send Back</li>
+                    <li class="context-options" id="deleteOption">Delete</li>
+                </ul>
+            </div>
+            <p class="middle-resulation">Final Output 1080x1920</p>
             @*  zoom div *@
             <div class="zoom_scale" style="display:none;">
                 <button onclick="zoomOut()">-</button>
@@ -1230,7 +1294,8 @@
                 <button onclick="zoomIn()">+</button>
             </div>
             @*  zoom div *@
-                    <textarea wrap="hard" style="display:none;" id="textEditor"></textarea>
+            <textarea wrap="hard" style="display:none;" id="textEditor"></textarea>
+            <div id="textEditorNew" contenteditable="true"></div>
         </div>
 
         <div class="panel-right content" id="divpanelright">
