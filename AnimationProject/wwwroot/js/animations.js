@@ -3663,276 +3663,276 @@ function isInsideRotatedText(mouseX, mouseY, txt) {
 //    );
 //}
 ////KD Need to be Include in project////////
-////canvas.addEventListener("mousedown", e => {
-////    const rect = canvas.getBoundingClientRect();
-////    const mouseX = e.clientX - rect.left;
-////    const mouseY = e.clientY - rect.top;
-////    const shift = e.shiftKey;
-////    if (document.activeElement === textEditor) return;
+//canvas.addEventListener("mousedown", e => {
+//    const rect = canvas.getBoundingClientRect();
+//    const mouseX = e.clientX - rect.left;
+//    const mouseY = e.clientY - rect.top;
+//    const shift = e.shiftKey;
+//    if (document.activeElement === textEditor) return;
 
-////    // ── 1) ROTATION HANDLE CHECK ─────────────────────────────────────
-////    let hitRotate = null;
-////    [...textObjects, ...images].forEach(obj => {
-////        if (!obj.selected || !obj._rotateHandle) return;
-////        const h = obj._rotateHandle; // { x, y, radius }
-////        const dist = Math.hypot(mouseX - h.x, mouseY - h.y);
-////        if (dist < h.radius) hitRotate = obj;
-////    });
-////    if (hitRotate) {
-////        isRotating = true;
-////        rotatingObject = hitRotate;
-////        rotationStartAngle = Math.atan2(mouseY - hitRotate.y, mouseX - hitRotate.x);
-////        rotationStartValue = hitRotate.rotation || 0;
-////        e.preventDefault();
-////        return;
-////    }
+//    // ── 1) ROTATION HANDLE CHECK ─────────────────────────────────────
+//    let hitRotate = null;
+//    [...textObjects, ...images].forEach(obj => {
+//        if (!obj.selected || !obj._rotateHandle) return;
+//        const h = obj._rotateHandle; // { x, y, radius }
+//        const dist = Math.hypot(mouseX - h.x, mouseY - h.y);
+//        if (dist < h.radius) hitRotate = obj;
+//    });
+//    if (hitRotate) {
+//        isRotating = true;
+//        rotatingObject = hitRotate;
+//        rotationStartAngle = Math.atan2(mouseY - hitRotate.y, mouseX - hitRotate.x);
+//        rotationStartValue = hitRotate.rotation || 0;
+//        e.preventDefault();
+//        return;
+//    }
 
-////    // ── 2) HIT-TEST FOR TEXT AND IMAGE ───────────────────────────────
-////    let txtHit = null;
-////    for (let i = textObjects.length - 1; i >= 0; i--) {
-////        if (isInsideRotatedText(mouseX, mouseY, textObjects[i])) {
-////            txtHit = textObjects[i];
-////            break;
-////        }
-////    }
+//    // ── 2) HIT-TEST FOR TEXT AND IMAGE ───────────────────────────────
+//    let txtHit = null;
+//    for (let i = textObjects.length - 1; i >= 0; i--) {
+//        if (isInsideRotatedText(mouseX, mouseY, textObjects[i])) {
+//            txtHit = textObjects[i];
+//            break;
+//        }
+//    }
 
-////    let imgHit = null;
-////    for (let i = images.length - 1; i >= 0; i--) {
-////        if (isInsideRotatedImage(mouseX, mouseY, images[i])) {
-////            imgHit = images[i];
-////            break;
-////        }
-////    }
+//    let imgHit = null;
+//    for (let i = images.length - 1; i >= 0; i--) {
+//        if (isInsideRotatedImage(mouseX, mouseY, images[i])) {
+//            imgHit = images[i];
+//            break;
+//        }
+//    }
 
-////    // ── 3) SHIFT-CLICK TOGGLE SELECTION ─────────────────────────────
-////    if (shift) {
-////        if (txtHit) {
-////            toggleSelect(txtHit);
-////            selectedForContextMenu = txtHit.selected ? txtHit : null;
-////            selectedType = txtHit.selected ? "text" : null;
-////        }
-////        if (imgHit) {
-////            toggleSelect(imgHit);
-////            selectedForContextMenu = imgHit.selected ? imgHit : null;
-////            selectedType = imgHit.selected ? "image" : null;
-////        }
-////        drawCanvas("Common");
-////        return;
-////    }
+//    // ── 3) SHIFT-CLICK TOGGLE SELECTION ─────────────────────────────
+//    if (shift) {
+//        if (txtHit) {
+//            toggleSelect(txtHit);
+//            selectedForContextMenu = txtHit.selected ? txtHit : null;
+//            selectedType = txtHit.selected ? "text" : null;
+//        }
+//        if (imgHit) {
+//            toggleSelect(imgHit);
+//            selectedForContextMenu = imgHit.selected ? imgHit : null;
+//            selectedType = imgHit.selected ? "image" : null;
+//        }
+//        drawCanvas("Common");
+//        return;
+//    }
 
-////    // ── 4) RESIZE HANDLE ON SELECTED OBJECT ──────────────────────────
-////    let primary = null;
-////    let handle;
+//    // ── 4) RESIZE HANDLE ON SELECTED OBJECT ──────────────────────────
+//    let primary = null;
+//    let handle;
 
-////    if (txtHit && txtHit.selected) {
-////        handle = getTextHandleUnderMouse(mouseX, mouseY, txtHit);
-////        if (handle && !handle.includes("middle")) {
-////            primary = { obj: txtHit, type: "text", handle };
-////        }
-////    }
-////    if (!primary) {
-////        for (let i = images.length - 1; i >= 0; i--) {
-////            const img = images[i];
-////            if (!img.selected) continue;
-////            handle = getImageHandleUnderMouse(mouseX, mouseY, img);
-////            if (handle) {
-////                primary = { obj: img, type: "image", handle };
-////                break;
-////            }
-////        }
-////    }
+//    if (txtHit && txtHit.selected) {
+//        handle = getTextHandleUnderMouse(mouseX, mouseY, txtHit);
+//        if (handle && !handle.includes("middle")) {
+//            primary = { obj: txtHit, type: "text", handle };
+//        }
+//    }
+//    if (!primary) {
+//        for (let i = images.length - 1; i >= 0; i--) {
+//            const img = images[i];
+//            if (!img.selected) continue;
+//            handle = getImageHandleUnderMouse(mouseX, mouseY, img);
+//            if (handle) {
+//                primary = { obj: img, type: "image", handle };
+//                break;
+//            }
+//        }
+//    }
 
-////    // ── 5) COUNT SELECTED ITEMS ──────────────────────────────────────
-////    const selectedCount =
-////        textObjects.filter(o => o.selected).length +
-////        images.filter(i => i.selected).length;
+//    // ── 5) COUNT SELECTED ITEMS ──────────────────────────────────────
+//    const selectedCount =
+//        textObjects.filter(o => o.selected).length +
+//        images.filter(i => i.selected).length;
 
-////    // Multi-resize or single-resize...
-////    if (primary && selectedCount > 1) {
-////        startMultiResize(primary.obj, e);
-////        e.preventDefault();
-////        return;
-////    }
-////    if (primary && selectedCount === 1) {
-////        if (primary.type === "text") {
-////            // Begin text resize: store starting width/height/font
-////            isResizingText = true;
-////            activeTextHandle = primary.handle;
-////            activeText = primary.obj;
-////            textResizeStart = {
-////                mouseX: e.clientX,
-////                mouseY: e.clientY,
-////                origX: activeText.x,
-////                origY: activeText.y,
-////                origW: activeText.boundingWidth,
-////                origH: activeText.boundingHeight,
-////                origFont: activeText.fontSize
-////            };
-////            // STORE “start‐of‐drag” dims for text:
-////            activeText._resizeStartW = activeText.boundingWidth;
-////            activeText._resizeStartH = activeText.boundingHeight;
-////            activeText._resizeStartFont = activeText.fontSize;
-////        } else {
-////            // Begin image resize: store starting on-canvas width/height & scale
-////            isResizingImage = true;
-////            activeImageHandle = primary.handle;
-////            activeImage = primary.obj;
+//    // Multi-resize or single-resize...
+//    if (primary && selectedCount > 1) {
+//        startMultiResize(primary.obj, e);
+//        e.preventDefault();
+//        return;
+//    }
+//    if (primary && selectedCount === 1) {
+//        if (primary.type === "text") {
+//            // Begin text resize: store starting width/height/font
+//            isResizingText = true;
+//            activeTextHandle = primary.handle;
+//            activeText = primary.obj;
+//            textResizeStart = {
+//                mouseX: e.clientX,
+//                mouseY: e.clientY,
+//                origX: activeText.x,
+//                origY: activeText.y,
+//                origW: activeText.boundingWidth,
+//                origH: activeText.boundingHeight,
+//                origFont: activeText.fontSize
+//            };
+//            // STORE “start‐of‐drag” dims for text:
+//            activeText._resizeStartW = activeText.boundingWidth;
+//            activeText._resizeStartH = activeText.boundingHeight;
+//            activeText._resizeStartFont = activeText.fontSize;
+//        } else {
+//            // Begin image resize: store starting on-canvas width/height & scale
+//            isResizingImage = true;
+//            activeImageHandle = primary.handle;
+//            activeImage = primary.obj;
 
-////            const startSX = (typeof activeImage.scaleX === 'number')
-////                ? activeImage.scaleX : 1;
-////            const startSY = (typeof activeImage.scaleY === 'number')
-////                ? activeImage.scaleY : 1;
+//            const startSX = (typeof activeImage.scaleX === 'number')
+//                ? activeImage.scaleX : 1;
+//            const startSY = (typeof activeImage.scaleY === 'number')
+//                ? activeImage.scaleY : 1;
 
-////            activeImage._resizeStartSX = startSX;
-////            activeImage._resizeStartSY = startSY;
-////            activeImage._resizeStartW = activeImage.width * startSX;
-////            activeImage._resizeStartH = activeImage.height * startSY;
-////        }
-////        e.preventDefault();
-////        drawCanvas("Common");
-////        return;
-////    }
+//            activeImage._resizeStartSX = startSX;
+//            activeImage._resizeStartSY = startSY;
+//            activeImage._resizeStartW = activeImage.width * startSX;
+//            activeImage._resizeStartH = activeImage.height * startSY;
+//        }
+//        e.preventDefault();
+//        drawCanvas("Common");
+//        return;
+//    }
 
-////    // ── 6) GROUP-DRAG ────────────────────────────────────────────────
-////    if ((txtHit && txtHit.selected) || (imgHit && imgHit.selected)) {
-////        isDraggingGroup = true;
-////        groupDragStart = { x: e.clientX, y: e.clientY };
-////        groupStarts = [];
-////        textObjects.filter(o => o.selected)
-////            .forEach(o => groupStarts.push({ obj: o, x: o.x, y: o.y }));
-////        images.filter(i => i.selected)
-////            .forEach(i => groupStarts.push({ obj: i, x: i.x, y: i.y }));
-////        e.preventDefault();
-////        return;
-////    }
+//    // ── 6) GROUP-DRAG ────────────────────────────────────────────────
+//    if ((txtHit && txtHit.selected) || (imgHit && imgHit.selected)) {
+//        isDraggingGroup = true;
+//        groupDragStart = { x: e.clientX, y: e.clientY };
+//        groupStarts = [];
+//        textObjects.filter(o => o.selected)
+//            .forEach(o => groupStarts.push({ obj: o, x: o.x, y: o.y }));
+//        images.filter(i => i.selected)
+//            .forEach(i => groupStarts.push({ obj: i, x: i.x, y: i.y }));
+//        e.preventDefault();
+//        return;
+//    }
 
-////    // ── 7) DESELECT ALL BEFORE NEW SELECTION ─────────────────────────
-////    textObjects.forEach(o => o.selected = false);
-////    images.forEach(i => i.selected = false);
-////    selectedForContextMenu = null;
-////    selectedType = null;
-////    activeText = activeImage = null;
+//    // ── 7) DESELECT ALL BEFORE NEW SELECTION ─────────────────────────
+//    textObjects.forEach(o => o.selected = false);
+//    images.forEach(i => i.selected = false);
+//    selectedForContextMenu = null;
+//    selectedType = null;
+//    activeText = activeImage = null;
 
-////    // ── 8) CLICK-TO-SELECT TEXT ─────────────────────────────────────
-////    if (txtHit) {
-////        txtHit.selected = true;
-////        selectedForContextMenu = txtHit;
-////        selectedType = "text";
-////        activeText = txtHit;
-////        const angle = txtHit.rotation || 0;
-////        rotationSlider.value = angle;
-////        document.getElementById("rotationValue").textContent = angle + "°";
-////        rotationBadge.textContent = angle;
+//    // ── 8) CLICK-TO-SELECT TEXT ─────────────────────────────────────
+//    if (txtHit) {
+//        txtHit.selected = true;
+//        selectedForContextMenu = txtHit;
+//        selectedType = "text";
+//        activeText = txtHit;
+//        const angle = txtHit.rotation || 0;
+//        rotationSlider.value = angle;
+//        document.getElementById("rotationValue").textContent = angle + "°";
+//        rotationBadge.textContent = angle;
 
 
-////        var opacity = txtHit.opacity * 100 || 100;
-////        if (opacity > 100) opacity = 100;
-////        opacitySlider.value = opacity;
-////        document.getElementById("opacityValue").textContent = opacity + "";
-////        opacityBadge.textContent = opacity;
+//        var opacity = txtHit.opacity * 100 || 100;
+//        if (opacity > 100) opacity = 100;
+//        opacitySlider.value = opacity;
+//        document.getElementById("opacityValue").textContent = opacity + "";
+//        opacityBadge.textContent = opacity;
 
-////        handle = getTextHandleUnderMouse(mouseX, mouseY, txtHit);
-////        if (handle && !handle.includes("middle")) {
-////            isResizingText = true;
-////            activeTextHandle = handle;
-////            textResizeStart = {
-////                mouseX: e.clientX,
-////                mouseY: e.clientY,
-////                origX: txtHit.x,
-////                origY: txtHit.y,
-////                origW: txtHit.boundingWidth,
-////                origH: txtHit.boundingHeight,
-////                origFont: txtHit.fontSize
-////            };
-////            // Also store “start” values in case user rotates then drags again:
-////            txtHit._resizeStartW = txtHit.boundingWidth;
-////            txtHit._resizeStartH = txtHit.boundingHeight;
-////            txtHit._resizeStartFont = txtHit.fontSize;
-////        } else {
-////            isDraggingText = true;
-////            dragOffsetText = { x: mouseX - txtHit.x, y: mouseY - txtHit.y };
-////        }
+//        handle = getTextHandleUnderMouse(mouseX, mouseY, txtHit);
+//        if (handle && !handle.includes("middle")) {
+//            isResizingText = true;
+//            activeTextHandle = handle;
+//            textResizeStart = {
+//                mouseX: e.clientX,
+//                mouseY: e.clientY,
+//                origX: txtHit.x,
+//                origY: txtHit.y,
+//                origW: txtHit.boundingWidth,
+//                origH: txtHit.boundingHeight,
+//                origFont: txtHit.fontSize
+//            };
+//            // Also store “start” values in case user rotates then drags again:
+//            txtHit._resizeStartW = txtHit.boundingWidth;
+//            txtHit._resizeStartH = txtHit.boundingHeight;
+//            txtHit._resizeStartFont = txtHit.fontSize;
+//        } else {
+//            isDraggingText = true;
+//            dragOffsetText = { x: mouseX - txtHit.x, y: mouseY - txtHit.y };
+//        }
 
-////        e.preventDefault();
-////        drawCanvas("Common");
-////        return;
-////    }
+//        e.preventDefault();
+//        drawCanvas("Common");
+//        return;
+//    }
 
-////    // ── 9) CLICK-TO-SELECT IMAGE ────────────────────────────────────
-////    if (imgHit) {
-////        images.forEach(i => i.selected = false);
-////        imgHit.selected = true;
-////        selectedForContextMenu = imgHit;
-////        selectedType = "image";
-////        activeImage = imgHit;
-////        const angle = imgHit.rotation || 0;
-////        rotationSlider.value = angle;
-////        document.getElementById("rotationValue").textContent = angle + "°";
-////        rotationBadge.textContent = angle;
+//    // ── 9) CLICK-TO-SELECT IMAGE ────────────────────────────────────
+//    if (imgHit) {
+//        images.forEach(i => i.selected = false);
+//        imgHit.selected = true;
+//        selectedForContextMenu = imgHit;
+//        selectedType = "image";
+//        activeImage = imgHit;
+//        const angle = imgHit.rotation || 0;
+//        rotationSlider.value = angle;
+//        document.getElementById("rotationValue").textContent = angle + "°";
+//        rotationBadge.textContent = angle;
 
-////        var opacity = imgHit.opacity * 100 || 100;
-////        if (opacity > 100) opacity = 100;
-////        opacitySlider.value = opacity;
-////        document.getElementById("opacityValue").textContent = opacity + "";
-////        opacityBadge.textContent = opacity;
+//        var opacity = imgHit.opacity * 100 || 100;
+//        if (opacity > 100) opacity = 100;
+//        opacitySlider.value = opacity;
+//        document.getElementById("opacityValue").textContent = opacity + "";
+//        opacityBadge.textContent = opacity;
 
-////        isDraggingImage = true;
-////        dragOffsetImage = { x: mouseX - imgHit.x, y: mouseY - imgHit.y };
-////        enableFillColorDiv();
-////        enableStrockColorDiv();
+//        isDraggingImage = true;
+//        dragOffsetImage = { x: mouseX - imgHit.x, y: mouseY - imgHit.y };
+//        enableFillColorDiv();
+//        enableStrockColorDiv();
 
-////        e.preventDefault();
-////        drawCanvas("Common");
-////        return;
-////    }
+//        e.preventDefault();
+//        drawCanvas("Common");
+//        return;
+//    }
 
-////    //// ── 10) CLICKED EMPTY SPACE ─────────────────────────────────────
-////    //textObjects.forEach(o => o.selected = false);
-////    //images.forEach(i => i.selected = false);
-////    //selectedForContextMenu = null;
-////    //selectedType = null;
-////    //activeText = activeImage = null;
-////    //rotationSlider.value = 0;
-////    //rotationBadge.textContent = "0";
+//    //// ── 10) CLICKED EMPTY SPACE ─────────────────────────────────────
+//    //textObjects.forEach(o => o.selected = false);
+//    //images.forEach(i => i.selected = false);
+//    //selectedForContextMenu = null;
+//    //selectedType = null;
+//    //activeText = activeImage = null;
+//    //rotationSlider.value = 0;
+//    //rotationBadge.textContent = "0";
 
-////    //e.preventDefault();
-////    //drawCanvas("Common");
+//    //e.preventDefault();
+//    //drawCanvas("Common");
 
-////    // ── 10) CLICKED EMPTY SPACE ─────────────────────────────────────
-////    const clickedEmpty =
-////        !hitRotate &&
-////        !txtHit &&
-////        !imgHit &&
-////        !primary;
+//    // ── 10) CLICKED EMPTY SPACE ─────────────────────────────────────
+//    const clickedEmpty =
+//        !hitRotate &&
+//        !txtHit &&
+//        !imgHit &&
+//        !primary;
 
-////    if (clickedEmpty) {
-////        // clear any existing selection
-////        textObjects.forEach(o => o.selected = false);
-////        images.forEach(i => i.selected = false);
-////        selectedForContextMenu = null;
-////        selectedType = null;
-////        activeText = activeImage = null;
-////        rotationSlider.value = 0;
-////        rotationBadge.textContent = "0";
+//    if (clickedEmpty) {
+//        // clear any existing selection
+//        textObjects.forEach(o => o.selected = false);
+//        images.forEach(i => i.selected = false);
+//        selectedForContextMenu = null;
+//        selectedType = null;
+//        activeText = activeImage = null;
+//        rotationSlider.value = 0;
+//        rotationBadge.textContent = "0";
 
-////        opacitySlider.value = 100;
-////        opacityBadge.textContent = "100";
+//        opacitySlider.value = 100;
+//        opacityBadge.textContent = "100";
        
 
-////        // begin drag-to-select
-////        isDraggingSelectionBox = true;
-////        const rect = canvas.getBoundingClientRect();
-////        selectionStart = {
-////            x: e.clientX - rect.left,
-////            y: e.clientY - rect.top
-////        };
-////        selectionEnd = { ...selectionStart };
+//        // begin drag-to-select
+//        isDraggingSelectionBox = true;
+//        const rect = canvas.getBoundingClientRect();
+//        selectionStart = {
+//            x: e.clientX - rect.left,
+//            y: e.clientY - rect.top
+//        };
+//        selectionEnd = { ...selectionStart };
 
-////        e.preventDefault();
-////        drawCanvas("Common");
-////        return;
-////    }
-////});
+//        e.preventDefault();
+//        drawCanvas("Common");
+//        return;
+//    }
+//});
 
 
 
@@ -7026,6 +7026,7 @@ function stripHTML(html) {
 
 
 // ✅ Updated drawText to show selection box even when not editing (for drag/select)
+// Updated drawText function with word-wrapping support without breaking font/color logic
 function drawText() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.textBaseline = "top";
@@ -7085,50 +7086,65 @@ function drawText() {
                 ctx.textAlign = "left";
             }
 
+            let line = "";
+            let segments = [];
             let maxLineHeight = 0;
 
-            (function paint(n, inheritedStyle = {}) {
-                if (n.nodeType === 3) {
-                    const txt = n.nodeValue;
-                    if (txt) {
-                        const fs = inheritedStyle.fontSize || defaultFontSize;
-                        const ff = inheritedStyle.fontFamily || defaultFontFamily;
-                        const fw = inheritedStyle.fontWeight || defaultFontWeight;
-                        const fst = inheritedStyle.fontStyle || defaultFontStyle;
-                        const col = inheritedStyle.color || defaultColor;
+            function measureWords(node, style) {
+                if (node.nodeType === 3) {
+                    const words = node.nodeValue.split(/(\s+)/);
+                    for (let word of words) {
+                        const fs = style.fontSize || defaultFontSize;
+                        const ff = style.fontFamily || defaultFontFamily;
+                        const fw = style.fontWeight || defaultFontWeight;
+                        const fst = style.fontStyle || defaultFontStyle;
+                        const col = style.color || defaultColor;
 
                         ctx.font = `${fst} ${fw} ${fs} ${ff}`;
-                        ctx.fillStyle = col;
+                        const width = ctx.measureText(word).width;
+                        segments.push({ text: word, width, style: { fs, ff, fw, fst, col } });
 
-                        ctx.fillText(txt, cursorX, cursorY);
-                        cursorX += ctx.measureText(txt).width;
-
-                        // Track max height
                         const px = parseFloat(fs);
                         if (!isNaN(px)) maxLineHeight = Math.max(maxLineHeight, px);
                     }
-                } else if (n.nodeType === 1) {
-                    if (n.tagName === "BR") return;
-
-                    const s = n.style;
-                    const style = {
-                        fontSize: s.fontSize || inheritedStyle.fontSize,
-                        fontFamily: s.fontFamily || inheritedStyle.fontFamily,
-                        fontWeight: s.fontWeight || inheritedStyle.fontWeight,
-                        fontStyle: s.fontStyle || inheritedStyle.fontStyle,
-                        color: s.color || inheritedStyle.color,
+                } else if (node.nodeType === 1) {
+                    const s = node.style;
+                    const nextStyle = {
+                        fontSize: s.fontSize || style.fontSize,
+                        fontFamily: s.fontFamily || style.fontFamily,
+                        fontWeight: s.fontWeight || style.fontWeight,
+                        fontStyle: s.fontStyle || style.fontStyle,
+                        color: s.color || style.color,
                     };
-
-                    n.childNodes.forEach(child => paint(child, style));
+                    node.childNodes.forEach(child => measureWords(child, nextStyle));
                 }
-            })(lineNode);
+            }
 
-            // Move down by line-height (can be less than font size to allow overlap)
-            const spacing = parseFloat(defaultStyle.lineHeight) || (maxLineHeight + 4);
-            cursorY += spacing;
+            measureWords(lineNode, {
+                fontSize: defaultFontSize,
+                fontFamily: defaultFontFamily,
+                fontWeight: defaultFontWeight,
+                fontStyle: defaultFontStyle,
+                color: defaultColor
+            });
+
+            let lineText = "";
+            let x = cursorX;
+            segments.forEach(segment => {
+                if (x + segment.width > box.x + box.width - 10) {
+                    cursorY += defaultLineHeight;
+                    x = cursorX;
+                }
+
+                ctx.font = `${segment.style.fst} ${segment.style.fw} ${segment.style.fs} ${segment.style.ff}`;
+                ctx.fillStyle = segment.style.col;
+                ctx.fillText(segment.text, x, cursorY);
+                x += segment.width;
+            });
+
+            cursorY += defaultLineHeight;
         });
 
-        // ✅ Show selection box if box is active (editing or not)
         if (box === activeBox) {
             ctx.strokeStyle = isEditing ? "red" : "red";
             ctx.lineWidth = isEditing ? 2 : 1;
@@ -7143,7 +7159,8 @@ function drawText() {
     }
 }
 
-function drawTextOld() {
+// Fix for canvas text overflow: update drawText to wrap long lines within box.width
+function drawTextNew() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.textBaseline = "top";
 
@@ -7153,7 +7170,7 @@ function drawTextOld() {
     const defaultFontWeight = defaultStyle.fontWeight || "normal";
     const defaultFontStyle = defaultStyle.fontStyle || "normal";
     const defaultColor = defaultStyle.color || "#000";
-    const defaultLineHeight = (parseFloat(defaultStyle.lineHeight) || 24) + 12;
+    const defaultLineHeight = (parseFloat(defaultStyle.lineHeight) || 24);
 
     for (const box of boxes) {
         ctx.save();
@@ -7163,29 +7180,29 @@ function drawTextOld() {
 
         let lines = [];
         let currentLine = document.createElement("div");
-        lines.push(currentLine);
 
         wrapper.childNodes.forEach(n => {
             if (n.nodeType === 1 && n.tagName === "DIV") {
-                if (currentLine.childNodes.length > 0) {
-                    currentLine = document.createElement("div");
+                if (currentLine.childNodes.length > 0 || lines.length === 0) {
                     lines.push(currentLine);
+                    currentLine = document.createElement("div");
                 }
-                currentLine.append(...n.childNodes);
-                currentLine = document.createElement("div");
-                lines.push(currentLine);
+                if (n.childNodes.length === 0) {
+                    lines.push(document.createElement("div"));
+                } else {
+                    n.childNodes.forEach(child => currentLine.appendChild(child.cloneNode(true)));
+                    lines.push(currentLine);
+                    currentLine = document.createElement("div");
+                }
             } else if (n.nodeType === 1 && n.tagName === "BR") {
-                currentLine = document.createElement("div");
-                lines.push(currentLine);
+                lines.push(document.createElement("div"));
             } else {
                 currentLine.appendChild(n.cloneNode(true));
             }
         });
 
-        if (lines.length === 0 || lines[0].childNodes.length === 0) {
-            const d = document.createElement("div");
-            d.textContent = box.text;
-            lines = [d];
+        if (currentLine.childNodes.length > 0) {
+            lines.push(currentLine);
         }
 
         lines.forEach((lineNode, row) => {
@@ -7219,8 +7236,6 @@ function drawTextOld() {
                         cursorX += ctx.measureText(txt).width;
                     }
                 } else if (n.nodeType === 1) {
-                    if (n.tagName === "BR") return;
-
                     const s = n.style;
                     const style = {
                         fontSize: s.fontSize || inheritedStyle.fontSize,
@@ -7229,13 +7244,11 @@ function drawTextOld() {
                         fontStyle: s.fontStyle || inheritedStyle.fontStyle,
                         color: s.color || inheritedStyle.color,
                     };
-
                     n.childNodes.forEach(child => paint(child, style));
                 }
             })(lineNode);
         });
 
-        // ✅ Show selection box if box is active (editing or not)
         if (box === activeBox) {
             ctx.strokeStyle = isEditing ? "red" : "red";
             ctx.lineWidth = isEditing ? 2 : 1;
@@ -7244,17 +7257,17 @@ function drawTextOld() {
             for (let h of Object.values(getAllHandles(box))) {
                 ctx.fillRect(h.x - 4, h.y - 4, 8, 8);
             }
-            ////if (isEditing) {
-            ////    ctx.fillStyle = "white";
-            ////    for (let h of Object.values(getAllHandles(box))) {
-            ////        ctx.fillRect(h.x - 4, h.y - 4, 8, 8);
-            ////    }
-            ////}
         }
 
         ctx.restore();
     }
 }
+
+
+// Update your drawText function to handle automatic word wrapping inside the canvas box
+
+
+
 
 
 
@@ -7553,8 +7566,22 @@ function getSelectionText() {
 
 // ——————— Text Editor Helpers (unchanged) ———————
 function execCommandSafely(cmd, val) { textEditorNew.focus(); document.execCommand(cmd, false, val); }
-function saveSelection() { let s = window.getSelection(); if (s.rangeCount) savedRange = s.getRangeAt(0).cloneRange(); }
-function restoreSelection() { let s = window.getSelection(); s.removeAllRanges(); if (savedRange) s.addRange(savedRange); }
+//function saveSelection() { let s = window.getSelection(); if (s.rangeCount) savedRange = s.getRangeAt(0).cloneRange(); }
+//function restoreSelection() { let s = window.getSelection(); s.removeAllRanges(); if (savedRange) s.addRange(savedRange); }
+function saveSelection() {
+    const sel = window.getSelection();
+    if (sel.rangeCount > 0) {
+        savedRange = sel.getRangeAt(0);
+    }
+}
+
+function restoreSelection() {
+    const sel = window.getSelection();
+    if (savedRange) {
+        sel.removeAllRanges();
+        sel.addRange(savedRange);
+    }
+}
 // … include your cleanEditorHTMLPreserveCaret, applyStyleToSelection, etc …
 
 // ——————— Box Creation & JSON ———————
@@ -7592,25 +7619,29 @@ colorPickerNew.addEventListener("input", e => {
     applyStyleToSelection("color", e.target.value);
 });
 
+
+// Track selection changes within the editor
+textEditorNew.addEventListener("mouseup", saveSelection);
+textEditorNew.addEventListener("keyup", saveSelection);
+
 // FONT SIZE LINKS
-document.querySelectorAll("#sizeList a").forEach(link => {
+sizeList.querySelectorAll("a").forEach(link => {
     link.addEventListener("click", e => {
         e.preventDefault();
-        const size = e.target.getAttribute("data-size");  // e.g. "16px"
-        textEditorNew.focus();
-        applyStyleToSelection("fontSize", size);
+        restoreSelection();
+        applyStyleToSelection("fontSize", e.target.getAttribute("data-size"));
     });
 });
 
 // FONT FAMILY LINKS
-document.querySelectorAll("#fontList a").forEach(link => {
+fontList.querySelectorAll("a").forEach(link => {
     link.addEventListener("click", e => {
         e.preventDefault();
-        const ff = e.target.getAttribute("data-font");
-        textEditorNew.focus();
-        applyStyleToSelection("fontFamily", ff);
+        restoreSelection();
+        applyStyleToSelection("fontFamily", e.target.getAttribute("data-font"));
     });
 });
+
 
 // ALIGNMENT can still use execCommand,
 // but if you want per-span alignment:
@@ -7709,23 +7740,73 @@ function showEditorAtBoxOLD(box) {
     textEditorNew.focus();
     isEditing = true;
 }
+// ✅ FIXED POSITIONING FOR TEXTEDITOR
+// ✅ Corrected function to place textEditorNew accurately on top of the active box
+// Universal version of `showEditorAtBox` that works whether the canvas is scaled or not
 function showEditorAtBox(box) {
-    const OFFSET_X = 73, OFFSET_Y = 45;
-    const container = document.getElementById("canvasContainer");
-    const crect = container.getBoundingClientRect();
+    const canvasRect = canvas.getBoundingClientRect();
+    const containerRect = document.getElementById("canvasContainer").getBoundingClientRect();
+
+    const scaleX = canvas.width / canvasRect.width;
+    const scaleY = canvas.height / canvasRect.height;
+
+    // Get position relative to canvas
+    const offsetX = box.x / scaleX;
+    const offsetY = box.y / scaleY;
+
+    // Adjust based on canvas position inside container
+    const relativeX = canvasRect.left - containerRect.left + offsetX;
+    const relativeY = canvasRect.top - containerRect.top + offsetY;
 
     textEditorNew.innerHTML = box.text;
     textEditorNew.style.textAlign = box.align || "left";
-    textEditorNew.style.left = `${crect.left + box.x + OFFSET_X}px`;
-    textEditorNew.style.top = `${crect.top + box.y + OFFSET_Y}px`;
-    textEditorNew.style.width = `${box.width}px`;
+    textEditorNew.style.left = `${relativeX}px`;
+    textEditorNew.style.top = `${relativeY}px`;
+    textEditorNew.style.width = `${box.width / scaleX}px`;
     textEditorNew.style.display = "block";
 
     applyTextEditorStyleFromBox(box);
-    textEditorNew.dispatchEvent(new Event("input")); // ✅ ensure updated height
     textEditorNew.focus();
     isEditing = true;
 }
+
+
+
+// Updated showEditorAtBox to rely only on box coordinates and canvas offsets
+// Revised showEditorAtBox using only canvas positioning
+// ✅ Corrected version of `showEditorAtBox` that fixes incorrect offset
+// Final working approach to properly position `textEditorNew` over canvas boxes
+function showEditorAtBoxNew(box) {
+    const canvasRect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / canvasRect.width;
+    const scaleY = canvas.height / canvasRect.height;
+
+    const screenX = canvasRect.left + box.x / scaleX;
+    const screenY = canvasRect.top + box.y / scaleY;
+
+    textEditorNew.innerHTML = box.text;
+    textEditorNew.style.textAlign = box.align || "left";
+    textEditorNew.style.left = `${screenX}px`;
+    textEditorNew.style.top = `${screenY}px`;
+    textEditorNew.style.width = `${box.width / scaleX}px`;
+    textEditorNew.style.height = "auto"; // let it recalculate
+    textEditorNew.style.display = "block";
+    textEditorNew.style.zIndex = 9999; // ensure it appears topmost
+
+    applyTextEditorStyleFromBox(box);
+
+    textEditorNew.dispatchEvent(new Event("input"));
+    textEditorNew.focus();
+    isEditing = true;
+}
+
+
+
+
+
+
+// ✅ Modify showEditorAtBox to dynamically position based on scaling
+
 
 
 //function applyTextEditorStyleFromBox(box) {
@@ -7859,13 +7940,26 @@ textEditorNew.addEventListener("input", () => {
 });
 
 
+//textEditorNew.addEventListener("keydown", e => {
+//    if (e.key === "Enter") {
+//        // let the line break happen, then re-fire input
+//        setTimeout(() => textEditorNew.dispatchEvent(new Event("input")), 0);
+//    }
+//});
+
 textEditorNew.addEventListener("keydown", e => {
     if (e.key === "Enter") {
-        // let the line break happen, then re-fire input
-        setTimeout(() => textEditorNew.dispatchEvent(new Event("input")), 0);
+        // ✅ Let line break happen first
+        setTimeout(() => {
+            // Check if we're still editing and an activeBox exists
+            if (activeBox && isEditing) {
+                activeBox.text = textEditorNew.innerHTML;
+                console.log("calling");
+                drawText();
+            }
+        }, 0);
     }
 });
-
 
 
 boldBtn.addEventListener("click", e => {
@@ -7881,27 +7975,27 @@ italicBtn.addEventListener("click", e => {
     document.execCommand("italic");
 });
 
-// 4. Font Change
-fontList.querySelectorAll("a[data-font]").forEach(a => {
-    a.addEventListener("click", e => {
-        e.preventDefault();
-        restoreSelection();
-        const font = a.getAttribute("data-font");
-        document.execCommand("fontName", false, font);
-    });
-});
+//// 4. Font Change
+//fontList.querySelectorAll("a[data-font]").forEach(a => {
+//    a.addEventListener("click", e => {
+//        e.preventDefault();
+//        restoreSelection();
+//        const font = a.getAttribute("data-font");
+//        document.execCommand("fontName", false, font);
+//    });
+//});
 
-// 5. Font Size Change
-sizeList.querySelectorAll("a[data-size]").forEach(a => {
-    a.addEventListener("click", e => {
-        e.preventDefault();
-        restoreSelection();
-        const size = a.getAttribute("data-size");
-        const span = document.createElement("span");
-        span.style.fontSize = size;
-        wrapSelectionWithSpan(span);
-    });
-});
+//// 5. Font Size Change
+//sizeList.querySelectorAll("a[data-size]").forEach(a => {
+//    a.addEventListener("click", e => {
+//        e.preventDefault();
+//        restoreSelection();
+//        const size = a.getAttribute("data-size");
+//        const span = document.createElement("span");
+//        span.style.fontSize = size;
+//        wrapSelectionWithSpan(span);
+//    });
+//});
 
 // 6. Line Spacing
 //const lineSpacingSelect = document.getElementById("lineSpacingSelect");
