@@ -7614,12 +7614,33 @@ document.querySelectorAll("#fontList a").forEach(link => {
 
 // ALIGNMENT can still use execCommand,
 // but if you want per-span alignment:
-document.querySelectorAll("#alignList a").forEach(link => {
+//////document.querySelectorAll("#alignList a").forEach(link => {
+//////    link.addEventListener("click", e => {
+//////        e.preventDefault();
+//////        const align = e.target.getAttribute("data-align");
+//////        textEditorNew.focus();
+//////        applyStyleToSelection("textAlign", align);
+//////    });
+//////});
+const alignLinks = document.querySelectorAll("#alignList a");
+alignLinks.forEach(link => {
     link.addEventListener("click", e => {
         e.preventDefault();
         const align = e.target.getAttribute("data-align");
-        textEditorNew.focus();
-        applyStyleToSelection("textAlign", align);
+
+        if (!activeBox) return;
+
+        // CASE 1: Editing mode, update editor alignment
+        if (isEditing) {
+            textEditorNew.style.textAlign = align;
+            activeBox.align = align;
+            activeBox.text = textEditorNew.innerHTML;
+        } else {
+            // CASE 2: Not editing: just update box align and redraw
+            activeBox.align = align;
+        }
+
+        drawText();
     });
 });
 
