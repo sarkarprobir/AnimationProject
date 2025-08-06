@@ -7098,25 +7098,57 @@ function drawText() {
         wrapper.innerHTML = box.text;
 
         const lines = [];
-        let currentLine = document.createElement("div");
-        lines.push(currentLine);
+        //let currentLine = document.createElement("div");
+        //lines.push(currentLine);
 
         wrapper.childNodes.forEach(n => {
             if (n.nodeType === 1 && n.tagName === "DIV") {
-                if (currentLine.childNodes.length > 0) {
-                    currentLine = document.createElement("div");
-                    lines.push(currentLine);
+                const hasContent = n.textContent.trim().length > 0 || n.children.length > 0;
+
+                if (!hasContent) {
+                    // Empty <div><br></div> → blank line
+                    const blankLine = document.createElement("div");
+                    blankLine.appendChild(document.createTextNode(" "));
+                    lines.push(blankLine);
+                } else {
+                    const newLine = document.createElement("div");
+                    newLine.append(...n.cloneNode(true).childNodes);
+                    lines.push(newLine);
                 }
-                currentLine.append(...n.childNodes);
-                currentLine = document.createElement("div");
-                lines.push(currentLine);
             } else if (n.nodeType === 1 && n.tagName === "BR") {
-                currentLine = document.createElement("div");
-                lines.push(currentLine);
+                const brLine = document.createElement("div");
+                brLine.appendChild(document.createTextNode(" "));
+                lines.push(brLine);
             } else {
-                currentLine.appendChild(n.cloneNode(true));
+                // Text directly outside div (rare, but possible)
+                if (lines.length === 0) {
+                    lines.push(document.createElement("div"));
+                }
+                lines[lines.length - 1].appendChild(n.cloneNode(true));
             }
+            
         });
+        console.log("Parsed lines:", lines);
+        lines.forEach((line, index) => {
+            console.log(`Line ${index}:`, line.innerHTML || line.textContent || line);
+        });
+        //wrapper.childNodes.forEach(n => {
+        //    if (n.nodeType === 1 && n.tagName === "DIV") {
+        //        if (currentLine.childNodes.length > 0) {
+        //            currentLine = document.createElement("div");
+        //            lines.push(currentLine);
+        //        }
+        //        currentLine.append(...n.childNodes);
+        //        currentLine = document.createElement("div");
+        //        lines.push(currentLine);
+        //    } else if (n.nodeType === 1 && n.tagName === "BR") {
+        //        currentLine = document.createElement("div");
+        //        lines.push(currentLine);
+        //    } else {
+        //        currentLine.appendChild(n.cloneNode(true));
+        //    }
+        //});
+      
 
         let cursorY = box.y + 5;
         let usedHeight = 0;
@@ -7136,8 +7168,42 @@ function drawText() {
             let segments = [];
             let maxFontPx = 0;
 
+            //function measureWords(node, style) {
+            //    if (node.nodeType === 3) {
+            //        const words = node.nodeValue.split("");
+            //        for (let word of words) {
+            //            const fs = style.fontSize || defaultFontSize;
+            //            const ff = style.fontFamily || defaultFontFamily;
+            //            const fw = style.fontWeight || defaultFontWeight;
+            //            const fst = style.fontStyle || defaultFontStyle;
+            //            const col = style.color || defaultColor;
+
+            //            ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+            //            const width = ctx.measureText(word).width;
+            //            const px = parseFloat(fs);
+            //            if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+            //            segments.push({
+            //                text: word,
+            //                width,
+            //                style: { fs, ff, fw, fst, col }
+            //            });
+            //        }
+            //    } else if (node.nodeType === 1) {
+            //        const s = node.style;
+            //        const nextStyle = {
+            //            fontSize: s.fontSize || style.fontSize,
+            //            fontFamily: s.fontFamily || style.fontFamily,
+            //            fontWeight: s.fontWeight || style.fontWeight,
+            //            fontStyle: s.fontStyle || style.fontStyle,
+            //            color: s.color || style.color,
+            //        };
+            //        node.childNodes.forEach(child => measureWords(child, nextStyle));
+            //    }
+            //}
             function measureWords(node, style) {
                 if (node.nodeType === 3) {
+                    // Handle text node (split into individual characters)
                     const words = node.nodeValue.split("");
                     for (let word of words) {
                         const fs = style.fontSize || defaultFontSize;
@@ -7158,6 +7224,28 @@ function drawText() {
                         });
                     }
                 } else if (node.nodeType === 1) {
+                    // ✅ Special case: if node is a <br>, treat it as a blank line
+                    if (node.tagName === "BR") {
+                        const fs = style.fontSize || defaultFontSize;
+                        const ff = style.fontFamily || defaultFontFamily;
+                        const fw = style.fontWeight || defaultFontWeight;
+                        const fst = style.fontStyle || defaultFontStyle;
+                        const col = style.color || defaultColor;
+
+                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                        const width = ctx.measureText(" ").width;
+                        const px = parseFloat(fs);
+                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                        segments.push({
+                            text: " ",
+                            width,
+                            style: { fs, ff, fw, fst, col }
+                        });
+                        return; // Don’t process children
+                    }
+
+                    // Normal element with children
                     const s = node.style;
                     const nextStyle = {
                         fontSize: s.fontSize || style.fontSize,
@@ -7169,7 +7257,6 @@ function drawText() {
                     node.childNodes.forEach(child => measureWords(child, nextStyle));
                 }
             }
-
             measureWords(lineNode, {
                 fontSize: defaultFontSize,
                 fontFamily: defaultFontFamily,
@@ -7234,297 +7321,6 @@ function measureTextHTML(html, referenceStyle) {
     document.body.removeChild(temp);
     return size;
 }
-
-
-//function drawText() {
-//    ctx.clearRect(0, 0, canvas.width, canvas.height);
-//    ctx.textBaseline = "top";
-
-//    const defaultStyle = window.getComputedStyle(textEditorNew);
-//    const defaultFontSize = defaultStyle.fontSize || "16px";
-//    const defaultFontFamily = defaultStyle.fontFamily || "Arial";
-//    const defaultFontWeight = defaultStyle.fontWeight || "normal";
-//    const defaultFontStyle = defaultStyle.fontStyle || "normal";
-//    const defaultColor = defaultStyle.color || "#000";
-//    const defaultLineHeight = parseFloat(defaultStyle.lineHeight) || (parseFloat(defaultFontSize) + 8);
-
-//    for (const box of boxes) {
-//        ctx.save();
-//        if (isNaN(box.width) || box.width <= 0) box.width = 50;
-//        if (isNaN(box.height) || box.height <= 0) box.height = 30;
-//        const wrapper = document.createElement("div");
-//        wrapper.innerHTML = box.text;
-
-//        let lines = [];
-//        let currentLine = document.createElement("div");
-//        lines.push(currentLine);
-
-//        wrapper.childNodes.forEach(n => {
-//            if (n.nodeType === 1 && n.tagName === "DIV") {
-//                if (currentLine.childNodes.length > 0) {
-//                    currentLine = document.createElement("div");
-//                    lines.push(currentLine);
-//                }
-//                currentLine.append(...n.childNodes);
-//                currentLine = document.createElement("div");
-//                lines.push(currentLine);
-//            } else if (n.nodeType === 1 && n.tagName === "BR") {
-//                currentLine = document.createElement("div");
-//                lines.push(currentLine);
-//            } else {
-//                currentLine.appendChild(n.cloneNode(true));
-//            }
-//        });
-
-//        if (lines.length === 0 || lines[0].childNodes.length === 0) {
-//            const d = document.createElement("div");
-//            d.textContent = box.text;
-//            lines = [d];
-//        }
-
-//        let cursorY = box.y + 5;
-
-//        lines.forEach(lineNode => {
-//            let cursorX = box.x + 5;
-//            if (box.align === "center") {
-//                ctx.textAlign = "center";
-//                cursorX = box.x + box.width / 2;
-//            } else if (box.align === "right") {
-//                ctx.textAlign = "right";
-//                cursorX = box.x + box.width - 5;
-//            } else {
-//                ctx.textAlign = "left";
-//            }
-
-//            let line = "";
-//            let segments = [];
-//            let maxLineHeight = 0;
-
-//            function measureWords(node, style) {
-//                if (node.nodeType === 3) {
-//                    const words = node.nodeValue.split(""); // <- CHANGED: character-wise
-//                    for (let word of words) {
-//                        const fs = style.fontSize || defaultFontSize;
-//                        const ff = style.fontFamily || defaultFontFamily;
-//                        const fw = style.fontWeight || defaultFontWeight;
-//                        const fst = style.fontStyle || defaultFontStyle;
-//                        const col = style.color || defaultColor;
-
-//                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
-//                        const width = ctx.measureText(word).width;
-//                        segments.push({ text: word, width, style: { fs, ff, fw, fst, col } });
-
-//                        const px = parseFloat(fs);
-//                        if (!isNaN(px)) maxLineHeight = Math.max(maxLineHeight, px);
-//                    }
-//                } else if (node.nodeType === 1) {
-//                    const s = node.style;
-//                    const nextStyle = {
-//                        fontSize: s.fontSize || style.fontSize,
-//                        fontFamily: s.fontFamily || style.fontFamily,
-//                        fontWeight: s.fontWeight || style.fontWeight,
-//                        fontStyle: s.fontStyle || style.fontStyle,
-//                        color: s.color || style.color,
-//                    };
-//                    node.childNodes.forEach(child => measureWords(child, nextStyle));
-//                }
-//            }
-
-//            measureWords(lineNode, {
-//                fontSize: defaultFontSize,
-//                fontFamily: defaultFontFamily,
-//                fontWeight: defaultFontWeight,
-//                fontStyle: defaultFontStyle,
-//                color: defaultColor
-//            });
-
-//            let lineText = "";
-//            let x = cursorX;
-//            segments.forEach(segment => {
-//                if (x + segment.width > box.x + box.width - 10) {
-//                    cursorY += defaultLineHeight;
-//                    x = cursorX;
-//                }
-
-//                ctx.font = `${segment.style.fst} ${segment.style.fw} ${segment.style.fs} ${segment.style.ff}`;
-//                ctx.fillStyle = segment.style.col;
-//                ctx.fillText(segment.text, x, cursorY);
-//                x += segment.width;
-//            });
-
-//            cursorY += defaultLineHeight;
-//        });
-
-//        if (box === activeBox && box.width > 0 && box.height > 0) {
-//            ctx.strokeStyle = isEditing ? "red" : "red";
-//            ctx.lineWidth = isEditing ? 2 : 1;
-//            ctx.strokeRect(box.x, box.y, box.width, box.height);
-//            ctx.fillStyle = "blue";
-//            for (let h of Object.values(getAllHandles(box))) {
-//                ctx.fillRect(h.x - 4, h.y - 4, 8, 8);
-//            }
-//        }
-
-//        ctx.restore();
-//    }
-//}
-
-function drawTextNew() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.textBaseline = "top";
-
-    const defaultStyle = window.getComputedStyle(textEditorNew);
-    const defaultFontSize = defaultStyle.fontSize || "16px";
-    const defaultFontFamily = defaultStyle.fontFamily || "Arial";
-    const defaultFontWeight = defaultStyle.fontWeight || "normal";
-    const defaultFontStyle = defaultStyle.fontStyle || "normal";
-    const defaultColor = defaultStyle.color || "#000";
-    const defaultLineHeight = (parseFloat(defaultStyle.lineHeight) || 24);
-
-    for (const box of boxes) {
-        ctx.save();
-
-        const wrapper = document.createElement("div");
-        wrapper.innerHTML = box.text;
-
-        let lines = [];
-        let currentLine = document.createElement("div");
-
-        wrapper.childNodes.forEach(n => {
-            if (n.nodeType === 1 && n.tagName === "DIV") {
-                if (currentLine.childNodes.length > 0 || lines.length === 0) {
-                    lines.push(currentLine);
-                    currentLine = document.createElement("div");
-                }
-                if (n.childNodes.length === 0) {
-                    lines.push(document.createElement("div"));
-                } else {
-                    n.childNodes.forEach(child => currentLine.appendChild(child.cloneNode(true)));
-                    lines.push(currentLine);
-                    currentLine = document.createElement("div");
-                }
-            } else if (n.nodeType === 1 && n.tagName === "BR") {
-                lines.push(document.createElement("div"));
-            } else {
-                currentLine.appendChild(n.cloneNode(true));
-            }
-        });
-
-        if (currentLine.childNodes.length > 0) {
-            lines.push(currentLine);
-        }
-
-        lines.forEach((lineNode, row) => {
-            let cursorX = box.x + 5;
-            if (box.align === "center") {
-                ctx.textAlign = "center";
-                cursorX = box.x + box.width / 2;
-            } else if (box.align === "right") {
-                ctx.textAlign = "right";
-                cursorX = box.x + box.width - 5;
-            } else {
-                ctx.textAlign = "left";
-            }
-
-            const baseY = box.y + 5 + row * defaultLineHeight;
-
-            (function paint(n, inheritedStyle = {}) {
-                if (n.nodeType === 3) {
-                    const txt = n.nodeValue;
-                    if (txt) {
-                        const fs = inheritedStyle.fontSize || defaultFontSize;
-                        const ff = inheritedStyle.fontFamily || defaultFontFamily;
-                        const fw = inheritedStyle.fontWeight || defaultFontWeight;
-                        const fst = inheritedStyle.fontStyle || defaultFontStyle;
-                        const col = inheritedStyle.color || defaultColor;
-
-                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
-                        ctx.fillStyle = col;
-
-                        ctx.fillText(txt, cursorX, baseY);
-                        cursorX += ctx.measureText(txt).width;
-                    }
-                } else if (n.nodeType === 1) {
-                    const s = n.style;
-                    const style = {
-                        fontSize: s.fontSize || inheritedStyle.fontSize,
-                        fontFamily: s.fontFamily || inheritedStyle.fontFamily,
-                        fontWeight: s.fontWeight || inheritedStyle.fontWeight,
-                        fontStyle: s.fontStyle || inheritedStyle.fontStyle,
-                        color: s.color || inheritedStyle.color,
-                    };
-                    n.childNodes.forEach(child => paint(child, style));
-                }
-            })(lineNode);
-        });
-
-        if (box === activeBox) {
-            ctx.strokeStyle = isEditing ? "red" : "red";
-            ctx.lineWidth = isEditing ? 2 : 1;
-            ctx.strokeRect(box.x, box.y, box.width, box.height);
-            ctx.fillStyle = "blue";
-            for (let h of Object.values(getAllHandles(box))) {
-                ctx.fillRect(h.x - 4, h.y - 4, 8, 8);
-            }
-        }
-
-        ctx.restore();
-    }
-}
-
-
-// Update your drawText function to handle automatic word wrapping inside the canvas box
-
-
-
-
-
-
-
-//function drawText() {
-//    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-//    for (const box of boxes) {
-//        ctx.save();
-//        const tempDiv = document.createElement("div");
-//        tempDiv.innerHTML = box.text;
-//        const spans = tempDiv.querySelectorAll("span");
-
-//        let x = box.x;
-//        let y = box.y + fontSizeNew; // adjust for baseline
-//        let lineX = x;
-
-//        for (const span of spans) {
-//            const text = span.innerText;
-//            const style = span.style;
-
-//            const color = style.color || "#000";
-//            const fontSize = style.fontSize || "30px";
-//            const fontFamily = style.fontFamily || "Arial";
-//            const fontWeight = style.fontWeight || "normal";
-//            const fontStyle = style.fontStyle || "normal";
-
-//            ctx.font = `${fontStyle} ${fontWeight} ${fontSize} ${fontFamily}`;
-//            ctx.fillStyle = color;
-
-//            ctx.fillText(text, lineX, y);
-//            const metrics = ctx.measureText(text);
-//            lineX += metrics.width;
-//        }
-
-//        ctx.strokeStyle = "#00f";
-//        ctx.strokeRect(box.x, box.y, box.width, box.height);
-
-//        const size = 8;
-//        const handles = getAllHandles(box);
-//        for (const h of Object.values(handles)) {
-//            ctx.fillStyle = "red";
-//            ctx.fillRect(h.x - size / 2, h.y - size / 2, size, size);
-//        }
-//        ctx.restore();
-//    }
-//}
-
 
 
 function scaleBoxContent(box, scale) {
@@ -7625,149 +7421,7 @@ canvas.addEventListener("mouseup", () => {
 });
 
 
-// ✅ Combined: support click-to-select, resize, and drag properly
-//canvas.addEventListener("mousedown", e => {
-//    const { x: mx, y: my } = getCanvasMousePosition(e);
-//    prevMouseX = mx;
-//    prevMouseY = my;
 
-//    // Finish any editing session
-//    if (isEditing && activeBox) {
-//        activeBox.text = textEditorNew.innerHTML;
-//        textEditorNew.style.display = "none";
-//        isEditing = false;
-//    }
-
-//    // Check resize handles first
-//    for (let box of boxes) {
-//        let h = getResizeHandle(box, mx, my);
-//        if (h) {
-//            activeBox = box;
-//            resizeDirection = h;
-//            isResizingNew = true;
-//            box._orig = {
-//                x: box.x,
-//                y: box.y,
-//                width: box.width,
-//                height: box.height,
-//                text: stripHTML(box.text)
-//            };
-//            drawText();
-//            return;
-//        }
-//    }
-
-//    // Then check for dragging inside box
-//    let clicked = boxes.slice().reverse().find(b =>
-//        mx >= b.x && mx <= b.x + b.width &&
-//        my >= b.y && my <= b.y + b.height
-//    );
-
-//    if (clicked) {
-//        activeBox = clicked;
-//        isDraggingNew = true;
-//        dragOffsetXNew = mx - clicked.x;
-//        dragOffsetYNew = my - clicked.y;
-//    } else {
-//        activeBox = null;
-//        isEditing = false;
-//    }
-
-//    drawText();
-//});
-
-//canvas.addEventListener("mousemove", e => {
-//    const { x: mx, y: my } = getCanvasMousePosition(e);
-//    const dx = mx - prevMouseX, dy = my - prevMouseY;
-
-//    // update cursor
-//    if (activeBox) {
-//        let h = getResizeHandle(activeBox, mx, my);
-//        if (["tl", "br"].includes(h)) canvas.style.cursor = "nwse-resize";
-//        else if (["tr", "bl"].includes(h)) canvas.style.cursor = "nesw-resize";
-//        else if (["tm", "bm"].includes(h)) canvas.style.cursor = "ns-resize";
-//        else if (["ml", "mr"].includes(h)) canvas.style.cursor = "ew-resize";
-//        else if (
-//            mx >= activeBox.x && mx <= activeBox.x + activeBox.width &&
-//            my >= activeBox.y && my <= activeBox.y + activeBox.height
-//        ) canvas.style.cursor = "move";
-//        else canvas.style.cursor = "default";
-//    }
-
-//    // dragging
-//    if (isDraggingNew) {
-//        activeBox.x = mx - dragOffsetXNew;
-//        activeBox.y = my - dragOffsetYNew;
-//    }
-//    // resizing
-//    else if (isResizingNew && activeBox && resizeDirection) {
-//        const o = activeBox._orig;
-//        let sX = 1, sY = 1;
-//        // corner handles: scale both dims proportionally
-//        if (["tl", "tr", "bl", "br"].includes(resizeDirection)) {
-//            if (resizeDirection === "tl") {
-//                let ndx = mx - o.x, ndy = my - o.y;
-//                sX = ndx / o.width;
-//                sY = ndy / o.height;
-//                activeBox.x = o.x;
-//                activeBox.y = o.y;
-//            }
-//            if (resizeDirection === "tr") {
-//                let ndx = mx - o.x, ndy = my - o.y;
-//                sX = ndx / o.width;
-//                sY = ndy / o.height;
-//                activeBox.x = o.x;
-//                activeBox.y = o.y;
-//            }
-//            //… same for bl/br
-//            sX = Math.max(0.1, sX);
-//            sY = Math.max(0.1, sY);
-//            activeBox.width = o.width * sX;
-//            activeBox.height = o.height * sY;
-//            scaleBoxContent(activeBox, (sX + sY) / 2);
-//        }
-//        // side handles: only single-dimension
-//        else {
-//            if (resizeDirection === "tm") { activeBox.y = o.y; activeBox.height = o.height * ((o.y + o.height - my) / o.height); }
-//            if (resizeDirection === "bm") { activeBox.height = my - o.y; }
-//            if (resizeDirection === "ml") { activeBox.x = o.x; activeBox.width = o.width * ((o.x + o.width - mx) / o.width); }
-//            if (resizeDirection === "mr") { activeBox.width = mx - o.x; }
-//        }
-//    }
-
-//    prevMouseX = mx; prevMouseY = my;
-//    drawText();
-//});
-
-//canvas.addEventListener("mouseup", () => {
-//    isDraggingNew = false;
-//    isResizingNew = false;
-//    resizeDirection = null;
-//});
-//canvas.addEventListener("dblclick", e => {
-//    const { x: mx, y: my } = getCanvasMousePosition(e);
-//    const box = boxes.find(b => mx >= b.x && mx <= b.x + b.width && my >= b.y && my <= b.y + b.height);
-//    if (!box) return;
-
-//    if (isEditing && activeBox !== box) {
-//        activeBox.text = textEditorNew.innerHTML;
-//    }
-
-//    activeBox = box;
-//    isEditing = true;
-
-//    const container = document.getElementById("canvasContainer");
-//    const crect = container.getBoundingClientRect();
-//    textEditorNew.style.left = crect.left + box.x + "px";
-//    textEditorNew.style.top = crect.top + box.y + "px";
-//    textEditorNew.style.width = box.width + "px";
-//    textEditorNew.style.height = box.height + "px";
-//    textEditorNew.innerHTML = box.text;
-//    textEditorNew.style.display = "block";
-//    textEditorNew.focus();
-
-//    saveSelection();
-//});
 canvas.addEventListener("dblclick", e => {
     const { x: mx, y: my } = getCanvasMousePosition(e);
     const box = boxes.find(b =>
@@ -7793,25 +7447,6 @@ canvas.addEventListener("dblclick", e => {
 
 
 
-// ✅ Simpler click-only selection logic without drag or resize
-//////canvas.addEventListener("click", e => {
-//////    const { x: mx, y: my } = getCanvasMousePosition(e);
-
-//////    let clicked = boxes.slice().reverse().find(b =>
-//////        mx >= b.x && mx <= b.x + b.width &&
-//////        my >= b.y && my <= b.y + b.height
-//////    );
-
-//////    if (clicked) {
-//////        activeBox = clicked;
-//////        isEditing = false; // selection only
-//////    } else {
-//////        activeBox = null;
-//////        isEditing = false;
-//////    }
-
-//////    drawText();
-//////});
 
 // ✅ Apply any text style and reflect in canvas
 function applyStyleToSelection(styleProp, value) {
@@ -7826,12 +7461,25 @@ function applyStyleToSelection(styleProp, value) {
         document.execCommand("italic");
     } else if (styleProp === "fontFamily") {
         document.execCommand("fontName", false, value);
-    } else if (styleProp === "fontSize") {
-        // Font size using inline span workaround
-        const span = document.createElement("span");
-        span.style.fontSize = value;
-        span.innerHTML = getSelectionText();
-        insertHTML(span.outerHTML);
+    }
+    else if (styleProp === "fontSize") {
+        restoreSelection(); // 👈 Restore first!
+
+        const sel = window.getSelection();
+        if (sel.rangeCount > 0) {
+            const range = sel.getRangeAt(0);
+            const span = document.createElement("span");
+            span.style.fontSize = value;
+            span.appendChild(range.extractContents());
+            range.insertNode(span);
+
+            // Move cursor after the inserted span
+            sel.removeAllRanges();
+            const newRange = document.createRange();
+            newRange.setStartAfter(span);
+            newRange.collapse(true);
+            sel.addRange(newRange);
+        }
     }
 
 
@@ -7865,8 +7513,7 @@ function getSelectionText() {
 
 // ——————— Text Editor Helpers (unchanged) ———————
 function execCommandSafely(cmd, val) { textEditorNew.focus(); document.execCommand(cmd, false, val); }
-//function saveSelection() { let s = window.getSelection(); if (s.rangeCount) savedRange = s.getRangeAt(0).cloneRange(); }
-//function restoreSelection() { let s = window.getSelection(); s.removeAllRanges(); if (savedRange) s.addRange(savedRange); }
+
 function saveSelection() {
     const sel = window.getSelection();
     if (sel.rangeCount > 0) {
@@ -8277,7 +7924,7 @@ textEditorNew.addEventListener("keydown", e => {
             // Check if we're still editing and an activeBox exists
             if (activeBox && isEditing) {
                 activeBox.text = textEditorNew.innerHTML;
-                console.log("calling");
+             
                 drawText();
             }
         }, 0);
@@ -8344,6 +7991,8 @@ italicBtn.addEventListener("click", e => {
 ////        textEditorNew.dispatchEvent(new Event("input"));
 ////    }
 ////});
+
+
 window.addEventListener("DOMContentLoaded", () => {
     const lineSpacingInput = document.getElementById("lineSpacingInput");
     //if (!lineSpacingSelect) {
@@ -8381,6 +8030,7 @@ window.addEventListener("DOMContentLoaded", () => {
             drawText();
         }
     });
+});
     // ✅ Line spacing will apply at box level if a box is active and editor has multiline
     //lineSpacingSelect.addEventListener("change", () => {
     //    const val = parseFloat(lineSpacingSelect.value);
@@ -8416,7 +8066,7 @@ window.addEventListener("DOMContentLoaded", () => {
     //    }
     //});
 
-});
+/*});*/
 
 // 7. Alignment
 alignList.querySelectorAll("a[data-align]").forEach(a => {
