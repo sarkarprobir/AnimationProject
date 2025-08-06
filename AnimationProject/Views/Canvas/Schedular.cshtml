@@ -182,6 +182,34 @@
         font-size: 22px;
         font-weight: 600;
     }
+    /*modal check mark*/
+    .option-box .checkmark {
+        width: 20px;
+        height: 20px;
+        display: inline-block;
+        border: 2px solid #ccc;
+        border-radius: 50%;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .option-box.selected .checkmark {
+        background-color: #6214fe; /* your brand purple */
+        border-color: #6214fe;
+    }
+
+        .option-box.selected .checkmark::after {
+            content: '';
+            position: absolute;
+            top: 2.5px;
+            left: 6px;
+            width: 5px;
+            height: 10px;
+            border: solid #fff;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+    /*modal check mark*/
 </style>
 
 <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
@@ -236,7 +264,7 @@
                                 </a>
                             </li>
                             <li class="w-100 acc_list">
-                                <a class="dropdown-item d-flex align-items-center text-white" href="/change-password">
+                                <a class="dropdown-item d-flex align-items-center text-white" asp-controller="Canvas" asp-action="Boards">
                                     Boards
                                 </a>
                             </li>
@@ -252,7 +280,7 @@
                                 </a>
                             </li>
                             <li class="w-100 acc_list">
-                                <a class="dropdown-item d-flex align-items-center text-white" href="/logout">
+                                <a class="dropdown-item d-flex align-items-center text-white" asp-controller="Canvas" asp-action="Login">
                                     Sign Out
                                 </a>
                             </li>
@@ -274,7 +302,7 @@
             <h2 class="heading_acc">TV / Screen</h2>
             <div class="d-flex gap-3">
                 <button class="btn btn-primary my-button create_button b_rad4" data-bs-toggle="modal" data-bs-target="#exampleModal">+ Create New Aniboard</button>
-                <button class="btn btn-secondary my-button browse_button b_rad4">Browse The Template</button>
+                <a href="/Canvas/Templates" class="d-flex justify-content-center align-items-center btn btn-secondary my-button browse_button b_rad4">Browse The Template</a>
             </div>
         </div>
 
@@ -493,18 +521,23 @@
                         <div class="portrait-icon"></div>
                         <span class="vertical_option">Vertical / Portrait</span>
                     </div>
-                    <span>1080x1920</span>
+                    <div class="d-flex align-items-center gap-3">
+                        <span>1080x1920</span>
+                        <span class="checkmark"></span>
+                    </div>
                 </div>
+
                 <!-- Horizontal Option -->
                 <div class="option-box d-flex justify-content-between align-items-center" id="horizontal-option">
                     <div class="d-flex align-items-center">
                         <div class="landscape-icon"></div>
                         <span>Horizontal / Landscape</span>
                     </div>
-                    <span>1920x1080</span>
+                    <div class="d-flex align-items-center gap-3">
+                        <span>1920x1080</span>
+                        <span class="checkmark"></span>
+                    </div>
                 </div>
-
-
             </div>
 
             <div class="modal-footer pt-0">
@@ -525,4 +558,47 @@
             button.classList.add('selected-tv');
           });
         });
+</script>
+
+<script>
+        // JavaScript for Handling Selection and Redirection
+
+    let selectedOption = ""; // Variable to store the selected board type
+
+    document.getElementById("horizontal-option").addEventListener("click", function () {
+        selectedOption = "horizontal";
+        highlightSelection("horizontal-option");
+    });
+
+    document.getElementById("vertical-option").addEventListener("click", function () {
+        selectedOption = "vertical";
+        highlightSelection("vertical-option");
+    });
+
+    document.getElementById("create-button").addEventListener("click", function () {
+        if (selectedOption === "horizontal") {
+            window.location.href = "/Canvas/HorizontalIndex"; // Redirect to horizontal page
+        } else if (selectedOption === "vertical") {
+            window.location.href = "/Canvas/VerticalIndex"; // Redirect to vertical page
+        } else {
+            // alert("Please select an option before proceeding!");
+            MessageShow('', 'Please select an option before proceeding!', 'error');
+        }
+    });
+
+    // Function to highlight selected option
+    function highlightSelection(selectedId) {
+        document.getElementById("horizontal-option").classList.remove("selected");
+        document.getElementById("vertical-option").classList.remove("selected");
+        document.getElementById(selectedId).classList.add("selected");
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.panel-vertical-scroll .menuboard-vertical-thum')
+            .forEach(item => {
+                item.addEventListener('click', function () {
+                    this.classList.toggle('active');
+                });
+            });
+    });
 </script>

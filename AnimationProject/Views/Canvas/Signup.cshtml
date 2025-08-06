@@ -4,10 +4,8 @@
 @{
     Layout = null;
 }
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7"
-      crossorigin="anonymous" />
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Font Awesome -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
       rel="stylesheet" />
@@ -15,6 +13,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
 <style>
     body {
         height: 100vh;
@@ -277,6 +278,8 @@
         border: none;
         border-radius: 3px;
         font-family: "Nunito Sans", serif;
+        text-align: center;
+        text-decoration: none;
     }
     .success_btn:hover{
         color: #fff;
@@ -291,6 +294,134 @@
         background-color: #E4E9EC;
         color: #000;
     }
+    /* modal */
+    .layout_modal {
+        background-color: rgba(36, 7, 136, 0.49);
+    }
+
+    .modal-backdrop {
+        background-color: transparent !important;
+    }
+    .modal-backdrop {
+        z-index: 1000 !important;
+    }
+
+    .modal-dialog {
+        margin-top: 200px !important;
+    }
+
+    .modal-content {
+        height: 315px !important;
+        border-radius: 3px !important;
+    }
+
+    .modal-title {
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        font-family: "Inter", sans-serif;
+    }
+
+    .modal-header {
+        border: none !important;
+    }
+
+    .modal-footer {
+        border: none !important;
+    }
+
+    .option-box {
+        border: 2px solid transparent;
+        padding: 14px;
+        margin-bottom: 15px;
+        cursor: pointer;
+        border-radius: 3px;
+        font-size: 14px;
+    }
+
+        .option-box:hover {
+            border: 2px solid black;
+        }
+
+        .option-box.selected {
+            border: 2px solid black;
+        }
+
+    .landscape-icon,
+    .portrait-icon {
+        border: 2px solid black;
+        display: inline-block;
+        margin-right: 10px;
+    }
+
+    .landscape-icon {
+        width: 30px;
+        height: 20px;
+    }
+
+    .portrait-icon {
+        width: 20px;
+        height: 30px;
+    }
+
+    .create-btn {
+        background-color: #000;
+        color: white;
+        border: 2px solid transparent;
+        padding: 6px 32px;
+        border-radius: 3px;
+    }
+
+    .cancel-btn {
+        background-color: #fff;
+        color: #000;
+        border: 2px solid #ccc;
+        padding: 6px 32px;
+        border-radius: 3px;
+    }
+
+    .create-btn:hover {
+        background-color: #333;
+    }
+
+    .cancel-btn:hover {
+        background-color: #d1d1d1;
+    }
+
+    .vertical_option {
+        margin-left: 11px;
+    }
+
+    .nav-item .dropdown-item:hover {
+        background-color: #4a32a3 !important;
+    }
+    /*modal check mark*/
+    .option-box .checkmark {
+        width: 20px;
+        height: 20px;
+        display: inline-block;
+        border: 2px solid #ccc;
+        border-radius: 50%;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .option-box.selected .checkmark {
+        background-color: #6214fe; /* your brand purple */
+        border-color: #6214fe;
+    }
+
+        .option-box.selected .checkmark::after {
+            content: '';
+            position: absolute;
+            top: 2.5px;
+            left: 6px;
+            width: 5px;
+            height: 10px;
+            border: solid #fff;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+    /*modal check mark*/
 </style>
 <div class="container-fluid login-From" id="signup_options" style="display:block; height: 100%">
     <div class="row">
@@ -419,9 +550,55 @@
     </div>
     <p class="success_p mb-5">Congratulation on joining! Your account is <br /> all set, and you're ready to explore!</p>
     <div class="d-flex gap-3 align-items-center">
-        <button class="success_btn s-select">Select Template From Gallery to Edit</button>
+        <a href="/Canvas/Templates" class="d-flex align-items-center success_btn s-select">Select Template From Gallery to Edit</a>
         <p class="success_p mb-0">OR</p>
-        <button class="success_btn s-create">Create New AniBoard</button>
+        <button class="success_btn s-create" data-bs-toggle="modal" data-bs-target="#exampleModal">Create New AniBoard</button>
+    </div>
+</div>
+<dotlottie-wc src="https://lottie.host/a6b7e99b-765e-46d3-91ca-17aaa148ddef/75eecioadL.lottie"
+              style="width: 300px;height: 300px"
+              speed="1"
+              autoplay
+              loop></dotlottie-wc>
+<!-- Modal Structure -->
+<div class="modal fade layout_modal" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content p-3">
+            <div class="modal-header">
+                <h5 class="modal-title" id="aniBoardModalLabel">New AniBoard</h5>
+            </div>
+
+            <div class="modal-body">
+                <!-- Vertical Option -->
+                <div class="option-box d-flex justify-content-between align-items-center mb-2" id="vertical-option">
+                    <div class="d-flex align-items-center">
+                        <div class="portrait-icon"></div>
+                        <span class="vertical_option">Vertical / Portrait</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <span>1080x1920</span>
+                        <span class="checkmark"></span>
+                    </div>
+                </div>
+
+                <!-- Horizontal Option -->
+                <div class="option-box d-flex justify-content-between align-items-center" id="horizontal-option">
+                    <div class="d-flex align-items-center">
+                        <div class="landscape-icon"></div>
+                        <span>Horizontal / Landscape</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <span>1920x1080</span>
+                        <span class="checkmark"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer pt-0">
+                <button type="button" class="cancel-btn" data-bs-dismiss="modal">Cancel</button>
+                <button class="create-btn" id="create-button">Create</button>
+            </div>
+        </div>
     </div>
 </div>
 <script>
@@ -472,4 +649,47 @@
       clickedElement.classList.add('active_indus');
     }
 
+</script>
+
+<script>
+        // JavaScript for Handling Selection and Redirection
+
+    let selectedOption = ""; // Variable to store the selected board type
+
+    document.getElementById("horizontal-option").addEventListener("click", function () {
+        selectedOption = "horizontal";
+        highlightSelection("horizontal-option");
+    });
+
+    document.getElementById("vertical-option").addEventListener("click", function () {
+        selectedOption = "vertical";
+        highlightSelection("vertical-option");
+    });
+
+    document.getElementById("create-button").addEventListener("click", function () {
+        if (selectedOption === "horizontal") {
+            window.location.href = "/Canvas/HorizontalIndex"; // Redirect to horizontal page
+        } else if (selectedOption === "vertical") {
+            window.location.href = "/Canvas/VerticalIndex"; // Redirect to vertical page
+        } else {
+            // alert("Please select an option before proceeding!");
+            MessageShow('', 'Please select an option before proceeding!', 'error');
+        }
+    });
+
+    // Function to highlight selected option
+    function highlightSelection(selectedId) {
+        document.getElementById("horizontal-option").classList.remove("selected");
+        document.getElementById("vertical-option").classList.remove("selected");
+        document.getElementById(selectedId).classList.add("selected");
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.panel-vertical-scroll .menuboard-vertical-thum')
+            .forEach(item => {
+                item.addEventListener('click', function () {
+                    this.classList.toggle('active');
+                });
+            });
+    });
 </script>

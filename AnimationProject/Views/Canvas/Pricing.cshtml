@@ -4,10 +4,8 @@
 @{
     Layout = null;
 }
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7"
-      crossorigin="anonymous" />
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Font Awesome -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
       rel="stylesheet" />
@@ -46,7 +44,7 @@
     .nav-link.active{
         color: #6214fe !important;
     }
-    .create-btn {
+    .create-new-btn {
         background-color: #6214fe;
         color: white;
         border: none;
@@ -57,7 +55,7 @@
         text-decoration: none;
     }
 
-        .create-btn:hover {
+        .create-new-btn:hover {
             background-color: #000;
             color: #fff;
         }
@@ -286,17 +284,18 @@
     .modal-backdrop {
         background-color: transparent !important;
     }
+
     .modal-backdrop {
         z-index: 1000 !important;
     }
 
-    .modal-dialog {
+    .login_modal .modal-dialog {
         margin-top: 120px !important;
         width: 350px;
     }
 
-    .modal-content {
-        /* height: 315px !important; */
+    .login_modal .modal-content {
+        height: auto !important;
         border-radius: 3px !important;
     }
 
@@ -358,7 +357,7 @@
         border-radius: 3px;
     }
 
-    .login-box{
+    .login-box {
         margin-bottom: 15px;
     }
 
@@ -367,28 +366,29 @@
         box-shadow: none !important;
     }
 
-    .form-check-input{
+    .form-check-input {
         width: 1.1rem;
         height: 1.1rem;
         border: 2px solid #c4c4c4;
         margin-top: 0;
     }
-    .login-label{
+
+    .login-label {
         display: inline-block;
         font-size: 13px !important;
         margin-left: 4px;
         color: #000;
     }
 
-    .forgot{
+    .forgot {
         text-decoration: none;
         color: #000;
         font-size: 13px !important;
     }
 
-    .forgot:hover{
-         color: #6214fe;
-    }
+        .forgot:hover {
+            color: #6214fe;
+        }
 
     .sign-btn {
         background-color: #fff;
@@ -401,9 +401,133 @@
         text-decoration: none;
     }
 
-    .sign-btn:hover {
+        .sign-btn:hover {
+            background-color: #d1d1d1;
+        }
+    /* modal */
+    .layout_modal {
+        background-color: rgba(36, 7, 136, 0.49);
+    }
+
+    .modal-backdrop {
+        z-index: 1000 !important;
+    }
+
+    .modal-dialog {
+        margin-top: 200px !important;
+    }
+
+    .modal-content {
+        height: 315px !important;
+        border-radius: 3px !important;
+    }
+
+    .modal-title {
+        font-size: 16px !important;
+        font-weight: 600 !important;
+    }
+
+    .modal-header {
+        border: none !important;
+    }
+
+    .modal-footer {
+        border: none !important;
+    }
+
+    .option-box {
+        border: 2px solid transparent;
+        padding: 14px;
+        margin-bottom: 15px;
+        cursor: pointer;
+        border-radius: 3px;
+        font-size: var(--font-size14);
+    }
+
+        .option-box:hover {
+            border: 2px solid black;
+        }
+
+        .option-box.selected {
+            border: 2px solid black;
+        }
+
+    .landscape-icon,
+    .portrait-icon {
+        border: 2px solid black;
+        display: inline-block;
+        margin-right: 10px;
+    }
+
+    .landscape-icon {
+        width: 30px;
+        height: 20px;
+    }
+
+    .portrait-icon {
+        width: 20px;
+        height: 30px;
+    }
+
+    .create-btn {
+        background-color: #000;
+        color: white;
+        border: 2px solid transparent;
+        padding: 6px 32px;
+        border-radius: 3px;
+    }
+
+    .cancel-btn {
+        background-color: #fff;
+        color: #000;
+        border: 2px solid #ccc;
+        padding: 6px 32px;
+        border-radius: 3px;
+    }
+
+    .create-btn:hover {
+        background-color: #333;
+    }
+
+    .cancel-btn:hover {
         background-color: #d1d1d1;
     }
+
+    .vertical_option {
+        margin-left: 11px;
+    }
+
+    .nav-item .dropdown-item:hover {
+        background-color: #4a32a3 !important;
+    }
+    /*modal check mark*/
+    .option-box .checkmark {
+        width: 20px;
+        height: 20px;
+        display: inline-block;
+        border: 2px solid #ccc;
+        border-radius: 50%;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .option-box.selected .checkmark {
+        background-color: #6214fe; /* your brand purple */
+        border-color: #6214fe;
+    }
+
+        .option-box.selected .checkmark::after {
+            content: '';
+            position: absolute;
+            top: 2.5px;
+            left: 6px;
+            width: 5px;
+            height: 10px;
+            border: solid #fff;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+    /*modal check mark*/
 </style>
 
 <!-- Navbar -->
@@ -427,7 +551,7 @@
             <span class="nav-icon">
                 <i class="fa-solid fa-magnifying-glass"></i>
             </span>
-            <button class="create-btn">Create New</button>
+            <button class="create-new-btn" data-bs-toggle="modal" data-bs-target="#exampleModal">Create New</button>
             <a data-bs-toggle="modal" data-bs-target="#loginModal" href="#">Login</a>
         </div>
     </div>
@@ -514,7 +638,7 @@
         <div class="price">$0</div>
         <p class="align-center">Pay nothing</p>
         <p class="align-center">
-            <button class="create-btn">Subscribe</button>
+            <button class="create-new-btn">Subscribe</button>
         </p>
         <ul class="features">
             <li>1 Aniboard</li>
@@ -532,7 +656,7 @@
         <div class="price">$29</div>
         <p class="align-center">Per Month</p>
         <p class="align-center">
-            <button class="create-btn">Subscribe</button>
+            <button class="create-new-btn">Subscribe</button>
         </p>
         <ul class="features">
             <li>3 Aniboards with 9 Slides</li>
@@ -568,7 +692,7 @@
             <div class="foot-text py-5">
                 <h2 class="foot-head mb-4">Features</h2>
                 <p class="foot-para">No designer or animator needed... Just design it yourself and the animation will be created automatically.It's super simple to create an animation board for your signage screen.</p>
-                <a href="/Canvas/Signup" class="create-btn register_btn">Register Now</a>
+                <a href="/Canvas/Signup" class="create-new-btn register_btn">Register Now</a>
             </div>
         </div>
     </div>
@@ -590,6 +714,49 @@
     </div>
 </footer>
 
+<!-- Modal Structure -->
+<div class="modal fade layout_modal" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content p-3">
+            <div class="modal-header">
+                <h5 class="modal-title" id="aniBoardModalLabel">New AniBoard</h5>
+            </div>
+
+            <div class="modal-body">
+                <!-- Vertical Option -->
+                <div class="option-box d-flex justify-content-between align-items-center mb-2" id="vertical-option">
+                    <div class="d-flex align-items-center">
+                        <div class="portrait-icon"></div>
+                        <span class="vertical_option">Vertical / Portrait</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <span>1080x1920</span>
+                        <span class="checkmark"></span>
+                    </div>
+                </div>
+
+                <!-- Horizontal Option -->
+                <div class="option-box d-flex justify-content-between align-items-center" id="horizontal-option">
+                    <div class="d-flex align-items-center">
+                        <div class="landscape-icon"></div>
+                        <span>Horizontal / Landscape</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <span>1920x1080</span>
+                        <span class="checkmark"></span>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <div class="modal-footer pt-0">
+                <button type="button" class="cancel-btn" data-bs-dismiss="modal">Cancel</button>
+                <button class="create-btn" id="create-button">Create</button>
+            </div>
+        </div>
+    </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 
@@ -627,4 +794,46 @@
     });
 
 
+</script>
+<script>
+        // JavaScript for Handling Selection and Redirection
+
+    let selectedOption = ""; // Variable to store the selected board type
+
+    document.getElementById("horizontal-option").addEventListener("click", function () {
+        selectedOption = "horizontal";
+        highlightSelection("horizontal-option");
+    });
+
+    document.getElementById("vertical-option").addEventListener("click", function () {
+        selectedOption = "vertical";
+        highlightSelection("vertical-option");
+    });
+
+    document.getElementById("create-button").addEventListener("click", function () {
+        if (selectedOption === "horizontal") {
+            window.location.href = "/Canvas/HorizontalIndex"; // Redirect to horizontal page
+        } else if (selectedOption === "vertical") {
+            window.location.href = "/Canvas/VerticalIndex"; // Redirect to vertical page
+        } else {
+            // alert("Please select an option before proceeding!");
+            MessageShow('', 'Please select an option before proceeding!', 'error');
+        }
+    });
+
+    // Function to highlight selected option
+    function highlightSelection(selectedId) {
+        document.getElementById("horizontal-option").classList.remove("selected");
+        document.getElementById("vertical-option").classList.remove("selected");
+        document.getElementById(selectedId).classList.add("selected");
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.panel-vertical-scroll .menuboard-vertical-thum')
+            .forEach(item => {
+                item.addEventListener('click', function () {
+                    this.classList.toggle('active');
+                });
+            });
+    });
 </script>
