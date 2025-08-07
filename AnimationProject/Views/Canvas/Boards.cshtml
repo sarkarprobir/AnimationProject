@@ -405,9 +405,9 @@ rel="stylesheet">
         <div class="row">
             <div class="col-md-5 d-flex align-items-center gap-4 ms-2">
                 <a href="javascript:history.back()" class="account"><img src="~/images/icons/icon-left-arrow.png" width="25px" height="25px" alt="Alternate Text" /></a>
-                <a class="account" asp-action="Account">Account</a>
+                <a class="account" asp-controller="Canvas" asp-action="Account">Account</a>
                 <a class="account nav_active">Boards</a>
-                <a class="account">TV/Screens</a>
+                <a class="account" asp-controller="Canvas" asp-action="Schedular">TV/Screens</a>
                 <a class="account">Billing</a>
             </div>
 
@@ -440,7 +440,7 @@ rel="stylesheet">
                             </li>
 
                             <li class="w-100 acc_list">
-                                <a class="dropdown-item d-flex align-items-center text-white" href="">
+                                <a class="dropdown-item d-flex align-items-center text-white" asp-controller="Canvas" asp-action="Schedular">
                                     TV/Screens
                                 </a>
                             </li>
