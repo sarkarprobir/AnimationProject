@@ -7128,10 +7128,7 @@ function drawText() {
             }
             
         });
-        console.log("Parsed lines:", lines);
-        lines.forEach((line, index) => {
-            console.log(`Line ${index}:`, line.innerHTML || line.textContent || line);
-        });
+        
         //wrapper.childNodes.forEach(n => {
         //    if (n.nodeType === 1 && n.tagName === "DIV") {
         //        if (currentLine.childNodes.length > 0) {
@@ -7765,7 +7762,7 @@ function showEditorAtBoxNew(box) {
 
     applyTextEditorStyleFromBox(box);
 
-    textEditorNew.dispatchEvent(new Event("input"));
+   // textEditorNew.dispatchEvent(new Event("input"));
     textEditorNew.focus();
     isEditing = true;
 }
@@ -7995,41 +7992,68 @@ italicBtn.addEventListener("click", e => {
 
 window.addEventListener("DOMContentLoaded", () => {
     const lineSpacingInput = document.getElementById("lineSpacingInput");
-    //if (!lineSpacingSelect) {
-    //    console.warn("lineSpacingSelect element not found");
-    //    return;
-    //}
     lineSpacingInput.addEventListener("change", () => {
         const val = parseFloat(lineSpacingInput.value);
         if (isNaN(val)) return;
 
-        // Clamp to reasonable values if necessary
         const clamped = Math.max(-3, Math.min(7, val));
-        selectedLineSpacing = clamped * 8; // convert to px spacing
+        const pxSpacing = clamped * 8;
 
-        const html = textEditorNew.innerHTML;
-        const divCount = (html.match(/<div>|<br>/g) || []).length;
-        const hasMultipleLines = divCount >= 1;
-
-        const sel = window.getSelection();
-
-        // CASE 1: We're editing and no selection but multiple lines present
-        if (activeBox && isEditing) {
-            if (sel && sel.rangeCount === 1 && sel.isCollapsed && hasMultipleLines) {
-                applyTextEditorStyleFromBox(activeBox);
-                textEditorNew.dispatchEvent(new Event("input"));
-                activeBox.text = textEditorNew.innerHTML;
-                drawText();
-            }
+        let fontSize;
+        if (textEditorNew.offsetParent !== null) {
+            fontSize = parseFloat(window.getComputedStyle(textEditorNew).fontSize) || 16;
+        } else if (activeBox?.fontSize) {
+            fontSize = parseFloat(activeBox.fontSize);
+        } else {
+            fontSize = 16; // fallback
         }
-        // CASE 2: Not editing but activeBox has multiple lines
-        else if (activeBox && !isEditing && hasMultipleLines) {
-            showEditorAtBox(activeBox);
-            applyTextEditorStyleFromBox(activeBox);
-            activeBox.text = textEditorNew.innerHTML;
+
+        const lineSpacingMultiplier = (fontSize + pxSpacing) / fontSize;
+
+        // ✅ Apply to editor even if hidden — so it’s ready on open
+        textEditorNew.style.lineHeight = `${fontSize + pxSpacing}px`;
+
+        if (activeBox) {
+            activeBox.lineSpacing = lineSpacingMultiplier;
+            if (isEditing) {
+                activeBox.text = textEditorNew.innerHTML;
+            }
             drawText();
         }
     });
+
+
+    //lineSpacingInput.addEventListener("change", () => {
+    //    const val = parseFloat(lineSpacingInput.value);
+    //    if (isNaN(val)) return;
+
+    //    // Clamp to reasonable values if necessary
+    //    const clamped = Math.max(-3, Math.min(7, val));
+    //    selectedLineSpacing = clamped * 8; // convert to px spacing
+
+    //    const html = textEditorNew.innerHTML;
+    //    const divCount = (html.match(/<div>|<br>/g) || []).length;
+    //    const hasMultipleLines = divCount >= 1;
+
+    //    const sel = window.getSelection();
+
+    //    // CASE 1: We're editing and no selection but multiple lines present
+    //    if (activeBox && isEditing) {
+    //        if (sel && sel.rangeCount === 1 && sel.isCollapsed && hasMultipleLines) {
+    //            applyTextEditorStyleFromBox(activeBox);
+    //            textEditorNew.dispatchEvent(new Event("input"));
+    //            activeBox.text = textEditorNew.innerHTML;
+    //            drawText();
+    //        }
+    //    }
+    //    // CASE 2: Not editing but activeBox has multiple lines
+    //    else if (activeBox && !isEditing && hasMultipleLines) {
+    //        showEditorAtBox(activeBox);
+    //        applyTextEditorStyleFromBox(activeBox);
+    //        activeBox.text = textEditorNew.innerHTML;
+    //        drawText();
+    //    }
+    //});
 });
     // ✅ Line spacing will apply at box level if a box is active and editor has multiline
     //lineSpacingSelect.addEventListener("change", () => {
