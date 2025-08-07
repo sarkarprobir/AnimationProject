@@ -408,7 +408,7 @@ rel="stylesheet">
                 <a class="account" asp-controller="Canvas" asp-action="Account">Account</a>
                 <a class="account nav_active">Boards</a>
                 <a class="account" asp-controller="Canvas" asp-action="Schedular">TV/Screens</a>
-                <a class="account">Billing</a>
+                <a class="account" asp-controller="Canvas" asp-action="Billing">Billing</a>
             </div>
 
 
@@ -445,7 +445,7 @@ rel="stylesheet">
                                 </a>
                             </li>
                             <li class="w-100 acc_list">
-                                <a class="dropdown-item d-flex align-items-center text-white" href="">
+                                <a class="dropdown-item d-flex align-items-center text-white" asp-controller="Canvas" asp-action="Billing">
                                     Billing
                                 </a>
                             </li>

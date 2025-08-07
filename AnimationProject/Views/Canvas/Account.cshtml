@@ -322,7 +322,7 @@
                 <a class="account nav_active">Account</a>
                 <a class="account" asp-action="Boards">Boards</a>
                 <a class="account" asp-action="Schedular">TV/Screens</a>
-                <a class="account">Billing</a>   
+                <a class="account" asp-controller="Canvas" asp-action="Billing">Billing</a>
             </div>
 
             
@@ -359,7 +359,7 @@
                                 </a>
                             </li>
                             <li class="w-100 acc_list">
-                                <a class="dropdown-item d-flex align-items-center text-white" href="/logout">
+                                <a class="dropdown-item d-flex align-items-center text-white" asp-controller="Canvas" asp-action="Billing">
                                     Billing
                                 </a>
                             </li>
