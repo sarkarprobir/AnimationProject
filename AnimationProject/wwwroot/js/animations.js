@@ -3015,7 +3015,7 @@ function addDefaultTextOld() {
     drawCanvas('Common');
     $("#opengl_popup").hide();
 }
-function addDefaultText() {
+function addDefaultTextNew() {
     images.forEach(img => img.selected = false);
     const fs = 30;
     const factor = 1.2;        // 120% of fontSize
@@ -6983,7 +6983,7 @@ let _cornerScaleState = null; // { cx, cy, startDist, startScale, baseFontSize }
 //const CORNER_HANDLES = new Set(['tl', 'tr', 'bl', 'br']);
 let isCornerFontScale = false;
 let startMXCanvas = 0, startMYCanvas = 0; // canvas-space drag start
-
+const defaultLineSpacing = 8;
 
 
 function _mouseCanvas(e) { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
@@ -7722,18 +7722,115 @@ function restoreSelection() {
 
 // ——————— Box Creation & JSON ———————
 // Ensure default text is drawn once at start
-function addNewBox() {
-    boxes.push({
-        x: 120,
-        y: 200,
-        width: 200,
-        height: 38,
-        align: "left",
-        text: "<span style='color:black;font-size:30px;'>Default Text</span>"
-    });
-    activeBox = boxes[boxes.length - 1];
+//function addNewBox() {
+//    boxes.push({
+//        x: 120,
+//        y: 200,
+//        width: 200,
+//        height: 38,
+//        align: "left",
+//        text: "<span style='color:black;font-size:30px;'>Default Text</span>"
+//    });
+//    activeBox = boxes[boxes.length - 1];
+//    drawText();
+//}
+function addDefaultText(opts = {}) {
+    // --- defaults (kept from your working function + addDefaultText) ---
+    const fs = opts.fontSize ?? 30;
+    const text = opts.text ?? "Default Text";
+    const factor = opts.lineSpacing ?? 1.2;           // multiplier
+    const fontFam = opts.fontFamily ?? "Arial";
+    const color = opts.textColor ?? "#000000";
+    const align = opts.align ?? "left";
+    const x0 = opts.x ?? 120;
+    const y0 = opts.y ?? 200;
+    const minW = opts.width ?? 200;
+    const minH = opts.height ?? 38;
+
+    // --- build the box content (inline styles preserved) ---
+    const html = `<span style="color:${color};font-size:${fs}px;font-family:${fontFam};">${text}</span>`;
+
+    // --- create the box as you already do ---
+    const newBox = {
+        x: x0,
+        y: y0,
+        width: minW,
+        height: minH,
+        align: align,
+        text: html,
+        lineSpacing: factor,   // your drawText() uses multiplier
+        fontScale: 1,          // for corner font-scaling path (if used)
+        type: 'text',
+        zIndex: (typeof getNextZIndex === 'function')
+            ? getNextZIndex()
+            : (Math.max(0, ...(boxes.map(b => b.zIndex || 0))) + 1)
+    };
+
+    // --- measure to give a better starting size (respects your minW/minH) ---
+    const padX = 20, padY = 25;
+    ctx.font = `${fs}px ${fontFam}`;
+    const m = ctx.measureText(text);
+    const ascent = m.actualBoundingBoxAscent || fs * 0.8;
+    const descent = m.actualBoundingBoxDescent || fs * 0.2;
+    const textW = m.width;
+    const textH = ascent + descent;
+
+    newBox.width = Math.max(minW, Math.ceil(textW + padX));
+    newBox.height = Math.max(minH, Math.ceil(textH + padY));
+
+    // --- push to boxes and set active ---
+    boxes.push(newBox);
+    activeBox = newBox;
+
+    // --- mirror into textObjects with your exact selection flow ---
+    if (Array.isArray(textObjects)) {
+        // deselect all, select the new one, push
+        textObjects.forEach(o => o.selected = false);
+        const newObj = {
+            html,                   // plain text string (matches your addDefaultText)
+            x: newBox.x,
+            y: newBox.y,
+            selected: true,
+            editing: false,
+            fontFamily: fontFam,
+            textColor: color,
+            textAlign: align,
+            fontSize: fs,
+            lineSpacing: factor,    // multiplier
+            boundingWidth: newBox.width,
+            boundingHeight: newBox.height,
+            noAnim: false,
+            groupId: null,
+            rotation: 0,
+            isBold: false,
+            isItalic: false,
+            type: 'text',
+            zIndex: (typeof getNextZIndex === 'function') ? getNextZIndex() : 0,
+            opacity: 100
+        };
+        textObjects.push(newObj);
+    }
+
+    // --- keep editor in sync if you open it later (optional safe-guard) ---
+    if (typeof textEditorNew !== "undefined" && textEditorNew) {
+        textEditorNew.innerHTML = newBox.text;
+        textEditorNew.style.textAlign = newBox.align;
+    }
+
+    // --- redraw with your renderer ---
     drawText();
+    // ---- optional UI tidy (from addDefaultText) ----
+    try {
+        if (window.$) {
+            $("#opengl_popup").hide();
+            $("#elementsPopup").hide();
+        }
+    } catch (_) { /* noop */ }
+    console.log(textObjects);
+    // (optional) if you also need your other pipeline:
+    // if (typeof drawCanvas === 'function') drawCanvas('Common');
 }
+
 
 function generateJson() {
     console.log(JSON.stringify(boxes, null, 2));
@@ -7744,7 +7841,7 @@ window.onload = () => {
     // size canvas to container
     canvas.width = canvas.clientWidth;
     canvas.height = canvas.clientHeight;
-    addNewBox();
+   // addNewBox();
 };
 
 
@@ -7834,7 +7931,7 @@ alignLinks.forEach(link => {
 //    isEditing = true;
 //}
 // ✅ showEditorAtBox with correct offset + line spacing support
-const defaultLineSpacing = 8; // Default fallback
+ // Default fallback
 
 //function showEditorAtBox(box) {
 //    if (!box) return;
