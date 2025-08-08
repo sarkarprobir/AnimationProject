@@ -3662,277 +3662,277 @@ function isInsideRotatedText(mouseX, mouseY, txt) {
 //        localY <= +h / 2
 //    );
 //}
+////KD Need to be Include in project////////
+//canvas.addEventListener("mousedown", e => {
+//    const rect = canvas.getBoundingClientRect();
+//    const mouseX = e.clientX - rect.left;
+//    const mouseY = e.clientY - rect.top;
+//    const shift = e.shiftKey;
+//    if (document.activeElement === textEditor) return;
 
-canvas.addEventListener("mousedown", e => {
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    const shift = e.shiftKey;
-    if (document.activeElement === textEditor) return;
+//    // ── 1) ROTATION HANDLE CHECK ─────────────────────────────────────
+//    let hitRotate = null;
+//    [...textObjects, ...images].forEach(obj => {
+//        if (!obj.selected || !obj._rotateHandle) return;
+//        const h = obj._rotateHandle; // { x, y, radius }
+//        const dist = Math.hypot(mouseX - h.x, mouseY - h.y);
+//        if (dist < h.radius) hitRotate = obj;
+//    });
+//    if (hitRotate) {
+//        isRotating = true;
+//        rotatingObject = hitRotate;
+//        rotationStartAngle = Math.atan2(mouseY - hitRotate.y, mouseX - hitRotate.x);
+//        rotationStartValue = hitRotate.rotation || 0;
+//        e.preventDefault();
+//        return;
+//    }
 
-    // ── 1) ROTATION HANDLE CHECK ─────────────────────────────────────
-    let hitRotate = null;
-    [...textObjects, ...images].forEach(obj => {
-        if (!obj.selected || !obj._rotateHandle) return;
-        const h = obj._rotateHandle; // { x, y, radius }
-        const dist = Math.hypot(mouseX - h.x, mouseY - h.y);
-        if (dist < h.radius) hitRotate = obj;
-    });
-    if (hitRotate) {
-        isRotating = true;
-        rotatingObject = hitRotate;
-        rotationStartAngle = Math.atan2(mouseY - hitRotate.y, mouseX - hitRotate.x);
-        rotationStartValue = hitRotate.rotation || 0;
-        e.preventDefault();
-        return;
-    }
+//    // ── 2) HIT-TEST FOR TEXT AND IMAGE ───────────────────────────────
+//    let txtHit = null;
+//    for (let i = textObjects.length - 1; i >= 0; i--) {
+//        if (isInsideRotatedText(mouseX, mouseY, textObjects[i])) {
+//            txtHit = textObjects[i];
+//            break;
+//        }
+//    }
 
-    // ── 2) HIT-TEST FOR TEXT AND IMAGE ───────────────────────────────
-    let txtHit = null;
-    for (let i = textObjects.length - 1; i >= 0; i--) {
-        if (isInsideRotatedText(mouseX, mouseY, textObjects[i])) {
-            txtHit = textObjects[i];
-            break;
-        }
-    }
+//    let imgHit = null;
+//    for (let i = images.length - 1; i >= 0; i--) {
+//        if (isInsideRotatedImage(mouseX, mouseY, images[i])) {
+//            imgHit = images[i];
+//            break;
+//        }
+//    }
 
-    let imgHit = null;
-    for (let i = images.length - 1; i >= 0; i--) {
-        if (isInsideRotatedImage(mouseX, mouseY, images[i])) {
-            imgHit = images[i];
-            break;
-        }
-    }
+//    // ── 3) SHIFT-CLICK TOGGLE SELECTION ─────────────────────────────
+//    if (shift) {
+//        if (txtHit) {
+//            toggleSelect(txtHit);
+//            selectedForContextMenu = txtHit.selected ? txtHit : null;
+//            selectedType = txtHit.selected ? "text" : null;
+//        }
+//        if (imgHit) {
+//            toggleSelect(imgHit);
+//            selectedForContextMenu = imgHit.selected ? imgHit : null;
+//            selectedType = imgHit.selected ? "image" : null;
+//        }
+//        drawCanvas("Common");
+//        return;
+//    }
 
-    // ── 3) SHIFT-CLICK TOGGLE SELECTION ─────────────────────────────
-    if (shift) {
-        if (txtHit) {
-            toggleSelect(txtHit);
-            selectedForContextMenu = txtHit.selected ? txtHit : null;
-            selectedType = txtHit.selected ? "text" : null;
-        }
-        if (imgHit) {
-            toggleSelect(imgHit);
-            selectedForContextMenu = imgHit.selected ? imgHit : null;
-            selectedType = imgHit.selected ? "image" : null;
-        }
-        drawCanvas("Common");
-        return;
-    }
+//    // ── 4) RESIZE HANDLE ON SELECTED OBJECT ──────────────────────────
+//    let primary = null;
+//    let handle;
 
-    // ── 4) RESIZE HANDLE ON SELECTED OBJECT ──────────────────────────
-    let primary = null;
-    let handle;
+//    if (txtHit && txtHit.selected) {
+//        handle = getTextHandleUnderMouse(mouseX, mouseY, txtHit);
+//        if (handle && !handle.includes("middle")) {
+//            primary = { obj: txtHit, type: "text", handle };
+//        }
+//    }
+//    if (!primary) {
+//        for (let i = images.length - 1; i >= 0; i--) {
+//            const img = images[i];
+//            if (!img.selected) continue;
+//            handle = getImageHandleUnderMouse(mouseX, mouseY, img);
+//            if (handle) {
+//                primary = { obj: img, type: "image", handle };
+//                break;
+//            }
+//        }
+//    }
 
-    if (txtHit && txtHit.selected) {
-        handle = getTextHandleUnderMouse(mouseX, mouseY, txtHit);
-        if (handle && !handle.includes("middle")) {
-            primary = { obj: txtHit, type: "text", handle };
-        }
-    }
-    if (!primary) {
-        for (let i = images.length - 1; i >= 0; i--) {
-            const img = images[i];
-            if (!img.selected) continue;
-            handle = getImageHandleUnderMouse(mouseX, mouseY, img);
-            if (handle) {
-                primary = { obj: img, type: "image", handle };
-                break;
-            }
-        }
-    }
+//    // ── 5) COUNT SELECTED ITEMS ──────────────────────────────────────
+//    const selectedCount =
+//        textObjects.filter(o => o.selected).length +
+//        images.filter(i => i.selected).length;
 
-    // ── 5) COUNT SELECTED ITEMS ──────────────────────────────────────
-    const selectedCount =
-        textObjects.filter(o => o.selected).length +
-        images.filter(i => i.selected).length;
+//    // Multi-resize or single-resize...
+//    if (primary && selectedCount > 1) {
+//        startMultiResize(primary.obj, e);
+//        e.preventDefault();
+//        return;
+//    }
+//    if (primary && selectedCount === 1) {
+//        if (primary.type === "text") {
+//            // Begin text resize: store starting width/height/font
+//            isResizingText = true;
+//            activeTextHandle = primary.handle;
+//            activeText = primary.obj;
+//            textResizeStart = {
+//                mouseX: e.clientX,
+//                mouseY: e.clientY,
+//                origX: activeText.x,
+//                origY: activeText.y,
+//                origW: activeText.boundingWidth,
+//                origH: activeText.boundingHeight,
+//                origFont: activeText.fontSize
+//            };
+//            // STORE “start‐of‐drag” dims for text:
+//            activeText._resizeStartW = activeText.boundingWidth;
+//            activeText._resizeStartH = activeText.boundingHeight;
+//            activeText._resizeStartFont = activeText.fontSize;
+//        } else {
+//            // Begin image resize: store starting on-canvas width/height & scale
+//            isResizingImage = true;
+//            activeImageHandle = primary.handle;
+//            activeImage = primary.obj;
 
-    // Multi-resize or single-resize...
-    if (primary && selectedCount > 1) {
-        startMultiResize(primary.obj, e);
-        e.preventDefault();
-        return;
-    }
-    if (primary && selectedCount === 1) {
-        if (primary.type === "text") {
-            // Begin text resize: store starting width/height/font
-            isResizingText = true;
-            activeTextHandle = primary.handle;
-            activeText = primary.obj;
-            textResizeStart = {
-                mouseX: e.clientX,
-                mouseY: e.clientY,
-                origX: activeText.x,
-                origY: activeText.y,
-                origW: activeText.boundingWidth,
-                origH: activeText.boundingHeight,
-                origFont: activeText.fontSize
-            };
-            // STORE “start‐of‐drag” dims for text:
-            activeText._resizeStartW = activeText.boundingWidth;
-            activeText._resizeStartH = activeText.boundingHeight;
-            activeText._resizeStartFont = activeText.fontSize;
-        } else {
-            // Begin image resize: store starting on-canvas width/height & scale
-            isResizingImage = true;
-            activeImageHandle = primary.handle;
-            activeImage = primary.obj;
+//            const startSX = (typeof activeImage.scaleX === 'number')
+//                ? activeImage.scaleX : 1;
+//            const startSY = (typeof activeImage.scaleY === 'number')
+//                ? activeImage.scaleY : 1;
 
-            const startSX = (typeof activeImage.scaleX === 'number')
-                ? activeImage.scaleX : 1;
-            const startSY = (typeof activeImage.scaleY === 'number')
-                ? activeImage.scaleY : 1;
+//            activeImage._resizeStartSX = startSX;
+//            activeImage._resizeStartSY = startSY;
+//            activeImage._resizeStartW = activeImage.width * startSX;
+//            activeImage._resizeStartH = activeImage.height * startSY;
+//        }
+//        e.preventDefault();
+//        drawCanvas("Common");
+//        return;
+//    }
 
-            activeImage._resizeStartSX = startSX;
-            activeImage._resizeStartSY = startSY;
-            activeImage._resizeStartW = activeImage.width * startSX;
-            activeImage._resizeStartH = activeImage.height * startSY;
-        }
-        e.preventDefault();
-        drawCanvas("Common");
-        return;
-    }
+//    // ── 6) GROUP-DRAG ────────────────────────────────────────────────
+//    if ((txtHit && txtHit.selected) || (imgHit && imgHit.selected)) {
+//        isDraggingGroup = true;
+//        groupDragStart = { x: e.clientX, y: e.clientY };
+//        groupStarts = [];
+//        textObjects.filter(o => o.selected)
+//            .forEach(o => groupStarts.push({ obj: o, x: o.x, y: o.y }));
+//        images.filter(i => i.selected)
+//            .forEach(i => groupStarts.push({ obj: i, x: i.x, y: i.y }));
+//        e.preventDefault();
+//        return;
+//    }
 
-    // ── 6) GROUP-DRAG ────────────────────────────────────────────────
-    if ((txtHit && txtHit.selected) || (imgHit && imgHit.selected)) {
-        isDraggingGroup = true;
-        groupDragStart = { x: e.clientX, y: e.clientY };
-        groupStarts = [];
-        textObjects.filter(o => o.selected)
-            .forEach(o => groupStarts.push({ obj: o, x: o.x, y: o.y }));
-        images.filter(i => i.selected)
-            .forEach(i => groupStarts.push({ obj: i, x: i.x, y: i.y }));
-        e.preventDefault();
-        return;
-    }
+//    // ── 7) DESELECT ALL BEFORE NEW SELECTION ─────────────────────────
+//    textObjects.forEach(o => o.selected = false);
+//    images.forEach(i => i.selected = false);
+//    selectedForContextMenu = null;
+//    selectedType = null;
+//    activeText = activeImage = null;
 
-    // ── 7) DESELECT ALL BEFORE NEW SELECTION ─────────────────────────
-    textObjects.forEach(o => o.selected = false);
-    images.forEach(i => i.selected = false);
-    selectedForContextMenu = null;
-    selectedType = null;
-    activeText = activeImage = null;
-
-    // ── 8) CLICK-TO-SELECT TEXT ─────────────────────────────────────
-    if (txtHit) {
-        txtHit.selected = true;
-        selectedForContextMenu = txtHit;
-        selectedType = "text";
-        activeText = txtHit;
-        const angle = txtHit.rotation || 0;
-        rotationSlider.value = angle;
-        document.getElementById("rotationValue").textContent = angle + "°";
-        rotationBadge.textContent = angle;
+//    // ── 8) CLICK-TO-SELECT TEXT ─────────────────────────────────────
+//    if (txtHit) {
+//        txtHit.selected = true;
+//        selectedForContextMenu = txtHit;
+//        selectedType = "text";
+//        activeText = txtHit;
+//        const angle = txtHit.rotation || 0;
+//        rotationSlider.value = angle;
+//        document.getElementById("rotationValue").textContent = angle + "°";
+//        rotationBadge.textContent = angle;
 
 
-        var opacity = txtHit.opacity * 100 || 100;
-        if (opacity > 100) opacity = 100;
-        opacitySlider.value = opacity;
-        document.getElementById("opacityValue").textContent = opacity + "";
-        opacityBadge.textContent = opacity;
+//        var opacity = txtHit.opacity * 100 || 100;
+//        if (opacity > 100) opacity = 100;
+//        opacitySlider.value = opacity;
+//        document.getElementById("opacityValue").textContent = opacity + "";
+//        opacityBadge.textContent = opacity;
 
-        handle = getTextHandleUnderMouse(mouseX, mouseY, txtHit);
-        if (handle && !handle.includes("middle")) {
-            isResizingText = true;
-            activeTextHandle = handle;
-            textResizeStart = {
-                mouseX: e.clientX,
-                mouseY: e.clientY,
-                origX: txtHit.x,
-                origY: txtHit.y,
-                origW: txtHit.boundingWidth,
-                origH: txtHit.boundingHeight,
-                origFont: txtHit.fontSize
-            };
-            // Also store “start” values in case user rotates then drags again:
-            txtHit._resizeStartW = txtHit.boundingWidth;
-            txtHit._resizeStartH = txtHit.boundingHeight;
-            txtHit._resizeStartFont = txtHit.fontSize;
-        } else {
-            isDraggingText = true;
-            dragOffsetText = { x: mouseX - txtHit.x, y: mouseY - txtHit.y };
-        }
+//        handle = getTextHandleUnderMouse(mouseX, mouseY, txtHit);
+//        if (handle && !handle.includes("middle")) {
+//            isResizingText = true;
+//            activeTextHandle = handle;
+//            textResizeStart = {
+//                mouseX: e.clientX,
+//                mouseY: e.clientY,
+//                origX: txtHit.x,
+//                origY: txtHit.y,
+//                origW: txtHit.boundingWidth,
+//                origH: txtHit.boundingHeight,
+//                origFont: txtHit.fontSize
+//            };
+//            // Also store “start” values in case user rotates then drags again:
+//            txtHit._resizeStartW = txtHit.boundingWidth;
+//            txtHit._resizeStartH = txtHit.boundingHeight;
+//            txtHit._resizeStartFont = txtHit.fontSize;
+//        } else {
+//            isDraggingText = true;
+//            dragOffsetText = { x: mouseX - txtHit.x, y: mouseY - txtHit.y };
+//        }
 
-        e.preventDefault();
-        drawCanvas("Common");
-        return;
-    }
+//        e.preventDefault();
+//        drawCanvas("Common");
+//        return;
+//    }
 
-    // ── 9) CLICK-TO-SELECT IMAGE ────────────────────────────────────
-    if (imgHit) {
-        images.forEach(i => i.selected = false);
-        imgHit.selected = true;
-        selectedForContextMenu = imgHit;
-        selectedType = "image";
-        activeImage = imgHit;
-        const angle = imgHit.rotation || 0;
-        rotationSlider.value = angle;
-        document.getElementById("rotationValue").textContent = angle + "°";
-        rotationBadge.textContent = angle;
+//    // ── 9) CLICK-TO-SELECT IMAGE ────────────────────────────────────
+//    if (imgHit) {
+//        images.forEach(i => i.selected = false);
+//        imgHit.selected = true;
+//        selectedForContextMenu = imgHit;
+//        selectedType = "image";
+//        activeImage = imgHit;
+//        const angle = imgHit.rotation || 0;
+//        rotationSlider.value = angle;
+//        document.getElementById("rotationValue").textContent = angle + "°";
+//        rotationBadge.textContent = angle;
 
-        var opacity = imgHit.opacity * 100 || 100;
-        if (opacity > 100) opacity = 100;
-        opacitySlider.value = opacity;
-        document.getElementById("opacityValue").textContent = opacity + "";
-        opacityBadge.textContent = opacity;
+//        var opacity = imgHit.opacity * 100 || 100;
+//        if (opacity > 100) opacity = 100;
+//        opacitySlider.value = opacity;
+//        document.getElementById("opacityValue").textContent = opacity + "";
+//        opacityBadge.textContent = opacity;
 
-        isDraggingImage = true;
-        dragOffsetImage = { x: mouseX - imgHit.x, y: mouseY - imgHit.y };
-        enableFillColorDiv();
-        enableStrockColorDiv();
+//        isDraggingImage = true;
+//        dragOffsetImage = { x: mouseX - imgHit.x, y: mouseY - imgHit.y };
+//        enableFillColorDiv();
+//        enableStrockColorDiv();
 
-        e.preventDefault();
-        drawCanvas("Common");
-        return;
-    }
+//        e.preventDefault();
+//        drawCanvas("Common");
+//        return;
+//    }
 
-    //// ── 10) CLICKED EMPTY SPACE ─────────────────────────────────────
-    //textObjects.forEach(o => o.selected = false);
-    //images.forEach(i => i.selected = false);
-    //selectedForContextMenu = null;
-    //selectedType = null;
-    //activeText = activeImage = null;
-    //rotationSlider.value = 0;
-    //rotationBadge.textContent = "0";
+//    //// ── 10) CLICKED EMPTY SPACE ─────────────────────────────────────
+//    //textObjects.forEach(o => o.selected = false);
+//    //images.forEach(i => i.selected = false);
+//    //selectedForContextMenu = null;
+//    //selectedType = null;
+//    //activeText = activeImage = null;
+//    //rotationSlider.value = 0;
+//    //rotationBadge.textContent = "0";
 
-    //e.preventDefault();
-    //drawCanvas("Common");
+//    //e.preventDefault();
+//    //drawCanvas("Common");
 
-    // ── 10) CLICKED EMPTY SPACE ─────────────────────────────────────
-    const clickedEmpty =
-        !hitRotate &&
-        !txtHit &&
-        !imgHit &&
-        !primary;
+//    // ── 10) CLICKED EMPTY SPACE ─────────────────────────────────────
+//    const clickedEmpty =
+//        !hitRotate &&
+//        !txtHit &&
+//        !imgHit &&
+//        !primary;
 
-    if (clickedEmpty) {
-        // clear any existing selection
-        textObjects.forEach(o => o.selected = false);
-        images.forEach(i => i.selected = false);
-        selectedForContextMenu = null;
-        selectedType = null;
-        activeText = activeImage = null;
-        rotationSlider.value = 0;
-        rotationBadge.textContent = "0";
+//    if (clickedEmpty) {
+//        // clear any existing selection
+//        textObjects.forEach(o => o.selected = false);
+//        images.forEach(i => i.selected = false);
+//        selectedForContextMenu = null;
+//        selectedType = null;
+//        activeText = activeImage = null;
+//        rotationSlider.value = 0;
+//        rotationBadge.textContent = "0";
 
-        opacitySlider.value = 100;
-        opacityBadge.textContent = "100";
+//        opacitySlider.value = 100;
+//        opacityBadge.textContent = "100";
        
 
-        // begin drag-to-select
-        isDraggingSelectionBox = true;
-        const rect = canvas.getBoundingClientRect();
-        selectionStart = {
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top
-        };
-        selectionEnd = { ...selectionStart };
+//        // begin drag-to-select
+//        isDraggingSelectionBox = true;
+//        const rect = canvas.getBoundingClientRect();
+//        selectionStart = {
+//            x: e.clientX - rect.left,
+//            y: e.clientY - rect.top
+//        };
+//        selectionEnd = { ...selectionStart };
 
-        e.preventDefault();
-        drawCanvas("Common");
-        return;
-    }
-});
+//        e.preventDefault();
+//        drawCanvas("Common");
+//        return;
+//    }
+//});
 
 
 
@@ -4360,296 +4360,296 @@ function drawImageObject(ctx, imgObj) {
 }
 
 
-canvas.addEventListener("mousemove", function (e) {
-    const pos = getMousePos(canvas, e);
-    let cursor = "default";
+//canvas.addEventListener("mousemove", function (e) {
+//    const pos = getMousePos(canvas, e);
+//    let cursor = "default";
 
-    // ── 1) ROTATION (live) ─────────────────────────────────────────────
-    if (isRotating && rotatingObject) {
-        const angleNow = Math.atan2(pos.y - rotatingObject.y, pos.x - rotatingObject.x);
-        const delta = angleNow - rotationStartAngle;
-        const angleDeg = (rotationStartValue + delta * 180 / Math.PI) % 360;
-        const roundedAngle = Math.round(angleDeg);
-        updateRotation(roundedAngle);
-        rotationBadge.textContent = roundedAngle;
-        return;
-    }
+//    // ── 1) ROTATION (live) ─────────────────────────────────────────────
+//    if (isRotating && rotatingObject) {
+//        const angleNow = Math.atan2(pos.y - rotatingObject.y, pos.x - rotatingObject.x);
+//        const delta = angleNow - rotationStartAngle;
+//        const angleDeg = (rotationStartValue + delta * 180 / Math.PI) % 360;
+//        const roundedAngle = Math.round(angleDeg);
+//        updateRotation(roundedAngle);
+//        rotationBadge.textContent = roundedAngle;
+//        return;
+//    }
 
-    // ── 2) TEXT HANDLE HOVER ────────────────────────────────────────────
-    if (!isDraggingText && !isResizingText && activeText) {
-        const center = {
-            x: activeText.x + activeText.boundingWidth / 2,
-            y: activeText.y + activeText.boundingHeight / 2
-        };
-        const pt = rotatePoint(pos.x, pos.y, center.x, center.y, -activeText.rotation);
-        const x0 = activeText.x;
-        const y0 = activeText.y;
-        const x1 = x0 + activeText.boundingWidth;
-        const y1 = y0 + activeText.boundingHeight;
+//    // ── 2) TEXT HANDLE HOVER ────────────────────────────────────────────
+//    if (!isDraggingText && !isResizingText && activeText) {
+//        const center = {
+//            x: activeText.x + activeText.boundingWidth / 2,
+//            y: activeText.y + activeText.boundingHeight / 2
+//        };
+//        const pt = rotatePoint(pos.x, pos.y, center.x, center.y, -activeText.rotation);
+//        const x0 = activeText.x;
+//        const y0 = activeText.y;
+//        const x1 = x0 + activeText.boundingWidth;
+//        const y1 = y0 + activeText.boundingHeight;
 
-        // Corner zones
-        const cornerTolerance = 16;
-        const corners = [
-            { x: x0, y: y0, cursor: 'nwse-resize' },
-            { x: x1, y: y0, cursor: 'nesw-resize' },
-            { x: x0, y: y1, cursor: 'nesw-resize' },
-            { x: x1, y: y1, cursor: 'nwse-resize' }
-        ];
-        for (const c of corners) {
-            if (Math.hypot(pt.x - c.x, pt.y - c.y) < cornerTolerance) {
-                canvas.style.cursor = c.cursor;
-                return;
-            }
-        }
-        // Edges
-        const edgeTolerance = 12;
-        if ((Math.abs(pt.x - x0) < edgeTolerance || Math.abs(pt.x - x1) < edgeTolerance)
-            && pt.y > y0 + cornerTolerance && pt.y < y1 - cornerTolerance) {
-            canvas.style.cursor = 'ew-resize';
-            return;
-        }
-        if ((Math.abs(pt.y - y0) < edgeTolerance || Math.abs(pt.y - y1) < edgeTolerance)
-            && pt.x > x0 + cornerTolerance && pt.x < x1 - cornerTolerance) {
-            canvas.style.cursor = 'ns-resize';
-            return;
-        }
-    }
+//        // Corner zones
+//        const cornerTolerance = 16;
+//        const corners = [
+//            { x: x0, y: y0, cursor: 'nwse-resize' },
+//            { x: x1, y: y0, cursor: 'nesw-resize' },
+//            { x: x0, y: y1, cursor: 'nesw-resize' },
+//            { x: x1, y: y1, cursor: 'nwse-resize' }
+//        ];
+//        for (const c of corners) {
+//            if (Math.hypot(pt.x - c.x, pt.y - c.y) < cornerTolerance) {
+//                canvas.style.cursor = c.cursor;
+//                return;
+//            }
+//        }
+//        // Edges
+//        const edgeTolerance = 12;
+//        if ((Math.abs(pt.x - x0) < edgeTolerance || Math.abs(pt.x - x1) < edgeTolerance)
+//            && pt.y > y0 + cornerTolerance && pt.y < y1 - cornerTolerance) {
+//            canvas.style.cursor = 'ew-resize';
+//            return;
+//        }
+//        if ((Math.abs(pt.y - y0) < edgeTolerance || Math.abs(pt.y - y1) < edgeTolerance)
+//            && pt.x > x0 + cornerTolerance && pt.x < x1 - cornerTolerance) {
+//            canvas.style.cursor = 'ns-resize';
+//            return;
+//        }
+//    }
 
-    // ── 3) IMAGE HANDLE HOVER ───────────────────────────────────────────
-    if (!isDraggingImage && !isResizingImage && activeImage) {
-        const handle = getImageHandleUnderMouse(pos.x, pos.y, activeImage);
-        if (handle) {
-            if (handle === 'top-left' || handle === 'bottom-right') {
-                canvas.style.cursor = 'nwse-resize';
-            } else if (handle === 'top-right' || handle === 'bottom-left') {
-                canvas.style.cursor = 'nesw-resize';
-            } else if (handle === 'left' || handle === 'right') {
-                canvas.style.cursor = 'ew-resize';
-            } else if (handle === 'top' || handle === 'bottom') {
-                canvas.style.cursor = 'ns-resize';
-            }
-            return;
-        }
-    }
+//    // ── 3) IMAGE HANDLE HOVER ───────────────────────────────────────────
+//    if (!isDraggingImage && !isResizingImage && activeImage) {
+//        const handle = getImageHandleUnderMouse(pos.x, pos.y, activeImage);
+//        if (handle) {
+//            if (handle === 'top-left' || handle === 'bottom-right') {
+//                canvas.style.cursor = 'nwse-resize';
+//            } else if (handle === 'top-right' || handle === 'bottom-left') {
+//                canvas.style.cursor = 'nesw-resize';
+//            } else if (handle === 'left' || handle === 'right') {
+//                canvas.style.cursor = 'ew-resize';
+//            } else if (handle === 'top' || handle === 'bottom') {
+//                canvas.style.cursor = 'ns-resize';
+//            }
+//            return;
+//        }
+//    }
 
-    // ── 4) GROUP DRAG ───────────────────────────────────────────────────
-    if (isDraggingGroup) {
-        const dx = e.clientX - groupDragStart.x;
-        const dy = e.clientY - groupDragStart.y;
-        groupStarts.forEach(({ obj, x, y }) => {
-            obj.x = x + dx;
-            obj.y = y + dy;
-        });
-        drawCanvas("Common");
-        canvas.style.cursor = "grabbing";
-        return;
-    }
+//    // ── 4) GROUP DRAG ───────────────────────────────────────────────────
+//    if (isDraggingGroup) {
+//        const dx = e.clientX - groupDragStart.x;
+//        const dy = e.clientY - groupDragStart.y;
+//        groupStarts.forEach(({ obj, x, y }) => {
+//            obj.x = x + dx;
+//            obj.y = y + dy;
+//        });
+//        drawCanvas("Common");
+//        canvas.style.cursor = "grabbing";
+//        return;
+//    }
 
-    // ── 5) TEXT RESIZE & DRAG ───────────────────────────────────────────
-    if (isResizingText && activeText && activeTextHandle) {
-        const txt = activeText;
+//    // ── 5) TEXT RESIZE & DRAG ───────────────────────────────────────────
+//    if (isResizingText && activeText && activeTextHandle) {
+//        const txt = activeText;
 
-        const wStart = txt._resizeStartW;
-        const hStart = txt._resizeStartH;
-        const fontStart = txt._resizeStartFont;
+//        const wStart = txt._resizeStartW;
+//        const hStart = txt._resizeStartH;
+//        const fontStart = txt._resizeStartFont;
 
-        const cx = txt.x + wStart / 2;
-        const cy = txt.y + hStart / 2;
-        const θ = (txt.rotation || 0) * Math.PI / 180;
+//        const cx = txt.x + wStart / 2;
+//        const cy = txt.y + hStart / 2;
+//        const θ = (txt.rotation || 0) * Math.PI / 180;
 
-        const dx = pos.x - cx;
-        const dy = pos.y - cy;
-        const localX = dx * Math.cos(-θ) - dy * Math.sin(-θ);
-        const localY = dx * Math.sin(-θ) + dy * Math.cos(-θ);
+//        const dx = pos.x - cx;
+//        const dy = pos.y - cy;
+//        const localX = dx * Math.cos(-θ) - dy * Math.sin(-θ);
+//        const localY = dx * Math.sin(-θ) + dy * Math.cos(-θ);
 
-        let origLX = 0, origLY = 0, cursorLocal = "default";
-        switch (activeTextHandle) {
-            case "bottom-right": origLX = wStart / 2; origLY = hStart / 2; cursorLocal = "nwse-resize"; break;
-            case "bottom-left": origLX = -wStart / 2; origLY = hStart / 2; cursorLocal = "nesw-resize"; break;
-            case "top-right": origLX = wStart / 2; origLY = -hStart / 2; cursorLocal = "nesw-resize"; break;
-            case "top-left": origLX = -wStart / 2; origLY = -hStart / 2; cursorLocal = "nwse-resize"; break;
-        }
+//        let origLX = 0, origLY = 0, cursorLocal = "default";
+//        switch (activeTextHandle) {
+//            case "bottom-right": origLX = wStart / 2; origLY = hStart / 2; cursorLocal = "nwse-resize"; break;
+//            case "bottom-left": origLX = -wStart / 2; origLY = hStart / 2; cursorLocal = "nesw-resize"; break;
+//            case "top-right": origLX = wStart / 2; origLY = -hStart / 2; cursorLocal = "nesw-resize"; break;
+//            case "top-left": origLX = -wStart / 2; origLY = -hStart / 2; cursorLocal = "nwse-resize"; break;
+//        }
 
-        const origDist = Math.hypot(origLX, origLY);
-        const newDist = Math.hypot(localX, localY);
-        const scaleFactor = newDist / origDist;
+//        const origDist = Math.hypot(origLX, origLY);
+//        const newDist = Math.hypot(localX, localY);
+//        const scaleFactor = newDist / origDist;
 
-        const newFontSize = Math.max(8, fontStart * scaleFactor);
+//        const newFontSize = Math.max(8, fontStart * scaleFactor);
 
-        const context = canvas.getContext("2d");
-        context.font = `${newFontSize}px ${txt.fontFamily}`;
-        //const lines = wrapText(context, txt.text.replace(/\n/g, ""), Infinity);
-        //const lineHeight = newFontSize * txt.lineSpacing;
-        //const measuredH = lines.length * lineHeight + 2 * padding;
-        //const measuredW = Math.max(...lines.map(line => context.measureText(line).width)) + 2 * padding;
+//        const context = canvas.getContext("2d");
+//        context.font = `${newFontSize}px ${txt.fontFamily}`;
+//        //const lines = wrapText(context, txt.text.replace(/\n/g, ""), Infinity);
+//        //const lineHeight = newFontSize * txt.lineSpacing;
+//        //const measuredH = lines.length * lineHeight + 2 * padding;
+//        //const measuredW = Math.max(...lines.map(line => context.measureText(line).width)) + 2 * padding;
 
-        const rawLines = txt.text.split('\n');
-        context.font = `${newFontSize}px ${txt.fontFamily}`;
-        const lineHeight = newFontSize * txt.lineSpacing;
-        const measuredW = Math.max(...rawLines.map(line => context.measureText(line).width)) + 2 * padding;
-        const measuredH = rawLines.length * lineHeight + 2 * padding;
+//        const rawLines = txt.text.split('\n');
+//        context.font = `${newFontSize}px ${txt.fontFamily}`;
+//        const lineHeight = newFontSize * txt.lineSpacing;
+//        const measuredW = Math.max(...rawLines.map(line => context.measureText(line).width)) + 2 * padding;
+//        const measuredH = rawLines.length * lineHeight + 2 * padding;
 
 
-        txt.fontSize = newFontSize;
-        txt.boundingWidth = measuredW;
-        txt.boundingHeight = measuredH;
+//        txt.fontSize = newFontSize;
+//        txt.boundingWidth = measuredW;
+//        txt.boundingHeight = measuredH;
 
-        // Shift x/y if resizing from top or left
-        //if (activeTextHandle.includes("left") || activeTextHandle.includes("top")) {
-        //    const deltaLX = localX - origLX;
-        //    const deltaLY = localY - origLY;
-        //    const s = Math.sin(θ), c = Math.cos(θ);
-        //    const dxShift = (activeTextHandle.includes("left") ? deltaLX : 0);
-        //    const dyShift = (activeTextHandle.includes("top") ? deltaLY : 0);
-        //    txt.x += dxShift * c - dyShift * s;
-        //    txt.y += dxShift * s + dyShift * c;
-        //}
+//        // Shift x/y if resizing from top or left
+//        //if (activeTextHandle.includes("left") || activeTextHandle.includes("top")) {
+//        //    const deltaLX = localX - origLX;
+//        //    const deltaLY = localY - origLY;
+//        //    const s = Math.sin(θ), c = Math.cos(θ);
+//        //    const dxShift = (activeTextHandle.includes("left") ? deltaLX : 0);
+//        //    const dyShift = (activeTextHandle.includes("top") ? deltaLY : 0);
+//        //    txt.x += dxShift * c - dyShift * s;
+//        //    txt.y += dxShift * s + dyShift * c;
+//        //}
 
-        drawCanvas("Common");
-        canvas.style.cursor = cursorLocal;
-        return;
-    }
-    if (isDraggingText && activeText) {
-        const txt = activeText;
-        const center = { x: txt.x + txt.boundingWidth / 2, y: txt.y + txt.boundingHeight / 2 };
-        const pt = rotatePoint(pos.x, pos.y, center.x, center.y, -txt.rotation);
-        txt.x = pt.x - dragOffsetText.x;
-        txt.y = pt.y - dragOffsetText.y;
-        drawCanvas("Common");
-        canvas.style.cursor = "grabbing";
-        return;
-    }
+//        drawCanvas("Common");
+//        canvas.style.cursor = cursorLocal;
+//        return;
+//    }
+//    if (isDraggingText && activeText) {
+//        const txt = activeText;
+//        const center = { x: txt.x + txt.boundingWidth / 2, y: txt.y + txt.boundingHeight / 2 };
+//        const pt = rotatePoint(pos.x, pos.y, center.x, center.y, -txt.rotation);
+//        txt.x = pt.x - dragOffsetText.x;
+//        txt.y = pt.y - dragOffsetText.y;
+//        drawCanvas("Common");
+//        canvas.style.cursor = "grabbing";
+//        return;
+//    }
 
-    // ── 6) IMAGE DRAG ───────────────────────────────────────────────────
-    if (isDraggingImage && activeImage) {
-        activeImage.x = pos.x - dragOffsetImage.x;
-        activeImage.y = pos.y - dragOffsetImage.y;
-        drawCanvas("Common");
-        canvas.style.cursor = "grabbing";
-        return;
-    }
+//    // ── 6) IMAGE DRAG ───────────────────────────────────────────────────
+//    if (isDraggingImage && activeImage) {
+//        activeImage.x = pos.x - dragOffsetImage.x;
+//        activeImage.y = pos.y - dragOffsetImage.y;
+//        drawCanvas("Common");
+//        canvas.style.cursor = "grabbing";
+//        return;
+//    }
 
-    // ── 7) IMAGE RESIZE ─────────────────────────────────────────────────
-    if (isResizingImage && activeImage && activeImageHandle) {
-        const img = activeImage;
-        // (image block remains exactly as you already verified it works)
+//    // ── 7) IMAGE RESIZE ─────────────────────────────────────────────────
+//    if (isResizingImage && activeImage && activeImageHandle) {
+//        const img = activeImage;
+//        // (image block remains exactly as you already verified it works)
 
-        const wStart = img._resizeStartW;
-        const hStart = img._resizeStartH;
-        const cx = img.x + wStart / 2;
-        const cy = img.y + hStart / 2;
-        const θ = (img.rotation || 0) * Math.PI / 180;
+//        const wStart = img._resizeStartW;
+//        const hStart = img._resizeStartH;
+//        const cx = img.x + wStart / 2;
+//        const cy = img.y + hStart / 2;
+//        const θ = (img.rotation || 0) * Math.PI / 180;
 
-        const dx = pos.x - cx;
-        const dy = pos.y - cy;
-        const localX = dx * Math.cos(-θ) - dy * Math.sin(-θ);
-        const localY = dx * Math.sin(-θ) + dy * Math.cos(-θ);
+//        const dx = pos.x - cx;
+//        const dy = pos.y - cy;
+//        const localX = dx * Math.cos(-θ) - dy * Math.sin(-θ);
+//        const localY = dx * Math.sin(-θ) + dy * Math.cos(-θ);
 
-        let origLX = 0, origLY = 0, cursorImg = "default";
-        switch (activeImageHandle) {
-            case "bottom-right":
-                origLX = wStart / 2; origLY = hStart / 2; cursorImg = "nwse-resize"; break;
-            case "bottom-left":
-                origLX = -wStart / 2; origLY = hStart / 2; cursorImg = "nesw-resize"; break;
-            case "top-right":
-                origLX = wStart / 2; origLY = -hStart / 2; cursorImg = "nesw-resize"; break;
-            case "top-left":
-                origLX = -wStart / 2; origLY = -hStart / 2; cursorImg = "nwse-resize"; break;
-            case "right":
-                origLX = wStart / 2; origLY = 0; cursorImg = "ew-resize"; break;
-            case "left":
-                origLX = -wStart / 2; origLY = 0; cursorImg = "ew-resize"; break;
-            case "bottom":
-                origLX = 0; origLY = hStart / 2; cursorImg = "ns-resize"; break;
-            case "top":
-                origLX = 0; origLY = -hStart / 2; cursorImg = "ns-resize"; break;
-        }
+//        let origLX = 0, origLY = 0, cursorImg = "default";
+//        switch (activeImageHandle) {
+//            case "bottom-right":
+//                origLX = wStart / 2; origLY = hStart / 2; cursorImg = "nwse-resize"; break;
+//            case "bottom-left":
+//                origLX = -wStart / 2; origLY = hStart / 2; cursorImg = "nesw-resize"; break;
+//            case "top-right":
+//                origLX = wStart / 2; origLY = -hStart / 2; cursorImg = "nesw-resize"; break;
+//            case "top-left":
+//                origLX = -wStart / 2; origLY = -hStart / 2; cursorImg = "nwse-resize"; break;
+//            case "right":
+//                origLX = wStart / 2; origLY = 0; cursorImg = "ew-resize"; break;
+//            case "left":
+//                origLX = -wStart / 2; origLY = 0; cursorImg = "ew-resize"; break;
+//            case "bottom":
+//                origLX = 0; origLY = hStart / 2; cursorImg = "ns-resize"; break;
+//            case "top":
+//                origLX = 0; origLY = -hStart / 2; cursorImg = "ns-resize"; break;
+//        }
 
-        const deltaLX = localX - origLX;
-        const deltaLY = localY - origLY;
+//        const deltaLX = localX - origLX;
+//        const deltaLY = localY - origLY;
 
-        let newLocalW = wStart;
-        let newLocalH = hStart;
-        if (activeImageHandle.includes("right")) newLocalW = wStart + 2 * deltaLX;
-        else if (activeImageHandle.includes("left")) newLocalW = wStart - 2 * deltaLX;
-        if (activeImageHandle.includes("bottom")) newLocalH = hStart + 2 * deltaLY;
-        else if (activeImageHandle.includes("top")) newLocalH = hStart - 2 * deltaLY;
+//        let newLocalW = wStart;
+//        let newLocalH = hStart;
+//        if (activeImageHandle.includes("right")) newLocalW = wStart + 2 * deltaLX;
+//        else if (activeImageHandle.includes("left")) newLocalW = wStart - 2 * deltaLX;
+//        if (activeImageHandle.includes("bottom")) newLocalH = hStart + 2 * deltaLY;
+//        else if (activeImageHandle.includes("top")) newLocalH = hStart - 2 * deltaLY;
 
-        const minW = 20;
-        const minH = 20;
-        newLocalW = Math.max(newLocalW, minW);
-        newLocalH = Math.max(newLocalH, minH);
+//        const minW = 20;
+//        const minH = 20;
+//        newLocalW = Math.max(newLocalW, minW);
+//        newLocalH = Math.max(newLocalH, minH);
 
-        img.scaleX = newLocalW / img.width;
-        img.scaleY = newLocalH / img.height;
+//        img.scaleX = newLocalW / img.width;
+//        img.scaleY = newLocalH / img.height;
 
-        if (activeImageHandle.includes("left")) {
-            const shiftLX = deltaLX;
-            const shiftLY = 0;
-            const s = Math.sin(θ), c = Math.cos(θ);
-            img.x += shiftLX * c - shiftLY * s;
-            img.y += shiftLX * s + shiftLY * c;
-        }
-        if (activeImageHandle.includes("top")) {
-            const shiftLX = 0;
-            const shiftLY = deltaLY;
-            const s = Math.sin(θ), c = Math.cos(θ);
-            img.x += shiftLX * c - shiftLY * s;
-            img.y += shiftLX * s + shiftLY * c;
-        }
+//        if (activeImageHandle.includes("left")) {
+//            const shiftLX = deltaLX;
+//            const shiftLY = 0;
+//            const s = Math.sin(θ), c = Math.cos(θ);
+//            img.x += shiftLX * c - shiftLY * s;
+//            img.y += shiftLX * s + shiftLY * c;
+//        }
+//        if (activeImageHandle.includes("top")) {
+//            const shiftLX = 0;
+//            const shiftLY = deltaLY;
+//            const s = Math.sin(θ), c = Math.cos(θ);
+//            img.x += shiftLX * c - shiftLY * s;
+//            img.y += shiftLX * s + shiftLY * c;
+//        }
 
-        drawCanvas("Common");
-        canvas.style.cursor = cursorImg;
-        return;
-    }
+//        drawCanvas("Common");
+//        canvas.style.cursor = cursorImg;
+//        return;
+//    }
 
-    // ── 8) HOVER FEEDBACK ───────────────────────────────────────────────
-    if (!isDraggingText && !isResizingText && activeText) {
-        const cx = activeText.x + activeText.boundingWidth / 2;
-        const cy = activeText.y + activeText.boundingHeight / 2;
-        const θ = -(activeText.rotation || 0) * Math.PI / 180;
-        const dx = pos.x - cx;
-        const dy = pos.y - cy;
-        const localX = dx * Math.cos(θ) - dy * Math.sin(θ);
-        const localY = dx * Math.sin(θ) + dy * Math.cos(θ);
-        if (
-            localX >= -activeText.boundingWidth / 2 &&
-            localX <= activeText.boundingWidth / 2 &&
-            localY >= -activeText.boundingHeight / 2 &&
-            localY <= activeText.boundingHeight / 2
-        ) {
-            cursor = "grab";
-        }
-    }
-    if (!isDraggingImage && !isResizingImage && activeImage) {
-        const sx = (typeof activeImage.scaleX === "number") ? activeImage.scaleX : 1;
-        const sy = (typeof activeImage.scaleY === "number") ? activeImage.scaleY : 1;
-        const w = activeImage.width * sx;
-        const h = activeImage.height * sy;
-        const cx = activeImage.x + w / 2;
-        const cy = activeImage.y + h / 2;
-        const θ = -(activeImage.rotation || 0) * Math.PI / 180;
-        const dx = pos.x - cx;
-        const dy = pos.y - cy;
-        const localX = dx * Math.cos(θ) - dy * Math.sin(θ);
-        const localY = dx * Math.sin(θ) + dy * Math.cos(θ);
-        if (
-            localX >= -w / 2 &&
-            localX <= w / 2 &&
-            localY >= -h / 2 &&
-            localY <= h / 2
-        ) {
-            cursor = "grab";
-        }
-    }
-    if (isDraggingSelectionBox) {
-        const r = canvas.getBoundingClientRect();
-        selectionEnd = { x: e.clientX - r.left, y: e.clientY - r.top };
-        drawCanvas("Common");        // live update
-    }
+//    // ── 8) HOVER FEEDBACK ───────────────────────────────────────────────
+//    if (!isDraggingText && !isResizingText && activeText) {
+//        const cx = activeText.x + activeText.boundingWidth / 2;
+//        const cy = activeText.y + activeText.boundingHeight / 2;
+//        const θ = -(activeText.rotation || 0) * Math.PI / 180;
+//        const dx = pos.x - cx;
+//        const dy = pos.y - cy;
+//        const localX = dx * Math.cos(θ) - dy * Math.sin(θ);
+//        const localY = dx * Math.sin(θ) + dy * Math.cos(θ);
+//        if (
+//            localX >= -activeText.boundingWidth / 2 &&
+//            localX <= activeText.boundingWidth / 2 &&
+//            localY >= -activeText.boundingHeight / 2 &&
+//            localY <= activeText.boundingHeight / 2
+//        ) {
+//            cursor = "grab";
+//        }
+//    }
+//    if (!isDraggingImage && !isResizingImage && activeImage) {
+//        const sx = (typeof activeImage.scaleX === "number") ? activeImage.scaleX : 1;
+//        const sy = (typeof activeImage.scaleY === "number") ? activeImage.scaleY : 1;
+//        const w = activeImage.width * sx;
+//        const h = activeImage.height * sy;
+//        const cx = activeImage.x + w / 2;
+//        const cy = activeImage.y + h / 2;
+//        const θ = -(activeImage.rotation || 0) * Math.PI / 180;
+//        const dx = pos.x - cx;
+//        const dy = pos.y - cy;
+//        const localX = dx * Math.cos(θ) - dy * Math.sin(θ);
+//        const localY = dx * Math.sin(θ) + dy * Math.cos(θ);
+//        if (
+//            localX >= -w / 2 &&
+//            localX <= w / 2 &&
+//            localY >= -h / 2 &&
+//            localY <= h / 2
+//        ) {
+//            cursor = "grab";
+//        }
+//    }
+//    if (isDraggingSelectionBox) {
+//        const r = canvas.getBoundingClientRect();
+//        selectionEnd = { x: e.clientX - r.left, y: e.clientY - r.top };
+//        drawCanvas("Common");        // live update
+//    }
 
-    canvas.style.cursor = cursor;
-});
+//    canvas.style.cursor = cursor;
+//});
 
 
 function drawSelectionBox() {
@@ -4817,34 +4817,34 @@ function updateRotation(angle) {
 
 //});
 
-canvas.addEventListener("mouseup", function (e) {
-    const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]');
-    const buttons = document.querySelectorAll('.toggle-btn');
+////canvas.addEventListener("mouseup", function (e) {
+////    const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]');
+////    const buttons = document.querySelectorAll('.toggle-btn');
 
-    if (isResizingText && activeText && activeTextHandle) {
-        onBoxResizeEnd(activeText);
-    }
+////    if (isResizingText && activeText && activeTextHandle) {
+////        onBoxResizeEnd(activeText);
+////    }
 
-    if (isDraggingSelectionBox) {
-        skipNextClick = true;
-        isDraggingSelectionBox = false;
-        drawCanvas("Common");        // final update + UI panels
-    }
+////    if (isDraggingSelectionBox) {
+////        skipNextClick = true;
+////        isDraggingSelectionBox = false;
+////        drawCanvas("Common");        // final update + UI panels
+////    }
 
-    // Final cleanup
-    isDraggingGroup = false;
-    isDraggingText = false;
-    isDraggingImage = false;
-    isResizingText = false;
-    isResizingImage = false;
-    isRotating = false;
-    groupDragStart = null;
-    groupStarts = [];
-    activeTextHandle = null;
-    activeImageHandle = null;
-    rotatingObject = null;
-    currentDrag = null;
-});
+////    // Final cleanup
+////    isDraggingGroup = false;
+////    isDraggingText = false;
+////    isDraggingImage = false;
+////    isResizingText = false;
+////    isResizingImage = false;
+////    isRotating = false;
+////    groupDragStart = null;
+////    groupStarts = [];
+////    activeTextHandle = null;
+////    activeImageHandle = null;
+////    rotatingObject = null;
+////    currentDrag = null;
+////});
 
 // Helper function to check if object is inside selection box
 function isObjectInSelection(objX, objY, objW, objH, x1, y1, x2, y2) {
@@ -4995,200 +4995,200 @@ function getSelectedType() {
 }
 
 
+////KD Need to be Include in project////////
+//canvas.addEventListener("click", function (e) {
+//    // ignore shift here
+//    if (e.shiftKey) return;
 
-canvas.addEventListener("click", function (e) {
-    // ignore shift here
-    if (e.shiftKey) return;
+//    if (skipNextClick) {
+//        skipNextClick = false;
+//        return;    // swallow this click so it doesn’t clear selection
+//    }
 
-    if (skipNextClick) {
-        skipNextClick = false;
-        return;    // swallow this click so it doesn’t clear selection
-    }
-
-    const buttons = document.querySelectorAll('.toggle-btn');
-    const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]');
+//    const buttons = document.querySelectorAll('.toggle-btn');
+//    const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]');
 
    
    
 
 
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    const pos = { x: mouseX, y: mouseY };
+//    const rect = canvas.getBoundingClientRect();
+//    const mouseX = e.clientX - rect.left;
+//    const mouseY = e.clientY - rect.top;
+//    const pos = { x: mouseX, y: mouseY };
 
-    // helpers to clear selection
-    const clearText = () => textObjects.forEach(o => o.selected = false);
-    const clearImages = () => images.forEach(i => i.selected = false);
+//    // helpers to clear selection
+//    const clearText = () => textObjects.forEach(o => o.selected = false);
+//    const clearImages = () => images.forEach(i => i.selected = false);
 
-    // find what was clicked
-    const txtHit = getTextObjectAt(mouseX, mouseY);
-    let imgHit = null;
-    for (let i = images.length - 1; i >= 0; i--) {
-        if (isMouseOverImage(images[i], pos)) {
-            imgHit = images[i];
-            break;
-        }
-    }
+//    // find what was clicked
+//    const txtHit = getTextObjectAt(mouseX, mouseY);
+//    let imgHit = null;
+//    for (let i = images.length - 1; i >= 0; i--) {
+//        if (isMouseOverImage(images[i], pos)) {
+//            imgHit = images[i];
+//            break;
+//        }
+//    }
 
-    // always start fresh
-    clearText();
-    clearImages();
-    activeText = null;
-    activeImage = null;
+//    // always start fresh
+//    clearText();
+//    clearImages();
+//    activeText = null;
+//    activeImage = null;
 
-    // helper to select a whole group
-    function selectGroup(id) {
-        textObjects.forEach(o => { if (o.groupId === id) o.selected = true; });
-        images.forEach(i => { if (i.groupId === id) i.selected = true; });
-    }
+//    // helper to select a whole group
+//    function selectGroup(id) {
+//        textObjects.forEach(o => { if (o.groupId === id) o.selected = true; });
+//        images.forEach(i => { if (i.groupId === id) i.selected = true; });
+//    }
 
-    // update the groupCheckbox UI
-    const groupCheckbox = document.getElementById("groupCheckbox");
-    function updateCheckboxFor(id) {
-        if (id != null) {
-            groupCheckbox.checked = true;
-        } else {
-            groupCheckbox.checked = false;
-        }
-    }
+//    // update the groupCheckbox UI
+//    const groupCheckbox = document.getElementById("groupCheckbox");
+//    function updateCheckboxFor(id) {
+//        if (id != null) {
+//            groupCheckbox.checked = true;
+//        } else {
+//            groupCheckbox.checked = false;
+//        }
+//    }
 
-    if (txtHit) {
-        // TEXT clicked
-        txtHit.selected = true;
-        activeText = txtHit;
+//    if (txtHit) {
+//        // TEXT clicked
+//        txtHit.selected = true;
+//        activeText = txtHit;
 
-        // if this text is grouped, select its entire group
-        if (txtHit.groupId != null) {
-            selectGroup(txtHit.groupId);
-            updateCheckboxFor(txtHit.groupId);
-        } else {
-            updateCheckboxFor(null);
-        }
+//        // if this text is grouped, select its entire group
+//        if (txtHit.groupId != null) {
+//            selectGroup(txtHit.groupId);
+//            updateCheckboxFor(txtHit.groupId);
+//        } else {
+//            updateCheckboxFor(null);
+//        }
 
-        // update UI panels...
-        $("#favcolor").val(txtHit.textColor);
-        $("#noAnimCheckbox").prop("checked", !!txtHit.noAnim);
-        $("#fontstyle_popup").show();
-        $(".right-sec-two").show();
-        $(".right-sec-one").hide();
-        //document.getElementById("modeButton").innerText = "Animation Mode";
-        $("#opengl_popup").hide();
-        // 2) Clear `active` from all
-        buttons.forEach(b => b.classList.remove('active'));
+//        // update UI panels...
+//        $("#favcolor").val(txtHit.textColor);
+//        $("#noAnimCheckbox").prop("checked", !!txtHit.noAnim);
+//        $("#fontstyle_popup").show();
+//        $(".right-sec-two").show();
+//        $(".right-sec-one").hide();
+//        //document.getElementById("modeButton").innerText = "Animation Mode";
+//        $("#opengl_popup").hide();
+//        // 2) Clear `active` from all
+//        buttons.forEach(b => b.classList.remove('active'));
 
-        // 3) Activate only the Graphic button
-        graphicBtn.classList.add('active');
+//        // 3) Activate only the Graphic button
+//        graphicBtn.classList.add('active');
 
-        var opacity = txtHit.opacity * 100 || 100;
-        if (opacity > 100) opacity = 100;
-        opacitySlider.value = opacity;
-        document.getElementById("opacityValue").textContent = opacity + "";
-        opacityBadge.textContent = opacity;
+//        var opacity = txtHit.opacity * 100 || 100;
+//        if (opacity > 100) opacity = 100;
+//        opacitySlider.value = opacity;
+//        document.getElementById("opacityValue").textContent = opacity + "";
+//        opacityBadge.textContent = opacity;
 
-    }
-    else if (imgHit) {
-        // IMAGE clicked
-        imgHit.selected = true;
-        activeImage = imgHit;
+//    }
+//    else if (imgHit) {
+//        // IMAGE clicked
+//        imgHit.selected = true;
+//        activeImage = imgHit;
 
-        if (imgHit.groupId != null) {
-            selectGroup(imgHit.groupId);
-            updateCheckboxFor(imgHit.groupId);
-        } else {
-            updateCheckboxFor(null);
-        }
+//        if (imgHit.groupId != null) {
+//            selectGroup(imgHit.groupId);
+//            updateCheckboxFor(imgHit.groupId);
+//        } else {
+//            updateCheckboxFor(null);
+//        }
 
-        // update UI panels...
-        $("#noAnimCheckbox").prop("checked", !!imgHit.noAnim);
-        $("#fontstyle_popup").show();
-        $(".right-sec-two").show();
-        $(".right-sec-one").hide();
-        //document.getElementById("modeButton").innerText = "Animation Mode";
-        $("#opengl_popup").hide();
-        // 2) Clear `active` from all
-        buttons.forEach(b => b.classList.remove('active'));
+//        // update UI panels...
+//        $("#noAnimCheckbox").prop("checked", !!imgHit.noAnim);
+//        $("#fontstyle_popup").show();
+//        $(".right-sec-two").show();
+//        $(".right-sec-one").hide();
+//        //document.getElementById("modeButton").innerText = "Animation Mode";
+//        $("#opengl_popup").hide();
+//        // 2) Clear `active` from all
+//        buttons.forEach(b => b.classList.remove('active'));
 
-        // 3) Activate only the Graphic button
-        graphicBtn.classList.add('active');
+//        // 3) Activate only the Graphic button
+//        graphicBtn.classList.add('active');
 
-        var opacity = imgHit.opacity * 100 || 100;
-        if (opacity > 100) opacity = 100;
-        opacitySlider.value = opacity;
-        document.getElementById("opacityValue").textContent = opacity + "";
-        opacityBadge.textContent = opacity;
-        if ($("#hdnFillStrockColorFlag").val() == '1') {
-            $("#hdnfillColor").val(imgHit.fillNoColor || "#FFFFFF");
-            $("#hdnStrockColor").val(imgHit.strokeNoColor || "#FFFFFF");
-            $("#favFillcolor").val($("#hdnfillColor").val());
-            $("#favStrockcolor").val($("#hdnStrockColor").val());
-            $("#hdnFillStrockColorFlag").val('2');
-        }
+//        var opacity = imgHit.opacity * 100 || 100;
+//        if (opacity > 100) opacity = 100;
+//        opacitySlider.value = opacity;
+//        document.getElementById("opacityValue").textContent = opacity + "";
+//        opacityBadge.textContent = opacity;
+//        if ($("#hdnFillStrockColorFlag").val() == '1') {
+//            $("#hdnfillColor").val(imgHit.fillNoColor || "#FFFFFF");
+//            $("#hdnStrockColor").val(imgHit.strokeNoColor || "#FFFFFF");
+//            $("#favFillcolor").val($("#hdnfillColor").val());
+//            $("#favStrockcolor").val($("#hdnStrockColor").val());
+//            $("#hdnFillStrockColorFlag").val('2');
+//        }
        
-    }
-    else {
-                // — clicked empty space —
-                clearText();
-                clearImages();
-                activeText = null;
-                activeImage = null;
-        // no group selected
-        updateCheckboxFor(null);
+//    }
+//    else {
+//                // — clicked empty space —
+//                clearText();
+//                clearImages();
+//                activeText = null;
+//                activeImage = null;
+//        // no group selected
+//        updateCheckboxFor(null);
 
-        // 2) Clear `active` from all
-        buttons.forEach(b => b.classList.remove('active'));
+//        // 2) Clear `active` from all
+//        buttons.forEach(b => b.classList.remove('active'));
 
-        // 3) Activate only the Graphic button
-        graphicBtn.classList.add('active');
+//        // 3) Activate only the Graphic button
+//        graphicBtn.classList.add('active');
 
-        const opacity =  100;
-        opacitySlider.value = opacity;
-        document.getElementById("opacityValue").textContent = opacity + "";
-        opacityBadge.textContent = opacity;
-    }
+//        const opacity =  100;
+//        opacitySlider.value = opacity;
+//        document.getElementById("opacityValue").textContent = opacity + "";
+//        opacityBadge.textContent = opacity;
+//    }
 
-    drawCanvas('Common');
-    updateFontStyleButtons();
-    const selectedType = getSelectedType();
-    if (selectedType == "Shape") {
-        $("#hdnfillNoColorStatus").val(imgHit.fillNoColorStatus || false);
-        $("#hdnstrokeNoColorStatus").val(imgHit.strokeNoColorStatus || false);
-        //if ($("#hdnfillColor").val() == imgHit.fillNoColor) {
-        //    $("#hdnfillColor").val(imgHit.fillNoColor || "#FFFFFF");
-        //}
-        //if ($("#hdnStrockColor").val() == imgHit.strokeNoColor) {
-        //    $("#hdnStrockColor").val(imgHit.strokeNoColor || "#FFFFFF");
-        //}
+//    drawCanvas('Common');
+//    updateFontStyleButtons();
+//    const selectedType = getSelectedType();
+//    if (selectedType == "Shape") {
+//        $("#hdnfillNoColorStatus").val(imgHit.fillNoColorStatus || false);
+//        $("#hdnstrokeNoColorStatus").val(imgHit.strokeNoColorStatus || false);
+//        //if ($("#hdnfillColor").val() == imgHit.fillNoColor) {
+//        //    $("#hdnfillColor").val(imgHit.fillNoColor || "#FFFFFF");
+//        //}
+//        //if ($("#hdnStrockColor").val() == imgHit.strokeNoColor) {
+//        //    $("#hdnStrockColor").val(imgHit.strokeNoColor || "#FFFFFF");
+//        //}
        
-        //$("#favFillcolor").val($("#hdnfillColor").val());
-        //$("#favStrockcolor").val($("#hdnStrockColor").val());
+//        //$("#favFillcolor").val($("#hdnfillColor").val());
+//        //$("#favStrockcolor").val($("#hdnStrockColor").val());
 
-        document.getElementById('ddlStrokeWidth').value = (imgHit.strokeWidth || 3).toString();
-        document.getElementById("noColorCheck").checked = toBool(imgHit.fillNoColorStatus)||false;
-        document.getElementById("noColorCheck2").checked = toBool(imgHit.strokeNoColorStatus) || false;
+//        document.getElementById('ddlStrokeWidth').value = (imgHit.strokeWidth || 3).toString();
+//        document.getElementById("noColorCheck").checked = toBool(imgHit.fillNoColorStatus)||false;
+//        document.getElementById("noColorCheck2").checked = toBool(imgHit.strokeNoColorStatus) || false;
 
-        const noColorChecked = document.getElementById("noColorCheck").checked;
-        const noStrokeChecked = document.getElementById("noColorCheck2").checked;
-        if (noColorChecked) {
-            updateSelectedImageColors(
-                "none", noStrokeChecked ? "none" : $("#hdnStrockColor").val(), document.getElementById("ddlStrokeWidth").value || 2
-            );
-        }
+//        const noColorChecked = document.getElementById("noColorCheck").checked;
+//        const noStrokeChecked = document.getElementById("noColorCheck2").checked;
+//        if (noColorChecked) {
+//            updateSelectedImageColors(
+//                "none", noStrokeChecked ? "none" : $("#hdnStrockColor").val(), document.getElementById("ddlStrokeWidth").value || 2
+//            );
+//        }
 
       
-        if (noStrokeChecked) {
-            updateSelectedImageColors(
-                noColorChecked ? "none" : $("#hdnfillColor").val(),
-                "none", document.getElementById("ddlStrokeWidth").value || 2
-            );
-        }
+//        if (noStrokeChecked) {
+//            updateSelectedImageColors(
+//                noColorChecked ? "none" : $("#hdnfillColor").val(),
+//                "none", document.getElementById("ddlStrokeWidth").value || 2
+//            );
+//        }
 
        
-    }
-    console.log("Selected Type:", selectedType);
-    HideShowRightPannel(selectedType);
+//    }
+//    console.log("Selected Type:", selectedType);
+//    HideShowRightPannel(selectedType);
 
-});
+//});
 function toBool(x) {
     return x === true || x === "true";
 }
@@ -6952,7 +6952,6 @@ let scale = 1;
 const scaleStep = 0.1;
 const maxScale = 3;
 const minScale = 0.5;
-
 const scaleText = document.getElementById("scaleValue");
 
 function applyScale() {
@@ -6978,3 +6977,1477 @@ function zoomOut() {
 
 
 //zoom function end
+
+const textEditorNew = document.getElementById("textEditorNew");
+const colorPickerNew = document.getElementById("colorPickerNew");
+let selectedLineSpacing = 8;
+const fontSizeNew = 30;
+const lineHeight = 20;
+const fontFamilyNew = "Arial";
+
+let boxes = [];
+let activeBox = null;
+let isDraggingNew = false, isResizingNew = false, isEditing = false;
+let resizeDirection = null;
+let prevMouseX = 0, prevMouseY = 0;
+let dragOffsetXNew = 0, dragOffsetYNew = 0;
+let savedRange = null;
+
+
+// ——————— Helpers ———————
+
+function getCanvasMousePosition(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY
+    };
+}
+
+//function getAllHandles(box) {
+//    const { x, y, width: w, height: h } = box;
+//    return {
+//        tl: { x, y }, tm: { x: x + w / 2, y }, tr: { x: x + w, y },
+//        ml: { x, y: y + h / 2 }, mr: { x: x + w, y: y + h / 2 },
+//        bl: { x, y: y + h }, bm: { x: x + w / 2, y: y + h }, br: { x: x + w, y: y + h }
+//    };
+//}
+function getAllHandles(box, scaleX = 1, scaleY = 1) {
+    const { x, y, width: w, height: h } = box;
+    return {
+        tl: { x: x, y: y },
+        tm: { x: x + w / 2, y: y },
+        tr: { x: x + w, y: y },
+        ml: { x: x, y: y + h / 2 },
+        mr: { x: x + w, y: y + h / 2 },
+        bl: { x: x, y: y + h },
+        bm: { x: x + w / 2, y: y + h },
+        br: { x: x + w, y: y + h }
+    };
+}
+function getResizeHandle(box, mx, my) {
+    const hit = 8;
+    for (let [key, h] of Object.entries(getAllHandles(box))) {
+        if (Math.abs(mx - h.x) < hit && Math.abs(my - h.y) < hit) return key;
+    }
+    return null;
+}
+
+function stripHTML(html) {
+    let tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    return tmp.innerText;
+}
+// Helper to clean HTML and preserve caret in contentEditable editor
+function cleanEditorHTMLPreserveCaret() {
+    const temp = document.createElement("div");
+    temp.innerHTML = textEditorNew.innerHTML;
+
+    const cleanedLines = [];
+    temp.childNodes.forEach(node => {
+        let div;
+        if (node.nodeType === 1 && node.tagName === "DIV") {
+            div = document.createElement("div");
+            node.childNodes.forEach(child => {
+                div.appendChild(child.cloneNode(true));
+            });
+        } else if (node.nodeType === 1 || node.nodeType === 3) {
+            div = document.createElement("div");
+            div.appendChild(node.cloneNode(true));
+        }
+
+        // Ensure empty lines have a <br>
+        const isEmpty =
+            !div ||
+            div.innerText.trim() === "" ||
+            div.innerHTML.trim() === "" ||
+            div.innerHTML.includes("<br");
+
+        if (isEmpty) {
+            div.innerHTML = "<br>";
+        }
+
+        if (div) cleanedLines.push(div);
+    });
+
+    // Trim leading and trailing blank lines
+    while (cleanedLines.length > 1 && cleanedLines[0].innerText.trim() === "") {
+        cleanedLines.shift();
+    }
+    while (cleanedLines.length > 1 && cleanedLines[cleanedLines.length - 1].innerText.trim() === "") {
+        cleanedLines.pop();
+    }
+
+    // Remove blank divs from temp as well
+    while (temp.firstChild && temp.firstChild.tagName === "DIV" && temp.firstChild.innerText.trim() === "") {
+        temp.removeChild(temp.firstChild);
+    }
+    while (temp.lastChild && temp.lastChild.tagName === "DIV" && temp.lastChild.innerText.trim() === "") {
+        temp.removeChild(temp.lastChild);
+    }
+
+    // Apply cleaned content back
+    textEditorNew.innerHTML = "";
+    cleanedLines.forEach(line => textEditorNew.appendChild(line));
+}
+// 🟢 Fix line height calculation in drawText
+// 🟢 Fix line height calculation in drawText
+function drawText() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.textBaseline = "top";
+
+    const defaultStyle = window.getComputedStyle(textEditorNew);
+    const defaultFontSize = defaultStyle.fontSize || "16px";
+    const defaultFontFamily = defaultStyle.fontFamily || "Arial";
+    const defaultFontWeight = defaultStyle.fontWeight || "normal";
+    const defaultFontStyle = defaultStyle.fontStyle || "normal";
+    const defaultColor = defaultStyle.color || "#000";
+    const defaultLineHeight = parseFloat(defaultStyle.lineHeight) || (parseFloat(defaultFontSize) * 1.2);
+
+    for (const box of boxes) {
+        ctx.save();
+
+        if (!box.width || isNaN(box.width)) box.width = 50;
+        if (!box.height || isNaN(box.height)) box.height = 30;
+
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = box.text;
+
+        const lines = [];
+        //let currentLine = document.createElement("div");
+        //lines.push(currentLine);
+
+        wrapper.childNodes.forEach(n => {
+            if (n.nodeType === 1 && n.tagName === "DIV") {
+                const hasContent = n.textContent.trim().length > 0 || n.children.length > 0;
+
+                if (!hasContent) {
+                    // Empty <div><br></div> → blank line
+                    const blankLine = document.createElement("div");
+                    blankLine.appendChild(document.createTextNode(" "));
+                    lines.push(blankLine);
+                } else {
+                    const newLine = document.createElement("div");
+                    newLine.append(...n.cloneNode(true).childNodes);
+                    lines.push(newLine);
+                }
+            } else if (n.nodeType === 1 && n.tagName === "BR") {
+                const brLine = document.createElement("div");
+                brLine.appendChild(document.createTextNode(" "));
+                lines.push(brLine);
+            } else {
+                // Text directly outside div (rare, but possible)
+                if (lines.length === 0) {
+                    lines.push(document.createElement("div"));
+                }
+                lines[lines.length - 1].appendChild(n.cloneNode(true));
+            }
+            
+        });
+        
+        //wrapper.childNodes.forEach(n => {
+        //    if (n.nodeType === 1 && n.tagName === "DIV") {
+        //        if (currentLine.childNodes.length > 0) {
+        //            currentLine = document.createElement("div");
+        //            lines.push(currentLine);
+        //        }
+        //        currentLine.append(...n.childNodes);
+        //        currentLine = document.createElement("div");
+        //        lines.push(currentLine);
+        //    } else if (n.nodeType === 1 && n.tagName === "BR") {
+        //        currentLine = document.createElement("div");
+        //        lines.push(currentLine);
+        //    } else {
+        //        currentLine.appendChild(n.cloneNode(true));
+        //    }
+        //});
+      
+
+        let cursorY = box.y + 5;
+        let usedHeight = 0;
+
+        lines.forEach(lineNode => {
+            let cursorX = box.x + 5;
+            if (box.align === "center") {
+                ctx.textAlign = "center";
+                cursorX = box.x + box.width / 2;
+            } else if (box.align === "right") {
+                ctx.textAlign = "right";
+                cursorX = box.x + box.width - 5;
+            } else {
+                ctx.textAlign = "left";
+            }
+
+            let segments = [];
+            let maxFontPx = 0;
+
+            //function measureWords(node, style) {
+            //    if (node.nodeType === 3) {
+            //        const words = node.nodeValue.split("");
+            //        for (let word of words) {
+            //            const fs = style.fontSize || defaultFontSize;
+            //            const ff = style.fontFamily || defaultFontFamily;
+            //            const fw = style.fontWeight || defaultFontWeight;
+            //            const fst = style.fontStyle || defaultFontStyle;
+            //            const col = style.color || defaultColor;
+
+            //            ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+            //            const width = ctx.measureText(word).width;
+            //            const px = parseFloat(fs);
+            //            if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+            //            segments.push({
+            //                text: word,
+            //                width,
+            //                style: { fs, ff, fw, fst, col }
+            //            });
+            //        }
+            //    } else if (node.nodeType === 1) {
+            //        const s = node.style;
+            //        const nextStyle = {
+            //            fontSize: s.fontSize || style.fontSize,
+            //            fontFamily: s.fontFamily || style.fontFamily,
+            //            fontWeight: s.fontWeight || style.fontWeight,
+            //            fontStyle: s.fontStyle || style.fontStyle,
+            //            color: s.color || style.color,
+            //        };
+            //        node.childNodes.forEach(child => measureWords(child, nextStyle));
+            //    }
+            //}
+            function measureWords(node, style) {
+                if (node.nodeType === 3) {
+                    // Handle text node (split into individual characters)
+                    const words = node.nodeValue.split("");
+                    for (let word of words) {
+                        const fs = style.fontSize || defaultFontSize;
+                        const ff = style.fontFamily || defaultFontFamily;
+                        const fw = style.fontWeight || defaultFontWeight;
+                        const fst = style.fontStyle || defaultFontStyle;
+                        const col = style.color || defaultColor;
+
+                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                        const width = ctx.measureText(word).width;
+                        const px = parseFloat(fs);
+                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                        segments.push({
+                            text: word,
+                            width,
+                            style: { fs, ff, fw, fst, col }
+                        });
+                    }
+                } else if (node.nodeType === 1) {
+                    // ✅ Special case: if node is a <br>, treat it as a blank line
+                    if (node.tagName === "BR") {
+                        const fs = style.fontSize || defaultFontSize;
+                        const ff = style.fontFamily || defaultFontFamily;
+                        const fw = style.fontWeight || defaultFontWeight;
+                        const fst = style.fontStyle || defaultFontStyle;
+                        const col = style.color || defaultColor;
+
+                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                        const width = ctx.measureText(" ").width;
+                        const px = parseFloat(fs);
+                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                        segments.push({
+                            text: " ",
+                            width,
+                            style: { fs, ff, fw, fst, col }
+                        });
+                        return; // Don’t process children
+                    }
+
+                    // Normal element with children
+                    const s = node.style;
+                    const nextStyle = {
+                        fontSize: s.fontSize || style.fontSize,
+                        fontFamily: s.fontFamily || style.fontFamily,
+                        fontWeight: s.fontWeight || style.fontWeight,
+                        fontStyle: s.fontStyle || style.fontStyle,
+                        color: s.color || style.color,
+                    };
+                    node.childNodes.forEach(child => measureWords(child, nextStyle));
+                }
+            }
+            measureWords(lineNode, {
+                fontSize: defaultFontSize,
+                fontFamily: defaultFontFamily,
+                fontWeight: defaultFontWeight,
+                fontStyle: defaultFontStyle,
+                color: defaultColor
+            });
+
+            const lineHeight = maxFontPx * (box.lineSpacing || 1.2);
+            let x = cursorX;
+            segments.forEach(segment => {
+                if (x + segment.width > box.x + box.width - 10) {
+                    cursorY += lineHeight;
+                    x = cursorX;
+                }
+                ctx.font = `${segment.style.fst} ${segment.style.fw} ${segment.style.fs} ${segment.style.ff}`;
+                ctx.fillStyle = segment.style.col;
+                ctx.fillText(segment.text, x, cursorY);
+                x += segment.width;
+            });
+
+            cursorY += lineHeight;
+            usedHeight = cursorY - box.y + 5;
+        });
+
+        box.height = usedHeight;
+
+        if (box === activeBox && box.width > 0 && box.height > 0) {
+            ctx.strokeStyle = isEditing ? "red" : "red";
+            ctx.lineWidth = isEditing ? 2 : 1;
+            ctx.strokeRect(box.x, box.y, box.width, box.height);
+            ctx.fillStyle = "blue";
+            for (let h of Object.values(getAllHandles(box))) {
+                ctx.fillRect(h.x - 4, h.y - 4, 8, 8);
+            }
+        }
+
+        ctx.restore();
+    }
+}
+
+function measureTextHTML(html, referenceStyle) {
+    const temp = document.createElement("div");
+    temp.innerHTML = html;
+    temp.style.position = "absolute";
+    temp.style.visibility = "hidden";
+    temp.style.whiteSpace = "pre-wrap";
+    temp.style.fontSize = referenceStyle.fontSize;
+    temp.style.fontFamily = referenceStyle.fontFamily;
+    temp.style.lineHeight = referenceStyle.lineHeight;
+    temp.style.fontWeight = referenceStyle.fontWeight;
+    temp.style.fontStyle = referenceStyle.fontStyle;
+    temp.style.padding = "5px";
+    temp.style.maxWidth = "400px";
+    document.body.appendChild(temp);
+
+    const size = {
+        width: temp.offsetWidth,
+        height: temp.offsetHeight
+    };
+
+    document.body.removeChild(temp);
+    return size;
+}
+
+
+function scaleBoxContent(box, scale) {
+    // scale only once per drag, using box._orig.text
+    // here we simply wrap text in span with scaled font-size
+    box.text = `<span style="font-size:${Math.round(fontSizeNew * scale)}px">${box._orig.text}</span>`;
+}
+
+// ——————— Mouse Events ———————
+// Modified canvas mousedown, mousemove, and mouseup with scaleTextBoxWithHandle logic
+// Updated mouse handlers with integrated scaling and handle logic
+// ✅ MOUSE DOWN EVENT
+canvas.addEventListener("mousedown", e => {
+    const { x: mx, y: my } = getCanvasMousePosition(e);
+    startX = e.clientX;
+    startY = e.clientY;
+    prevMouseX = mx;
+    prevMouseY = my;
+
+    // Save & close editor if editing
+    if (isEditing && activeBox) {
+        cleanEditorHTMLPreserveCaret();
+        activeBox.text = textEditorNew.innerHTML;
+        activeBox.align = textEditorNew.style.textAlign || "left";
+        isEditing = false;
+        textEditorNew.style.display = "none";
+    }
+
+    // Check if resizing
+    for (const box of boxes) {
+        const handle = getResizeHandle(box, mx, my);
+        if (handle) {
+            activeBox = box;
+            resizeDirection = handle;      // ✅ set resize direction
+            isResizingNew = true;          // ✅ enable resize mode
+            activeBox._orig = {
+                x: box.x,
+                y: box.y,
+                width: box.width,
+                height: box.height,
+                fontSize: box.fontSize,
+                text: box.text
+            };
+            drawText();
+            return;
+        }
+    }
+
+    // Check for drag
+    const clickedBox = boxes.find(box =>
+        mx >= box.x && mx <= box.x + box.width &&
+        my >= box.y && my <= box.y + box.height
+    );
+    activeBox = clickedBox;
+    if (activeBox) {
+        isDraggingNew = true;
+        dragOffsetXNew = mx - activeBox.x;
+        dragOffsetYNew = my - activeBox.y;
+    } else {
+        activeBox = null;
+    }
+    drawText();
+});
+
+canvas.addEventListener("mousemove", e => {
+    const { x: mx, y: my } = getCanvasMousePosition(e);
+    const dx = mx - prevMouseX;
+    const dy = my - prevMouseY;
+
+    // Set cursor
+    if (activeBox) {
+        const h = getResizeHandle(activeBox, mx, my);
+        if (["tl", "br"].includes(h)) canvas.style.cursor = "nwse-resize";
+        else if (["tr", "bl"].includes(h)) canvas.style.cursor = "nesw-resize";
+        else if (["tm", "bm"].includes(h)) canvas.style.cursor = "ns-resize";
+        else if (["ml", "mr"].includes(h)) canvas.style.cursor = "ew-resize";
+        else if (mx >= activeBox.x && mx <= activeBox.x + activeBox.width && my >= activeBox.y && my <= activeBox.y + activeBox.height) canvas.style.cursor = "move";
+        else canvas.style.cursor = "default";
+    }
+
+    if (isDraggingNew) {
+        activeBox.x = mx - dragOffsetXNew;
+        activeBox.y = my - dragOffsetYNew;
+    } else if (isResizingNew && activeBox && resizeDirection) {
+        scaleTextBoxWithHandle(activeBox, resizeDirection, mx, my);
+    }
+
+    prevMouseX = mx;
+    prevMouseY = my;
+    drawText();
+});
+
+canvas.addEventListener("mouseup", () => {
+    isDraggingNew = false;
+    isResizingNew = false;
+    resizeDirection = null;
+    if (activeBox) delete activeBox._orig;
+});
+
+
+
+canvas.addEventListener("dblclick", e => {
+    const { x: mx, y: my } = getCanvasMousePosition(e);
+    const box = boxes.find(b =>
+        mx >= b.x && mx <= b.x + b.width &&
+        my >= b.y && my <= b.y + b.height
+    );
+    if (!box) return;
+
+    // If we were editing a different box, save it first
+    if (isEditing && activeBox !== box) {
+        cleanEditorHTMLPreserveCaret();
+        activeBox.text = textEditorNew.innerHTML;
+    }
+
+    activeBox = box;
+    // Now simply call our helper:
+    showEditorAtBox(box);
+
+    // And save the caret/selection if you need it:
+    saveSelection();
+});
+
+
+
+
+
+// ✅ Apply any text style and reflect in canvas
+function applyStyleToSelection(styleProp, value) {
+    textEditorNew.focus();
+    document.execCommand("styleWithCSS", false, true);
+
+    if (styleProp === "color") {
+        document.execCommand("foreColor", false, value);
+    } else if (styleProp === "bold") {
+        document.execCommand("bold");
+    } else if (styleProp === "italic") {
+        document.execCommand("italic");
+    } else if (styleProp === "fontFamily") {
+        document.execCommand("fontName", false, value);
+    }
+    else if (styleProp === "fontSize") {
+        restoreSelection(); // 👈 Restore first!
+
+        const sel = window.getSelection();
+        if (sel.rangeCount > 0) {
+            const range = sel.getRangeAt(0);
+            const span = document.createElement("span");
+            span.style.fontSize = value;
+            span.appendChild(range.extractContents());
+            range.insertNode(span);
+
+            // Move cursor after the inserted span
+            sel.removeAllRanges();
+            const newRange = document.createRange();
+            newRange.setStartAfter(span);
+            newRange.collapse(true);
+            sel.addRange(newRange);
+        }
+    }
+
+
+    // After styling, sync editor content into canvas
+    if (activeBox) {
+        activeBox.text = textEditorNew.innerHTML;
+        drawText();
+    }
+}
+
+// Helper to insert custom HTML at current caret position
+function insertHTML(html) {
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return;
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+
+    const el = document.createElement("div");
+    el.innerHTML = html;
+    const frag = document.createDocumentFragment();
+    let node;
+    while ((node = el.firstChild)) frag.appendChild(node);
+    range.insertNode(frag);
+    sel.collapseToEnd();
+}
+
+function getSelectionText() {
+    const sel = window.getSelection();
+    return sel.rangeCount ? sel.toString() : "";
+}
+
+// ——————— Text Editor Helpers (unchanged) ———————
+function execCommandSafely(cmd, val) { textEditorNew.focus(); document.execCommand(cmd, false, val); }
+
+function saveSelection() {
+    const sel = window.getSelection();
+    if (sel.rangeCount > 0) {
+        savedRange = sel.getRangeAt(0);
+    }
+}
+
+function restoreSelection() {
+    const sel = window.getSelection();
+    if (savedRange) {
+        sel.removeAllRanges();
+        sel.addRange(savedRange);
+    }
+}
+// … include your cleanEditorHTMLPreserveCaret, applyStyleToSelection, etc …
+
+// ——————— Box Creation & JSON ———————
+// Ensure default text is drawn once at start
+function addNewBox() {
+    boxes.push({
+        x: 120,
+        y: 200,
+        width: 200,
+        height: 38,
+        align: "left",
+        text: "<span style='color:black;font-size:30px;'>Default Text</span>"
+    });
+    activeBox = boxes[boxes.length - 1];
+    drawText();
+}
+
+function generateJson() {
+    console.log(JSON.stringify(boxes, null, 2));
+    alert("See console.");
+}
+
+window.onload = () => {
+    // size canvas to container
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+    addNewBox();
+};
+
+
+
+
+colorPickerNew.addEventListener("input", e => {
+    textEditorNew.focus();
+    applyStyleToSelection("color", e.target.value);
+});
+
+
+// Track selection changes within the editor
+textEditorNew.addEventListener("mouseup", saveSelection);
+textEditorNew.addEventListener("keyup", saveSelection);
+
+// FONT SIZE LINKS
+sizeList.querySelectorAll("a").forEach(link => {
+    link.addEventListener("click", e => {
+        e.preventDefault();
+        restoreSelection();
+        applyStyleToSelection("fontSize", e.target.getAttribute("data-size"));
+    });
+});
+
+// FONT FAMILY LINKS
+fontList.querySelectorAll("a").forEach(link => {
+    link.addEventListener("click", e => {
+        e.preventDefault();
+        restoreSelection();
+        applyStyleToSelection("fontFamily", e.target.getAttribute("data-font"));
+    });
+});
+
+
+// ALIGNMENT can still use execCommand,
+// but if you want per-span alignment:
+//////document.querySelectorAll("#alignList a").forEach(link => {
+//////    link.addEventListener("click", e => {
+//////        e.preventDefault();
+//////        const align = e.target.getAttribute("data-align");
+//////        textEditorNew.focus();
+//////        applyStyleToSelection("textAlign", align);
+//////    });
+//////});
+const alignLinks = document.querySelectorAll("#alignList a");
+alignLinks.forEach(link => {
+    link.addEventListener("click", e => {
+        e.preventDefault();
+        const align = e.target.getAttribute("data-align");
+
+        if (!activeBox) return;
+
+        // CASE 1: Editing mode, update editor alignment
+        if (isEditing) {
+            textEditorNew.style.textAlign = align;
+            activeBox.align = align;
+            activeBox.text = textEditorNew.innerHTML;
+        } else {
+            // CASE 2: Not editing: just update box align and redraw
+            activeBox.align = align;
+        }
+
+        drawText();
+    });
+});
+
+
+//function showEditorAtBox(box) {
+//    const OFFSET_X = 73;
+//    const OFFSET_Y = 45;
+
+//    const container = document.getElementById("canvasContainer");
+//    const crect = container.getBoundingClientRect();
+
+//    const editorX = crect.left + box.x + OFFSET_X;
+//    const editorY = crect.top + box.y + OFFSET_Y;
+
+//    textEditorNew.innerHTML = box.text;
+//    textEditorNew.style.textAlign = box.align || "left";
+//    textEditorNew.style.left = `${editorX}px`;
+//    textEditorNew.style.top = `${editorY}px`;
+//    textEditorNew.style.width = `${box.width}px`;
+//    //textEditorNew.style.height = `${box.height}px`;
+//    textEditorNew.style.height = (box.height + (typeof selectedLineSpacing === "number" ? selectedLineSpacing : 12)) + "px";
+//    textEditorNew.style.display = "block";
+//    textEditorNew.focus();
+//    isEditing = true;
+//}
+// ✅ showEditorAtBox with correct offset + line spacing support
+const defaultLineSpacing = 8; // Default fallback
+
+//function showEditorAtBox(box) {
+//    if (!box) return;
+
+//    const OFFSET_X = 73;
+//    const OFFSET_Y = 45;
+//    const container = document.getElementById("canvasContainer");
+//    const crect = container.getBoundingClientRect();
+
+//    const editorX = crect.left + box.x + OFFSET_X;
+//    const editorY = crect.top + box.y + OFFSET_Y;
+
+//    const spacing = typeof selectedLineSpacing === "number" ? selectedLineSpacing : defaultLineSpacing;
+
+//    textEditorNew.innerHTML = box.text;
+//    textEditorNew.style.textAlign = box.align || "left";
+//    textEditorNew.style.left = `${editorX}px`;
+//    textEditorNew.style.top = `${editorY}px`;
+//    textEditorNew.style.width = `${box.width}px`;
+//    textEditorNew.style.lineHeight = `calc(1.2em + ${spacing}px)`;
+//    textEditorNew.style.display = "block";
+
+//    applyTextEditorStyleFromBox(box);
+//    textEditorNew.focus();
+//    isEditing = true;
+//}
+function showEditorAtBoxOLD(box) {
+    const OFFSET_X = 73, OFFSET_Y = 45;
+    const container = document.getElementById("canvasContainer");
+    const crect = container.getBoundingClientRect();
+    textEditorNew.innerHTML = box.text;
+
+    textEditorNew.style.textAlign = box.align || "left";
+    textEditorNew.style.left = `${crect.left + box.x + OFFSET_X}px`;
+    textEditorNew.style.top = `${crect.top + box.y + OFFSET_Y}px`;
+    textEditorNew.style.width = `${box.width}px`;
+    textEditorNew.style.display = "block";
+    applyTextEditorStyleFromBox(box);
+    textEditorNew.focus();
+    isEditing = true;
+}
+// ✅ FIXED POSITIONING FOR TEXTEDITOR
+// ✅ Corrected function to place textEditorNew accurately on top of the active box
+// Universal version of `showEditorAtBox` that works whether the canvas is scaled or not
+function showEditorAtBox_6_8(box) {
+    const canvasRect = canvas.getBoundingClientRect();
+    const containerRect = document.getElementById("canvasContainer").getBoundingClientRect();
+
+    const scaleX = canvas.width / canvasRect.width;
+    const scaleY = canvas.height / canvasRect.height;
+
+    // Get position relative to canvas
+    const offsetX = box.x / scaleX;
+    const offsetY = box.y / scaleY;
+
+    // Adjust based on canvas position inside container
+    const relativeX = canvasRect.left - containerRect.left + offsetX;
+    const relativeY = canvasRect.top - containerRect.top + offsetY;
+
+    textEditorNew.innerHTML = box.text;
+    textEditorNew.style.textAlign = box.align || "left";
+    textEditorNew.style.left = `${relativeX}px`;
+    textEditorNew.style.top = `${relativeY}px`;
+    textEditorNew.style.width = `${box.width / scaleX}px`;
+    textEditorNew.style.display = "block";
+
+    applyTextEditorStyleFromBox(box);
+    textEditorNew.focus();
+    isEditing = true;
+}
+
+////Today
+//function showEditorAtBox(box) {
+//    const canvasRect = canvas.getBoundingClientRect();
+//    const containerRect = document.getElementById("canvasContainer").getBoundingClientRect();
+
+//    const scaleX = canvas.width / canvasRect.width;
+//    const scaleY = canvas.height / canvasRect.height;
+
+//    const offsetX = box.x / scaleX;
+//    const offsetY = box.y / scaleY;
+
+//    const relativeX = canvasRect.left - containerRect.left + offsetX;
+//    const relativeY = canvasRect.top - containerRect.top + offsetY;
+
+//    textEditorNew.innerHTML = box.text;
+//    textEditorNew.style.textAlign = box.align || "left";
+//    textEditorNew.style.left = `${relativeX}px`;
+//    textEditorNew.style.top = `${relativeY}px`;
+//    textEditorNew.style.width = `${box.width / scaleX}px`;
+//    textEditorNew.style.display = "block";
+
+//    applyTextEditorStyleFromBox(box);
+//    textEditorNew.focus();
+//    isEditing = true;
+//}
+
+// Updated showEditorAtBox to rely only on box coordinates and canvas offsets
+// Revised showEditorAtBox using only canvas positioning
+// ✅ Corrected version of `showEditorAtBox` that fixes incorrect offset
+// Final working approach to properly position `textEditorNew` over canvas boxes
+function showEditorAtBoxNew(box) {
+    const canvasRect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / canvasRect.width;
+    const scaleY = canvas.height / canvasRect.height;
+
+    const screenX = canvasRect.left + box.x / scaleX;
+    const screenY = canvasRect.top + box.y / scaleY;
+
+    textEditorNew.innerHTML = box.text;
+    textEditorNew.style.textAlign = box.align || "left";
+    textEditorNew.style.left = `${screenX}px`;
+    textEditorNew.style.top = `${screenY}px`;
+    textEditorNew.style.width = `${box.width / scaleX}px`;
+    textEditorNew.style.height = "auto"; // let it recalculate
+    textEditorNew.style.display = "block";
+    textEditorNew.style.zIndex = 9999; // ensure it appears topmost
+
+    applyTextEditorStyleFromBox(box);
+
+   // textEditorNew.dispatchEvent(new Event("input"));
+    textEditorNew.focus();
+    isEditing = true;
+}
+
+
+
+
+
+
+// ✅ Modify showEditorAtBox to dynamically position based on scaling
+
+
+
+//function applyTextEditorStyleFromBox(box) {
+//    if (!box) return;
+
+//    const fontSize = parseFloat(window.getComputedStyle(textEditorNew).fontSize) || 16;
+//    const lineHeight = fontSize + selectedLineSpacing;
+
+//    Object.assign(textEditorNew.style, {
+//        lineHeight: `${lineHeight}px`,
+//        whiteSpace: "pre-wrap",
+//        fontSize: `${fontSize}px`
+//    });
+//}
+
+function applyTextEditorStyleFromBox(box) {
+    if (!box) return;
+
+    const fontSize = parseFloat(getComputedStyle(textEditorNew).fontSize) || 16;
+    const spacingMultiplier = parseFloat(lineSpacingInput.value);
+
+    // 🧮 Safeguard against too-small values causing visual glitches
+    const lineHeightPx = Math.max(fontSize * spacingMultiplier, fontSize * 0.5);
+
+    Object.assign(textEditorNew.style, {
+        fontSize: `${fontSize}px`,
+        lineHeight: `${lineHeightPx}px`,
+        height: "auto"  // ✅ let JS measure height properly again
+    });
+
+    // 🔄 Manually resize box height to fit content
+    const meas = document.createElement("div");
+    Object.assign(meas.style, {
+        position: "absolute",
+        visibility: "hidden",
+        fontSize: `${fontSize}px`,
+        lineHeight: `${lineHeightPx}px`,
+        whiteSpace: "pre-wrap",
+        width: textEditorNew.style.width
+    });
+
+    meas.innerHTML = textEditorNew.innerHTML;
+    document.body.appendChild(meas);
+    const neededHeight = meas.scrollHeight;
+    document.body.removeChild(meas);
+
+    textEditorNew.style.height = neededHeight + "px";
+    activeBox.height = neededHeight;
+}
+
+// (1) helper to measure HTML content size
+function measureHTML(html, maxWidth = 1000) {
+    const temp = document.createElement("div");
+    temp.style.position = "absolute";
+    temp.style.visibility = "hidden";
+    temp.style.whiteSpace = "pre-wrap";
+    temp.style.font = window.getComputedStyle(textEditorNew).font;
+    temp.style.lineHeight = window.getComputedStyle(textEditorNew).lineHeight;
+    temp.style.width = maxWidth + "px";
+    temp.innerHTML = html;
+    document.body.appendChild(temp);
+    const size = { width: temp.scrollWidth + 10, height: temp.scrollHeight + 10 };
+    document.body.removeChild(temp);
+    return size;
+}
+
+// (2) whenever the content changes (including ENTER), resize the box
+// whenever the editor content changes (including Enter/new-line), resize the box
+
+
+//textEditorNew.addEventListener("input", () => {
+//    if (!activeBox || !isEditing) return;
+
+//    // Grab accurate font + size from computed styles
+//    const edStyle = window.getComputedStyle(textEditorNew);
+//    const meas = document.createElement("div");
+//    Object.assign(meas.style, {
+//        position: "absolute",
+//        visibility: "hidden",
+//        whiteSpace: "pre-wrap",
+//        fontFamily: edStyle.fontFamily,
+//        fontSize: edStyle.fontSize,
+//        lineHeight: edStyle.lineHeight,
+//        width: textEditorNew.style.width
+//    });
+
+//    meas.innerHTML = textEditorNew.innerHTML; // ✅ include all <span> with styles
+//    document.body.appendChild(meas);
+
+//    const neededH = meas.scrollHeight + 8;
+//    document.body.removeChild(meas);
+
+//    activeBox.height = Math.max(neededH, 30);
+//    textEditorNew.style.height = activeBox.height + "px";
+
+//    activeBox.text = textEditorNew.innerHTML; // ✅ This must be full styled HTML
+//    drawText();
+//});
+// ✅ Enhance line spacing and increase activeBox height when Enter is pressed
+// ✅ Enhance line spacing and increase activeBox height when Enter is pressed
+textEditorNew.addEventListener("input", () => {
+    if (!activeBox || !isEditing) return;
+
+    const edStyle = window.getComputedStyle(textEditorNew);
+    const lineSpacing = (typeof selectedLineSpacing === "number" ? selectedLineSpacing : 8);
+
+    const meas = document.createElement("div");
+    Object.assign(meas.style, {
+        position: "absolute",
+        visibility: "hidden",
+        whiteSpace: "pre-wrap",
+        fontFamily: edStyle.fontFamily,
+        fontSize: edStyle.fontSize,
+        lineHeight: `${parseFloat(edStyle.lineHeight) + lineSpacing}px`,
+        width: textEditorNew.style.width
+    });
+
+    meas.innerHTML = textEditorNew.innerHTML;
+    document.body.appendChild(meas);
+
+    const lines = meas.querySelectorAll("div").length || 1;
+    const neededH = meas.scrollHeight + lineSpacing * lines;
+
+    document.body.removeChild(meas);
+
+    activeBox.height = Math.max(neededH, 30);
+    textEditorNew.style.height = activeBox.height + "px";
+
+    activeBox.text = textEditorNew.innerHTML;
+    drawText();
+});
+
+
+//textEditorNew.addEventListener("keydown", e => {
+//    if (e.key === "Enter") {
+//        // let the line break happen, then re-fire input
+//        setTimeout(() => textEditorNew.dispatchEvent(new Event("input")), 0);
+//    }
+//});
+
+textEditorNew.addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+        // ✅ Let line break happen first
+        setTimeout(() => {
+            // Check if we're still editing and an activeBox exists
+            if (activeBox && isEditing) {
+                activeBox.text = textEditorNew.innerHTML;
+             
+                drawText();
+            }
+        }, 0);
+    }
+});
+
+
+boldBtn.addEventListener("click", e => {
+    e.preventDefault();
+    restoreSelection();
+    document.execCommand("bold");
+});
+
+// 3. Italic
+italicBtn.addEventListener("click", e => {
+    e.preventDefault();
+    restoreSelection();
+    document.execCommand("italic");
+});
+
+//// 4. Font Change
+//fontList.querySelectorAll("a[data-font]").forEach(a => {
+//    a.addEventListener("click", e => {
+//        e.preventDefault();
+//        restoreSelection();
+//        const font = a.getAttribute("data-font");
+//        document.execCommand("fontName", false, font);
+//    });
+//});
+
+//// 5. Font Size Change
+//sizeList.querySelectorAll("a[data-size]").forEach(a => {
+//    a.addEventListener("click", e => {
+//        e.preventDefault();
+//        restoreSelection();
+//        const size = a.getAttribute("data-size");
+//        const span = document.createElement("span");
+//        span.style.fontSize = size;
+//        wrapSelectionWithSpan(span);
+//    });
+//});
+
+// 6. Line Spacing
+//const lineSpacingSelect = document.getElementById("lineSpacingSelect");
+//lineSpacingSelect.addEventListener("change", () => {
+//    const val = parseFloat(lineSpacingSelect.value);
+//    selectedLineSpacing = isNaN(val) ? defaultLineSpacing : val * 8;
+
+//    if (activeBox) {
+//        applyTextEditorStyleFromBox(activeBox);
+//        textEditorNew.dispatchEvent(new Event("input"));
+//    }
+//});
+////lineSpacingSelect.addEventListener("change", () => {
+////    const val = parseFloat(lineSpacingSelect.value);
+////    selectedLineSpacing = isNaN(val) ? defaultLineSpacing : val * 8;
+
+////    // Apply spacing inline using execCommand
+////    applyStyleToSelection("lineSpacing", selectedLineSpacing);
+
+////    // Also refresh editor height for the box
+////    if (activeBox) {
+////        applyTextEditorStyleFromBox(activeBox);
+////        textEditorNew.dispatchEvent(new Event("input"));
+////    }
+////});
+
+
+window.addEventListener("DOMContentLoaded", () => {
+    const lineSpacingInput = document.getElementById("lineSpacingInput");
+    lineSpacingInput.addEventListener("change", () => {
+        const val = parseFloat(lineSpacingInput.value);
+        if (isNaN(val)) return;
+
+        const clamped = Math.max(-3, Math.min(7, val));
+        const pxSpacing = clamped * 8;
+
+        let fontSize;
+        if (textEditorNew.offsetParent !== null) {
+            fontSize = parseFloat(window.getComputedStyle(textEditorNew).fontSize) || 16;
+        } else if (activeBox?.fontSize) {
+            fontSize = parseFloat(activeBox.fontSize);
+        } else {
+            fontSize = 16; // fallback
+        }
+
+        const lineSpacingMultiplier = (fontSize + pxSpacing) / fontSize;
+
+        // ✅ Apply to editor even if hidden — so it’s ready on open
+        textEditorNew.style.lineHeight = `${fontSize + pxSpacing}px`;
+
+        if (activeBox) {
+            activeBox.lineSpacing = lineSpacingMultiplier;
+            if (isEditing) {
+                activeBox.text = textEditorNew.innerHTML;
+            }
+            drawText();
+        }
+    });
+
+
+    //lineSpacingInput.addEventListener("change", () => {
+    //    const val = parseFloat(lineSpacingInput.value);
+    //    if (isNaN(val)) return;
+
+    //    // Clamp to reasonable values if necessary
+    //    const clamped = Math.max(-3, Math.min(7, val));
+    //    selectedLineSpacing = clamped * 8; // convert to px spacing
+
+    //    const html = textEditorNew.innerHTML;
+    //    const divCount = (html.match(/<div>|<br>/g) || []).length;
+    //    const hasMultipleLines = divCount >= 1;
+
+    //    const sel = window.getSelection();
+
+    //    // CASE 1: We're editing and no selection but multiple lines present
+    //    if (activeBox && isEditing) {
+    //        if (sel && sel.rangeCount === 1 && sel.isCollapsed && hasMultipleLines) {
+    //            applyTextEditorStyleFromBox(activeBox);
+    //            textEditorNew.dispatchEvent(new Event("input"));
+    //            activeBox.text = textEditorNew.innerHTML;
+    //            drawText();
+    //        }
+    //    }
+    //    // CASE 2: Not editing but activeBox has multiple lines
+    //    else if (activeBox && !isEditing && hasMultipleLines) {
+    //        showEditorAtBox(activeBox);
+    //        applyTextEditorStyleFromBox(activeBox);
+    //        activeBox.text = textEditorNew.innerHTML;
+    //        drawText();
+    //    }
+    //});
+});
+    // ✅ Line spacing will apply at box level if a box is active and editor has multiline
+    //lineSpacingSelect.addEventListener("change", () => {
+    //    const val = parseFloat(lineSpacingSelect.value);
+    //    selectedLineSpacing = isNaN(val) ? defaultLineSpacing : val * 8; // px value
+
+    //    // ✅ Apply even when not editing yet
+    //    const html = textEditorNew.innerHTML;
+    //    const divCount = (html.match(/<div>|<br>/g) || []).length;
+    //    const hasMultipleLines = divCount >= 1;
+
+    //    const sel = window.getSelection();
+
+    //    // ✅ CASE 1: If actively editing
+    //    if (activeBox && isEditing) {
+    //        if (sel && sel.rangeCount === 1 && sel.isCollapsed && hasMultipleLines) {
+    //            applyTextEditorStyleFromBox(activeBox);
+    //            textEditorNew.dispatchEvent(new Event("input"));
+    //            activeBox.text = textEditorNew.innerHTML;
+    //            drawText();
+    //        }
+    //        // Optional inline selection logic
+    //        // else if (sel && !sel.isCollapsed) {
+    //        //     applyStyleToSelection("lineSpacing", selectedLineSpacing);
+    //        // }
+    //    }
+
+    //    // ✅ CASE 2: Not editing but we have a multiline activeBox
+    //    else if (activeBox && !isEditing && hasMultipleLines) {
+    //        showEditorAtBox(activeBox);
+    //        applyTextEditorStyleFromBox(activeBox);
+    //        activeBox.text = textEditorNew.innerHTML;
+    //        drawText();
+    //    }
+    //});
+
+/*});*/
+
+// 7. Alignment
+alignList.querySelectorAll("a[data-align]").forEach(a => {
+    a.addEventListener("click", e => {
+        e.preventDefault();
+        const align = a.getAttribute("data-align");
+        if (activeBox) {
+            activeBox.align = align;
+            textEditorNew.style.textAlign = align;
+            drawText();
+        }
+    });
+});
+
+
+
+function wrapSelectionWithSpan(span) {
+    restoreSelection();
+    if (!savedRange) return;
+    const range = savedRange.cloneRange();
+    range.surroundContents(span);
+    saveSelection();
+}
+
+// Logic for scaling and resizing text box with different handle behaviors
+// Updated `scaleTextBoxWithHandle` to follow:
+// 1. Corner handles scale font size only
+// 2. Middle handles only break into characters if box is squished beyond text line length
+
+// Revised `scaleTextBoxWithHandle` based on your feedback
+// Enhanced letter-level wrapping for squishing via middle handles
+//function showEditorAtBox(box) {
+//    const canvasRect = canvas.getBoundingClientRect();
+//    const containerRect = document.getElementById("canvasContainer").getBoundingClientRect();
+
+//    const scaleX = canvas.width / canvasRect.width;
+//    const scaleY = canvas.height / canvasRect.height;
+
+//    const offsetX = box.x / scaleX;
+//    const offsetY = box.y / scaleY;
+
+//    const relativeX = canvasRect.left - containerRect.left + offsetX;
+//    const relativeY = canvasRect.top - containerRect.top + offsetY;
+
+//    textEditorNew.innerHTML = box.text;
+//    textEditorNew.style.textAlign = box.align || "left";
+//    textEditorNew.style.left = `${relativeX}px`;
+//    textEditorNew.style.top = `${relativeY}px`;
+//    textEditorNew.style.width = `${box.width / scaleX}px`;
+//    textEditorNew.style.display = "block";
+
+//    applyTextEditorStyleFromBox(box);
+//    textEditorNew.focus();
+//    isEditing = true;
+//}
+
+function getAllHandles(box, scaleX = 1, scaleY = 1) {
+    const { x, y, width: w, height: h } = box;
+    return {
+        tl: { x: x, y: y }, tm: { x: x + w / 2, y: y }, tr: { x: x + w, y: y },
+        ml: { x: x, y: y + h / 2 }, mr: { x: x + w, y: y + h / 2 },
+        bl: { x: x, y: y + h }, bm: { x: x + w / 2, y: y + h }, br: { x: x + w, y: y + h }
+    };
+}
+
+function showEditorAtBox(box) {
+    const canvasRect = canvas.getBoundingClientRect();
+    const containerRect = document.getElementById("canvasContainer").getBoundingClientRect();
+
+    const scaleX = canvas.width / canvasRect.width;
+    const scaleY = canvas.height / canvasRect.height;
+
+    const offsetX = box.x / scaleX;
+    const offsetY = box.y / scaleY;
+
+    const relativeX = canvasRect.left - containerRect.left + offsetX;
+    const relativeY = canvasRect.top - containerRect.top + offsetY;
+
+    textEditorNew.innerHTML = box.text;
+    textEditorNew.style.textAlign = box.align || "left";
+    textEditorNew.style.left = `${relativeX}px`;
+    textEditorNew.style.top = `${relativeY}px`;
+    textEditorNew.style.width = `${box.width / scaleX}px`;
+    textEditorNew.style.display = "block";
+
+    applyTextEditorStyleFromBox(box);
+    textEditorNew.focus();
+    isEditing = true;
+}
+//function showEditorAtBox(box) {
+//    const canvasRect = canvas.getBoundingClientRect();
+//    const containerRect = document.getElementById("canvasContainer").getBoundingClientRect();
+
+//    const scaleX = canvas.width / canvasRect.width;
+//    const scaleY = canvas.height / canvasRect.height;
+
+//    const offsetX = box.x / scaleX;
+//    const offsetY = box.y / scaleY;
+
+//    const relativeX = canvasRect.left - containerRect.left + offsetX;
+//    const relativeY = canvasRect.top - containerRect.top + offsetY;
+
+//    textEditorNew.innerHTML = box.text;
+//    textEditorNew.style.textAlign = box.align || "left";
+//    textEditorNew.style.left = `${relativeX}px`;
+//    textEditorNew.style.top = `${relativeY}px`;
+//    textEditorNew.style.width = `${box.width / scaleX}px`;
+//    textEditorNew.style.display = "block";
+
+//    applyTextEditorStyleFromBox(box);
+//    textEditorNew.focus();
+//    isEditing = true;
+//}
+
+//function getAllHandles(box, scaleX = 1, scaleY = 1) {
+//    const { x, y, width: w, height: h } = box;
+//    return {
+//        tl: { x: x, y: y }, tm: { x: x + w / 2, y: y }, tr: { x: x + w, y: y },
+//        ml: { x: x, y: y + h / 2 }, mr: { x: x + w, y: y + h / 2 },
+//        bl: { x: x, y: y + h }, bm: { x: x + w / 2, y: y + h }, br: { x: x + w, y: y + h }
+//    };
+//}
+
+
+// Updates to scaleTextBoxWithHandle function
+// Updated version of `scaleTextBoxWithHandle` to fix:
+// 1. Letter-wise text wrapping during middle handle squishing
+// 2. Font size scaling via corner handles only
+
+// Unified version of scaleTextBoxWithHandle
+// Function to handle resizing based on the handle direction
+
+function scaleTextBoxWithHandle(box, dir, mx, my) {
+    const orig = box._orig;
+    const minWidth = 10;
+    const minHeight = 10;
+
+    if (["tl", "tr", "bl", "br"].includes(dir)) {
+        let factor = 1;
+        const dx = mx - orig.x;
+        const dy = my - orig.y;
+        const avgScale = ((dx / orig.width) + (dy / orig.height)) / 2;
+        factor = Math.max(0.1, avgScale);
+        box.fontSize = Math.max(5, orig.fontSize * factor);
+
+        const context = canvas.getContext("2d");
+        context.font = `${box.fontSize}px ${box.fontFamily || 'Arial'}`;
+        const lines = box.text.split(/<br\s*\/?>/);
+        const widths = lines.map(line => context.measureText(stripHTML(line)).width);
+        const maxWidth = Math.max(...widths);
+        box.width = maxWidth;
+        box.height = lines.length * box.fontSize * 1.2;
+    } else if (["ml", "mr"].includes(dir)) {
+        let newWidth = orig.width;
+        if (dir === "ml") {
+            newWidth = orig.width + (orig.x - mx);
+            if (newWidth > minWidth) {
+                box.x = mx;
+                box.width = newWidth;
+            }
+        } else if (dir === "mr") {
+            newWidth = mx - orig.x;
+            if (newWidth > minWidth) {
+                box.width = newWidth;
+            }
+        }
+
+        const text = stripHTML(box.text).replace(/\s/g, "");
+        const approxCharWidth = box.fontSize * 0.6;
+        const charsPerLine = Math.max(1, Math.floor(box.width / approxCharWidth));
+        const estLines = Math.ceil(text.length / charsPerLine);
+        box.height = estLines * box.fontSize * 1.2;
+    } else if (["tm", "bm"].includes(dir)) {
+        let newHeight = orig.height;
+        if (dir === "tm") {
+            newHeight = orig.height + (orig.y - my);
+            if (newHeight > minHeight) {
+                box.y = my;
+                box.height = newHeight;
+            }
+        } else if (dir === "bm") {
+            newHeight = my - orig.y;
+            if (newHeight > minHeight) {
+                box.height = newHeight;
+            }
+        }
+    }
+}
+
+
+
+////function scaleTextBoxWithHandle(box, dir, mx, my) {
+////    const orig = box._orig;
+////    const minWidth = 10;
+////    const minHeight = 10;
+////    const context = canvas.getContext("2d");
+
+////    // Update context font
+////    context.font = `${box.fontSize}px ${box.fontFamily || 'Arial'}`;
+
+////    // ---- 1. CORNER HANDLES: resize by scaling font size ----
+////    if (["tl", "tr", "bl", "br"].includes(dir)) {
+////        const dx = mx - orig.x;
+////        const dy = my - orig.y;
+////        const avgScale = ((dx / orig.width) + (dy / orig.height)) / 2;
+////        const scale = Math.max(0.1, avgScale);
+
+////        box.fontSize = Math.max(5, orig.fontSize * scale);
+////        context.font = `${box.fontSize}px ${box.fontFamily || 'Arial'}`;
+
+////        // Recalculate size
+////        const text = stripHTML(box.text).replace(/\s+/g, "");
+////        const approxCharWidth = box.fontSize * 0.6;
+////        const charsPerLine = Math.floor(orig.width / approxCharWidth);
+////        const lineCount = Math.ceil(text.length / charsPerLine);
+////        box.width = approxCharWidth * charsPerLine;
+////        box.height = box.fontSize * 1.2 * lineCount;
+////        return;
+////    }
+
+////    // ---- 2. LEFT/RIGHT MIDDLE: Letter-wise wrapping ----
+////    if (["ml", "mr"].includes(dir)) {
+////        let newWidth = orig.width;
+////        if (dir === "ml") {
+////            newWidth = orig.width + (orig.x - mx);
+////            if (newWidth > minWidth) {
+////                box.x = mx;
+////                box.width = newWidth;
+////            }
+////        } else {
+////            newWidth = mx - orig.x;
+////            if (newWidth > minWidth) {
+////                box.width = newWidth;
+////            }
+////        }
+
+////        const text = stripHTML(box.text).replace(/\s+/g, "");
+////        const approxCharWidth = box.fontSize * 0.6;
+////        const charsPerLine = Math.max(1, Math.floor(box.width / approxCharWidth));
+////        const lineCount = Math.ceil(text.length / charsPerLine);
+////        box.height = box.fontSize * 1.2 * lineCount;
+////        return;
+////    }
+
+////    // ---- 3. TOP/BOTTOM MIDDLE: Resize height freely ----
+////    if (["tm", "bm"].includes(dir)) {
+////        let newHeight = orig.height;
+////        if (dir === "tm") {
+////            newHeight = orig.height + (orig.y - my);
+////            if (newHeight > minHeight) {
+////                box.y = my;
+////                box.height = newHeight;
+////            }
+////        } else {
+////            newHeight = my - orig.y;
+////            if (newHeight > minHeight) {
+////                box.height = newHeight;
+////            }
+////        }
+////    }
+////}
+
+
+
+
+
+
+
+
+
+function scaleTextBoxWithHandle_6_8(box, handle, deltaX, deltaY, scaleX = 1, scaleY = 1) {
+    const minFontSize = 8;
+    const maxFontSize = 300;
+    const minWidth = 10;
+    const minHeight = 10;
+
+    // Handle midpoint stretching without font size change
+    const isMiddleHandle = ["ml", "mr", "tm", "bm"].includes(handle);
+    const isCornerHandle = ["tl", "tr", "bl", "br"].includes(handle);
+
+    if (isMiddleHandle) {
+        // Horizontal handles (left-middle or right-middle)
+        if (handle === "ml") {
+            const newWidth = box.width - deltaX / scaleX;
+            if (newWidth > minWidth) {
+                box.x += deltaX / scaleX;
+                box.width = newWidth;
+            }
+        } else if (handle === "mr") {
+            const newWidth = box.width + deltaX / scaleX;
+            if (newWidth > minWidth) box.width = newWidth;
+        }
+
+        // Vertical handles (top-middle or bottom-middle)
+        if (handle === "tm") {
+            const newHeight = box.height - deltaY / scaleY;
+            if (newHeight > minHeight) {
+                box.y += deltaY / scaleY;
+                box.height = newHeight;
+            }
+        } else if (handle === "bm") {
+            const newHeight = box.height + deltaY / scaleY;
+            if (newHeight > minHeight) box.height = newHeight;
+        }
+
+        // Don't change font size here
+    }
+
+    if (isCornerHandle) {
+        // Change font size based on diagonal scale (deltaX + deltaY)
+        const fontGrowth = (deltaX + deltaY) / 10; // tune the factor
+        let newFontSize = box.fontSize + fontGrowth;
+        newFontSize = Math.max(minFontSize, Math.min(maxFontSize, newFontSize));
+
+        // Apply new font size
+        box.fontSize = newFontSize;
+
+        // Optionally update width/height to reflect font size visually
+        const measured = measureTextSize(box.text, box.fontFamily, newFontSize, box.width);
+        box.width = measured.width;
+        box.height = measured.height;
+    }
+}
+
+function measureTextSize(text, fontFamily, fontSize, maxWidth = 1000) {
+    const temp = document.createElement("div");
+    temp.style.position = "absolute";
+    temp.style.visibility = "hidden";
+    temp.style.fontFamily = fontFamily;
+    temp.style.fontSize = fontSize + "px";
+    temp.style.whiteSpace = "pre-wrap";
+    temp.style.lineHeight = "1.2";
+    temp.style.width = maxWidth + "px";
+    temp.innerText = text;
+    document.body.appendChild(temp);
+    const size = {
+        width: temp.scrollWidth + 4,
+        height: temp.scrollHeight + 4
+    };
+    document.body.removeChild(temp);
+    return size;
+}
