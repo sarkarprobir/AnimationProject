@@ -5367,101 +5367,101 @@ function ImagePropertySet() {
     // one save at the end
     SaveDesignBoard();
 }
-canvasContainer.addEventListener("dblclick", function (e) {
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    const obj = getTextObjectAt(mouseX, mouseY);
+//canvasContainer.addEventListener("dblclick", function (e) {
+//    const rect = canvas.getBoundingClientRect();
+//    const mouseX = e.clientX - rect.left;
+//    const mouseY = e.clientY - rect.top;
+//    const obj = getTextObjectAt(mouseX, mouseY);
 
-    if (obj) {
-        obj.editing = true;
+//    if (obj) {
+//        obj.editing = true;
 
-        // Use the object's bounding box and padding to set the editor's dimensions.
-        const editorX = obj.x - padding;  // Position relative to object's x
-        const editorY = obj.y - padding;  // Position relative to object's y
-        const offsetX = 260;  // adjust if needed
-        const offsetY = 45;  // adjust if needed
+//        // Use the object's bounding box and padding to set the editor's dimensions.
+//        const editorX = obj.x - padding;  // Position relative to object's x
+//        const editorY = obj.y - padding;  // Position relative to object's y
+//        const offsetX = 260;  // adjust if needed
+//        const offsetY = 45;  // adjust if needed
 
 
 
-        // Position the text editor over the object's bounding box.
-        textEditor.style.left = `${rect.left + editorX - offsetX}px`;
-        textEditor.style.top = `${rect.top + editorY + scrollTop - offsetY}px`;
-        //textEditor.style.left = `${rect.left + editorX}px`;
-        //textEditor.style.top = `${rect.top + editorY}px`;
-        textEditor.style.width = `${obj.boundingWidth + 2 * padding}px`;
-        textEditor.style.height = `${obj.boundingHeight + 2 * padding}px`;
+//        // Position the text editor over the object's bounding box.
+//        textEditor.style.left = `${rect.left + editorX - offsetX}px`;
+//        textEditor.style.top = `${rect.top + editorY + scrollTop - offsetY}px`;
+//        //textEditor.style.left = `${rect.left + editorX}px`;
+//        //textEditor.style.top = `${rect.top + editorY}px`;
+//        textEditor.style.width = `${obj.boundingWidth + 2 * padding}px`;
+//        textEditor.style.height = `${obj.boundingHeight + 2 * padding}px`;
 
-        // Match styles with the text object.
-        textEditor.style.fontSize = `${obj.fontSize}px`;
-        textEditor.style.fontFamily = obj.fontFamily;
-        textEditor.style.color = obj.textColor;
-        textEditor.style.textAlign = obj.textAlign;
-        /*textEditor.style.background = "rgba(255,255,255,0.95)";*/
-        if (obj.textColor === "#000000") {
-            // mostly‑opaque white
-            textEditor.style.background = "rgba(255,255,255,0.95)";
-        } else {
-             textEditor.style.background = "rgba(34, 34, 34, 1)";
-        }
-        textEditor.style.border = "1px solid #ccc";
-        textEditor.style.padding = "2px 4px";
-        textEditor.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.3)";
+//        // Match styles with the text object.
+//        textEditor.style.fontSize = `${obj.fontSize}px`;
+//        textEditor.style.fontFamily = obj.fontFamily;
+//        textEditor.style.color = obj.textColor;
+//        textEditor.style.textAlign = obj.textAlign;
+//        /*textEditor.style.background = "rgba(255,255,255,0.95)";*/
+//        if (obj.textColor === "#000000") {
+//            // mostly‑opaque white
+//            textEditor.style.background = "rgba(255,255,255,0.95)";
+//        } else {
+//             textEditor.style.background = "rgba(34, 34, 34, 1)";
+//        }
+//        textEditor.style.border = "1px solid #ccc";
+//        textEditor.style.padding = "2px 4px";
+//        textEditor.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.3)";
 
-        // Set the current text and show the editor.
-        textEditor.value = obj.text.replace(/\\n/g, "\n");
-        textEditor.style.display = "block";
-        textEditor.focus();
-        //requestAnimationFrame(() => {
-        //    textEditor.setSelectionRange(0, 0);
-        //});
-        setTimeout(() => textEditor.setSelectionRange(0, 0), 0);
+//        // Set the current text and show the editor.
+//        textEditor.value = obj.text.replace(/\\n/g, "\n");
+//        textEditor.style.display = "block";
+//        textEditor.focus();
+//        //requestAnimationFrame(() => {
+//        //    textEditor.setSelectionRange(0, 0);
+//        //});
+//        setTimeout(() => textEditor.setSelectionRange(0, 0), 0);
      
 
-        // Finish editing when Enter is pressed (unless using Shift+Enter for a new line) or on blur.
+//        // Finish editing when Enter is pressed (unless using Shift+Enter for a new line) or on blur.
        
 
-        function finishEditing() {
-            const editedText = textEditor.value;
-            obj.editing = false;
-            textEditor.style.display = "none";
+//        function finishEditing() {
+//            const editedText = textEditor.value;
+//            obj.editing = false;
+//            textEditor.style.display = "none";
 
-            const ctx = canvas.getContext("2d");
-            const padding = obj.padding || 10; // default padding if not set on obj
-            const fontSize = obj.fontSize;
-            ctx.font = `${fontSize}px ${obj.fontFamily}`;
+//            const ctx = canvas.getContext("2d");
+//            const padding = obj.padding || 10; // default padding if not set on obj
+//            const fontSize = obj.fontSize;
+//            ctx.font = `${fontSize}px ${obj.fontFamily}`;
 
-            // Split text only on explicit newlines; no wrapping or font resizing
-            const lines = editedText.split("\n");
+//            // Split text only on explicit newlines; no wrapping or font resizing
+//            const lines = editedText.split("\n");
 
-            // Update obj properties
-            obj.text = lines.join("\n");
+//            // Update obj properties
+//            obj.text = lines.join("\n");
 
-            // Recompute bounding box width based on longest line
-            const lineWidths = lines.map(line => ctx.measureText(line).width);
-            const maxLineWidth = Math.max(...lineWidths, 0);
-            obj.boundingWidth = maxLineWidth + 2 * padding;
+//            // Recompute bounding box width based on longest line
+//            const lineWidths = lines.map(line => ctx.measureText(line).width);
+//            const maxLineWidth = Math.max(...lineWidths, 0);
+//            obj.boundingWidth = maxLineWidth + 2 * padding;
 
-            // Recompute bounding box height based on line count
-            const lineHeight = fontSize * 1.2;
-            obj.boundingHeight = lines.length * lineHeight + 2 * padding;
+//            // Recompute bounding box height based on line count
+//            const lineHeight = fontSize * 1.2;
+//            obj.boundingHeight = lines.length * lineHeight + 2 * padding;
 
-            drawCanvas('Common');
-            textEditor.removeEventListener("blur", finishEditing);
-        }
-
-
-        //function onKeyDown(e) {
-        //    if (e.key === "Enter" && !e.shiftKey) {
-        //        finishEditing();
-        //    }
-        //}
+//            drawCanvas('Common');
+//            textEditor.removeEventListener("blur", finishEditing);
+//        }
 
 
-       // textEditor.addEventListener("keydown", onKeyDown);
-        textEditor.addEventListener("blur", finishEditing);
-    }
-});
+//        //function onKeyDown(e) {
+//        //    if (e.key === "Enter" && !e.shiftKey) {
+//        //        finishEditing();
+//        //    }
+//        //}
+
+
+//       // textEditor.addEventListener("keydown", onKeyDown);
+//        textEditor.addEventListener("blur", finishEditing);
+//    }
+//});
 
 // When the text editor loses focus or Enter is pressed, update the text
 textEditor.addEventListener("blur", function () {
@@ -5483,16 +5483,241 @@ textEditor.addEventListener("blur", function () {
 
 
 
+//function ChangeColor() {
+//    const colorPicker = document.getElementById("favcolor");
+//    $("#hdnTextColor").val(colorPicker.value);
+//    const textColor = document.getElementById("hdnTextColor").value; // Text color from dropdown
+//    const Obj = textObjects.find(obj => obj.selected);
+//    if (Obj) {
+//        Obj.textColor = textColor || 'black';
+//    }
+//    drawCanvas('ChangeStyle');
+//}
+function normalizeSingleLine(html) {
+    // Wrap HTML so we can inspect/modify safely
+    const doc = new DOMParser().parseFromString(`<div id="__wrap">${html}</div>`, "text/html");
+    const wrap = doc.getElementById("__wrap");
+
+    // If there is an explicit <br>, we do nothing (user wants multiple lines)
+    const hasBR = !!wrap.querySelector("br");
+
+    // Count top-level divs (your renderer treats each top-level <div> as a line)
+    const topDivs = Array.from(wrap.childNodes).filter(
+        n => n.nodeType === 1 && n.tagName === "DIV"
+    );
+
+    // Only enforce single-line when it's truly single-line content:
+    // - no <br>
+    // - 0 or 1 top-level <div>
+    if (!hasBR && topDivs.length <= 1) {
+        // Make sure there is one top-level <div>
+        let lineDiv;
+        if (topDivs.length === 1) {
+            lineDiv = topDivs[0];
+        } else {
+            lineDiv = doc.createElement("div");
+            // move all children into this single line div
+            while (wrap.firstChild) lineDiv.appendChild(wrap.firstChild);
+            wrap.appendChild(lineDiv);
+        }
+
+        // Prevent wrapping
+        lineDiv.style.whiteSpace = "nowrap";
+
+        // Optional: preserve multiple spaces visually
+        // (only needed if you care about double spaces)
+        lineDiv.innerHTML = lineDiv.innerHTML.replace(/  /g, "&nbsp;&nbsp;");
+    }
+
+    // Return innerHTML of the wrapper (what your box stores)
+    return wrap.innerHTML;
+}
+
 function ChangeColor() {
     const colorPicker = document.getElementById("favcolor");
-    $("#hdnTextColor").val(colorPicker.value);
-    const textColor = document.getElementById("hdnTextColor").value; // Text color from dropdown 
-    const Obj = textObjects.find(obj => obj.selected);
-    if (Obj) {
-        Obj.textColor = textColor || 'black';
+    const color = (colorPicker && colorPicker.value) ? colorPicker.value : "#000000";
+
+    // keep your hidden input + textObjects color
+    $("#hdnTextColor").val(color);
+    const textColor = document.getElementById("hdnTextColor").value;
+    const Obj = (typeof textObjects !== "undefined") ? textObjects.find(o => o.selected) : null;
+    if (Obj) Obj.textColor = textColor || "black";
+
+    if (!activeBox) return;
+
+    if (isEditing) {
+        // apply to current selection in the editor
+        try {
+            textEditorNew.focus();
+            document.execCommand("styleWithCSS", false, true);
+            restoreSelection();
+            document.execCommand("foreColor", false, color);
+
+            // sanitize to avoid accidental line breaks on single-line content
+            textEditorNew.innerHTML = sanitizeSingleLine(textEditorNew.innerHTML);
+
+            // sync canvas + object
+            activeBox.text = textEditorNew.innerHTML;
+            if (Obj) Obj.html = activeBox.text;   // 👈 keep textObjects[].html updated
+        } catch (e) {
+            // fallback: apply to whole box
+            applyColorToWholeBox(color);
+            if (Obj) Obj.html = activeBox.text;
+        }
+    } else {
+        // editor closed → color whole box
+        applyColorToWholeBox(color);
+        // keep editor default color for when it opens later
+        textEditorNew.style.color = color;
+        if (Obj) Obj.html = activeBox.text;
     }
-    drawCanvas('ChangeStyle');
+
+    drawText();
+    console.log(textObjects);
 }
+
+/* ------- helpers ------- */
+
+// Color the whole box safely without blowing away existing inline colors.
+// If you want to FORCE one color across everything, set every element's style.color below.
+function applyColorToWholeBox(color) {
+    const container = document.createElement("div");
+    container.innerHTML = activeBox.text;
+
+    const divs = Array.from(container.childNodes).filter(n => n.nodeType === 1 && n.tagName === "DIV");
+    if (divs.length > 0) {
+        divs.forEach(div => {
+            if (!div.style.color) div.style.color = color;
+        });
+    } else {
+        const wrap = document.createElement("div");
+        const span = document.createElement("span");
+        span.style.color = color;
+        span.innerHTML = container.innerHTML;
+        wrap.appendChild(span);
+        container.innerHTML = wrap.innerHTML;
+    }
+
+    // avoid spurious wraps on truly single-line content
+    container.innerHTML = sanitizeSingleLine(container.innerHTML);
+
+    activeBox.text = container.innerHTML;
+}
+
+// If the content is effectively a single line, prevent breaking by using white-space:nowrap
+function sanitizeSingleLineOLD(html) {
+    const doc = new DOMParser().parseFromString(`<div>${html}</div>`, "text/html");
+    const root = doc.body.firstChild; // our wrapper div
+    const hasBR = !!root.querySelector("br");
+    const topDivs = Array.from(root.childNodes).filter(n => n.nodeType === 1 && n.tagName === "DIV");
+
+    if (!hasBR) {
+        if (topDivs.length === 1) {
+            topDivs[0].style.whiteSpace = "nowrap";      // keep one-line lines together
+        } else if (topDivs.length === 0) {
+            root.style.whiteSpace = "nowrap";
+        }
+    }
+    return root.innerHTML;
+}
+function sanitizeSingleLine(html) {
+    // Wrap/parse safely
+    const doc = new DOMParser().parseFromString(`<div id="__wrap">${html}</div>`, "text/html");
+    const wrap = doc.getElementById("__wrap");
+
+    // If there is any explicit line break, leave it alone (user wants multiline)
+    const hasBR = !!wrap.querySelector("br");
+
+    // Count top-level DIVs (your renderer treats each top-level div as a line)
+    const topDivs = Array.from(wrap.childNodes).filter(
+        n => n.nodeType === 1 && n.tagName === "DIV"
+    );
+
+    // If it’s truly single-line (no <br>, and <= 1 top-level div),
+    // flatten everything into ONE div and prevent wrapping.
+    if (!hasBR) {
+        // Create a single line div
+        const lineDiv = doc.createElement("div");
+        lineDiv.style.whiteSpace = "nowrap";
+
+        // Move all content into lineDiv (flatten multiple top-level divs/spans/text)
+        while (wrap.firstChild) {
+            const node = wrap.firstChild;
+            if (node.nodeType === 1 && node.tagName === "DIV") {
+                // Move its children instead of the div wrapper itself
+                while (node.firstChild) lineDiv.appendChild(node.firstChild);
+                wrap.removeChild(node);
+            } else {
+                lineDiv.appendChild(node); // spans/text/etc.
+            }
+        }
+
+        // Merge accidental adjacent spans with the same inline styles (keeps HTML tidy)
+        mergeAdjacentSpans(lineDiv);
+
+        // Optional: collapse CR/LF to spaces to avoid accidental breaks
+        lineDiv.innerHTML = lineDiv.innerHTML.replace(/\n+/g, " ");
+
+        // Put our normalized single line back into the wrapper
+        wrap.innerHTML = "";
+        wrap.appendChild(lineDiv);
+    }
+
+    return wrap.innerHTML;
+}
+function mergeAdjacentSpans(rootEl) {
+    // Walk shallowly; good enough for post-color output
+    let i = 0;
+    while (i < rootEl.childNodes.length - 1) {
+        const a = rootEl.childNodes[i];
+        const b = rootEl.childNodes[i + 1];
+
+        const isSpanA = a.nodeType === 1 && a.tagName === "SPAN";
+        const isSpanB = b && b.nodeType === 1 && b.tagName === "SPAN";
+
+        if (isSpanA && isSpanB && a.getAttribute("style") === b.getAttribute("style")) {
+            // Same style → merge contents
+            while (b.firstChild) a.appendChild(b.firstChild);
+            rootEl.removeChild(b);
+            // Do not increment i; try merging again in case there are more
+        } else {
+            i++;
+        }
+    }
+}
+
+
+/* ---------- helpers ---------- */
+
+// Apply color to the entire box content without blowing away existing inline colors.
+// This sets color where it’s missing; if you want to FORCE override everywhere,
+// change the if-block to always set el.style.color = color.
+//function applyColorToWholeBox(color) {
+//    const container = document.createElement("div");
+//    container.innerHTML = activeBox.text;
+
+//    // If there are top-level <div> lines, color each unless already colored
+//    const divs = Array.from(container.childNodes).filter(
+//        n => n.nodeType === 1 && n.tagName === "DIV"
+//    );
+//    if (divs.length > 0) {
+//        divs.forEach(div => {
+//            const hasInlineColor = div.style && div.style.color && div.style.color.trim() !== "";
+//            if (!hasInlineColor) div.style.color = color;
+//        });
+//    } else {
+//        // No top-level divs → wrap everything in a colored span
+//        const wrapper = document.createElement("div");
+//        const span = document.createElement("span");
+//        span.style.color = color;
+//        span.innerHTML = container.innerHTML;
+//        wrapper.appendChild(span);
+//        container.innerHTML = wrapper.innerHTML;
+//    }
+
+//    activeBox.text = container.innerHTML;
+//}
+
 function ChangeTranColor1() {
     const colorPicker = document.getElementById("tranColor1");
     $("#hdnTransition1").val(colorPicker.value);
@@ -7436,7 +7661,19 @@ function scaleBoxContent(box, scale) {
     });
     box.text = container.innerHTML;
 }
+const HANDLE_CURSOR = {
+    tl: "nwse-resize", br: "nwse-resize",
+    tr: "nesw-resize", bl: "nesw-resize",
+    tm: "ns-resize", bm: "ns-resize",
+    ml: "ew-resize", mr: "ew-resize"
+};
 
+function setGlobalCursor(cursor) {
+    const c = cursor || "";
+    canvas.style.cursor = c || "default";
+    document.body.style.cursor = c;
+    document.documentElement.style.cursor = c;
+}
 
 // ——————— Mouse Events ———————
 // Modified canvas mousedown, mousemove, and mouseup with scaleTextBoxWithHandle logic
@@ -7451,7 +7688,6 @@ canvas.addEventListener("mousedown", e => {
     startMXCanvas = mx;
     startMYCanvas = my;
 
-    // Save & close editor if editing (unchanged)
     if (isEditing && activeBox) {
         cleanEditorHTMLPreserveCaret();
         activeBox.text = textEditorNew.innerHTML;
@@ -7460,14 +7696,13 @@ canvas.addEventListener("mousedown", e => {
         textEditorNew.style.display = "none";
     }
 
-    // Check if resizing
     for (const box of boxes) {
         const handle = getResizeHandle(box, mx, my);
         if (handle) {
             activeBox = box;
 
             if (CORNER_HANDLES.has(handle)) {
-                // CORNER: font-scale ONLY
+                // CORNER: start font+box scale
                 resizeDirection = handle;
                 isCornerFontScale = true;
                 isResizingNew = false; // block normal resize
@@ -7477,33 +7712,27 @@ canvas.addEventListener("mousedown", e => {
                     width: box.width, height: box.height,
                     text: box.text
                 };
-                // compute min font once from original HTML
-                activeBox._origMinFontPx = computeMinFontPxFromHTML(activeBox._orig.text, 16);
-
-                const endCorner = () => { isCornerFontScale = false; };
+                setGlobalCursor(HANDLE_CURSOR[handle] || "nwse-resize");
+                const endCorner = () => { isCornerFontScale = false; setGlobalCursor(""); };
                 document.addEventListener("mouseup", endCorner, { once: true });
 
                 drawText();
-                return; // don't fall through
+                return;
             }
 
-            // NOT a corner: normal resize path (unchanged)
-            resizeDirection = handle;      // ✅ set resize direction
-            isResizingNew = true;          // ✅ enable resize mode
+            // sides: keep your normal resize path
+            resizeDirection = handle;
+            isResizingNew = true;
             activeBox._orig = {
-                x: box.x,
-                y: box.y,
-                width: box.width,
-                height: box.height,
-                fontSize: box.fontSize,
-                text: box.text
+                x: box.x, y: box.y,
+                width: box.width, height: box.height,
+                fontSize: box.fontSize, text: box.text
             };
             drawText();
             return;
         }
     }
 
-    // Drag (unchanged)
     const clickedBox = boxes.find(box =>
         mx >= box.x && mx <= box.x + box.width &&
         my >= box.y && my <= box.y + box.height
@@ -7521,29 +7750,48 @@ canvas.addEventListener("mousedown", e => {
 
 
 
+
 canvas.addEventListener("mousemove", e => {
     const { x: mx, y: my } = getCanvasMousePosition(e);
     const dx = mx - prevMouseX;
     const dy = my - prevMouseY;
 
-    // Cursor
+    // ----- cursor handling -----
+    let hoveredHandle = null;
     if (activeBox) {
-        const h = getResizeHandle(activeBox, mx, my);
-        if (["tl", "br"].includes(h)) canvas.style.cursor = "nwse-resize";
-        else if (["tr", "bl"].includes(h)) canvas.style.cursor = "nesw-resize";
-        else if (["tm", "bm"].includes(h)) canvas.style.cursor = "ns-resize";
-        else if (["ml", "mr"].includes(h)) canvas.style.cursor = "ew-resize";
-        else if (mx >= activeBox.x && mx <= activeBox.x + activeBox.width &&
-            my >= activeBox.y && my <= activeBox.y + activeBox.height) canvas.style.cursor = "move";
-        else canvas.style.cursor = "default";
+        hoveredHandle = getResizeHandle(activeBox, mx, my);
     }
+
+    // Force cursor while dragging/resizing
+    if (isDraggingNew) {
+        setGlobalCursor("move");
+    } else if (isCornerFontScale && resizeDirection) {
+        setGlobalCursor(HANDLE_CURSOR[resizeDirection] || "nwse-resize");
+    } else if (isResizingNew && resizeDirection) {
+        setGlobalCursor(HANDLE_CURSOR[resizeDirection] || "default");
+    } else if (activeBox) {
+        // Hover state
+        if (hoveredHandle && HANDLE_CURSOR[hoveredHandle]) {
+            setGlobalCursor(HANDLE_CURSOR[hoveredHandle]);
+        } else if (
+            mx >= activeBox.x && mx <= activeBox.x + activeBox.width &&
+            my >= activeBox.y && my <= activeBox.y + activeBox.height
+        ) {
+            setGlobalCursor("move");
+        } else {
+            setGlobalCursor("default");
+        }
+    } else {
+        setGlobalCursor("default");
+    }
+    // ----- end cursor handling -----
 
     if (isDraggingNew) {
         activeBox.x = mx - dragOffsetXNew;
         activeBox.y = my - dragOffsetYNew;
 
     } else if (isCornerFontScale && activeBox && resizeDirection && CORNER_HANDLES.has(resizeDirection)) {
-        // Font-scale ONLY (no box stretch)
+        // 🔥 CORNER: scale font + box together, anchored at dragged corner
         const ow = activeBox._orig.width;
         const oh = activeBox._orig.height;
 
@@ -7557,22 +7805,39 @@ canvas.addEventListener("mousemove", e => {
             case 'bl': scaleX = (ow - dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
             case 'br': scaleX = (ow + dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
         }
+
         scaleX = Math.max(0.1, scaleX);
         scaleY = Math.max(0.1, scaleY);
-        let uniform = Math.min(scaleX, scaleY);
+        const s = Math.min(scaleX, scaleY);          // uniform font scale
+        const newW = ow * s, newH = oh * s;          // box scales with font
 
-        // clamp so min font never < 10px (tweakable)
-        const minBase = activeBox._origMinFontPx || 16;
-        const minAllowed = 10;
-        if (minBase * uniform < minAllowed) {
-            uniform = minAllowed / minBase;
+        // position so the dragged corner sticks to anchor
+        switch (resizeDirection) {
+            case 'tl':
+                activeBox.x = activeBox._orig.x + (ow - newW);
+                activeBox.y = activeBox._orig.y + (oh - newH);
+                break;
+            case 'tr':
+                activeBox.x = activeBox._orig.x;
+                activeBox.y = activeBox._orig.y + (oh - newH);
+                break;
+            case 'bl':
+                activeBox.x = activeBox._orig.x + (ow - newW);
+                activeBox.y = activeBox._orig.y;
+                break;
+            case 'br':
+                activeBox.x = activeBox._orig.x;
+                activeBox.y = activeBox._orig.y;
+                break;
         }
+        activeBox.width = newW;
+        activeBox.height = newH;
 
         // scale the ORIGINAL html each move (no compounding)
-        activeBox.text = scaleTextHTML(activeBox._orig.text, uniform);
+        activeBox.text = scaleTextHTML(activeBox._orig.text, s);
 
     } else if (isResizingNew && activeBox && resizeDirection) {
-        // Side handles: normal behavior
+        // sides: normal behavior
         scaleTextBoxWithHandle(activeBox, resizeDirection, mx, my);
     }
 
@@ -7580,6 +7845,7 @@ canvas.addEventListener("mousemove", e => {
     prevMouseY = my;
     drawText();
 });
+
 function scaleTextHTML(html, scale) {
     const div = document.createElement("div");
     div.innerHTML = html;
@@ -8483,7 +8749,7 @@ function showEditorAtBox(box) {
     textEditorNew.style.top = `${relativeY}px`;
     textEditorNew.style.width = `${box.width / scaleX}px`;
     textEditorNew.style.display = "block";
-
+    textEditorNew.style.cursor = "text"; 
     applyTextEditorStyleFromBox(box);
     textEditorNew.focus();
     isEditing = true;
