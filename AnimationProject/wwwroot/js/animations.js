@@ -543,7 +543,7 @@ function getLinesFor(obj) {
 
 //    drawCanvas('Common');
 //}
-function changeLineSpacing(deltaFactor) {
+function changeLineSpacingOLD(deltaFactor) {
     const obj = textObjects.find(o => o.selected);
     if (!obj) return;
 
@@ -557,7 +557,53 @@ function changeLineSpacing(deltaFactor) {
     drawCanvas('Common');
 }
 
+function changeLineSpacing(deltaFactor) {
+    const obj = textObjects.find(o => o.selected);
+    if (!obj) return;
 
+    // clamp and update model
+    const current = typeof obj.lineSpacing === "number" ? obj.lineSpacing : 1.2;
+    const next = Math.max(0.2, current + deltaFactor); // clamp lower bound
+    obj.lineSpacing = next;
+
+    // keep canvas box in sync
+    if (activeBox) activeBox.lineSpacing = next;
+
+    if (isEditing && textEditorNew) {
+        // preserve selection while we tweak DOM
+        textEditorNew.focus();
+        restoreSelection();
+        const bm = bookmarkSelection(textEditorNew); // ← invisible markers
+
+        // apply unitless line-height multiplier to line DIVs (or editor root)
+        applyLineSpacingInEditor(textEditorNew, next);
+
+        // restore selection
+        restoreSelectionFromBookmarks(textEditorNew, bm);
+
+        // sync editor → model → canvas
+        activeBox.text = textEditorNew.innerHTML;
+        if (obj) obj.html = activeBox.text;
+       
+    }
+
+    // redraw
+    drawText();
+    console.log(textObjects);
+}
+
+// Apply line spacing in place without nuking selection/HTML
+function applyLineSpacingInEditor(root, multiplier) {
+    const value = String(multiplier); // unitless
+    const topDivs = Array.from(root.childNodes).filter(
+        n => n.nodeType === 1 && n.tagName === "DIV"
+    );
+    if (topDivs.length) {
+        topDivs.forEach(div => { div.style.lineHeight = value; });
+    } else {
+        root.style.lineHeight = value;
+    }
+}
 
 
 
@@ -8759,6 +8805,7 @@ function applyTextEditorStyleFromBox(box) {
 
     textEditorNew.style.height = neededHeight + "px";
     activeBox.height = neededHeight;
+    syncEditorLineSpacingFromBox(box);
 }
 
 // (1) helper to measure HTML content size
@@ -9127,7 +9174,7 @@ function getAllHandles(box, scaleX = 1, scaleY = 1) {
     };
 }
 
-function showEditorAtBox(box) {
+function showEditorAtBoxOLD(box) {
     const canvasRect = canvas.getBoundingClientRect();
     const containerRect = document.getElementById("canvasContainer").getBoundingClientRect();
 
@@ -9150,6 +9197,50 @@ function showEditorAtBox(box) {
     applyTextEditorStyleFromBox(box);
     textEditorNew.focus();
     isEditing = true;
+}
+function showEditorAtBox(box) {
+    const canvasRect = canvas.getBoundingClientRect();
+    const containerRect = document.getElementById("canvasContainer").getBoundingClientRect();
+
+    const scaleX = canvas.width / canvasRect.width;
+    const scaleY = canvas.height / canvasRect.height;
+
+    const offsetX = box.x / scaleX;
+    const offsetY = box.y / scaleY;
+
+    const relativeX = canvasRect.left - containerRect.left + offsetX;
+    const relativeY = canvasRect.top - containerRect.top + offsetY;
+
+    textEditorNew.innerHTML = box.text;
+    textEditorNew.style.textAlign = box.align || "left";
+
+    // position & size
+    textEditorNew.style.left = `${relativeX}px`;
+    textEditorNew.style.top = `${relativeY}px`;
+    textEditorNew.style.width = `${box.width / scaleX}px`;
+    textEditorNew.style.height = `${box.height / scaleY}px`; // ← keeps visual parity with canvas
+
+    // apply the box's spacing to the editor DOM
+    syncEditorLineSpacingFromBox(box);
+
+    textEditorNew.style.display = "block";
+    textEditorNew.style.cursor = "text";
+
+    // keep the rest of your styling logic
+    applyTextEditorStyleFromBox(box);
+
+    textEditorNew.focus();
+    isEditing = true;
+}
+function syncEditorLineSpacingFromBox(box) {
+    const lh = String(box.lineSpacing || 1.2); // unitless multiplier
+    // set on editor (fallback when there are no top-level divs)
+    textEditorNew.style.lineHeight = lh;
+
+    // set on each top-level <div> (your renderer treats these as lines)
+    Array.from(textEditorNew.childNodes)
+        .filter(n => n.nodeType === 1 && n.tagName === "DIV")
+        .forEach(div => { div.style.lineHeight = lh; });
 }
 //function showEditorAtBox(box) {
 //    const canvasRect = canvas.getBoundingClientRect();
