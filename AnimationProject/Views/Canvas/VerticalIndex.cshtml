@@ -1226,12 +1226,12 @@
 
         <div class="panel-middle d-flex align-items-center justify-content-center" id="canvasContainer">
             <div id="toolbar">
-                <label for="colorPickerNew">Text Color:</label>
-                <input type="color" id="colorPickerNew" value="#000000">
-                <a href="#" id="boldBtn" onmousedown="event.preventDefault(); saveSelection();">Bold</a> |
-                <a href="#" id="italicBtn" onmousedown="event.preventDefault(); saveSelection();">Italic</a>
-                <label>Font:</label>
-                <div id="fontList" style="display:inline-block">
+                <label style="display:none;" for="colorPickerNew">Text Color:</label>
+                <input style="display:none;" type="color" id="colorPickerNew" value="#000000">
+                <a href="#" style="display:none;" id="boldBtn" onmousedown="event.preventDefault(); saveSelection();">Bold</a> |
+                <a href="#" style="display:none;" id="italicBtn" onmousedown="event.preventDefault(); saveSelection();">Italic</a>
+                <label style="display:none;">Font:</label>
+                <div style="display:none;" id="fontList">
                     <a href="#" data-font="Arial">Arial</a> |
                     <a href="#" data-font="'Courier New'">Courier</a> |
                     <a href="#" data-font="Georgia">Georgia</a> |
