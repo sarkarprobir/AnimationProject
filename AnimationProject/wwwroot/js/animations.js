@@ -1213,7 +1213,7 @@ function ChangeAlignStyleOLD(value) {
     drawCanvas("ChangeStyle");
 }
 
-function ChangeAlignStyle(value) {
+function ChangeAlignStyleOLD1(value) {
     // 1) Store the new alignment on your control
     $("#textAlign").val(value);
     const newAlign = $("#textAlign").val(); // "left", "center", or "right"
@@ -1232,6 +1232,59 @@ function ChangeAlignStyle(value) {
     // 5) Redraw
     drawCanvas("ChangeStyle");
 }
+function ChangeAlignStyle(value) {
+    // 1) persist UI value
+    $("#textAlign").val(value);
+    const newAlign = $("#textAlign").val(); // "left" | "center" | "right"
+
+    // 2) selected object
+    const Obj = (typeof textObjects !== "undefined") ? textObjects.find(o => o.selected) : null;
+    if (!Obj) return;
+
+    // 3) update model + canvas box
+    Obj.textAlign = newAlign;
+    if (activeBox) activeBox.align = newAlign;
+
+    // 4) (optional) keep box inside canvas horizontally if you were capping width
+    //    Do NOT change x for alignment; just keep your old width cap if desired
+    const maxAllowedW = canvas.width - Obj.x;
+    Obj.boundingWidth = Math.min(Obj.boundingWidth, maxAllowedW);
+
+    // 5) If the inline editor is open, apply to editor DOM without nuking selection
+    if (isEditing && textEditorNew) {
+        textEditorNew.style.textAlign = newAlign;
+
+        // preserve selection while changing DOM styles
+        restoreSelection?.();
+        const bm = bookmarkSelection?.(textEditorNew);
+
+        applyAlignInEditor(textEditorNew, newAlign); // set on line <div>s too
+
+        // restore selection
+        if (bm) restoreSelectionFromBookmarks?.(textEditorNew, bm);
+
+        // sync html back to model/canvas
+        if (activeBox) activeBox.text = textEditorNew.innerHTML;
+        Obj.html = activeBox?.text || Obj.html;
+    }
+
+    // 6) redraw
+    drawText()
+    console.log(textObjects);
+}
+function applyAlignInEditor(root, align) {
+    // apply to top-level line <div>s so the editor WYSIWYG matches the canvas
+    const lineDivs = Array.from(root.childNodes)
+        .filter(n => n.nodeType === 1 && n.tagName === "DIV");
+
+    if (lineDivs.length) {
+        lineDivs.forEach(div => { div.style.textAlign = align; });
+    } else {
+        // fallback if no line divs
+        root.style.textAlign = align;
+    }
+}
+
 
 function OnChangefontFamily(value) {
     $("#fontFamily").val(value);
@@ -8540,10 +8593,10 @@ window.onload = () => {
 
 
 
-colorPickerNew.addEventListener("input", e => {
-    textEditorNew.focus();
-    applyStyleToSelection("color", e.target.value);
-});
+//colorPickerNew.addEventListener("input", e => {
+//    textEditorNew.focus();
+//    applyStyleToSelection("color", e.target.value);
+//});
 
 
 // Track selection changes within the editor
@@ -8551,22 +8604,22 @@ textEditorNew.addEventListener("mouseup", saveSelection);
 textEditorNew.addEventListener("keyup", saveSelection);
 
 // FONT SIZE LINKS
-sizeList.querySelectorAll("a").forEach(link => {
-    link.addEventListener("click", e => {
-        e.preventDefault();
-        restoreSelection();
-        applyStyleToSelection("fontSize", e.target.getAttribute("data-size"));
-    });
-});
+//sizeList.querySelectorAll("a").forEach(link => {
+//    link.addEventListener("click", e => {
+//        e.preventDefault();
+//        restoreSelection();
+//        applyStyleToSelection("fontSize", e.target.getAttribute("data-size"));
+//    });
+//});
 
 // FONT FAMILY LINKS
-fontList.querySelectorAll("a").forEach(link => {
-    link.addEventListener("click", e => {
-        e.preventDefault();
-        restoreSelection();
-        applyStyleToSelection("fontFamily", e.target.getAttribute("data-font"));
-    });
-});
+//fontList.querySelectorAll("a").forEach(link => {
+//    link.addEventListener("click", e => {
+//        e.preventDefault();
+//        restoreSelection();
+//        applyStyleToSelection("fontFamily", e.target.getAttribute("data-font"));
+//    });
+//});
 
 
 // ALIGNMENT can still use execCommand,
@@ -8772,7 +8825,7 @@ function showEditorAtBoxNew(box) {
 //    });
 //}
 
-function applyTextEditorStyleFromBox(box) {
+function applyTextEditorStyleFromBoxNEWOLD(box) {
     if (!box) return;
 
     const fontSize = parseFloat(getComputedStyle(textEditorNew).fontSize) || 16;
@@ -8806,6 +8859,54 @@ function applyTextEditorStyleFromBox(box) {
     textEditorNew.style.height = neededHeight + "px";
     activeBox.height = neededHeight;
     syncEditorLineSpacingFromBox(box);
+}
+function applyTextEditorStyleFromBox(box) {
+    if (!box) return;
+
+    // Use the value coming from your changeLineSpacing() updates
+    const spacingMultiplier = (typeof box.lineSpacing === "number" && !isNaN(box.lineSpacing))
+        ? box.lineSpacing
+        : 1.2; // default
+
+    // Apply alignment & line-height on the editor itself
+    textEditorNew.style.textAlign = box.align || "left";
+    textEditorNew.style.lineHeight = String(spacingMultiplier); // unitless multiplier
+
+    // Also apply to each top-level <div> line (to match your canvas line model)
+    const lineDivs = Array.from(textEditorNew.childNodes)
+        .filter(n => n.nodeType === 1 && n.tagName === "DIV");
+    lineDivs.forEach(div => { div.style.lineHeight = String(spacingMultiplier); });
+
+    // --- Measure height (don’t force a font-size; let inline sizes stand) ---
+    // Temporarily set height:auto to measure correctly
+    textEditorNew.style.height = "auto";
+
+    const meas = document.createElement("div");
+    Object.assign(meas.style, {
+        position: "absolute",
+        visibility: "hidden",
+        whiteSpace: "pre-wrap",
+        lineHeight: String(spacingMultiplier),
+        // mirror width so measurement matches
+        width: textEditorNew.style.width || (textEditorNew.clientWidth + "px"),
+    });
+
+    // Mirror line divs’ unitless line-height for accuracy
+    meas.innerHTML = textEditorNew.innerHTML;
+    const measDivs = Array.from(meas.childNodes).filter(n => n.nodeType === 1 && n.tagName === "DIV");
+    measDivs.forEach(div => { div.style.lineHeight = String(spacingMultiplier); });
+
+    document.body.appendChild(meas);
+    const neededHeight = meas.scrollHeight;
+    document.body.removeChild(meas);
+
+    textEditorNew.style.height = neededHeight + "px";
+    if (activeBox) activeBox.height = neededHeight;
+
+    // Keep your existing helper to ensure consistency (safe no-op if already set)
+    if (typeof syncEditorLineSpacingFromBox === "function") {
+        syncEditorLineSpacingFromBox(box);
+    }
 }
 
 // (1) helper to measure HTML content size
@@ -8913,18 +9014,18 @@ textEditorNew.addEventListener("keydown", e => {
 });
 
 
-boldBtn.addEventListener("click", e => {
-    e.preventDefault();
-    restoreSelection();
-    document.execCommand("bold");
-});
+//boldBtn.addEventListener("click", e => {
+//    e.preventDefault();
+//    restoreSelection();
+//    document.execCommand("bold");
+//});
 
-// 3. Italic
-italicBtn.addEventListener("click", e => {
-    e.preventDefault();
-    restoreSelection();
-    document.execCommand("italic");
-});
+//// 3. Italic
+//italicBtn.addEventListener("click", e => {
+//    e.preventDefault();
+//    restoreSelection();
+//    document.execCommand("italic");
+//});
 
 //// 4. Font Change
 //fontList.querySelectorAll("a[data-font]").forEach(a => {
@@ -8974,71 +9075,71 @@ italicBtn.addEventListener("click", e => {
 ////});
 
 
-window.addEventListener("DOMContentLoaded", () => {
-    const lineSpacingInput = document.getElementById("lineSpacingInput");
-    lineSpacingInput.addEventListener("change", () => {
-        const val = parseFloat(lineSpacingInput.value);
-        if (isNaN(val)) return;
+//window.addEventListener("DOMContentLoaded", () => {
+//    const lineSpacingInput = document.getElementById("lineSpacingInput");
+//    lineSpacingInput.addEventListener("change", () => {
+//        const val = parseFloat(lineSpacingInput.value);
+//        if (isNaN(val)) return;
 
-        const clamped = Math.max(-3, Math.min(7, val));
-        const pxSpacing = clamped * 8;
+//        const clamped = Math.max(-3, Math.min(7, val));
+//        const pxSpacing = clamped * 8;
 
-        let fontSize;
-        if (textEditorNew.offsetParent !== null) {
-            fontSize = parseFloat(window.getComputedStyle(textEditorNew).fontSize) || 16;
-        } else if (activeBox?.fontSize) {
-            fontSize = parseFloat(activeBox.fontSize);
-        } else {
-            fontSize = 16; // fallback
-        }
+//        let fontSize;
+//        if (textEditorNew.offsetParent !== null) {
+//            fontSize = parseFloat(window.getComputedStyle(textEditorNew).fontSize) || 16;
+//        } else if (activeBox?.fontSize) {
+//            fontSize = parseFloat(activeBox.fontSize);
+//        } else {
+//            fontSize = 16; // fallback
+//        }
 
-        const lineSpacingMultiplier = (fontSize + pxSpacing) / fontSize;
+//        const lineSpacingMultiplier = (fontSize + pxSpacing) / fontSize;
 
-        // ✅ Apply to editor even if hidden — so it’s ready on open
-        textEditorNew.style.lineHeight = `${fontSize + pxSpacing}px`;
+//        // ✅ Apply to editor even if hidden — so it’s ready on open
+//        textEditorNew.style.lineHeight = `${fontSize + pxSpacing}px`;
 
-        if (activeBox) {
-            activeBox.lineSpacing = lineSpacingMultiplier;
-            if (isEditing) {
-                activeBox.text = textEditorNew.innerHTML;
-            }
-            drawText();
-        }
-    });
+//        if (activeBox) {
+//            activeBox.lineSpacing = lineSpacingMultiplier;
+//            if (isEditing) {
+//                activeBox.text = textEditorNew.innerHTML;
+//            }
+//            drawText();
+//        }
+//    });
 
 
-    //lineSpacingInput.addEventListener("change", () => {
-    //    const val = parseFloat(lineSpacingInput.value);
-    //    if (isNaN(val)) return;
+//    //lineSpacingInput.addEventListener("change", () => {
+//    //    const val = parseFloat(lineSpacingInput.value);
+//    //    if (isNaN(val)) return;
 
-    //    // Clamp to reasonable values if necessary
-    //    const clamped = Math.max(-3, Math.min(7, val));
-    //    selectedLineSpacing = clamped * 8; // convert to px spacing
+//    //    // Clamp to reasonable values if necessary
+//    //    const clamped = Math.max(-3, Math.min(7, val));
+//    //    selectedLineSpacing = clamped * 8; // convert to px spacing
 
-    //    const html = textEditorNew.innerHTML;
-    //    const divCount = (html.match(/<div>|<br>/g) || []).length;
-    //    const hasMultipleLines = divCount >= 1;
+//    //    const html = textEditorNew.innerHTML;
+//    //    const divCount = (html.match(/<div>|<br>/g) || []).length;
+//    //    const hasMultipleLines = divCount >= 1;
 
-    //    const sel = window.getSelection();
+//    //    const sel = window.getSelection();
 
-    //    // CASE 1: We're editing and no selection but multiple lines present
-    //    if (activeBox && isEditing) {
-    //        if (sel && sel.rangeCount === 1 && sel.isCollapsed && hasMultipleLines) {
-    //            applyTextEditorStyleFromBox(activeBox);
-    //            textEditorNew.dispatchEvent(new Event("input"));
-    //            activeBox.text = textEditorNew.innerHTML;
-    //            drawText();
-    //        }
-    //    }
-    //    // CASE 2: Not editing but activeBox has multiple lines
-    //    else if (activeBox && !isEditing && hasMultipleLines) {
-    //        showEditorAtBox(activeBox);
-    //        applyTextEditorStyleFromBox(activeBox);
-    //        activeBox.text = textEditorNew.innerHTML;
-    //        drawText();
-    //    }
-    //});
-});
+//    //    // CASE 1: We're editing and no selection but multiple lines present
+//    //    if (activeBox && isEditing) {
+//    //        if (sel && sel.rangeCount === 1 && sel.isCollapsed && hasMultipleLines) {
+//    //            applyTextEditorStyleFromBox(activeBox);
+//    //            textEditorNew.dispatchEvent(new Event("input"));
+//    //            activeBox.text = textEditorNew.innerHTML;
+//    //            drawText();
+//    //        }
+//    //    }
+//    //    // CASE 2: Not editing but activeBox has multiple lines
+//    //    else if (activeBox && !isEditing && hasMultipleLines) {
+//    //        showEditorAtBox(activeBox);
+//    //        applyTextEditorStyleFromBox(activeBox);
+//    //        activeBox.text = textEditorNew.innerHTML;
+//    //        drawText();
+//    //    }
+//    //});
+//});
     // ✅ Line spacing will apply at box level if a box is active and editor has multiline
     //lineSpacingSelect.addEventListener("change", () => {
     //    const val = parseFloat(lineSpacingSelect.value);
@@ -9077,17 +9178,17 @@ window.addEventListener("DOMContentLoaded", () => {
 /*});*/
 
 // 7. Alignment
-alignList.querySelectorAll("a[data-align]").forEach(a => {
-    a.addEventListener("click", e => {
-        e.preventDefault();
-        const align = a.getAttribute("data-align");
-        if (activeBox) {
-            activeBox.align = align;
-            textEditorNew.style.textAlign = align;
-            drawText();
-        }
-    });
-});
+//alignList.querySelectorAll("a[data-align]").forEach(a => {
+//    a.addEventListener("click", e => {
+//        e.preventDefault();
+//        const align = a.getAttribute("data-align");
+//        if (activeBox) {
+//            activeBox.align = align;
+//            textEditorNew.style.textAlign = align;
+//            drawText();
+//        }
+//    });
+//});
 
 
 function wrapSelectionWithSpan(styleObj) {
