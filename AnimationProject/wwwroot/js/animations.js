@@ -6974,7 +6974,59 @@ let resizeDirection = null;
 let prevMouseX = 0, prevMouseY = 0;
 let dragOffsetXNew = 0, dragOffsetYNew = 0;
 let savedRange = null;
+let isFontScaling = false;
+let _cornerScale = null; // { cx, cy, startDist, startScale, baseFontSize }
 
+const CORNER_HANDLES = new Set(["tl", "tr", "bl", "br", "top-left", "top-right", "bottom-left", "bottom-right"]);
+let _cornerScaleState = null; // { cx, cy, startDist, startScale, baseFontSize }
+
+//const CORNER_HANDLES = new Set(['tl', 'tr', 'bl', 'br']);
+let isCornerFontScale = false;
+let startMXCanvas = 0, startMYCanvas = 0; // canvas-space drag start
+
+
+
+function _mouseCanvas(e) { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+// Helper: multiply any CSS font-size (e.g. "30px") by box.fontScale
+function fontSizePxWithScale(sizeStr, box) { const basePx = parseFloat(sizeStr) || 16; const sc = (box && box.fontScale) ? box.fontScale : 1; return basePx * sc; }
+
+function mouseInCanvas(e) {
+    const r = canvas.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+}
+function onCornerScaleMove(ev) {
+    if (!_cornerScaleState || !activeBox) return;
+    const { x, y } = mouseInCanvas(ev);
+    const newDist = Math.hypot(x - _cornerScaleState.cx, y - _cornerScaleState.cy) || 1;
+    let newScale = (newDist / _cornerScaleState.startDist) * _cornerScaleState.startScale;
+    newScale = Math.max(0.25, Math.min(8, newScale));
+    activeBox.fontScale = newScale;
+
+    // If editor visible, mirror font size live (WYSIWYG)
+    if (isEditing && textEditorNew) {
+        textEditorNew.style.fontSize = (_cornerScaleState.baseFontSize * newScale) + "px";
+        activeBox.text = textEditorNew.innerHTML;
+    }
+
+    drawText();
+}
+function endCornerScale() {
+    document.removeEventListener("mousemove", onCornerScaleMove);
+    document.removeEventListener("mouseup", endCornerScale);
+    _cornerScaleState = null;
+}
+
+function beginCornerScale(box, mx, my) {
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    const startDist = Math.hypot(mx - cx, my - cy) || 1;
+    const startScale = box.fontScale || 1;
+    let baseFontSize = parseFloat(box.fontSize);
+    if (isNaN(baseFontSize)) {
+        try { baseFontSize = parseFloat(getComputedStyle(textEditorNew).fontSize) || 16; } catch { baseFontSize = 16; }
+    }
+    _cornerScaleState = { cx, cy, startDist, startScale, baseFontSize };
+}
 
 // ——————— Helpers ———————
 
@@ -7319,12 +7371,54 @@ function measureTextHTML(html, referenceStyle) {
     return size;
 }
 
-
-function scaleBoxContent(box, scale) {
-    // scale only once per drag, using box._orig.text
-    // here we simply wrap text in span with scaled font-size
-    box.text = `<span style="font-size:${Math.round(fontSizeNew * scale)}px">${box._orig.text}</span>`;
+function computeMinFontPxFromHTML(html, fallback = 16) {
+    let min = Infinity;
+    const doc = new DOMParser().parseFromString(`<div>${html}</div>`, 'text/html');
+    (function walk(n) {
+        if (n.nodeType === 1) {
+            // inline style font-size
+            const fs = n.style?.fontSize;
+            if (fs) {
+                const px = parseFloat(fs);
+                if (!isNaN(px)) min = Math.min(min, px);
+            }
+            // legacy <font size="...">
+            if (n.tagName === 'FONT' && n.getAttribute('size')) {
+                const size = parseInt(n.getAttribute('size'), 10);
+                if (!isNaN(size)) {
+                    const map = { 1: 10, 2: 13, 3: 16, 4: 18, 5: 24, 6: 32, 7: 48 };
+                    min = Math.min(min, map[size] ?? 16);
+                }
+            }
+            n.childNodes.forEach(walk);
+        }
+    })(doc.body);
+    return (min === Infinity ? fallback : min);
 }
+function scaleBoxContent(box, scale) {
+    const container = document.createElement("div");
+    container.innerHTML = box.text;
+    container.querySelectorAll("*").forEach(el => {
+        if (el.style.fontSize) {
+            const px = parseFloat(el.style.fontSize);
+            if (!isNaN(px)) el.style.fontSize = (px * scale).toFixed(2) + "px";
+        }
+        if (el.tagName === "FONT" && el.getAttribute("size")) {
+            const size = parseInt(el.getAttribute("size"));
+            if (!isNaN(size)) {
+                const px = sizeToPx(size);
+                el.style.fontSize = (px * scale).toFixed(2) + "px";
+                el.removeAttribute("size");
+            }
+        }
+        if (el.style.lineHeight && el.style.lineHeight.includes("px")) {
+            const lh = parseFloat(el.style.lineHeight);
+            if (!isNaN(lh)) el.style.lineHeight = (lh * scale).toFixed(2) + "px";
+        }
+    });
+    box.text = container.innerHTML;
+}
+
 
 // ——————— Mouse Events ———————
 // Modified canvas mousedown, mousemove, and mouseup with scaleTextBoxWithHandle logic
@@ -7336,8 +7430,10 @@ canvas.addEventListener("mousedown", e => {
     startY = e.clientY;
     prevMouseX = mx;
     prevMouseY = my;
+    startMXCanvas = mx;
+    startMYCanvas = my;
 
-    // Save & close editor if editing
+    // Save & close editor if editing (unchanged)
     if (isEditing && activeBox) {
         cleanEditorHTMLPreserveCaret();
         activeBox.text = textEditorNew.innerHTML;
@@ -7351,6 +7447,29 @@ canvas.addEventListener("mousedown", e => {
         const handle = getResizeHandle(box, mx, my);
         if (handle) {
             activeBox = box;
+
+            if (CORNER_HANDLES.has(handle)) {
+                // CORNER: font-scale ONLY
+                resizeDirection = handle;
+                isCornerFontScale = true;
+                isResizingNew = false; // block normal resize
+
+                activeBox._orig = {
+                    x: box.x, y: box.y,
+                    width: box.width, height: box.height,
+                    text: box.text
+                };
+                // compute min font once from original HTML
+                activeBox._origMinFontPx = computeMinFontPxFromHTML(activeBox._orig.text, 16);
+
+                const endCorner = () => { isCornerFontScale = false; };
+                document.addEventListener("mouseup", endCorner, { once: true });
+
+                drawText();
+                return; // don't fall through
+            }
+
+            // NOT a corner: normal resize path (unchanged)
             resizeDirection = handle;      // ✅ set resize direction
             isResizingNew = true;          // ✅ enable resize mode
             activeBox._orig = {
@@ -7366,7 +7485,7 @@ canvas.addEventListener("mousedown", e => {
         }
     }
 
-    // Check for drag
+    // Drag (unchanged)
     const clickedBox = boxes.find(box =>
         mx >= box.x && mx <= box.x + box.width &&
         my >= box.y && my <= box.y + box.height
@@ -7382,26 +7501,60 @@ canvas.addEventListener("mousedown", e => {
     drawText();
 });
 
+
+
 canvas.addEventListener("mousemove", e => {
     const { x: mx, y: my } = getCanvasMousePosition(e);
     const dx = mx - prevMouseX;
     const dy = my - prevMouseY;
 
-    // Set cursor
+    // Cursor
     if (activeBox) {
         const h = getResizeHandle(activeBox, mx, my);
         if (["tl", "br"].includes(h)) canvas.style.cursor = "nwse-resize";
         else if (["tr", "bl"].includes(h)) canvas.style.cursor = "nesw-resize";
         else if (["tm", "bm"].includes(h)) canvas.style.cursor = "ns-resize";
         else if (["ml", "mr"].includes(h)) canvas.style.cursor = "ew-resize";
-        else if (mx >= activeBox.x && mx <= activeBox.x + activeBox.width && my >= activeBox.y && my <= activeBox.y + activeBox.height) canvas.style.cursor = "move";
+        else if (mx >= activeBox.x && mx <= activeBox.x + activeBox.width &&
+            my >= activeBox.y && my <= activeBox.y + activeBox.height) canvas.style.cursor = "move";
         else canvas.style.cursor = "default";
     }
 
     if (isDraggingNew) {
         activeBox.x = mx - dragOffsetXNew;
         activeBox.y = my - dragOffsetYNew;
+
+    } else if (isCornerFontScale && activeBox && resizeDirection && CORNER_HANDLES.has(resizeDirection)) {
+        // Font-scale ONLY (no box stretch)
+        const ow = activeBox._orig.width;
+        const oh = activeBox._orig.height;
+
+        const dxAbs = mx - startMXCanvas;
+        const dyAbs = my - startMYCanvas;
+
+        let scaleX = 1, scaleY = 1;
+        switch (resizeDirection) {
+            case 'tl': scaleX = (ow - dxAbs) / ow; scaleY = (oh - dyAbs) / oh; break;
+            case 'tr': scaleX = (ow + dxAbs) / ow; scaleY = (oh - dyAbs) / oh; break;
+            case 'bl': scaleX = (ow - dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
+            case 'br': scaleX = (ow + dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
+        }
+        scaleX = Math.max(0.1, scaleX);
+        scaleY = Math.max(0.1, scaleY);
+        let uniform = Math.min(scaleX, scaleY);
+
+        // clamp so min font never < 10px (tweakable)
+        const minBase = activeBox._origMinFontPx || 16;
+        const minAllowed = 10;
+        if (minBase * uniform < minAllowed) {
+            uniform = minAllowed / minBase;
+        }
+
+        // scale the ORIGINAL html each move (no compounding)
+        activeBox.text = scaleTextHTML(activeBox._orig.text, uniform);
+
     } else if (isResizingNew && activeBox && resizeDirection) {
+        // Side handles: normal behavior
         scaleTextBoxWithHandle(activeBox, resizeDirection, mx, my);
     }
 
@@ -7409,6 +7562,46 @@ canvas.addEventListener("mousemove", e => {
     prevMouseY = my;
     drawText();
 });
+function scaleTextHTML(html, scale) {
+    const div = document.createElement("div");
+    div.innerHTML = html;
+
+    (function walk(node) {
+        if (node.nodeType === 1) {
+            // inline style: font-size: Npx;
+            if (node.style && node.style.fontSize) {
+                const px = parseFloat(node.style.fontSize);
+                if (!isNaN(px)) node.style.fontSize = (px * scale).toFixed(2) + "px";
+            }
+
+            // inline style: line-height: Npx;  (only px to avoid double-scaling %/unitless)
+            if (node.style && node.style.lineHeight && node.style.lineHeight.includes("px")) {
+                const lh = parseFloat(node.style.lineHeight);
+                if (!isNaN(lh)) node.style.lineHeight = (lh * scale).toFixed(2) + "px";
+            }
+
+            // legacy <font size="1..7">
+            if (node.tagName === "FONT" && node.hasAttribute("size")) {
+                const map = { 1: 10, 2: 13, 3: 16, 4: 18, 5: 24, 6: 32, 7: 48 };
+                const sz = parseInt(node.getAttribute("size"), 10);
+                const basePx = map[sz] ?? 16;
+                node.style.fontSize = (basePx * scale).toFixed(2) + "px";
+                node.removeAttribute("size");
+            }
+
+            // recurse
+            for (const child of node.childNodes) walk(child);
+        }
+    })(div);
+
+    return div.innerHTML;
+}
+function sizeToPx(size) {
+    const map = { 1: 10, 2: 13, 3: 16, 4: 18, 5: 24, 6: 32, 7: 48 };
+    return map[size] ?? 16;
+}
+
+
 
 canvas.addEventListener("mouseup", () => {
     isDraggingNew = false;
@@ -8432,4 +8625,20 @@ function measureTextSize(text, fontFamily, fontSize, maxWidth = 1000) {
     };
     document.body.removeChild(temp);
     return size;
+}
+
+
+// 1) Pointer → canvas coords helper (adjust if you already have one)
+function getMouseInCanvas(e) {
+    const r = canvas.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+}
+
+// 2) State for corner scaling
+let cornerScaleState = null; // { startDist, startScale }
+
+function isCornerHandleName(h) {
+    return (
+        h === "top-left" || h === "top-right" || h === "bottom-left" || h === "bottom-right"
+    );
 }
