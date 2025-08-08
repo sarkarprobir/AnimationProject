@@ -1187,14 +1187,78 @@ function ChangeAlignStyle(value) {
     drawCanvas("ChangeStyle");
 }
 
-
-
-
-
-
-
-
 function OnChangefontFamily(value) {
+    $("#fontFamily").val(value);
+    const fontFamily = document.getElementById("fontFamily").value || "Arial";
+    const familyForCss = /[, ]/.test(fontFamily) ? `"${fontFamily}"` : fontFamily;
+
+    const Obj = (typeof textObjects !== "undefined") ? textObjects.find(o => o.selected) : null;
+    if (Obj) Obj.fontFamily = fontFamily;
+
+    if (!activeBox) { drawText?.(); return; }
+
+    if (isEditing) {
+        textEditorNew.focus();
+        restoreSelection();
+
+        const span = applySelectionStyleReplace("fontFamily", familyForCss); // ← keeps selection
+        normalizeEditorInPlace(textEditorNew, span);
+
+        activeBox.text = textEditorNew.innerHTML;
+        if (Obj) Obj.html = activeBox.text;
+    } else {
+        applyFontFamilyToWholeBox(familyForCss);
+        if (Obj) Obj.html = activeBox.text;
+    }
+
+    drawText();
+    console.log(textObjects);
+}
+
+
+
+
+// Apply font-family to the entire box without blowing away other inline styles.
+// If you want to FORCE override everywhere, set style.fontFamily on every element via querySelectorAll("*").
+function applyFontFamilyToWholeBox(family) {
+    const container = document.createElement("div");
+    container.innerHTML = activeBox.text;
+
+    const topDivs = Array.from(container.childNodes).filter(
+        n => n.nodeType === 1 && n.tagName === "DIV"
+    );
+
+    if (topDivs.length > 0) {
+        topDivs.forEach(div => {
+            // only set if not already set inline
+            if (!div.style.fontFamily) div.style.fontFamily = family;
+        });
+    } else {
+        // no top-level divs -> wrap everything in a span with font-family
+        const wrap = document.createElement("div");
+        const span = document.createElement("span");
+        span.style.fontFamily = family;
+        span.innerHTML = container.innerHTML;
+        wrap.appendChild(span);
+        container.innerHTML = wrap.innerHTML;
+    }
+
+    // keep single-line content on one line
+    if (typeof sanitizeSingleLine === "function") {
+        container.innerHTML = sanitizeSingleLine(container.innerHTML);
+    }
+
+    activeBox.text = container.innerHTML;
+}
+
+
+
+
+
+
+
+
+function OnChangefontFamilyOLD(value) {
     //const paddingX = 23;
     //const paddingY = 15;
     $("#fontFamily").val(value);
@@ -1202,28 +1266,7 @@ function OnChangefontFamily(value) {
     const Obj = textObjects.find(obj => obj.selected);
     if (Obj) {
         Obj.fontFamily = fontFamily || 'Arial';
-
-        //// 3) Measure the text
-        //const metrics = ctx.measureText(Obj.text);
-        //const measuredWidth = metrics.width;
-
-        //// 4) Measure height if supported; otherwise fallback to fontSize:
-        //let measuredHeight;
-        //if (
-        //    typeof metrics.actualBoundingBoxAscent === "number" &&
-        //    typeof metrics.actualBoundingBoxDescent === "number"
-        //) {
-        //    measuredHeight =
-        //        metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
-        //} else {
-        //    // Fallback: approximate height with fontSize (not pixel‐perfect,
-        //    // but better than nothing)
-        //    measuredHeight = Obj.fontSize;
-        //}
-
-        //// 5) Overwrite boundingWidth/boundingHeight with dynamic values + padding:
-        //Obj.boundingWidth = measuredWidth + paddingX * 2;
-        //Obj.boundingHeight = measuredHeight + paddingY * 2;
+        
     }
 
     drawCanvas('ChangeStyle');
@@ -5532,12 +5575,241 @@ function normalizeSingleLine(html) {
     // Return innerHTML of the wrapper (what your box stores)
     return wrap.innerHTML;
 }
+function applySelectionStyleReplace(cssProp, value) {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return null;
+    const range = sel.getRangeAt(0);
+    if (range.collapsed) return null;
 
+    // Pull out selection
+    const frag = range.extractContents();
+
+    // Strip same prop inside selection so we don't nest
+    stripStylePropInFragment(frag, cssProp);
+
+    // Wrap once with new style
+    const span = document.createElement("span");
+    span.style[cssProp] = value;
+    span.appendChild(frag);
+    range.insertNode(span);
+
+    // Reselect this exact span
+    sel.removeAllRanges();
+    const r = document.createRange();
+    r.selectNodeContents(span);
+    sel.addRange(r);
+
+    // Persist for next action
+    if (typeof saveSelection === "function") saveSelection();
+
+    return span;
+}
+function normalizeEditorInPlace(root, keepSpan) {
+    if (!root) return;
+    // 1) Remove empty spans
+    removeEmptySpans(root);
+    // 2) Collapse span>span chains
+    collapseSpanChains(root);
+    // 3) Merge adjacent spans with identical style
+    mergeAdjacentSameStyleSpans(root);
+    // 4) If single-line, enforce nowrap – but IN PLACE
+    if (!root.querySelector("br")) {
+        const line = (root.childElementCount === 1 && root.firstElementChild?.tagName === "DIV")
+            ? root.firstElementChild
+            : root;
+        line.style.whiteSpace = "nowrap";
+    }
+
+    // Re-select keepSpan if it still exists
+    if (keepSpan && root.contains(keepSpan)) {
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        const r = document.createRange();
+        r.selectNodeContents(keepSpan);
+        sel.addRange(r);
+        if (typeof saveSelection === "function") saveSelection();
+    }
+}
+
+function stripStylePropInFragment(fragment, cssProp) {
+    const walker = document.createTreeWalker(fragment, NodeFilter.SHOW_ELEMENT, null, false);
+    const nodesToCleanup = [];
+
+    while (walker.nextNode()) {
+        const el = walker.currentNode;
+        if (!(el instanceof HTMLElement)) continue;
+        // Remove the property if present
+        if (el.style && el.style[cssProp]) {
+            el.style[cssProp] = "";
+            // If that makes style empty, we’ll try to unwrap later
+            nodesToCleanup.push(el);
+        }
+        // Legacy <font> handling for color / font-family if you have those
+        if (cssProp === "color" && el.tagName === "FONT" && el.hasAttribute("color")) {
+            el.removeAttribute("color");
+            nodesToCleanup.push(el);
+        }
+        if (cssProp === "fontFamily" && el.tagName === "FONT" && el.hasAttribute("face")) {
+            el.removeAttribute("face");
+            nodesToCleanup.push(el);
+        }
+    }
+
+    // unwrap empty spans (no style and <span> only)
+    nodesToCleanup.forEach(tryUnwrapIfUseless);
+}
+
+function tryUnwrapIfUseless(el) {
+    if (!(el instanceof HTMLElement)) return;
+    const isSpan = el.tagName === "SPAN";
+    const hasNoStyle = !el.getAttribute("style") || el.getAttribute("style").trim() === "";
+    if (isSpan && hasNoStyle) {
+        // unwrap
+        const parent = el.parentNode;
+        while (el.firstChild) parent.insertBefore(el.firstChild, el);
+        parent.removeChild(el);
+    }
+}
+function mergeRedundantSpansAround(node) {
+    // Bubble up to a reasonable parent container (editor root or its child line div)
+    let root = node;
+    for (let i = 0; i < 3 && root.parentElement; i++) root = root.parentElement;
+
+    // 1) Merge adjacent spans with identical style
+    const children = Array.from(root.childNodes);
+    for (let i = 0; i < children.length - 1; i++) {
+        const a = children[i], b = children[i + 1];
+        if (a?.nodeType === 1 && b?.nodeType === 1 &&
+            a.tagName === "SPAN" && b.tagName === "SPAN" &&
+            a.getAttribute("style") === b.getAttribute("style")) {
+            while (b.firstChild) a.appendChild(b.firstChild);
+            b.remove();
+            i--; // re-check from this index
+        }
+    }
+
+    // 2) Collapse span > span chains by merging styles
+    collapseSpanChains(root);
+}
+
+function normalizeEditorHtml(html) {
+    const doc = new DOMParser().parseFromString(`<div id="__wrap">${html}</div>`, "text/html");
+    const wrap = doc.getElementById("__wrap");
+
+    // 1) Remove empty spans (no text and no element children)
+    removeEmptySpans(wrap);
+
+    // 2) Collapse span > span chains by merging styles (child overrides parent)
+    collapseSpanChains(wrap);
+
+    // 3) Merge adjacent spans that have identical style strings
+    mergeAdjacentSameStyleSpans(wrap);
+
+    // 4) If it's effectively single-line (no <br> and <=1 top-level <div>),
+    //    enforce nowrap so “Default Text” won’t break after styling.
+    enforceSingleLineNowrap(wrap);
+
+    return wrap.innerHTML;
+}
+
+function removeEmptySpans(root) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, null, false);
+    const toRemove = [];
+    while (walker.nextNode()) {
+        const el = walker.currentNode;
+        if (el.tagName === "SPAN") {
+            const hasElementChild = Array.from(el.childNodes).some(n => n.nodeType === 1);
+            const hasText = el.textContent && el.textContent.replace(/\u200B/g, "").trim().length > 0; // ignore zero-width
+            if (!hasElementChild && !hasText) toRemove.push(el);
+        }
+    }
+    toRemove.forEach(el => el.remove());
+}
+
+function collapseSpanChains(root) {
+    let changed = true;
+    while (changed) {
+        changed = false;
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, null, false);
+        const toProcess = [];
+        while (walker.nextNode()) {
+            const el = walker.currentNode;
+            if (el.tagName === "SPAN" &&
+                el.childNodes.length === 1 &&
+                el.firstChild.nodeType === 1 &&
+                el.firstChild.tagName === "SPAN") {
+                toProcess.push(el);
+            }
+        }
+        toProcess.forEach(parent => {
+            const child = parent.firstElementChild;
+            const merged = mergeStyleStrings(parent.getAttribute("style") || "", child.getAttribute("style") || "");
+            if (merged) parent.setAttribute("style", merged); else parent.removeAttribute("style");
+            // move grandchildren up
+            while (child.firstChild) parent.insertBefore(child.firstChild, child);
+            child.remove();
+            changed = true;
+        });
+    }
+}
+function mergeAdjacentSameStyleSpans(root) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, null, false);
+    const parents = new Set();
+    while (walker.nextNode()) {
+        parents.add(walker.currentNode.parentElement);
+    }
+    parents.forEach(parent => {
+        if (!parent) return;
+        for (let i = 0; i < parent.childNodes.length - 1; i++) {
+            const a = parent.childNodes[i];
+            const b = parent.childNodes[i + 1];
+            if (a?.nodeType === 1 && b?.nodeType === 1 &&
+                a.tagName === "SPAN" && b.tagName === "SPAN" &&
+                (a.getAttribute("style") || "") === (b.getAttribute("style") || "")) {
+                // merge b into a
+                while (b.firstChild) a.appendChild(b.firstChild);
+                b.remove();
+                i--; // re-check at same index
+            }
+        }
+    });
+}
+function mergeStyleStrings(a, b) {
+    const map = {};
+    (a || "").split(";").forEach(s => {
+        const [k, v] = s.split(":").map(x => x && x.trim());
+        if (k && v) map[k.toLowerCase()] = v; // normalize keys
+    });
+    (b || "").split(";").forEach(s => {
+        const [k, v] = s.split(":").map(x => x && x.trim());
+        if (k && v) map[k.toLowerCase()] = v; // child wins
+    });
+    const out = Object.entries(map)
+        .filter(([k, v]) => v && v.length)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join("; ");
+    return out;
+}
+function enforceSingleLineNowrap(wrap) {
+    const hasBR = !!wrap.querySelector("br");
+    const topDivs = Array.from(wrap.childNodes).filter(n => n.nodeType === 1 && n.tagName === "DIV");
+
+    if (!hasBR && topDivs.length <= 1) {
+        let lineDiv;
+        if (topDivs.length === 1) {
+            lineDiv = topDivs[0];
+        } else {
+            lineDiv = wrap.ownerDocument.createElement("div");
+            while (wrap.firstChild) lineDiv.appendChild(wrap.firstChild);
+            wrap.appendChild(lineDiv);
+        }
+        lineDiv.style.whiteSpace = "nowrap";
+    }
+}
 function ChangeColor() {
     const colorPicker = document.getElementById("favcolor");
     const color = (colorPicker && colorPicker.value) ? colorPicker.value : "#000000";
 
-    // keep your hidden input + textObjects color
     $("#hdnTextColor").val(color);
     const textColor = document.getElementById("hdnTextColor").value;
     const Obj = (typeof textObjects !== "undefined") ? textObjects.find(o => o.selected) : null;
@@ -5546,35 +5818,25 @@ function ChangeColor() {
     if (!activeBox) return;
 
     if (isEditing) {
-        // apply to current selection in the editor
-        try {
-            textEditorNew.focus();
-            document.execCommand("styleWithCSS", false, true);
-            restoreSelection();
-            document.execCommand("foreColor", false, color);
+        textEditorNew.focus();
+        restoreSelection();
 
-            // sanitize to avoid accidental line breaks on single-line content
-            textEditorNew.innerHTML = sanitizeSingleLine(textEditorNew.innerHTML);
+        const span = applySelectionStyleReplace("color", color); // ← keeps selection
+        normalizeEditorInPlace(textEditorNew, span);             // ← no innerHTML replace
 
-            // sync canvas + object
-            activeBox.text = textEditorNew.innerHTML;
-            if (Obj) Obj.html = activeBox.text;   // 👈 keep textObjects[].html updated
-        } catch (e) {
-            // fallback: apply to whole box
-            applyColorToWholeBox(color);
-            if (Obj) Obj.html = activeBox.text;
-        }
+        activeBox.text = textEditorNew.innerHTML;
+        if (Obj) Obj.html = activeBox.text;
     } else {
-        // editor closed → color whole box
         applyColorToWholeBox(color);
-        // keep editor default color for when it opens later
-        textEditorNew.style.color = color;
         if (Obj) Obj.html = activeBox.text;
     }
 
     drawText();
     console.log(textObjects);
 }
+
+
+
 
 /* ------- helpers ------- */
 
@@ -5605,21 +5867,7 @@ function applyColorToWholeBox(color) {
 }
 
 // If the content is effectively a single line, prevent breaking by using white-space:nowrap
-function sanitizeSingleLineOLD(html) {
-    const doc = new DOMParser().parseFromString(`<div>${html}</div>`, "text/html");
-    const root = doc.body.firstChild; // our wrapper div
-    const hasBR = !!root.querySelector("br");
-    const topDivs = Array.from(root.childNodes).filter(n => n.nodeType === 1 && n.tagName === "DIV");
 
-    if (!hasBR) {
-        if (topDivs.length === 1) {
-            topDivs[0].style.whiteSpace = "nowrap";      // keep one-line lines together
-        } else if (topDivs.length === 0) {
-            root.style.whiteSpace = "nowrap";
-        }
-    }
-    return root.innerHTML;
-}
 function sanitizeSingleLine(html) {
     // Wrap/parse safely
     const doc = new DOMParser().parseFromString(`<div id="__wrap">${html}</div>`, "text/html");
@@ -6928,32 +7176,12 @@ document.addEventListener('click', function (event) {
         popup.style.display = 'none';
     }
 });
-function boldText() {
+function boldTextOLD() {
     //const paddingX = 23;
     //const paddingY = 15;
     textObjects.forEach(obj => {
         if (obj.selected) obj.isBold = !obj.isBold;
-        //// 3) Measure the text
-        //const metrics = ctx.measureText(obj.text);
-        //const measuredWidth = metrics.width;
-
-        //// 4) Measure height if supported; otherwise fallback to fontSize:
-        //let measuredHeight;
-        //if (
-        //    typeof metrics.actualBoundingBoxAscent === "number" &&
-        //    typeof metrics.actualBoundingBoxDescent === "number"
-        //) {
-        //    measuredHeight =
-        //        metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
-        //} else {
-        //    // Fallback: approximate height with fontSize (not pixel‐perfect,
-        //    // but better than nothing)
-        //    measuredHeight = obj.fontSize;
-        //}
-
-        //// 5) Overwrite boundingWidth/boundingHeight with dynamic values + padding:
-        //obj.boundingWidth = measuredWidth + paddingX * 2;
-        //obj.boundingHeight = measuredHeight + paddingY * 2;
+        
      
     });
    
@@ -6961,7 +7189,7 @@ function boldText() {
     updateFontStyleButtons();
 }
 
-function italicText() {
+function italicTextOLD() {
     //const paddingX = 23;
     //const paddingY = 15;
     textObjects.forEach(obj => {
@@ -6991,7 +7219,142 @@ function italicText() {
     drawCanvas("Common");
     updateFontStyleButtons();
 }
+function boldText() {
+    const Obj = (typeof textObjects !== "undefined") ? textObjects.find(o => o.selected) : null;
+    if (!activeBox && !Obj) return;
 
+    if (isEditing) {
+        // Edit mode: toggle bold on the current selection (keeps selection)
+        try {
+            textEditorNew.focus();
+            document.execCommand("styleWithCSS", false, true);
+            restoreSelection();
+            document.execCommand("bold");
+
+            // sync model + canvas
+            activeBox.text = textEditorNew.innerHTML;
+            if (Obj) {
+                Obj.isBold = isSelectionBoldInEditor(textEditorNew); // best-effort reflect state
+                Obj.html = activeBox.text;
+            }
+            redrawCanvas();
+            updateFontStyleButtons();
+            console.log(textObjects);
+            return;
+        } catch (e) {
+            // fall through to whole-box toggle if execCommand fails
+        }
+    }
+
+    // Not editing (or execCommand failed): toggle whole box
+    if (Obj) Obj.isBold = !Obj.isBold;
+    applyWholeBoxStyle({ fontWeight: Obj && Obj.isBold ? "bold" : "" });
+    if (Obj) Obj.html = activeBox.text;
+
+    redrawCanvas();
+    updateFontStyleButtons();
+    
+}
+
+function italicText() {
+    const Obj = (typeof textObjects !== "undefined") ? textObjects.find(o => o.selected) : null;
+    if (!activeBox && !Obj) return;
+
+    if (isEditing) {
+        // Edit mode: toggle italic on the current selection (keeps selection)
+        try {
+            textEditorNew.focus();
+            document.execCommand("styleWithCSS", false, true);
+            restoreSelection();
+            document.execCommand("italic");
+
+            // sync model + canvas
+            activeBox.text = textEditorNew.innerHTML;
+            if (Obj) {
+                Obj.isItalic = isSelectionItalicInEditor(textEditorNew); // best-effort reflect state
+                Obj.html = activeBox.text;
+            }
+            redrawCanvas();
+            updateFontStyleButtons();
+            console.log(textObjects);
+            return;
+        } catch (e) {
+            // fall through to whole-box toggle if execCommand fails
+        }
+    }
+
+    // Not editing (or execCommand failed): toggle whole box
+    if (Obj) Obj.isItalic = !Obj.isItalic;
+    applyWholeBoxStyle({ fontStyle: Obj && Obj.isItalic ? "italic" : "" });
+    if (Obj) Obj.html = activeBox.text;
+
+    redrawCanvas();
+    updateFontStyleButtons();
+  
+}
+
+// Apply a style to the entire box without nuking existing spans.
+// Sets style on each top-level <div> if present; otherwise wraps in a <span>.
+function applyWholeBoxStyle(styleObj) {
+    if (!activeBox) return;
+    const container = document.createElement("div");
+    container.innerHTML = activeBox.text;
+
+    const topDivs = Array.from(container.childNodes).filter(
+        n => n.nodeType === 1 && n.tagName === "DIV"
+    );
+
+    if (topDivs.length > 0) {
+        topDivs.forEach(div => Object.assign(div.style, styleObj));
+    } else {
+        const wrap = document.createElement("div");
+        const span = document.createElement("span");
+        Object.assign(span.style, styleObj);
+        span.innerHTML = container.innerHTML;
+        wrap.appendChild(span);
+        container.innerHTML = wrap.innerHTML;
+    }
+
+    activeBox.text = container.innerHTML;
+}
+
+// Best-effort: detect if current selection is bold in the editor
+function isSelectionBoldInEditor(root) {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return false;
+    const range = sel.getRangeAt(0);
+    let node = range.commonAncestorContainer.nodeType === 1
+        ? range.commonAncestorContainer
+        : range.commonAncestorContainer.parentNode;
+    while (node && node !== root) {
+        const fw = (node.style && node.style.fontWeight) || "";
+        if (node.tagName === "B" || node.tagName === "STRONG" || fw === "bold" || parseInt(fw, 10) >= 600) return true;
+        node = node.parentNode;
+    }
+    return false;
+}
+
+// Best-effort: detect if current selection is italic in the editor
+function isSelectionItalicInEditor(root) {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return false;
+    const range = sel.getRangeAt(0);
+    let node = range.commonAncestorContainer.nodeType === 1
+        ? range.commonAncestorContainer
+        : range.commonAncestorContainer.parentNode;
+    while (node && node !== root) {
+        const fs = (node.style && node.style.fontStyle) || "";
+        if (node.tagName === "I" || node.tagName === "EM" || fs === "italic") return true;
+        node = node.parentNode;
+    }
+    return false;
+}
+
+// Use your canvas draw if present; otherwise your old drawCanvas
+function redrawCanvas() {
+    if (typeof drawText === "function") drawText();
+    else if (typeof drawCanvas === "function") drawCanvas("Common");
+}
 
 //  Sync button “active” state to selection:
 function updateFontStyleButtons() {
@@ -8110,7 +8473,7 @@ function addDefaultText(opts = {}) {
             $("#elementsPopup").hide();
         }
     } catch (_) { /* noop */ }
-    console.log(textObjects);
+    
     // (optional) if you also need your other pipeline:
     // if (typeof drawCanvas === 'function') drawCanvas('Common');
 }
@@ -8680,8 +9043,42 @@ alignList.querySelectorAll("a[data-align]").forEach(a => {
 });
 
 
+function wrapSelectionWithSpan(styleObj) {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return null;
 
-function wrapSelectionWithSpan(span) {
+    const range = sel.getRangeAt(0);
+    if (range.collapsed) return null;
+
+    const span = document.createElement("span");
+    Object.assign(span.style, styleObj);
+
+    // Keep existing formatting: wrap the extracted nodes
+    const frag = range.extractContents();
+    span.appendChild(frag);
+    range.insertNode(span);
+
+    // Reselect the styled text
+    sel.removeAllRanges();
+    const newRange = document.createRange();
+    newRange.selectNodeContents(span);
+    sel.addRange(newRange);
+
+    return span;
+}
+function sanitizeSingleLineInPlace(editorEl) {
+    if (!editorEl) return;
+    if (editorEl.querySelector("br")) return; // skip if multiline on purpose
+
+    // If exactly one top-level DIV, apply nowrap there; otherwise on editor itself
+    if (editorEl.childElementCount === 1 && editorEl.firstElementChild?.tagName === "DIV") {
+        editorEl.firstElementChild.style.whiteSpace = "nowrap";
+    } else {
+        editorEl.style.whiteSpace = "nowrap";
+    }
+}
+
+function wrapSelectionWithSpanOLD(span) {
     restoreSelection();
     if (!savedRange) return;
     const range = savedRange.cloneRange();
