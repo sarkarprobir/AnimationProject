@@ -8385,7 +8385,7 @@ canvas.addEventListener("dblclick", e => {
 
 
 // ✅ Apply any text style and reflect in canvas
-function applyStyleToSelection(styleProp, value) {
+function applyStyleToSelectionOLD(styleProp, value) {
     textEditorNew.focus();
     document.execCommand("styleWithCSS", false, true);
 
@@ -8575,6 +8575,7 @@ function addDefaultText(opts = {}) {
     
     // (optional) if you also need your other pipeline:
     // if (typeof drawCanvas === 'function') drawCanvas('Common');
+    console.log("Add", textObjects);
 }
 
 
@@ -9670,4 +9671,200 @@ function isCornerHandleName(h) {
     return (
         h === "top-left" || h === "top-right" || h === "bottom-left" || h === "bottom-right"
     );
+}
+function isEditorActive() {
+    const ed = window.textEditorNew;
+    if (!ed) return false;
+    const visible = ed.isConnected && ed.offsetParent !== null && ed.style.display !== 'none';
+    const sel = window.getSelection && window.getSelection();
+    const inEd = sel && sel.rangeCount && ed.contains(sel.anchorNode);
+    return visible && inEd;
+}
+
+function getSelectedObj() {
+    return Array.isArray(window.textObjects) ? textObjects.find(o => o.selected) : null;
+}
+
+function isEditorVisible(ed) {
+    return ed && ed.isConnected && ed.style.display !== 'none' && ed.offsetParent !== null;
+}
+
+function ChangeFontSize(val) {
+    const px = /px$/i.test(val) ? val : (parseInt(val, 10) || 16) + 'px';
+    const pxNum = parseInt(px, 10);
+    const ed = window.textEditorNew;
+    const Obj = getSelectedObj();
+
+    // EDITING: apply to current selection (or insert typing-span if caret only)
+    if (isEditorVisible(ed)) {
+        ed.focus();
+
+        const sel = window.getSelection && window.getSelection();
+        const hasRange = sel && sel.rangeCount && ed.contains(sel.anchorNode);
+        if (!hasRange) return; // nothing to do inside editor
+
+        const range = sel.getRangeAt(0);
+
+        if (!range.collapsed) {
+            // Wrap the selected fragment with a span that has font-size
+            const span = document.createElement('span');
+            span.style.fontSize = px;
+
+            const frag = range.extractContents();
+            span.appendChild(frag);
+            range.insertNode(span);
+
+            // caret after new span
+            sel.removeAllRanges();
+            const r = document.createRange();
+            r.setStartAfter(span); r.collapse(true);
+            sel.addRange(r);
+        } else {
+            // Collapsed caret: insert a typing span (zero-width char inside)
+            const span = document.createElement('span');
+            span.style.fontSize = px;
+            span.appendChild(document.createTextNode('\u200b')); // ZWSP so it sticks
+            range.insertNode(span);
+
+            // place caret inside the span (after the zwsp) so new typing uses this size
+            sel.removeAllRanges();
+            const r = document.createRange();
+            r.setStart(span.firstChild, 1);
+            r.collapse(true);
+            sel.addRange(r);
+        }
+
+        // Optional: clean up nested/duplicate spans if you have this helper
+        if (typeof normalizeEditorInPlace === 'function') normalizeEditorInPlace(ed);
+
+        // ✅ persist RAW HTML back to models
+        if (window.activeBox) {
+            activeBox.text = ed.innerHTML;
+            // height autosize if you do that elsewhere is fine; here we just persist
+        }
+        if (Obj) {
+            Obj.html = activeBox ? activeBox.text : ed.innerHTML; // raw HTML (no stringify)
+            Obj.fontSize = pxNum; // meta sync (last used)
+        }
+
+        drawText();
+        console.log("change", textObjects);
+        return;
+    }
+
+    // NOT EDITING: apply to entire box HTML
+    if (window.activeBox) {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = activeBox.text || '';
+
+        // Set font-size on all spans; if you prefer only top-level, narrow this selector
+        tmp.querySelectorAll('span').forEach(s => { s.style.fontSize = px; });
+
+        activeBox.text = tmp.innerHTML;
+    }
+    if (Obj) {
+        Obj.html = activeBox ? activeBox.text : (Obj.html || '');
+        Obj.fontSize = pxNum;
+    }
+
+    drawText();
+    console.log("change", textObjects);
+}
+
+
+
+function applyFontSizeToSelection(sizePx) {
+    const ed = textEditorNew;
+    const sel = window.getSelection();
+    if (!ed || !sel || !sel.rangeCount) return false;
+
+    const range = sel.getRangeAt(0);
+    if (!ed.contains(range.commonAncestorContainer) || range.collapsed) return false;
+
+    const span = document.createElement('span');
+    span.style.fontSize = sizePx;
+
+    // Robust surround
+    const frag = range.extractContents();
+    span.appendChild(frag);
+    range.insertNode(span);
+
+    // merge adjacent same-size spans to avoid fragmentation
+    mergeAdjacentSameStyleSpan(span, 'fontSize');
+
+    // caret after inserted span
+    sel.removeAllRanges();
+    const r = document.createRange();
+    r.setStartAfter(span);
+    r.collapse(true);
+    sel.addRange(r);
+    return true;
+}
+
+function mergeAdjacentSameStyleSpan(node, styleKey) {
+    if (!node || node.nodeType !== 1 || node.tagName !== 'SPAN') return;
+    const val = node.style[styleKey];
+
+    // left
+    let prev = node.previousSibling;
+    while (prev && prev.nodeType === 3 && !prev.nodeValue.trim()) prev = prev.previousSibling;
+    if (prev && prev.nodeType === 1 && prev.tagName === 'SPAN' && prev.style[styleKey] === val) {
+        while (node.firstChild) prev.appendChild(node.firstChild);
+        node.parentNode.removeChild(node);
+        node = prev;
+    }
+    // right
+    let next = node.nextSibling;
+    while (next && next.nodeType === 3 && !next.nodeValue.trim()) next = next.nextSibling;
+    if (next && next.nodeType === 1 && next.tagName === 'SPAN' && next.style[styleKey] === val) {
+        while (next.firstChild) node.appendChild(next.firstChild);
+        next.parentNode.removeChild(next);
+    }
+}
+
+
+// Merge prev/next sibling spans if they have identical font-size styles.
+function mergeAdjacentFontSizeSpans(node) {
+    if (!node || node.nodeType !== 1) return;
+    const getSize = el => (el && el.nodeType === 1 && el.tagName === 'SPAN')
+        ? (el.style && el.style.fontSize) : null;
+
+    // merge left
+    let prev = node.previousSibling;
+    while (prev && prev.nodeType === 3 && !prev.nodeValue.trim()) prev = prev.previousSibling;
+    if (prev && prev.nodeType === 1 && prev.tagName === 'SPAN' && getSize(prev) === getSize(node)) {
+        // append node's children into prev and remove node
+        while (node.firstChild) prev.appendChild(node.firstChild);
+        node.parentNode.removeChild(node);
+        node = prev; // merged node becomes prev
+    }
+
+    // merge right
+    let next = node.nextSibling;
+    while (next && next.nodeType === 3 && !next.nodeValue.trim()) next = next.nextSibling;
+    if (next && next.nodeType === 1 && next.tagName === 'SPAN' && getSize(next) === getSize(node)) {
+        while (next.firstChild) node.appendChild(next.firstChild);
+        next.parentNode.removeChild(next);
+    }
+}
+
+function setAllSpanFontSizes(html, px) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html || '';
+
+    const spans = tmp.querySelectorAll('span');
+    if (spans.length) {
+        spans.forEach(s => { s.style.fontSize = px; });
+    } else {
+        // if no spans exist, wrap text nodes so font-size can persist
+        Array.from(tmp.childNodes).forEach(n => {
+            if (n.nodeType === 3 && n.nodeValue.trim()) {
+                const wrap = document.createElement('span');
+                wrap.style.fontSize = px;
+                n.parentNode.insertBefore(wrap, n);
+                wrap.appendChild(n);
+            }
+        });
+    }
+    return tmp.innerHTML;
 }

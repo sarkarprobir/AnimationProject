@@ -523,7 +523,8 @@ function moveCaretToEnd(el) {
           // Add 'active_direction' to the clicked element
               clickedElement.classList.add('active_tran');
         }
-
+                  document.getElementById('fontSizeSelect')
+        .addEventListener('change', e => ChangeFontSize(e.target.value));
 </script>
 
 
@@ -1132,6 +1133,28 @@ function moveCaretToEnd(el) {
         <button id="boldBtn" onclick="boldText();" class="text_decoration"><i class="fa-solid fa-bold"></i></button>
         <button id="italicBtn" onclick="italicText();" class="text_decoration"><i class="fa-solid fa-italic"></i></button>
         <button class="text_decoration">aA</button>
+    </div>
+    <div id="text_color_tool" class="col-md-12 mb-3">
+        <div class="row FontSize my-4">
+            <div class="col-md-6  d-flex align-items-center">
+                <label>Font Size</label>
+            </div>
+            <div class="col-md-6 text-end d-flex align-items-center justify-content-end">
+                <select id="fontSizeSelect" onchange="ChangeFontSize(this.value)">
+                    <option value="12px">12</option>
+                    <option value="14px">14</option>
+                    <option value="16px" selected>16</option>
+                    <option value="18px">18</option>
+                    <option value="24px">24</option>
+                    <option value="32px">32</option>
+                    <option value="36px">36</option>
+                    <option value="40px">40</option>
+                    <option value="45px">45</option>
+                     <option value="52px">52</option>
+                </select>
+            </div>
+
+        </div>
     </div>
     <div id="text_color_tool" class="col-md-12 mb-3">
         <div class="row FontSize my-4">
