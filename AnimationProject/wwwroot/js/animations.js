@@ -1285,8 +1285,108 @@ function applyAlignInEditor(root, align) {
     }
 }
 
-
+const famSel = document.getElementById('fontFamily');
+if (famSel) {
+    famSel.addEventListener('mousedown', e => {
+        e.preventDefault();                 // don't steal focus
+        textEditorNew && textEditorNew.focus();
+    });
+}
 function OnChangefontFamily(value) {
+    $("#fontFamily").val(value);
+    const fontFamily = document.getElementById("fontFamily").value || "Arial";
+
+    // meta
+    const Obj = Array.isArray(textObjects) ? textObjects.find(o => o.selected) : null;
+    if (Obj) Obj.fontFamily = fontFamily;
+
+    if (!activeBox) { drawText?.(); return; }
+
+    const ed = textEditorNew;
+    const hasRange = !!_lastEditorRange && ed && ed.isConnected && ed.contains(_lastEditorRange.commonAncestorContainer);
+
+    if (isEditing && hasRange) {
+        ed.focus();
+
+        // restore saved selection
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(_lastEditorRange);
+
+        // Try your helper first (some setups support this)
+        let ok = false;
+        if (typeof applySelectionStyleReplace === "function") {
+            ok = !!(applySelectionStyleReplace("fontFamily", fontFamily) ||
+                applySelectionStyleReplace("font-family", fontFamily));
+        }
+
+        // Fallback: manual wrap
+        if (!ok) {
+            const r = sel.getRangeAt(0);
+            if (!r.collapsed) {
+                const span = document.createElement("span");
+                span.style.fontFamily = fontFamily; // ← raw name; browser quotes if needed
+                const frag = r.extractContents();
+                span.appendChild(frag);
+                r.insertNode(span);
+
+                // caret after + recache range
+                sel.removeAllRanges();
+                const after = document.createRange();
+                after.setStartAfter(span); after.collapse(true);
+                sel.addRange(after);
+                _lastEditorRange = after.cloneRange();
+                ok = true;
+            }
+        }
+
+        // normalize (optional) → persist → redraw
+        if (ok && typeof normalizeEditorInPlace === "function") {
+            normalizeEditorInPlace(ed);
+        }
+        activeBox.text = ed.innerHTML;
+        if (Obj) Obj.html = activeBox.text;
+
+        drawText();
+        console.log(textObjects);
+        return;
+    }
+
+    // Not editing (or no valid selection) → apply to whole box
+    applyFontFamilyToWholeBox(fontFamily);
+    if (Obj) Obj.html = activeBox.text;
+
+    drawText();
+    console.log(textObjects);
+}
+function applyFontFamilyToWholeBox(family) {
+    const container = document.createElement("div");
+    container.innerHTML = activeBox.text || "";
+
+    const topDivs = Array.from(container.childNodes).filter(n => n.nodeType === 1 && n.tagName === "DIV");
+
+    if (topDivs.length > 0) {
+        topDivs.forEach(div => {
+            if (!div.style.fontFamily) div.style.fontFamily = family; // raw name
+        });
+    } else {
+        const wrap = document.createElement("div");
+        const span = document.createElement("span");
+        span.style.fontFamily = family; // raw name
+        span.innerHTML = container.innerHTML;
+        wrap.appendChild(span);
+        container.innerHTML = wrap.innerHTML;
+    }
+
+    if (typeof sanitizeSingleLine === "function") {
+        container.innerHTML = sanitizeSingleLine(container.innerHTML);
+    }
+
+    activeBox.text = container.innerHTML;
+}
+
+
+function OnChangefontFamilyOld(value) {
     $("#fontFamily").val(value);
     const fontFamily = document.getElementById("fontFamily").value || "Arial";
     const familyForCss = /[, ]/.test(fontFamily) ? `"${fontFamily}"` : fontFamily;
@@ -1319,7 +1419,7 @@ function OnChangefontFamily(value) {
 
 // Apply font-family to the entire box without blowing away other inline styles.
 // If you want to FORCE override everywhere, set style.fontFamily on every element via querySelectorAll("*").
-function applyFontFamilyToWholeBox(family) {
+function applyFontFamilyToWholeBoxOLD(family) {
     const container = document.createElement("div");
     container.innerHTML = activeBox.text;
 
@@ -5905,7 +6005,83 @@ function enforceSingleLineNowrap(wrap) {
         lineDiv.style.whiteSpace = "nowrap";
     }
 }
+const colorInput = document.getElementById('favcolor');
+if (colorInput) {
+    colorInput.addEventListener('mousedown', e => {
+        e.preventDefault();
+        textEditorNew && textEditorNew.focus();
+    });
+}
 function ChangeColor() {
+    const colorPicker = document.getElementById("favcolor");
+    const color = (colorPicker && colorPicker.value) ? colorPicker.value : "#000000";
+
+    $("#hdnTextColor").val(color);
+    const textColor = document.getElementById("hdnTextColor").value;
+
+    const Obj = Array.isArray(textObjects) ? textObjects.find(o => o.selected) : null;
+    if (Obj) Obj.textColor = textColor || "black";
+
+    if (!activeBox) return;
+
+    const ed = textEditorNew;
+    const hasRange = !!_lastEditorRange && ed && ed.isConnected && ed.contains(_lastEditorRange.commonAncestorContainer);
+
+    if (isEditing && hasRange) {
+        ed.focus();
+
+        // restore saved selection
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(_lastEditorRange);
+
+        // try your helper first
+        let ok = false;
+        if (typeof applySelectionStyleReplace === "function") {
+            ok = !!applySelectionStyleReplace("color", color);
+        }
+
+        // fallback: manual wrap if helper didn't apply
+        if (!ok) {
+            const r = sel.getRangeAt(0);
+            if (!r.collapsed) {
+                const span = document.createElement("span");
+                span.style.color = color;
+                const frag = r.extractContents();
+                span.appendChild(frag);
+                r.insertNode(span);
+
+                // move caret after and refresh cached range
+                sel.removeAllRanges();
+                const after = document.createRange();
+                after.setStartAfter(span); after.collapse(true);
+                sel.addRange(after);
+                _lastEditorRange = after.cloneRange();
+                ok = true;
+            }
+        }
+
+        // normalize (if available), persist, redraw
+        if (ok && typeof normalizeEditorInPlace === "function") {
+            normalizeEditorInPlace(ed);
+        }
+
+        activeBox.text = ed.innerHTML;
+        if (Obj) Obj.html = activeBox.text;
+
+        drawText();
+        return;
+    }
+
+    // Not editing or no valid selection → color the whole box
+    applyColorToWholeBox(color);
+    if (Obj) Obj.html = activeBox.text;
+
+    drawText();
+    console.log("Color",textObjects);
+}
+
+function ChangeColorOLD() {
     const colorPicker = document.getElementById("favcolor");
     const color = (colorPicker && colorPicker.value) ? colorPicker.value : "#000000";
 
@@ -7318,7 +7494,138 @@ function italicTextOLD() {
     drawCanvas("Common");
     updateFontStyleButtons();
 }
+document.getElementById('btnBold')?.addEventListener('mousedown', e => { e.preventDefault(); textEditorNew?.focus(); });
+document.getElementById('btnItalic')?.addEventListener('mousedown', e => { e.preventDefault(); textEditorNew?.focus(); });
+
+// ensure you already have these from the font-size/color fixes
+// let _lastEditorRange = null;
+// function captureEditorRange() { ... add listeners to textEditorNew + document ... }
+
 function boldText() {
+    const Obj = (typeof textObjects !== "undefined") ? textObjects.find(o => o.selected) : null;
+    if (!activeBox && !Obj) return;
+
+    if (isEditing && textEditorNew) {
+        textEditorNew.focus();
+
+        // restore last selection inside editor (reliable)
+        const sel = window.getSelection();
+        const canRestore = _lastEditorRange && textEditorNew.contains(_lastEditorRange.commonAncestorContainer);
+        if (canRestore) { sel.removeAllRanges(); sel.addRange(_lastEditorRange); }
+
+        let ok = false;
+        try {
+            document.execCommand("styleWithCSS", false, true);
+            document.execCommand("bold");
+            ok = true;
+        } catch (_) { }
+
+        // fallback: manual wrap if execCommand failed or selection collapsed
+        if (!ok) {
+            if (sel.rangeCount) {
+                const r = sel.getRangeAt(0);
+                if (!r.collapsed) {
+                    const span = document.createElement("span");
+                    span.style.fontWeight = "bold";
+                    span.appendChild(r.extractContents());
+                    r.insertNode(span);
+
+                    // caret after + cache
+                    sel.removeAllRanges();
+                    const after = document.createRange();
+                    after.setStartAfter(span); after.collapse(true);
+                    sel.addRange(after);
+                    _lastEditorRange = after.cloneRange();
+                    ok = true;
+                }
+            }
+        }
+
+        if (typeof normalizeEditorInPlace === "function") normalizeEditorInPlace(textEditorNew);
+
+        // persist + redraw
+        activeBox.text = textEditorNew.innerHTML;
+        if (Obj) {
+            Obj.isBold = isSelectionBoldInEditor?.(textEditorNew) ?? Obj.isBold;
+            Obj.html = activeBox.text;
+        }
+        if (typeof redrawCanvas === "function") redrawCanvas();
+        else drawText();
+        console.log(textObjects);
+        return;
+    }
+
+    // Not editing → toggle whole box
+    if (Obj) Obj.isBold = !Obj.isBold;
+    applyWholeBoxStyle({ fontWeight: Obj && Obj.isBold ? "bold" : "" });
+    if (Obj) Obj.html = activeBox.text;
+
+    if (typeof redrawCanvas === "function") redrawCanvas();
+    else drawText();
+    console.log(textObjects);
+}
+
+function italicText() {
+    const Obj = (typeof textObjects !== "undefined") ? textObjects.find(o => o.selected) : null;
+    if (!activeBox && !Obj) return;
+
+    if (isEditing && textEditorNew) {
+        textEditorNew.focus();
+
+        const sel = window.getSelection();
+        const canRestore = _lastEditorRange && textEditorNew.contains(_lastEditorRange.commonAncestorContainer);
+        if (canRestore) { sel.removeAllRanges(); sel.addRange(_lastEditorRange); }
+
+        let ok = false;
+        try {
+            document.execCommand("styleWithCSS", false, true);
+            document.execCommand("italic");
+            ok = true;
+        } catch (_) { }
+
+        if (!ok) {
+            if (sel.rangeCount) {
+                const r = sel.getRangeAt(0);
+                if (!r.collapsed) {
+                    const span = document.createElement("span");
+                    span.style.fontStyle = "italic";
+                    span.appendChild(r.extractContents());
+                    r.insertNode(span);
+
+                    sel.removeAllRanges();
+                    const after = document.createRange();
+                    after.setStartAfter(span); after.collapse(true);
+                    sel.addRange(after);
+                    _lastEditorRange = after.cloneRange();
+                    ok = true;
+                }
+            }
+        }
+
+        if (typeof normalizeEditorInPlace === "function") normalizeEditorInPlace(textEditorNew);
+
+        activeBox.text = textEditorNew.innerHTML;
+        if (Obj) {
+            Obj.isItalic = isSelectionItalicInEditor?.(textEditorNew) ?? Obj.isItalic;
+            Obj.html = activeBox.text;
+        }
+        if (typeof redrawCanvas === "function") redrawCanvas();
+        else drawText();
+        console.log(textObjects);
+        return;
+    }
+
+    // Not editing → toggle whole box
+    if (Obj) Obj.isItalic = !Obj.isItalic;
+    applyWholeBoxStyle({ fontStyle: Obj && Obj.isItalic ? "italic" : "" });
+    if (Obj) Obj.html = activeBox.text;
+
+    if (typeof redrawCanvas === "function") redrawCanvas();
+    else drawText();
+    console.log(textObjects);
+}
+
+function boldTextOLD() {
     const Obj = (typeof textObjects !== "undefined") ? textObjects.find(o => o.selected) : null;
     if (!activeBox && !Obj) return;
 
@@ -7355,7 +7662,7 @@ function boldText() {
     
 }
 
-function italicText() {
+function italicTextOLD() {
     const Obj = (typeof textObjects !== "undefined") ? textObjects.find(o => o.selected) : null;
     if (!activeBox && !Obj) return;
 
@@ -8601,9 +8908,32 @@ window.onload = () => {
 
 
 // Track selection changes within the editor
-textEditorNew.addEventListener("mouseup", saveSelection);
-textEditorNew.addEventListener("keyup", saveSelection);
+let _lastEditorRange = null;
 
+function captureEditorRange() {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    const r = sel.getRangeAt(0);
+    if (textEditorNew && textEditorNew.contains(r.commonAncestorContainer)) {
+        // clone so it survives DOM edits
+        _lastEditorRange = r.cloneRange();
+    }
+}
+
+if (window.textEditorNew) {
+    textEditorNew.addEventListener('mouseup', captureEditorRange);
+    textEditorNew.addEventListener('keyup', captureEditorRange);
+    document.addEventListener('selectionchange', captureEditorRange);
+}
+// on the <select id="fontSizeSelect">
+const fontSel = document.getElementById('fontSizeSelect');
+if (fontSel) {
+    fontSel.addEventListener('mousedown', e => {
+        // keep focus in the editor so selection doesn’t collapse
+        e.preventDefault();
+        textEditorNew && textEditorNew.focus();
+    });
+}
 // FONT SIZE LINKS
 //sizeList.querySelectorAll("a").forEach(link => {
 //    link.addEventListener("click", e => {
@@ -9689,7 +10019,7 @@ function isEditorVisible(ed) {
     return ed && ed.isConnected && ed.style.display !== 'none' && ed.offsetParent !== null;
 }
 
-function ChangeFontSize(val) {
+function ChangeFontSizeOld(val) {
     // normalize to px
     const px = /px$/i.test(val) ? val : (parseInt(val, 10) || 16) + 'px';
 
@@ -9725,6 +10055,69 @@ function ChangeFontSize(val) {
 
     drawText();
     console.log("change", textObjects);
+}
+function ChangeFontSize(val) {
+    const px = /px$/i.test(val) ? val : (parseInt(val, 10) || 16) + 'px';
+    const Obj = Array.isArray(textObjects) ? textObjects.find(o => o.selected) : null;
+    if (Obj) Obj.fontSize = parseInt(px, 10);
+    if (!activeBox) return;
+
+    // Are we editing and do we have a valid range?
+    const ed = textEditorNew;
+    const hasRange =
+        !!_lastEditorRange &&
+        ed && ed.isConnected &&
+        ed.contains(_lastEditorRange.commonAncestorContainer);
+
+    if (isEditing && hasRange) {
+        ed.focus();
+
+        // restore the saved range
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(_lastEditorRange);
+
+        // try your helper; if it returns falsy, do a robust manual wrap
+        let ok = false;
+        if (typeof applySelectionStyleReplace === 'function') {
+            ok = !!(applySelectionStyleReplace('fontSize', px) ||
+                applySelectionStyleReplace('font-size', px));
+        }
+        if (!ok) {
+            // manual surround
+            const r = sel.getRangeAt(0);
+            if (!r.collapsed) {
+                const span = document.createElement('span');
+                span.style.fontSize = px;
+                const frag = r.extractContents();
+                span.appendChild(frag);
+                r.insertNode(span);
+
+                // move caret after and re-capture for next time
+                sel.removeAllRanges();
+                const after = document.createRange();
+                after.setStartAfter(span); after.collapse(true);
+                sel.addRange(after);
+                _lastEditorRange = after.cloneRange();
+                ok = true;
+            }
+        }
+
+        // normalize (if you have it), persist, redraw
+        if (ok) {
+            if (typeof normalizeEditorInPlace === 'function') normalizeEditorInPlace(ed);
+            activeBox.text = ed.innerHTML;
+            if (Obj) Obj.html = activeBox.text;
+            drawText();
+            console.log("size",textObjects);
+        }
+        return;
+    }
+
+    // Not editing or no valid range → apply to whole box
+    applyFontSizeToWholeBox(px);
+    if (Obj) Obj.html = activeBox.text;
+    drawText();
 }
 
 function applyFontSizeToWholeBox(px) {
