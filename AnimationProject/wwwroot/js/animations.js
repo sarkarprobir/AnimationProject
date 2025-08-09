@@ -8861,6 +8861,65 @@ function applyTextEditorStyleFromBoxNEWOLD(box) {
     syncEditorLineSpacingFromBox(box);
 }
 function applyTextEditorStyleFromBox(box) {
+    if (!box || !window.textEditorNew) return;
+    const ed = textEditorNew;
+
+    // keep your existing spacing/align logic
+    const spacing = (typeof box.lineSpacing === "number" && isFinite(box.lineSpacing))
+        ? box.lineSpacing : 1.2;
+    ed.style.lineHeight = String(spacing);
+    ed.style.textAlign = box.align || "left";
+    ed.style.whiteSpace = "pre-wrap";
+    ed.style.wordBreak = "break-word";
+
+    // ---------- NEW: width must match the select box ----------
+    // If you have the DOM node of the red box, use it; otherwise fall back to box.width
+    const selectEl = (box.el instanceof Element) ? box.el
+        : document.getElementById(box.id) || null;
+
+    let contentW = Number(box.width) || 0;
+    if (selectEl) {
+        const cs = getComputedStyle(selectEl);
+        const padX = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+        contentW = Math.max(0, selectEl.clientWidth - padX);
+    }
+    if (contentW > 0) ed.style.width = contentW + "px";  // <-- key to matching wrapping
+    // ----------------------------------------------------------
+
+    // Make sure line wrappers behave like lines
+    Array.from(ed.children).forEach(n => {
+        if (n.tagName === "DIV") {
+            n.style.display = "block";
+            n.style.margin = "0";
+            n.style.lineHeight = String(spacing);
+        }
+    });
+
+    // Measure and set height (unchanged idea)
+    ed.style.height = "auto";
+    const csEd = getComputedStyle(ed);
+    const meas = document.createElement("div");
+    Object.assign(meas.style, {
+        position: "absolute",
+        visibility: "hidden",
+        whiteSpace: "pre-wrap",
+        boxSizing: csEd.boxSizing,
+        padding: csEd.padding,
+        width: ed.getBoundingClientRect().width + "px",
+        lineHeight: String(spacing),
+        font: csEd.font,
+        letterSpacing: csEd.letterSpacing
+    });
+    meas.innerHTML = ed.innerHTML;
+    document.body.appendChild(meas);
+    const needed = meas.scrollHeight;
+    document.body.removeChild(meas);
+
+    ed.style.height = Math.max(needed, Number(box.height) || 0) + "px";
+}
+
+
+function applyTextEditorStyleFromBox_09_08(box) {
     if (!box) return;
 
     // Use the value coming from your changeLineSpacing() updates
