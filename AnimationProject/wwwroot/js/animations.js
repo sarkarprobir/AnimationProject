@@ -9690,85 +9690,67 @@ function isEditorVisible(ed) {
 }
 
 function ChangeFontSize(val) {
+    // normalize to px
     const px = /px$/i.test(val) ? val : (parseInt(val, 10) || 16) + 'px';
-    const pxNum = parseInt(px, 10);
-    const ed = window.textEditorNew;
-    const Obj = getSelectedObj();
 
-    // EDITING: apply to current selection (or insert typing-span if caret only)
-    if (isEditorVisible(ed)) {
-        ed.focus();
+    const Obj = (typeof textObjects !== "undefined") ? textObjects.find(o => o.selected) : null;
+    if (Obj) Obj.fontSize = parseInt(px, 10); // optional meta sync like your color meta
 
-        const sel = window.getSelection && window.getSelection();
-        const hasRange = sel && sel.rangeCount && ed.contains(sel.anchorNode);
-        if (!hasRange) return; // nothing to do inside editor
+    if (!activeBox) return;
 
-        const range = sel.getRangeAt(0);
+    if (isEditing) {
+        // ----- EDITING: apply to current selection, then persist -----
+        textEditorNew.focus();
+        restoreSelection(); // same as your color path
 
-        if (!range.collapsed) {
-            // Wrap the selected fragment with a span that has font-size
-            const span = document.createElement('span');
-            span.style.fontSize = px;
-
-            const frag = range.extractContents();
-            span.appendChild(frag);
-            range.insertNode(span);
-
-            // caret after new span
-            sel.removeAllRanges();
-            const r = document.createRange();
-            r.setStartAfter(span); r.collapse(true);
-            sel.addRange(r);
-        } else {
-            // Collapsed caret: insert a typing span (zero-width char inside)
-            const span = document.createElement('span');
-            span.style.fontSize = px;
-            span.appendChild(document.createTextNode('\u200b')); // ZWSP so it sticks
-            range.insertNode(span);
-
-            // place caret inside the span (after the zwsp) so new typing uses this size
-            sel.removeAllRanges();
-            const r = document.createRange();
-            r.setStart(span.firstChild, 1);
-            r.collapse(true);
-            sel.addRange(r);
+        // Try your existing helper first (camelCase); if it returns falsy, try hyphen case
+        let span = applySelectionStyleReplace?.("fontSize", px);
+        if (!span && typeof applySelectionStyleReplace === "function") {
+            span = applySelectionStyleReplace("font-size", px);
         }
 
-        // Optional: clean up nested/duplicate spans if you have this helper
-        if (typeof normalizeEditorInPlace === 'function') normalizeEditorInPlace(ed);
-
-        // ✅ persist RAW HTML back to models
-        if (window.activeBox) {
-            activeBox.text = ed.innerHTML;
-            // height autosize if you do that elsewhere is fine; here we just persist
-        }
-        if (Obj) {
-            Obj.html = activeBox ? activeBox.text : ed.innerHTML; // raw HTML (no stringify)
-            Obj.fontSize = pxNum; // meta sync (last used)
+        // Keep DOM clean like you do for color
+        if (typeof normalizeEditorInPlace === "function") {
+            normalizeEditorInPlace(textEditorNew, span);
         }
 
-        drawText();
-        console.log("change", textObjects);
-        return;
-    }
-
-    // NOT EDITING: apply to entire box HTML
-    if (window.activeBox) {
-        const tmp = document.createElement('div');
-        tmp.innerHTML = activeBox.text || '';
-
-        // Set font-size on all spans; if you prefer only top-level, narrow this selector
-        tmp.querySelectorAll('span').forEach(s => { s.style.fontSize = px; });
-
-        activeBox.text = tmp.innerHTML;
-    }
-    if (Obj) {
-        Obj.html = activeBox ? activeBox.text : (Obj.html || '');
-        Obj.fontSize = pxNum;
+        // Persist RAW html back to models (this is what updates textObjects.html)
+        activeBox.text = textEditorNew.innerHTML;
+        if (Obj) Obj.html = activeBox.text;
+    } else {
+        // ----- NOT EDITING: apply to entire box html, then persist -----
+        applyFontSizeToWholeBox(px);
+        if (Obj) Obj.html = activeBox.text;
     }
 
     drawText();
     console.log("change", textObjects);
+}
+
+function applyFontSizeToWholeBox(px) {
+    const container = document.createElement("div");
+    container.innerHTML = activeBox.text || "";
+
+    // Prefer updating existing spans so we don’t overwrite other per-char styles
+    const spans = container.querySelectorAll("span");
+    if (spans.length > 0) {
+        spans.forEach(s => { s.style.fontSize = px; });
+    } else {
+        // No spans? wrap content once so size persists (like your color fallback)
+        const wrap = document.createElement("div");
+        const span = document.createElement("span");
+        span.style.fontSize = px;
+        span.innerHTML = container.innerHTML;
+        wrap.appendChild(span);
+        container.innerHTML = wrap.innerHTML;
+    }
+
+    // optional: use your sanitizer to avoid unnecessary extra wrapper on single line
+    if (typeof sanitizeSingleLine === "function") {
+        container.innerHTML = sanitizeSingleLine(container.innerHTML);
+    }
+
+    activeBox.text = container.innerHTML; // <-- PERSIST
 }
 
 
