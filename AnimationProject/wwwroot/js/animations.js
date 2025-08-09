@@ -5495,39 +5495,55 @@ function HideShowRightPannel(selectedType) {
         HideLoader();
     }
 }
+document.addEventListener('keydown', (e) => {
+    if (!window.isEditing || !window.textEditorNew) return;
 
-// Arrow-key nudge: move all selected items by the arrow direction
-document.addEventListener('keydown', function (e) {
-    // only when the canvas is “active”—you can tighten this to a focused flag if you like
-    const arrowKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
-    if (!arrowKeys.includes(e.key)) return;
+    const ed = textEditorNew;
+    const inEditor = ed.contains(document.activeElement) || ed.contains((window.getSelection()?.anchorNode) || null);
+    if (!inEditor) return;
 
-    e.preventDefault();
-    // how many pixels per tap? +Shift for larger step
-    const step = e.shiftKey ? 10 : 1;
-    let dx = 0, dy = 0;
-    switch (e.key) {
-        case 'ArrowUp': dy = -step; break;
-        case 'ArrowDown': dy = step; break;
-        case 'ArrowLeft': dx = -step; break;
-        case 'ArrowRight': dx = step; break;
+    // Let browser handle arrows/home/end/page… naturally, just stop canvas listeners
+    // NOTE: we don't preventDefault (except for Tab handled above), only stopPropagation.
+    const passThroughKeys = [
+        'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'
+    ];
+    if (passThroughKeys.includes(e.key)) {
+        e.stopPropagation();
     }
+    // Tab is handled on the editor element (above)
+}, true);
+// Arrow-key nudge: move all selected items by the arrow direction
+//document.addEventListener('keydown', function (e) {
+//    // only when the canvas is “active”—you can tighten this to a focused flag if you like
+//    const arrowKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+//    if (!arrowKeys.includes(e.key)) return;
 
-    // move each selected text
-    textObjects.filter(o => o.selected).forEach(o => {
-        o.x += dx;
-        o.y += dy;
-    });
+//    e.preventDefault();
+//    // how many pixels per tap? +Shift for larger step
+//    const step = e.shiftKey ? 10 : 1;
+//    let dx = 0, dy = 0;
+//    switch (e.key) {
+//        case 'ArrowUp': dy = -step; break;
+//        case 'ArrowDown': dy = step; break;
+//        case 'ArrowLeft': dx = -step; break;
+//        case 'ArrowRight': dx = step; break;
+//    }
 
-    // move each selected image
-    images.filter(i => i.selected).forEach(i => {
-        i.x += dx;
-        i.y += dy;
-    });
+//    // move each selected text
+//    textObjects.filter(o => o.selected).forEach(o => {
+//        o.x += dx;
+//        o.y += dy;
+//    });
 
-    // redraw with updated positions
-    drawCanvas('Common');
-});
+//    // move each selected image
+//    images.filter(i => i.selected).forEach(i => {
+//        i.x += dx;
+//        i.y += dy;
+//    });
+
+//    // redraw with updated positions
+//    drawCanvas('Common');
+//});
 
 function updateGroupCheckbox() {
     const sel = [
@@ -9720,6 +9736,12 @@ function showEditorAtBox(box) {
     // keep the rest of your styling logic
     applyTextEditorStyleFromBox(box);
 
+    // ✅ enable keyboard support once
+    if (!textEditorNew._keyboardEnabled) {
+        enableEditorKeyboard();
+        textEditorNew._keyboardEnabled = true;
+    }
+
     textEditorNew.focus();
     isEditing = true;
 }
@@ -10242,4 +10264,50 @@ function setAllSpanFontSizes(html, px) {
         });
     }
     return tmp.innerHTML;
+}
+
+
+function insertTabIntoEditor(ed) {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    const r = sel.getRangeAt(0);
+    if (!ed.contains(r.commonAncestorContainer)) return;
+
+    const tabText = '\u00A0\u00A0\u00A0\u00A0'; // 4 spaces (non-breaking)
+    const node = document.createTextNode(tabText);
+
+    r.deleteContents();
+    r.insertNode(node);
+
+    // place caret after the inserted spaces
+    sel.removeAllRanges();
+    const after = document.createRange();
+    after.setStartAfter(node);
+    after.collapse(true);
+    sel.addRange(after);
+
+    // keep your models/canvas in sync
+    if (window.activeBox) activeBox.text = ed.innerHTML;
+    if (typeof drawText === 'function') drawText();
+    if (typeof captureEditorRange === 'function') captureEditorRange();
+}
+
+function enableEditorKeyboard() {
+    const ed = window.textEditorNew;
+    if (!ed) return;
+
+    ed.setAttribute('contenteditable', 'true');
+    ed.setAttribute('tabindex', '0');
+    ed.spellcheck = false;
+    ed.autocapitalize = 'off';
+    ed.autocomplete = 'off';
+    ed.autocorrect = 'off';
+
+    // TAB should insert spaces inside the editor
+    ed.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            insertTabIntoEditor(ed);
+        }
+    }, true);
 }
