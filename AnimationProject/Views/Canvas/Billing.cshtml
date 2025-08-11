@@ -210,6 +210,16 @@
             transform: rotate(45deg);
         }
     /*modal check mark*/
+    #downloadPdfBtn{
+        color: #fff;
+        background-color: #6214fe;
+        box-shadow: none !important;
+        border-radius: 3px;
+    }
+
+    #downloadPdfBtn:hover{
+        background-color: #000;
+    }
 </style>
 
 <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
@@ -303,179 +313,67 @@
                 <a href="/Canvas/Templates" class="d-flex justify-content-center align-items-center btn btn-secondary my-button browse_button b_rad4">Browse The Template</a>
             </div>
         </div>
+        
         <div class="row">
-            <div class="col-md-9">
-                <!-- Schedule Table -->
-                <table class="table table-bordered schedule-table">
+            <div class="col-md-12">
+                <!-- Billing Table -->
+                <table class="table table-bordered schedule-table" id="billingTable">
                     <thead>
                         <tr>
-                            <th style="width: 10%">24 Hrs</th>
-                            <th>Mon</th>
-                            <th>Tue</th>
-                            <th>Wed</th>
-                            <th>Thu</th>
-                            <th>Fri</th>
-                            <th>Sat</th>
-                            <th>Sun</th>
+                            <th style="width: 10%">#</th>
+                            <th>Item Description</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Tax</th>
+                            <th>Discount</th>
+                            <th>Total</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Rows from 06 AM to 06 AM (next day) -->
-                        <!-- Example static row -->
                         <tr>
-                            <td>06 AM <br />07 AM</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
+                            <td>1</td>
+                            <td>Product A</td>
+                            <td>2</td>
+                            <td>$50</td>
+                            <td>$5</td>
+                            <td>$0</td>
+                            <td>$105</td>
+                            <td>Paid</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Product B</td>
+                            <td>1</td>
+                            <td>$30</td>
+                            <td>$3</td>
+                            <td>$5</td>
+                            <td>$28</td>
+                            <td>Pending</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>Service Fee</td>
+                            <td>1</td>
+                            <td>$20</td>
+                            <td>$0</td>
+                            <td>$0</td>
+                            <td>$20</td>
+                            <td>Paid</td>
+                        </tr>
+                        <tr>
+                            <td colspan="6" class="text-end"><strong>Grand Total</strong></td>
+                            <td><strong>$153</strong></td>
                             <td></td>
                         </tr>
-                        <!-- Example static row -->
-                        <tr>
-                            <td>08 AM <br />09 AM</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        <!-- Example static row -->
-                        <tr>
-                            <td>10 AM <br />11 AM</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        <!-- Example static row -->
-                        <tr>
-                            <td>12 AM <br />13 PM</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        <!-- Example static row -->
-                        <tr>
-                            <td>14 PM <br />15 PM</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        <!-- Example static row -->
-                        <tr>
-                            <td>16 PM <br />17 PM</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        <!-- Example static row -->
-                        <tr>
-                            <td>18 PM <br />19 PM</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        <!-- Example static row -->
-                        <tr>
-                            <td>20 PM <br />21 PM</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        <!-- Example static row -->
-                        <tr>
-                            <td>22 PM <br />23 PM</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        <!-- Example static row -->
-                        <tr>
-                            <td>00 PM <br />01 AM</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        <!-- Example static row -->
-                        <tr>
-                            <td>02 AM <br />03 AM</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        <!-- Example static row -->
-                        <tr>
-                            <td>04 AM <br />05 AM</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        <!-- Example static row -->
-                        <tr>
-                            <td>05 AM <br />06 AM</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-
                     </tbody>
                 </table>
-            </div>
-            @* <div class="col-md-3">
-                <h6><strong>Vertical Aniboards</strong></h6>
-                <div class="vertical-aniboards d-flex  flex-wrap justify-content-start">
-                    <img src="~/images/Vertical-Menuboard.png" class="img-fluid">
-                    <img src="~/images/Vertical-Menuboard.png" class="img-fluid">
-                    <img src="~/images/Vertical-Menuboard.png" class="img-fluid">
+
+                <!-- Download PDF Button -->
+                <div class="d-flex justify-content-end">
+                    <button id="downloadPdfBtn" class="btn btn-primary mb-3">Download PDF</button>
                 </div>
-            </div> *@
+            </div>
         </div>
 
 
@@ -581,5 +479,23 @@
                     this.classList.toggle('active');
                 });
             });
+    });
+</script>
+<!-- jsPDF & html2canvas for PDF download -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+    document.getElementById('downloadPdfBtn').addEventListener('click', function () {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        html2canvas(document.getElementById("billingTable")).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const imgWidth = 190;
+            const imgHeight = canvas.height * imgWidth / canvas.width;
+            doc.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+            doc.save("billing_invoice.pdf");
+        });
     });
 </script>
