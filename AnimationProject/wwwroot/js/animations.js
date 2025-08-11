@@ -8345,7 +8345,7 @@ function drawText() {
             const lineHeight = maxFontPx * (box.lineSpacing || 1.2);
             let x = cursorX;
             segments.forEach(segment => {
-                if (x + segment.width > box.x + box.width - 10) {
+                if (x + segment.width > box.x + box.width - .01) {
                     cursorY += lineHeight;
                     x = cursorX;
                 }
