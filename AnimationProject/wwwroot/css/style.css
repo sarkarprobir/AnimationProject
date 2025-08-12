@@ -1043,19 +1043,9 @@ body {
     font-size: 1rem;
 }
 
-/*.panel-left-gallery {
-    width: 500px;
-    height: 100vh;
-    background: var(--color-white);*/
-    /* z-index: 9; */
-    /*padding: 25px 30px;
-    position: absolute;
-    left: 0px;
-    top: 10px;
-}*/
 .tabs {
     display: flex;
-    justify-content: space-between;
+    gap: 20px;
     width: 85% !important;
 }
 
