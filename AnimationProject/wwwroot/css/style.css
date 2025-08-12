@@ -20,7 +20,9 @@ Body {
     overflow-y: auto;
     font-family: "Nunito Sans", serif;
 }
- 
+a:hover {
+    color: #c9cccf !important;
+}
 
 .fixed-top {
     position: fixed;
