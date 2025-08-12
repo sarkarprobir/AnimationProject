@@ -30,9 +30,7 @@
         transform: scale(1.02);
     }
 
-</style >
 
-<style >
 
 input[type="color" i] {
     width: 30px;
@@ -236,11 +234,6 @@ body {
     color: var(--color-muted-grey);
 }
 
-/* .shapes_tabs a {
-                    font-size: 14px;
-                    text-decoration: none;
-                    color: black;
-                } */
 
 .left-panel-imput {
     flex: 1;
@@ -258,17 +251,9 @@ body {
 }
 
 .temp_gallery {
-    /* display: flex;
-                    gap: 8px;
-                    flex-wrap: wrap; */
     overflow-y: hidden;
     min-height: 432px;
 }
-
-/* .temp_gallery img {
-                        width: auto;
-                        height: 147px;
-                    } */
 
 .gallery_head {
     font-size: 18px;
@@ -458,7 +443,7 @@ body {
     font-size: 30px;
     line-height: 20px;
     overflow-y: hidden;
-    max-height: 1000px; /* allow scroll if text overflows manually resized box */
+    max-height: 1000px; 
     z-index: 9999;
 }
 
