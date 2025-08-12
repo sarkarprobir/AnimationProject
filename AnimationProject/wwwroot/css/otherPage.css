@@ -585,13 +585,13 @@ footer {
     position: relative;
 }
 
-    .contact-box form {
-        width: 60%;
-        margin: 0 auto;
-        z-index: 9;
-        display: block;
-        position: relative;
-    }
+.contact-box form {
+    width: 60%;
+    margin: 0 auto;
+    z-index: 9;
+    display: block;
+    position: relative;
+}
 
 .form-control {
     border-radius: 3px;

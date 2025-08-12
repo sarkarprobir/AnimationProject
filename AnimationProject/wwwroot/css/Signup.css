@@ -28,11 +28,11 @@
     transition: all 0.5s ease;
 }
 
-    .carousel .inner .sub-forms .sub-form {
-        padding: 0rem;
-        flex-basis: 100%;
-        flex-shrink: 0;
-    }
+.carousel .inner .sub-forms .sub-form {
+    padding: 0rem;
+    flex-basis: 100%;
+    flex-shrink: 0;
+}
 
 .form-actions {
     width: fit-content;
@@ -44,23 +44,23 @@
     column-gap: 0.7rem;
 }
 
-    .form-step-indicators button.step-indicator {
-        outline: none;
-        border: none;
-        height: 5px;
-        width: 25px;
-        background-color: rgb(214, 214, 214);
-        border-radius: 2px;
-        transition: all 0.3s ease;
-    }
+.form-step-indicators button.step-indicator {
+    outline: none;
+    border: none;
+    height: 5px;
+    width: 25px;
+    background-color: rgb(214, 214, 214);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
 
-        .form-step-indicators button.step-indicator.active {
-            background-color: rgb(0, 94, 235);
-        }
+.form-step-indicators button.step-indicator.active {
+    background-color: rgb(0, 94, 235);
+}
 
-        .form-step-indicators button.step-indicator.visited:not(.active) {
-            background-color: rgb(112, 169, 255);
-        }
+.form-step-indicators button.step-indicator.visited:not(.active) {
+    background-color: rgb(112, 169, 255);
+}
 
 .form-finish-box {
     display: flex;
