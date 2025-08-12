@@ -21,7 +21,7 @@ Body {
     font-family: "Nunito Sans", serif;
 }
 a:hover {
-    color: #c9cccf !important;
+    color: #c9cccf ;
 }
 
 .fixed-top {
