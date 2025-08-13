@@ -583,7 +583,7 @@ function changeLineSpacing(deltaFactor) {
 
         // sync editor → model → canvas
         activeBox.text = textEditorNew.innerHTML;
-        if (obj) obj.html = activeBox.text;
+        if (obj) obj.text = activeBox.text;
        
     }
 
@@ -1265,7 +1265,7 @@ function ChangeAlignStyle(value) {
 
         // sync html back to model/canvas
         if (activeBox) activeBox.text = textEditorNew.innerHTML;
-        Obj.html = activeBox?.text || Obj.html;
+        Obj.text = activeBox?.text || Obj.text;
     }
 
     // 6) redraw
@@ -1345,7 +1345,7 @@ function OnChangefontFamily(value) {
             normalizeEditorInPlace(ed);
         }
         activeBox.text = ed.innerHTML;
-        if (Obj) Obj.html = activeBox.text;
+        if (Obj) Obj.text = activeBox.text;
 
         drawText();
         console.log(textObjects);
@@ -1354,7 +1354,7 @@ function OnChangefontFamily(value) {
 
     // Not editing (or no valid selection) → apply to whole box
     applyFontFamilyToWholeBox(fontFamily);
-    if (Obj) Obj.html = activeBox.text;
+    if (Obj) Obj.text = activeBox.text;
 
     drawText();
     console.log(textObjects);
@@ -1404,10 +1404,10 @@ function OnChangefontFamilyOld(value) {
         normalizeEditorInPlace(textEditorNew, span);
 
         activeBox.text = textEditorNew.innerHTML;
-        if (Obj) Obj.html = activeBox.text;
+        if (Obj) Obj.text = activeBox.text;
     } else {
         applyFontFamilyToWholeBox(familyForCss);
-        if (Obj) Obj.html = activeBox.text;
+        if (Obj) Obj.text = activeBox.text;
     }
 
     drawText();
@@ -6083,7 +6083,7 @@ function ChangeColor() {
         }
 
         activeBox.text = ed.innerHTML;
-        if (Obj) Obj.html = activeBox.text;
+        if (Obj) Obj.text = activeBox.text;
 
         drawText();
         return;
@@ -6091,7 +6091,7 @@ function ChangeColor() {
 
     // Not editing or no valid selection → color the whole box
     applyColorToWholeBox(color);
-    if (Obj) Obj.html = activeBox.text;
+    if (Obj) Obj.text = activeBox.text;
 
     drawText();
     console.log("Color",textObjects);
@@ -6116,10 +6116,10 @@ function ChangeColorOLD() {
         normalizeEditorInPlace(textEditorNew, span);             // ← no innerHTML replace
 
         activeBox.text = textEditorNew.innerHTML;
-        if (Obj) Obj.html = activeBox.text;
+        if (Obj) Obj.text = activeBox.text;
     } else {
         applyColorToWholeBox(color);
-        if (Obj) Obj.html = activeBox.text;
+        if (Obj) Obj.text = activeBox.text;
     }
 
     drawText();
@@ -7563,7 +7563,7 @@ function boldText() {
         activeBox.text = textEditorNew.innerHTML;
         if (Obj) {
             Obj.isBold = isSelectionBoldInEditor?.(textEditorNew) ?? Obj.isBold;
-            Obj.html = activeBox.text;
+            Obj.text = activeBox.text;
         }
         if (typeof redrawCanvas === "function") redrawCanvas();
         else drawText();
@@ -7574,7 +7574,7 @@ function boldText() {
     // Not editing → toggle whole box
     if (Obj) Obj.isBold = !Obj.isBold;
     applyWholeBoxStyle({ fontWeight: Obj && Obj.isBold ? "bold" : "" });
-    if (Obj) Obj.html = activeBox.text;
+    if (Obj) Obj.text = activeBox.text;
 
     if (typeof redrawCanvas === "function") redrawCanvas();
     else drawText();
@@ -7623,7 +7623,7 @@ function italicText() {
         activeBox.text = textEditorNew.innerHTML;
         if (Obj) {
             Obj.isItalic = isSelectionItalicInEditor?.(textEditorNew) ?? Obj.isItalic;
-            Obj.html = activeBox.text;
+            Obj.text = activeBox.text;
         }
         if (typeof redrawCanvas === "function") redrawCanvas();
         else drawText();
@@ -7634,7 +7634,7 @@ function italicText() {
     // Not editing → toggle whole box
     if (Obj) Obj.isItalic = !Obj.isItalic;
     applyWholeBoxStyle({ fontStyle: Obj && Obj.isItalic ? "italic" : "" });
-    if (Obj) Obj.html = activeBox.text;
+    if (Obj) Obj.text = activeBox.text;
 
     if (typeof redrawCanvas === "function") redrawCanvas();
     else drawText();
@@ -7657,7 +7657,7 @@ function boldTextOLD() {
             activeBox.text = textEditorNew.innerHTML;
             if (Obj) {
                 Obj.isBold = isSelectionBoldInEditor(textEditorNew); // best-effort reflect state
-                Obj.html = activeBox.text;
+                Obj.text = activeBox.text;
             }
             redrawCanvas();
             updateFontStyleButtons();
@@ -7671,7 +7671,7 @@ function boldTextOLD() {
     // Not editing (or execCommand failed): toggle whole box
     if (Obj) Obj.isBold = !Obj.isBold;
     applyWholeBoxStyle({ fontWeight: Obj && Obj.isBold ? "bold" : "" });
-    if (Obj) Obj.html = activeBox.text;
+    if (Obj) Obj.text = activeBox.text;
 
     redrawCanvas();
     updateFontStyleButtons();
@@ -7694,7 +7694,7 @@ function italicTextOLD() {
             activeBox.text = textEditorNew.innerHTML;
             if (Obj) {
                 Obj.isItalic = isSelectionItalicInEditor(textEditorNew); // best-effort reflect state
-                Obj.html = activeBox.text;
+                Obj.text = activeBox.text;
             }
             redrawCanvas();
             updateFontStyleButtons();
@@ -7708,7 +7708,7 @@ function italicTextOLD() {
     // Not editing (or execCommand failed): toggle whole box
     if (Obj) Obj.isItalic = !Obj.isItalic;
     applyWholeBoxStyle({ fontStyle: Obj && Obj.isItalic ? "italic" : "" });
-    if (Obj) Obj.html = activeBox.text;
+    if (Obj) Obj.text = activeBox.text;
 
     redrawCanvas();
     updateFontStyleButtons();
@@ -8856,7 +8856,7 @@ function addDefaultText(opts = {}) {
         // deselect all, select the new one, push
         textObjects.forEach(o => o.selected = false);
         const newObj = {
-            html,                   // plain text string (matches your addDefaultText)
+            text: html,                   // plain text string (matches your addDefaultText)
             x: newBox.x,
             y: newBox.y,
             selected: true,
@@ -10068,11 +10068,11 @@ function ChangeFontSizeOld(val) {
 
         // Persist RAW html back to models (this is what updates textObjects.html)
         activeBox.text = textEditorNew.innerHTML;
-        if (Obj) Obj.html = activeBox.text;
+        if (Obj) Obj.text = activeBox.text;
     } else {
         // ----- NOT EDITING: apply to entire box html, then persist -----
         applyFontSizeToWholeBox(px);
-        if (Obj) Obj.html = activeBox.text;
+        if (Obj) Obj.text = activeBox.text;
     }
 
     drawText();
@@ -10129,7 +10129,7 @@ function ChangeFontSize(val) {
         if (ok) {
             if (typeof normalizeEditorInPlace === 'function') normalizeEditorInPlace(ed);
             activeBox.text = ed.innerHTML;
-            if (Obj) Obj.html = activeBox.text;
+            if (Obj) Obj.text = activeBox.text;
             drawText();
             console.log("size",textObjects);
         }
@@ -10138,7 +10138,7 @@ function ChangeFontSize(val) {
 
     // Not editing or no valid range → apply to whole box
     applyFontSizeToWholeBox(px);
-    if (Obj) Obj.html = activeBox.text;
+    if (Obj) Obj.text = activeBox.text;
     drawText();
 }
 
