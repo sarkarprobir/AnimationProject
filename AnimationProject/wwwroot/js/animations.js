@@ -8530,7 +8530,7 @@ canvas.addEventListener("mousedown", e => {
     } else {
         activeBox = null;
     }
-    drawText();
+   // drawText();
 });
 
 
@@ -8574,6 +8574,10 @@ canvas.addEventListener("mousemove", e => {
     if (isDraggingNew) {
         activeBox.x = mx - dragOffsetXNew;
         activeBox.y = my - dragOffsetYNew;
+
+        prevMouseX = mx;
+        prevMouseY = my;
+        drawText();
 
     } else if (isCornerFontScale && activeBox && resizeDirection && CORNER_HANDLES.has(resizeDirection)) {
         // 🔥 CORNER: scale font + box together, anchored at dragged corner
@@ -8621,14 +8625,22 @@ canvas.addEventListener("mousemove", e => {
         // scale the ORIGINAL html each move (no compounding)
         activeBox.text = scaleTextHTML(activeBox._orig.text, s);
 
+        prevMouseX = mx;
+        prevMouseY = my;
+        drawText();
+
     } else if (isResizingNew && activeBox && resizeDirection) {
         // sides: normal behavior
         scaleTextBoxWithHandle(activeBox, resizeDirection, mx, my);
+
+        prevMouseX = mx;
+        prevMouseY = my;
+        drawText();
     }
 
-    prevMouseX = mx;
-    prevMouseY = my;
-    drawText();
+    //prevMouseX = mx;
+    //prevMouseY = my;
+    //drawText();
 });
 
 function scaleTextHTML(html, scale) {

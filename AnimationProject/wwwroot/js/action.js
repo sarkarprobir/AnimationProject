@@ -392,7 +392,7 @@ function SelectionOfEffectandDirection(activeSlide) {
             document.getElementById("a" + $("#hdnOutDirectiontSlide3").val() + "").classList.add("active_effect");
         }
     }
-    resizeCanvas();
+   // resizeCanvas();
 }
 
 // ──────────────────────────────────────────────────────────────────────
@@ -831,7 +831,8 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
             autoFitTextNew(obj, padding);
         });
         console.log('drawCanvas calling after Promise');
-        drawCanvas(condition);
+        // drawCanvas(condition);
+        drawText();
        // resizeCanvas();
     });
 }
