@@ -85,72 +85,83 @@
 <div class="container  acc_cont">
     <div class="mt-5">
         <div class="d-flex justify-content-between align-items-center mb-5">
-            <h2 class="heading_acc">Billing</h2>
-            <div class="d-flex gap-3">
+            <h2 class="heading_acc">Payment Details</h2>
+            @* <div class="d-flex gap-3">
                 <button class="btn btn-primary my-button create_button b_rad4" data-bs-toggle="modal" data-bs-target="#exampleModal">+ Create New Aniboard</button>
                 <a href="/Canvas/Templates" class="d-flex justify-content-center align-items-center btn btn-secondary my-button browse_button b_rad4">Browse The Template</a>
-            </div>
+            </div> *@
         </div>
         
         <div class="row">
             <div class="col-md-12">
                 <!-- Billing Table -->
-                <table class="table table-bordered schedule-table" id="billingTable">
-                    <thead>
+                <table class="payment-table" id="billingTable">
+                    <thead class="payment-head">
                         <tr>
-                            <th style="width: 10%">#</th>
-                            <th>Item Description</th>
-                            <th>Quantity</th>
-                            <th>Unit Price</th>
-                            <th>Tax</th>
-                            <th>Discount</th>
-                            <th>Total</th>
-                            <th>Status</th>
+                            <th class="payment-th">Payment Type</th>
+                            <th class="payment-th">Payment Id</th>
+                            <th class="payment-th">Date</th>
+                            <th class="payment-th">Method</th>
+                            <th class="payment-th">Amount</th>
+                            <th class="payment-th">Menuboard</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td>Product A</td>
-                            <td>2</td>
-                            <td>$50</td>
-                            <td>$5</td>
-                            <td>$0</td>
-                            <td>$105</td>
-                            <td>Paid</td>
+                    <tbody class="payment-body">
+                        <tr class="payment-row">
+                            <td class="payment-td">Renew</td>
+                            <td class="payment-td">pi_3Rot9MKZa1YSLVs01Jcg8D7r</td>
+                            <td class="payment-td">26 Jul 2025</td>
+                            <td class="payment-td">stripe webhook</td>
+                            <td class="payment-amount">112.50</td>
+                            <td class="payment-td"></td>
                         </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>Product B</td>
-                            <td>1</td>
-                            <td>$30</td>
-                            <td>$3</td>
-                            <td>$5</td>
-                            <td>$28</td>
-                            <td>Pending</td>
+                        <tr class="payment-row">
+                            <td class="payment-td">Renew</td>
+                            <td class="payment-td">pi_3Re1mZKZa1YSLVs01Bw5HRCZ</td>
+                            <td class="payment-td">03 Jul 2025</td>
+                            <td class="payment-td">stripe webhook</td>
+                            <td class="payment-amount">112.50</td>
+                            <td class="payment-td"></td>
                         </tr>
-                        <tr>
-                            <td>3</td>
-                            <td>Service Fee</td>
-                            <td>1</td>
-                            <td>$20</td>
-                            <td>$0</td>
-                            <td>$0</td>
-                            <td>$20</td>
-                            <td>Paid</td>
+                        <tr class="payment-row">
+                            <td class="payment-td">Renew</td>
+                            <td class="payment-td">pi_3RSn0wKZa1YSLVs01E2P47Or</td>
+                            <td class="payment-td">30 May 2025</td>
+                            <td class="payment-td">stripe webhook</td>
+                            <td class="payment-amount">112.50</td>
+                            <td class="payment-td"></td>
                         </tr>
-                        <tr>
-                            <td colspan="6" class="text-end"><strong>Grand Total</strong></td>
-                            <td><strong>$153</strong></td>
-                            <td></td>
+                        <tr class="payment-row">
+                            <td class="payment-td">Renew</td>
+                            <td class="payment-td">pi_3RHui4KZa1YSLVs01Udpnzbc</td>
+                            <td class="payment-td">25 Apr 2025</td>
+                            <td class="payment-td">stripe webhook</td>
+                            <td class="payment-amount">112.50</td>
+                            <td class="payment-td"></td>
+                        </tr>
+                        <tr class="payment-row">
+                            <td class="payment-td">Renew</td>
+                            <td class="payment-td">pi_3R6flKkZa1YSLVs00laDbzwF</td>
+                            <td class="payment-td">28 Mar 2025</td>
+                            <td class="payment-td">stripe webhook</td>
+                            <td class="payment-amount">112.50</td>
+                            <td class="payment-td"></td>
+                        </tr>
+                        <tr class="payment-row">
+                            <td class="payment-td">Subscription</td>
+                            <td class="payment-td">PMT-335220</td>
+                            <td class="payment-td">12 Jul 2024</td>
+                            <td class="payment-td">Paypal</td>
+                            <td class="payment-amount">250.15</td>
+                            <td class="payment-td"></td>
                         </tr>
                     </tbody>
                 </table>
 
-                <!-- Download PDF Button -->
+                @* <!-- Download PDF Button -->
                 <div class="d-flex justify-content-end">
-                    <button id="downloadPdfBtn" class="btn btn-primary mb-3">Download PDF</button>
-                </div>
+                    <button id="downloadPdfBtn" class="btn btn-primary mt-4">Download PDF</button>
+                </div> *@
             </div>
         </div>
 
