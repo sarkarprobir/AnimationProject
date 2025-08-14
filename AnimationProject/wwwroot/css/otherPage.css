@@ -452,9 +452,10 @@ footer {
     text-decoration: none;
 }
 
-    .sign-btn:hover {
-        background-color: #d1d1d1;
-    }
+.sign-btn:hover {
+    background-color: #d1d1d1;
+    color: #000;
+}
 /* modal */
 .layout_modal {
     background-color: rgba(36, 7, 136, 0.49);
