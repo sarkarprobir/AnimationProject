@@ -556,7 +556,7 @@ footer {
     width: 20px;
     height: 20px;
     display: inline-block;
-    border: 2px solid #ccc;
+    border: 2px solid transparent;
     border-radius: 50%;
     position: relative;
     transition: all 0.3s ease;
@@ -615,3 +615,59 @@ footer {
     width: 100%;
 }
 /*contact css end*/
+
+/*landing css*/
+.landing {
+    margin-block: 8.5px;
+}
+.nike_img {
+    max-width: 100%;
+    width: 275px;
+    height: auto;
+    object-fit: contain;
+}
+.laptop_img {
+    max-width: 100%;
+    height: auto;
+    width: 475px;
+    object-fit: contain;
+}
+.slogan_p {
+    font-size: 17px;
+    font-weight: 700;
+    width: 384px;
+}
+.slogan_head {
+    font-family: "Inter", sans-serif;
+    font-size: 4.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+}
+.trial-btn {
+    background-color: #00a99d;
+}
+.partner_land img {
+    width: 81px;
+    height: 43px;
+    object-fit: contain;
+}
+.landing-foot {
+    background-color: #6214fe;
+    padding-block: 15px;
+}
+.landing-foot .slogan_p{
+    color: #fff;
+}
+@media (min-width: 1900px) {
+    .landing{
+        margin-block: 100px;
+    }
+}
+.create-link{
+    color: #fff !important;
+}
+.create-link:hover{
+    color: #fff !important;
+}
+/*landing css end*/

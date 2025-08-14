@@ -79,6 +79,10 @@ namespace AnimationProject.Controllers
         {
             return View();
         }
+        public IActionResult Landing()
+        {
+            return View();
+        }
         public IActionResult Templates()
         {
             return View();
