@@ -371,7 +371,7 @@ input::placeholder {
 
 
 .payment-row:hover {
-    background-color: #eee;
+    background-color: #dcdcdc;
     cursor: pointer;
 }
 
