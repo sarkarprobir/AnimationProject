@@ -8168,7 +8168,7 @@ function drawText() {
     const defaultColor = defaultStyle.color || "#000";
     const defaultLineHeight = parseFloat(defaultStyle.lineHeight) || (parseFloat(defaultFontSize) * 1.2);
 
-    for (const box of boxes) {
+    for (const box of textObjects) {
         ctx.save();
 
         if (!box.width || isNaN(box.width)) box.width = 50;
@@ -8360,8 +8360,8 @@ function drawText() {
         });
 
         box.height = usedHeight;
-
-        if (box === activeBox && box.width > 0 && box.height > 0) {
+        //box === activeBox &&
+        if ( box.width > 0 && box.height > 0) {
             ctx.strokeStyle = isEditing ? "red" : "red";
             ctx.lineWidth = isEditing ? 2 : 1;
             ctx.strokeRect(box.x, box.y, box.width, box.height);
@@ -8481,7 +8481,7 @@ canvas.addEventListener("mousedown", e => {
         textEditorNew.style.display = "none";
     }
 
-    for (const box of boxes) {
+    for (const box of textObjects) {
         const handle = getResizeHandle(box, mx, my);
         if (handle) {
             activeBox = box;
@@ -8518,7 +8518,7 @@ canvas.addEventListener("mousedown", e => {
         }
     }
 
-    const clickedBox = boxes.find(box =>
+    const clickedBox = textObjects.find(box =>
         mx >= box.x && mx <= box.x + box.width &&
         my >= box.y && my <= box.y + box.height
     );
@@ -8695,7 +8695,7 @@ canvas.addEventListener("mouseup", () => {
 
 canvas.addEventListener("dblclick", e => {
     const { x: mx, y: my } = getCanvasMousePosition(e);
-    const box = boxes.find(b =>
+    const box = textObjects.find(b =>
         mx >= b.x && mx <= b.x + b.width &&
         my >= b.y && my <= b.y + b.height
     );
@@ -8860,7 +8860,7 @@ function addDefaultText(opts = {}) {
     newBox.height = Math.max(minH, Math.ceil(textH + padY));
 
     // --- push to boxes and set active ---
-    boxes.push(newBox);
+  //  boxes.push(newBox);
     activeBox = newBox;
 
     // --- mirror into textObjects with your exact selection flow ---
@@ -8887,7 +8887,10 @@ function addDefaultText(opts = {}) {
             isItalic: false,
             type: 'text',
             zIndex: (typeof getNextZIndex === 'function') ? getNextZIndex() : 0,
-            opacity: 100
+            opacity: 100,
+            width: newBox.width,
+            height: newBox.height,
+            align: align
         };
         textObjects.push(newObj);
     }
@@ -8915,7 +8918,7 @@ function addDefaultText(opts = {}) {
 
 
 function generateJson() {
-    console.log(JSON.stringify(boxes, null, 2));
+    console.log(JSON.stringify(textObjects, null, 2));
     alert("See console.");
 }
 
