@@ -6876,7 +6876,8 @@ function ChangeSpecificBackgroundColor(controlid) {
     //RemoveBackgroundImage
     canvas._bgImg = null;
     canvas.style.backgroundImage = 'none';
-    drawCanvas('Common'); // Redraw the canvas without the background image.
+    //drawCanvas('Common'); // Redraw the canvas without the background image.
+    drawText();
     setCanvasBackground(controlid, backgroundSpecificColorPicker.value);
 }
 function setCanvasBackgroundOld(canvasId, color) {
@@ -8157,7 +8158,37 @@ function cleanEditorHTMLPreserveCaret() {
 // 🟢 Fix line height calculation in drawText
 // 🟢 Fix line height calculation in drawText
 function drawText() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    //ctx.clearRect(0, 0, canvas.width, canvas.height);
+    //ctx.textBaseline = "top";
+    // --- background layer ---
+    const designW = canvas.width;   // use canvas backing size (device px)
+    const designH = canvas.height;
+
+    // clear pixels
+    ctx.clearRect(0, 0, designW, designH);
+
+    // fill bg color (from your hidden input or the canvas style as fallback)
+    const bgEl = document.getElementById('hdnBackgroundSpecificColor');
+    const bgColor = (bgEl?.value || canvas.style.backgroundColor || "").trim();
+    if (bgColor) {
+        ctx.save();
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, designW, designH);
+        ctx.restore();
+    }
+
+    // draw bg image if present
+    if (canvas._bgImg) {
+        if (canvas._bgImg.complete) {
+            ctx.drawImage(canvas._bgImg, 0, 0, designW, designH);
+        } else {
+            // ensure it renders once the image finishes loading
+            canvas._bgImg.onload = () => drawText();
+            canvas._bgImg.onerror = () => {/* ignore or log */ };
+        }
+    }
+
+    // --- text layer (your existing code follows) ---
     ctx.textBaseline = "top";
 
     const defaultStyle = window.getComputedStyle(textEditorNew);
@@ -8361,7 +8392,7 @@ function drawText() {
 
         box.height = usedHeight;
         //box === activeBox &&
-        if ( box.width > 0 && box.height > 0) {
+        if (box.selected && box.width > 0 && box.height > 0) {
             ctx.strokeStyle = isEditing ? "red" : "red";
             ctx.lineWidth = isEditing ? 2 : 1;
             ctx.strokeRect(box.x, box.y, box.width, box.height);
@@ -8461,9 +8492,112 @@ function setGlobalCursor(cursor) {
 }
 
 // ——————— Mouse Events ———————
+
+function deselectAllText() {
+    if (!Array.isArray(textObjects)) return;
+    textObjects.forEach(o => o.selected = false);
+}
+
+function hitTestTextObject(mx, my) {
+    const items = (Array.isArray(textObjects) ? textObjects : [])
+        .slice()
+        .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0)); // bottom→top
+    for (let i = items.length - 1; i >= 0; i--) {    // pick topmost
+        const o = items[i];
+        const w = o.width ?? o.boundingWidth ?? 0;
+        const h = o.height ?? o.boundingHeight ?? 0;
+        if (mx >= o.x && mx <= o.x + w && my >= o.y && my <= o.y + h) return o;
+    }
+    return null;
+}
+
+
 // Modified canvas mousedown, mousemove, and mouseup with scaleTextBoxWithHandle logic
 // Updated mouse handlers with integrated scaling and handle logic
 // ✅ MOUSE DOWN EVENT
+//canvas.addEventListener("mousedown", e => {
+//    const { x: mx, y: my } = getCanvasMousePosition(e);
+//    startX = e.clientX;
+//    startY = e.clientY;
+//    prevMouseX = mx;
+//    prevMouseY = my;
+//    startMXCanvas = mx;
+//    startMYCanvas = my;
+
+//    if (isEditing && activeBox) {
+//        cleanEditorHTMLPreserveCaret();
+//        activeBox.text = textEditorNew.innerHTML;
+//        activeBox.align = textEditorNew.style.textAlign || "left";
+//        isEditing = false;
+//        textEditorNew.style.display = "none";
+//    }
+
+//    for (const box of textObjects) {
+//        const handle = getResizeHandle(box, mx, my);
+//        if (handle) {
+//            activeBox = box;
+
+//            if (CORNER_HANDLES.has(handle)) {
+//                // CORNER: start font+box scale
+//                resizeDirection = handle;
+//                isCornerFontScale = true;
+//                isResizingNew = false; // block normal resize
+
+//                activeBox._orig = {
+//                    x: box.x, y: box.y,
+//                    width: box.width, height: box.height,
+//                    text: box.text
+//                };
+//                setGlobalCursor(HANDLE_CURSOR[handle] || "nwse-resize");
+//                const endCorner = () => { isCornerFontScale = false; setGlobalCursor(""); };
+//                document.addEventListener("mouseup", endCorner, { once: true });
+
+//                drawText();
+//                return;
+//            }
+
+//            // sides: keep your normal resize path
+//            resizeDirection = handle;
+//            isResizingNew = true;
+//            activeBox._orig = {
+//                x: box.x, y: box.y,
+//                width: box.width, height: box.height,
+//                fontSize: box.fontSize, text: box.text
+//            };
+//            drawText();
+//            return;
+//        }
+//    }
+
+//    const clickedBox = textObjects.find(box =>
+//        mx >= box.x && mx <= box.x + box.width &&
+//        my >= box.y && my <= box.y + box.height
+//    );
+//    activeBox = clickedBox;
+//    if (activeBox) {
+//        isDraggingNew = true;
+//        dragOffsetXNew = mx - activeBox.x;
+//        dragOffsetYNew = my - activeBox.y;
+//    } else {
+//        activeBox = null;
+//    }
+//   // drawText();
+//});
+
+// helpers
+function objW(o) { return Number.isFinite(o.width) ? o.width : (Number.isFinite(o.boundingWidth) ? o.boundingWidth : 0); }
+function objH(o) { return Number.isFinite(o.height) ? o.height : (Number.isFinite(o.boundingHeight) ? o.boundingHeight : 0); }
+function deselectAllText() { if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = false); }
+function topmostAt(mx, my) {
+    if (!Array.isArray(textObjects)) return null;
+    const items = textObjects.slice().sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+    for (let i = items.length - 1; i >= 0; i--) {
+        const o = items[i], w = objW(o), h = objH(o);
+        if (mx >= o.x && mx <= o.x + w && my >= o.y && my <= o.y + h) return o;
+    }
+    return null;
+}
+
 canvas.addEventListener("mousedown", e => {
     const { x: mx, y: my } = getCanvasMousePosition(e);
     startX = e.clientX;
@@ -8474,23 +8608,27 @@ canvas.addEventListener("mousedown", e => {
     startMYCanvas = my;
 
     if (isEditing && activeBox) {
-        cleanEditorHTMLPreserveCaret();
+        cleanEditorHTMLPreserveCaret?.();
         activeBox.text = textEditorNew.innerHTML;
         activeBox.align = textEditorNew.style.textAlign || "left";
         isEditing = false;
-        textEditorNew.style.display = "none";
+        if (textEditorNew) textEditorNew.style.display = "none";
     }
 
+    // check handles (topmost-by-zIndex recommended, but keeping your order)
     for (const box of textObjects) {
         const handle = getResizeHandle(box, mx, my);
         if (handle) {
             activeBox = box;
 
+            // single-select the box you grabbed
+            if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = (o === box));
+            drawText(); // NEW: show selection immediately
+
             if (CORNER_HANDLES.has(handle)) {
-                // CORNER: start font+box scale
                 resizeDirection = handle;
                 isCornerFontScale = true;
-                isResizingNew = false; // block normal resize
+                isResizingNew = false;
 
                 activeBox._orig = {
                     x: box.x, y: box.y,
@@ -8501,11 +8639,10 @@ canvas.addEventListener("mousedown", e => {
                 const endCorner = () => { isCornerFontScale = false; setGlobalCursor(""); };
                 document.addEventListener("mouseup", endCorner, { once: true });
 
-                drawText();
                 return;
             }
 
-            // sides: keep your normal resize path
+            // sides: normal resize
             resizeDirection = handle;
             isResizingNew = true;
             activeBox._orig = {
@@ -8513,24 +8650,38 @@ canvas.addEventListener("mousedown", e => {
                 width: box.width, height: box.height,
                 fontSize: box.fontSize, text: box.text
             };
-            drawText();
             return;
         }
     }
 
+    // no handle → hit test object body
     const clickedBox = textObjects.find(box =>
         mx >= box.x && mx <= box.x + box.width &&
         my >= box.y && my <= box.y + box.height
     );
+
     activeBox = clickedBox;
+
     if (activeBox) {
+        // single-select this one
+        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = (o === activeBox));
+
+        // prepare potential drag
         isDraggingNew = true;
         dragOffsetXNew = mx - activeBox.x;
         dragOffsetYNew = my - activeBox.y;
+
+        drawText(); // NEW: reflect selection immediately
     } else {
+        // blank click → deselect everything
         activeBox = null;
+        isDraggingNew = false;
+        isResizingNew = false;
+        resizeDirection = null;
+        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = false);
+
+        drawText(); // NEW: clear selection immediately
     }
-   // drawText();
 });
 
 
