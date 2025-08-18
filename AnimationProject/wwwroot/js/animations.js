@@ -583,7 +583,7 @@ function changeLineSpacing(deltaFactor) {
 
         // sync editor → model → canvas
         activeBox.text = textEditorNew.innerHTML;
-        if (obj) obj.html = activeBox.text;
+        if (obj) obj.text = activeBox.text;
        
     }
 
@@ -1265,7 +1265,7 @@ function ChangeAlignStyle(value) {
 
         // sync html back to model/canvas
         if (activeBox) activeBox.text = textEditorNew.innerHTML;
-        Obj.html = activeBox?.text || Obj.html;
+        Obj.text = activeBox?.text || Obj.text;
     }
 
     // 6) redraw
@@ -1345,7 +1345,7 @@ function OnChangefontFamily(value) {
             normalizeEditorInPlace(ed);
         }
         activeBox.text = ed.innerHTML;
-        if (Obj) Obj.html = activeBox.text;
+        if (Obj) Obj.text = activeBox.text;
 
         drawText();
         console.log(textObjects);
@@ -1354,7 +1354,7 @@ function OnChangefontFamily(value) {
 
     // Not editing (or no valid selection) → apply to whole box
     applyFontFamilyToWholeBox(fontFamily);
-    if (Obj) Obj.html = activeBox.text;
+    if (Obj) Obj.text = activeBox.text;
 
     drawText();
     console.log(textObjects);
@@ -1404,10 +1404,10 @@ function OnChangefontFamilyOld(value) {
         normalizeEditorInPlace(textEditorNew, span);
 
         activeBox.text = textEditorNew.innerHTML;
-        if (Obj) Obj.html = activeBox.text;
+        if (Obj) Obj.text = activeBox.text;
     } else {
         applyFontFamilyToWholeBox(familyForCss);
-        if (Obj) Obj.html = activeBox.text;
+        if (Obj) Obj.text = activeBox.text;
     }
 
     drawText();
@@ -6083,7 +6083,7 @@ function ChangeColor() {
         }
 
         activeBox.text = ed.innerHTML;
-        if (Obj) Obj.html = activeBox.text;
+        if (Obj) Obj.text = activeBox.text;
 
         drawText();
         return;
@@ -6091,7 +6091,7 @@ function ChangeColor() {
 
     // Not editing or no valid selection → color the whole box
     applyColorToWholeBox(color);
-    if (Obj) Obj.html = activeBox.text;
+    if (Obj) Obj.text = activeBox.text;
 
     drawText();
     console.log("Color",textObjects);
@@ -6116,10 +6116,10 @@ function ChangeColorOLD() {
         normalizeEditorInPlace(textEditorNew, span);             // ← no innerHTML replace
 
         activeBox.text = textEditorNew.innerHTML;
-        if (Obj) Obj.html = activeBox.text;
+        if (Obj) Obj.text = activeBox.text;
     } else {
         applyColorToWholeBox(color);
-        if (Obj) Obj.html = activeBox.text;
+        if (Obj) Obj.text = activeBox.text;
     }
 
     drawText();
@@ -6876,7 +6876,8 @@ function ChangeSpecificBackgroundColor(controlid) {
     //RemoveBackgroundImage
     canvas._bgImg = null;
     canvas.style.backgroundImage = 'none';
-    drawCanvas('Common'); // Redraw the canvas without the background image.
+    //drawCanvas('Common'); // Redraw the canvas without the background image.
+    drawText();
     setCanvasBackground(controlid, backgroundSpecificColorPicker.value);
 }
 function setCanvasBackgroundOld(canvasId, color) {
@@ -7563,7 +7564,7 @@ function boldText() {
         activeBox.text = textEditorNew.innerHTML;
         if (Obj) {
             Obj.isBold = isSelectionBoldInEditor?.(textEditorNew) ?? Obj.isBold;
-            Obj.html = activeBox.text;
+            Obj.text = activeBox.text;
         }
         if (typeof redrawCanvas === "function") redrawCanvas();
         else drawText();
@@ -7574,7 +7575,7 @@ function boldText() {
     // Not editing → toggle whole box
     if (Obj) Obj.isBold = !Obj.isBold;
     applyWholeBoxStyle({ fontWeight: Obj && Obj.isBold ? "bold" : "" });
-    if (Obj) Obj.html = activeBox.text;
+    if (Obj) Obj.text = activeBox.text;
 
     if (typeof redrawCanvas === "function") redrawCanvas();
     else drawText();
@@ -7623,7 +7624,7 @@ function italicText() {
         activeBox.text = textEditorNew.innerHTML;
         if (Obj) {
             Obj.isItalic = isSelectionItalicInEditor?.(textEditorNew) ?? Obj.isItalic;
-            Obj.html = activeBox.text;
+            Obj.text = activeBox.text;
         }
         if (typeof redrawCanvas === "function") redrawCanvas();
         else drawText();
@@ -7634,7 +7635,7 @@ function italicText() {
     // Not editing → toggle whole box
     if (Obj) Obj.isItalic = !Obj.isItalic;
     applyWholeBoxStyle({ fontStyle: Obj && Obj.isItalic ? "italic" : "" });
-    if (Obj) Obj.html = activeBox.text;
+    if (Obj) Obj.text = activeBox.text;
 
     if (typeof redrawCanvas === "function") redrawCanvas();
     else drawText();
@@ -7657,7 +7658,7 @@ function boldTextOLD() {
             activeBox.text = textEditorNew.innerHTML;
             if (Obj) {
                 Obj.isBold = isSelectionBoldInEditor(textEditorNew); // best-effort reflect state
-                Obj.html = activeBox.text;
+                Obj.text = activeBox.text;
             }
             redrawCanvas();
             updateFontStyleButtons();
@@ -7671,7 +7672,7 @@ function boldTextOLD() {
     // Not editing (or execCommand failed): toggle whole box
     if (Obj) Obj.isBold = !Obj.isBold;
     applyWholeBoxStyle({ fontWeight: Obj && Obj.isBold ? "bold" : "" });
-    if (Obj) Obj.html = activeBox.text;
+    if (Obj) Obj.text = activeBox.text;
 
     redrawCanvas();
     updateFontStyleButtons();
@@ -7694,7 +7695,7 @@ function italicTextOLD() {
             activeBox.text = textEditorNew.innerHTML;
             if (Obj) {
                 Obj.isItalic = isSelectionItalicInEditor(textEditorNew); // best-effort reflect state
-                Obj.html = activeBox.text;
+                Obj.text = activeBox.text;
             }
             redrawCanvas();
             updateFontStyleButtons();
@@ -7708,7 +7709,7 @@ function italicTextOLD() {
     // Not editing (or execCommand failed): toggle whole box
     if (Obj) Obj.isItalic = !Obj.isItalic;
     applyWholeBoxStyle({ fontStyle: Obj && Obj.isItalic ? "italic" : "" });
-    if (Obj) Obj.html = activeBox.text;
+    if (Obj) Obj.text = activeBox.text;
 
     redrawCanvas();
     updateFontStyleButtons();
@@ -8157,7 +8158,37 @@ function cleanEditorHTMLPreserveCaret() {
 // 🟢 Fix line height calculation in drawText
 // 🟢 Fix line height calculation in drawText
 function drawText() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    //ctx.clearRect(0, 0, canvas.width, canvas.height);
+    //ctx.textBaseline = "top";
+    // --- background layer ---
+    const designW = canvas.width;   // use canvas backing size (device px)
+    const designH = canvas.height;
+
+    // clear pixels
+    ctx.clearRect(0, 0, designW, designH);
+
+    // fill bg color (from your hidden input or the canvas style as fallback)
+    const bgEl = document.getElementById('hdnBackgroundSpecificColor');
+    const bgColor = (bgEl?.value || canvas.style.backgroundColor || "").trim();
+    if (bgColor) {
+        ctx.save();
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, designW, designH);
+        ctx.restore();
+    }
+
+    // draw bg image if present
+    if (canvas._bgImg) {
+        if (canvas._bgImg.complete) {
+            ctx.drawImage(canvas._bgImg, 0, 0, designW, designH);
+        } else {
+            // ensure it renders once the image finishes loading
+            canvas._bgImg.onload = () => drawText();
+            canvas._bgImg.onerror = () => {/* ignore or log */ };
+        }
+    }
+
+    // --- text layer (your existing code follows) ---
     ctx.textBaseline = "top";
 
     const defaultStyle = window.getComputedStyle(textEditorNew);
@@ -8168,7 +8199,7 @@ function drawText() {
     const defaultColor = defaultStyle.color || "#000";
     const defaultLineHeight = parseFloat(defaultStyle.lineHeight) || (parseFloat(defaultFontSize) * 1.2);
 
-    for (const box of boxes) {
+    for (const box of textObjects) {
         ctx.save();
 
         if (!box.width || isNaN(box.width)) box.width = 50;
@@ -8360,8 +8391,8 @@ function drawText() {
         });
 
         box.height = usedHeight;
-
-        if (box === activeBox && box.width > 0 && box.height > 0) {
+        //box === activeBox &&
+        if (box.selected && box.width > 0 && box.height > 0) {
             ctx.strokeStyle = isEditing ? "red" : "red";
             ctx.lineWidth = isEditing ? 2 : 1;
             ctx.strokeRect(box.x, box.y, box.width, box.height);
@@ -8461,9 +8492,112 @@ function setGlobalCursor(cursor) {
 }
 
 // ——————— Mouse Events ———————
+
+function deselectAllText() {
+    if (!Array.isArray(textObjects)) return;
+    textObjects.forEach(o => o.selected = false);
+}
+
+function hitTestTextObject(mx, my) {
+    const items = (Array.isArray(textObjects) ? textObjects : [])
+        .slice()
+        .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0)); // bottom→top
+    for (let i = items.length - 1; i >= 0; i--) {    // pick topmost
+        const o = items[i];
+        const w = o.width ?? o.boundingWidth ?? 0;
+        const h = o.height ?? o.boundingHeight ?? 0;
+        if (mx >= o.x && mx <= o.x + w && my >= o.y && my <= o.y + h) return o;
+    }
+    return null;
+}
+
+
 // Modified canvas mousedown, mousemove, and mouseup with scaleTextBoxWithHandle logic
 // Updated mouse handlers with integrated scaling and handle logic
 // ✅ MOUSE DOWN EVENT
+//canvas.addEventListener("mousedown", e => {
+//    const { x: mx, y: my } = getCanvasMousePosition(e);
+//    startX = e.clientX;
+//    startY = e.clientY;
+//    prevMouseX = mx;
+//    prevMouseY = my;
+//    startMXCanvas = mx;
+//    startMYCanvas = my;
+
+//    if (isEditing && activeBox) {
+//        cleanEditorHTMLPreserveCaret();
+//        activeBox.text = textEditorNew.innerHTML;
+//        activeBox.align = textEditorNew.style.textAlign || "left";
+//        isEditing = false;
+//        textEditorNew.style.display = "none";
+//    }
+
+//    for (const box of textObjects) {
+//        const handle = getResizeHandle(box, mx, my);
+//        if (handle) {
+//            activeBox = box;
+
+//            if (CORNER_HANDLES.has(handle)) {
+//                // CORNER: start font+box scale
+//                resizeDirection = handle;
+//                isCornerFontScale = true;
+//                isResizingNew = false; // block normal resize
+
+//                activeBox._orig = {
+//                    x: box.x, y: box.y,
+//                    width: box.width, height: box.height,
+//                    text: box.text
+//                };
+//                setGlobalCursor(HANDLE_CURSOR[handle] || "nwse-resize");
+//                const endCorner = () => { isCornerFontScale = false; setGlobalCursor(""); };
+//                document.addEventListener("mouseup", endCorner, { once: true });
+
+//                drawText();
+//                return;
+//            }
+
+//            // sides: keep your normal resize path
+//            resizeDirection = handle;
+//            isResizingNew = true;
+//            activeBox._orig = {
+//                x: box.x, y: box.y,
+//                width: box.width, height: box.height,
+//                fontSize: box.fontSize, text: box.text
+//            };
+//            drawText();
+//            return;
+//        }
+//    }
+
+//    const clickedBox = textObjects.find(box =>
+//        mx >= box.x && mx <= box.x + box.width &&
+//        my >= box.y && my <= box.y + box.height
+//    );
+//    activeBox = clickedBox;
+//    if (activeBox) {
+//        isDraggingNew = true;
+//        dragOffsetXNew = mx - activeBox.x;
+//        dragOffsetYNew = my - activeBox.y;
+//    } else {
+//        activeBox = null;
+//    }
+//   // drawText();
+//});
+
+// helpers
+function objW(o) { return Number.isFinite(o.width) ? o.width : (Number.isFinite(o.boundingWidth) ? o.boundingWidth : 0); }
+function objH(o) { return Number.isFinite(o.height) ? o.height : (Number.isFinite(o.boundingHeight) ? o.boundingHeight : 0); }
+function deselectAllText() { if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = false); }
+function topmostAt(mx, my) {
+    if (!Array.isArray(textObjects)) return null;
+    const items = textObjects.slice().sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+    for (let i = items.length - 1; i >= 0; i--) {
+        const o = items[i], w = objW(o), h = objH(o);
+        if (mx >= o.x && mx <= o.x + w && my >= o.y && my <= o.y + h) return o;
+    }
+    return null;
+}
+
 canvas.addEventListener("mousedown", e => {
     const { x: mx, y: my } = getCanvasMousePosition(e);
     startX = e.clientX;
@@ -8474,23 +8608,27 @@ canvas.addEventListener("mousedown", e => {
     startMYCanvas = my;
 
     if (isEditing && activeBox) {
-        cleanEditorHTMLPreserveCaret();
+        cleanEditorHTMLPreserveCaret?.();
         activeBox.text = textEditorNew.innerHTML;
         activeBox.align = textEditorNew.style.textAlign || "left";
         isEditing = false;
-        textEditorNew.style.display = "none";
+        if (textEditorNew) textEditorNew.style.display = "none";
     }
 
-    for (const box of boxes) {
+    // check handles (topmost-by-zIndex recommended, but keeping your order)
+    for (const box of textObjects) {
         const handle = getResizeHandle(box, mx, my);
         if (handle) {
             activeBox = box;
 
+            // single-select the box you grabbed
+            if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = (o === box));
+            drawText(); // NEW: show selection immediately
+
             if (CORNER_HANDLES.has(handle)) {
-                // CORNER: start font+box scale
                 resizeDirection = handle;
                 isCornerFontScale = true;
-                isResizingNew = false; // block normal resize
+                isResizingNew = false;
 
                 activeBox._orig = {
                     x: box.x, y: box.y,
@@ -8501,11 +8639,10 @@ canvas.addEventListener("mousedown", e => {
                 const endCorner = () => { isCornerFontScale = false; setGlobalCursor(""); };
                 document.addEventListener("mouseup", endCorner, { once: true });
 
-                drawText();
                 return;
             }
 
-            // sides: keep your normal resize path
+            // sides: normal resize
             resizeDirection = handle;
             isResizingNew = true;
             activeBox._orig = {
@@ -8513,24 +8650,38 @@ canvas.addEventListener("mousedown", e => {
                 width: box.width, height: box.height,
                 fontSize: box.fontSize, text: box.text
             };
-            drawText();
             return;
         }
     }
 
-    const clickedBox = boxes.find(box =>
+    // no handle → hit test object body
+    const clickedBox = textObjects.find(box =>
         mx >= box.x && mx <= box.x + box.width &&
         my >= box.y && my <= box.y + box.height
     );
+
     activeBox = clickedBox;
+
     if (activeBox) {
+        // single-select this one
+        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = (o === activeBox));
+
+        // prepare potential drag
         isDraggingNew = true;
         dragOffsetXNew = mx - activeBox.x;
         dragOffsetYNew = my - activeBox.y;
+
+        drawText(); // NEW: reflect selection immediately
     } else {
+        // blank click → deselect everything
         activeBox = null;
+        isDraggingNew = false;
+        isResizingNew = false;
+        resizeDirection = null;
+        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = false);
+
+        drawText(); // NEW: clear selection immediately
     }
-    drawText();
 });
 
 
@@ -8574,6 +8725,10 @@ canvas.addEventListener("mousemove", e => {
     if (isDraggingNew) {
         activeBox.x = mx - dragOffsetXNew;
         activeBox.y = my - dragOffsetYNew;
+
+        prevMouseX = mx;
+        prevMouseY = my;
+        drawText();
 
     } else if (isCornerFontScale && activeBox && resizeDirection && CORNER_HANDLES.has(resizeDirection)) {
         // 🔥 CORNER: scale font + box together, anchored at dragged corner
@@ -8621,14 +8776,22 @@ canvas.addEventListener("mousemove", e => {
         // scale the ORIGINAL html each move (no compounding)
         activeBox.text = scaleTextHTML(activeBox._orig.text, s);
 
+        prevMouseX = mx;
+        prevMouseY = my;
+        drawText();
+
     } else if (isResizingNew && activeBox && resizeDirection) {
         // sides: normal behavior
         scaleTextBoxWithHandle(activeBox, resizeDirection, mx, my);
+
+        prevMouseX = mx;
+        prevMouseY = my;
+        drawText();
     }
 
-    prevMouseX = mx;
-    prevMouseY = my;
-    drawText();
+    //prevMouseX = mx;
+    //prevMouseY = my;
+    //drawText();
 });
 
 function scaleTextHTML(html, scale) {
@@ -8683,7 +8846,7 @@ canvas.addEventListener("mouseup", () => {
 
 canvas.addEventListener("dblclick", e => {
     const { x: mx, y: my } = getCanvasMousePosition(e);
-    const box = boxes.find(b =>
+    const box = textObjects.find(b =>
         mx >= b.x && mx <= b.x + b.width &&
         my >= b.y && my <= b.y + b.height
     );
@@ -8848,7 +9011,7 @@ function addDefaultText(opts = {}) {
     newBox.height = Math.max(minH, Math.ceil(textH + padY));
 
     // --- push to boxes and set active ---
-    boxes.push(newBox);
+  //  boxes.push(newBox);
     activeBox = newBox;
 
     // --- mirror into textObjects with your exact selection flow ---
@@ -8856,7 +9019,7 @@ function addDefaultText(opts = {}) {
         // deselect all, select the new one, push
         textObjects.forEach(o => o.selected = false);
         const newObj = {
-            html,                   // plain text string (matches your addDefaultText)
+            text: html,                   // plain text string (matches your addDefaultText)
             x: newBox.x,
             y: newBox.y,
             selected: true,
@@ -8875,7 +9038,10 @@ function addDefaultText(opts = {}) {
             isItalic: false,
             type: 'text',
             zIndex: (typeof getNextZIndex === 'function') ? getNextZIndex() : 0,
-            opacity: 100
+            opacity: 100,
+            width: newBox.width,
+            height: newBox.height,
+            align: align
         };
         textObjects.push(newObj);
     }
@@ -8903,7 +9069,7 @@ function addDefaultText(opts = {}) {
 
 
 function generateJson() {
-    console.log(JSON.stringify(boxes, null, 2));
+    console.log(JSON.stringify(textObjects, null, 2));
     alert("See console.");
 }
 
@@ -10068,11 +10234,11 @@ function ChangeFontSizeOld(val) {
 
         // Persist RAW html back to models (this is what updates textObjects.html)
         activeBox.text = textEditorNew.innerHTML;
-        if (Obj) Obj.html = activeBox.text;
+        if (Obj) Obj.text = activeBox.text;
     } else {
         // ----- NOT EDITING: apply to entire box html, then persist -----
         applyFontSizeToWholeBox(px);
-        if (Obj) Obj.html = activeBox.text;
+        if (Obj) Obj.text = activeBox.text;
     }
 
     drawText();
@@ -10129,7 +10295,7 @@ function ChangeFontSize(val) {
         if (ok) {
             if (typeof normalizeEditorInPlace === 'function') normalizeEditorInPlace(ed);
             activeBox.text = ed.innerHTML;
-            if (Obj) Obj.html = activeBox.text;
+            if (Obj) Obj.text = activeBox.text;
             drawText();
             console.log("size",textObjects);
         }
@@ -10138,7 +10304,7 @@ function ChangeFontSize(val) {
 
     // Not editing or no valid range → apply to whole box
     applyFontSizeToWholeBox(px);
-    if (Obj) Obj.html = activeBox.text;
+    if (Obj) Obj.text = activeBox.text;
     drawText();
 }
 

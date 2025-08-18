@@ -198,7 +198,8 @@ async function captureSlide(activeSlide, slideResult) {
     const canvas = document.getElementById("myCanvas");
     const ctx = canvas.getContext("2d");
     // 1) Update your canvas one last time:
-    drawCanvas("Common");
+    // drawCanvas("Common");
+    drawText();
     // 2) Wait for any <img> or <svg> in the DOM to be fully loaded:
     const imgs = images;//Array.from(document.querySelectorAll("img, svg"));
     await Promise.all(imgs.map(el => {
@@ -308,6 +309,7 @@ function saveCurrentSlide() {
         }
     }
 }
+
 function SaveDesignBoardSlide(newSlideNumber) {
     // Save the current slide state (if it's not blank).
     saveCurrentSlide();
@@ -392,7 +394,7 @@ function SelectionOfEffectandDirection(activeSlide) {
             document.getElementById("a" + $("#hdnOutDirectiontSlide3").val() + "").classList.add("active_effect");
         }
     }
-    resizeCanvas();
+   // resizeCanvas();
 }
 
 // ──────────────────────────────────────────────────────────────────────
@@ -401,8 +403,13 @@ function SelectionOfEffectandDirection(activeSlide) {
 function saveCanvasData() {
     const dpr = window.devicePixelRatio || 1;
     // current “logical” canvas size in CSS‑pixels
-    const screenW = canvas.width / dpr;
-    const screenH = canvas.height / dpr;
+   // const screenW = canvas.width / dpr;
+   // const screenH = canvas.height / dpr;
+
+    const rect = canvas.getBoundingClientRect();   // CSS pixels
+    const screenW = rect.width;
+    const screenH = rect.height;
+
 
     // background
     const canvasBgColor = canvas.style.backgroundColor || "#ffffff";
@@ -434,7 +441,10 @@ function saveCanvasData() {
                 isBold: obj.isBold || false,
                 isItalic: obj.isItalic || false,
                 type: obj.type || 'text',
-                zIndex: obj.zIndex || getNextZIndex()
+                zIndex: obj.zIndex || getNextZIndex(),
+                width: obj.width,
+                height: obj.height,
+                align: obj.align,
             };
         }),
 
@@ -466,6 +476,7 @@ function saveCanvasData() {
 
     return JSON.stringify(data, null, 2);
 }
+
 function GetDesignBoardById(id) {
    
     try {
@@ -787,6 +798,9 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
             isItalic: obj.isItalic || false,
             type: obj.type || 'text',
             zIndex: obj.zIndex || getNextZIndex(),
+            width: obj.width,
+            height: obj.height,
+            align: obj.textAlign
         };
     });
 
@@ -831,10 +845,12 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
             autoFitTextNew(obj, padding);
         });
         console.log('drawCanvas calling after Promise');
-        drawCanvas(condition);
+        // drawCanvas(condition);
+        drawText();
        // resizeCanvas();
     });
 }
+
 
 
 function autoFitTextNew(obj, padding = 5) {
