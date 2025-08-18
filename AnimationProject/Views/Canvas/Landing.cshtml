@@ -1,7 +1,5 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
+﻿@{
+    // Layout = null;
     ViewBag.HideNavbar = true;
 }
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -40,7 +38,7 @@
             <span class="nav-icon">
                 <i class="fa-solid fa-magnifying-glass"></i>
             </span>
-            <button class="create-new-btn" data-bs-toggle="modal" data-bs-target="#exampleModal">Create New</button>
+            <a class="create-new-btn create-link" href="/Canvas/Signup">Create New</a>
             <a data-bs-toggle="modal" data-bs-target="#loginModal" href="#">Login</a>
         </div>
     </div>
@@ -76,7 +74,6 @@
         </div>
     </div>
 </div>
-
 <!-- Hover options Section -->
 <div class="option-box-outer" id="hoverBox" style="display:none;">
     <div class="option-box-inner">
@@ -114,125 +111,53 @@
     </div>
 </div>
 
-<div class="container py-4">
-    <div class="text-center mb-5">
-        <h2 class="temp_head">Animation Templates</h2>
-    </div>
-    <div class="row column-gap-3 d-flex justify-content-center">
-        <!-- Column 1: Horizontal Images -->
-        <div class="col-auto p-0">
-            <div class="img-box horizontal">
-                <img class="border3" src="~/images/iphone.png" alt="Image 1" />
-            </div>
-            <div class="img-box horizontal">
-                <img class="border3" src="~/images/discount.png" alt="Image 2" />
-            </div>
-            <div class="img-box horizontal">
-                <img class="border3" src="~/images/brandname.png" alt="Image 3" />
-            </div>
-            <div class="img-box horizontal">
-                <img class="border3" src="~/images/onlinecloths.png" alt="Image 6" />
-            </div>
-            <div class="img-box horizontal">
-                <img class="border3" src="~/images/70offf.png" alt="Image 7" />
-            </div>
-            
-        </div>
-
-        <!-- Column 2: Vertical Images -->
-        <div class="col-auto p-0">
-            <div class="img-box vertical">
-                <img class="border3" src="~/images/watch.png" alt="Image 4" />
-            </div>
-            <div class="img-box vertical">
-                <img class="border3" src="~/images/lemontea.png" alt="Image 5" />
-            </div>
-            <div class="img-box vertical">
-                <img class="border3" src="~/images/iphone14.png" alt="Image 9" />
-            </div>
-            
-        </div>
-
-        <!-- Column 3: Horizontal Images -->
-        <div class="col-auto p-0">
-            <div class="img-box horizontal">
-                <img class="border3" src="~/images/onlinecloths.png" alt="Image 6" />
-            </div>
-            <div class="img-box horizontal">
-                <img class="border3" src="~/images/70offf.png" alt="Image 7" />
-            </div>
-            <div class="img-box horizontal">
-                <img class="border3" src="~/images/stickynote.png" alt="Image 8" />
-            </div>
-            <div class="img-box horizontal">
-                <img class="border3" src="~/images/laptop.png" alt="Image 8" />
-            </div>
-            <div class="img-box horizontal">
-                <img class="border3" src="~/images/iphone.png" alt="Image 1" />
-            </div>
-            <div class="img-box horizontal">
-                <img class="border3" src="~/images/discount.png" alt="Image 2" />
+<div class="landing">
+  <div class="container">
+    <div class="d-flex justify-content-between">
+        <div class="land_content mt-5">
+            <p class="slogan_p">Easily create animations with a simple preset motion tool. No designer or animator needed.
+                Do it all yourself! 
+            </p>
+            <h1 class="slogan_head mt-4">
+                All Motion.<br /> No Static.
+            </h1>
+            <div class="mt-5 d-flex gap-3">
+                <a class="create-new-btn" href="/Canvas/Signup">Create New</a>
+                <a class="create-new-btn trial-btn" href="/Canvas/Signup">7 Days Trial</a>
             </div>
         </div>
-
-        <!-- Column 4: Vertical Images -->
-        <div class="col-auto p-0">
-            <div class="img-box vertical">
-                <img class="border3" src="~/images/iphone14.png" alt="Image 9" />
+        <div>
+            <div class="d-flex gap-4 align-items-center">
+                <div>
+                    <img class="nike_img" src="~/images/hero_sec_img.png" alt="Nike Promo Image" />
+                </div>
+                <div>
+                    <img class="laptop_img" src="~/images/laptop2.png" alt="Nike Promo Image" />
+                </div>
             </div>
-            <div class="img-box vertical">
-                <img class="border3" src="~/images/shoe.png" alt="Image 10" />
+            <div class="partner_land d-flex justify-content-between align-items-center container my-4">
+                 <img src="~/images/Layer 1.png" alt="" />
+                 <img src="~/images/Layer 2.png" alt="" />
+                 <img src="~/images/Layer 3.png" alt="" />
+                 <img src="~/images/Layer 4.png" alt="" />
+                 <img src="~/images/Layer 5.png" alt="" />
+                 <img src="~/images/Layer 7.png" alt="" />
+                 <img src="~/images/Layer 8.png" alt="" />
             </div>
-            <div class="img-box vertical">
-                <img class="border3" src="~/images/watch.png" alt="Image 4" />
-            </div>
-            
         </div>
     </div>
-</div>
-<div class="partner d-flex justify-content-between align-items-center container my-5">
-    <img src="~/images/Layer 1.png" alt="" />
-    <img src="~/images/Layer 2.png" alt="" />
-    <img src="~/images/Layer 3.png" alt="" />
-    <img src="~/images/Layer 4.png" alt="" />
-    <img src="~/images/Layer 5.png" alt="" />
-    <img src="~/images/Layer 7.png" alt="" />
-    <img src="~/images/Layer 8.png" alt="" />
+  </div>
 </div>
 
-<footer>
+<div class="landing-foot"> 
     <div class="container">
-        <div class="d-flex justify-content-center footer-content">
-            <div class="align-self-center">
-                <img class="foot_img ms-5 border3" src="~/images/screen-H.png" alt="Alternate Text" />
-            </div>
-            <div class="align-self-center">
-                <img class="foot_img border3" src="~/images/screen-V.png" alt="Alternate Text" />
-            </div>
-            <div class="foot-text py-5">
-                <h2 class="foot-head mb-4">Features</h2>
-                <p class="foot-para">No designer or animator needed... Just design it yourself and the animation will be created automatically.It's super simple to create an animation board for your signage screen.</p>
-                <a href="/Canvas/Signup" class="create-new-btn register_btn">Register Now</a>
-            </div>
+        <div class="d-flex justify-content-between align-items-center">
+            <p class="slogan_p mb-0">Animate Like Never Before!</p>
+            <a class="foot_brand" href="#">AniBoard</a>
         </div>
     </div>
-    <div class="container-fluid">
-        <div class="footer_nav d-flex justify-content-between">
-            <div class="copyright-text d-flex align-items-center">
-                <p>&#169; 2025 - All Rights Reserved.</p>
-            </div>
-            <div>
-                <ul class="d-flex gap-5 align-items-center">
-                    <li class="foot-nav-item"><a class="foot-nav-link" href="#">About Us</a></li>
-                    <li class="foot-nav-item"><a class="foot-nav-link" href="/Canvas/Templates">Templates</a></li>
-                    <li class="foot-nav-item"><a class="foot-nav-link" href="/Canvas/Pricing">Pricing</a></li>
-                    <li class="foot-nav-item"><a class="foot-nav-link" href="/Canvas/Contactus">Contact</a></li>
-                    <a class="foot_brand" href="#">AniBoard</a>
-                </ul>
-            </div>
-        </div>
-    </div>
-</footer>
+</div>
+
 <!-- Modal Structure -->
 <div class="modal fade layout_modal" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -312,8 +237,9 @@
       box.style.display = 'none';
       hero.style.display = 'flex';
     });
-</script>
 
+
+</script>
 <script>
         // JavaScript for Handling Selection and Redirection
 
@@ -355,4 +281,5 @@
                 });
             });
     });
+   
 </script>

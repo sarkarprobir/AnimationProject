@@ -20,7 +20,9 @@ Body {
     overflow-y: auto;
     font-family: "Nunito Sans", serif;
 }
- 
+a:hover {
+    color: #c9cccf ;
+}
 
 .fixed-top {
     position: fixed;
@@ -1041,19 +1043,9 @@ body {
     font-size: 1rem;
 }
 
-/*.panel-left-gallery {
-    width: 500px;
-    height: 100vh;
-    background: var(--color-white);*/
-    /* z-index: 9; */
-    /*padding: 25px 30px;
-    position: absolute;
-    left: 0px;
-    top: 10px;
-}*/
 .tabs {
     display: flex;
-    justify-content: space-between;
+    gap: 20px;
     width: 85% !important;
 }
 
@@ -1351,7 +1343,7 @@ body {
     width: 20px;
     height: 20px;
     display: inline-block;
-    border: 2px solid #ccc;
+    border: 2px solid transparent;
     border-radius: 50%;
     position: relative;
     transition: all 0.3s ease;
