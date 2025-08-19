@@ -689,7 +689,7 @@ function ensureFontsInitialized() {
     return window.__allFontsReady;
 }
 
-async function loadCanvasFromJson(jsonData, condition = 'Common') {
+async function loadCanvasFromJsonOLD(jsonData, condition = 'Common') {
     // Ensure fonts are ready (on first draw or SPA redraws)
     // Wait for all font families to finish loading (first time or SPA)
     //await window.__allFontsReady;
@@ -851,6 +851,151 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
     });
 }
 
+async function loadCanvasFromJson(jsonData, condition = 'Common') {
+    await ensureFontsInitialized();
+
+    // Clear & set condition
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    currentCondition = condition;
+
+    if (!jsonData) {
+        await document.fonts.ready;
+        drawText();
+        return;
+    }
+
+    const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+    slideData = data;
+
+    // Background color
+    canvasBgColor = data.canvasBgColor || '#ffffff';
+    document.getElementById('hdnBackgroundSpecificColor').value = canvasBgColor;
+    canvas.style.backgroundColor = canvasBgColor;
+
+    // Canvas CSS → device px (for normalized coords)
+    const rect = canvas.getBoundingClientRect();
+    const screenW = rect.width;
+    const screenH = rect.height;
+
+    // ---------- Preload background image (promise) ----------
+    const bgPromise = data.canvasBgImage
+        ? new Promise(resolve => {
+            const bg = new Image();
+            bg.crossOrigin = 'anonymous';
+            bg.onload = () => { canvas._bgImg = bg; resolve(); };
+            bg.onerror = () => { canvas._bgImg = null; resolve(); };
+            bg.src = data.canvasBgImage;
+        })
+        : Promise.resolve(canvas._bgImg = null);
+
+    // ---------- Build text objects with usable width/height ----------
+    const padding = 5; // (use your existing padding)
+    textObjects = (data.text || []).map(obj => {
+        const bw_norm = (obj.boundingWidth ?? obj.width ?? 0) * screenW;
+        const bh_norm = (obj.boundingHeight ?? obj.height ?? 0) * screenH;
+
+        const fontPx = obj.fontSize;
+        const lineH = fontPx * 1.2;
+
+        // Manual line breaks height
+        const manualLines = String(obj.text ?? "").split("\n");
+        const hasManual = manualLines.length > 1;
+
+        const neededHeight = hasManual
+            ? (manualLines.length * lineH + 2 * padding)
+            : bh_norm;
+
+        const finalWidth = Math.max(10, bw_norm || 50);        // ensure sane defaults
+        const finalHeight = Math.max(10, neededHeight || 30);
+
+        let ty = (obj.y ?? 0) * screenH;
+        if (ty + finalHeight + padding > screenH) {
+            ty = screenH - finalHeight - padding;
+        }
+
+        return {
+            text: obj.text || "",
+            x: (obj.x ?? 0) * screenW,
+            y: ty,
+            width: finalWidth,                  // ✅ set width now
+            height: finalHeight,                // ✅ set height now
+            boundingWidth: finalWidth,
+            boundingHeight: finalHeight,
+            fontSize: fontPx,
+            fontFamily: obj.fontFamily,
+            textColor: obj.textColor,
+            textAlign: obj.textAlign,
+            align: obj.textAlign,
+            opacity: obj.opacity ?? 100,
+            selected: false,
+            _hasManualBreaks: hasManual,
+            lineSpacing: (typeof obj.lineSpacing === 'number')
+                ? obj.lineSpacing : 1.2,
+            noAnim: obj.noAnim,
+            groupId: obj.groupId,
+            rotation: obj.rotation || 0,
+            isBold: !!obj.isBold,
+            isItalic: !!obj.isItalic,
+            type: obj.type || 'text',
+            zIndex: obj.zIndex || getNextZIndex()
+        };
+    });
+
+    // ---------- Preload images (promises) ----------
+    const imagesInput = data.images || [];
+    const imagePromises = imagesInput.map(imgObj => new Promise(resolve => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve({ ok: true, img });
+        img.onerror = () => resolve({ ok: false, img: null });
+        img.src = imgObj.src;
+    }));
+
+    const loadedImages = await Promise.all(imagePromises);
+
+    images = imagesInput.map((imgObj, i) => {
+        const entry = loadedImages[i];
+        const img = entry && entry.ok ? entry.img : null;
+
+        return {
+            ...imgObj,
+            x: (imgObj.x ?? 0) * screenW,
+            y: (imgObj.y ?? 0) * screenH,
+            width: (imgObj.width ?? 0) * screenW,
+            height: (imgObj.height ?? 0) * screenH,
+            selected: false,
+            img,
+            noAnim: imgObj.noAnim,
+            groupId: imgObj.groupId,
+            rotation: imgObj.rotation || 0,
+            type: imgObj.type || 'image',
+            zIndex: imgObj.zIndex || getNextZIndex(),
+            fillNoColorStatus: !!imgObj.fillNoColorStatus,
+            strokeNoColorStatus: !!imgObj.strokeNoColorStatus,
+            fillNoColor: imgObj.fillNoColor || "#FFFFFF",
+            strokeNoColor: imgObj.strokeNoColor || "#FFFFFF",
+            strokeWidth: imgObj.strokeWidth || 3
+        };
+    });
+
+    // ---------- Load fonts for each text object ----------
+    const fontPromises = textObjects.map(o =>
+        document.fonts.load(`${o.fontSize}px ${o.fontFamily}`)
+    );
+
+    // Wait for everything (bg + images + fonts)
+    await Promise.all([bgPromise, ...fontPromises]);
+
+    // ---------- Now that fonts are loaded, fit text if you want ----------
+    textObjects.forEach(obj => {
+        // If you only want autofit when no manual breaks:
+        // if (!obj._hasManualBreaks) autoFitTextNew(obj, padding);
+        autoFitTextNew(obj, padding); // as in your current code
+    });
+
+    // ---------- Single, final draw ----------
+    drawText();
+}
 
 
 function autoFitTextNew(obj, padding = 5) {
