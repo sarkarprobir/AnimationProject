@@ -8094,7 +8094,8 @@ const minScale = 0.5;
 const scaleText = document.getElementById("scaleValue");
 
 let activeHandleKey = null;          // 'tl','tr','bl','br','t','r','b','l'
-
+let resizeDirectionRaw = null;   // e.g. "mr","ml","mt","mb","top-left", etc
+let resizeDirectionNorm = null;  // "r","l","t","b","tl","tr","bl","br"
 function applyScale() {
  /*   resizeCanvas();*/
     canvas.style.transform = `scale(${scale})`;
@@ -8136,8 +8137,8 @@ let savedRange = null;
 let isFontScaling = false;
 let _cornerScale = null; // { cx, cy, startDist, startScale, baseFontSize }
 let isCornerImageScale = false;
-
-const CORNER_HANDLES = new Set(["tl", "tr", "bl", "br", "top-left", "top-right", "bottom-left", "bottom-right"]);
+const CORNER_HANDLES = new Set(["tl", "tr", "bl", "br"]); // use normalized names only
+/*const CORNER_HANDLES = new Set(["tl", "tr", "bl", "br", "top-left", "top-right", "bottom-left", "bottom-right"]);*/
 let _cornerScaleState = null; // { cx, cy, startDist, startScale, baseFontSize }
 
 //const CORNER_HANDLES = new Set(['tl', 'tr', 'bl', 'br']);
@@ -8601,10 +8602,25 @@ function scaleBoxContent(box, scale) {
 const HANDLE_CURSOR = {
     tl: "nwse-resize", br: "nwse-resize",
     tr: "nesw-resize", bl: "nesw-resize",
-    tm: "ns-resize", bm: "ns-resize",
-    ml: "ew-resize", mr: "ew-resize"
+    l: "ew-resize", r: "ew-resize",
+    t: "ns-resize", b: "ns-resize"
 };
-
+function normalizeHandle(h) {
+    if (!h) return h;
+    switch (h) {
+        // corners
+        case "top-left": return "tl";
+        case "top-right": return "tr";
+        case "bottom-left": return "bl";
+        case "bottom-right": return "br";
+        // sides
+        case "ml": case "middle-left": return "l";
+        case "mr": case "middle-right": return "r";
+        case "mt": case "middle-top": return "t";
+        case "mb": case "middle-bottom": return "b";
+        default: return h; // already "tl","tr","bl","br","l","r","t","b"
+    }
+}
 function setGlobalCursor(cursor) {
     const c = cursor || "";
     canvas.style.cursor = c || "default";
@@ -8977,10 +8993,15 @@ canvas.addEventListener("mousedown", e => {
     const allTop = [...(images || []), ...(textObjects || [])].sort((a, b) => (b.zIndex || 0) - (a.zIndex || 0));
 
     // handles first
+    // handles first
+    // handles first
     for (const box of allTop) {
-        const handle = getResizeHandle(box, mx, my);
-        if (!handle) continue;
+        const raw = getResizeHandle(box, mx, my);
+        if (!raw) continue;
 
+        const handle = normalizeHandle(raw);      // ← normalize HERE
+        resizeDirectionRaw = raw;                // keep raw for text helpers if needed
+        resizeDirectionNorm = handle;             // use norm everywhere else
         activeBox = box;
 
         // single-select
@@ -8988,71 +9009,45 @@ canvas.addEventListener("mousedown", e => {
         if (Array.isArray(images)) images.forEach(o => o.selected = (o === box));
         drawText();
 
-        if (CORNER_HANDLES.has(handle)) {
+        if (CORNER_HANDLES.has(handle)) {         // ← use normalized in the test
+            // store for compatibility if your code uses it elsewhere
             resizeDirection = handle;
 
             if (box.type === "image") {
-                // 🔵 IMAGE: corner uniform scale (like your text)
                 isCornerImageScale = true;
-                isResizingNew = false;
+                isResizingNew = false; isDraggingNew = false;
                 activeBox._orig = { x: box.x, y: box.y, width: box.width, height: box.height };
-                setGlobalCursor(HANDLE_CURSOR[handle] || "nwse-resize");
-                const endCorner = () => { isCornerImageScale = false; setGlobalCursor(""); };
-                document.addEventListener("mouseup", endCorner, { once: true });
+                activeBox._origMouse = { x: startMXCanvas, y: startMYCanvas };
+                setGlobalCursor("nwse-resize");
+                document.addEventListener("mouseup", () => { isCornerImageScale = false; setGlobalCursor(""); }, { once: true });
                 return;
             } else {
-                // 🔤 TEXT: keep your old behavior
                 isCornerFontScale = true;
-                isResizingNew = false;
+                isResizingNew = false; isDraggingNew = false;
                 activeBox._orig = { x: box.x, y: box.y, width: box.width, height: box.height, text: box.text };
-                setGlobalCursor(HANDLE_CURSOR[handle] || "nwse-resize");
-                const endCorner = () => { isCornerFontScale = false; setGlobalCursor(""); };
-                document.addEventListener("mouseup", endCorner, { once: true });
+                activeBox._origMouse = { x: startMXCanvas, y: startMYCanvas };
+                setGlobalCursor("nwse-resize");
+                document.addEventListener("mouseup", () => { isCornerFontScale = false; setGlobalCursor(""); }, { once: true });
                 return;
             }
         }
 
         // sides (not corners)
-        //resizeDirection = handle;
-        //isResizingNew = true;
-        //activeBox._orig = { x: box.x, y: box.y, width: box.width, height: box.height, text: box.text, fontSize: box.fontSize };
-        resizeDirection = handle;
+        resizeDirection = handle;                 // keep if referenced elsewhere
+        isCornerFontScale = false; isCornerImageScale = false;
+        isResizingNew = true; isDraggingNew = false;
 
-        // make sure corner flows are OFF
-        isCornerFontScale = false;
-        isCornerImageScale = false;
+        activeBox._orig = (box.type === "image")
+            ? { x: box.x, y: box.y, width: box.width, height: box.height }
+            : { x: box.x, y: box.y, width: box.width, height: box.height, text: box.text, fontSize: box.fontSize };
 
-        isResizingNew = true;
-
-        // ✅ capture original box geometry for side-resize deltas
-        if (box.type === "image") {
-            // only what we need for images
-            activeBox._orig = {
-                x: box.x,
-                y: box.y,
-                width: box.width,
-                height: box.height
-            };
-        } else {
-            // keep your existing extra fields for text
-            activeBox._orig = {
-                x: box.x,
-                y: box.y,
-                width: box.width,
-                height: box.height,
-                text: box.text,
-                fontSize: box.fontSize
-            };
-        }
-
-        // (optional) also remember where the drag started; handy if your helper reads from the box instead of globals
         activeBox._origMouse = { x: startMXCanvas, y: startMYCanvas };
-
-        // nice to have: set cursor for sides
-        setGlobalCursor(HANDLE_CURSOR[handle] || (handle === 'l' || handle === 'r' ? 'ew-resize' : 'ns-resize'));
-
+        setGlobalCursor((handle === "l" || handle === "r") ? "ew-resize" : "ns-resize");
         return;
     }
+
+
+
 
     // no handle → body hit (topmost)
     const clickedBox = allTop.find(box =>
@@ -9094,82 +9089,67 @@ canvas.addEventListener("mousemove", e => {
         drawText();
         return;
     }
-
-    // 🔤 TEXT corner (your old behavior)
-    if (isCornerFontScale && activeBox && resizeDirection && CORNER_HANDLES.has(resizeDirection)) {
-        const ow = activeBox._orig.width;
-        const oh = activeBox._orig.height;
-        const dxAbs = mx - startMXCanvas;
-        const dyAbs = my - startMYCanvas;
+    if (isCornerFontScale && activeBox && resizeDirectionNorm && CORNER_HANDLES.has(resizeDirectionNorm)) {
+        const dir = resizeDirectionNorm;          // ← normalized "tl/tr/bl/br"
+        const ow = activeBox._orig.width, oh = activeBox._orig.height;
+        const dxAbs = mx - startMXCanvas, dyAbs = my - startMYCanvas;
 
         let scaleX = 1, scaleY = 1;
-        switch (resizeDirection) {
+        switch (dir) {
             case 'tl': scaleX = (ow - dxAbs) / ow; scaleY = (oh - dyAbs) / oh; break;
             case 'tr': scaleX = (ow + dxAbs) / ow; scaleY = (oh - dyAbs) / oh; break;
             case 'bl': scaleX = (ow - dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
             case 'br': scaleX = (ow + dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
         }
-        scaleX = Math.max(0.1, scaleX);
-        scaleY = Math.max(0.1, scaleY);
-        const s = Math.min(scaleX, scaleY);
-        const newW = ow * s, newH = oh * s;
+        scaleX = Math.max(0.1, scaleX); scaleY = Math.max(0.1, scaleY);
+        const s = Math.min(scaleX, scaleY), newW = ow * s, newH = oh * s;
 
-        switch (resizeDirection) {
+        switch (dir) {
             case 'tl': activeBox.x = activeBox._orig.x + (ow - newW); activeBox.y = activeBox._orig.y + (oh - newH); break;
             case 'tr': activeBox.x = activeBox._orig.x; activeBox.y = activeBox._orig.y + (oh - newH); break;
             case 'bl': activeBox.x = activeBox._orig.x + (ow - newW); activeBox.y = activeBox._orig.y; break;
             case 'br': activeBox.x = activeBox._orig.x; activeBox.y = activeBox._orig.y; break;
         }
-        activeBox.width = newW;
-        activeBox.height = newH;
-
-        // scale original HTML per your old flow
+        activeBox.width = newW; activeBox.height = newH;
         activeBox.text = scaleTextHTML(activeBox._orig.text, s);
-
-        prevMouseX = mx; prevMouseY = my;
-        drawText();
-        return;
+        drawText(); return;
     }
 
-    // 🔵 IMAGE corner (NEW: same corner-anchored, uniform scale)
-    if (isCornerImageScale && activeBox && activeBox.type === "image" && resizeDirection && CORNER_HANDLES.has(resizeDirection)) {
-        const ow = activeBox._orig.width;
-        const oh = activeBox._orig.height;
-        const dxAbs = mx - startMXCanvas;
-        const dyAbs = my - startMYCanvas;
+    // IMAGE corner
+    if (isCornerImageScale && activeBox && activeBox.type === "image" &&
+        resizeDirectionNorm && CORNER_HANDLES.has(resizeDirectionNorm)) {
+        const dir = resizeDirectionNorm;
+        const ow = activeBox._orig.width, oh = activeBox._orig.height;
+        const dxAbs = mx - startMXCanvas, dyAbs = my - startMYCanvas;
 
         let scaleX = 1, scaleY = 1;
-        switch (resizeDirection) {
+        switch (dir) {
             case 'tl': scaleX = (ow - dxAbs) / ow; scaleY = (oh - dyAbs) / oh; break;
             case 'tr': scaleX = (ow + dxAbs) / ow; scaleY = (oh - dyAbs) / oh; break;
             case 'bl': scaleX = (ow - dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
             case 'br': scaleX = (ow + dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
         }
-        scaleX = Math.max(0.1, scaleX);
-        scaleY = Math.max(0.1, scaleY);
-        const s = Math.min(scaleX, scaleY); // uniform like text
-        const newW = ow * s, newH = oh * s;
+        scaleX = Math.max(0.1, scaleX); scaleY = Math.max(0.1, scaleY);
+        const s = Math.min(scaleX, scaleY), newW = ow * s, newH = oh * s;
 
-        switch (resizeDirection) {
+        switch (dir) {
             case 'tl': activeBox.x = activeBox._orig.x + (ow - newW); activeBox.y = activeBox._orig.y + (oh - newH); break;
             case 'tr': activeBox.x = activeBox._orig.x; activeBox.y = activeBox._orig.y + (oh - newH); break;
             case 'bl': activeBox.x = activeBox._orig.x + (ow - newW); activeBox.y = activeBox._orig.y; break;
             case 'br': activeBox.x = activeBox._orig.x; activeBox.y = activeBox._orig.y; break;
         }
-        activeBox.width = newW;
-        activeBox.height = newH;
-
-        prevMouseX = mx; prevMouseY = my;
-        drawText();
-        return;
+        activeBox.width = newW; activeBox.height = newH;
+        drawText(); return;
     }
 
     // Sides (text or image) – keep your existing text path, add image resize similarly
     if (isResizingNew && activeBox && resizeDirection) {
         if (activeBox.type === "image") {
-            scaleImageBoxWithHandle(activeBox, resizeDirection, mx, my); // NEW helper below
+            // IMAGES: normalized ("l","r","t","b")
+            scaleImageBoxWithHandle(activeBox, resizeDirectionNorm || resizeDirection, mx, my);
         } else {
-            scaleTextBoxWithHandle(activeBox, resizeDirection, mx, my);  // your existing helper
+            // TEXT: raw ("mr","ml","mt","mb" or already-short)
+            scaleTextBoxWithHandle(activeBox, resizeDirectionRaw || resizeDirection, mx, my);
         }
         prevMouseX = mx; prevMouseY = my;
         drawText();
@@ -9187,25 +9167,20 @@ window.addEventListener("mouseup", () => {
 });
 
 function scaleImageBoxWithHandle(box, handle, mx, my) {
+    handle = normalizeHandle(handle); // ensure canonical for images
     const minW = 10, minH = 10;
     const o = box._orig || { x: box.x, y: box.y, width: box.width, height: box.height };
-
-    // deltas since mousedown
-    const dx = mx - startMXCanvas;
-    const dy = my - startMYCanvas;
+    const dx = mx - startMXCanvas, dy = my - startMYCanvas;
 
     let x = o.x, y = o.y, w = o.width, h = o.height;
-
-    // horizontal
     if (handle === 'r') { w = Math.max(minW, o.width + dx); }
     if (handle === 'l') { w = Math.max(minW, o.width - dx); x = o.x + (o.width - w); }
-
-    // vertical (if you also want t/b on images)
     if (handle === 'b') { h = Math.max(minH, o.height + dy); }
     if (handle === 't') { h = Math.max(minH, o.height - dy); y = o.y + (o.height - h); }
 
     box.x = x; box.y = y; box.width = w; box.height = h;
 }
+
 
 
 
