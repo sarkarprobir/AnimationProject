@@ -8317,7 +8317,15 @@ function cleanEditorHTMLPreserveCaret() {
     textEditorNew.innerHTML = "";
     cleanedLines.forEach(line => textEditorNew.appendChild(line));
 }
-// 🟢 Fix line height calculation in drawText
+function normAlpha(op) {
+    if (op == null) return 1;         // default fully opaque
+    return op > 1 ? op / 100 : op;    // handle legacy 0–100
+}
+function pointInBox(b, x, y) {
+    const w = Number(b.width) || 0;
+    const h = Number(b.height) || 0;
+    return x >= b.x && x <= b.x + w && y >= b.y && y <= b.y + h;
+}
 // 🟢 Fix line height calculation in drawText
 function drawText() {
     const designW = canvas.width;
@@ -8364,7 +8372,7 @@ function drawText() {
         if (box.type === "image") {
             ctx.save();
             // (no rotation here since your old code didn't do rotated text; keeps selection aligned)
-            ctx.globalAlpha = (box.opacity ?? 100) / 100;
+            ctx.globalAlpha = normAlpha(box.opacity);
             ctx.drawImage(box.img, box.x, box.y, box.width, box.height);
             ctx.restore();
 
@@ -8383,7 +8391,7 @@ function drawText() {
 
         // ---- TEXT (your old logic preserved) ----
         ctx.save();
-
+        ctx.globalAlpha = normAlpha(box.opacity);
         const wrapper = document.createElement("div");
         wrapper.innerHTML = box.text;
 
@@ -8991,7 +8999,42 @@ canvas.addEventListener("mousedown", e => {
 
     // 🔁 NEW: search topmost among images + text
     const allTop = [...(images || []), ...(textObjects || [])].sort((a, b) => (b.zIndex || 0) - (a.zIndex || 0));
+    let hit = null;
+    for (let i = allTop.length - 1; i >= 0; i--) {
+        const b = allTop[i];
+        if (pointInBox(b, mx, my)) { hit = b; break; }
+    }
 
+    // clear previous selection
+    (images || []).forEach(b => b.selected = false);
+    (textObjects || []).forEach(b => b.selected = false);
+    activeText = null;
+    activeImage = null;
+
+    if (hit) {
+        hit.selected = true;
+
+        // decide which "active" to set
+        if (hit.type === "image" || hit.img) {
+            activeImage = hit;
+        } else {
+            activeText = hit;
+        }
+
+        // --- update opacity controls from the hit ---
+        // safer than `txtHit.opacity * 100 || 100` (that would turn 0% into 100%)
+        const alpha = normAlpha(hit.opacity);
+        let opacity = Math.round(alpha * 100);
+        if (opacity > 100) opacity = 100;
+
+        const opacitySlider = document.getElementById("opacitySlider");
+        const opacityValue = document.getElementById("opacityValue");
+        const opacityBadge = document.getElementById("opacityBadge");
+
+        if (opacitySlider) opacitySlider.value = String(opacity);
+        if (opacityValue) opacityValue.textContent = String(opacity);
+        if (opacityBadge) opacityBadge.textContent = String(opacity);
+    }
     // handles first
     // handles first
     // handles first

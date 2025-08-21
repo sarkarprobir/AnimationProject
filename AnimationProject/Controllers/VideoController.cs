@@ -1,24 +1,27 @@
-﻿using AnimationProject.Services;
+﻿using AnimationProject.Helpers;
+using AnimationProject.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace YourNamespace.Controllers
+namespace AnimationProject.Controllers
 {
     [Route("[controller]")]
     [ApiController]
     public class VideoController : ControllerBase
     {
         private readonly IWebHostEnvironment _env;
-        
 
-        public VideoController(IWebHostEnvironment env)
+        private readonly AppSettings _appSettings;
+        public VideoController(IWebHostEnvironment env, IOptions<AppSettings> appSettings)
         {
             _env = env;
+            _appSettings = appSettings.Value;
         }
 
         [HttpPost("save-video")]
@@ -36,7 +39,7 @@ namespace YourNamespace.Controllers
             }
 
             string targetFolder;
-            if (!string.IsNullOrEmpty(folderId) && folderId !="new")
+            if (!string.IsNullOrEmpty(folderId) && folderId != "new")
             {
                 targetFolder = Path.Combine(baseFolder, folderId);
                 if (!Directory.Exists(targetFolder))
@@ -95,7 +98,86 @@ namespace YourNamespace.Controllers
             });
         }
         [HttpPost("save-Large-video")]
+        [HttpPost]
         public async Task<IActionResult> SaveLargeVideo([FromForm] IFormFile video, [FromForm] string folderId)
+        {
+            if (video == null || video.Length == 0)
+                return BadRequest("No file uploaded.");
+
+            // Read config
+            var physicalRoot = (_appSettings.PhysicalPath ?? "").Trim().TrimEnd('\\', '/'); // e.g. "Z:" or "\\ANIBOARD-WEB\ShareRoot"
+            if (string.IsNullOrWhiteSpace(physicalRoot))
+                return StatusCode(500, "AppSettings:PhysicalPath not configured.");
+
+            // We want: Z:\SlideLargeVideo\<folderId or newGuid>\animation.mp4
+            var baseFolder = Path.Combine(physicalRoot, "SlideLargeVideo");
+            Directory.CreateDirectory(baseFolder);
+
+            string targetFolder;
+            string finalFolderId;
+
+            if (!string.IsNullOrWhiteSpace(folderId) && !folderId.Equals("new", StringComparison.OrdinalIgnoreCase))
+            {
+                finalFolderId = folderId.Trim();
+                targetFolder = Path.Combine(baseFolder, finalFolderId);
+                Directory.CreateDirectory(targetFolder);
+            }
+            else
+            {
+                finalFolderId = Guid.NewGuid().ToString();
+                targetFolder = Path.Combine(baseFolder, finalFolderId);
+                Directory.CreateDirectory(targetFolder);
+            }
+
+            // Remove any previous .mp4
+            try
+            {
+                foreach (var f in Directory.EnumerateFiles(targetFolder, "*.mp4"))
+                    System.IO.File.Delete(f);
+            }
+            catch (Exception ex)
+            {
+                // not fatal
+                Console.WriteLine("Delete old mp4 failed: " + ex.Message);
+            }
+
+            var fileName = "animation.mp4";
+            var filePath = Path.Combine(targetFolder, fileName);
+
+            try
+            {
+                // FileShare.Read lets the player start reading while you still have the file open elsewhere
+                using (var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+                {
+                    await video.CopyToAsync(stream);
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error writing file: {ex.Message}");
+            }
+
+            // Optional: wait until the file becomes readable/non-locked
+            int attempts = 0;
+            while (!IsFileReady(filePath) && attempts++ < 40) // ~20s
+                await Task.Delay(500);
+
+            // Build the browser URL that maps via your StaticFiles/IIS VDir
+            var webPath = (_appSettings.WebPath ?? "/SlideLargeVideo").TrimEnd('/'); // e.g. "/SlideLargeVideo"
+            var relativeUrl = $"{webPath}/{Uri.EscapeDataString(finalFolderId)}/{fileName}?nocache={Guid.NewGuid()}";
+
+            return Ok(new
+            {
+                message = "Video saved successfully",
+                fileName,
+                folder = finalFolderId,
+                filePath = relativeUrl       // send this to the <source src=...>
+            });
+        }
+
+
+
+        public async Task<IActionResult> SaveLargeVideoOLD([FromForm] IFormFile video, [FromForm] string folderId)
         {
             if (video == null || video.Length == 0)
             {
@@ -159,7 +241,7 @@ namespace YourNamespace.Controllers
             var folderName = !string.IsNullOrEmpty(folderId) ? folderId : Path.GetFileName(targetFolder);
             var relativeFilePath = $"/SlideLargeVideo/{folderName}/{fileName}?nocache={Guid.NewGuid()}";
 
-            
+
 
             // Wait until the file is accessible (with a maximum wait time if needed)
             int maxAttempts = 60;  // e.g., 60 attempts * 500ms = 30 seconds max
