@@ -103,6 +103,10 @@ namespace AnimationProject.Controllers
         {
             return View();
         }
+        public IActionResult About()
+        {
+            return View();
+        }
         public IActionResult Billing()
         {
             return View();
