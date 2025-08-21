@@ -1033,10 +1033,11 @@ async function SaveDesignBoardInPublishTable() {
                 $("#hdnPublishBoardUniqueId").val(result.publishBoardUniqueId);
 
 
-                const companyUniqueId = getCompanyIdFromUrl();
+                const companyId = getCompanyIdFromUrl();
                 const projectId = $("#hdnPublishBoardUniqueId").val();
-                window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
-
+                //window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
+                const url = `${baseURL.replace(/\/$/, '')}/s/v/${encodeURIComponent(companyId)}/${encodeURIComponent(projectId)}`;
+                window.open(url, "_blank");
                 RedirectToVerticalPageWithQueryString();
             },
             error: function (data) {
