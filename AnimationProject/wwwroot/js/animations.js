@@ -36,6 +36,7 @@ let layers = []; // global
 //const stream = canvas.captureStream(7); // Capture at 30 fps
 //const recorder = new MediaRecorder(stream);
 //const chunks = [];
+//const deg2rad = d => (d || 0) * Math.PI / 180;
 const HANDLE_SIZE = 8;
 const HANDLE_HITAREA = 20;
 let activeText,      // the text object under manipulation
@@ -5671,23 +5672,48 @@ function HideShowRightPannel(selectedType) {
         HideLoader();
     }
 }
+// Arrow key nudge for all selected items
 document.addEventListener('keydown', (e) => {
-    if (!window.isEditing || !window.textEditorNew) return;
+    // don't move while typing in inputs or your rich text editor
+    const ae = document.activeElement;
+    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
+    if (window.isEditing) return;
 
-    const ed = textEditorNew;
-    const inEditor = ed.contains(document.activeElement) || ed.contains((window.getSelection()?.anchorNode) || null);
-    if (!inEditor) return;
+    let dx = 0, dy = 0;
+    const step = e.shiftKey ? 10 : 1;
 
-    // Let browser handle arrows/home/end/page… naturally, just stop canvas listeners
-    // NOTE: we don't preventDefault (except for Tab handled above), only stopPropagation.
-    const passThroughKeys = [
-        'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'
-    ];
-    if (passThroughKeys.includes(e.key)) {
-        e.stopPropagation();
+    switch (e.key) {
+        case 'ArrowLeft': dx = -step; break;
+        case 'ArrowRight': dx = step; break;
+        case 'ArrowUp': dy = -step; break;
+        case 'ArrowDown': dy = step; break;
+        default: return;
     }
-    // Tab is handled on the editor element (above)
-}, true);
+    e.preventDefault();
+
+    const selected = [...(textObjects || []), ...(images || [])].filter(o => o.selected);
+    selected.forEach(o => { o.x += dx; o.y += dy; });
+
+    drawText();
+});
+
+//document.addEventListener('keydown', (e) => {
+//    if (!window.isEditing || !window.textEditorNew) return;
+
+//    const ed = textEditorNew;
+//    const inEditor = ed.contains(document.activeElement) || ed.contains((window.getSelection()?.anchorNode) || null);
+//    if (!inEditor) return;
+
+//    // Let browser handle arrows/home/end/page… naturally, just stop canvas listeners
+//    // NOTE: we don't preventDefault (except for Tab handled above), only stopPropagation.
+//    const passThroughKeys = [
+//        'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'
+//    ];
+//    if (passThroughKeys.includes(e.key)) {
+//        e.stopPropagation();
+//    }
+//    // Tab is handled on the editor element (above)
+//}, true);
 // Arrow-key nudge: move all selected items by the arrow direction
 //document.addEventListener('keydown', function (e) {
 //    // only when the canvas is “active”—you can tighten this to a focused flag if you like
@@ -8547,12 +8573,15 @@ function drawText() {
         if (box.width == null || Number.isNaN(box.width)) box.width = 50;
         if (box.height == null || Number.isNaN(box.height)) box.height = 30;
 
-        const angleRad = ((box.rotation || 0) * Math.PI) / 180;
-        const cx = box.x + box.width / 2;
-        const cy = box.y + box.height / 2;
+        const { w, h, cx, cy } = getBoxRect(box);
+        const angleRad = deg2rad(box.rotation || 0);
 
+        
         // ---- IMAGE ----
         if (box.type === "image") {
+            const { w, h, cx, cy } = getBoxRect(box);
+            const angleRad = deg2rad(box.rotation || 0);
+
             ctx.save();
             ctx.translate(cx, cy);
             ctx.rotate(angleRad);
@@ -8560,37 +8589,26 @@ function drawText() {
 
             if (box.img) {
                 if (box.img.complete) {
-                    ctx.drawImage(box.img, -box.width / 2, -box.height / 2, box.width, box.height);
+                    ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
                 } else {
                     const img = box.img;
                     img.onload = () => { img.onload = null; drawText(); };
                     img.onerror = () => { img.onerror = null; };
                 }
             }
+            ctx.restore();                     // ⬅️ back to world space
 
-            // 🔴 rotated selection & handles (drawn in local space)
-            if (box.selected && box.width > 0 && box.height > 0) {
-                ctx.strokeStyle = "red";
-                ctx.lineWidth = 1;
-                ctx.strokeRect(-box.width / 2, -box.height / 2, box.width, box.height);
-
-                ctx.fillStyle = "blue";
-                const w2 = box.width / 2, h2 = box.height / 2, s = 8, hs = s / 2;
-                const handles = [
-                    [-w2, -h2], [0, -h2], [w2, -h2],
-                    [w2, 0], [w2, h2], [0, h2],
-                    [-w2, h2], [-w2, 0]
-                ];
-                for (const [hx, hy] of handles) {
-                    ctx.fillRect(hx - hs, hy - hs, s, s);
-                }
+            if (box.selected && w > 0 && h > 0) {
+                drawRotatedSelection(ctx, box);  // ⬅️ now draw selection (single transform)
             }
-
-            ctx.restore();
             continue;
         }
 
+
         // ---- TEXT ----
+     
+      
+
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(angleRad);
@@ -8599,7 +8617,7 @@ function drawText() {
         const wrapper = document.createElement("div");
         wrapper.innerHTML = box.text || "";
 
-        // build lines
+        // build logical lines
         const lines = [];
         wrapper.childNodes.forEach(n => {
             if (n.nodeType === 1 && n.tagName === "DIV") {
@@ -8624,8 +8642,8 @@ function drawText() {
         });
 
         // local (rotated) coords: top-left is (-w/2, -h/2)
-        const left = -box.width / 2;
-        const top = -box.height / 2;
+        const left = -w / 2;
+        const top = -h / 2;
 
         let cursorY = top + 5;
         let usedHeight = 0;
@@ -8635,10 +8653,10 @@ function drawText() {
             let cursorX = left + 5;
             if (box.align === "center") {
                 ctx.textAlign = "center";
-                cursorX = left + box.width / 2;
+                cursorX = left + w / 2;
             } else if (box.align === "right") {
                 ctx.textAlign = "right";
-                cursorX = left + box.width - 5;
+                cursorX = left + w - 5;
             } else {
                 ctx.textAlign = "left";
             }
@@ -8703,48 +8721,40 @@ function drawText() {
             const lineHeight = (maxFontPx > 0 ? maxFontPx : basePx) * (box.lineSpacing || 1.2);
 
             let x = cursorX;
-            let drew = false;
+            let drewSomething = false;
 
             segments.forEach(seg => {
-                if (x + seg.width > left + box.width - 0.01) {
-                    cursorY += lineHeight;
+                if (x + seg.width > left + w - 0.01) {
+                    cursorY += lineHeight;     // wrap
                     x = cursorX;
                 }
                 ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
                 ctx.fillStyle = seg.style.col;
                 ctx.fillText(seg.text, x, cursorY);
                 x += seg.width;
-                drew = true;
+                drewSomething = true;
             });
 
-            if (drew) cursorY += lineHeight;
+            if (drewSomething) cursorY += lineHeight;
             usedHeight = cursorY - top + 5;
         });
 
-        // rotated selection for text
-        if (box.selected && box.width > 0 && box.height > 0) {
-            ctx.strokeStyle = "red";
-            ctx.lineWidth = 1;
-            ctx.strokeRect(-box.width / 2, -box.height / 2, box.width, box.height);
+        // keep size fields consistent for text
+        //box.height = usedHeight;
+        //syncTextDims(box);
 
-            ctx.fillStyle = "blue";
-            const w2 = box.width / 2, h2 = box.height / 2, s = 8, hs = s / 2;
-            const handles = [
-                [-w2, -h2], [0, -h2], [w2, -h2],
-                [w2, 0], [w2, h2], [0, h2],
-                [-w2, h2], [-w2, 0]
-            ];
-            for (const [hx, hy] of handles) {
-                ctx.fillRect(hx - hs, hy - hs, s, s);
-            }
+        //if (box.selected && w > 0 && h > 0) drawRotatedSelection(ctx, box);
+        //ctx.restore();
+        box.height = usedHeight;     // update size first
+        syncTextDims(box);           // keep bounding* in sync if your other code uses it
+        ctx.restore();               // ⬅️ back to world space
+
+        if (box.selected && w > 0 && h > 0) {
+            drawRotatedSelection(ctx, box);  // ⬅️ selection in world space (no double-rotate)
         }
-
-        // keep height if you rely on it elsewhere
-        box.height = usedHeight;
-
-        ctx.restore();
     }
 }
+
 
 
 function drawTextOLD() {
@@ -9404,8 +9414,10 @@ function sizeToPx(size) {
 }
 
 let   startDrag = null;
-
+// make canvas focusable once
+if (!canvas.hasAttribute('tabindex')) canvas.setAttribute('tabindex', '0');
 canvas.addEventListener("mousedown", e => {
+    canvas.focus({ preventScroll: true });
     const { x: mx, y: my } = getCanvasMousePosition(e);
     startX = e.clientX;
     startY = e.clientY;
@@ -9430,7 +9442,20 @@ canvas.addEventListener("mousedown", e => {
         const b = allTop[i];
         if (pointInBox(b, mx, my)) { hit = b; break; }
     }
+    // ✅ Only clear selection when NOT holding Shift
+    if (!e.shiftKey) {
+        (images || []).forEach(b => b.selected = false);
+        (textObjects || []).forEach(b => b.selected = false);
+        activeText = null;
+        activeImage = null;
+    }
 
+    // ✅ Shift-click toggles selection and exits early
+    if (e.shiftKey && hit) {
+        hit.selected = !hit.selected;
+        drawText();
+        return; // important: don't let later logic reselect/clear
+    }
     // clear previous selection
     (images || []).forEach(b => b.selected = false);
     (textObjects || []).forEach(b => b.selected = false);
@@ -9459,7 +9484,6 @@ canvas.addEventListener("mousedown", e => {
         }
 
         // --- update opacity controls from the hit ---
-        // safer than `txtHit.opacity * 100 || 100` (that would turn 0% into 100%)
         const alpha = normAlpha(hit.opacity);
         let opacity = Math.round(alpha * 100);
         if (opacity > 100) opacity = 100;
@@ -9473,13 +9497,15 @@ canvas.addEventListener("mousedown", e => {
         if (opacityBadge) opacityBadge.textContent = String(opacity);
     }
     // handles first
-   
+
     for (const box of allTop) {
-        const raw = getResizeHandle(box, mx, my);
+        const raw = (typeof getResizeHandleRotated === 'function')
+            ? getResizeHandleRotated(box, mx, my)
+            : getResizeHandle(box, mx, my);
         if (!raw) continue;
 
         const handle = normalizeHandle(raw);      // ← normalize HERE
-        resizeDirectionRaw = raw;                // keep raw for text helpers if needed
+        resizeDirectionRaw = raw;                 // keep raw for text helpers if needed
         resizeDirectionNorm = handle;             // use norm everywhere else
         activeBox = box;
 
@@ -9512,7 +9538,7 @@ canvas.addEventListener("mousedown", e => {
         }
 
         // sides (not corners)
-        resizeDirection = handle;                 // keep if referenced elsewhere
+        resizeDirection = handle;
         isCornerFontScale = false; isCornerImageScale = false;
         isResizingNew = true; isDraggingNew = false;
 
@@ -9522,11 +9548,18 @@ canvas.addEventListener("mousedown", e => {
 
         activeBox._origMouse = { x: startMXCanvas, y: startMYCanvas };
         setGlobalCursor((handle === "l" || handle === "r") ? "ew-resize" : "ns-resize");
+
+        // 🔹 NEW HOOK: start side-resize state for TEXT on left/right handle
+        if (box.type !== "image" && (handle === 'l' || handle === 'r')) {
+            // If you added the helper from earlier:
+            if (typeof startTextSideResize === 'function') {
+                startTextSideResize(activeBox);
+            }
+            // (no behavior change for images or top/bottom handles)
+        }
+
         return;
     }
-
-
-
 
     // no handle → body hit (topmost)
     const clickedBox = allTop.find(box =>
@@ -9549,21 +9582,196 @@ canvas.addEventListener("mousedown", e => {
         resizeDirection = null;
         if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = false);
         if (Array.isArray(images)) images.forEach(o => o.selected = false);
-            selectedForContextMenu = null;
-            selectedType = null;
-            activeText = activeImage = null;
-            rotationSlider.value = 0;
-            rotationBadge.textContent = "0";
+        selectedForContextMenu = null;
+        selectedType = null;
+        activeText = activeImage = null;
+        rotationSlider.value = 0;
+        rotationBadge.textContent = "0";
         drawText();
     }
 });
+
+//canvas.addEventListener("mousedown", e => {
+//    canvas.focus({ preventScroll: true });
+//    const { x: mx, y: my } = getCanvasMousePosition(e);
+//    startX = e.clientX;
+//    startY = e.clientY;
+//    prevMouseX = mx;
+//    prevMouseY = my;
+//    startMXCanvas = mx;
+//    startMYCanvas = my;
+
+//    if (isEditing && activeBox) {
+//        cleanEditorHTMLPreserveCaret?.();
+//        activeBox.text = textEditorNew.innerHTML;
+//        activeBox.align = textEditorNew.style.textAlign || "left";
+//        isEditing = false;
+//        if (textEditorNew) textEditorNew.style.display = "none";
+//    }
+
+//    // 🔁 NEW: search topmost among images + text
+//    const allTop = [...(images || []), ...(textObjects || [])].sort((a, b) => (b.zIndex || 0) - (a.zIndex || 0));
+//    let hit = null;
+//    selectedForContextMenu = null;
+//    for (let i = allTop.length - 1; i >= 0; i--) {
+//        const b = allTop[i];
+//        if (pointInBox(b, mx, my)) { hit = b; break; }
+//    }
+//    // ✅ Only clear selection when NOT holding Shift
+//    if (!e.shiftKey) {
+//        (images || []).forEach(b => b.selected = false);
+//        (textObjects || []).forEach(b => b.selected = false);
+//        activeText = null;
+//        activeImage = null;
+//    }
+
+//    // ✅ Shift-click toggles selection and exits early
+//    if (e.shiftKey && hit) {
+//        hit.selected = !hit.selected;
+//        drawText();
+//        return; // important: don't let later logic reselect/clear
+//    }
+//    // clear previous selection
+//    (images || []).forEach(b => b.selected = false);
+//    (textObjects || []).forEach(b => b.selected = false);
+//    activeText = null;
+//    activeImage = null;
+
+//    if (hit) {
+//        hit.selected = true;
+//        selectedForContextMenu = hit;
+//        // decide which "active" to set
+//        if (hit.type === "image" || hit.img) {
+//            activeImage = hit;
+//            enableFillColorDiv();
+//            enableStrockColorDiv();
+//            const angle = hit.rotation || 0;
+//            rotationSlider.value = angle;
+//            document.getElementById("rotationValue").textContent = angle + "°";
+//            rotationBadge.textContent = angle;
+
+//        } else {
+//            activeText = hit;
+//            const angle = hit.rotation || 0;
+//            rotationSlider.value = angle;
+//            document.getElementById("rotationValue").textContent = angle + "°";
+//            rotationBadge.textContent = angle;
+//        }
+
+//        // --- update opacity controls from the hit ---
+//        // safer than `txtHit.opacity * 100 || 100` (that would turn 0% into 100%)
+//        const alpha = normAlpha(hit.opacity);
+//        let opacity = Math.round(alpha * 100);
+//        if (opacity > 100) opacity = 100;
+
+//        const opacitySlider = document.getElementById("opacitySlider");
+//        const opacityValue = document.getElementById("opacityValue");
+//        const opacityBadge = document.getElementById("opacityBadge");
+
+//        if (opacitySlider) opacitySlider.value = String(opacity);
+//        if (opacityValue) opacityValue.textContent = String(opacity);
+//        if (opacityBadge) opacityBadge.textContent = String(opacity);
+//    }
+//    // handles first
+   
+//    for (const box of allTop) {
+//        const raw = (typeof getResizeHandleRotated === 'function')
+//            ? getResizeHandleRotated(box, mx, my)
+//            : getResizeHandle(box, mx, my);
+//        if (!raw) continue;
+
+//        const handle = normalizeHandle(raw);      // ← normalize HERE
+//        resizeDirectionRaw = raw;                // keep raw for text helpers if needed
+//        resizeDirectionNorm = handle;             // use norm everywhere else
+//        activeBox = box;
+
+//        // single-select
+//        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = (o === box));
+//        if (Array.isArray(images)) images.forEach(o => o.selected = (o === box));
+//        drawText();
+
+//        if (CORNER_HANDLES.has(handle)) {         // ← use normalized in the test
+//            // store for compatibility if your code uses it elsewhere
+//            resizeDirection = handle;
+
+//            if (box.type === "image") {
+//                isCornerImageScale = true;
+//                isResizingNew = false; isDraggingNew = false;
+//                activeBox._orig = { x: box.x, y: box.y, width: box.width, height: box.height };
+//                activeBox._origMouse = { x: startMXCanvas, y: startMYCanvas };
+//                setGlobalCursor("nwse-resize");
+//                document.addEventListener("mouseup", () => { isCornerImageScale = false; setGlobalCursor(""); }, { once: true });
+//                return;
+//            } else {
+//                isCornerFontScale = true;
+//                isResizingNew = false; isDraggingNew = false;
+//                activeBox._orig = { x: box.x, y: box.y, width: box.width, height: box.height, text: box.text };
+//                activeBox._origMouse = { x: startMXCanvas, y: startMYCanvas };
+//                setGlobalCursor("nwse-resize");
+//                document.addEventListener("mouseup", () => { isCornerFontScale = false; setGlobalCursor(""); }, { once: true });
+//                return;
+//            }
+//        }
+
+//        // sides (not corners)
+//        resizeDirection = handle;                 // keep if referenced elsewhere
+//        isCornerFontScale = false; isCornerImageScale = false;
+//        isResizingNew = true; isDraggingNew = false;
+
+//        activeBox._orig = (box.type === "image")
+//            ? { x: box.x, y: box.y, width: box.width, height: box.height }
+//            : { x: box.x, y: box.y, width: box.width, height: box.height, text: box.text, fontSize: box.fontSize };
+
+//        activeBox._origMouse = { x: startMXCanvas, y: startMYCanvas };
+//        setGlobalCursor((handle === "l" || handle === "r") ? "ew-resize" : "ns-resize");
+//        return;
+//    }
+
+
+
+
+//    // no handle → body hit (topmost)
+//    const clickedBox = allTop.find(box =>
+//        mx >= box.x && mx <= box.x + box.width &&
+//        my >= box.y && my <= box.y + box.height
+//    );
+//    activeBox = clickedBox;
+
+//    if (activeBox) {
+//        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = (o === activeBox));
+//        if (Array.isArray(images)) images.forEach(o => o.selected = (o === activeBox));
+//        isDraggingNew = true;
+//        dragOffsetXNew = mx - activeBox.x;
+//        dragOffsetYNew = my - activeBox.y;
+//        drawText();
+//    } else {
+//        activeBox = null;
+//        isDraggingNew = false;
+//        isResizingNew = false;
+//        resizeDirection = null;
+//        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = false);
+//        if (Array.isArray(images)) images.forEach(o => o.selected = false);
+//            selectedForContextMenu = null;
+//            selectedType = null;
+//            activeText = activeImage = null;
+//            rotationSlider.value = 0;
+//            rotationBadge.textContent = "0";
+//        drawText();
+//    }
+//});
 
 
 canvas.addEventListener("mousemove", e => {
     const { x: mx, y: my } = getCanvasMousePosition(e);
     const dx = mx - prevMouseX;
     const dy = my - prevMouseY;
-
+    // ✅ TEXT left/right side-resize in rotated space
+    if (isResizingNew && activeBox && activeBox.type !== 'image' &&
+        (resizeDirection === 'l' || resizeDirection === 'r')) {
+        resizeTextSideToMouse(activeBox, resizeDirection, mx, my);
+        drawText();
+        return;
+    }
     // cursor logic unchanged (optional to extend for images)
 
     if (isDraggingNew && activeBox) {
@@ -11335,4 +11543,107 @@ function enableEditorKeyboard() {
             insertTabIntoEditor(ed);
         }
     }, true);
+}
+function getBoxRect(box) {
+    const w = (typeof box.width === 'number') ? box.width : (box.boundingWidth || 0);
+    const h = (typeof box.height === 'number') ? box.height : (box.boundingHeight || 0);
+    return { x: box.x, y: box.y, w, h, cx: box.x + w / 2, cy: box.y + h / 2 };
+}
+
+function syncTextDims(box) {
+    if (box?.type === 'text') {
+        if (typeof box.width === 'number') box.boundingWidth = box.width;
+        if (typeof box.height === 'number') box.boundingHeight = box.height;
+    }
+}
+
+function drawRotatedSelection(ctx, box) {
+    const { w, h, cx, cy } = getBoxRect(box);
+    const ang = deg2rad(box.rotation || 0);
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(ang);
+
+    ctx.strokeStyle = "red";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(-w / 2, -h / 2, w, h);
+
+    ctx.fillStyle = "blue";
+    const s = HANDLE_SIZE, hs = s / 2, w2 = w / 2, h2 = h / 2;
+    const handles = [
+        [-w2, -h2], [0, -h2], [w2, -h2],      // top: left, mid, right
+        [w2, 0],                           // right mid
+        [w2, h2], [0, h2], [-w2, h2],     // bottom: right, mid, left
+        [-w2, 0]                            // left mid
+    ];
+    for (const [hx, hy] of handles) ctx.fillRect(hx - hs, hy - hs, s, s);
+
+    ctx.restore();
+}
+function getResizeHandleRotated(box, mx, my) {
+    const { w, h, cx, cy } = getBoxRect(box);
+    const ang = deg2rad(box.rotation || 0);
+
+    // world → local (inverse rotate about center)
+    const dx = mx - cx, dy = my - cy;
+    const cos = Math.cos(-ang), sin = Math.sin(-ang);
+    const lx = cos * dx - sin * dy;
+    const ly = sin * dx + cos * dy;
+
+    // handle positions in local space
+    const w2 = w / 2, h2 = h / 2;
+    const hs = HANDLE_SIZE + 2; // tolerance
+    const handles = {
+        tl: { x: -w2, y: -h2 }, t: { x: 0, y: -h2 }, tr: { x: w2, y: -h2 },
+        r: { x: w2, y: 0 }, br: { x: w2, y: h2 }, b: { x: 0, y: h2 },
+        bl: { x: -w2, y: h2 }, l: { x: -w2, y: 0 }
+    };
+
+    for (const [name, p] of Object.entries(handles)) {
+        if (Math.abs(lx - p.x) <= hs && Math.abs(ly - p.y) <= hs) return name;
+    }
+    return null;
+}
+// called when text side-resize starts
+function startTextSideResize(box) {
+    const { w, h, cx, cy } = getBoxRect(box);
+    box._rs = { w, h, cx, cy, ang: deg2rad(box.rotation || 0) };
+}
+
+// called on mousemove to update width + top-left while keeping the opposite edge anchored
+function resizeTextSideToMouse(box, handle, mx, my) {
+    const rs = box._rs; if (!rs) return;
+
+    // mouse to LOCAL (relative to original center at mousedown)
+    const dx = mx - rs.cx, dy = my - rs.cy;
+    const cosa = Math.cos(-rs.ang), sina = Math.sin(-rs.ang);
+    const lx = cosa * dx - sina * dy;  // local X
+    // const ly =  sina * dx + cosa * dy;  // (unused)
+
+    const minW = 10;
+    let newW, dCenterLocal; // shift of center along local X to keep opposite edge anchored
+
+    if (handle === 'r') {
+        // right handle moves to mouse x; left edge stays where it was (-rs.w/2)
+        newW = Math.max(minW, lx - (-rs.w / 2));
+        dCenterLocal = (newW - rs.w) / 2;            // center moves +X half the delta
+    } else if (handle === 'l') {
+        // left handle moves; right edge stays at +rs.w/2
+        newW = Math.max(minW, (rs.w / 2) - lx);
+        dCenterLocal = -(newW - rs.w) / 2;           // center moves -X half the delta
+    } else {
+        return; // only l/r here
+    }
+
+    // LOCAL center shift → WORLD
+    const cosw = Math.cos(rs.ang), sinw = Math.sin(rs.ang);
+    const newCx = rs.cx + cosw * dCenterLocal;     // (local y shift is 0)
+    const newCy = rs.cy + sinw * dCenterLocal;
+
+    // update box geometry
+    box.width = newW;
+    box.x = newCx - newW / 2;
+    box.y = rs.cy - rs.h / 2;                      // height unchanged for l/r
+    syncTextDims(box);
 }
