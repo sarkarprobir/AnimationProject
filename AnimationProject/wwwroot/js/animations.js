@@ -382,19 +382,46 @@ document.addEventListener("click", function (e) {
 
 
 // When the Delete option is clicked, remove the selected object.
+//document.getElementById("deleteOption").addEventListener("click", function (e) {
+//    if (selectedForContextMenu) {
+//        if (selectedType === "text") {
+//            textObjects = textObjects.filter(obj => obj !== selectedForContextMenu);
+//        } else if (selectedType === "image") {
+//            // Remove from images array
+//            images = images.filter(imgObj => imgObj !== selectedForContextMenu);
+//        }
+//        drawCanvas('Common');
+//        selectedForContextMenu = null;
+//        contextMenu.style.display = "none";
+//    }
+//});
 document.getElementById("deleteOption").addEventListener("click", function (e) {
-    if (selectedForContextMenu) {
-        if (selectedType === "text") {
-            textObjects = textObjects.filter(obj => obj !== selectedForContextMenu);
-        } else if (selectedType === "image") {
-            // Remove from images array
-            images = images.filter(imgObj => imgObj !== selectedForContextMenu);
-        }
-        drawCanvas('Common');
-        selectedForContextMenu = null;
-        contextMenu.style.display = "none";
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!selectedForContextMenu) return;
+
+    // pick the right collection
+    const arr = (selectedType === "image") ? images : textObjects;
+
+    // IMPORTANT: delete in-place so existing references to the array stay valid
+    const idx = arr.indexOf(selectedForContextMenu);
+    if (idx > -1) {
+        arr.splice(idx, 1);
     }
+
+    // clear any other selection state that could redraw it
+    if (selectedForContextMenu.selected) selectedForContextMenu.selected = false;
+    if (activeText === selectedForContextMenu) activeText = null;
+    if (activeImage === selectedForContextMenu) activeImage = null;
+    if (activeBox === selectedForContextMenu) activeBox = null;
+
+    selectedForContextMenu = null;
+    contextMenu.style.display = "none";
+
+    drawText();
 });
+
 window.addEventListener("keydown", function (e) {
     const active = document.activeElement;
     // if focus is in any input/textarea or a contenteditable element, skip our canvas‐delete logic
@@ -9000,6 +9027,7 @@ canvas.addEventListener("mousedown", e => {
     // 🔁 NEW: search topmost among images + text
     const allTop = [...(images || []), ...(textObjects || [])].sort((a, b) => (b.zIndex || 0) - (a.zIndex || 0));
     let hit = null;
+    selectedForContextMenu = null;
     for (let i = allTop.length - 1; i >= 0; i--) {
         const b = allTop[i];
         if (pointInBox(b, mx, my)) { hit = b; break; }
@@ -9013,7 +9041,7 @@ canvas.addEventListener("mousedown", e => {
 
     if (hit) {
         hit.selected = true;
-
+        selectedForContextMenu = hit;
         // decide which "active" to set
         if (hit.type === "image" || hit.img) {
             activeImage = hit;
