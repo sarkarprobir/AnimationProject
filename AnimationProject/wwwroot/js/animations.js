@@ -5262,6 +5262,155 @@ function getSelectedType() {
 
     return null;
 }
+canvas.addEventListener("click", function onCanvasClick(e) {
+    // ignore shift here
+    if (e.shiftKey) return;
+
+    if (skipNextClick) {
+        skipNextClick = false;
+        return; // swallow this click so it doesn’t clear selection
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    // --- UI refs (guarded) ---
+    const buttons = document.querySelectorAll('.toggle-btn');
+    const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]');
+    const groupCheckbox = document.getElementById("groupCheckbox");
+    const opacitySlider = document.getElementById("opacitySlider");
+    const opacityValue = document.getElementById("opacityValue");
+    const opacityBadge = document.getElementById("opacityBadge");
+
+    // --- mouse position in canvas CSS px ---
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // --- helpers ---
+    function clearSelection() {
+        (textObjects || []).forEach(o => o.selected = false);
+        (images || []).forEach(i => i.selected = false);
+        activeText = null;
+        activeImage = null;
+    }
+    function selectGroup(id) {
+        if (id == null) return;
+        (textObjects || []).forEach(o => { if (o.groupId === id) o.selected = true; });
+        (images || []).forEach(i => { if (i.groupId === id) i.selected = true; });
+    }
+    function setGroupCheckbox(id) {
+        if (!groupCheckbox) return;
+        groupCheckbox.checked = (id != null);
+    }
+    function setGraphicModeActive() {
+        buttons.forEach(b => b.classList.remove('active'));
+        if (graphicBtn) graphicBtn.classList.add('active');
+    }
+    function setOpacityUI(alpha0to1) {
+        const pct = Math.max(0, Math.min(100, Math.round((isFinite(alpha0to1) ? alpha0to1 : 1) * 100)));
+        if (opacitySlider) opacitySlider.value = String(pct);
+        if (opacityValue) opacityValue.textContent = String(pct);
+        if (opacityBadge) opacityBadge.textContent = String(pct);
+    }
+
+    // --- hit testing (topmost) ---
+    const txtHit = getTextObjectAt(mouseX, mouseY);
+    let imgHit = null;
+    for (let i = (images ? images.length : 0) - 1; i >= 0; i--) {
+        if (isMouseOverImage(images[i], { x: mouseX, y: mouseY })) { imgHit = images[i]; break; }
+    }
+
+    // always start fresh
+    clearSelection();
+
+    if (txtHit) {
+        // TEXT clicked
+        txtHit.selected = true;
+        activeText = txtHit;
+
+        selectGroup(txtHit.groupId);
+        setGroupCheckbox(txtHit.groupId);
+
+        // UI panels
+        $("#favcolor").val(txtHit.textColor);
+        $("#noAnimCheckbox").prop("checked", !!txtHit.noAnim);
+        $("#fontstyle_popup").show();
+        $(".right-sec-two").show();
+        $(".right-sec-one").hide();
+        $("#opengl_popup").hide();
+
+        setGraphicModeActive();
+        setOpacityUI(normAlpha(txtHit.opacity));
+
+    } else if (imgHit) {
+        // IMAGE clicked
+        imgHit.selected = true;
+        activeImage = imgHit;
+
+        selectGroup(imgHit.groupId);
+        setGroupCheckbox(imgHit.groupId);
+
+        // UI panels
+        $("#noAnimCheckbox").prop("checked", !!imgHit.noAnim);
+        $("#fontstyle_popup").show();
+        $(".right-sec-two").show();
+        $(".right-sec-one").hide();
+        $("#opengl_popup").hide();
+
+        setGraphicModeActive();
+        setOpacityUI(normAlpha(imgHit.opacity));
+
+        // initialize fill/stroke colors once if required
+        if ($("#hdnFillStrockColorFlag").val() === '1') {
+            $("#hdnfillColor").val(imgHit.fillNoColor || "#FFFFFF");
+            $("#hdnStrockColor").val(imgHit.strokeNoColor || "#FFFFFF");
+            $("#favFillcolor").val($("#hdnfillColor").val());
+            $("#favStrockcolor").val($("#hdnStrockColor").val());
+            $("#hdnFillStrockColorFlag").val('2');
+        }
+
+    } else {
+        // clicked empty space
+        setGroupCheckbox(null);
+        setGraphicModeActive();
+        setOpacityUI(1);
+    }
+
+    // draw + UI follow-ups
+    drawText();
+    updateFontStyleButtons?.();
+
+    // use activeImage instead of imgHit here (imgHit may be null)
+    const selectedType = getSelectedType?.();
+    if (selectedType === "Shape" && activeImage) {
+        $("#hdnfillNoColorStatus").val(activeImage.fillNoColorStatus || false);
+        $("#hdnstrokeNoColorStatus").val(activeImage.strokeNoColorStatus || false);
+
+        const swEl = document.getElementById('ddlStrokeWidth');
+        if (swEl) swEl.value = String(activeImage.strokeWidth || 3);
+
+        const noColorChecked = document.getElementById("noColorCheck")?.checked;
+        const noStrokeChecked = document.getElementById("noColorCheck2")?.checked;
+
+        if (noColorChecked) {
+            updateSelectedImageColors(
+                "none",
+                noStrokeChecked ? "none" : $("#hdnStrockColor").val(),
+                (document.getElementById("ddlStrokeWidth")?.value || 2)
+            );
+        }
+        if (noStrokeChecked) {
+            updateSelectedImageColors(
+                noColorChecked ? "none" : $("#hdnfillColor").val(),
+                "none",
+                (document.getElementById("ddlStrokeWidth")?.value || 2)
+            );
+        }
+    }
+
+    HideShowRightPannel?.(selectedType);
+});
 
 
 ////KD Need to be Include in project////////
@@ -6934,7 +7083,9 @@ function updateSelectedImageColors(newFill, newStroke, newStrokeWidth = null) {
             activeImage.width = origW;
             activeImage.height = origH;
             activeImage.src = uri;
-            drawCanvas("Common");
+            //  drawCanvas("Common");
+            drawText();
+
         };
         imgEl.src = uri;
     }
@@ -9045,6 +9196,8 @@ canvas.addEventListener("mousedown", e => {
         // decide which "active" to set
         if (hit.type === "image" || hit.img) {
             activeImage = hit;
+            enableFillColorDiv();
+            enableStrockColorDiv();
         } else {
             activeText = hit;
         }
