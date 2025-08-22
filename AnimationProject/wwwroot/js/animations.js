@@ -5055,8 +5055,8 @@ function updateRotation(angle) {
     [...textObjects, ...images].forEach(obj => {
         if (obj.selected) obj.rotation = angle;
     });
-
-    drawCanvas('Common');
+    drawText();
+   // drawCanvas('Common');
 }
 
 
@@ -8530,6 +8530,248 @@ function drawText() {
         }
     }
 
+    // text defaults
+    ctx.textBaseline = "top";
+    const defaultStyle = window.getComputedStyle(textEditorNew);
+    const defaultFontSize = defaultStyle.fontSize || "16px";
+    const defaultFontFamily = defaultStyle.fontFamily || "Arial";
+    const defaultFontWeight = defaultStyle.fontWeight || "normal";
+    const defaultFontStyle = defaultStyle.fontStyle || "normal";
+    const defaultColor = defaultStyle.color || "#000";
+
+    // z-ordered
+    const all = [...(images || []), ...(textObjects || [])]
+        .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+
+    for (const box of all) {
+        if (box.width == null || Number.isNaN(box.width)) box.width = 50;
+        if (box.height == null || Number.isNaN(box.height)) box.height = 30;
+
+        const angleRad = ((box.rotation || 0) * Math.PI) / 180;
+        const cx = box.x + box.width / 2;
+        const cy = box.y + box.height / 2;
+
+        // ---- IMAGE ----
+        if (box.type === "image") {
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(angleRad);
+            ctx.globalAlpha = normAlpha(box.opacity);
+
+            if (box.img) {
+                if (box.img.complete) {
+                    ctx.drawImage(box.img, -box.width / 2, -box.height / 2, box.width, box.height);
+                } else {
+                    const img = box.img;
+                    img.onload = () => { img.onload = null; drawText(); };
+                    img.onerror = () => { img.onerror = null; };
+                }
+            }
+
+            // 🔴 rotated selection & handles (drawn in local space)
+            if (box.selected && box.width > 0 && box.height > 0) {
+                ctx.strokeStyle = "red";
+                ctx.lineWidth = 1;
+                ctx.strokeRect(-box.width / 2, -box.height / 2, box.width, box.height);
+
+                ctx.fillStyle = "blue";
+                const w2 = box.width / 2, h2 = box.height / 2, s = 8, hs = s / 2;
+                const handles = [
+                    [-w2, -h2], [0, -h2], [w2, -h2],
+                    [w2, 0], [w2, h2], [0, h2],
+                    [-w2, h2], [-w2, 0]
+                ];
+                for (const [hx, hy] of handles) {
+                    ctx.fillRect(hx - hs, hy - hs, s, s);
+                }
+            }
+
+            ctx.restore();
+            continue;
+        }
+
+        // ---- TEXT ----
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angleRad);
+        ctx.globalAlpha = normAlpha(box.opacity);
+
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = box.text || "";
+
+        // build lines
+        const lines = [];
+        wrapper.childNodes.forEach(n => {
+            if (n.nodeType === 1 && n.tagName === "DIV") {
+                const hasContent = n.textContent.trim().length > 0 || n.children.length > 0;
+                if (!hasContent) {
+                    const blank = document.createElement("div");
+                    blank.appendChild(document.createTextNode(" "));
+                    lines.push(blank);
+                } else {
+                    const ln = document.createElement("div");
+                    ln.append(...n.cloneNode(true).childNodes);
+                    lines.push(ln);
+                }
+            } else if (n.nodeType === 1 && n.tagName === "BR") {
+                const brLine = document.createElement("div");
+                brLine.appendChild(document.createTextNode(" "));
+                lines.push(brLine);
+            } else {
+                if (lines.length === 0) lines.push(document.createElement("div"));
+                lines[lines.length - 1].appendChild(n.cloneNode(true));
+            }
+        });
+
+        // local (rotated) coords: top-left is (-w/2, -h/2)
+        const left = -box.width / 2;
+        const top = -box.height / 2;
+
+        let cursorY = top + 5;
+        let usedHeight = 0;
+
+        lines.forEach(lineNode => {
+            // alignment inside the rotated box
+            let cursorX = left + 5;
+            if (box.align === "center") {
+                ctx.textAlign = "center";
+                cursorX = left + box.width / 2;
+            } else if (box.align === "right") {
+                ctx.textAlign = "right";
+                cursorX = left + box.width - 5;
+            } else {
+                ctx.textAlign = "left";
+            }
+
+            let segments = [];
+            let maxFontPx = 0;
+
+            function measureWords(node, style) {
+                if (node.nodeType === 3) {
+                    const chars = node.nodeValue.split("");
+                    for (let ch of chars) {
+                        const fs = style.fontSize || defaultFontSize;
+                        const ff = style.fontFamily || defaultFontFamily;
+                        const fw = style.fontWeight || defaultFontWeight;
+                        const fst = style.fontStyle || defaultFontStyle;
+                        const col = style.color || defaultColor;
+
+                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                        const width = ctx.measureText(ch).width;
+                        const px = parseFloat(fs);
+                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                        segments.push({ text: ch, width, style: { fs, ff, fw, fst, col } });
+                    }
+                } else if (node.nodeType === 1) {
+                    if (node.tagName === "BR") {
+                        const fs = style.fontSize || defaultFontSize;
+                        const ff = style.fontFamily || defaultFontFamily;
+                        const fw = style.fontWeight || defaultFontWeight;
+                        const fst = style.fontStyle || defaultFontStyle;
+                        const col = style.color || defaultColor;
+
+                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                        const width = ctx.measureText(" ").width;
+                        const px = parseFloat(fs);
+                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                        segments.push({ text: " ", width, style: { fs, ff, fw, fst, col } });
+                        return;
+                    }
+                    const s = node.style || {};
+                    const nextStyle = {
+                        fontSize: s.fontSize || style.fontSize,
+                        fontFamily: s.fontFamily || style.fontFamily,
+                        fontWeight: s.fontWeight || style.fontWeight,
+                        fontStyle: s.fontStyle || style.fontStyle,
+                        color: s.color || style.color,
+                    };
+                    node.childNodes.forEach(child => measureWords(child, nextStyle));
+                }
+            }
+
+            measureWords(lineNode, {
+                fontSize: defaultFontSize,
+                fontFamily: defaultFontFamily,
+                fontWeight: defaultFontWeight,
+                fontStyle: defaultFontStyle,
+                color: defaultColor
+            });
+
+            const basePx = parseFloat(defaultFontSize) || 16;
+            const lineHeight = (maxFontPx > 0 ? maxFontPx : basePx) * (box.lineSpacing || 1.2);
+
+            let x = cursorX;
+            let drew = false;
+
+            segments.forEach(seg => {
+                if (x + seg.width > left + box.width - 0.01) {
+                    cursorY += lineHeight;
+                    x = cursorX;
+                }
+                ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
+                ctx.fillStyle = seg.style.col;
+                ctx.fillText(seg.text, x, cursorY);
+                x += seg.width;
+                drew = true;
+            });
+
+            if (drew) cursorY += lineHeight;
+            usedHeight = cursorY - top + 5;
+        });
+
+        // rotated selection for text
+        if (box.selected && box.width > 0 && box.height > 0) {
+            ctx.strokeStyle = "red";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(-box.width / 2, -box.height / 2, box.width, box.height);
+
+            ctx.fillStyle = "blue";
+            const w2 = box.width / 2, h2 = box.height / 2, s = 8, hs = s / 2;
+            const handles = [
+                [-w2, -h2], [0, -h2], [w2, -h2],
+                [w2, 0], [w2, h2], [0, h2],
+                [-w2, h2], [-w2, 0]
+            ];
+            for (const [hx, hy] of handles) {
+                ctx.fillRect(hx - hs, hy - hs, s, s);
+            }
+        }
+
+        // keep height if you rely on it elsewhere
+        box.height = usedHeight;
+
+        ctx.restore();
+    }
+}
+
+
+function drawTextOLD() {
+    const designW = canvas.width;
+    const designH = canvas.height;
+
+    // clear & bg
+    ctx.clearRect(0, 0, designW, designH);
+
+    const bgEl = document.getElementById('hdnBackgroundSpecificColor');
+    const bgColor = (bgEl?.value || canvas.style.backgroundColor || "").trim();
+    if (bgColor) {
+        ctx.save();
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, designW, designH);
+        ctx.restore();
+    }
+
+    if (canvas._bgImg) {
+        if (canvas._bgImg.complete) {
+            ctx.drawImage(canvas._bgImg, 0, 0, designW, designH);
+        } else {
+            canvas._bgImg.onload = () => drawText();
+            canvas._bgImg.onerror = () => { };
+        }
+    }
+
     // defaults for text measuring
     ctx.textBaseline = "top";
     const defaultStyle = window.getComputedStyle(textEditorNew);
@@ -8550,6 +8792,7 @@ function drawText() {
         if (box.type === "image") {
             ctx.save();
             // (no rotation here since your old code didn't do rotated text; keeps selection aligned)
+           
             ctx.globalAlpha = normAlpha(box.opacity);
             ctx.drawImage(box.img, box.x, box.y, box.width, box.height);
             ctx.restore();
@@ -8563,12 +8806,16 @@ function drawText() {
                 for (let h of Object.values(getAllHandles(box))) {
                     ctx.fillRect(h.x - 4, h.y - 4, 8, 8);
                 }
+                const rot = (box.rotation || 0) * Math.PI / 180;
+                ctx.rotate(rot);
             }
             continue;
         }
 
         // ---- TEXT (your old logic preserved) ----
         ctx.save();
+        const rot = (box.rotation || 0) * Math.PI / 180;
+        ctx.rotate(rot);
         ctx.globalAlpha = normAlpha(box.opacity);
         const wrapper = document.createElement("div");
         wrapper.innerHTML = box.text;
@@ -9198,8 +9445,17 @@ canvas.addEventListener("mousedown", e => {
             activeImage = hit;
             enableFillColorDiv();
             enableStrockColorDiv();
+            const angle = hit.rotation || 0;
+            rotationSlider.value = angle;
+            document.getElementById("rotationValue").textContent = angle + "°";
+            rotationBadge.textContent = angle;
+
         } else {
             activeText = hit;
+            const angle = hit.rotation || 0;
+            rotationSlider.value = angle;
+            document.getElementById("rotationValue").textContent = angle + "°";
+            rotationBadge.textContent = angle;
         }
 
         // --- update opacity controls from the hit ---
@@ -9217,8 +9473,7 @@ canvas.addEventListener("mousedown", e => {
         if (opacityBadge) opacityBadge.textContent = String(opacity);
     }
     // handles first
-    // handles first
-    // handles first
+   
     for (const box of allTop) {
         const raw = getResizeHandle(box, mx, my);
         if (!raw) continue;
@@ -9294,6 +9549,11 @@ canvas.addEventListener("mousedown", e => {
         resizeDirection = null;
         if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = false);
         if (Array.isArray(images)) images.forEach(o => o.selected = false);
+            selectedForContextMenu = null;
+            selectedType = null;
+            activeText = activeImage = null;
+            rotationSlider.value = 0;
+            rotationBadge.textContent = "0";
         drawText();
     }
 });
