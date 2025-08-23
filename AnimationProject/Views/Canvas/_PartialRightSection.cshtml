@@ -312,9 +312,13 @@ function applyOpacity(rawV) {
 
   // Store as 0–1 on your objects & redraw
   const alpha = percent / 100;
-  if (activeText)  activeText.opacity  = alpha;
-  if (activeImage) activeImage.opacity = alpha;
-  drawCanvas('Common');
+     // const activeBox = [...(images || []), ...(textObjects || [])].find(b => b.selected);
+     //  if (activeBox) {
+     //    activeBox.opacity = alpha;  // always store 0–1
+     //  }
+          if (activeText)  activeText.opacity  = alpha;
+      if (activeImage) activeImage.opacity = alpha;
+ drawText();
 }
 
   // 1) slider → spans & canvas
@@ -392,7 +396,8 @@ function clampAngle(raw) {
   [...textObjects, ...images].forEach(obj => {
     if (obj.selected) obj.rotation = angle;
   });
-  drawCanvas('Common');
+  //drawCanvas('Common');
+  drawText();
 });
 
     //     // Allow only digits, backspace, etc.
@@ -478,7 +483,8 @@ function moveCaretToEnd(el) {
         if (obj.selected) obj.rotation = angle;
       });
 
-      drawCanvas?.('Common');
+      //drawCanvas?.('Common');
+      drawText();
     }
     // function for horizontal scroll in templates
     function scrollCategories(offset) {

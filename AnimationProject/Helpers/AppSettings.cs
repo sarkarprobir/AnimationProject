@@ -8,5 +8,8 @@
         public string KeyGSTIN { get; set; }
         public string IosVersionID { get; set; }
         public string AndroidVersionID { get; set; }
+        public string PhysicalPath { get; set; }
+        public string WebPath { get; set; }
+
     }
 }

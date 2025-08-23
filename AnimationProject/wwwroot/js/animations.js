@@ -36,7 +36,8 @@ let layers = []; // global
 //const stream = canvas.captureStream(7); // Capture at 30 fps
 //const recorder = new MediaRecorder(stream);
 //const chunks = [];
-const HANDLE_SIZE = 12;
+//const deg2rad = d => (d || 0) * Math.PI / 180;
+const HANDLE_SIZE = 8;
 const HANDLE_HITAREA = 20;
 let activeText,      // the text object under manipulation
     isDraggingText = false,
@@ -382,19 +383,46 @@ document.addEventListener("click", function (e) {
 
 
 // When the Delete option is clicked, remove the selected object.
+//document.getElementById("deleteOption").addEventListener("click", function (e) {
+//    if (selectedForContextMenu) {
+//        if (selectedType === "text") {
+//            textObjects = textObjects.filter(obj => obj !== selectedForContextMenu);
+//        } else if (selectedType === "image") {
+//            // Remove from images array
+//            images = images.filter(imgObj => imgObj !== selectedForContextMenu);
+//        }
+//        drawCanvas('Common');
+//        selectedForContextMenu = null;
+//        contextMenu.style.display = "none";
+//    }
+//});
 document.getElementById("deleteOption").addEventListener("click", function (e) {
-    if (selectedForContextMenu) {
-        if (selectedType === "text") {
-            textObjects = textObjects.filter(obj => obj !== selectedForContextMenu);
-        } else if (selectedType === "image") {
-            // Remove from images array
-            images = images.filter(imgObj => imgObj !== selectedForContextMenu);
-        }
-        drawCanvas('Common');
-        selectedForContextMenu = null;
-        contextMenu.style.display = "none";
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!selectedForContextMenu) return;
+
+    // pick the right collection
+    const arr = (selectedType === "image") ? images : textObjects;
+
+    // IMPORTANT: delete in-place so existing references to the array stay valid
+    const idx = arr.indexOf(selectedForContextMenu);
+    if (idx > -1) {
+        arr.splice(idx, 1);
     }
+
+    // clear any other selection state that could redraw it
+    if (selectedForContextMenu.selected) selectedForContextMenu.selected = false;
+    if (activeText === selectedForContextMenu) activeText = null;
+    if (activeImage === selectedForContextMenu) activeImage = null;
+    if (activeBox === selectedForContextMenu) activeBox = null;
+
+    selectedForContextMenu = null;
+    contextMenu.style.display = "none";
+
+    drawText();
 });
+
 window.addEventListener("keydown", function (e) {
     const active = document.activeElement;
     // if focus is in any input/textarea or a contenteditable element, skip our canvas‐delete logic
@@ -5028,8 +5056,8 @@ function updateRotation(angle) {
     [...textObjects, ...images].forEach(obj => {
         if (obj.selected) obj.rotation = angle;
     });
-
-    drawCanvas('Common');
+    drawText();
+   // drawCanvas('Common');
 }
 
 
@@ -5235,6 +5263,155 @@ function getSelectedType() {
 
     return null;
 }
+canvas.addEventListener("click", function onCanvasClick(e) {
+    // ignore shift here
+    if (e.shiftKey) return;
+
+    if (skipNextClick) {
+        skipNextClick = false;
+        return; // swallow this click so it doesn’t clear selection
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    // --- UI refs (guarded) ---
+    const buttons = document.querySelectorAll('.toggle-btn');
+    const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]');
+    const groupCheckbox = document.getElementById("groupCheckbox");
+    const opacitySlider = document.getElementById("opacitySlider");
+    const opacityValue = document.getElementById("opacityValue");
+    const opacityBadge = document.getElementById("opacityBadge");
+
+    // --- mouse position in canvas CSS px ---
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // --- helpers ---
+    function clearSelection() {
+        (textObjects || []).forEach(o => o.selected = false);
+        (images || []).forEach(i => i.selected = false);
+        activeText = null;
+        activeImage = null;
+    }
+    function selectGroup(id) {
+        if (id == null) return;
+        (textObjects || []).forEach(o => { if (o.groupId === id) o.selected = true; });
+        (images || []).forEach(i => { if (i.groupId === id) i.selected = true; });
+    }
+    function setGroupCheckbox(id) {
+        if (!groupCheckbox) return;
+        groupCheckbox.checked = (id != null);
+    }
+    function setGraphicModeActive() {
+        buttons.forEach(b => b.classList.remove('active'));
+        if (graphicBtn) graphicBtn.classList.add('active');
+    }
+    function setOpacityUI(alpha0to1) {
+        const pct = Math.max(0, Math.min(100, Math.round((isFinite(alpha0to1) ? alpha0to1 : 1) * 100)));
+        if (opacitySlider) opacitySlider.value = String(pct);
+        if (opacityValue) opacityValue.textContent = String(pct);
+        if (opacityBadge) opacityBadge.textContent = String(pct);
+    }
+
+    // --- hit testing (topmost) ---
+    const txtHit = getTextObjectAt(mouseX, mouseY);
+    let imgHit = null;
+    for (let i = (images ? images.length : 0) - 1; i >= 0; i--) {
+        if (isMouseOverImage(images[i], { x: mouseX, y: mouseY })) { imgHit = images[i]; break; }
+    }
+
+    // always start fresh
+    clearSelection();
+
+    if (txtHit) {
+        // TEXT clicked
+        txtHit.selected = true;
+        activeText = txtHit;
+
+        selectGroup(txtHit.groupId);
+        setGroupCheckbox(txtHit.groupId);
+
+        // UI panels
+        $("#favcolor").val(txtHit.textColor);
+        $("#noAnimCheckbox").prop("checked", !!txtHit.noAnim);
+        $("#fontstyle_popup").show();
+        $(".right-sec-two").show();
+        $(".right-sec-one").hide();
+        $("#opengl_popup").hide();
+
+        setGraphicModeActive();
+        setOpacityUI(normAlpha(txtHit.opacity));
+
+    } else if (imgHit) {
+        // IMAGE clicked
+        imgHit.selected = true;
+        activeImage = imgHit;
+
+        selectGroup(imgHit.groupId);
+        setGroupCheckbox(imgHit.groupId);
+
+        // UI panels
+        $("#noAnimCheckbox").prop("checked", !!imgHit.noAnim);
+        $("#fontstyle_popup").show();
+        $(".right-sec-two").show();
+        $(".right-sec-one").hide();
+        $("#opengl_popup").hide();
+
+        setGraphicModeActive();
+        setOpacityUI(normAlpha(imgHit.opacity));
+
+        // initialize fill/stroke colors once if required
+        if ($("#hdnFillStrockColorFlag").val() === '1') {
+            $("#hdnfillColor").val(imgHit.fillNoColor || "#FFFFFF");
+            $("#hdnStrockColor").val(imgHit.strokeNoColor || "#FFFFFF");
+            $("#favFillcolor").val($("#hdnfillColor").val());
+            $("#favStrockcolor").val($("#hdnStrockColor").val());
+            $("#hdnFillStrockColorFlag").val('2');
+        }
+
+    } else {
+        // clicked empty space
+        setGroupCheckbox(null);
+        setGraphicModeActive();
+        setOpacityUI(1);
+    }
+
+    // draw + UI follow-ups
+    drawText();
+    updateFontStyleButtons?.();
+
+    // use activeImage instead of imgHit here (imgHit may be null)
+    const selectedType = getSelectedType?.();
+    if (selectedType === "Shape" && activeImage) {
+        $("#hdnfillNoColorStatus").val(activeImage.fillNoColorStatus || false);
+        $("#hdnstrokeNoColorStatus").val(activeImage.strokeNoColorStatus || false);
+
+        const swEl = document.getElementById('ddlStrokeWidth');
+        if (swEl) swEl.value = String(activeImage.strokeWidth || 3);
+
+        const noColorChecked = document.getElementById("noColorCheck")?.checked;
+        const noStrokeChecked = document.getElementById("noColorCheck2")?.checked;
+
+        if (noColorChecked) {
+            updateSelectedImageColors(
+                "none",
+                noStrokeChecked ? "none" : $("#hdnStrockColor").val(),
+                (document.getElementById("ddlStrokeWidth")?.value || 2)
+            );
+        }
+        if (noStrokeChecked) {
+            updateSelectedImageColors(
+                noColorChecked ? "none" : $("#hdnfillColor").val(),
+                "none",
+                (document.getElementById("ddlStrokeWidth")?.value || 2)
+            );
+        }
+    }
+
+    HideShowRightPannel?.(selectedType);
+});
 
 
 ////KD Need to be Include in project////////
@@ -5495,23 +5672,48 @@ function HideShowRightPannel(selectedType) {
         HideLoader();
     }
 }
+// Arrow key nudge for all selected items
 document.addEventListener('keydown', (e) => {
-    if (!window.isEditing || !window.textEditorNew) return;
+    // don't move while typing in inputs or your rich text editor
+    const ae = document.activeElement;
+    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
+    if (window.isEditing) return;
 
-    const ed = textEditorNew;
-    const inEditor = ed.contains(document.activeElement) || ed.contains((window.getSelection()?.anchorNode) || null);
-    if (!inEditor) return;
+    let dx = 0, dy = 0;
+    const step = e.shiftKey ? 10 : 1;
 
-    // Let browser handle arrows/home/end/page… naturally, just stop canvas listeners
-    // NOTE: we don't preventDefault (except for Tab handled above), only stopPropagation.
-    const passThroughKeys = [
-        'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'
-    ];
-    if (passThroughKeys.includes(e.key)) {
-        e.stopPropagation();
+    switch (e.key) {
+        case 'ArrowLeft': dx = -step; break;
+        case 'ArrowRight': dx = step; break;
+        case 'ArrowUp': dy = -step; break;
+        case 'ArrowDown': dy = step; break;
+        default: return;
     }
-    // Tab is handled on the editor element (above)
-}, true);
+    e.preventDefault();
+
+    const selected = [...(textObjects || []), ...(images || [])].filter(o => o.selected);
+    selected.forEach(o => { o.x += dx; o.y += dy; });
+
+    drawText();
+});
+
+//document.addEventListener('keydown', (e) => {
+//    if (!window.isEditing || !window.textEditorNew) return;
+
+//    const ed = textEditorNew;
+//    const inEditor = ed.contains(document.activeElement) || ed.contains((window.getSelection()?.anchorNode) || null);
+//    if (!inEditor) return;
+
+//    // Let browser handle arrows/home/end/page… naturally, just stop canvas listeners
+//    // NOTE: we don't preventDefault (except for Tab handled above), only stopPropagation.
+//    const passThroughKeys = [
+//        'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'
+//    ];
+//    if (passThroughKeys.includes(e.key)) {
+//        e.stopPropagation();
+//    }
+//    // Tab is handled on the editor element (above)
+//}, true);
 // Arrow-key nudge: move all selected items by the arrow direction
 //document.addEventListener('keydown', function (e) {
 //    // only when the canvas is “active”—you can tighten this to a focused flag if you like
@@ -6647,19 +6849,43 @@ canvas.addEventListener('drop', e => {
         const newWidth = img.width * scale;
         const newHeight = img.height * scale;
 
-        images.push({
+        //images.push({
+        //    img,
+        //    src,
+        //    x: e.offsetX,
+        //    y: e.offsetY,
+        //    // assign downsized values here:
+        //    width: newWidth,
+        //    height: newHeight,
+        //    // keep these at 1 so drawCanvas draws at exactly width×height:
+        //    scaleX: 1,
+        //    scaleY: 1,
+        //    opacity: 100,
+        //    selected: false,
+        //    noAnim: false,
+        //    groupId: null,
+        //    rotation: 0,
+        //    type: "image",
+        //    zIndex: getNextZIndex(),
+        //    fillNoColorStatus: false,
+        //    strokeNoColorStatus: false,
+        //    fillNoColor: "#FFFFFF",
+        //    strokeNoColor: "#FFFFFF",
+        //    strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 3
+        //});
+        //drawCanvas('Common');
+
+        const newImgObj = {
             img,
             src,
             x: e.offsetX,
             y: e.offsetY,
-            // assign downsized values here:
             width: newWidth,
             height: newHeight,
-            // keep these at 1 so drawCanvas draws at exactly width×height:
             scaleX: 1,
             scaleY: 1,
             opacity: 100,
-            selected: false,
+            selected: true,            // ⬅ select it
             noAnim: false,
             groupId: null,
             rotation: 0,
@@ -6670,11 +6896,115 @@ canvas.addEventListener('drop', e => {
             fillNoColor: "#FFFFFF",
             strokeNoColor: "#FFFFFF",
             strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 3
-        });
-        drawCanvas('Common');
+        };
+        images.forEach(it => it.selected = false);
+        textObjects.forEach(t => t.selected = false);
+        images.push(newImgObj);
+        activeBox = newImgObj;       // ⬅ reuse same selected “box” concept
+        drawText();
     };
     img.src = src;
 });
+
+
+function deg2rad(a) { return a * Math.PI / 180; }
+
+function rectCenter(o) {
+    return { cx: o.x + o.width / 2, cy: o.y + o.height / 2 };
+}
+
+function toLocal(o, mx, my) {
+    const { cx, cy } = rectCenter(o);
+    const ang = -deg2rad(o.rotation || 0);
+    const cos = Math.cos(ang), sin = Math.sin(ang);
+    const dx = mx - cx, dy = my - cy;
+    return { x: dx * cos - dy * sin + o.width / 2, y: dx * sin + dy * cos + o.height / 2 };
+}
+
+function pointInBox(o, mx, my) {
+    const p = toLocal(o, mx, my);
+    return p.x >= 0 && p.x <= o.width && p.y >= 0 && p.y <= o.height;
+}
+
+function whichHandle(box, mx, my) {
+    const { cx, cy } = rectCenter(box);
+    const ang = deg2rad(box.rotation || 0);
+    const cos = Math.cos(ang), sin = Math.sin(ang);
+    const halfW = box.width / 2, halfH = box.height / 2, H = HANDLE_SIZE / 2;
+
+    const centers = {
+        tl: { x: -halfW, y: -halfH }, tr: { x: halfW, y: -halfH },
+        bl: { x: -halfW, y: halfH }, br: { x: halfW, y: halfH },
+        l: { x: -halfW, y: 0 }, r: { x: halfW, y: 0 },
+        t: { x: 0, y: -halfH }, b: { x: 0, y: halfH }
+    };
+
+    for (const k in centers) {
+        const p = centers[k];
+        const sx = cx + p.x * cos - p.y * sin;
+        const sy = cy + p.x * sin + p.y * cos;
+        if (mx >= sx - H && mx <= sx + H && my >= sy - H && my <= sy + H) return k;
+    }
+    return null;
+}
+
+function getAllHandles(o) {
+    // returns handle rects in *screen space*, rotation-aware (we’ll draw test in object local)
+    // We'll test in local space like the box; handle keys: tl,tr,bl,br,t,r,b,l
+    const hs = HANDLE_SIZE, half = hs / 2;
+    const ptsLocal = {
+        tl: { x: 0, y: 0 },                                   // top-left
+        tr: { x: o.width, y: 0 },
+        bl: { x: 0, y: o.height },
+        br: { x: o.width, y: o.height },
+        t: { x: o.width / 2, y: 0 },
+        r: { x: o.width, y: o.height / 2 },
+        b: { x: o.width / 2, y: o.height },
+        l: { x: 0, y: o.height / 2 }
+    };
+    // rotate each local point into screen coords
+    const { cx, cy } = rectCenter(o);
+    const cos = Math.cos(deg2rad(o.rotation || 0));
+    const sin = Math.sin(deg2rad(o.rotation || 0));
+    const out = {};
+    for (const k in ptsLocal) {
+        const lx = ptsLocal[k].x - o.width / 2;
+        const ly = ptsLocal[k].y - o.height / 2;
+        const sx = cx + lx * cos - ly * sin;
+        const sy = cy + lx * sin + ly * cos;
+        out[k] = { key: k, x: sx, y: sy, w: hs, h: hs };
+    }
+    return out;
+}
+
+//const HANDLE_SIZE = 8;
+
+
+
+
+function drawSelection(o) {
+    const { cx, cy } = rectCenter(o);
+    const hs = HANDLE_SIZE, half = hs / 2;
+    const place = (lx, ly) => ctx.fillRect(lx - half, ly - half, hs, hs);
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(deg2rad(o.rotation || 0));
+    ctx.strokeStyle = "red"; ctx.lineWidth = 1;
+    ctx.strokeRect(-o.width / 2, -o.height / 2, o.width, o.height);
+    ctx.fillStyle = "blue";
+    place(-o.width / 2, -o.height / 2);  // tl
+    place(o.width / 2, -o.height / 2);  // tr
+    place(-o.width / 2, o.height / 2);  // bl
+    place(o.width / 2, o.height / 2);  // br
+    place(0, -o.height / 2);           // t
+    place(0, o.height / 2);           // b
+    place(-o.width / 2, 0);            // l
+    place(o.width / 2, 0);            // r
+    ctx.restore();
+}
+
+
 function updateSelectedImageColorsOld(newFill, newStroke) {
     if (activeImage && activeImage.src && activeImage.src.endsWith('.svg')) {
         if (activeImage.originalSVG) {
@@ -6779,7 +7109,9 @@ function updateSelectedImageColors(newFill, newStroke, newStrokeWidth = null) {
             activeImage.width = origW;
             activeImage.height = origH;
             activeImage.src = uri;
-            drawCanvas("Common");
+            //  drawCanvas("Common");
+            drawText();
+
         };
         imgEl.src = uri;
     }
@@ -7965,6 +8297,9 @@ const maxScale = 3;
 const minScale = 0.5;
 const scaleText = document.getElementById("scaleValue");
 
+let activeHandleKey = null;          // 'tl','tr','bl','br','t','r','b','l'
+let resizeDirectionRaw = null;   // e.g. "mr","ml","mt","mb","top-left", etc
+let resizeDirectionNorm = null;  // "r","l","t","b","tl","tr","bl","br"
 function applyScale() {
  /*   resizeCanvas();*/
     canvas.style.transform = `scale(${scale})`;
@@ -8005,8 +8340,9 @@ let dragOffsetXNew = 0, dragOffsetYNew = 0;
 let savedRange = null;
 let isFontScaling = false;
 let _cornerScale = null; // { cx, cy, startDist, startScale, baseFontSize }
-
-const CORNER_HANDLES = new Set(["tl", "tr", "bl", "br", "top-left", "top-right", "bottom-left", "bottom-right"]);
+let isCornerImageScale = false;
+const CORNER_HANDLES = new Set(["tl", "tr", "bl", "br"]); // use normalized names only
+/*const CORNER_HANDLES = new Set(["tl", "tr", "bl", "br", "top-left", "top-right", "bottom-left", "bottom-right"]);*/
 let _cornerScaleState = null; // { cx, cy, startDist, startScale, baseFontSize }
 
 //const CORNER_HANDLES = new Set(['tl', 'tr', 'bl', 'br']);
@@ -8059,14 +8395,34 @@ function beginCornerScale(box, mx, my) {
 
 // ——————— Helpers ———————
 
+//function getCanvasMousePosition(e) {
+//    const rect = canvas.getBoundingClientRect();
+//    const scaleX = canvas.width / rect.width;
+//    const scaleY = canvas.height / rect.height;
+//    return {
+//        x: (e.clientX - rect.left) * scaleX,
+//        y: (e.clientY - rect.top) * scaleY
+//    };
+//}
+function endEditingIfOpen() {
+    if (isEditing) {
+        // save if you need, then hide
+        textEditorNew.style.display = "none";
+        isEditing = false;
+    }
+}
+
 function getCanvasMousePosition(e) {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    return {
-        x: (e.clientX - rect.left) * scaleX,
-        y: (e.clientY - rect.top) * scaleY
-    };
+    const r = canvas.getBoundingClientRect();
+    const sx = canvas.width / r.width, sy = canvas.height / r.height;
+    return { x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy };
+}
+function cursorForHandle(k) {
+    if (k === 'tl' || k === 'br') return 'nwse-resize';
+    if (k === 'tr' || k === 'bl') return 'nesw-resize';
+    if (k === 'l' || k === 'r') return 'ew-resize';
+    if (k === 't' || k === 'b') return 'ns-resize';
+    return 'default';
 }
 
 //function getAllHandles(box) {
@@ -8090,13 +8446,23 @@ function getAllHandles(box, scaleX = 1, scaleY = 1) {
         br: { x: x + w, y: y + h }
     };
 }
-function getResizeHandle(box, mx, my) {
+function getResizeHandleOLD(box, mx, my) {
     const hit = 8;
     for (let [key, h] of Object.entries(getAllHandles(box))) {
         if (Math.abs(mx - h.x) < hit && Math.abs(my - h.y) < hit) return key;
     }
     return null;
 }
+function getResizeHandle(box, mx, my) {
+    const hs = 8, half = hs / 2;
+    const handles = getAllHandles(box); // returns tl,tr,bl,br,l,r,t,b with .x/.y in screen space
+    for (const [key, h] of Object.entries(handles)) {
+        if (mx >= h.x - half && mx <= h.x + half && my >= h.y - half && my <= h.y + half) return key;
+    }
+    return null;
+}
+
+
 
 function stripHTML(html) {
     let tmp = document.createElement("div");
@@ -8155,19 +8521,23 @@ function cleanEditorHTMLPreserveCaret() {
     textEditorNew.innerHTML = "";
     cleanedLines.forEach(line => textEditorNew.appendChild(line));
 }
-// 🟢 Fix line height calculation in drawText
+function normAlpha(op) {
+    if (op == null) return 1;         // default fully opaque
+    return op > 1 ? op / 100 : op;    // handle legacy 0–100
+}
+function pointInBox(b, x, y) {
+    const w = Number(b.width) || 0;
+    const h = Number(b.height) || 0;
+    return x >= b.x && x <= b.x + w && y >= b.y && y <= b.y + h;
+}
 // 🟢 Fix line height calculation in drawText
 function drawText() {
-    //ctx.clearRect(0, 0, canvas.width, canvas.height);
-    //ctx.textBaseline = "top";
-    // --- background layer ---
-    const designW = canvas.width;   // use canvas backing size (device px)
+    const designW = canvas.width;
     const designH = canvas.height;
 
-    // clear pixels
+    // clear & bg
     ctx.clearRect(0, 0, designW, designH);
 
-    // fill bg color (from your hidden input or the canvas style as fallback)
     const bgEl = document.getElementById('hdnBackgroundSpecificColor');
     const bgColor = (bgEl?.value || canvas.style.backgroundColor || "").trim();
     if (bgColor) {
@@ -8177,47 +8547,294 @@ function drawText() {
         ctx.restore();
     }
 
-    // draw bg image if present
     if (canvas._bgImg) {
         if (canvas._bgImg.complete) {
             ctx.drawImage(canvas._bgImg, 0, 0, designW, designH);
         } else {
-            // ensure it renders once the image finishes loading
             canvas._bgImg.onload = () => drawText();
-            canvas._bgImg.onerror = () => {/* ignore or log */ };
+            canvas._bgImg.onerror = () => { };
         }
     }
 
-    // --- text layer (your existing code follows) ---
+    // text defaults
     ctx.textBaseline = "top";
-
     const defaultStyle = window.getComputedStyle(textEditorNew);
     const defaultFontSize = defaultStyle.fontSize || "16px";
     const defaultFontFamily = defaultStyle.fontFamily || "Arial";
     const defaultFontWeight = defaultStyle.fontWeight || "normal";
     const defaultFontStyle = defaultStyle.fontStyle || "normal";
     const defaultColor = defaultStyle.color || "#000";
-    const defaultLineHeight = parseFloat(defaultStyle.lineHeight) || (parseFloat(defaultFontSize) * 1.2);
 
-    for (const box of textObjects) {
+    // z-ordered
+    const all = [...(images || []), ...(textObjects || [])]
+        .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+
+    for (const box of all) {
+        if (box.width == null || Number.isNaN(box.width)) box.width = 50;
+        if (box.height == null || Number.isNaN(box.height)) box.height = 30;
+
+        const { w, h, cx, cy } = getBoxRect(box);
+        const angleRad = deg2rad(box.rotation || 0);
+
+        
+        // ---- IMAGE ----
+        if (box.type === "image") {
+            const { w, h, cx, cy } = getBoxRect(box);
+            const angleRad = deg2rad(box.rotation || 0);
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(angleRad);
+            ctx.globalAlpha = normAlpha(box.opacity);
+
+            if (box.img) {
+                if (box.img.complete) {
+                    ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                } else {
+                    const img = box.img;
+                    img.onload = () => { img.onload = null; drawText(); };
+                    img.onerror = () => { img.onerror = null; };
+                }
+            }
+            ctx.restore();                     // ⬅️ back to world space
+
+            if (box.selected && w > 0 && h > 0) {
+                drawRotatedSelection(ctx, box);  // ⬅️ now draw selection (single transform)
+            }
+            continue;
+        }
+
+
+        // ---- TEXT ----
+     
+      
+
         ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angleRad);
+        ctx.globalAlpha = normAlpha(box.opacity);
 
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = box.text || "";
+
+        // build logical lines
+        const lines = [];
+        wrapper.childNodes.forEach(n => {
+            if (n.nodeType === 1 && n.tagName === "DIV") {
+                const hasContent = n.textContent.trim().length > 0 || n.children.length > 0;
+                if (!hasContent) {
+                    const blank = document.createElement("div");
+                    blank.appendChild(document.createTextNode(" "));
+                    lines.push(blank);
+                } else {
+                    const ln = document.createElement("div");
+                    ln.append(...n.cloneNode(true).childNodes);
+                    lines.push(ln);
+                }
+            } else if (n.nodeType === 1 && n.tagName === "BR") {
+                const brLine = document.createElement("div");
+                brLine.appendChild(document.createTextNode(" "));
+                lines.push(brLine);
+            } else {
+                if (lines.length === 0) lines.push(document.createElement("div"));
+                lines[lines.length - 1].appendChild(n.cloneNode(true));
+            }
+        });
+
+        // local (rotated) coords: top-left is (-w/2, -h/2)
+        const left = -w / 2;
+        const top = -h / 2;
+
+        let cursorY = top + 5;
+        let usedHeight = 0;
+
+        lines.forEach(lineNode => {
+            // alignment inside the rotated box
+            let cursorX = left + 5;
+            if (box.align === "center") {
+                ctx.textAlign = "center";
+                cursorX = left + w / 2;
+            } else if (box.align === "right") {
+                ctx.textAlign = "right";
+                cursorX = left + w - 5;
+            } else {
+                ctx.textAlign = "left";
+            }
+
+            let segments = [];
+            let maxFontPx = 0;
+
+            function measureWords(node, style) {
+                if (node.nodeType === 3) {
+                    const chars = node.nodeValue.split("");
+                    for (let ch of chars) {
+                        const fs = style.fontSize || defaultFontSize;
+                        const ff = style.fontFamily || defaultFontFamily;
+                        const fw = style.fontWeight || defaultFontWeight;
+                        const fst = style.fontStyle || defaultFontStyle;
+                        const col = style.color || defaultColor;
+
+                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                        const width = ctx.measureText(ch).width;
+                        const px = parseFloat(fs);
+                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                        segments.push({ text: ch, width, style: { fs, ff, fw, fst, col } });
+                    }
+                } else if (node.nodeType === 1) {
+                    if (node.tagName === "BR") {
+                        const fs = style.fontSize || defaultFontSize;
+                        const ff = style.fontFamily || defaultFontFamily;
+                        const fw = style.fontWeight || defaultFontWeight;
+                        const fst = style.fontStyle || defaultFontStyle;
+                        const col = style.color || defaultColor;
+
+                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                        const width = ctx.measureText(" ").width;
+                        const px = parseFloat(fs);
+                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                        segments.push({ text: " ", width, style: { fs, ff, fw, fst, col } });
+                        return;
+                    }
+                    const s = node.style || {};
+                    const nextStyle = {
+                        fontSize: s.fontSize || style.fontSize,
+                        fontFamily: s.fontFamily || style.fontFamily,
+                        fontWeight: s.fontWeight || style.fontWeight,
+                        fontStyle: s.fontStyle || style.fontStyle,
+                        color: s.color || style.color,
+                    };
+                    node.childNodes.forEach(child => measureWords(child, nextStyle));
+                }
+            }
+
+            measureWords(lineNode, {
+                fontSize: defaultFontSize,
+                fontFamily: defaultFontFamily,
+                fontWeight: defaultFontWeight,
+                fontStyle: defaultFontStyle,
+                color: defaultColor
+            });
+
+            const basePx = parseFloat(defaultFontSize) || 16;
+            const lineHeight = (maxFontPx > 0 ? maxFontPx : basePx) * (box.lineSpacing || 1.2);
+
+            let x = cursorX;
+            let drewSomething = false;
+
+            segments.forEach(seg => {
+                if (x + seg.width > left + w - 0.01) {
+                    cursorY += lineHeight;     // wrap
+                    x = cursorX;
+                }
+                ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
+                ctx.fillStyle = seg.style.col;
+                ctx.fillText(seg.text, x, cursorY);
+                x += seg.width;
+                drewSomething = true;
+            });
+
+            if (drewSomething) cursorY += lineHeight;
+            usedHeight = cursorY - top + 5;
+        });
+
+        // keep size fields consistent for text
+        //box.height = usedHeight;
+        //syncTextDims(box);
+
+        //if (box.selected && w > 0 && h > 0) drawRotatedSelection(ctx, box);
+        //ctx.restore();
+        box.height = usedHeight;     // update size first
+        syncTextDims(box);           // keep bounding* in sync if your other code uses it
+        ctx.restore();               // ⬅️ back to world space
+
+        if (box.selected && w > 0 && h > 0) {
+            drawRotatedSelection(ctx, box);  // ⬅️ selection in world space (no double-rotate)
+        }
+    }
+}
+
+
+
+function drawTextOLD() {
+    const designW = canvas.width;
+    const designH = canvas.height;
+
+    // clear & bg
+    ctx.clearRect(0, 0, designW, designH);
+
+    const bgEl = document.getElementById('hdnBackgroundSpecificColor');
+    const bgColor = (bgEl?.value || canvas.style.backgroundColor || "").trim();
+    if (bgColor) {
+        ctx.save();
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, designW, designH);
+        ctx.restore();
+    }
+
+    if (canvas._bgImg) {
+        if (canvas._bgImg.complete) {
+            ctx.drawImage(canvas._bgImg, 0, 0, designW, designH);
+        } else {
+            canvas._bgImg.onload = () => drawText();
+            canvas._bgImg.onerror = () => { };
+        }
+    }
+
+    // defaults for text measuring
+    ctx.textBaseline = "top";
+    const defaultStyle = window.getComputedStyle(textEditorNew);
+    const defaultFontSize = defaultStyle.fontSize || "16px";
+    const defaultFontFamily = defaultStyle.fontFamily || "Arial";
+    const defaultFontWeight = defaultStyle.fontWeight || "normal";
+    const defaultFontStyle = defaultStyle.fontStyle || "normal";
+    const defaultColor = defaultStyle.color || "#000";
+
+    // z-ordered render of images + text (textObjects kept intact)
+    const all = [...(images || []), ...(textObjects || [])].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+
+    for (const box of all) {
         if (!box.width || isNaN(box.width)) box.width = 50;
         if (!box.height || isNaN(box.height)) box.height = 30;
 
+        // ---- IMAGE ----
+        if (box.type === "image") {
+            ctx.save();
+            // (no rotation here since your old code didn't do rotated text; keeps selection aligned)
+           
+            ctx.globalAlpha = normAlpha(box.opacity);
+            ctx.drawImage(box.img, box.x, box.y, box.width, box.height);
+            ctx.restore();
+
+            // same selection UI as old text (strokeRect + handle squares)
+            if (box.selected && box.width > 0 && box.height > 0) {
+                ctx.strokeStyle = "red";
+                ctx.lineWidth = 1;
+                ctx.strokeRect(box.x, box.y, box.width, box.height);
+                ctx.fillStyle = "blue";
+                for (let h of Object.values(getAllHandles(box))) {
+                    ctx.fillRect(h.x - 4, h.y - 4, 8, 8);
+                }
+                const rot = (box.rotation || 0) * Math.PI / 180;
+                ctx.rotate(rot);
+            }
+            continue;
+        }
+
+        // ---- TEXT (your old logic preserved) ----
+        ctx.save();
+        const rot = (box.rotation || 0) * Math.PI / 180;
+        ctx.rotate(rot);
+        ctx.globalAlpha = normAlpha(box.opacity);
         const wrapper = document.createElement("div");
         wrapper.innerHTML = box.text;
 
         const lines = [];
-        //let currentLine = document.createElement("div");
-        //lines.push(currentLine);
-
         wrapper.childNodes.forEach(n => {
             if (n.nodeType === 1 && n.tagName === "DIV") {
                 const hasContent = n.textContent.trim().length > 0 || n.children.length > 0;
-
                 if (!hasContent) {
-                    // Empty <div><br></div> → blank line
                     const blankLine = document.createElement("div");
                     blankLine.appendChild(document.createTextNode(" "));
                     lines.push(blankLine);
@@ -8231,32 +8848,10 @@ function drawText() {
                 brLine.appendChild(document.createTextNode(" "));
                 lines.push(brLine);
             } else {
-                // Text directly outside div (rare, but possible)
-                if (lines.length === 0) {
-                    lines.push(document.createElement("div"));
-                }
+                if (lines.length === 0) lines.push(document.createElement("div"));
                 lines[lines.length - 1].appendChild(n.cloneNode(true));
             }
-            
         });
-        
-        //wrapper.childNodes.forEach(n => {
-        //    if (n.nodeType === 1 && n.tagName === "DIV") {
-        //        if (currentLine.childNodes.length > 0) {
-        //            currentLine = document.createElement("div");
-        //            lines.push(currentLine);
-        //        }
-        //        currentLine.append(...n.childNodes);
-        //        currentLine = document.createElement("div");
-        //        lines.push(currentLine);
-        //    } else if (n.nodeType === 1 && n.tagName === "BR") {
-        //        currentLine = document.createElement("div");
-        //        lines.push(currentLine);
-        //    } else {
-        //        currentLine.appendChild(n.cloneNode(true));
-        //    }
-        //});
-      
 
         let cursorY = box.y + 5;
         let usedHeight = 0;
@@ -8276,42 +8871,8 @@ function drawText() {
             let segments = [];
             let maxFontPx = 0;
 
-            //function measureWords(node, style) {
-            //    if (node.nodeType === 3) {
-            //        const words = node.nodeValue.split("");
-            //        for (let word of words) {
-            //            const fs = style.fontSize || defaultFontSize;
-            //            const ff = style.fontFamily || defaultFontFamily;
-            //            const fw = style.fontWeight || defaultFontWeight;
-            //            const fst = style.fontStyle || defaultFontStyle;
-            //            const col = style.color || defaultColor;
-
-            //            ctx.font = `${fst} ${fw} ${fs} ${ff}`;
-            //            const width = ctx.measureText(word).width;
-            //            const px = parseFloat(fs);
-            //            if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
-
-            //            segments.push({
-            //                text: word,
-            //                width,
-            //                style: { fs, ff, fw, fst, col }
-            //            });
-            //        }
-            //    } else if (node.nodeType === 1) {
-            //        const s = node.style;
-            //        const nextStyle = {
-            //            fontSize: s.fontSize || style.fontSize,
-            //            fontFamily: s.fontFamily || style.fontFamily,
-            //            fontWeight: s.fontWeight || style.fontWeight,
-            //            fontStyle: s.fontStyle || style.fontStyle,
-            //            color: s.color || style.color,
-            //        };
-            //        node.childNodes.forEach(child => measureWords(child, nextStyle));
-            //    }
-            //}
             function measureWords(node, style) {
                 if (node.nodeType === 3) {
-                    // Handle text node (split into individual characters)
                     const words = node.nodeValue.split("");
                     for (let word of words) {
                         const fs = style.fontSize || defaultFontSize;
@@ -8325,14 +8886,9 @@ function drawText() {
                         const px = parseFloat(fs);
                         if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
 
-                        segments.push({
-                            text: word,
-                            width,
-                            style: { fs, ff, fw, fst, col }
-                        });
+                        segments.push({ text: word, width, style: { fs, ff, fw, fst, col } });
                     }
                 } else if (node.nodeType === 1) {
-                    // ✅ Special case: if node is a <br>, treat it as a blank line
                     if (node.tagName === "BR") {
                         const fs = style.fontSize || defaultFontSize;
                         const ff = style.fontFamily || defaultFontFamily;
@@ -8344,16 +8900,9 @@ function drawText() {
                         const width = ctx.measureText(" ").width;
                         const px = parseFloat(fs);
                         if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
-
-                        segments.push({
-                            text: " ",
-                            width,
-                            style: { fs, ff, fw, fst, col }
-                        });
-                        return; // Don’t process children
+                        segments.push({ text: " ", width, style: { fs, ff, fw, fst, col } });
+                        return;
                     }
-
-                    // Normal element with children
                     const s = node.style;
                     const nextStyle = {
                         fontSize: s.fontSize || style.fontSize,
@@ -8365,6 +8914,7 @@ function drawText() {
                     node.childNodes.forEach(child => measureWords(child, nextStyle));
                 }
             }
+
             measureWords(lineNode, {
                 fontSize: defaultFontSize,
                 fontFamily: defaultFontFamily,
@@ -8391,10 +8941,10 @@ function drawText() {
         });
 
         box.height = usedHeight;
-        //box === activeBox &&
+
         if (box.selected && box.width > 0 && box.height > 0) {
-            ctx.strokeStyle = isEditing ? "red" : "red";
-            ctx.lineWidth = isEditing ? 2 : 1;
+            ctx.strokeStyle = "red";
+            ctx.lineWidth = 1;
             ctx.strokeRect(box.x, box.y, box.width, box.height);
             ctx.fillStyle = "blue";
             for (let h of Object.values(getAllHandles(box))) {
@@ -8405,6 +8955,21 @@ function drawText() {
         ctx.restore();
     }
 }
+
+
+
+function pickTopObject(mx, my) {
+    // highest zIndex among all objects under the pointer
+    let best = null;
+    const all = [...images, ...textObjects];
+    for (const o of all) {
+        if (pointInBox(o, mx, my)) {
+            if (!best || (o.zIndex || 0) >= (best.zIndex || 0)) best = o;
+        }
+    }
+    return best;
+}
+
 
 function measureTextHTML(html, referenceStyle) {
     const temp = document.createElement("div");
@@ -8480,10 +9045,25 @@ function scaleBoxContent(box, scale) {
 const HANDLE_CURSOR = {
     tl: "nwse-resize", br: "nwse-resize",
     tr: "nesw-resize", bl: "nesw-resize",
-    tm: "ns-resize", bm: "ns-resize",
-    ml: "ew-resize", mr: "ew-resize"
+    l: "ew-resize", r: "ew-resize",
+    t: "ns-resize", b: "ns-resize"
 };
-
+function normalizeHandle(h) {
+    if (!h) return h;
+    switch (h) {
+        // corners
+        case "top-left": return "tl";
+        case "top-right": return "tr";
+        case "bottom-left": return "bl";
+        case "bottom-right": return "br";
+        // sides
+        case "ml": case "middle-left": return "l";
+        case "mr": case "middle-right": return "r";
+        case "mt": case "middle-top": return "t";
+        case "mb": case "middle-bottom": return "b";
+        default: return h; // already "tl","tr","bl","br","l","r","t","b"
+    }
+}
 function setGlobalCursor(cursor) {
     const c = cursor || "";
     canvas.style.cursor = c || "default";
@@ -8598,201 +9178,201 @@ function topmostAt(mx, my) {
     return null;
 }
 
-canvas.addEventListener("mousedown", e => {
-    const { x: mx, y: my } = getCanvasMousePosition(e);
-    startX = e.clientX;
-    startY = e.clientY;
-    prevMouseX = mx;
-    prevMouseY = my;
-    startMXCanvas = mx;
-    startMYCanvas = my;
+//canvas.addEventListener("mousedown", e => {
+//    const { x: mx, y: my } = getCanvasMousePosition(e);
+//    startX = e.clientX;
+//    startY = e.clientY;
+//    prevMouseX = mx;
+//    prevMouseY = my;
+//    startMXCanvas = mx;
+//    startMYCanvas = my;
 
-    if (isEditing && activeBox) {
-        cleanEditorHTMLPreserveCaret?.();
-        activeBox.text = textEditorNew.innerHTML;
-        activeBox.align = textEditorNew.style.textAlign || "left";
-        isEditing = false;
-        if (textEditorNew) textEditorNew.style.display = "none";
-    }
+//    if (isEditing && activeBox) {
+//        cleanEditorHTMLPreserveCaret?.();
+//        activeBox.text = textEditorNew.innerHTML;
+//        activeBox.align = textEditorNew.style.textAlign || "left";
+//        isEditing = false;
+//        if (textEditorNew) textEditorNew.style.display = "none";
+//    }
 
-    // check handles (topmost-by-zIndex recommended, but keeping your order)
-    for (const box of textObjects) {
-        const handle = getResizeHandle(box, mx, my);
-        if (handle) {
-            activeBox = box;
+//    // check handles (topmost-by-zIndex recommended, but keeping your order)
+//    for (const box of textObjects) {
+//        const handle = getResizeHandle(box, mx, my);
+//        if (handle) {
+//            activeBox = box;
 
-            // single-select the box you grabbed
-            if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = (o === box));
-            drawText(); // NEW: show selection immediately
+//            // single-select the box you grabbed
+//            if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = (o === box));
+//            drawText(); // NEW: show selection immediately
 
-            if (CORNER_HANDLES.has(handle)) {
-                resizeDirection = handle;
-                isCornerFontScale = true;
-                isResizingNew = false;
+//            if (CORNER_HANDLES.has(handle)) {
+//                resizeDirection = handle;
+//                isCornerFontScale = true;
+//                isResizingNew = false;
 
-                activeBox._orig = {
-                    x: box.x, y: box.y,
-                    width: box.width, height: box.height,
-                    text: box.text
-                };
-                setGlobalCursor(HANDLE_CURSOR[handle] || "nwse-resize");
-                const endCorner = () => { isCornerFontScale = false; setGlobalCursor(""); };
-                document.addEventListener("mouseup", endCorner, { once: true });
+//                activeBox._orig = {
+//                    x: box.x, y: box.y,
+//                    width: box.width, height: box.height,
+//                    text: box.text
+//                };
+//                setGlobalCursor(HANDLE_CURSOR[handle] || "nwse-resize");
+//                const endCorner = () => { isCornerFontScale = false; setGlobalCursor(""); };
+//                document.addEventListener("mouseup", endCorner, { once: true });
 
-                return;
-            }
+//                return;
+//            }
 
-            // sides: normal resize
-            resizeDirection = handle;
-            isResizingNew = true;
-            activeBox._orig = {
-                x: box.x, y: box.y,
-                width: box.width, height: box.height,
-                fontSize: box.fontSize, text: box.text
-            };
-            return;
-        }
-    }
+//            // sides: normal resize
+//            resizeDirection = handle;
+//            isResizingNew = true;
+//            activeBox._orig = {
+//                x: box.x, y: box.y,
+//                width: box.width, height: box.height,
+//                fontSize: box.fontSize, text: box.text
+//            };
+//            return;
+//        }
+//    }
 
-    // no handle → hit test object body
-    const clickedBox = textObjects.find(box =>
-        mx >= box.x && mx <= box.x + box.width &&
-        my >= box.y && my <= box.y + box.height
-    );
+//    // no handle → hit test object body
+//    const clickedBox = textObjects.find(box =>
+//        mx >= box.x && mx <= box.x + box.width &&
+//        my >= box.y && my <= box.y + box.height
+//    );
 
-    activeBox = clickedBox;
+//    activeBox = clickedBox;
 
-    if (activeBox) {
-        // single-select this one
-        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = (o === activeBox));
+//    if (activeBox) {
+//        // single-select this one
+//        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = (o === activeBox));
 
-        // prepare potential drag
-        isDraggingNew = true;
-        dragOffsetXNew = mx - activeBox.x;
-        dragOffsetYNew = my - activeBox.y;
+//        // prepare potential drag
+//        isDraggingNew = true;
+//        dragOffsetXNew = mx - activeBox.x;
+//        dragOffsetYNew = my - activeBox.y;
 
-        drawText(); // NEW: reflect selection immediately
-    } else {
-        // blank click → deselect everything
-        activeBox = null;
-        isDraggingNew = false;
-        isResizingNew = false;
-        resizeDirection = null;
-        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = false);
+//        drawText(); // NEW: reflect selection immediately
+//    } else {
+//        // blank click → deselect everything
+//        activeBox = null;
+//        isDraggingNew = false;
+//        isResizingNew = false;
+//        resizeDirection = null;
+//        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = false);
 
-        drawText(); // NEW: clear selection immediately
-    }
-});
-
-
+//        drawText(); // NEW: clear selection immediately
+//    }
+//});
 
 
-canvas.addEventListener("mousemove", e => {
-    const { x: mx, y: my } = getCanvasMousePosition(e);
-    const dx = mx - prevMouseX;
-    const dy = my - prevMouseY;
 
-    // ----- cursor handling -----
-    let hoveredHandle = null;
-    if (activeBox) {
-        hoveredHandle = getResizeHandle(activeBox, mx, my);
-    }
 
-    // Force cursor while dragging/resizing
-    if (isDraggingNew) {
-        setGlobalCursor("move");
-    } else if (isCornerFontScale && resizeDirection) {
-        setGlobalCursor(HANDLE_CURSOR[resizeDirection] || "nwse-resize");
-    } else if (isResizingNew && resizeDirection) {
-        setGlobalCursor(HANDLE_CURSOR[resizeDirection] || "default");
-    } else if (activeBox) {
-        // Hover state
-        if (hoveredHandle && HANDLE_CURSOR[hoveredHandle]) {
-            setGlobalCursor(HANDLE_CURSOR[hoveredHandle]);
-        } else if (
-            mx >= activeBox.x && mx <= activeBox.x + activeBox.width &&
-            my >= activeBox.y && my <= activeBox.y + activeBox.height
-        ) {
-            setGlobalCursor("move");
-        } else {
-            setGlobalCursor("default");
-        }
-    } else {
-        setGlobalCursor("default");
-    }
-    // ----- end cursor handling -----
+//canvas.addEventListener("mousemove", e => {
+//    const { x: mx, y: my } = getCanvasMousePosition(e);
+//    const dx = mx - prevMouseX;
+//    const dy = my - prevMouseY;
 
-    if (isDraggingNew) {
-        activeBox.x = mx - dragOffsetXNew;
-        activeBox.y = my - dragOffsetYNew;
+//    // ----- cursor handling -----
+//    let hoveredHandle = null;
+//    if (activeBox) {
+//        hoveredHandle = getResizeHandle(activeBox, mx, my);
+//    }
 
-        prevMouseX = mx;
-        prevMouseY = my;
-        drawText();
+//    // Force cursor while dragging/resizing
+//    if (isDraggingNew) {
+//        setGlobalCursor("move");
+//    } else if (isCornerFontScale && resizeDirection) {
+//        setGlobalCursor(HANDLE_CURSOR[resizeDirection] || "nwse-resize");
+//    } else if (isResizingNew && resizeDirection) {
+//        setGlobalCursor(HANDLE_CURSOR[resizeDirection] || "default");
+//    } else if (activeBox) {
+//        // Hover state
+//        if (hoveredHandle && HANDLE_CURSOR[hoveredHandle]) {
+//            setGlobalCursor(HANDLE_CURSOR[hoveredHandle]);
+//        } else if (
+//            mx >= activeBox.x && mx <= activeBox.x + activeBox.width &&
+//            my >= activeBox.y && my <= activeBox.y + activeBox.height
+//        ) {
+//            setGlobalCursor("move");
+//        } else {
+//            setGlobalCursor("default");
+//        }
+//    } else {
+//        setGlobalCursor("default");
+//    }
+//    // ----- end cursor handling -----
 
-    } else if (isCornerFontScale && activeBox && resizeDirection && CORNER_HANDLES.has(resizeDirection)) {
-        // 🔥 CORNER: scale font + box together, anchored at dragged corner
-        const ow = activeBox._orig.width;
-        const oh = activeBox._orig.height;
+//    if (isDraggingNew) {
+//        activeBox.x = mx - dragOffsetXNew;
+//        activeBox.y = my - dragOffsetYNew;
 
-        const dxAbs = mx - startMXCanvas;
-        const dyAbs = my - startMYCanvas;
+//        prevMouseX = mx;
+//        prevMouseY = my;
+//        drawText();
 
-        let scaleX = 1, scaleY = 1;
-        switch (resizeDirection) {
-            case 'tl': scaleX = (ow - dxAbs) / ow; scaleY = (oh - dyAbs) / oh; break;
-            case 'tr': scaleX = (ow + dxAbs) / ow; scaleY = (oh - dyAbs) / oh; break;
-            case 'bl': scaleX = (ow - dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
-            case 'br': scaleX = (ow + dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
-        }
+//    } else if (isCornerFontScale && activeBox && resizeDirection && CORNER_HANDLES.has(resizeDirection)) {
+//        // 🔥 CORNER: scale font + box together, anchored at dragged corner
+//        const ow = activeBox._orig.width;
+//        const oh = activeBox._orig.height;
 
-        scaleX = Math.max(0.1, scaleX);
-        scaleY = Math.max(0.1, scaleY);
-        const s = Math.min(scaleX, scaleY);          // uniform font scale
-        const newW = ow * s, newH = oh * s;          // box scales with font
+//        const dxAbs = mx - startMXCanvas;
+//        const dyAbs = my - startMYCanvas;
 
-        // position so the dragged corner sticks to anchor
-        switch (resizeDirection) {
-            case 'tl':
-                activeBox.x = activeBox._orig.x + (ow - newW);
-                activeBox.y = activeBox._orig.y + (oh - newH);
-                break;
-            case 'tr':
-                activeBox.x = activeBox._orig.x;
-                activeBox.y = activeBox._orig.y + (oh - newH);
-                break;
-            case 'bl':
-                activeBox.x = activeBox._orig.x + (ow - newW);
-                activeBox.y = activeBox._orig.y;
-                break;
-            case 'br':
-                activeBox.x = activeBox._orig.x;
-                activeBox.y = activeBox._orig.y;
-                break;
-        }
-        activeBox.width = newW;
-        activeBox.height = newH;
+//        let scaleX = 1, scaleY = 1;
+//        switch (resizeDirection) {
+//            case 'tl': scaleX = (ow - dxAbs) / ow; scaleY = (oh - dyAbs) / oh; break;
+//            case 'tr': scaleX = (ow + dxAbs) / ow; scaleY = (oh - dyAbs) / oh; break;
+//            case 'bl': scaleX = (ow - dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
+//            case 'br': scaleX = (ow + dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
+//        }
 
-        // scale the ORIGINAL html each move (no compounding)
-        activeBox.text = scaleTextHTML(activeBox._orig.text, s);
+//        scaleX = Math.max(0.1, scaleX);
+//        scaleY = Math.max(0.1, scaleY);
+//        const s = Math.min(scaleX, scaleY);          // uniform font scale
+//        const newW = ow * s, newH = oh * s;          // box scales with font
 
-        prevMouseX = mx;
-        prevMouseY = my;
-        drawText();
+//        // position so the dragged corner sticks to anchor
+//        switch (resizeDirection) {
+//            case 'tl':
+//                activeBox.x = activeBox._orig.x + (ow - newW);
+//                activeBox.y = activeBox._orig.y + (oh - newH);
+//                break;
+//            case 'tr':
+//                activeBox.x = activeBox._orig.x;
+//                activeBox.y = activeBox._orig.y + (oh - newH);
+//                break;
+//            case 'bl':
+//                activeBox.x = activeBox._orig.x + (ow - newW);
+//                activeBox.y = activeBox._orig.y;
+//                break;
+//            case 'br':
+//                activeBox.x = activeBox._orig.x;
+//                activeBox.y = activeBox._orig.y;
+//                break;
+//        }
+//        activeBox.width = newW;
+//        activeBox.height = newH;
 
-    } else if (isResizingNew && activeBox && resizeDirection) {
-        // sides: normal behavior
-        scaleTextBoxWithHandle(activeBox, resizeDirection, mx, my);
+//        // scale the ORIGINAL html each move (no compounding)
+//        activeBox.text = scaleTextHTML(activeBox._orig.text, s);
 
-        prevMouseX = mx;
-        prevMouseY = my;
-        drawText();
-    }
+//        prevMouseX = mx;
+//        prevMouseY = my;
+//        drawText();
 
-    //prevMouseX = mx;
-    //prevMouseY = my;
-    //drawText();
-});
+//    } else if (isResizingNew && activeBox && resizeDirection) {
+//        // sides: normal behavior
+//        scaleTextBoxWithHandle(activeBox, resizeDirection, mx, my);
+
+//        prevMouseX = mx;
+//        prevMouseY = my;
+//        drawText();
+//    }
+
+//    //prevMouseX = mx;
+//    //prevMouseY = my;
+//    //drawText();
+//});
 
 function scaleTextHTML(html, scale) {
     const div = document.createElement("div");
@@ -8833,14 +9413,501 @@ function sizeToPx(size) {
     return map[size] ?? 16;
 }
 
+let   startDrag = null;
+// make canvas focusable once
+if (!canvas.hasAttribute('tabindex')) canvas.setAttribute('tabindex', '0');
+canvas.addEventListener("mousedown", e => {
+    canvas.focus({ preventScroll: true });
+    const { x: mx, y: my } = getCanvasMousePosition(e);
+    startX = e.clientX;
+    startY = e.clientY;
+    prevMouseX = mx;
+    prevMouseY = my;
+    startMXCanvas = mx;
+    startMYCanvas = my;
+
+    if (isEditing && activeBox) {
+        cleanEditorHTMLPreserveCaret?.();
+        activeBox.text = textEditorNew.innerHTML;
+        activeBox.align = textEditorNew.style.textAlign || "left";
+        isEditing = false;
+        if (textEditorNew) textEditorNew.style.display = "none";
+    }
+
+    // 🔁 NEW: search topmost among images + text
+    const allTop = [...(images || []), ...(textObjects || [])].sort((a, b) => (b.zIndex || 0) - (a.zIndex || 0));
+    let hit = null;
+    selectedForContextMenu = null;
+    for (let i = allTop.length - 1; i >= 0; i--) {
+        const b = allTop[i];
+        if (pointInBox(b, mx, my)) { hit = b; break; }
+    }
+    // ✅ Only clear selection when NOT holding Shift
+    if (!e.shiftKey) {
+        (images || []).forEach(b => b.selected = false);
+        (textObjects || []).forEach(b => b.selected = false);
+        activeText = null;
+        activeImage = null;
+    }
+
+    // ✅ Shift-click toggles selection and exits early
+    if (e.shiftKey && hit) {
+        hit.selected = !hit.selected;
+        drawText();
+        return; // important: don't let later logic reselect/clear
+    }
+    // clear previous selection
+    (images || []).forEach(b => b.selected = false);
+    (textObjects || []).forEach(b => b.selected = false);
+    activeText = null;
+    activeImage = null;
+
+    if (hit) {
+        hit.selected = true;
+        selectedForContextMenu = hit;
+        // decide which "active" to set
+        if (hit.type === "image" || hit.img) {
+            activeImage = hit;
+            enableFillColorDiv();
+            enableStrockColorDiv();
+            const angle = hit.rotation || 0;
+            rotationSlider.value = angle;
+            document.getElementById("rotationValue").textContent = angle + "°";
+            rotationBadge.textContent = angle;
+
+        } else {
+            activeText = hit;
+            const angle = hit.rotation || 0;
+            rotationSlider.value = angle;
+            document.getElementById("rotationValue").textContent = angle + "°";
+            rotationBadge.textContent = angle;
+        }
+
+        // --- update opacity controls from the hit ---
+        const alpha = normAlpha(hit.opacity);
+        let opacity = Math.round(alpha * 100);
+        if (opacity > 100) opacity = 100;
+
+        const opacitySlider = document.getElementById("opacitySlider");
+        const opacityValue = document.getElementById("opacityValue");
+        const opacityBadge = document.getElementById("opacityBadge");
+
+        if (opacitySlider) opacitySlider.value = String(opacity);
+        if (opacityValue) opacityValue.textContent = String(opacity);
+        if (opacityBadge) opacityBadge.textContent = String(opacity);
+    }
+    // handles first
+
+    for (const box of allTop) {
+        const raw = (typeof getResizeHandleRotated === 'function')
+            ? getResizeHandleRotated(box, mx, my)
+            : getResizeHandle(box, mx, my);
+        if (!raw) continue;
+
+        const handle = normalizeHandle(raw);      // ← normalize HERE
+        resizeDirectionRaw = raw;                 // keep raw for text helpers if needed
+        resizeDirectionNorm = handle;             // use norm everywhere else
+        activeBox = box;
+
+        // single-select
+        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = (o === box));
+        if (Array.isArray(images)) images.forEach(o => o.selected = (o === box));
+        drawText();
+
+        if (CORNER_HANDLES.has(handle)) {         // ← use normalized in the test
+            // store for compatibility if your code uses it elsewhere
+            resizeDirection = handle;
+
+            if (box.type === "image") {
+                isCornerImageScale = true;
+                isResizingNew = false; isDraggingNew = false;
+                activeBox._orig = { x: box.x, y: box.y, width: box.width, height: box.height };
+                activeBox._origMouse = { x: startMXCanvas, y: startMYCanvas };
+                setGlobalCursor("nwse-resize");
+                document.addEventListener("mouseup", () => { isCornerImageScale = false; setGlobalCursor(""); }, { once: true });
+                return;
+            } else {
+                isCornerFontScale = true;
+                isResizingNew = false; isDraggingNew = false;
+                activeBox._orig = { x: box.x, y: box.y, width: box.width, height: box.height, text: box.text };
+                activeBox._origMouse = { x: startMXCanvas, y: startMYCanvas };
+                setGlobalCursor("nwse-resize");
+                document.addEventListener("mouseup", () => { isCornerFontScale = false; setGlobalCursor(""); }, { once: true });
+                return;
+            }
+        }
+
+        // sides (not corners)
+        resizeDirection = handle;
+        isCornerFontScale = false; isCornerImageScale = false;
+        isResizingNew = true; isDraggingNew = false;
+
+        activeBox._orig = (box.type === "image")
+            ? { x: box.x, y: box.y, width: box.width, height: box.height }
+            : { x: box.x, y: box.y, width: box.width, height: box.height, text: box.text, fontSize: box.fontSize };
+
+        activeBox._origMouse = { x: startMXCanvas, y: startMYCanvas };
+        setGlobalCursor((handle === "l" || handle === "r") ? "ew-resize" : "ns-resize");
+
+        // 🔹 NEW HOOK: start side-resize state for TEXT on left/right handle
+        if (box.type !== "image" && (handle === 'l' || handle === 'r')) {
+            // If you added the helper from earlier:
+            if (typeof startTextSideResize === 'function') {
+                startTextSideResize(activeBox);
+            }
+            // (no behavior change for images or top/bottom handles)
+        }
+
+        return;
+    }
+
+    // no handle → body hit (topmost)
+    const clickedBox = allTop.find(box =>
+        mx >= box.x && mx <= box.x + box.width &&
+        my >= box.y && my <= box.y + box.height
+    );
+    activeBox = clickedBox;
+
+    if (activeBox) {
+        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = (o === activeBox));
+        if (Array.isArray(images)) images.forEach(o => o.selected = (o === activeBox));
+        isDraggingNew = true;
+        dragOffsetXNew = mx - activeBox.x;
+        dragOffsetYNew = my - activeBox.y;
+        drawText();
+    } else {
+        activeBox = null;
+        isDraggingNew = false;
+        isResizingNew = false;
+        resizeDirection = null;
+        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = false);
+        if (Array.isArray(images)) images.forEach(o => o.selected = false);
+        selectedForContextMenu = null;
+        selectedType = null;
+        activeText = activeImage = null;
+        rotationSlider.value = 0;
+        rotationBadge.textContent = "0";
+        drawText();
+    }
+});
+
+//canvas.addEventListener("mousedown", e => {
+//    canvas.focus({ preventScroll: true });
+//    const { x: mx, y: my } = getCanvasMousePosition(e);
+//    startX = e.clientX;
+//    startY = e.clientY;
+//    prevMouseX = mx;
+//    prevMouseY = my;
+//    startMXCanvas = mx;
+//    startMYCanvas = my;
+
+//    if (isEditing && activeBox) {
+//        cleanEditorHTMLPreserveCaret?.();
+//        activeBox.text = textEditorNew.innerHTML;
+//        activeBox.align = textEditorNew.style.textAlign || "left";
+//        isEditing = false;
+//        if (textEditorNew) textEditorNew.style.display = "none";
+//    }
+
+//    // 🔁 NEW: search topmost among images + text
+//    const allTop = [...(images || []), ...(textObjects || [])].sort((a, b) => (b.zIndex || 0) - (a.zIndex || 0));
+//    let hit = null;
+//    selectedForContextMenu = null;
+//    for (let i = allTop.length - 1; i >= 0; i--) {
+//        const b = allTop[i];
+//        if (pointInBox(b, mx, my)) { hit = b; break; }
+//    }
+//    // ✅ Only clear selection when NOT holding Shift
+//    if (!e.shiftKey) {
+//        (images || []).forEach(b => b.selected = false);
+//        (textObjects || []).forEach(b => b.selected = false);
+//        activeText = null;
+//        activeImage = null;
+//    }
+
+//    // ✅ Shift-click toggles selection and exits early
+//    if (e.shiftKey && hit) {
+//        hit.selected = !hit.selected;
+//        drawText();
+//        return; // important: don't let later logic reselect/clear
+//    }
+//    // clear previous selection
+//    (images || []).forEach(b => b.selected = false);
+//    (textObjects || []).forEach(b => b.selected = false);
+//    activeText = null;
+//    activeImage = null;
+
+//    if (hit) {
+//        hit.selected = true;
+//        selectedForContextMenu = hit;
+//        // decide which "active" to set
+//        if (hit.type === "image" || hit.img) {
+//            activeImage = hit;
+//            enableFillColorDiv();
+//            enableStrockColorDiv();
+//            const angle = hit.rotation || 0;
+//            rotationSlider.value = angle;
+//            document.getElementById("rotationValue").textContent = angle + "°";
+//            rotationBadge.textContent = angle;
+
+//        } else {
+//            activeText = hit;
+//            const angle = hit.rotation || 0;
+//            rotationSlider.value = angle;
+//            document.getElementById("rotationValue").textContent = angle + "°";
+//            rotationBadge.textContent = angle;
+//        }
+
+//        // --- update opacity controls from the hit ---
+//        // safer than `txtHit.opacity * 100 || 100` (that would turn 0% into 100%)
+//        const alpha = normAlpha(hit.opacity);
+//        let opacity = Math.round(alpha * 100);
+//        if (opacity > 100) opacity = 100;
+
+//        const opacitySlider = document.getElementById("opacitySlider");
+//        const opacityValue = document.getElementById("opacityValue");
+//        const opacityBadge = document.getElementById("opacityBadge");
+
+//        if (opacitySlider) opacitySlider.value = String(opacity);
+//        if (opacityValue) opacityValue.textContent = String(opacity);
+//        if (opacityBadge) opacityBadge.textContent = String(opacity);
+//    }
+//    // handles first
+   
+//    for (const box of allTop) {
+//        const raw = (typeof getResizeHandleRotated === 'function')
+//            ? getResizeHandleRotated(box, mx, my)
+//            : getResizeHandle(box, mx, my);
+//        if (!raw) continue;
+
+//        const handle = normalizeHandle(raw);      // ← normalize HERE
+//        resizeDirectionRaw = raw;                // keep raw for text helpers if needed
+//        resizeDirectionNorm = handle;             // use norm everywhere else
+//        activeBox = box;
+
+//        // single-select
+//        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = (o === box));
+//        if (Array.isArray(images)) images.forEach(o => o.selected = (o === box));
+//        drawText();
+
+//        if (CORNER_HANDLES.has(handle)) {         // ← use normalized in the test
+//            // store for compatibility if your code uses it elsewhere
+//            resizeDirection = handle;
+
+//            if (box.type === "image") {
+//                isCornerImageScale = true;
+//                isResizingNew = false; isDraggingNew = false;
+//                activeBox._orig = { x: box.x, y: box.y, width: box.width, height: box.height };
+//                activeBox._origMouse = { x: startMXCanvas, y: startMYCanvas };
+//                setGlobalCursor("nwse-resize");
+//                document.addEventListener("mouseup", () => { isCornerImageScale = false; setGlobalCursor(""); }, { once: true });
+//                return;
+//            } else {
+//                isCornerFontScale = true;
+//                isResizingNew = false; isDraggingNew = false;
+//                activeBox._orig = { x: box.x, y: box.y, width: box.width, height: box.height, text: box.text };
+//                activeBox._origMouse = { x: startMXCanvas, y: startMYCanvas };
+//                setGlobalCursor("nwse-resize");
+//                document.addEventListener("mouseup", () => { isCornerFontScale = false; setGlobalCursor(""); }, { once: true });
+//                return;
+//            }
+//        }
+
+//        // sides (not corners)
+//        resizeDirection = handle;                 // keep if referenced elsewhere
+//        isCornerFontScale = false; isCornerImageScale = false;
+//        isResizingNew = true; isDraggingNew = false;
+
+//        activeBox._orig = (box.type === "image")
+//            ? { x: box.x, y: box.y, width: box.width, height: box.height }
+//            : { x: box.x, y: box.y, width: box.width, height: box.height, text: box.text, fontSize: box.fontSize };
+
+//        activeBox._origMouse = { x: startMXCanvas, y: startMYCanvas };
+//        setGlobalCursor((handle === "l" || handle === "r") ? "ew-resize" : "ns-resize");
+//        return;
+//    }
 
 
-canvas.addEventListener("mouseup", () => {
+
+
+//    // no handle → body hit (topmost)
+//    const clickedBox = allTop.find(box =>
+//        mx >= box.x && mx <= box.x + box.width &&
+//        my >= box.y && my <= box.y + box.height
+//    );
+//    activeBox = clickedBox;
+
+//    if (activeBox) {
+//        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = (o === activeBox));
+//        if (Array.isArray(images)) images.forEach(o => o.selected = (o === activeBox));
+//        isDraggingNew = true;
+//        dragOffsetXNew = mx - activeBox.x;
+//        dragOffsetYNew = my - activeBox.y;
+//        drawText();
+//    } else {
+//        activeBox = null;
+//        isDraggingNew = false;
+//        isResizingNew = false;
+//        resizeDirection = null;
+//        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = false);
+//        if (Array.isArray(images)) images.forEach(o => o.selected = false);
+//            selectedForContextMenu = null;
+//            selectedType = null;
+//            activeText = activeImage = null;
+//            rotationSlider.value = 0;
+//            rotationBadge.textContent = "0";
+//        drawText();
+//    }
+//});
+
+
+canvas.addEventListener("mousemove", e => {
+    const { x: mx, y: my } = getCanvasMousePosition(e);
+    const dx = mx - prevMouseX;
+    const dy = my - prevMouseY;
+    // ✅ TEXT left/right side-resize in rotated space
+    if (isResizingNew && activeBox && activeBox.type !== 'image' &&
+        (resizeDirection === 'l' || resizeDirection === 'r')) {
+        resizeTextSideToMouse(activeBox, resizeDirection, mx, my);
+        drawText();
+        return;
+    }
+    // cursor logic unchanged (optional to extend for images)
+
+    if (isDraggingNew && activeBox) {
+        activeBox.x = mx - dragOffsetXNew;
+        activeBox.y = my - dragOffsetYNew;
+        prevMouseX = mx; prevMouseY = my;
+        drawText();
+        return;
+    }
+    if (isCornerFontScale && activeBox && resizeDirectionNorm && CORNER_HANDLES.has(resizeDirectionNorm)) {
+        const dir = resizeDirectionNorm;          // ← normalized "tl/tr/bl/br"
+        const ow = activeBox._orig.width, oh = activeBox._orig.height;
+        const dxAbs = mx - startMXCanvas, dyAbs = my - startMYCanvas;
+
+        let scaleX = 1, scaleY = 1;
+        switch (dir) {
+            case 'tl': scaleX = (ow - dxAbs) / ow; scaleY = (oh - dyAbs) / oh; break;
+            case 'tr': scaleX = (ow + dxAbs) / ow; scaleY = (oh - dyAbs) / oh; break;
+            case 'bl': scaleX = (ow - dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
+            case 'br': scaleX = (ow + dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
+        }
+        scaleX = Math.max(0.1, scaleX); scaleY = Math.max(0.1, scaleY);
+        const s = Math.min(scaleX, scaleY), newW = ow * s, newH = oh * s;
+
+        switch (dir) {
+            case 'tl': activeBox.x = activeBox._orig.x + (ow - newW); activeBox.y = activeBox._orig.y + (oh - newH); break;
+            case 'tr': activeBox.x = activeBox._orig.x; activeBox.y = activeBox._orig.y + (oh - newH); break;
+            case 'bl': activeBox.x = activeBox._orig.x + (ow - newW); activeBox.y = activeBox._orig.y; break;
+            case 'br': activeBox.x = activeBox._orig.x; activeBox.y = activeBox._orig.y; break;
+        }
+        activeBox.width = newW; activeBox.height = newH;
+        activeBox.text = scaleTextHTML(activeBox._orig.text, s);
+        drawText(); return;
+    }
+
+    // IMAGE corner
+    if (isCornerImageScale && activeBox && activeBox.type === "image" &&
+        resizeDirectionNorm && CORNER_HANDLES.has(resizeDirectionNorm)) {
+        const dir = resizeDirectionNorm;
+        const ow = activeBox._orig.width, oh = activeBox._orig.height;
+        const dxAbs = mx - startMXCanvas, dyAbs = my - startMYCanvas;
+
+        let scaleX = 1, scaleY = 1;
+        switch (dir) {
+            case 'tl': scaleX = (ow - dxAbs) / ow; scaleY = (oh - dyAbs) / oh; break;
+            case 'tr': scaleX = (ow + dxAbs) / ow; scaleY = (oh - dyAbs) / oh; break;
+            case 'bl': scaleX = (ow - dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
+            case 'br': scaleX = (ow + dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
+        }
+        scaleX = Math.max(0.1, scaleX); scaleY = Math.max(0.1, scaleY);
+        const s = Math.min(scaleX, scaleY), newW = ow * s, newH = oh * s;
+
+        switch (dir) {
+            case 'tl': activeBox.x = activeBox._orig.x + (ow - newW); activeBox.y = activeBox._orig.y + (oh - newH); break;
+            case 'tr': activeBox.x = activeBox._orig.x; activeBox.y = activeBox._orig.y + (oh - newH); break;
+            case 'bl': activeBox.x = activeBox._orig.x + (ow - newW); activeBox.y = activeBox._orig.y; break;
+            case 'br': activeBox.x = activeBox._orig.x; activeBox.y = activeBox._orig.y; break;
+        }
+        activeBox.width = newW; activeBox.height = newH;
+        drawText(); return;
+    }
+
+    // Sides (text or image) – keep your existing text path, add image resize similarly
+    if (isResizingNew && activeBox && resizeDirection) {
+        if (activeBox.type === "image") {
+            // IMAGES: normalized ("l","r","t","b")
+            scaleImageBoxWithHandle(activeBox, resizeDirectionNorm || resizeDirection, mx, my);
+        } else {
+            // TEXT: raw ("mr","ml","mt","mb" or already-short)
+            scaleTextBoxWithHandle(activeBox, resizeDirectionRaw || resizeDirection, mx, my);
+        }
+        prevMouseX = mx; prevMouseY = my;
+        drawText();
+        return;
+    }
+});
+
+window.addEventListener("mouseup", () => {
     isDraggingNew = false;
     isResizingNew = false;
+    isCornerFontScale = false;
+    isCornerImageScale = false;    // ⬅ NEW
     resizeDirection = null;
-    if (activeBox) delete activeBox._orig;
+    setGlobalCursor("default");
 });
+
+function scaleImageBoxWithHandle(box, handle, mx, my) {
+    handle = normalizeHandle(handle); // ensure canonical for images
+    const minW = 10, minH = 10;
+    const o = box._orig || { x: box.x, y: box.y, width: box.width, height: box.height };
+    const dx = mx - startMXCanvas, dy = my - startMYCanvas;
+
+    let x = o.x, y = o.y, w = o.width, h = o.height;
+    if (handle === 'r') { w = Math.max(minW, o.width + dx); }
+    if (handle === 'l') { w = Math.max(minW, o.width - dx); x = o.x + (o.width - w); }
+    if (handle === 'b') { h = Math.max(minH, o.height + dy); }
+    if (handle === 't') { h = Math.max(minH, o.height - dy); y = o.y + (o.height - h); }
+
+    box.x = x; box.y = y; box.width = w; box.height = h;
+}
+
+
+
+
+
+
+
+const MIN_W = 10, MIN_H = 10;
+
+canvas.addEventListener('mousemove', (e) => {
+    const { x: mx, y: my } = getCanvasMousePosition(e);
+
+    // if dragging/resizing we keep the cursor set elsewhere
+    if (isDragging || isResizing) return;
+
+    let cur = 'default';
+    const all = [...images, ...textObjects].sort((a, b) => (b.zIndex || 0) - (a.zIndex || 0));
+
+    // 1) handles first (topmost first)
+    for (const o of all) {
+        const h = whichHandle(o, mx, my);
+        if (h) { cur = cursorForHandle(h); break; }
+        if (pointInBox(o, mx, my)) { cur = 'move'; break; }
+    }
+    canvas.style.cursor = cur;
+});
+
+
+
+
+//canvas.addEventListener("mouseup", () => {
+//    isDraggingNew = false;
+//    isResizingNew = false;
+//    resizeDirection = null;
+//    if (activeBox) delete activeBox._orig;
+//});
 
 
 
@@ -10476,4 +11543,107 @@ function enableEditorKeyboard() {
             insertTabIntoEditor(ed);
         }
     }, true);
+}
+function getBoxRect(box) {
+    const w = (typeof box.width === 'number') ? box.width : (box.boundingWidth || 0);
+    const h = (typeof box.height === 'number') ? box.height : (box.boundingHeight || 0);
+    return { x: box.x, y: box.y, w, h, cx: box.x + w / 2, cy: box.y + h / 2 };
+}
+
+function syncTextDims(box) {
+    if (box?.type === 'text') {
+        if (typeof box.width === 'number') box.boundingWidth = box.width;
+        if (typeof box.height === 'number') box.boundingHeight = box.height;
+    }
+}
+
+function drawRotatedSelection(ctx, box) {
+    const { w, h, cx, cy } = getBoxRect(box);
+    const ang = deg2rad(box.rotation || 0);
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(ang);
+
+    ctx.strokeStyle = "red";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(-w / 2, -h / 2, w, h);
+
+    ctx.fillStyle = "blue";
+    const s = HANDLE_SIZE, hs = s / 2, w2 = w / 2, h2 = h / 2;
+    const handles = [
+        [-w2, -h2], [0, -h2], [w2, -h2],      // top: left, mid, right
+        [w2, 0],                           // right mid
+        [w2, h2], [0, h2], [-w2, h2],     // bottom: right, mid, left
+        [-w2, 0]                            // left mid
+    ];
+    for (const [hx, hy] of handles) ctx.fillRect(hx - hs, hy - hs, s, s);
+
+    ctx.restore();
+}
+function getResizeHandleRotated(box, mx, my) {
+    const { w, h, cx, cy } = getBoxRect(box);
+    const ang = deg2rad(box.rotation || 0);
+
+    // world → local (inverse rotate about center)
+    const dx = mx - cx, dy = my - cy;
+    const cos = Math.cos(-ang), sin = Math.sin(-ang);
+    const lx = cos * dx - sin * dy;
+    const ly = sin * dx + cos * dy;
+
+    // handle positions in local space
+    const w2 = w / 2, h2 = h / 2;
+    const hs = HANDLE_SIZE + 2; // tolerance
+    const handles = {
+        tl: { x: -w2, y: -h2 }, t: { x: 0, y: -h2 }, tr: { x: w2, y: -h2 },
+        r: { x: w2, y: 0 }, br: { x: w2, y: h2 }, b: { x: 0, y: h2 },
+        bl: { x: -w2, y: h2 }, l: { x: -w2, y: 0 }
+    };
+
+    for (const [name, p] of Object.entries(handles)) {
+        if (Math.abs(lx - p.x) <= hs && Math.abs(ly - p.y) <= hs) return name;
+    }
+    return null;
+}
+// called when text side-resize starts
+function startTextSideResize(box) {
+    const { w, h, cx, cy } = getBoxRect(box);
+    box._rs = { w, h, cx, cy, ang: deg2rad(box.rotation || 0) };
+}
+
+// called on mousemove to update width + top-left while keeping the opposite edge anchored
+function resizeTextSideToMouse(box, handle, mx, my) {
+    const rs = box._rs; if (!rs) return;
+
+    // mouse to LOCAL (relative to original center at mousedown)
+    const dx = mx - rs.cx, dy = my - rs.cy;
+    const cosa = Math.cos(-rs.ang), sina = Math.sin(-rs.ang);
+    const lx = cosa * dx - sina * dy;  // local X
+    // const ly =  sina * dx + cosa * dy;  // (unused)
+
+    const minW = 10;
+    let newW, dCenterLocal; // shift of center along local X to keep opposite edge anchored
+
+    if (handle === 'r') {
+        // right handle moves to mouse x; left edge stays where it was (-rs.w/2)
+        newW = Math.max(minW, lx - (-rs.w / 2));
+        dCenterLocal = (newW - rs.w) / 2;            // center moves +X half the delta
+    } else if (handle === 'l') {
+        // left handle moves; right edge stays at +rs.w/2
+        newW = Math.max(minW, (rs.w / 2) - lx);
+        dCenterLocal = -(newW - rs.w) / 2;           // center moves -X half the delta
+    } else {
+        return; // only l/r here
+    }
+
+    // LOCAL center shift → WORLD
+    const cosw = Math.cos(rs.ang), sinw = Math.sin(rs.ang);
+    const newCx = rs.cx + cosw * dCenterLocal;     // (local y shift is 0)
+    const newCy = rs.cy + sinw * dCenterLocal;
+
+    // update box geometry
+    box.width = newW;
+    box.x = newCx - newW / 2;
+    box.y = rs.cy - rs.h / 2;                      // height unchanged for l/r
+    syncTextDims(box);
 }
