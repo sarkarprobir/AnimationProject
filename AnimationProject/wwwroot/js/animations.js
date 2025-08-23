@@ -26,7 +26,13 @@ let canvasClipboard = {
     textItems: [],
     imageItems: []
 };
-
+let isDraggingMulti = false;
+let multiDragStart = { x: 0, y: 0 };
+let multiDragLast = { x: 0, y: 0 };
+let multiDragTargets = [];
+let multiDragOffsets = [];
+const MULTI_DRAG_THRESHOLD = 2;
+let multiDragDidMove = false;
 let currentZIndex = 0;
 function getNextZIndex() {
     return ++currentZIndex;
@@ -149,15 +155,16 @@ function wrapText(ctx, text, maxWidth) {
     return lines;
 }
 // helper: hit­test a point against all your shapes
-function hitTest(x, y) {
-    // assuming each object has x,y,width,height
-    const all = [...images, ...textObjects];
-    return all.find(obj =>
-        x >= obj.x &&
-        x <= obj.x + obj.width &&
-        y >= obj.y &&
-        y <= obj.y + obj.height
-    );
+function hitTest(mx, my, items = getAllItems()) {
+    // Prefer topmost hit. If you track z-order, iterate from topmost → bottom.
+    for (let i = items.length - 1; i >= 0; i--) {
+        const o = items[i];
+        if (
+            mx >= o.x && mx <= o.x + o.width &&
+            my >= o.y && my <= o.y + o.height
+        ) return o;
+    }
+    return null;
 }
 function getMousePos(canvas, evt) {
     const rect = canvas.getBoundingClientRect();
@@ -433,7 +440,7 @@ window.addEventListener("keydown", function (e) {
     ) {
         return; // allow native delete/backspace
     }
-
+    if (e.key === "Escape" && isDraggingMulti) endMultiDrag(false);
     const isDelete =
         e.key === "Delete" ||      // Windows “Delete”
         e.key === "Backspace";     // Mac “Backspace”
@@ -9488,14 +9495,44 @@ canvas.addEventListener("mousedown", e => {
         const b = allTop[i];
         if (pointInBox(b, mx, my)) { hit = b; break; }
     }
-    // ✅ Only clear selection when NOT holding Shift
-    if (!e.shiftKey) {
+    //// ✅ Only clear selection when NOT holding Shift
+    //if (!e.shiftKey) {
+    //    (images || []).forEach(b => b.selected = false);
+    //    (textObjects || []).forEach(b => b.selected = false);
+    //    activeText = null;
+    //    activeImage = null;
+    //}
+    // ✅ Only clear when clicking a non-selected item or empty space
+    if (!e.shiftKey && (!hit || !hit.selected)) {
         (images || []).forEach(b => b.selected = false);
         (textObjects || []).forEach(b => b.selected = false);
         activeText = null;
         activeImage = null;
     }
+    if (hit && !hit.selected && !e.shiftKey) {
+        // clear others and select this one
+        getAllItems().forEach(o => (o.selected = false));
+        hit.selected = true;
+        redraw();
+    }
 
+    // Only start drag if cursor is on any selected item
+    const onSelected = !!(hit && hit.selected);
+    if (onSelected) {
+        const sel = (images || []).concat(textObjects || []).filter(o => o && o.selected);
+        if (sel.length >= 2) {
+            e.preventDefault();
+            if (beginMultiDrag(e, mx, my)) {
+                // prevent single-drag path & any selection resets below
+                isDraggingNew = false;
+                isResizingNew = false;
+                return;
+            }
+        }
+    } else {
+        // else, you might be starting a marquee selection or doing nothing
+        isDraggingMulti = false;
+    }
     // ✅ Shift-click toggles selection and exits early
     if (e.shiftKey && hit) {
         hit.selected = !hit.selected;
@@ -9806,11 +9843,12 @@ canvas.addEventListener("mousedown", e => {
 //    }
 //});
 
-
+function redraw() { if (typeof drawText === 'function') drawText(); }
 canvas.addEventListener("mousemove", e => {
     const { x: mx, y: my } = getCanvasMousePosition(e);
     const dx = mx - prevMouseX;
     const dy = my - prevMouseY;
+
     // ✅ TEXT left/right side-resize in rotated space
     if (isResizingNew && activeBox && activeBox.type !== 'image' &&
         (resizeDirection === 'l' || resizeDirection === 'r')) {
@@ -9818,6 +9856,16 @@ canvas.addEventListener("mousemove", e => {
         drawText();
         return;
     }
+
+    // 🔁 FIX: run multi-drag only when active; don't early-return otherwise
+    if (isDraggingMulti) {
+        updateMultiDrag(mx, my);
+        // (optional) keep these in sync if other code relies on them
+        prevMouseX = mx;
+        prevMouseY = my;
+        return;
+    }
+
     // cursor logic unchanged (optional to extend for images)
 
     if (isDraggingNew && activeBox) {
@@ -9827,6 +9875,7 @@ canvas.addEventListener("mousemove", e => {
         drawText();
         return;
     }
+
     if (isCornerFontScale && activeBox && resizeDirectionNorm && CORNER_HANDLES.has(resizeDirectionNorm)) {
         const dir = resizeDirectionNorm;          // ← normalized "tl/tr/bl/br"
         const ow = activeBox._orig.width, oh = activeBox._orig.height;
@@ -9850,7 +9899,8 @@ canvas.addEventListener("mousemove", e => {
         }
         activeBox.width = newW; activeBox.height = newH;
         activeBox.text = scaleTextHTML(activeBox._orig.text, s);
-        drawText(); return;
+        drawText();
+        return;
     }
 
     // IMAGE corner
@@ -9877,10 +9927,11 @@ canvas.addEventListener("mousemove", e => {
             case 'br': activeBox.x = activeBox._orig.x; activeBox.y = activeBox._orig.y; break;
         }
         activeBox.width = newW; activeBox.height = newH;
-        drawText(); return;
+        drawText();
+        return;
     }
 
-    // Sides (text or image) – keep your existing text path, add image resize similarly
+    // Sides (text or image)
     if (isResizingNew && activeBox && resizeDirection) {
         if (activeBox.type === "image") {
             // IMAGES: normalized ("l","r","t","b")
@@ -9902,6 +9953,8 @@ window.addEventListener("mouseup", () => {
     isCornerImageScale = false;    // ⬅ NEW
     resizeDirection = null;
     setGlobalCursor("default");
+    if (!isDraggingMulti) return;
+    endMultiDrag(true);
 });
 
 function scaleImageBoxWithHandle(box, handle, mx, my) {
@@ -10045,7 +10098,9 @@ function getSelectionText() {
     const sel = window.getSelection();
     return sel.rangeCount ? sel.toString() : "";
 }
-
+function getSelection() {
+    return getAllItems().filter(o => o.selected);
+}
 // ——————— Text Editor Helpers (unchanged) ———————
 function execCommandSafely(cmd, val) { textEditorNew.focus(); document.execCommand(cmd, false, val); }
 
@@ -11929,3 +11984,41 @@ function wrapSelectionInSpan(styleCb) {
     window._lastEditorRange = after.cloneRange();
     return true;
 }
+function beginMultiDrag(e, mx, my) {
+    multiDragTargets = getSelection();
+    if (multiDragTargets.length < 2) return false;   // only when 2+ are selected
+    isDraggingMulti = true;
+    multiDragDidMove = false;
+    multiDragStart = { x: mx, y: my };
+    multiDragLast = { x: mx, y: my };
+    multiDragOffsets = multiDragTargets.map(o => ({ o, startX: o.x, startY: o.y }));
+    return true;
+}
+
+
+function updateMultiDrag(mx, my) {
+    if (!isDraggingMulti) return;
+    const dx = mx - multiDragLast.x;
+    const dy = my - multiDragLast.y;
+
+    if (!multiDragDidMove) {
+        const tdx = mx - multiDragStart.x, tdy = my - multiDragStart.y;
+        if (Math.abs(tdx) >= MULTI_DRAG_THRESHOLD || Math.abs(tdy) >= MULTI_DRAG_THRESHOLD) multiDragDidMove = true;
+    }
+    if (dx === 0 && dy === 0) return;
+
+    multiDragTargets.forEach(o => { o.x += dx; o.y += dy; });
+    multiDragLast = { x: mx, y: my };
+    redraw();
+}
+function endMultiDrag(commit = true) {
+    if (!isDraggingMulti) return;
+    if (!multiDragDidMove || !commit) {
+        multiDragOffsets.forEach(({ o, startX, startY }) => { o.x = startX; o.y = startY; });
+        redraw();
+    }
+    isDraggingMulti = false;
+    multiDragTargets = [];
+    multiDragOffsets = [];
+}
+
