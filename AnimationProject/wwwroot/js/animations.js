@@ -1324,6 +1324,62 @@ function OnChangefontFamily(value) {
     $("#fontFamily").val(value);
     const fontFamily = document.getElementById("fontFamily").value || "Arial";
 
+    const Obj = Array.isArray(textObjects) ? textObjects.find(o => o.selected) : null;
+    if (Obj) Obj.fontFamily = fontFamily;
+
+    if (!activeBox) { drawText?.(); return; }
+
+    const ed = textEditorNew;
+    const hasRange = !!_lastEditorRange && ed && ed.isConnected &&
+        ed.contains(_lastEditorRange.commonAncestorContainer);
+
+    if (isEditing && hasRange) {
+        ed.focus();
+
+        // restore selection
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(_lastEditorRange);
+
+        // 1) try safe span wrap (only if selection is within one block)
+        let ok = wrapSelectionInSpan(span => { span.style.fontFamily = fontFamily; });
+
+        // 2) if selection crosses blocks or wrap failed, use execCommand
+        if (!ok) ok = applyInlineStyleSafe('fontFamily', fontFamily);
+
+        // Optional normalize (must NOT collapse blocks)
+        if (ok && typeof normalizeEditorInPlace === "function") {
+            normalizeEditorInPlace(ed);
+        }
+
+        activeBox.text = ed.innerHTML;
+        if (Obj) Obj.text = activeBox.text;
+
+        resizeEditorToContent(ed, activeBox);
+        if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
+        drawText();
+        return;
+    }
+
+    // Not editing → apply to whole box (simple wrap)
+    const wrap = document.createElement("div");
+    wrap.innerHTML = activeBox.text || "";
+    const span = document.createElement("span");
+    span.style.fontFamily = fontFamily;
+    span.innerHTML = wrap.innerHTML;
+    activeBox.text = span.outerHTML;
+    if (Obj) Obj.text = activeBox.text;
+
+    resizeEditorToContent(ed, activeBox);
+    if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
+    drawText();
+}
+
+
+function OnChangefontFamilyOLD(value) {
+    $("#fontFamily").val(value);
+    const fontFamily = document.getElementById("fontFamily").value || "Arial";
+
     // meta
     const Obj = Array.isArray(textObjects) ? textObjects.find(o => o.selected) : null;
     if (Obj) Obj.fontFamily = fontFamily;
@@ -6231,73 +6287,62 @@ if (colorInput) {
     });
 }
 function ChangeColor() {
-    const colorPicker = document.getElementById("favcolor");
-    const color = (colorPicker && colorPicker.value) ? colorPicker.value : "#000000";
+  const colorPicker = document.getElementById("favcolor");
+  const color = (colorPicker && colorPicker.value) ? colorPicker.value : "#000000";
 
-    $("#hdnTextColor").val(color);
-    const textColor = document.getElementById("hdnTextColor").value;
+  $("#hdnTextColor").val(color);
+  const textColor = document.getElementById("hdnTextColor").value;
 
-    const Obj = Array.isArray(textObjects) ? textObjects.find(o => o.selected) : null;
-    if (Obj) Obj.textColor = textColor || "black";
+  const Obj = Array.isArray(textObjects) ? textObjects.find(o => o.selected) : null;
+  if (Obj) Obj.textColor = textColor || "black";
 
-    if (!activeBox) return;
+  if (!activeBox) return;
 
-    const ed = textEditorNew;
-    const hasRange = !!_lastEditorRange && ed && ed.isConnected && ed.contains(_lastEditorRange.commonAncestorContainer);
+  const ed = textEditorNew;
+  const hasRange = !!_lastEditorRange && ed && ed.isConnected &&
+                   ed.contains(_lastEditorRange.commonAncestorContainer);
 
-    if (isEditing && hasRange) {
-        ed.focus();
+  if (isEditing && hasRange) {
+    ed.focus();
 
-        // restore saved selection
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(_lastEditorRange);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(_lastEditorRange);
 
-        // try your helper first
-        let ok = false;
-        if (typeof applySelectionStyleReplace === "function") {
-            ok = !!applySelectionStyleReplace("color", color);
-        }
+    // 1) safe span wrap if within one block
+    let ok = wrapSelectionInSpan(span => { span.style.color = color; });
 
-        // fallback: manual wrap if helper didn't apply
-        if (!ok) {
-            const r = sel.getRangeAt(0);
-            if (!r.collapsed) {
-                const span = document.createElement("span");
-                span.style.color = color;
-                const frag = r.extractContents();
-                span.appendChild(frag);
-                r.insertNode(span);
+    // 2) else execCommand
+    if (!ok) ok = applyInlineStyleSafe('color', color);
 
-                // move caret after and refresh cached range
-                sel.removeAllRanges();
-                const after = document.createRange();
-                after.setStartAfter(span); after.collapse(true);
-                sel.addRange(after);
-                _lastEditorRange = after.cloneRange();
-                ok = true;
-            }
-        }
-
-        // normalize (if available), persist, redraw
-        if (ok && typeof normalizeEditorInPlace === "function") {
-            normalizeEditorInPlace(ed);
-        }
-
-        activeBox.text = ed.innerHTML;
-        if (Obj) Obj.text = activeBox.text;
-
-        drawText();
-        return;
+    if (ok && typeof normalizeEditorInPlace === "function") {
+      normalizeEditorInPlace(ed);   // make sure this doesn't flatten <div>/<br>
     }
 
-    // Not editing or no valid selection → color the whole box
-    applyColorToWholeBox(color);
+    activeBox.text = ed.innerHTML;
     if (Obj) Obj.text = activeBox.text;
 
+    resizeEditorToContent(ed, activeBox);
+    if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
     drawText();
-    console.log("Color",textObjects);
+    return;
+  }
+
+  // Whole box
+  const holder = document.createElement("div");
+  holder.innerHTML = activeBox.text || "";
+  const spanAll = document.createElement("span");
+  spanAll.style.color = color;
+  spanAll.innerHTML = holder.innerHTML;
+  activeBox.text = spanAll.outerHTML;
+  if (Obj) Obj.text = activeBox.text;
+
+  resizeEditorToContent(ed, activeBox);
+  if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
+  drawText();
 }
+
+
 
 function ChangeColorOLD() {
     const colorPicker = document.getElementById("favcolor");
@@ -11311,7 +11356,7 @@ function ChangeFontSizeOld(val) {
     drawText();
     console.log("change", textObjects);
 }
-function ChangeFontSize(val) {
+function ChangeFontSizeOLD1(val) {
     const px = /px$/i.test(val) ? val : (parseInt(val, 10) || 16) + 'px';
     const Obj = Array.isArray(textObjects) ? textObjects.find(o => o.selected) : null;
     if (Obj) Obj.fontSize = parseInt(px, 10);
@@ -11372,6 +11417,101 @@ function ChangeFontSize(val) {
     // Not editing or no valid range → apply to whole box
     applyFontSizeToWholeBox(px);
     if (Obj) Obj.text = activeBox.text;
+    drawText();
+}
+// tiny helpers (put once near your editor code)
+function blockOf(node, editor) {
+    if (!node) return null;
+    let n = (node.nodeType === 3) ? node.parentNode : node;
+    while (n && n.parentNode && n.parentNode !== editor) n = n.parentNode;
+    return (n && n.parentNode === editor) ? n : null;
+}
+function selectionIsSingleBlock(ed, range) {
+    const b1 = blockOf(range.startContainer, ed);
+    const b2 = blockOf(range.endContainer, ed);
+    return b1 && b1 === b2;
+}
+function resizeEditorToContent(ed, box) {
+    if (!ed || !box) return;
+    ed.style.boxSizing = "border-box";
+    ed.style.whiteSpace = "normal";
+    ed.style.wordBreak = "break-word";
+    ed.style.overflowWrap = "break-word";
+    ed.style.width = Math.max(1, Math.round(box.width || 0)) + "px";
+    ed.style.minWidth = ed.style.width;
+    ed.style.maxWidth = ed.style.width;
+    requestAnimationFrame(() => {
+        ed.style.height = "auto";
+        const minH = Math.max(1, Math.round(box.height || 0));
+        ed.style.height = Math.max(minH, ed.scrollHeight) + "px";
+    });
+}
+
+function ChangeFontSize(val) {
+    const px = /px$/i.test(val) ? val : (parseInt(val, 10) || 16) + 'px';
+    const Obj = Array.isArray(textObjects) ? textObjects.find(o => o.selected) : null;
+    if (Obj) Obj.fontSize = parseInt(px, 10);
+    if (!activeBox) return;
+
+    const ed = textEditorNew;
+    const hasRange =
+        !!_lastEditorRange &&
+        ed && ed.isConnected &&
+        ed.contains(_lastEditorRange.commonAncestorContainer);
+
+    if (isEditing && hasRange) {
+        ed.focus();
+
+        // restore saved range
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(_lastEditorRange);
+
+        let ok = false;
+
+        // try your helper first
+        if (typeof applySelectionStyleReplace === 'function') {
+            ok = !!(applySelectionStyleReplace('fontSize', px) ||
+                applySelectionStyleReplace('font-size', px));
+        }
+
+        // manual surround ONLY if selection is within one editor block
+        if (!ok) {
+            const r = sel.getRangeAt(0);
+            if (!r.collapsed && selectionIsSingleBlock(ed, r)) {
+                const span = document.createElement('span');
+                span.style.fontSize = px;
+                const frag = r.extractContents();
+                span.appendChild(frag);
+                r.insertNode(span);
+
+                // move caret after and re-capture
+                sel.removeAllRanges();
+                const after = document.createRange();
+                after.setStartAfter(span); after.collapse(true);
+                sel.addRange(after);
+                _lastEditorRange = after.cloneRange();
+                ok = true;
+            }
+        }
+
+        if (ok) {
+            if (typeof normalizeEditorInPlace === 'function') normalizeEditorInPlace(ed);
+            activeBox.text = ed.innerHTML;
+            if (Obj) Obj.text = activeBox.text;
+
+            // keep editor height in sync with new wrapping
+            resizeEditorToContent(ed, activeBox);
+            drawText();
+        }
+        return;
+    }
+
+    // Not editing or no valid range → apply to whole box
+    applyFontSizeToWholeBox(px);
+    if (Obj) Obj.text = activeBox.text;
+    // also keep editor sized if it's visible
+    if (ed) resizeEditorToContent(ed, activeBox);
     drawText();
 }
 
@@ -11646,4 +11786,145 @@ function resizeTextSideToMouse(box, handle, mx, my) {
     box.x = newCx - newW / 2;
     box.y = rs.cy - rs.h / 2;                      // height unchanged for l/r
     syncTextDims(box);
+}
+let _edRO; // ResizeObserver for the editor
+
+function mountEditorOverBox(box) {
+    const ed = textEditorNew;
+    if (!ed || !box) return;
+
+    // position and width
+    ed.style.left = box.x + 'px';
+    ed.style.top = box.y + 'px';
+    ed.style.width = Math.max(10, box.width) + 'px';
+    ed.style.minHeight = Math.max(10, box.height) + 'px';
+    ed.style.height = 'auto';
+
+    // start observing size changes to keep box.height in sync
+    if (!_edRO) {
+        _edRO = new ResizeObserver(() => {
+            if (!isEditing || !activeBox) return;
+            const h = Math.ceil(ed.getBoundingClientRect().height);
+            activeBox.height = activeBox.boundingHeight = h;
+            drawText();
+        });
+        _edRO.observe(ed);
+    }
+
+    // grow once now
+    autoGrowEditor(true);
+    // keep growing while typing/pasting
+    ed.addEventListener('input', () => autoGrowEditor(true), { passive: true });
+    ed.addEventListener('keyup', () => autoGrowEditor(true), { passive: true });
+}
+
+function autoGrowEditor(commitToBox = true) {
+    const ed = textEditorNew;
+    if (!ed) return;
+    // measure natural height
+    ed.style.height = 'auto';
+    const h = Math.ceil(ed.scrollHeight);
+    // keep at least the box min-height
+    const minH = activeBox ? Math.max(10, activeBox.height || 0) : 10;
+    const finalH = Math.max(h, minH);
+    ed.style.height = finalH + 'px';
+
+    if (commitToBox && activeBox) {
+        activeBox.height = activeBox.boundingHeight = finalH;
+    }
+}
+function quoteFont(ff) { return /["',\s]/.test(ff) ? `"${ff}"` : ff; }
+
+async function afterTextStyleChanged(maybeFontFamily) {
+    // If a font changes, wait for it so wrapping is correct
+    try {
+        if (maybeFontFamily) {
+            const px = activeBox?.fontSize || 16;
+            await document.fonts.load(`${px}px ${quoteFont(maybeFontFamily)}`);
+        }
+        await document.fonts.ready;
+    } catch { }
+
+    autoGrowEditor(true);  // resize editor + sync box.height
+    if (activeBox && textEditorNew) activeBox.text = textEditorNew.innerHTML;
+    if (typeof invalidateTextRaster === 'function') invalidateTextRaster(activeBox);
+    drawText();
+}
+function beginEdit(box) {
+    isEditing = true;
+    activeBox = box;
+    textEditorNew.innerHTML = box.text || '';
+    mountEditorOverBox(box);
+    textEditorNew.focus();
+    autoGrowEditor(true); // initial sync
+}
+
+function closestBlock(node) {
+    while (node && node !== textEditorNew) {
+        if (node.nodeType === 1) {
+            const d = window.getComputedStyle(node).display;
+            if (d === 'block' || d === 'list-item' || d === 'table') return node;
+            if (node.tagName === 'DIV' || node.tagName === 'P' || node.tagName === 'LI') return node;
+        }
+        node = node.parentNode;
+    }
+    return textEditorNew;
+}
+
+function selectionCrossesBlocks(ed) {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return false;
+    const r = sel.getRangeAt(0);
+    if (r.collapsed) return false;
+    return closestBlock(r.startContainer) !== closestBlock(r.endContainer);
+}
+
+function resizeEditorToContentOld(ed, box) {
+    // keep width; only grow height to fit
+    ed.style.height = 'auto';
+    const h = Math.ceil(ed.scrollHeight);
+    ed.style.height = h + 'px';
+    // reflect back to box so canvas matches when you save/close
+    if (box) {
+        box.height = h;
+        box.boundingHeight = h;
+    }
+}
+
+function applyInlineStyleSafe(prop, value) {
+    // Prefer browser to apply inline styling without changing block structure.
+    try { document.execCommand('styleWithCSS', true); } catch (_e) { }
+    switch (prop) {
+        case 'color':
+            return document.execCommand('foreColor', false, value);
+        case 'fontFamily':
+            // Most browsers map to <font face=""> and then to CSS.
+            return document.execCommand('fontName', false, value);
+        default:
+            return false;
+    }
+}
+
+function wrapSelectionInSpan(styleCb) {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return false;
+    const r = sel.getRangeAt(0);
+    if (r.collapsed) return false;
+
+    // Surround only if range stays within a single block;
+    // otherwise return false so caller can fall back to execCommand.
+    if (selectionCrossesBlocks(textEditorNew)) return false;
+
+    const span = document.createElement('span');
+    styleCb(span);
+    span.appendChild(r.extractContents());
+    r.insertNode(span);
+
+    // move caret after span & save
+    sel.removeAllRanges();
+    const after = document.createRange();
+    after.setStartAfter(span); after.collapse(true);
+    sel.addRange(after);
+    window._lastEditorRange = after.cloneRange();
+    return true;
 }

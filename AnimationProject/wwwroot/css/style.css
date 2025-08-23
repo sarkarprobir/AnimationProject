@@ -1789,7 +1789,7 @@ body {
     right: 34px;
 }
 /*text editor css*/
-#textEditorNew {
+/*#textEditorNew {
     position: absolute;
     display: none;
     border: 1px solid #aaa;
@@ -1803,10 +1803,34 @@ body {
     font-size: 16px;
     line-height: 0px;
     overflow-y: hidden;
-    max-height: 1000px; /* allow scroll if text overflows manually resized box */
-    z-index: 9999;
-}
+    max-height: 1000px;*/ /* allow scroll if text overflows manually resized box */
+    /*z-index: 9999;
+    height: auto;
+}*/
 
 #toolbar {
     margin-bottom: 10px;
+}
+#textEditorNew {
+    position: absolute;
+    z-index: 9999;
+    display: none;
+    box-sizing: border-box;
+    /* Match canvas inset (you use +5px when drawing) */
+    padding: 5px;
+    border: 1px solid #aaa; /* or transparent if you don't want a visible border */
+    outline: none;
+    background: #fff;
+    box-shadow: 0 0 5px rgba(0,0,0,.2);
+    /* Wrapping/flow */
+    white-space: normal;
+    overflow: hidden; /* single overflow rule */
+    overflow-wrap: break-word; /* or: anywhere; */
+    /* Typographic defaults to mirror canvas */
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.2;
+    /* Let JS resize height; don't cap it here */
+    height: auto;
+    max-height: none;
 }
