@@ -457,7 +457,8 @@ window.addEventListener("keydown", function (e) {
     contextMenu.style.display = "none";
 
     // Redraw canvas
-    drawCanvas("Common");
+    // drawCanvas("Common");
+    drawText();
 });
 
 
