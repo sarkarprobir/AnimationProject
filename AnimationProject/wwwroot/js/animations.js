@@ -10098,7 +10098,7 @@ function getSelectionText() {
     const sel = window.getSelection();
     return sel.rangeCount ? sel.toString() : "";
 }
-function getSelection() {
+function getSelectionItem() {
     return getAllItems().filter(o => o.selected);
 }
 // ——————— Text Editor Helpers (unchanged) ———————
@@ -11985,7 +11985,7 @@ function wrapSelectionInSpan(styleCb) {
     return true;
 }
 function beginMultiDrag(e, mx, my) {
-    multiDragTargets = getSelection();
+    multiDragTargets = getSelectionItem();
     if (multiDragTargets.length < 2) return false;   // only when 2+ are selected
     isDraggingMulti = true;
     multiDragDidMove = false;
