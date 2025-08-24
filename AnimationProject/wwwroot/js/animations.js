@@ -3494,56 +3494,153 @@ copyOption.addEventListener('click', () => {
     // (Optional) give user feedback: e.g. flash “Copied” somewhere
 });
 
-pasteOption.addEventListener('click', () => {
-    pasteFromClipboard();
-});
+function cloneTextObject(src) {
+    // list all properties your renderer uses
+    const fields = [
+        "type", "x", "y", "width", "height", "scaleX", "scaleY", "rotate", "opacity",
+        "text", "html", "fontFamily", "fontSize", "fontWeight", "fontStyle", "textColor",
+        "align", "lineHeight", "letterSpacing", "wrap", "whiteSpace", "padding",
+        "strokeColor", "strokeWidth", "bgColor", "zIndex", "groupId", "noAnim"
+    ];
+    const o = {};
+    fields.forEach(k => { if (k in src) o[k] = structuredClone(src[k]); });
 
-// ─── 4) pasteFromClipboard implementation ───────────────────────────
+    // give pasted item a fresh id if you track ids
+    o.id = crypto.randomUUID ? crypto.randomUUID() : ("id_" + Math.random().toString(36).slice(2));
+    return o;
+}
+
+function cloneImageObject(src) {
+    const fields = [
+        "type", "x", "y", "width", "height", "scaleX", "scaleY", "rotate", "opacity",
+        "zIndex", "groupId", "noAnim", "crop", "flipX", "flipY", "src" // keep a plain src string if you have it
+    ];
+    const o = {};
+    fields.forEach(k => { if (k in src) o[k] = structuredClone(src[k]); });
+
+    // ensure we have a drawable bitmap
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = src.src || (src.img && src.img.src) || "";
+    o.img = img;
+
+    // optional: keep natural dims if width/height missing
+    img.onload = () => {
+        if (!o.width) o.width = img.naturalWidth;
+        if (!o.height) o.height = img.naturalHeight;
+        renderScene(); // redraw when the image finishes loading
+    };
+
+    // fresh id
+    o.id = crypto.randomUUID ? crypto.randomUUID() : ("img_" + Math.random().toString(36).slice(2));
+    return o;
+}
+pasteOption.addEventListener('click', pasteFromClipboard);
+
 function pasteFromClipboard() {
-    // If nothing in clipboard, do nothing
     if (
         canvasClipboard.textItems.length === 0 &&
         canvasClipboard.imageItems.length === 0
-    ) {
-        return;
-    }
+    ) return;
 
-    // 4.1) Clear existing selection
-    textObjects.forEach(obj => obj.selected = false);
-    images.forEach(img => img.selected = false);
+    // clear selection and editing state
+    isEditing = false;
+    activeBox = null;
+    textEditorNew && (textEditorNew.style.display = "none");
+    textObjects.forEach(o => o.selected = false);
+    images.forEach(o => o.selected = false);
 
-    // Compute the current highest zIndex
-    //const allItems = [...textObjects, ...images];
-    //const maxZ = allItems.reduce((max, item) => Math.max(max, item.zIndex || 0), 0);
+    // stack above others
+    const all = [...textObjects, ...images];
+    let zTop = all.reduce((m, it) => Math.max(m, it.zIndex || 0), 0);
 
-    //let currentZ = maxZ + 1;
+    // small offset so duplicates are visible
+    const dx = 12, dy = 12;
 
-
-    // 4.2) Paste text items at the same x/y as the original
+    // texts
     canvasClipboard.textItems.forEach(orig => {
         const pasted = cloneTextObject(orig);
-        pasted.x = orig.x;
-        pasted.y = orig.y;
+        pasted.x = (orig.x || 0) + dx;
+        pasted.y = (orig.y || 0) + dy;
+
+        // keep dimensions, but guard against zero width
+        if (!pasted.width || pasted.width < 5) pasted.width = orig.width || 200;
+        if (!pasted.height || pasted.height < 5) pasted.height = orig.height || 50;
+
+        // preserve wrapping behavior
+        pasted.wrap = (orig.wrap !== undefined) ? orig.wrap : true;
+        pasted.whiteSpace = orig.whiteSpace || "normal";
+
         pasted.selected = true;
-        pasted.zIndex = orig.zIndex;
-        type: orig.type,
+        pasted.zIndex = ++zTop;
         textObjects.push(pasted);
     });
 
-    // 4.3) Paste image items at the same x/y as the original
+    // images
     canvasClipboard.imageItems.forEach(orig => {
         const pasted = cloneImageObject(orig);
-        pasted.x = orig.x;
-        pasted.y = orig.y;
+        pasted.x = (orig.x || 0) + dx;
+        pasted.y = (orig.y || 0) + dy;
         pasted.selected = true;
-        pasted.zIndex = orig.zIndex;
-        type: orig.type,
+        pasted.zIndex = ++zTop;
         images.push(pasted);
     });
 
-    // 4.4) Redraw the canvas
-    drawCanvas('Common');
+    renderScene(); // draw bg + images + texts + handles
 }
+
+
+//////pasteOption.addEventListener('click', () => {
+//////    pasteFromClipboard();
+//////});
+
+//////// ─── 4) pasteFromClipboard implementation ───────────────────────────
+//////function pasteFromClipboard() {
+//////    // If nothing in clipboard, do nothing
+//////    if (
+//////        canvasClipboard.textItems.length === 0 &&
+//////        canvasClipboard.imageItems.length === 0
+//////    ) {
+//////        return;
+//////    }
+
+//////    // 4.1) Clear existing selection
+//////    textObjects.forEach(obj => obj.selected = false);
+//////    images.forEach(img => img.selected = false);
+
+//////    // Compute the current highest zIndex
+//////    //const allItems = [...textObjects, ...images];
+//////    //const maxZ = allItems.reduce((max, item) => Math.max(max, item.zIndex || 0), 0);
+
+//////    //let currentZ = maxZ + 1;
+
+
+//////    // 4.2) Paste text items at the same x/y as the original
+//////    canvasClipboard.textItems.forEach(orig => {
+//////        const pasted = cloneTextObject(orig);
+//////        pasted.x = orig.x;
+//////        pasted.y = orig.y;
+//////        pasted.selected = true;
+//////        pasted.zIndex = orig.zIndex;
+//////        type: orig.type,
+//////        textObjects.push(pasted);
+//////    });
+
+//////    // 4.3) Paste image items at the same x/y as the original
+//////    canvasClipboard.imageItems.forEach(orig => {
+//////        const pasted = cloneImageObject(orig);
+//////        pasted.x = orig.x;
+//////        pasted.y = orig.y;
+//////        pasted.selected = true;
+//////        pasted.zIndex = orig.zIndex;
+//////        type: orig.type,
+//////        images.push(pasted);
+//////    });
+
+//////    // 4.4) Redraw the canvas
+//////    //drawCanvas('Common');
+//////    drawText();
+//////}
 
 
 //// ─── 5) Keyboard shortcuts (Ctrl+C, Ctrl+V) ─────────────────────────
@@ -9468,7 +9565,7 @@ function sizeToPx(size) {
 
 let   startDrag = null;
 // make canvas focusable once
-if (!canvas.hasAttribute('tabindex')) canvas.setAttribute('tabindex', '0');
+//if (!canvas.hasAttribute('tabindex')) canvas.setAttribute('tabindex', '0');
 canvas.addEventListener("mousedown", e => {
     canvas.focus({ preventScroll: true });
     const { x: mx, y: my } = getCanvasMousePosition(e);
@@ -11726,7 +11823,7 @@ function enableEditorKeyboard() {
     if (!ed) return;
 
     ed.setAttribute('contenteditable', 'true');
-    ed.setAttribute('tabindex', '0');
+   // ed.setAttribute('tabindex', '0');
     ed.spellcheck = false;
     ed.autocapitalize = 'off';
     ed.autocomplete = 'off';
