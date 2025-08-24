@@ -3543,51 +3543,71 @@ function pasteFromClipboard() {
         canvasClipboard.imageItems.length === 0
     ) return;
 
-    // clear selection and editing state
+    // clear selection & editing state
     isEditing = false;
     activeBox = null;
-    textEditorNew && (textEditorNew.style.display = "none");
+    if (textEditorNew) textEditorNew.style.display = "none";
     textObjects.forEach(o => o.selected = false);
     images.forEach(o => o.selected = false);
 
-    // stack above others
+    // current top z
     const all = [...textObjects, ...images];
     let zTop = all.reduce((m, it) => Math.max(m, it.zIndex || 0), 0);
 
-    // small offset so duplicates are visible
-    const dx = 12, dy = 12;
+    // ✅ NO OFFSET
+    // const dx = 12, dy = 12;  // ❌ remove/ignore
 
-    // texts
+    // TEXTS
     canvasClipboard.textItems.forEach(orig => {
         const pasted = cloneTextObject(orig);
-        pasted.x = (orig.x || 0) + dx;
-        pasted.y = (orig.y || 0) + dy;
 
-        // keep dimensions, but guard against zero width
+        // ✅ exact same position (coerce to numbers so "123" doesn't round weirdly)
+        pasted.x = Number(orig.x) || 0;
+        pasted.y = Number(orig.y) || 0;
+
+        // keep size (guard zero)
         if (!pasted.width || pasted.width < 5) pasted.width = orig.width || 200;
         if (!pasted.height || pasted.height < 5) pasted.height = orig.height || 50;
 
-        // preserve wrapping behavior
+        // keep transform
+        pasted.rotation = orig.rotation || 0;
+        pasted.scaleX = (orig.scaleX != null) ? orig.scaleX : 1;
+        pasted.scaleY = (orig.scaleY != null) ? orig.scaleY : 1;
+        if (orig.anchorX != null) pasted.anchorX = orig.anchorX;
+        if (orig.anchorY != null) pasted.anchorY = orig.anchorY;
+
         pasted.wrap = (orig.wrap !== undefined) ? orig.wrap : true;
         pasted.whiteSpace = orig.whiteSpace || "normal";
 
         pasted.selected = true;
-        pasted.zIndex = ++zTop;
+        pasted.zIndex = ++zTop;          // just above the original (and above anything below it)
         textObjects.push(pasted);
     });
 
-    // images
+    // IMAGES
     canvasClipboard.imageItems.forEach(orig => {
         const pasted = cloneImageObject(orig);
-        pasted.x = (orig.x || 0) + dx;
-        pasted.y = (orig.y || 0) + dy;
+
+        // ✅ exact same position
+        pasted.x = Number(orig.x) || 0;
+        pasted.y = Number(orig.y) || 0;
+
+        // keep transform
+        pasted.rotation = orig.rotation || 0;
+        pasted.scaleX = (orig.scaleX != null) ? orig.scaleX : 1;
+        pasted.scaleY = (orig.scaleY != null) ? orig.scaleY : 1;
+        if (orig.anchorX != null) pasted.anchorX = orig.anchorX;
+        if (orig.anchorY != null) pasted.anchorY = orig.anchorY;
+
         pasted.selected = true;
         pasted.zIndex = ++zTop;
         images.push(pasted);
     });
 
-    renderScene(); // draw bg + images + texts + handles
+    // redraw EVERYTHING (your drawText already draws bg + images + texts)
+    drawText();
 }
+
 
 
 //////pasteOption.addEventListener('click', () => {
@@ -8275,6 +8295,7 @@ function updateFontStyleButtons() {
     const anyItalic = textObjects.some(o => o.selected && o.isItalic);
     document.getElementById("italicBtn").classList.toggle("active", anyItalic);
 }
+const allItems = [];
 function reindex() {
     allItems.forEach((obj, idx) => obj.zIndex = idx + 1)
 }
