@@ -8,12 +8,16 @@ p {
 }
 
 .acc_cont {
-    margin-top: 3.5rem;
-    margin-bottom: 5.5rem;
+    /*    margin-top: 3.5rem;
+    margin-bottom: 5.5rem;*/
     padding-left: 86px !important;
     padding-right: 86px !important;
 }
+.pay_sub_cont {
+    padding-inline: 86px !important;
+    margin-block: 20px;
 
+}
 .account {
     color: white;
     margin-bottom: 0;
@@ -135,16 +139,20 @@ input::placeholder {
 .tv_button {
     border: 2.3px solid black;
     font-size: 13px;
-    padding: 3px 10px;
-    height: 32px;
+    padding: 0;
+    height: 40px;
+    width: 70px;
 }
 
 .verticval_button {
-    width: 35px;
-    height: 60px;
+    width: 45px;
+    height: 70px;
     padding: 0;
 }
-
+.board_schedule_info {
+    border: none;
+    background-color: transparent;
+}
 .selected-tv {
     background-color: #6214fe;
     color: #fff;
@@ -154,6 +162,62 @@ input::placeholder {
     height: 200px;
     margin: 10px;
 }
+.schedular {
+    position: relative;
+}
+
+/*info container css*/
+.info_container {
+    position: absolute;
+    top: -45px;
+    right: 0;
+    background-color: #f0f0f0;
+    padding: 25px 45px;
+}
+.step_name {
+    background-color: #000;
+    color: #fff;
+    font-size: 14px;
+    border-radius: 3px;
+    width: 58px;
+    padding: 4px 8px;
+    margin-block: 20px;
+}
+.info-head{
+    font-weight: 600;
+}
+.tv {
+    border: 2.3px solid black;
+    font-size: 13px;
+    padding: 0;
+    height: 40px;
+    width: 70px;
+    background-color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 3px;
+}
+.page_box {
+    border: 4px solid #000;
+    text-align: center;
+    width: 200px;
+    height: 115px;
+    /*display: flex;*/
+    align-items: center;
+    justify-content: center;
+}
+.tv_link_info {
+    font-size: 16px;
+    font-weight: 600;
+}
+.link-on-tv {
+    font-size: 13px;
+    border-bottom: 2px solid #000;
+    text-align: left;
+    padding-left: 3px;
+}
+/*info container css end*/
 /* table styles */
 .table > :not(caption) > * > * {
     padding: .15rem .15rem !important;
