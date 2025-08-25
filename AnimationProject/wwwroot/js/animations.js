@@ -8701,6 +8701,7 @@ function pointInBox(b, x, y) {
     const h = Number(b.height) || 0;
     return x >= b.x && x <= b.x + w && y >= b.y && y <= b.y + h;
 }
+
 // 🟢 Fix line height calculation in drawText
 function drawText() {
     const designW = canvas.width;
@@ -8814,6 +8815,10 @@ function drawText() {
         let cursorY = top + 5;
         let usedHeight = 0;
 
+        // NEW: trackers (inner widths; 5px pad each side → +10 when converting to outer)
+        let __maxRunWidthObserved = 0;   // widest wrapped line we draw
+        let __maxTokenWidthObserved = 0; // widest single word/token
+
         lines.forEach(lineNode => {
             // alignment inside the rotated box (kept)
             let cursorX = left + 5;
@@ -8840,6 +8845,34 @@ function drawText() {
 
             function measureWords(node, style) {
                 if (node.nodeType === 3) {
+                    // NEW: use word tokens (words + whitespace) so wrapping happens between words
+                    const USE_WORD_TOKENS = true;
+                    if (USE_WORD_TOKENS) {
+                        const tokens = (node.nodeValue.match(/(\s+|\S+)/g) || []);
+                        for (let tk of tokens) {
+                            const fs = style.fontSize || defaultFontSize;
+                            const ff = style.fontFamily || defaultFontFamily;
+                            const fw = style.fontWeight || defaultFontWeight;
+                            const fst = style.fontStyle || defaultFontStyle;
+                            const col = style.color || defaultColor;
+
+                            ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                            const width = ctx.measureText(tk).width;
+                            const px = parseFloat(fs);
+                            if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                            const isSpace = /^\s+$/.test(tk);
+                            segments.push({ text: tk, width, style: { fs, ff, fw, fst, col }, isSpace });
+
+                            // NEW: track the widest single non-space token
+                            if (!isSpace && width > __maxTokenWidthObserved) {
+                                __maxTokenWidthObserved = width;
+                            }
+                        }
+                        return; // keep char fallback below
+                    }
+
+                    // (original char-by-char fallback)
                     const chars = node.nodeValue.split("");
                     for (let ch of chars) {
                         const fs = style.fontSize || defaultFontSize;
@@ -8855,6 +8888,7 @@ function drawText() {
 
                         segments.push({ text: ch, width, style: { fs, ff, fw, fst, col } });
                     }
+                    return;
                 } else if (node.nodeType === 1) {
                     if (node.tagName === "BR") {
                         const fs = style.fontSize || defaultFontSize;
@@ -8868,7 +8902,7 @@ function drawText() {
                         const px = parseFloat(fs);
                         if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
 
-                        segments.push({ text: " ", width, style: { fs, ff, fw, fst, col } });
+                        segments.push({ text: " ", width, style: { fs, ff, fw, fst, col }, isSpace: true });
                         return;
                     }
                     const s = node.style || {};
@@ -8917,6 +8951,10 @@ function drawText() {
                         ctx.fillText(seg.text, x2, cursorY);
                         x2 += seg.width;
                     }
+
+                    // NEW: remember widest wrapped line we rendered
+                    if (runWidth > __maxRunWidthObserved) __maxRunWidthObserved = runWidth;
+
                     const lh = (runMaxPx || basePx) * (box.lineSpacing || 1.2);
                     cursorY += lh;
                     usedHeight = cursorY - top + 5;
@@ -8928,13 +8966,22 @@ function drawText() {
 
                 for (const seg of segments) {
                     const segPx = parseFloat(seg.style.fs) || basePx;
+
+                    // don’t start a line with spaces
+                    if (seg.isSpace && runSegs.length === 0) continue;
+
+                    // wrap by tokens (words/spaces). If it doesn't fit, flush
                     if (runWidth + seg.width > innerWidth && runSegs.length > 0) {
                         flushRun();
+                        // after wrapping, still don't start the new line with a space
+                        if (seg.isSpace) continue;
                     }
+
                     runSegs.push(seg);
                     runWidth += seg.width;
                     if (segPx > runMaxPx) runMaxPx = segPx;
                 }
+
                 flushRun();
             }
             // ------------- END NEW PER-RUN WRAP/DRAW -------------
@@ -8962,6 +9009,12 @@ function drawText() {
             // ---- END ORIGINAL LOOP ----
         });
 
+        // NEW: ensure the active box is at least as wide as the longest word (+ 5px pad each side)
+        const __minOuterWidthByWord = Math.ceil(__maxTokenWidthObserved + 10);
+        if (__minOuterWidthByWord > (box.width || 0)) {
+            box.width = __minOuterWidthByWord;  // expand only; never shrink
+        }
+
         // keep size fields consistent for text
         box.height = usedHeight;     // update size first
         syncTextDims(box);           // keep bounding* in sync if your other code uses it
@@ -8972,6 +9025,7 @@ function drawText() {
         }
     }
 }
+
 
 
 
