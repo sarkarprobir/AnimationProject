@@ -1344,21 +1344,20 @@ function OnChangefontFamily(value) {
     if (isEditing && hasRange) {
         ed.focus();
 
-        // restore selection
         const sel = window.getSelection();
         sel.removeAllRanges();
         sel.addRange(_lastEditorRange);
 
-        // 1) try safe span wrap (only if selection is within one block)
         let ok = wrapSelectionInSpan(span => { span.style.fontFamily = fontFamily; });
-
-        // 2) if selection crosses blocks or wrap failed, use execCommand
         if (!ok) ok = applyInlineStyleSafe('fontFamily', fontFamily);
 
         // Optional normalize (must NOT collapse blocks)
         if (ok && typeof normalizeEditorInPlace === "function") {
             normalizeEditorInPlace(ed);
         }
+
+        // ✅ ADD: force wrapping back on (avoids single-line collapse)
+        ensureEditorWrapping(ed);
 
         activeBox.text = ed.innerHTML;
         if (Obj) Obj.text = activeBox.text;
@@ -1369,7 +1368,23 @@ function OnChangefontFamily(value) {
         return;
     }
 
-    // Not editing → apply to whole box (simple wrap)
+    // Not editing → apply to whole box, but keep line <div>s intact
+    // ✅ ADD: safe whole-box update (preserves lines)
+    const safeHTML = applyFontFamilyToWholeBoxHTML(activeBox.text, fontFamily);
+    if (safeHTML != null) {
+        activeBox.text = safeHTML;
+        if (Obj) Obj.text = activeBox.text;
+
+        // if editor is open, keep it wrapped
+        ensureEditorWrapping(ed);
+
+        resizeEditorToContent(ed, activeBox);
+        if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
+        drawText();
+        return;
+    }
+
+    // (fallback — your original span-around-all, kept for completeness)
     const wrap = document.createElement("div");
     wrap.innerHTML = activeBox.text || "";
     const span = document.createElement("span");
@@ -1378,10 +1393,13 @@ function OnChangefontFamily(value) {
     activeBox.text = span.outerHTML;
     if (Obj) Obj.text = activeBox.text;
 
+    ensureEditorWrapping(ed); // ✅ keep wrapping even in fallback
+
     resizeEditorToContent(ed, activeBox);
     if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
     drawText();
 }
+
 
 
 function OnChangefontFamilyOLD(value) {
@@ -8928,6 +8946,16 @@ function drawText() {
             const basePx = parseFloat(defaultFontSize) || 16;
             const lineHeight = (maxFontPx > 0 ? maxFontPx : basePx) * (box.lineSpacing || 1.2);
 
+            // ✅ NEW: treat <div><br></div> (and any spaces-only line) as a real blank line
+            const isBlankLine = (segments.length === 0) ||
+                segments.every(seg => seg.isSpace || ((seg.text || '').trim() === ''));
+
+            if (isBlankLine) {
+                cursorY += lineHeight;           // advance one line
+                usedHeight = cursorY - top + 5;  // keep height in sync
+                return;                          // next logical line
+            }
+
             // ------------- NEW PER-RUN WRAP/DRAW -------------
             const __usePerRun = true; // turn off to fall back to your old loop
 
@@ -10918,9 +10946,32 @@ function measureHTML(html, maxWidth = 1000) {
 //    drawText();
 //});
 // ✅ Enhance line spacing and increase activeBox height when Enter is pressed
-// ✅ Enhance line spacing and increase activeBox height when Enter is pressed
+function ensureEditorWrapping() {
+    if (!window.textEditorNew) return;
+
+    // Root must wrap
+    textEditorNew.style.whiteSpace = 'pre-wrap';
+
+    // Each top-level line should be a block and allowed to wrap
+    textEditorNew.querySelectorAll(':scope > div').forEach(d => {
+        if (d.style.display !== 'block') d.style.display = 'block';
+        if (d.style.whiteSpace && d.style.whiteSpace.toLowerCase() === 'nowrap') {
+            d.style.whiteSpace = 'pre-wrap';
+        }
+    });
+
+    // Remove accidental nowrap on descendants (spans created by styling)
+    textEditorNew.querySelectorAll('[style*="white-space"]').forEach(el => {
+        const ws = (el.style.whiteSpace || '').toLowerCase();
+        if (ws === 'nowrap') el.style.whiteSpace = ''; // let it inherit/wrap
+    });
+}
+
 textEditorNew.addEventListener("input", () => {
     if (!activeBox || !isEditing) return;
+
+    // ✅ add this line FIRST
+    ensureEditorWrapping();
 
     const edStyle = window.getComputedStyle(textEditorNew);
     const lineSpacing = (typeof selectedLineSpacing === "number" ? selectedLineSpacing : 8);
@@ -10950,6 +11001,7 @@ textEditorNew.addEventListener("input", () => {
     activeBox.text = textEditorNew.innerHTML;
     drawText();
 });
+
 
 
 //textEditorNew.addEventListener("keydown", e => {
@@ -12268,5 +12320,44 @@ function endMultiDrag(commit = true) {
     isDraggingMulti = false;
     multiDragTargets = [];
     multiDragOffsets = [];
+}
+function ensureEditorWrapping(root = textEditorNew) {
+    if (!root) return;
+    root.style.whiteSpace = 'pre-wrap'; // the editor root must wrap
+    root.querySelectorAll(':scope > div').forEach(d => {
+        if (d.style.display !== 'block') d.style.display = 'block';
+        if (d.style.whiteSpace && d.style.whiteSpace.toLowerCase() === 'nowrap') {
+            d.style.whiteSpace = 'pre-wrap';
+        }
+    });
+    // remove accidental nowrap on descendants (from style buttons etc.)
+    root.querySelectorAll('[style*="white-space"]').forEach(el => {
+        if ((el.style.whiteSpace || '').toLowerCase() === 'nowrap') el.style.whiteSpace = '';
+    });
+}
+
+// Safely apply a font-family to the WHOLE BOX without breaking line <div>s
+function applyFontFamilyToWholeBoxHTML(html, fontFamily) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html || '';
+
+    const topLines = tmp.querySelectorAll(':scope > div');
+    const targets = topLines.length ? topLines : [tmp]; // if no lines, treat root as a single line
+
+    targets.forEach(div => {
+        // if it already has a single span, just update it
+        const onlyChild = div.childNodes.length === 1 && div.firstChild?.nodeType === 1 && div.firstChild.tagName === 'SPAN';
+        if (onlyChild) {
+            div.firstChild.style.fontFamily = fontFamily;
+        } else {
+            // wrap the line's content in a span (valid: DIV > SPAN > inline...)
+            const sp = document.createElement('span');
+            sp.style.fontFamily = fontFamily;
+            while (div.firstChild) sp.appendChild(div.firstChild);
+            div.appendChild(sp);
+        }
+    });
+
+    return tmp.innerHTML;
 }
 
