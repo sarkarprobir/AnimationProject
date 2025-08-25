@@ -10717,7 +10717,7 @@ function applyTextEditorStyleFromBox(box) {
     ed.style.lineHeight = String(spacing);
     ed.style.textAlign = box.align || "left";
     ed.style.whiteSpace = "pre-wrap";
-    ed.style.wordBreak = "anywhere";
+    ed.style.wordBreak = "break-word";
 
     // ---------- NEW: width must match the select box ----------
     // If you have the DOM node of the red box, use it; otherwise fall back to box.width
