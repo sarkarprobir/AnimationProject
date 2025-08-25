@@ -8747,7 +8747,6 @@ function drawText() {
         const { w, h, cx, cy } = getBoxRect(box);
         const angleRad = deg2rad(box.rotation || 0);
 
-        
         // ---- IMAGE ----
         if (box.type === "image") {
             const { w, h, cx, cy } = getBoxRect(box);
@@ -8767,19 +8766,15 @@ function drawText() {
                     img.onerror = () => { img.onerror = null; };
                 }
             }
-            ctx.restore();                     // ⬅️ back to world space
+            ctx.restore(); // back to world space
 
             if (box.selected && w > 0 && h > 0) {
-                drawRotatedSelection(ctx, box);  // ⬅️ now draw selection (single transform)
+                drawRotatedSelection(ctx, box);
             }
             continue;
         }
 
-
         // ---- TEXT ----
-     
-      
-
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(angleRad);
@@ -8820,7 +8815,7 @@ function drawText() {
         let usedHeight = 0;
 
         lines.forEach(lineNode => {
-            // alignment inside the rotated box
+            // alignment inside the rotated box (kept)
             let cursorX = left + 5;
             if (box.align === "center") {
                 ctx.textAlign = "center";
@@ -8831,6 +8826,14 @@ function drawText() {
             } else {
                 ctx.textAlign = "left";
             }
+
+            // NEW: inner content edges + we'll align by shifting startX
+            const innerLeft = left + 5;
+            const innerRight = left + w - 5;
+            const innerWidth = Math.max(0, innerRight - innerLeft);
+            const alignMode = box.align || "left";
+            // force left alignment while drawing; we handle startX ourselves
+            ctx.textAlign = "left";
 
             let segments = [];
             let maxFontPx = 0;
@@ -8891,40 +8894,85 @@ function drawText() {
             const basePx = parseFloat(defaultFontSize) || 16;
             const lineHeight = (maxFontPx > 0 ? maxFontPx : basePx) * (box.lineSpacing || 1.2);
 
+            // ------------- NEW PER-RUN WRAP/DRAW -------------
+            const __usePerRun = true; // turn off to fall back to your old loop
+
+            if (__usePerRun) {
+                function startXForWidth(runWidth) {
+                    if (alignMode === "center") return innerLeft + Math.max(0, (innerWidth - runWidth) / 2);
+                    if (alignMode === "right") return innerRight - runWidth;
+                    return innerLeft;
+                }
+
+                let runSegs = [];
+                let runWidth = 0;
+                let runMaxPx = 0;
+
+                function flushRun() {
+                    if (runSegs.length === 0) return;
+                    let x2 = startXForWidth(runWidth);
+                    for (const seg of runSegs) {
+                        ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
+                        ctx.fillStyle = seg.style.col;
+                        ctx.fillText(seg.text, x2, cursorY);
+                        x2 += seg.width;
+                    }
+                    const lh = (runMaxPx || basePx) * (box.lineSpacing || 1.2);
+                    cursorY += lh;
+                    usedHeight = cursorY - top + 5;
+
+                    runSegs = [];
+                    runWidth = 0;
+                    runMaxPx = 0;
+                }
+
+                for (const seg of segments) {
+                    const segPx = parseFloat(seg.style.fs) || basePx;
+                    if (runWidth + seg.width > innerWidth && runSegs.length > 0) {
+                        flushRun();
+                    }
+                    runSegs.push(seg);
+                    runWidth += seg.width;
+                    if (segPx > runMaxPx) runMaxPx = segPx;
+                }
+                flushRun();
+            }
+            // ------------- END NEW PER-RUN WRAP/DRAW -------------
+
+            // ---- ORIGINAL PER-CHAR LOOP (kept; disabled by flag) ----
             let x = cursorX;
             let drewSomething = false;
 
-            segments.forEach(seg => {
-                if (x + seg.width > left + w - 0.01) {
-                    cursorY += lineHeight;     // wrap
-                    x = cursorX;
-                }
-                ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
-                ctx.fillStyle = seg.style.col;
-                ctx.fillText(seg.text, x, cursorY);
-                x += seg.width;
-                drewSomething = true;
-            });
+            if (!__usePerRun) {
+                segments.forEach(seg => {
+                    if (x + seg.width > left + w - 0.01) {
+                        cursorY += lineHeight;     // wrap
+                        x = cursorX;
+                    }
+                    ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
+                    ctx.fillStyle = seg.style.col;
+                    ctx.fillText(seg.text, x, cursorY);
+                    x += seg.width;
+                    drewSomething = true;
+                });
 
-            if (drewSomething) cursorY += lineHeight;
-            usedHeight = cursorY - top + 5;
+                if (drewSomething) cursorY += lineHeight;
+                usedHeight = cursorY - top + 5;
+            }
+            // ---- END ORIGINAL LOOP ----
         });
 
         // keep size fields consistent for text
-        //box.height = usedHeight;
-        //syncTextDims(box);
-
-        //if (box.selected && w > 0 && h > 0) drawRotatedSelection(ctx, box);
-        //ctx.restore();
         box.height = usedHeight;     // update size first
         syncTextDims(box);           // keep bounding* in sync if your other code uses it
-        ctx.restore();               // ⬅️ back to world space
+        ctx.restore();               // back to world space
 
         if (box.selected && w > 0 && h > 0) {
-            drawRotatedSelection(ctx, box);  // ⬅️ selection in world space (no double-rotate)
+            drawRotatedSelection(ctx, box);  // selection in world space (no double-rotate)
         }
     }
 }
+
 
 
 
@@ -10669,7 +10717,7 @@ function applyTextEditorStyleFromBox(box) {
     ed.style.lineHeight = String(spacing);
     ed.style.textAlign = box.align || "left";
     ed.style.whiteSpace = "pre-wrap";
-    ed.style.wordBreak = "break-word";
+    ed.style.wordBreak = "anywhere";
 
     // ---------- NEW: width must match the select box ----------
     // If you have the DOM node of the red box, use it; otherwise fall back to box.width
@@ -11173,11 +11221,38 @@ function showEditorAtBox(box) {
     textEditorNew.innerHTML = box.text;
     textEditorNew.style.textAlign = box.align || "left";
 
-    // position & size
+    // position & size (your existing lines)
     textEditorNew.style.left = `${relativeX}px`;
     textEditorNew.style.top = `${relativeY}px`;
     textEditorNew.style.width = `${box.width / scaleX}px`;
     textEditorNew.style.height = `${box.height / scaleY}px`; // ← keeps visual parity with canvas
+
+    // ──────────────── ADD BELOW (do not delete anything above) ────────────────
+    // Use the current visual size (after any resize/scale) so the editor matches the active box.
+    (function syncEditorOuterBoxToSelection() {
+        const snap = v => Math.round(v * window.devicePixelRatio) / window.devicePixelRatio;
+
+        // get the current on-canvas w/h that drawText() also uses
+        const { w, h } = getBoxRect(box);   // canvas pixels
+
+        // convert to CSS pixels
+        const outerWcss = w / scaleX;
+        const outerHcss = h / scaleY;
+
+        // ensure width/height are OUTER sizes (include padding + border)
+        textEditorNew.style.boxSizing = "border-box";
+
+        // reapply (override) with snapped values to avoid 1px drift after resizes
+        textEditorNew.style.left = `${snap(relativeX)}px`;
+        textEditorNew.style.top = `${snap(relativeY)}px`;
+        textEditorNew.style.width = `${snap(outerWcss)}px`;
+        textEditorNew.style.height = `${snap(outerHcss)}px`;
+
+        // optional: prevent layout from shrinking it by accident
+        textEditorNew.style.minWidth = `${snap(outerWcss)}px`;
+        textEditorNew.style.minHeight = `${snap(outerHcss)}px`;
+    })();
+    // ─────────────────────────────────────────────────────────────────────────
 
     // apply the box's spacing to the editor DOM
     syncEditorLineSpacingFromBox(box);
@@ -11197,6 +11272,7 @@ function showEditorAtBox(box) {
     textEditorNew.focus();
     isEditing = true;
 }
+
 function syncEditorLineSpacingFromBox(box) {
     const lh = String(box.lineSpacing || 1.2); // unitless multiplier
     // set on editor (fallback when there are no top-level divs)

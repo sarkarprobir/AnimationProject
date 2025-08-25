@@ -1825,7 +1825,7 @@ body {
     /* Wrapping/flow */
     white-space: normal;
     overflow: hidden; /* single overflow rule */
-    overflow-wrap: break-word; /* or: anywhere; */
+    overflow-wrap: anywhere; /* or: anywhere; */
     /* Typographic defaults to mirror canvas */
     font-family: Arial, sans-serif;
     font-size: 16px;
