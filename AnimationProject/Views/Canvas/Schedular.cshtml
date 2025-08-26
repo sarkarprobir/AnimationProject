@@ -476,4 +476,22 @@
             }, 1000);
         });
     }
+
+    const tvButtons = document.querySelectorAll(".tv_button");
+    const tvTitle = document.querySelector(".tv_links_title");
+    const tvLink = document.querySelector(".link_fortv");
+
+    tvButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const isVertical = btn.classList.contains("verticval_button");
+
+        // Get TV name
+        const tvName = btn.textContent.trim();
+        const group = isVertical ? "Vertical" : "Horizontal";
+
+        //change the title text
+        tvTitle.textContent = `${group} ${tvName}: `;
+      });
+    });
+
 </script>
