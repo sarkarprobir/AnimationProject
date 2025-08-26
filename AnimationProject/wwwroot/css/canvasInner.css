@@ -167,12 +167,17 @@ input::placeholder {
 }
 
 /*info container css*/
+#info_TV{
+    display: none;
+}
+
 .info_container {
     position: absolute;
     top: -45px;
     right: 0;
     background-color: #f0f0f0;
-    padding: 25px 45px;
+    padding: 17px 25px;
+    height: 105%;
 }
 .step_name {
     background-color: #000;
@@ -181,17 +186,19 @@ input::placeholder {
     border-radius: 3px;
     width: 58px;
     padding: 4px 8px;
-    margin-block: 20px;
+    margin-top: 15px;
+    margin-bottom: 15px;
 }
-.info-head{
+.info-head {
     font-weight: 600;
+    margin-bottom: 25px;    
 }
 .tv {
     border: 2.3px solid black;
     font-size: 13px;
     padding: 0;
-    height: 40px;
-    width: 70px;
+    height: 35px;
+    width: 56px;
     background-color: #fff;
     display: flex;
     justify-content: center;
@@ -203,7 +210,12 @@ input::placeholder {
     text-align: center;
     width: 200px;
     height: 115px;
-    /*display: flex;*/
+    align-items: center;
+    justify-content: center;
+}
+.page_box_noborder {
+    width: 200px;
+    height: 115px;
     align-items: center;
     justify-content: center;
 }
@@ -217,6 +229,12 @@ input::placeholder {
     text-align: left;
     padding-left: 3px;
 }
+@media (min-width: 1900px) {
+    .info_container {
+        padding: 26px 40px;
+        height: 110%;
+    }
+}
 /*info container css end*/
 /* table styles */
 .table > :not(caption) > * > * {
@@ -226,10 +244,17 @@ input::placeholder {
 .schedule-table {
     font-size: 14px;
 }
-
+.link_copy_btn {
+    border: none;
+    background-color: transparent;
+}
 .tv_links {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 600;
+    margin-bottom: 0;
+}
+.tv_links_title {
+    color: #959595;
 }
 /*modal check mark*/
 .option-box .checkmark {
