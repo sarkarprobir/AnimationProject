@@ -10204,6 +10204,13 @@ canvas.addEventListener("mousemove", e => {
         drawText();
         return;
     }
+    // --- at top of the TEXT corner-scale block ---
+    if (activeBox && activeBox._orig && typeof activeBox._orig.text === 'string') {
+        // If original text has no inline font-size, bake in computed editor font once
+        if (!/font-size\s*:/i.test(activeBox._orig.text)) {
+            activeBox._orig.text = bakeInlineFontOnLinesHTML(activeBox._orig.text, textEditorNew);
+        }
+    }
 
     if (isCornerFontScale && activeBox && resizeDirectionNorm && CORNER_HANDLES.has(resizeDirectionNorm)) {
         const dir = resizeDirectionNorm;          // ← normalized "tl/tr/bl/br"
@@ -12504,4 +12511,51 @@ function hoistNestedLines(root) {
             d.appendChild(document.createElement('br'));
         }
     });
+}
+function bakeInlineFontOnLinesHTML(html, refEl) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html || '';
+
+    const cs = refEl ? getComputedStyle(refEl) : null;
+    const fs = cs ? cs.fontSize : '16px';
+    const ff = cs ? cs.fontFamily : 'Arial';
+    const fw = cs ? cs.fontWeight : 'normal';
+    const fst = cs ? cs.fontStyle : 'normal';
+    const col = cs ? cs.color : '#000';
+
+    // ensure each top-level line is <div>…</div>
+    const top = tmp.children.length ? Array.from(tmp.children) : [tmp];
+
+    top.forEach(div => {
+        if (div.tagName !== 'DIV') return;
+
+        // already a span with font-size? leave it
+        const span = (div.children.length === 1 && div.firstElementChild.tagName === 'SPAN')
+            ? div.firstElementChild
+            : null;
+
+        if (span) {
+            // if span lacks inline font-size, bake it in
+            const st = span.style;
+            if (!st.fontSize) st.fontSize = fs;
+            if (!st.fontFamily) st.fontFamily = ff;
+            if (!st.fontWeight) st.fontWeight = fw;
+            if (!st.fontStyle) st.fontStyle = fst;
+            if (!st.color) st.color = col;
+            return;
+        }
+
+        // wrap existing nodes in a span with inline font styles
+        const sp = document.createElement('span');
+        sp.style.fontSize = fs;
+        sp.style.fontFamily = ff;
+        sp.style.fontWeight = fw;
+        sp.style.fontStyle = fst;
+        sp.style.color = col;
+
+        while (div.firstChild) sp.appendChild(div.firstChild);
+        div.appendChild(sp);
+    });
+
+    return tmp.innerHTML;
 }
