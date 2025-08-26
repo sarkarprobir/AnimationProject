@@ -6430,6 +6430,81 @@ if (colorInput) {
     });
 }
 function ChangeColor() {
+    const colorPicker = document.getElementById("favcolor");
+    const color = (colorPicker && colorPicker.value) ? colorPicker.value : "#000000";
+
+    $("#hdnTextColor").val(color);
+    const textColor = document.getElementById("hdnTextColor").value;
+
+    const Obj = Array.isArray(textObjects) ? textObjects.find(o => o.selected) : null;
+    if (Obj) Obj.textColor = textColor || "black";
+
+    if (!activeBox) return;
+
+    const ed = textEditorNew;
+    const hasRange = !!_lastEditorRange && ed && ed.isConnected &&
+        ed.contains(_lastEditorRange.commonAncestorContainer);
+
+    if (isEditing && hasRange) {
+        ed.focus();
+
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(_lastEditorRange);
+
+        // 1) safe span wrap if within one block
+        let wrappedSpanRef = null; // ADD
+        let ok = wrapSelectionInSpan(span => {
+            span.style.color = color;
+            wrappedSpanRef = span;    // ADD: capture the wrapper we just created
+        });
+
+        // 2) else execCommand
+        if (!ok) ok = applyInlineStyleSafe('color', color);
+
+        // 🔧 ADD: ensure our color wins over any inner spans with their own color
+        if (ok) {
+            if (wrappedSpanRef) {
+                stripInlineColorInside(wrappedSpanRef);
+            } else {
+                // best-effort clean for execCommand path: limit to current selection subtree
+                const r = sel && sel.rangeCount ? sel.getRangeAt(0) : null;
+                const common = r ? (r.commonAncestorContainer.nodeType === 1
+                    ? r.commonAncestorContainer
+                    : r.commonAncestorContainer.parentElement) : null;
+                if (common && ed.contains(common)) {
+                    stripInlineColorInside(common);
+                }
+            }
+        }
+
+        if (ok && typeof normalizeEditorInPlace === "function") {
+            normalizeEditorInPlace(ed);   // your existing normalizer
+        }
+
+        activeBox.text = ed.innerHTML;
+        if (Obj) Obj.text = activeBox.text;
+
+        resizeEditorToContent(ed, activeBox);
+        if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
+        drawText();
+        return;
+    }
+
+    // Whole box (unchanged)
+    const holder = document.createElement("div");
+    holder.innerHTML = activeBox.text || "";
+    const spanAll = document.createElement("span");
+    spanAll.style.color = color;
+    spanAll.innerHTML = holder.innerHTML;
+    activeBox.text = spanAll.outerHTML;
+    if (Obj) Obj.text = activeBox.text;
+
+    resizeEditorToContent(ed, activeBox);
+    if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
+    drawText();
+}
+function ChangeColorOLD() {
   const colorPicker = document.getElementById("favcolor");
   const color = (colorPicker && colorPicker.value) ? colorPicker.value : "#000000";
 
@@ -6484,7 +6559,13 @@ function ChangeColor() {
   if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
   drawText();
 }
-
+function stripInlineColorInside(rootSpan) {
+    if (!rootSpan) return;
+    // remove color on descendants only; keep rootSpan's color
+    rootSpan.querySelectorAll('span[style*="color"]').forEach(el => {
+        el.style.color = '';
+    });
+}
 
 
 function ChangeColorOLD() {
@@ -10522,6 +10603,13 @@ if (window.textEditorNew) {
     textEditorNew.addEventListener('mouseup', captureEditorRange);
     textEditorNew.addEventListener('keyup', captureEditorRange);
     document.addEventListener('selectionchange', captureEditorRange);
+    textEditorNew.addEventListener('paste', () => {
+        setTimeout(() => {
+            hoistNestedLines(textEditorNew);
+            // make your existing input pipeline recompute sizes/draw
+            textEditorNew.dispatchEvent(new Event('input', { bubbles: true }));
+        }, 0);
+    }, { capture: false });
 }
 // on the <select id="fontSizeSelect">
 const fontSel = document.getElementById('fontSizeSelect');
@@ -10972,7 +11060,8 @@ textEditorNew.addEventListener("input", () => {
 
     // ✅ add this line FIRST
     ensureEditorWrapping();
-
+    // ✅ Add this: keeps pasted copies as top-level lines
+    hoistNestedLines(textEditorNew);
     const edStyle = window.getComputedStyle(textEditorNew);
     const lineSpacing = (typeof selectedLineSpacing === "number" ? selectedLineSpacing : 8);
 
@@ -11325,6 +11414,7 @@ function showEditorAtBox(box) {
     const relativeY = canvasRect.top - containerRect.top + offsetY;
 
     textEditorNew.innerHTML = box.text;
+    hoistNestedLines(textEditorNew); // optional safety on open
     textEditorNew.style.textAlign = box.align || "left";
 
     // position & size (your existing lines)
@@ -12361,3 +12451,31 @@ function applyFontFamilyToWholeBoxHTML(html, fontFamily) {
     return tmp.innerHTML;
 }
 
+// Hoist any nested <div> blocks so the editor root has only top-level lines.
+function hoistNestedLines(root) {
+    if (!root) return;
+
+    // Keep hoisting until no nested blocks remain
+    let moved;
+    do {
+        moved = false;
+        const topLines = Array.from(root.children).filter(el => el.tagName === 'DIV');
+        for (const line of topLines) {
+            const nestedBlocks = Array.from(line.children).filter(el => el.tagName === 'DIV');
+            for (const block of nestedBlocks) {
+                const newLine = document.createElement('div');
+                while (block.firstChild) newLine.appendChild(block.firstChild);
+                line.parentNode.insertBefore(newLine, line.nextSibling);
+                block.remove();
+                moved = true;
+            }
+        }
+    } while (moved);
+
+    // Normalize truly empty lines → <div><br></div>
+    Array.from(root.children).forEach(d => {
+        if (d.tagName === 'DIV' && d.textContent.trim() === '' && d.children.length === 0) {
+            d.appendChild(document.createElement('br'));
+        }
+    });
+}
