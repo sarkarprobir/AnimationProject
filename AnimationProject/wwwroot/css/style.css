@@ -1834,3 +1834,6 @@ body {
     height: auto;
     max-height: none;
 }
+.navbar-brand.layout-brand{
+    color: #fff !important;
+}
