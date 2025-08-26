@@ -10465,7 +10465,7 @@ function restoreSelection() {
 //}
 function addDefaultText(opts = {}) {
     // --- defaults (kept from your working function + addDefaultText) ---
-    const fs = opts.fontSize ?? 30;
+    const fs = opts.fontSize ?? 24;
     const text = opts.text ?? "Default Text";
     const factor = opts.lineSpacing ?? 1.2;           // multiplier
     const fontFam = opts.fontFamily ?? "Arial";
@@ -10605,11 +10605,10 @@ if (window.textEditorNew) {
     document.addEventListener('selectionchange', captureEditorRange);
     textEditorNew.addEventListener('paste', () => {
         setTimeout(() => {
-            hoistNestedLines(textEditorNew);
-            // make your existing input pipeline recompute sizes/draw
-            textEditorNew.dispatchEvent(new Event('input', { bubbles: true }));
-        }, 0);
-    }, { capture: false });
+            hoistNestedLines(textEditorNew);                        // ✅ ADD
+            textEditorNew.dispatchEvent(new Event('input', { bubbles: true })); // reuse your pipeline
+        }, 0); // let the browser insert first
+    });
 }
 // on the <select id="fontSizeSelect">
 const fontSel = document.getElementById('fontSizeSelect');
@@ -11060,6 +11059,8 @@ textEditorNew.addEventListener("input", () => {
 
     // ✅ add this line FIRST
     ensureEditorWrapping();
+    hoistNestedLines(textEditorNew);        // ✅ ADD this line
+
     // ✅ Add this: keeps pasted copies as top-level lines
     hoistNestedLines(textEditorNew);
     const edStyle = window.getComputedStyle(textEditorNew);
@@ -12473,6 +12474,31 @@ function hoistNestedLines(root) {
     } while (moved);
 
     // Normalize truly empty lines → <div><br></div>
+    Array.from(root.children).forEach(d => {
+        if (d.tagName === 'DIV' && d.textContent.trim() === '' && d.children.length === 0) {
+            d.appendChild(document.createElement('br'));
+        }
+    });
+}
+function hoistNestedLines(root) {
+    if (!root) return;
+
+    const topLines = Array.from(root.children).filter(el => el.tagName === 'DIV');
+
+    topLines.forEach(line => {
+        // moving anchor so order is preserved
+        let anchor = line;
+        const nestedBlocks = Array.from(line.children).filter(el => el.tagName === 'DIV');
+        nestedBlocks.forEach(block => {
+            const newLine = document.createElement('div');
+            while (block.firstChild) newLine.appendChild(block.firstChild);
+            anchor.parentNode.insertBefore(newLine, anchor.nextSibling);
+            anchor = newLine;        // advance anchor to keep A,B,C order
+            block.remove();
+        });
+    });
+
+    // normalize truly empty lines
     Array.from(root.children).forEach(d => {
         if (d.tagName === 'DIV' && d.textContent.trim() === '' && d.children.length === 0) {
             d.appendChild(document.createElement('br'));
