@@ -1778,8 +1778,8 @@ function animateText(direction, condition, loopCount) {
         // 4) Build the GSAP timeline
         const tlText = gsap.timeline({
             repeat: loopCount - 1,
-            onStart: () => drawCanvas(condition),
-            onUpdate: () => drawCanvas(condition),
+            onStart: () => drawText(),
+            onUpdate: () => drawText(),
         });
 
         // ✅ Pin noAnim items at t=0 — ensure they are visible always
@@ -1801,7 +1801,7 @@ function animateText(direction, condition, loopCount) {
         });
 
         // 🔥 Force immediate draw, outside GSAP
-        drawCanvas(condition);
+        drawText();
 
         // ── IN ── (only when tabType === "In")
         //if (tabType === "In") {
@@ -1822,7 +1822,7 @@ function animateText(direction, condition, loopCount) {
                     y: (i, target) => target.finalY,
                     duration: scaleInText*.20,
                     ease: "power1.in",
-                    onUpdate: () => drawCanvas(condition)
+                    onUpdate: () => drawText()
                 }, 0);
             });
         }
@@ -1855,7 +1855,7 @@ function animateText(direction, condition, loopCount) {
                     y: (i, target) => target.exitY,
                     duration: 0.20 * scaleOutText,
                     ease: "power1.out",
-                    onUpdate: () => drawCanvas(condition)
+                    onUpdate: () => drawText()
                 }, idx * 0);
             });
         }
@@ -1885,7 +1885,7 @@ function animateText(direction, condition, loopCount) {
                 txt.x = txt.finalX;
                 txt.y = txt.finalY;
             });
-            drawCanvas(condition);
+            drawText();
         });
     }
     else if (animationType === "delaylinear2") {
@@ -1925,9 +1925,9 @@ function animateText(direction, condition, loopCount) {
                 // reset positions on loop
                 images.forEach(img => { img.x = img.startX; img.y = img.startY; });
                 textObjects.forEach(txt => { txt.x = txt.startX; txt.y = txt.startY; });
-                drawCanvas(condition);
+                drawText();
             },
-            onUpdate: () => drawCanvas(condition)
+            onUpdate: () => drawText()
         });
         // ✅ Pin noAnim items at t=0 — ensure they are visible always
         images.filter(i => i.noAnim).forEach(imgObj => {
@@ -1948,7 +1948,7 @@ function animateText(direction, condition, loopCount) {
         });
 
         // 🔥 Force immediate draw, outside GSAP
-        drawCanvas(condition);
+        drawText();
 
 
         // ── IN ── (only if requested)
@@ -1959,7 +1959,7 @@ function animateText(direction, condition, loopCount) {
                 duration: individualIn,
                 ease: "power1.in",
                 stagger: staggerIn,
-                onUpdate: () => drawCanvas(condition)
+                onUpdate: () => drawText()
             }, 0);
         }
 
@@ -1990,7 +1990,7 @@ function animateText(direction, condition, loopCount) {
                 duration: individualOut,
                 ease: "power1.out",
                 stagger: staggerOut,
-                onUpdate: () => drawCanvas(condition)
+                onUpdate: () => drawText()
             }, 0);
         }
 
@@ -2013,7 +2013,7 @@ function animateText(direction, condition, loopCount) {
             textObjects.forEach(txt => {
                 txt.x = txt.finalX; txt.y = txt.finalY;
             });
-            drawCanvas(condition);
+            drawText();
         });
 
         // ── OPTIONAL: normalize to exact slide length ──
@@ -2032,7 +2032,7 @@ function animateText(direction, condition, loopCount) {
         if (tabType === "In") items.forEach(o => o.opacity = 0);
         else items.forEach(o => o.opacity = 1);
 
-        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawText() });
 
         // IN fade in
         if (tabType === "In") {
@@ -2063,7 +2063,7 @@ function animateText(direction, condition, loopCount) {
         // RESET
         tl.eventCallback("onComplete", () => {
             items.forEach(o => o.opacity = 1);
-            drawCanvas(condition);
+            drawText();
         });
     }
 
@@ -2079,7 +2079,7 @@ function animateText(direction, condition, loopCount) {
             o.startY = o.exitY || o.finalY;
         });
 
-        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawText() });
 
         // IN bounce from startX/startY to finalX/finalY
         if (tabType === "In") {
@@ -2111,7 +2111,7 @@ function animateText(direction, condition, loopCount) {
         // RESET
         tl.eventCallback("onComplete", () => {
             items.forEach(o => { o.x = o.finalX; o.y = o.finalY; });
-            drawCanvas(condition);
+            drawText();
         });
     }
     // ── Zoom (canvas-only) In working Out not working also only image working for In ───────────────────────────
@@ -2124,7 +2124,7 @@ function animateText(direction, condition, loopCount) {
             o.opacity = (tabType === "In" ? 0 : 1);
         });
 
-        const tl = gsap.timeline({ repeat: loopCount - 1, onStart: () => drawCanvas(condition), onUpdate: () => drawCanvas(condition) });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onStart: () => drawText(), onUpdate: () => drawText() });
 
         if (tabType === "In") {
             tl.to(items, {
@@ -2144,7 +2144,7 @@ function animateText(direction, condition, loopCount) {
         }
         tl.eventCallback("onComplete", () => {
             items.forEach(o => { o.scaleX = 1; o.scaleY = 1; o.opacity = 1; });
-            drawCanvas(condition);
+            drawText();
         });
     }
 
@@ -2191,7 +2191,7 @@ function animateText(direction, condition, loopCount) {
 
         const tl = gsap.timeline({
             repeat: loopCount - 1,
-            onUpdate: () => drawCanvas(condition)
+            onUpdate: () => drawText()
         });
 
         // Static items pinned
@@ -2205,7 +2205,7 @@ function animateText(direction, condition, loopCount) {
                     clip: 0,
                     duration: inTime,
                     ease: "power2.out",
-                    onUpdate: () => drawCanvas(condition)
+                    onUpdate: () => drawText()
                 }, 0);
             });
         }
@@ -2222,7 +2222,7 @@ function animateText(direction, condition, loopCount) {
                     clip: 1,
                     duration: outTime,
                     ease: "power2.out",
-                    onUpdate: () => drawCanvas(condition)
+                    onUpdate: () => drawText()
                 }, delayM);
             });
         }
@@ -2236,7 +2236,7 @@ function animateText(direction, condition, loopCount) {
 
             [...animItems, ...staticItems].forEach(o => o.rotation = o.rotation);
 
-            drawCanvas(condition);
+            drawText();
         });
 
     }
@@ -2249,7 +2249,7 @@ function animateText(direction, condition, loopCount) {
         const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
         // reset home
         items.forEach(o => { o.x = o.finalX; o.y = o.finalY; });
-        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawText() });
 
         if (tabType === "In") {
             tl.to(items, {
@@ -2267,7 +2267,7 @@ function animateText(direction, condition, loopCount) {
         }
         tl.eventCallback("onComplete", () => {
             items.forEach(o => { o.x = o.finalX; o.y = o.finalY; });
-            drawCanvas(condition);
+            drawText();
         });
     }
 
@@ -2275,7 +2275,7 @@ function animateText(direction, condition, loopCount) {
     else if (animationType === "blurCanvas") {
         const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
         items.forEach(o => { o.x = o.finalX; o.y = o.finalY; o.blur = 20; });
-        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawText() });
 
         if (tabType === "In") {
             tl.to(items, { blur: 0, duration: inTime, ease: "power2.out", stagger: 0.1 }, 0);
@@ -2289,7 +2289,7 @@ function animateText(direction, condition, loopCount) {
         }
         tl.eventCallback("onComplete", () => {
             items.forEach(o => o.blur = 0);
-            drawCanvas(condition);
+            drawText();
         });
     }
 
@@ -2334,9 +2334,9 @@ function animateText(direction, condition, loopCount) {
                     else if (direction === "top") o.y = -200;
                     else if (direction === "bottom") o.y = canvasHeight + 200;
                 });
-                drawCanvas(condition);
+                drawText();
             },
-            onUpdate: () => drawCanvas(condition),
+            onUpdate: () => drawText(),
             onComplete: () => {
                 // snap back exactly to startRotation
                 allItems.concat(staticItems).forEach(o => {
@@ -2344,7 +2344,7 @@ function animateText(direction, condition, loopCount) {
                     o.y = o.finalY;
                     o.rotation = o.startRotation;
                 });
-               drawCanvas(condition);
+                drawText();
             }
         });
         // ✅ Pin noAnim items at t=0 — ensure they are visible always
@@ -2365,7 +2365,7 @@ function animateText(direction, condition, loopCount) {
             }, 0);
         });
         // 🔥 Force immediate draw, outside GSAP
-        drawCanvas(condition);
+        drawText();
         const tweenIn = 0.15 * inTime;
         const tweenOut = 0.15 * outTime;
 
@@ -2385,7 +2385,7 @@ function animateText(direction, condition, loopCount) {
                     rotation: `+=${inRotationAmount}`,
                     x: (i, t) => t.finalX,
                     y: (i, t) => t.finalY,
-                    onUpdate: () => drawCanvas(condition)
+                    onUpdate: () => drawText()
                 }, tweenIn);
             });
         }
@@ -2427,7 +2427,7 @@ function animateText(direction, condition, loopCount) {
                     rotation: `+=${outRotationAmount}`,
                     x: (i, t) => t.exitX,
                     y: (i, t) => t.exitY,
-                    onUpdate: () => drawCanvas(condition)
+                    onUpdate: () => drawText()
                 }, tweenOut);
             });
 
@@ -2466,7 +2466,7 @@ function animateText(direction, condition, loopCount) {
                     txt.x = txt.finalX;
                     txt.y = txt.finalY;
                 });
-                drawCanvas(condition);
+                drawText();
             });
         }
 
@@ -2490,7 +2490,7 @@ function animateText(direction, condition, loopCount) {
     else if (animationType === "curtainCanvas") {
         const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
         items.forEach(o => { o.x = o.finalX; o.y = o.finalY; o.scaleY = 0; });
-        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawText() });
 
         if (tabType === "In") {
             tl.to(items, { scaleY: 1, duration: inTime, ease: "power2.out", stagger: 0.1 }, 0);
@@ -2504,7 +2504,7 @@ function animateText(direction, condition, loopCount) {
         }
         tl.eventCallback("onComplete", () => {
             items.forEach(o => o.scaleY = 1);
-            drawCanvas(condition);
+            drawText();
         });
     }
 
@@ -2512,7 +2512,7 @@ function animateText(direction, condition, loopCount) {
     else if (animationType === "blurFlashCanvas") {
         const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
         items.forEach(o => { o.x = o.finalX; o.y = o.finalY; o.blur = 0; o.opacity = 1; });
-        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawText() });
 
         if (tabType === "In") {
             tl.to(items, {
@@ -2532,7 +2532,7 @@ function animateText(direction, condition, loopCount) {
         }
         tl.eventCallback("onComplete", () => {
             items.forEach(o => { o.blur = 0; o.opacity = 1; });
-            drawCanvas(condition);
+            drawText();
         });
     }
 
@@ -2573,7 +2573,7 @@ function animateText(direction, condition, loopCount) {
 
     const tl = gsap.timeline({
         repeat: loopCount - 1,
-        onUpdate: () => drawCanvas(condition)
+        onUpdate: () => drawText()
     });
 
     // 🧷 Pin static items immediately
@@ -2673,7 +2673,7 @@ function animateText(direction, condition, loopCount) {
 
     const tl = gsap.timeline({
         repeat: loopCount - 1,
-        onUpdate: () => drawCanvas(condition)
+        onUpdate: () => drawText()
     });
 
     // Pin static items immediately
@@ -2694,7 +2694,7 @@ function animateText(direction, condition, loopCount) {
                 scaleY: 1,
                 duration: inTime / 2,
                 ease: "power2.out",
-                onUpdate: () => drawCanvas(condition)
+                onUpdate: () => drawText()
             }, 0);
         }
 
@@ -2719,7 +2719,7 @@ function animateText(direction, condition, loopCount) {
                 scaleY: 0,
                 duration: outTime / 2,
                 ease: "power2.inOut",
-                onUpdate: () => drawCanvas(condition)
+                onUpdate: () => drawText()
             }, 0);
             
         }
@@ -2729,7 +2729,7 @@ function animateText(direction, condition, loopCount) {
     else if (animationType === "glitchCanvas") {
         const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
         items.forEach(o => { o.x = o.finalX; o.y = o.finalY; });
-        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawText() });
 
         if (tabType === "In") {
             tl.to(items, {
@@ -2749,7 +2749,7 @@ function animateText(direction, condition, loopCount) {
         }
         tl.eventCallback("onComplete", () => {
             items.forEach(o => { o.x = o.finalX; });
-            drawCanvas(condition);
+            drawText();
         });
     }
 
@@ -2940,7 +2940,7 @@ function animateImage(condition) {
             y: endY,
             duration: 2,
             ease: "power1.inOut",
-            onUpdate: function () { drawCanvas(condition); },
+            onUpdate: function () { drawText(); },
         });
     } else if (animationType === "elastic") {
         gsap.to(imagePosition, {
@@ -2948,7 +2948,7 @@ function animateImage(condition) {
             y: endY,
             duration: 2.5,
             ease: "elastic.out(1, 0.3)",
-            onUpdate: function () { drawCanvas(condition); },
+            onUpdate: function () { drawText(); },
         });
     } else if (animationType === "spin") {
         let angle = 0;
@@ -2971,7 +2971,7 @@ function animateImage(condition) {
                 y: endY,
                 duration: 2,
                 ease: "power2.out",
-                onUpdate: function () { drawCanvas(condition); },
+                onUpdate: function () { drawText(); },
             }
         );
     } else if (animationType === "zoom-in") {
@@ -2984,7 +2984,7 @@ function animateImage(condition) {
                 y: endY,
                 duration: 2,
                 ease: "power2.inOut",
-                onUpdate: function () { drawCanvas(condition); },
+                onUpdate: function () { drawText(); },
             }
         );
     } else if (animationType === "bounce") {
@@ -2993,7 +2993,7 @@ function animateImage(condition) {
             y: endY,
             duration: 2,
             ease: "bounce.out",
-            onUpdate: function () { drawCanvas(condition); },
+            onUpdate: function () { drawText(); },
         });
     } else if (animationType === "path") {
         gsap.to(imagePosition, {
@@ -3007,7 +3007,7 @@ function animateImage(condition) {
                 autoRotate: true,
             },
             ease: "power2.inOut",
-            onUpdate: function () { drawCanvas(condition); },
+            onUpdate: function () { drawText(); },
         });
     } else if (animationType === "flip") {
         gsap.fromTo(
@@ -3019,7 +3019,7 @@ function animateImage(condition) {
                 y: endY,
                 duration: 2,
                 ease: "power2.inOut",
-                onUpdate: function () { drawCanvas(condition); },
+                onUpdate: function () { drawText(); },
             }
         );
     } else if (animationType === "blur") {
@@ -3030,11 +3030,11 @@ function animateImage(condition) {
             ease: "power2.out",
             onUpdate: () => {
                 ctx.filter = "blur(5px)";
-                drawCanvas(condition);
+                drawText();
             },
             onComplete: () => {
                 ctx.filter = "none";
-                drawCanvas(condition);
+                drawText();
             },
         });
     }
@@ -3049,7 +3049,7 @@ function animateImage(condition) {
                 y: endY,
                 duration: 2,
                 ease: "power2.out",
-                onUpdate: function () { drawCanvas(condition); },
+                onUpdate: function () { drawText(); },
             }
         );
 
@@ -3063,7 +3063,7 @@ function animateImage(condition) {
                 curviness: 1.5,
                 autoRotate: true,
             },
-            onUpdate: function () { drawCanvas(condition); },
+            onUpdate: function () { drawText(); },
         });
 
 
@@ -3083,8 +3083,8 @@ function applyAnimations(direction, conditionvalue) {
     const bgColor = $("#hdnBackgroundSpecificColor").val();
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    drawCanvas(conditionvalue);
-
+    //drawCanvas(conditionvalue);
+    drawText();
     animateText(direction, conditionvalue, parseInt($("#hdnlLoopControl").val()) || 1);
     animateImage(conditionvalue);
 
@@ -8932,6 +8932,48 @@ function drawText() {
 
         const { w, h, cx, cy } = getBoxRect(box);
         const angleRad = deg2rad(box.rotation || 0);
+
+        if (box.clip >= 1) {
+            ctx.restore();
+            return;
+        }
+
+        if (box.clip > 0 && box.clip < 1) {
+            const originalDir = box.clipDirection || "top";
+
+            // If clip is increasing (masking), invert direction automatically
+            const isHiding = box.clip > box.previousClip;
+            const effectiveDirection = isHiding ? invertDirection(originalDir) : originalDir;
+
+            box.previousClip = box.clip;   // Track for next render frame
+
+            const isImage = box.type === 'image';
+            const width = isImage ? box.width : box.boundingWidth;
+            const height = isImage ? box.height : box.boundingHeight;
+            const x = box.x;
+            const y = box.y;
+
+            ctx.beginPath();
+
+            if (effectiveDirection === "top") {
+                const visibleHeight = height * (1 - box.clip);
+                ctx.rect(x, y, width, visibleHeight);
+
+            } else if (effectiveDirection === "bottom") {
+                const visibleHeight = height * (1 - box.clip);
+                ctx.rect(x, y + height - visibleHeight, width, visibleHeight);
+
+            } else if (effectiveDirection === "left") {
+                const visibleWidth = width * (1 - box.clip);
+                ctx.rect(x, y, visibleWidth, height);
+
+            } else if (effectiveDirection === "right") {
+                const visibleWidth = width * (1 - box.clip);
+                ctx.rect(x + width - visibleWidth, y, visibleWidth, height);
+            }
+
+            ctx.clip();
+        }
 
         // ---- IMAGE ----
         if (box.type === "image") {
