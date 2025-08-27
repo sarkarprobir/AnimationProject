@@ -5399,6 +5399,34 @@ function getSelectedType() {
 
     return null;
 }
+// ✅ ADD: hit test for a rotated box (works for text boxes)
+function isPointInRotatedBox(box, x, y) {
+    const { w, h, cx, cy } = getBoxRect(box);              // you already have this
+    const ang = deg2rad(box.rotation || 0);                // you already have this
+    const dx = x - cx, dy = y - cy;
+    const cos = Math.cos(-ang), sin = Math.sin(-ang);      // rotate mouse into box's local space
+    const rx = dx * cos - dy * sin;
+    const ry = dx * sin + dy * cos;
+    return (rx >= -w / 2 && rx <= w / 2 && ry >= -h / 2 && ry <= h / 2);
+}
+
+// ✅ ADD: get the topmost item under (x,y) by zIndex
+function getTopHitAt(x, y) {
+    const all = [...(images || []), ...(textObjects || [])]
+        .slice()
+        .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0)); // bottom→top
+
+    for (let i = all.length - 1; i >= 0; i--) {           // check from topmost
+        const it = all[i];
+        if (it.type === 'image') {
+            if (isMouseOverImage?.(it, { x, y })) return it;  // you already have this
+        } else {
+            if (isPointInRotatedBox(it, x, y)) return it;
+        }
+    }
+    return null;
+}
+
 canvas.addEventListener("click", function onCanvasClick(e) {
     // ignore shift here
     if (e.shiftKey) return;
@@ -5452,11 +5480,34 @@ canvas.addEventListener("click", function onCanvasClick(e) {
     }
 
     // --- hit testing (topmost) ---
-    const txtHit = getTextObjectAt(mouseX, mouseY);
+    let txtHit = getTextObjectAt(mouseX, mouseY);
     let imgHit = null;
     for (let i = (images ? images.length : 0) - 1; i >= 0; i--) {
         if (isMouseOverImage(images[i], { x: mouseX, y: mouseY })) { imgHit = images[i]; break; }
     }
+    // ✅ ADD: zIndex-aware resolution when both overlap
+    (function resolveByZIndex() {
+        const top = getTopHitAt(mouseX, mouseY);
+        if (!top) return;
+
+        const topZ = top.zIndex || 0;
+        const txtZ = txtHit ? (txtHit.zIndex || 0) : -Infinity;
+        const imgZ = imgHit ? (imgHit.zIndex || 0) : -Infinity;
+
+        // If our simple per-type tests disagree with the real topmost, override them
+        if (top.type === 'image') {
+            if (!imgHit || topZ >= imgZ) {        // image is really on top
+                imgHit = top;
+                // ensure text doesn't steal selection
+                if (txtHit && txtZ < topZ) txtHit = null;
+            }
+        } else {
+            if (!txtHit || topZ >= txtZ) {        // text is really on top
+                txtHit = top;
+                if (imgHit && imgZ < topZ) imgHit = null;
+            }
+        }
+    })();
 
     // always start fresh
     clearSelection();
