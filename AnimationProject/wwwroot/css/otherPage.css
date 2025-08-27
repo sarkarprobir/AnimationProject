@@ -606,7 +606,7 @@ footer {
 .contact-title {
     font-size: 2.4rem;
     font-weight: 800;
-    font-family: "Montserrat", sans-serif !important;
+    font-family: "Inter", sans-serif !important;
 }
 
 .paper-plane {
@@ -751,9 +751,32 @@ plans {
     text-align: center;
     font-weight: 900;
     color: #000;
-    font-family: "Montserrat", sans-serif !important;
+    font-family: "Inter", sans-serif !important;
 }
 .partner {
     margin-block: 100px;
 }
 /*pricing css end*/
+/*about css*/
+.about_title {
+    font-family: "Inter", sans-serif;
+    font-weight: 800;
+    font-size: 6.5rem;
+    margin-bottom: 2.3rem;
+}
+.rignt-sec-about{
+    display: flex;
+    gap: 95px;
+}
+.about_lg_para {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+.about_sm_para {
+    font-size: 1rem;
+    color: #555;
+}
+.about-us-section{
+    margin: 30px 0 50px 0;
+}
+/*about css end*/
