@@ -1365,6 +1365,8 @@ function OnChangefontFamily(value) {
         resizeEditorToContent(ed, activeBox);
         if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
         drawText();
+        console.log(textObjects);
+        console.log(images);
         return;
     }
 
@@ -1381,6 +1383,8 @@ function OnChangefontFamily(value) {
         resizeEditorToContent(ed, activeBox);
         if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
         drawText();
+        console.log(textObjects);
+        console.log(images);
         return;
     }
 
@@ -1398,6 +1402,8 @@ function OnChangefontFamily(value) {
     resizeEditorToContent(ed, activeBox);
     if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
     drawText();
+    console.log(textObjects);
+    console.log(images);
 }
 
 
@@ -5979,6 +5985,8 @@ function generateUUID() {
 }
 
 function ImagePropertySet() {
+    console.log(textObjects);
+    console.log(images);
     const noAnimCheckbox = document.getElementById('noAnimCheckbox');
     const isChecked = noAnimCheckbox.checked;
     
@@ -6013,6 +6021,8 @@ function ImagePropertySet() {
 
     // one save at the end
     SaveDesignBoard();
+    console.log(textObjects);
+    console.log(images);
 }
 //canvasContainer.addEventListener("dblclick", function (e) {
 //    const rect = canvas.getBoundingClientRect();
@@ -6217,12 +6227,12 @@ function normalizeEditorInPlace(root, keepSpan) {
     // 3) Merge adjacent spans with identical style
     mergeAdjacentSameStyleSpans(root);
     // 4) If single-line, enforce nowrap – but IN PLACE
-    if (!root.querySelector("br")) {
-        const line = (root.childElementCount === 1 && root.firstElementChild?.tagName === "DIV")
-            ? root.firstElementChild
-            : root;
-        line.style.whiteSpace = "nowrap";
-    }
+    //if (!root.querySelector("br")) {
+    //    const line = (root.childElementCount === 1 && root.firstElementChild?.tagName === "DIV")
+    //        ? root.firstElementChild
+    //        : root;
+    //    line.style.whiteSpace = "nowrap";
+    //}
 
     // Re-select keepSpan if it still exists
     if (keepSpan && root.contains(keepSpan)) {
