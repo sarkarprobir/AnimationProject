@@ -3628,70 +3628,7 @@ function pasteFromClipboard() {
 
 
 
-//////pasteOption.addEventListener('click', () => {
-//////    pasteFromClipboard();
-//////});
 
-//////// ─── 4) pasteFromClipboard implementation ───────────────────────────
-//////function pasteFromClipboard() {
-//////    // If nothing in clipboard, do nothing
-//////    if (
-//////        canvasClipboard.textItems.length === 0 &&
-//////        canvasClipboard.imageItems.length === 0
-//////    ) {
-//////        return;
-//////    }
-
-//////    // 4.1) Clear existing selection
-//////    textObjects.forEach(obj => obj.selected = false);
-//////    images.forEach(img => img.selected = false);
-
-//////    // Compute the current highest zIndex
-//////    //const allItems = [...textObjects, ...images];
-//////    //const maxZ = allItems.reduce((max, item) => Math.max(max, item.zIndex || 0), 0);
-
-//////    //let currentZ = maxZ + 1;
-
-
-//////    // 4.2) Paste text items at the same x/y as the original
-//////    canvasClipboard.textItems.forEach(orig => {
-//////        const pasted = cloneTextObject(orig);
-//////        pasted.x = orig.x;
-//////        pasted.y = orig.y;
-//////        pasted.selected = true;
-//////        pasted.zIndex = orig.zIndex;
-//////        type: orig.type,
-//////        textObjects.push(pasted);
-//////    });
-
-//////    // 4.3) Paste image items at the same x/y as the original
-//////    canvasClipboard.imageItems.forEach(orig => {
-//////        const pasted = cloneImageObject(orig);
-//////        pasted.x = orig.x;
-//////        pasted.y = orig.y;
-//////        pasted.selected = true;
-//////        pasted.zIndex = orig.zIndex;
-//////        type: orig.type,
-//////        images.push(pasted);
-//////    });
-
-//////    // 4.4) Redraw the canvas
-//////    //drawCanvas('Common');
-//////    drawText();
-//////}
-
-
-//// ─── 5) Keyboard shortcuts (Ctrl+C, Ctrl+V) ─────────────────────────
-//window.addEventListener('keydown', (e) => {
-//    if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) {
-//        e.preventDefault();
-//        copyOption.click();
-//    }
-//    if (e.ctrlKey && (e.key === 'v' || e.key === 'V')) {
-//        e.preventDefault();
-//        pasteFromClipboard();
-//    }
-//});
 // ─── 5) Keyboard shortcuts (Ctrl+C/Cmd+C, Ctrl+V/Cmd+V) ─────────────────────────
 window.addEventListener('keydown', (e) => {
     const isCopy = (e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C');
@@ -8394,7 +8331,7 @@ function updateFontStyleButtons() {
     const anyItalic = textObjects.some(o => o.selected && o.isItalic);
     document.getElementById("italicBtn").classList.toggle("active", anyItalic);
 }
-const allItems = [];
+let allItems = [];
 function reindex() {
     allItems.forEach((obj, idx) => obj.zIndex = idx + 1)
 }
@@ -8409,27 +8346,115 @@ function bringToFront(item) {
 function getAllItems() {
     return [...textObjects, ...images];
 }
-function sendToBack(item) {
-    // item.zIndex = Math.min(...getAllItems().map(i => i.zIndex || 0)) - 1;
-    const i = allItems.indexOf(item)
-    if (i === -1) return
-    allItems.splice(i, 1)     // remove it
-    allItems.unshift(item)    // insert at start (bottom)
-    reindex()
+//window.allItems = window.allItems || getAllItems();
+// ✅ ADD: whenever you add/remove an item elsewhere, call this to resync the working list
+
+function refreshAllItems() {
+    const current = getAllItems();
+    // Keep only those that still exist; add new ones that weren't tracked yet.
+    const set = new Set(current);
+    allItems = allItems.filter(it => set.has(it));
+    for (const it of current) if (!allItems.includes(it)) allItems.push(it);
+}
+// ✅ ADD: compact and normalize z-order based on current zIndex values
+function reindexZ() {
+    // Ensure we’re tracking current items
+    refreshAllItems();
+
+    // Sort by current zIndex (undefined ⇒ 0)
+    allItems.sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
+
+    // Reassign dense zIndex = 0..N-1
+    for (let i = 0; i < allItems.length; i++) {
+        allItems[i].zIndex = i;
+    }
+}
+// ✅ ADD: when a brand-new item is created, call this so it lands on top
+function giveTopZ(item) {
+    refreshAllItems();
+    const maxZ = allItems.reduce((m, it) => Math.max(m, it.zIndex ?? 0), -1);
+    item.zIndex = maxZ + 1;
+    refreshAllItems();
+    reindexZ();
+}
+// ✅ ADD: move one step toward front (increase z)
+function bringForward(item) {
+    refreshAllItems();
+    reindex(); // ensure dense 0..N-1
+    const i = allItems.indexOf(item);
+    if (i === -1 || i === allItems.length - 1) return; // already top or missing
+    const tmp = allItems[i + 1];
+    allItems[i + 1] = allItems[i];
+    allItems[i] = tmp;
+    reindex();
+}
+
+// ✅ ADD: move one step toward back (decrease z)
+function sendBackward(item) {
+    refreshAllItems();
+    reindex();
+    const i = allItems.indexOf(item);
+    if (i <= 0) return; // already bottom or missing
+    const tmp = allItems[i - 1];
+    allItems[i - 1] = allItems[i];
+    allItems[i] = tmp;
+    reindex();
+}
+
+// ✅ ADD: to absolute front (highest z)
+function bringToFront(item) {
+    refreshAllItems();
+    const i = allItems.indexOf(item);
+    if (i === -1) return;
+    allItems.splice(i, 1);
+    allItems.push(item);
+    reindex();
 }
 bringFrontOption.addEventListener('click', () => {
     if (!selectedForContextMenu) return;
-    bringToFront(selectedForContextMenu);
-    drawCanvas("Common");
+    bringToFront(selectedForContextMenu); // uses helper above
+    drawText();
     contextMenu.style.display = 'none';
 });
 
 sendBackOption.addEventListener('click', () => {
     if (!selectedForContextMenu) return;
-    sendToBack(selectedForContextMenu);
-    drawCanvas("Common");
+    sendToBack(selectedForContextMenu); // your existing function
+    drawText();
     contextMenu.style.display = 'none';
 });
+// define at top-level
+function sendToBack(item) {
+    const i = allItems.indexOf(item);
+    if (i === -1) return;
+    allItems.splice(i, 1);     // remove it
+    allItems.unshift(item);    // put at bottom
+    reindex();
+}
+
+
+
+//function sendToBack(item) {
+//    // item.zIndex = Math.min(...getAllItems().map(i => i.zIndex || 0)) - 1;
+//    const i = allItems.indexOf(item)
+//    if (i === -1) return
+//    allItems.splice(i, 1)     // remove it
+//    allItems.unshift(item)    // insert at start (bottom)
+//    reindex()
+//}
+//bringFrontOption.addEventListener('click', () => {
+//    if (!selectedForContextMenu) return;
+//    bringToFront(selectedForContextMenu);
+//    drawCanvas("Common");
+//    contextMenu.style.display = 'none';
+//});
+
+//sendBackOption.addEventListener('click', () => {
+//    if (!selectedForContextMenu) return;
+//    sendToBack(selectedForContextMenu);
+//    drawCanvas("Common");
+//    contextMenu.style.display = 'none';
+//});
 function transitionSelected() {
     if ($("#hdntransition").val() != '') {
         $('.sd-btn-right').addClass('activeB');
