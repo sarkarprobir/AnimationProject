@@ -316,6 +316,7 @@ footer {
 
 .pop_imgs {
     background-color: #DADDEC;
+    padding-block: 100px;
 }
 
 .register_btn {
@@ -778,5 +779,8 @@ plans {
 }
 .about-us-section{
     margin: 30px 0 50px 0;
+}
+.about-text{
+    padding-right: 2.5rem;
 }
 /*about css end*/
