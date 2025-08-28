@@ -19,7 +19,7 @@ a:hover {
 }
 
 .navbar-brand {
-    font-size: 2.4rem;
+    font-size: 2rem;
     font-weight: 800;
     font-family: "Montserrat", sans-serif !important;
 }
@@ -91,7 +91,7 @@ a:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0px 10rem;
+    padding: 0px 5.5rem;
     gap: 2rem;
 }
 
@@ -101,9 +101,9 @@ a:hover {
 
     .hero-text h1 {
         font-family: "Inter", sans-serif;
-        font-size: 4.5rem;
+        font-size: 6.5rem;
         font-weight: 800;
-        line-height: 1.2;
+        line-height: 1;
         margin-bottom: 1rem;
     }
 
@@ -324,7 +324,7 @@ footer {
 
 .pop_imgs {
     background-color: #DADDEC;
-    padding-block: 100px;
+    padding-block: 150px;
 }
 
 .register_btn {
@@ -594,7 +594,7 @@ footer {
 .contact-box {
     background-color: #e8ecf8;
     border-radius: 8px;
-    padding: 2rem;
+    padding: 3rem;
     position: relative;
 }
 
@@ -778,7 +778,7 @@ plans {
     gap: 50px;
 }
 .about_lg_para {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: 600;
 }
 .about_sm_para {
@@ -786,9 +786,12 @@ plans {
     color: #555;
 }
 .about-us-section{
-    margin: 80px 0 150px 0;
+    margin: 60px 0 60px 0;
 }
 .about-text{
     padding-right: 2.5rem;
+}
+.about-banner {
+    margin: auto;
 }
 /*about css end*/
