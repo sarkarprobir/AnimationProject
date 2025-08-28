@@ -23,7 +23,7 @@
 <script src="~/js/wow.min.js"></script>
 
 
-
+<div class="schedular">
 <nav class="navbar bg-dark-topnav navbar-expand-lg fixed-top">
     <div class="container-fluid p-r-0" style="justify-content: center !important;">
         <div class="row">
@@ -85,7 +85,7 @@
 
 
 
-<div class="container  acc_cont">
+<div class="container">
     <div class="mt-5">
         <div class="d-flex justify-content-between align-items-center mb-5">
             <h2 class="heading_acc">TV / Screen</h2>
@@ -106,16 +106,18 @@
             <button class="tv_button verticval_button b_rad4">TV2</button>
             <button class="tv_button verticval_button b_rad4">TV3</button>
             <button class="tv_button verticval_button b_rad4">TV4</button>
-            <span class="ms-2"><img src="~/images/icons/info.png" alt="Alternate Text" /></span>
+            <button class="ms-2 board_schedule_info" id="info_TV_btn"><img src="~/images/icons/info.png" alt="Alternate Text" /></button>
 
         </div>
 
 
         <!-- Link -->
-        <p class="tv_links">https://aniboard.com/b1209</p>
-
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <p class="tv_links"><span class="tv_links_title">Vertical TV1: </span><span class="link_fortv">https://aniboard.com/b1209</span></p>
+            <button onclick="copyLink(this)" class="link_copy_btn"><i class="fa-regular fa-copy"></i></button>
+        </div>
         <div class="row">
-            <div class="col-md-9">
+            <div class="col-md-8">
                 <!-- Schedule Table -->
                 <table class="table table-bordered schedule-table">
                     <thead>
@@ -279,7 +281,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <h6><strong>Vertical Aniboards</strong></h6>
                 <div class="vertical-aniboards d-flex  flex-wrap justify-content-start">
                     <img src="~/images/Vertical-Menuboard.png" class="img-fluid">
@@ -289,8 +291,48 @@
             </div>
         </div>
     </div>
-</div>
 
+</div>
+    <div id="info_TV" class="info_container">
+        <h5 class="info-head">How to set up TV/Screen</h5>
+        <div>
+            <div class="step_name">Step 1</div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="tv">TV1</div>
+                <img class="ms-auto" width="40" height="25" src="~/images/icons/right-arrow.png" alt="Alternate Text" />
+                <div class="page_box d-flex">
+                    <p>Your TV/Screen</p>
+                </div>
+            </div>
+        </div>
+        <div>
+            <div class="step_name">Step 2</div>
+            <p class="tv_link_info">https://aniboard.com/b1209</p>
+            <div class="d-flex gap-3">
+                <p>Permanent Link <br /> for TV <br /> Type the URL into <br /> the TV Browser <br /> and Bookmark it.</p>
+                <img class="ms-auto mt-3" width="40" height="25" src="~/images/icons/right-arrow.png" alt="Alternate Text" />
+                <div class="page_box">
+                    <p class="link-on-tv">https://aniboard.com/b1209</p>
+                </div>
+            </div>
+        </div>
+        <div>
+            <div class="step_name">Step 3</div>
+            <div class="d-flex gap-3">
+                <div class="tv">TV1</div>
+                <img class="ms-auto mt-1" width="30" height="25" src="~/images/icons/left-arrow.png" alt="Alternate Text" />
+                <img width="60" height="37" src="~/images/laptop.png" alt="Alternate Text" />
+                <div class="page_box_noborder d-flex">
+                    <div>
+                        <p>Add aniboard or change any <br/> aniboard to this Container.</p>
+                        <p>No need to change TV browser link.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
 
 <!-- Modal Structure -->
 <div class="modal fade layout_modal" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -387,4 +429,69 @@
                 });
             });
     });
+
+    //info section script
+    function setupToggle(buttonId, divId) {
+      const btn = document.getElementById(buttonId);
+      const box = document.getElementById(divId);
+
+      // Toggle on button click
+      btn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        box.style.display =
+          box.style.display === "none" || box.style.display === ""
+            ? "block"
+            : "none";
+      });
+
+      // Hide when clicking outside
+      document.addEventListener("click", (event) => {
+        if (
+          box.style.display === "block" &&
+          !box.contains(event.target) &&
+          event.target !== btn
+        ) {
+          box.style.display = "none";
+        }
+      });
+    }
+
+    setupToggle("info_TV_btn", "info_TV");
+
+    //link copy functionality
+    function copyLink(button) {
+        const linkText = document.querySelector('.link_fortv').innerText.trim();
+
+        navigator.clipboard.writeText(linkText).then(() => {
+            // Change icon to check
+            const icon = button.querySelector('i');
+            const originalClass = icon.className;
+
+            icon.className = 'fa-solid fa-check'; // show check icon
+
+
+            // Revert after 1 second
+            setTimeout(() => {
+                icon.className = originalClass;
+            }, 1000);
+        });
+    }
+
+    const tvButtons = document.querySelectorAll(".tv_button");
+    const tvTitle = document.querySelector(".tv_links_title");
+    const tvLink = document.querySelector(".link_fortv");
+
+    tvButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const isVertical = btn.classList.contains("verticval_button");
+
+        // Get TV name
+        const tvName = btn.textContent.trim();
+        const group = isVertical ? "Vertical" : "Horizontal";
+
+        //change the title text
+        tvTitle.textContent = `${group} ${tvName}: `;
+      });
+    });
+
 </script>

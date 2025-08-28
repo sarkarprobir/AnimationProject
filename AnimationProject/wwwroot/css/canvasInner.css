@@ -8,12 +8,16 @@ p {
 }
 
 .acc_cont {
-    margin-top: 3.5rem;
-    margin-bottom: 5.5rem;
+    /*    margin-top: 3.5rem;
+    margin-bottom: 5.5rem;*/
     padding-left: 86px !important;
     padding-right: 86px !important;
 }
+.pay_sub_cont {
+    padding-inline: 86px !important;
+    margin-block: 20px;
 
+}
 .account {
     color: white;
     margin-bottom: 0;
@@ -41,6 +45,9 @@ p {
     width: 250px;
     font-weight: 600 !important;
     border: 2px solid #6666668c !important;
+}
+.sub_span {
+    font-size: 14px;
 }
 
 tr {
@@ -135,16 +142,20 @@ input::placeholder {
 .tv_button {
     border: 2.3px solid black;
     font-size: 13px;
-    padding: 3px 10px;
-    height: 32px;
+    padding: 0;
+    height: 40px;
+    width: 70px;
 }
 
 .verticval_button {
-    width: 35px;
-    height: 60px;
+    width: 45px;
+    height: 70px;
     padding: 0;
 }
-
+.board_schedule_info {
+    border: none;
+    background-color: transparent;
+}
 .selected-tv {
     background-color: #6214fe;
     color: #fff;
@@ -154,6 +165,80 @@ input::placeholder {
     height: 200px;
     margin: 10px;
 }
+.schedular {
+    position: relative;
+}
+
+/*info container css*/
+#info_TV{
+    display: none;
+}
+
+.info_container {
+    position: absolute;
+    top: -45px;
+    right: 0;
+    background-color: #f0f0f0;
+    padding: 17px 25px;
+    height: 105%;
+}
+.step_name {
+    background-color: #000;
+    color: #fff;
+    font-size: 14px;
+    border-radius: 3px;
+    width: 58px;
+    padding: 4px 8px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+.info-head {
+    font-weight: 600;
+    margin-bottom: 25px;    
+}
+.tv {
+    border: 2.3px solid black;
+    font-size: 13px;
+    padding: 0;
+    height: 35px;
+    width: 56px;
+    background-color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 3px;
+}
+.page_box {
+    border: 4px solid #000;
+    text-align: center;
+    width: 200px;
+    height: 115px;
+    align-items: center;
+    justify-content: center;
+}
+.page_box_noborder {
+    width: 200px;
+    height: 115px;
+    align-items: center;
+    justify-content: center;
+}
+.tv_link_info {
+    font-size: 16px;
+    font-weight: 600;
+}
+.link-on-tv {
+    font-size: 13px;
+    border-bottom: 2px solid #000;
+    text-align: left;
+    padding-left: 3px;
+}
+@media (min-width: 1900px) {
+    .info_container {
+        padding: 26px 40px;
+        height: 110%;
+    }
+}
+/*info container css end*/
 /* table styles */
 .table > :not(caption) > * > * {
     padding: .15rem .15rem !important;
@@ -162,10 +247,17 @@ input::placeholder {
 .schedule-table {
     font-size: 14px;
 }
-
+.link_copy_btn {
+    border: none;
+    background-color: transparent;
+}
 .tv_links {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 600;
+    margin-bottom: 0;
+}
+.tv_links_title {
+    color: #959595;
 }
 /*modal check mark*/
 .option-box .checkmark {

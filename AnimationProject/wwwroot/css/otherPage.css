@@ -124,6 +124,14 @@ a:hover {
         height: 706px;
         object-fit: contain;
     }
+.category_head {
+    font-family: "Inter", sans-serif;
+    font-size: 4.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 3.5rem;
+    text-align: center;
+}
 /* imgae section */
 .img-box {
     overflow: hidden;
@@ -187,7 +195,7 @@ p {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20px 0 50px 0;
+    padding: 45px 0 105px 0;
 }
 
     .display h2 {
@@ -316,6 +324,7 @@ footer {
 
 .pop_imgs {
     background-color: #DADDEC;
+    padding-block: 100px;
 }
 
 .register_btn {
@@ -606,7 +615,7 @@ footer {
 .contact-title {
     font-size: 2.4rem;
     font-weight: 800;
-    font-family: "Montserrat", sans-serif !important;
+    font-family: "Inter", sans-serif !important;
 }
 
 .paper-plane {
@@ -751,9 +760,35 @@ plans {
     text-align: center;
     font-weight: 900;
     color: #000;
-    font-family: "Montserrat", sans-serif !important;
+    font-family: "Inter", sans-serif !important;
 }
 .partner {
     margin-block: 100px;
 }
 /*pricing css end*/
+/*about css*/
+.about_title {
+    font-family: "Inter", sans-serif;
+    font-weight: 800;
+    font-size: 6.5rem;
+    margin-bottom: 2.3rem;
+}
+.rignt-sec-about{
+    display: flex;
+    gap: 50px;
+}
+.about_lg_para {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+.about_sm_para {
+    font-size: 1rem;
+    color: #555;
+}
+.about-us-section{
+    margin: 80px 0 150px 0;
+}
+.about-text{
+    padding-right: 2.5rem;
+}
+/*about css end*/

@@ -227,12 +227,12 @@ ul.right-listone{padding:0px; margin:0px; width: 100%;
     .nav-right ul li.play-btn .btn {
         color: #fff;
         font-size: 14px;
-        font-weight: 600;
+        font-weight: 700;
         padding: 0.5px 7px;
         border-radius: 3px;
         margin: 4px !important;
         box-shadow: none;
-        border: 1px solid #fff;
+        border: 1.5px solid #fff;
     }
         .nav-right ul li.play-btn .btn:hover {
             background-color: #6214fe;
@@ -1833,4 +1833,7 @@ body {
     /* Let JS resize height; don't cap it here */
     height: auto;
     max-height: none;
+}
+.navbar-brand.layout-brand{
+    color: #fff !important;
 }

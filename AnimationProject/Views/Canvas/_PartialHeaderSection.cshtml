@@ -12,14 +12,17 @@
             <a href="javascript:void(0)"> <img  src="~/images/icons/icon-text.png" title="Text" alt="text" width="15"></a>
         </li>
         <li class="nav_button elementsToggleBtn" onclick="elementsTogglePopup(); handleNavButtonClick(event);">
-            <a href="javascript:void(0)"> <img src="~/images/icons/icon_circle.svg" title="Elements" alt="circle" width="14"></a>
+            @* <a href="javascript:void(0)"> <img src="~/images/icons/icon_circle.svg" title="Elements" alt="circle" width="14"></a> *@
+            <a href="javascript:void(0)"> <img src="~/images/icons/shapes.png" title="Elements" alt="element" width="20"></a>
         </li>
         @* <li>
             <a href="javascript:void(0)"> <img src="~/images/icons/ico-shapes-masking.svg" title="Masking" alt="Masking" width="17"></a>
         </li> *@
         <li class="nav_button" onclick="opengl(); handleNavButtonClick(event);">
             <a href="javascript:void(0)">
-                <img  src="~/images/icons/icon_gallery.svg" title="Templates" alt="Gallery" width="18">
+                @* <img  src="~/images/icons/icon_gallery.svg" title="Templates" alt="Gallery" width="18"> *@
+                <img src="~/images/icons/template.png" title="Templates" alt="Gallery" width="21">
+
             </a>
         </li>
         <li class="nav_button" onclick="handleNavButtonClick(event);" data-bs-toggle="modal" data-bs-target="#exampleModal">
@@ -31,7 +34,9 @@
 </div>
 <div class="col-md-6 nav-middle d-flex gap-2 justify-content-center align-items-center">
     <input type="text" class="form-control nav_input" placeholder="Board Name" aria-label="Username" id="txtSaveDesignBoardName">
-    <button class="D-icon-save" id="saveButton" onclick="SaveDesignBoard();" type="submit"><img src="~/images/icons/ico-save.svg"> </button>
+    <button class="D-icon-save" id="saveButton" onclick="SaveDesignBoard();" type="submit">
+        <img width="32" src="~/images/icons/ico-save.svg"> 
+    </button>
     <input type="hidden" id="hdnDesignBoardId" />
     <input type="hidden" id="hdnDesignBoardDetailsIdSlide1" />
     <input type="hidden" id="hdnDesignBoardDetailsIdSlide2" />
