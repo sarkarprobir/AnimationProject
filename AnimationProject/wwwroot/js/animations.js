@@ -1344,15 +1344,11 @@ function OnChangefontFamily(value) {
     if (isEditing && hasRange) {
         ed.focus();
 
-        // restore selection
         const sel = window.getSelection();
         sel.removeAllRanges();
         sel.addRange(_lastEditorRange);
 
-        // 1) try safe span wrap (only if selection is within one block)
         let ok = wrapSelectionInSpan(span => { span.style.fontFamily = fontFamily; });
-
-        // 2) if selection crosses blocks or wrap failed, use execCommand
         if (!ok) ok = applyInlineStyleSafe('fontFamily', fontFamily);
 
         // Optional normalize (must NOT collapse blocks)
@@ -1360,16 +1356,39 @@ function OnChangefontFamily(value) {
             normalizeEditorInPlace(ed);
         }
 
+        // ✅ ADD: force wrapping back on (avoids single-line collapse)
+        ensureEditorWrapping(ed);
+
         activeBox.text = ed.innerHTML;
         if (Obj) Obj.text = activeBox.text;
 
         resizeEditorToContent(ed, activeBox);
         if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
         drawText();
+        console.log(textObjects);
+        console.log(images);
         return;
     }
 
-    // Not editing → apply to whole box (simple wrap)
+    // Not editing → apply to whole box, but keep line <div>s intact
+    // ✅ ADD: safe whole-box update (preserves lines)
+    const safeHTML = applyFontFamilyToWholeBoxHTML(activeBox.text, fontFamily);
+    if (safeHTML != null) {
+        activeBox.text = safeHTML;
+        if (Obj) Obj.text = activeBox.text;
+
+        // if editor is open, keep it wrapped
+        ensureEditorWrapping(ed);
+
+        resizeEditorToContent(ed, activeBox);
+        if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
+        drawText();
+        console.log(textObjects);
+        console.log(images);
+        return;
+    }
+
+    // (fallback — your original span-around-all, kept for completeness)
     const wrap = document.createElement("div");
     wrap.innerHTML = activeBox.text || "";
     const span = document.createElement("span");
@@ -1378,10 +1397,15 @@ function OnChangefontFamily(value) {
     activeBox.text = span.outerHTML;
     if (Obj) Obj.text = activeBox.text;
 
+    ensureEditorWrapping(ed); // ✅ keep wrapping even in fallback
+
     resizeEditorToContent(ed, activeBox);
     if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
     drawText();
+    console.log(textObjects);
+    console.log(images);
 }
+
 
 
 function OnChangefontFamilyOLD(value) {
@@ -1754,8 +1778,8 @@ function animateText(direction, condition, loopCount) {
         // 4) Build the GSAP timeline
         const tlText = gsap.timeline({
             repeat: loopCount - 1,
-            onStart: () => drawCanvas(condition),
-            onUpdate: () => drawCanvas(condition),
+            onStart: () => drawText(),
+            onUpdate: () => drawText(),
         });
 
         // ✅ Pin noAnim items at t=0 — ensure they are visible always
@@ -1777,7 +1801,7 @@ function animateText(direction, condition, loopCount) {
         });
 
         // 🔥 Force immediate draw, outside GSAP
-        drawCanvas(condition);
+        drawText();
 
         // ── IN ── (only when tabType === "In")
         //if (tabType === "In") {
@@ -1798,7 +1822,7 @@ function animateText(direction, condition, loopCount) {
                     y: (i, target) => target.finalY,
                     duration: scaleInText*.20,
                     ease: "power1.in",
-                    onUpdate: () => drawCanvas(condition)
+                    onUpdate: () => drawText()
                 }, 0);
             });
         }
@@ -1831,7 +1855,7 @@ function animateText(direction, condition, loopCount) {
                     y: (i, target) => target.exitY,
                     duration: 0.20 * scaleOutText,
                     ease: "power1.out",
-                    onUpdate: () => drawCanvas(condition)
+                    onUpdate: () => drawText()
                 }, idx * 0);
             });
         }
@@ -1861,7 +1885,7 @@ function animateText(direction, condition, loopCount) {
                 txt.x = txt.finalX;
                 txt.y = txt.finalY;
             });
-            drawCanvas(condition);
+            drawText();
         });
     }
     else if (animationType === "delaylinear2") {
@@ -1901,9 +1925,9 @@ function animateText(direction, condition, loopCount) {
                 // reset positions on loop
                 images.forEach(img => { img.x = img.startX; img.y = img.startY; });
                 textObjects.forEach(txt => { txt.x = txt.startX; txt.y = txt.startY; });
-                drawCanvas(condition);
+                drawText();
             },
-            onUpdate: () => drawCanvas(condition)
+            onUpdate: () => drawText()
         });
         // ✅ Pin noAnim items at t=0 — ensure they are visible always
         images.filter(i => i.noAnim).forEach(imgObj => {
@@ -1924,7 +1948,7 @@ function animateText(direction, condition, loopCount) {
         });
 
         // 🔥 Force immediate draw, outside GSAP
-        drawCanvas(condition);
+        drawText();
 
 
         // ── IN ── (only if requested)
@@ -1935,7 +1959,7 @@ function animateText(direction, condition, loopCount) {
                 duration: individualIn,
                 ease: "power1.in",
                 stagger: staggerIn,
-                onUpdate: () => drawCanvas(condition)
+                onUpdate: () => drawText()
             }, 0);
         }
 
@@ -1966,7 +1990,7 @@ function animateText(direction, condition, loopCount) {
                 duration: individualOut,
                 ease: "power1.out",
                 stagger: staggerOut,
-                onUpdate: () => drawCanvas(condition)
+                onUpdate: () => drawText()
             }, 0);
         }
 
@@ -1989,7 +2013,7 @@ function animateText(direction, condition, loopCount) {
             textObjects.forEach(txt => {
                 txt.x = txt.finalX; txt.y = txt.finalY;
             });
-            drawCanvas(condition);
+            drawText();
         });
 
         // ── OPTIONAL: normalize to exact slide length ──
@@ -2008,7 +2032,7 @@ function animateText(direction, condition, loopCount) {
         if (tabType === "In") items.forEach(o => o.opacity = 0);
         else items.forEach(o => o.opacity = 1);
 
-        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawText() });
 
         // IN fade in
         if (tabType === "In") {
@@ -2039,7 +2063,7 @@ function animateText(direction, condition, loopCount) {
         // RESET
         tl.eventCallback("onComplete", () => {
             items.forEach(o => o.opacity = 1);
-            drawCanvas(condition);
+            drawText();
         });
     }
 
@@ -2055,7 +2079,7 @@ function animateText(direction, condition, loopCount) {
             o.startY = o.exitY || o.finalY;
         });
 
-        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawText() });
 
         // IN bounce from startX/startY to finalX/finalY
         if (tabType === "In") {
@@ -2087,7 +2111,7 @@ function animateText(direction, condition, loopCount) {
         // RESET
         tl.eventCallback("onComplete", () => {
             items.forEach(o => { o.x = o.finalX; o.y = o.finalY; });
-            drawCanvas(condition);
+            drawText();
         });
     }
     // ── Zoom (canvas-only) In working Out not working also only image working for In ───────────────────────────
@@ -2100,7 +2124,7 @@ function animateText(direction, condition, loopCount) {
             o.opacity = (tabType === "In" ? 0 : 1);
         });
 
-        const tl = gsap.timeline({ repeat: loopCount - 1, onStart: () => drawCanvas(condition), onUpdate: () => drawCanvas(condition) });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onStart: () => drawText(), onUpdate: () => drawText() });
 
         if (tabType === "In") {
             tl.to(items, {
@@ -2120,7 +2144,7 @@ function animateText(direction, condition, loopCount) {
         }
         tl.eventCallback("onComplete", () => {
             items.forEach(o => { o.scaleX = 1; o.scaleY = 1; o.opacity = 1; });
-            drawCanvas(condition);
+            drawText();
         });
     }
 
@@ -2167,7 +2191,7 @@ function animateText(direction, condition, loopCount) {
 
         const tl = gsap.timeline({
             repeat: loopCount - 1,
-            onUpdate: () => drawCanvas(condition)
+            onUpdate: () => drawText()
         });
 
         // Static items pinned
@@ -2181,7 +2205,7 @@ function animateText(direction, condition, loopCount) {
                     clip: 0,
                     duration: inTime,
                     ease: "power2.out",
-                    onUpdate: () => drawCanvas(condition)
+                    onUpdate: () => drawText()
                 }, 0);
             });
         }
@@ -2198,7 +2222,7 @@ function animateText(direction, condition, loopCount) {
                     clip: 1,
                     duration: outTime,
                     ease: "power2.out",
-                    onUpdate: () => drawCanvas(condition)
+                    onUpdate: () => drawText()
                 }, delayM);
             });
         }
@@ -2212,7 +2236,7 @@ function animateText(direction, condition, loopCount) {
 
             [...animItems, ...staticItems].forEach(o => o.rotation = o.rotation);
 
-            drawCanvas(condition);
+            drawText();
         });
 
     }
@@ -2225,7 +2249,7 @@ function animateText(direction, condition, loopCount) {
         const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
         // reset home
         items.forEach(o => { o.x = o.finalX; o.y = o.finalY; });
-        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawText() });
 
         if (tabType === "In") {
             tl.to(items, {
@@ -2243,7 +2267,7 @@ function animateText(direction, condition, loopCount) {
         }
         tl.eventCallback("onComplete", () => {
             items.forEach(o => { o.x = o.finalX; o.y = o.finalY; });
-            drawCanvas(condition);
+            drawText();
         });
     }
 
@@ -2251,7 +2275,7 @@ function animateText(direction, condition, loopCount) {
     else if (animationType === "blurCanvas") {
         const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
         items.forEach(o => { o.x = o.finalX; o.y = o.finalY; o.blur = 20; });
-        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawText() });
 
         if (tabType === "In") {
             tl.to(items, { blur: 0, duration: inTime, ease: "power2.out", stagger: 0.1 }, 0);
@@ -2265,7 +2289,7 @@ function animateText(direction, condition, loopCount) {
         }
         tl.eventCallback("onComplete", () => {
             items.forEach(o => o.blur = 0);
-            drawCanvas(condition);
+            drawText();
         });
     }
 
@@ -2310,9 +2334,9 @@ function animateText(direction, condition, loopCount) {
                     else if (direction === "top") o.y = -200;
                     else if (direction === "bottom") o.y = canvasHeight + 200;
                 });
-                drawCanvas(condition);
+                drawText();
             },
-            onUpdate: () => drawCanvas(condition),
+            onUpdate: () => drawText(),
             onComplete: () => {
                 // snap back exactly to startRotation
                 allItems.concat(staticItems).forEach(o => {
@@ -2320,7 +2344,7 @@ function animateText(direction, condition, loopCount) {
                     o.y = o.finalY;
                     o.rotation = o.startRotation;
                 });
-               drawCanvas(condition);
+                drawText();
             }
         });
         // ✅ Pin noAnim items at t=0 — ensure they are visible always
@@ -2341,7 +2365,7 @@ function animateText(direction, condition, loopCount) {
             }, 0);
         });
         // 🔥 Force immediate draw, outside GSAP
-        drawCanvas(condition);
+        drawText();
         const tweenIn = 0.15 * inTime;
         const tweenOut = 0.15 * outTime;
 
@@ -2361,7 +2385,7 @@ function animateText(direction, condition, loopCount) {
                     rotation: `+=${inRotationAmount}`,
                     x: (i, t) => t.finalX,
                     y: (i, t) => t.finalY,
-                    onUpdate: () => drawCanvas(condition)
+                    onUpdate: () => drawText()
                 }, tweenIn);
             });
         }
@@ -2403,7 +2427,7 @@ function animateText(direction, condition, loopCount) {
                     rotation: `+=${outRotationAmount}`,
                     x: (i, t) => t.exitX,
                     y: (i, t) => t.exitY,
-                    onUpdate: () => drawCanvas(condition)
+                    onUpdate: () => drawText()
                 }, tweenOut);
             });
 
@@ -2442,7 +2466,7 @@ function animateText(direction, condition, loopCount) {
                     txt.x = txt.finalX;
                     txt.y = txt.finalY;
                 });
-                drawCanvas(condition);
+                drawText();
             });
         }
 
@@ -2466,7 +2490,7 @@ function animateText(direction, condition, loopCount) {
     else if (animationType === "curtainCanvas") {
         const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
         items.forEach(o => { o.x = o.finalX; o.y = o.finalY; o.scaleY = 0; });
-        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawText() });
 
         if (tabType === "In") {
             tl.to(items, { scaleY: 1, duration: inTime, ease: "power2.out", stagger: 0.1 }, 0);
@@ -2480,7 +2504,7 @@ function animateText(direction, condition, loopCount) {
         }
         tl.eventCallback("onComplete", () => {
             items.forEach(o => o.scaleY = 1);
-            drawCanvas(condition);
+            drawText();
         });
     }
 
@@ -2488,7 +2512,7 @@ function animateText(direction, condition, loopCount) {
     else if (animationType === "blurFlashCanvas") {
         const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
         items.forEach(o => { o.x = o.finalX; o.y = o.finalY; o.blur = 0; o.opacity = 1; });
-        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawText() });
 
         if (tabType === "In") {
             tl.to(items, {
@@ -2508,7 +2532,7 @@ function animateText(direction, condition, loopCount) {
         }
         tl.eventCallback("onComplete", () => {
             items.forEach(o => { o.blur = 0; o.opacity = 1; });
-            drawCanvas(condition);
+            drawText();
         });
     }
 
@@ -2549,7 +2573,7 @@ function animateText(direction, condition, loopCount) {
 
     const tl = gsap.timeline({
         repeat: loopCount - 1,
-        onUpdate: () => drawCanvas(condition)
+        onUpdate: () => drawText()
     });
 
     // 🧷 Pin static items immediately
@@ -2649,7 +2673,7 @@ function animateText(direction, condition, loopCount) {
 
     const tl = gsap.timeline({
         repeat: loopCount - 1,
-        onUpdate: () => drawCanvas(condition)
+        onUpdate: () => drawText()
     });
 
     // Pin static items immediately
@@ -2670,7 +2694,7 @@ function animateText(direction, condition, loopCount) {
                 scaleY: 1,
                 duration: inTime / 2,
                 ease: "power2.out",
-                onUpdate: () => drawCanvas(condition)
+                onUpdate: () => drawText()
             }, 0);
         }
 
@@ -2695,7 +2719,7 @@ function animateText(direction, condition, loopCount) {
                 scaleY: 0,
                 duration: outTime / 2,
                 ease: "power2.inOut",
-                onUpdate: () => drawCanvas(condition)
+                onUpdate: () => drawText()
             }, 0);
             
         }
@@ -2705,7 +2729,7 @@ function animateText(direction, condition, loopCount) {
     else if (animationType === "glitchCanvas") {
         const items = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
         items.forEach(o => { o.x = o.finalX; o.y = o.finalY; });
-        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawCanvas(condition) });
+        const tl = gsap.timeline({ repeat: loopCount - 1, onUpdate: () => drawText() });
 
         if (tabType === "In") {
             tl.to(items, {
@@ -2725,7 +2749,7 @@ function animateText(direction, condition, loopCount) {
         }
         tl.eventCallback("onComplete", () => {
             items.forEach(o => { o.x = o.finalX; });
-            drawCanvas(condition);
+            drawText();
         });
     }
 
@@ -2916,7 +2940,7 @@ function animateImage(condition) {
             y: endY,
             duration: 2,
             ease: "power1.inOut",
-            onUpdate: function () { drawCanvas(condition); },
+            onUpdate: function () { drawText(); },
         });
     } else if (animationType === "elastic") {
         gsap.to(imagePosition, {
@@ -2924,7 +2948,7 @@ function animateImage(condition) {
             y: endY,
             duration: 2.5,
             ease: "elastic.out(1, 0.3)",
-            onUpdate: function () { drawCanvas(condition); },
+            onUpdate: function () { drawText(); },
         });
     } else if (animationType === "spin") {
         let angle = 0;
@@ -2947,7 +2971,7 @@ function animateImage(condition) {
                 y: endY,
                 duration: 2,
                 ease: "power2.out",
-                onUpdate: function () { drawCanvas(condition); },
+                onUpdate: function () { drawText(); },
             }
         );
     } else if (animationType === "zoom-in") {
@@ -2960,7 +2984,7 @@ function animateImage(condition) {
                 y: endY,
                 duration: 2,
                 ease: "power2.inOut",
-                onUpdate: function () { drawCanvas(condition); },
+                onUpdate: function () { drawText(); },
             }
         );
     } else if (animationType === "bounce") {
@@ -2969,7 +2993,7 @@ function animateImage(condition) {
             y: endY,
             duration: 2,
             ease: "bounce.out",
-            onUpdate: function () { drawCanvas(condition); },
+            onUpdate: function () { drawText(); },
         });
     } else if (animationType === "path") {
         gsap.to(imagePosition, {
@@ -2983,7 +3007,7 @@ function animateImage(condition) {
                 autoRotate: true,
             },
             ease: "power2.inOut",
-            onUpdate: function () { drawCanvas(condition); },
+            onUpdate: function () { drawText(); },
         });
     } else if (animationType === "flip") {
         gsap.fromTo(
@@ -2995,7 +3019,7 @@ function animateImage(condition) {
                 y: endY,
                 duration: 2,
                 ease: "power2.inOut",
-                onUpdate: function () { drawCanvas(condition); },
+                onUpdate: function () { drawText(); },
             }
         );
     } else if (animationType === "blur") {
@@ -3006,11 +3030,11 @@ function animateImage(condition) {
             ease: "power2.out",
             onUpdate: () => {
                 ctx.filter = "blur(5px)";
-                drawCanvas(condition);
+                drawText();
             },
             onComplete: () => {
                 ctx.filter = "none";
-                drawCanvas(condition);
+                drawText();
             },
         });
     }
@@ -3025,7 +3049,7 @@ function animateImage(condition) {
                 y: endY,
                 duration: 2,
                 ease: "power2.out",
-                onUpdate: function () { drawCanvas(condition); },
+                onUpdate: function () { drawText(); },
             }
         );
 
@@ -3039,7 +3063,7 @@ function animateImage(condition) {
                 curviness: 1.5,
                 autoRotate: true,
             },
-            onUpdate: function () { drawCanvas(condition); },
+            onUpdate: function () { drawText(); },
         });
 
 
@@ -3059,8 +3083,8 @@ function applyAnimations(direction, conditionvalue) {
     const bgColor = $("#hdnBackgroundSpecificColor").val();
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    drawCanvas(conditionvalue);
-
+    //drawCanvas(conditionvalue);
+    drawText();
     animateText(direction, conditionvalue, parseInt($("#hdnlLoopControl").val()) || 1);
     animateImage(conditionvalue);
 
@@ -3610,70 +3634,7 @@ function pasteFromClipboard() {
 
 
 
-//////pasteOption.addEventListener('click', () => {
-//////    pasteFromClipboard();
-//////});
 
-//////// ─── 4) pasteFromClipboard implementation ───────────────────────────
-//////function pasteFromClipboard() {
-//////    // If nothing in clipboard, do nothing
-//////    if (
-//////        canvasClipboard.textItems.length === 0 &&
-//////        canvasClipboard.imageItems.length === 0
-//////    ) {
-//////        return;
-//////    }
-
-//////    // 4.1) Clear existing selection
-//////    textObjects.forEach(obj => obj.selected = false);
-//////    images.forEach(img => img.selected = false);
-
-//////    // Compute the current highest zIndex
-//////    //const allItems = [...textObjects, ...images];
-//////    //const maxZ = allItems.reduce((max, item) => Math.max(max, item.zIndex || 0), 0);
-
-//////    //let currentZ = maxZ + 1;
-
-
-//////    // 4.2) Paste text items at the same x/y as the original
-//////    canvasClipboard.textItems.forEach(orig => {
-//////        const pasted = cloneTextObject(orig);
-//////        pasted.x = orig.x;
-//////        pasted.y = orig.y;
-//////        pasted.selected = true;
-//////        pasted.zIndex = orig.zIndex;
-//////        type: orig.type,
-//////        textObjects.push(pasted);
-//////    });
-
-//////    // 4.3) Paste image items at the same x/y as the original
-//////    canvasClipboard.imageItems.forEach(orig => {
-//////        const pasted = cloneImageObject(orig);
-//////        pasted.x = orig.x;
-//////        pasted.y = orig.y;
-//////        pasted.selected = true;
-//////        pasted.zIndex = orig.zIndex;
-//////        type: orig.type,
-//////        images.push(pasted);
-//////    });
-
-//////    // 4.4) Redraw the canvas
-//////    //drawCanvas('Common');
-//////    drawText();
-//////}
-
-
-//// ─── 5) Keyboard shortcuts (Ctrl+C, Ctrl+V) ─────────────────────────
-//window.addEventListener('keydown', (e) => {
-//    if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) {
-//        e.preventDefault();
-//        copyOption.click();
-//    }
-//    if (e.ctrlKey && (e.key === 'v' || e.key === 'V')) {
-//        e.preventDefault();
-//        pasteFromClipboard();
-//    }
-//});
 // ─── 5) Keyboard shortcuts (Ctrl+C/Cmd+C, Ctrl+V/Cmd+V) ─────────────────────────
 window.addEventListener('keydown', (e) => {
     const isCopy = (e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C');
@@ -5444,6 +5405,34 @@ function getSelectedType() {
 
     return null;
 }
+// ✅ ADD: hit test for a rotated box (works for text boxes)
+function isPointInRotatedBox(box, x, y) {
+    const { w, h, cx, cy } = getBoxRect(box);              // you already have this
+    const ang = deg2rad(box.rotation || 0);                // you already have this
+    const dx = x - cx, dy = y - cy;
+    const cos = Math.cos(-ang), sin = Math.sin(-ang);      // rotate mouse into box's local space
+    const rx = dx * cos - dy * sin;
+    const ry = dx * sin + dy * cos;
+    return (rx >= -w / 2 && rx <= w / 2 && ry >= -h / 2 && ry <= h / 2);
+}
+
+// ✅ ADD: get the topmost item under (x,y) by zIndex
+function getTopHitAt(x, y) {
+    const all = [...(images || []), ...(textObjects || [])]
+        .slice()
+        .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0)); // bottom→top
+
+    for (let i = all.length - 1; i >= 0; i--) {           // check from topmost
+        const it = all[i];
+        if (it.type === 'image') {
+            if (isMouseOverImage?.(it, { x, y })) return it;  // you already have this
+        } else {
+            if (isPointInRotatedBox(it, x, y)) return it;
+        }
+    }
+    return null;
+}
+
 canvas.addEventListener("click", function onCanvasClick(e) {
     // ignore shift here
     if (e.shiftKey) return;
@@ -5497,11 +5486,34 @@ canvas.addEventListener("click", function onCanvasClick(e) {
     }
 
     // --- hit testing (topmost) ---
-    const txtHit = getTextObjectAt(mouseX, mouseY);
+    let txtHit = getTextObjectAt(mouseX, mouseY);
     let imgHit = null;
     for (let i = (images ? images.length : 0) - 1; i >= 0; i--) {
         if (isMouseOverImage(images[i], { x: mouseX, y: mouseY })) { imgHit = images[i]; break; }
     }
+    // ✅ ADD: zIndex-aware resolution when both overlap
+    (function resolveByZIndex() {
+        const top = getTopHitAt(mouseX, mouseY);
+        if (!top) return;
+
+        const topZ = top.zIndex || 0;
+        const txtZ = txtHit ? (txtHit.zIndex || 0) : -Infinity;
+        const imgZ = imgHit ? (imgHit.zIndex || 0) : -Infinity;
+
+        // If our simple per-type tests disagree with the real topmost, override them
+        if (top.type === 'image') {
+            if (!imgHit || topZ >= imgZ) {        // image is really on top
+                imgHit = top;
+                // ensure text doesn't steal selection
+                if (txtHit && txtZ < topZ) txtHit = null;
+            }
+        } else {
+            if (!txtHit || topZ >= txtZ) {        // text is really on top
+                txtHit = top;
+                if (imgHit && imgZ < topZ) imgHit = null;
+            }
+        }
+    })();
 
     // always start fresh
     clearSelection();
@@ -5973,6 +5985,8 @@ function generateUUID() {
 }
 
 function ImagePropertySet() {
+    console.log(textObjects);
+    console.log(images);
     const noAnimCheckbox = document.getElementById('noAnimCheckbox');
     const isChecked = noAnimCheckbox.checked;
     
@@ -6007,6 +6021,8 @@ function ImagePropertySet() {
 
     // one save at the end
     SaveDesignBoard();
+    console.log(textObjects);
+    console.log(images);
 }
 //canvasContainer.addEventListener("dblclick", function (e) {
 //    const rect = canvas.getBoundingClientRect();
@@ -6211,12 +6227,12 @@ function normalizeEditorInPlace(root, keepSpan) {
     // 3) Merge adjacent spans with identical style
     mergeAdjacentSameStyleSpans(root);
     // 4) If single-line, enforce nowrap – but IN PLACE
-    if (!root.querySelector("br")) {
-        const line = (root.childElementCount === 1 && root.firstElementChild?.tagName === "DIV")
-            ? root.firstElementChild
-            : root;
-        line.style.whiteSpace = "nowrap";
-    }
+    //if (!root.querySelector("br")) {
+    //    const line = (root.childElementCount === 1 && root.firstElementChild?.tagName === "DIV")
+    //        ? root.firstElementChild
+    //        : root;
+    //    line.style.whiteSpace = "nowrap";
+    //}
 
     // Re-select keepSpan if it still exists
     if (keepSpan && root.contains(keepSpan)) {
@@ -6339,17 +6355,42 @@ function collapseSpanChains(root) {
                 toProcess.push(el);
             }
         }
+
+        // ✅ ADD: process deepest spans first (children before parents)
+        toProcess.sort((a, b) => {
+            const depth = (n) => { let d = 0; for (let p = n; p; p = p.parentElement) d++; return d; };
+            return depth(b) - depth(a);
+        });
+
         toProcess.forEach(parent => {
+            // ✅ ADD: re-validate; this node may have changed since we collected it
+            if (!parent || !parent.isConnected) return;
+
+            // still exactly one ELEMENT child and it's a <span>?
             const child = parent.firstElementChild;
-            const merged = mergeStyleStrings(parent.getAttribute("style") || "", child.getAttribute("style") || "");
-            if (merged) parent.setAttribute("style", merged); else parent.removeAttribute("style");
-            // move grandchildren up
+            if (!child) return;
+            if (parent.childElementCount !== 1) return;
+            if (child.tagName !== "SPAN") return;
+
+            // ✅ ADD: getAttribute only when nodes are valid
+            const pStyle = parent.getAttribute("style") || "";
+            const cStyle = child.getAttribute("style") || "";
+
+            // ✅ ADD: be resilient if mergeStyleStrings throws
+            let merged = "";
+            try { merged = mergeStyleStrings(pStyle, cStyle) || ""; } catch (e) { merged = pStyle; }
+
+            if (merged.trim()) parent.setAttribute("style", merged);
+            else parent.removeAttribute("style");
+
+            // move grandchildren up (guard while child still alive)
             while (child.firstChild) parent.insertBefore(child.firstChild, child);
             child.remove();
             changed = true;
         });
     }
 }
+
 function mergeAdjacentSameStyleSpans(root) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, null, false);
     const parents = new Set();
@@ -6411,62 +6452,301 @@ if (colorInput) {
         textEditorNew && textEditorNew.focus();
     });
 }
-function ChangeColor() {
-  const colorPicker = document.getElementById("favcolor");
-  const color = (colorPicker && colorPicker.value) ? colorPicker.value : "#000000";
+function getSelectionCharacterOffsetsWithin(root, rngOpt) {
+    if (!root) return null;
+    const sel = window.getSelection && window.getSelection();
+    const rng = rngOpt || (sel && sel.rangeCount ? sel.getRangeAt(0) : null);
+    if (!rng || !root.contains(rng.commonAncestorContainer)) return null;
 
-  $("#hdnTextColor").val(color);
-  const textColor = document.getElementById("hdnTextColor").value;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+    let node, start = 0, end = 0, seenStart = false;
+    while ((node = walker.nextNode())) {
+        const len = node.nodeValue.length;
+        if (!seenStart) {
+            if (node === rng.startContainer) { start += rng.startOffset; seenStart = true; }
+            else { start += len; }
+        }
+        if (node === rng.endContainer) { end += rng.endOffset; break; }
+        else { end += len; }
+    }
+    return { start, end };
+}
 
-  const Obj = Array.isArray(textObjects) ? textObjects.find(o => o.selected) : null;
-  if (Obj) Obj.textColor = textColor || "black";
-
-  if (!activeBox) return;
-
-  const ed = textEditorNew;
-  const hasRange = !!_lastEditorRange && ed && ed.isConnected &&
-                   ed.contains(_lastEditorRange.commonAncestorContainer);
-
-  if (isEditing && hasRange) {
-    ed.focus();
-
+function setSelectionByCharacterOffsets(root, start, end) {
+    if (!root || start == null || end == null) return false;
+    const range = document.createRange();
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+    let node, pos = 0, sNode = null, sOff = 0, eNode = null, eOff = 0;
+    while ((node = walker.nextNode())) {
+        const len = node.nodeValue.length;
+        if (sNode == null && start <= pos + len) { sNode = node; sOff = Math.max(0, start - pos); }
+        if (eNode == null && end <= pos + len) { eNode = node; eOff = Math.max(0, end - pos); break; }
+        pos += len;
+    }
+    if (!sNode) return false;
+    if (!eNode) { eNode = sNode; eOff = sOff; }
+    range.setStart(sNode, sOff);
+    range.setEnd(eNode, eOff);
     const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(_lastEditorRange);
+    sel.removeAllRanges(); sel.addRange(range);
+    window._lastEditorRange = range.cloneRange();
+    return true;
+}
+// Normalize any color string to computed rgb(...) for reliable compare
+function normalizeColorString(c) {
+    const el = document.createElement('span');
+    el.style.color = c;
+    document.body.appendChild(el);
+    const out = getComputedStyle(el).color;
+    document.body.removeChild(el);
+    return out;
+}
 
-    // 1) safe span wrap if within one block
-    let ok = wrapSelectionInSpan(span => { span.style.color = color; });
+// Remove inline 'color' from descendants of rootEl ONLY (keep rootEl’s own color)
+function stripInlineColorInside(rootEl) {
+    if (!rootEl) return;
+    const walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_ELEMENT, null, false);
+    const list = [];
+    while (walker.nextNode()) {
+        const el = walker.currentNode;
+        if (el === rootEl) continue;                 // don’t strip the wrapper itself
+        if (el.hasAttribute && el.hasAttribute('data-color-root')) continue; // don’t strip protected nodes
+        if (el.style && el.style.color) list.push(el);
+    }
+    list.forEach(el => { try { el.style.removeProperty('color'); } catch (_) { } });
+}
 
-    // 2) else execCommand
-    if (!ok) ok = applyInlineStyleSafe('color', color);
+// Ensure everything intersecting current selection has the target color (important)
+function ensureSelectedInlineColor(ed, charSel, color) {
+    if (!ed || !charSel) return;
+    const prevSel = window.getSelection();
+    const prevRange = (prevSel && prevSel.rangeCount) ? prevSel.getRangeAt(0).cloneRange() : null;
 
-    if (ok && typeof normalizeEditorInPlace === "function") {
-      normalizeEditorInPlace(ed);   // make sure this doesn't flatten <div>/<br>
+    // Build a live range for the selection
+    if (!setSelectionByCharacterOffsets(ed, charSel.start, charSel.end)) return;
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    const rng = sel.getRangeAt(0);
+
+    const common = rng.commonAncestorContainer.nodeType === 1
+        ? rng.commonAncestorContainer
+        : rng.commonAncestorContainer.parentElement;
+
+    if (common) {
+        const want = normalizeColorString(color);
+        const walker = document.createTreeWalker(common, NodeFilter.SHOW_ELEMENT, null, false);
+        while (walker.nextNode()) {
+            const el = walker.currentNode;
+            if (!ed.contains(el)) continue;
+            if (!rng.intersectsNode(el)) continue;
+            if (el.hasAttribute && el.hasAttribute('data-color-root')) continue;
+            const cur = getComputedStyle(el).color;
+            if (cur !== want) {
+                try { el.style.setProperty('color', color, 'important'); } catch (_) { }
+            }
+        }
     }
 
-    activeBox.text = ed.innerHTML;
+    // restore previous selection cache (you reselect later anyway)
+    if (prevRange) { prevSel.removeAllRanges(); prevSel.addRange(prevRange); }
+}
+function ChangeColor() {
+    const colorPicker = document.getElementById("favcolor");
+    const color = (colorPicker && colorPicker.value) ? colorPicker.value : "#000000";
+
+    $("#hdnTextColor").val(color);
+    const textColor = document.getElementById("hdnTextColor").value;
+
+    const Obj = Array.isArray(textObjects) ? textObjects.find(o => o.selected) : null;
+    if (Obj) Obj.textColor = textColor || "black";
+
+    if (!activeBox) return;
+
+    const ed = textEditorNew;
+    const hasRange = !!_lastEditorRange && ed && ed.isConnected &&
+        ed.contains(_lastEditorRange.commonAncestorContainer);
+
+    if (isEditing && hasRange) {
+        ed.focus();
+
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(_lastEditorRange);
+
+        // ✅ ADD (A): capture selection as character offsets BEFORE any DOM change
+        const __rngNow = (function () {
+            const s = window.getSelection && window.getSelection();
+            return (s && s.rangeCount && ed.contains(s.getRangeAt(0).commonAncestorContainer))
+                ? s.getRangeAt(0)
+                : (_lastEditorRange && ed.contains(_lastEditorRange.commonAncestorContainer) ? _lastEditorRange : null);
+        })();
+        const __charSel = __rngNow ? getSelectionCharacterOffsetsWithin(ed, __rngNow) : null;
+
+        // 1) safe span wrap if within one block
+        let wrappedSpanRef = null; // ADD
+        let ok = wrapSelectionInSpan(span => {
+            span.style.color = color;
+            span.style.setProperty('color', color, 'important');   // ✅ ADD: make it win
+            span.setAttribute('data-color-root', '1');             // ✅ ADD: protect from stripper
+            wrappedSpanRef = span;                                 // capture the wrapper we just created
+        });
+
+        // 2) else execCommand
+        if (!ok) ok = applyInlineStyleSafe('color', color);
+        // Optional extra fallback (kept very safe)
+        if (!ok) {
+            try { document.execCommand('styleWithCSS', false, true); } catch (_) { }
+            try { ok = document.execCommand('foreColor', false, color); } catch (_) { }
+        }
+
+        // 🔧 Make our color win over nested old colors (strip ONLY descendants)
+        if (ok) {
+            if (wrappedSpanRef) {
+                stripInlineColorInside(wrappedSpanRef); // removes child inline colors only
+            } else {
+                // best-effort clean for execCommand path: limit to current selection subtree
+                const r = sel && sel.rangeCount ? sel.getRangeAt(0) : null;
+                const common = r ? (r.commonAncestorContainer.nodeType === 1
+                    ? r.commonAncestorContainer
+                    : r.commonAncestorContainer.parentElement) : null;
+                if (common && ed.contains(common)) {
+                    // Avoid nuking containers we just colored: mark current selection container
+                    common.setAttribute && common.setAttribute('data-color-root', '1');
+                    stripInlineColorInside(common);
+                    common.removeAttribute && common.removeAttribute('data-color-root');
+                }
+            }
+        }
+
+        if (ok && typeof normalizeEditorInPlace === "function") {
+            normalizeEditorInPlace(ed);   // your existing normalizer
+        }
+
+        activeBox.text = ed.innerHTML;
+        if (Obj) Obj.text = activeBox.text;
+
+        resizeEditorToContent(ed, activeBox);
+        if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
+
+        // ✅ ADD (B): enforce final color across all elements intersecting the selection
+        if (__charSel) {
+            ensureSelectedInlineColor(ed, __charSel, color);
+        }
+
+        // ✅ ADD (C): restore the SAME selection so highlight remains
+        if (__charSel) {
+            setSelectionByCharacterOffsets(ed, __charSel.start, __charSel.end);
+            ed.focus({ preventScroll: true });
+            requestAnimationFrame(() => {
+                setSelectionByCharacterOffsets(ed, __charSel.start, __charSel.end);
+                ed.focus({ preventScroll: true });
+                const s2 = window.getSelection();
+                if (s2 && s2.rangeCount) window._lastEditorRange = s2.getRangeAt(0).cloneRange();
+            });
+        }
+
+        drawText();
+        return;
+    }
+
+    // Whole box (unchanged)
+    const holder = document.createElement("div");
+    holder.innerHTML = activeBox.text || "";
+    const spanAll = document.createElement("span");
+    spanAll.style.color = color;
+    spanAll.style.setProperty('color', color, 'important'); // ✅ ADD: keep consistent
+    spanAll.innerHTML = holder.innerHTML;
+    activeBox.text = spanAll.outerHTML;
     if (Obj) Obj.text = activeBox.text;
 
     resizeEditorToContent(ed, activeBox);
     if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
     drawText();
-    return;
-  }
-
-  // Whole box
-  const holder = document.createElement("div");
-  holder.innerHTML = activeBox.text || "";
-  const spanAll = document.createElement("span");
-  spanAll.style.color = color;
-  spanAll.innerHTML = holder.innerHTML;
-  activeBox.text = spanAll.outerHTML;
-  if (Obj) Obj.text = activeBox.text;
-
-  resizeEditorToContent(ed, activeBox);
-  if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
-  drawText();
 }
 
+function ChangeColorOLD() {
+    const colorPicker = document.getElementById("favcolor");
+    const color = (colorPicker && colorPicker.value) ? colorPicker.value : "#000000";
+
+    $("#hdnTextColor").val(color);
+    const textColor = document.getElementById("hdnTextColor").value;
+
+    const Obj = Array.isArray(textObjects) ? textObjects.find(o => o.selected) : null;
+    if (Obj) Obj.textColor = textColor || "black";
+
+    if (!activeBox) return;
+
+    const ed = textEditorNew;
+    const hasRange = !!_lastEditorRange && ed && ed.isConnected &&
+        ed.contains(_lastEditorRange.commonAncestorContainer);
+
+    if (isEditing && hasRange) {
+        ed.focus();
+
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(_lastEditorRange);
+
+        // 1) safe span wrap if within one block
+        let wrappedSpanRef = null; // ADD
+        let ok = wrapSelectionInSpan(span => {
+            span.style.color = color;
+            wrappedSpanRef = span;    // ADD: capture the wrapper we just created
+        });
+
+        // 2) else execCommand
+        if (!ok) ok = applyInlineStyleSafe('color', color);
+
+        // 🔧 ADD: ensure our color wins over any inner spans with their own color
+        if (ok) {
+            if (wrappedSpanRef) {
+                stripInlineColorInside(wrappedSpanRef);
+            } else {
+                // best-effort clean for execCommand path: limit to current selection subtree
+                const r = sel && sel.rangeCount ? sel.getRangeAt(0) : null;
+                const common = r ? (r.commonAncestorContainer.nodeType === 1
+                    ? r.commonAncestorContainer
+                    : r.commonAncestorContainer.parentElement) : null;
+                if (common && ed.contains(common)) {
+                    stripInlineColorInside(common);
+                }
+            }
+        }
+
+        if (ok && typeof normalizeEditorInPlace === "function") {
+            normalizeEditorInPlace(ed);   // your existing normalizer
+        }
+
+        activeBox.text = ed.innerHTML;
+        if (Obj) Obj.text = activeBox.text;
+
+        resizeEditorToContent(ed, activeBox);
+        if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
+        drawText();
+        return;
+    }
+
+    // Whole box (unchanged)
+    const holder = document.createElement("div");
+    holder.innerHTML = activeBox.text || "";
+    const spanAll = document.createElement("span");
+    spanAll.style.color = color;
+    spanAll.innerHTML = holder.innerHTML;
+    activeBox.text = spanAll.outerHTML;
+    if (Obj) Obj.text = activeBox.text;
+
+    resizeEditorToContent(ed, activeBox);
+    if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
+    drawText();
+}
+
+function stripInlineColorInside(rootSpan) {
+    if (!rootSpan) return;
+    // remove color on descendants only; keep rootSpan's color
+    rootSpan.querySelectorAll('span[style*="color"]').forEach(el => {
+        el.style.color = '';
+    });
+}
 
 
 function ChangeColorOLD() {
@@ -8295,7 +8575,7 @@ function updateFontStyleButtons() {
     const anyItalic = textObjects.some(o => o.selected && o.isItalic);
     document.getElementById("italicBtn").classList.toggle("active", anyItalic);
 }
-const allItems = [];
+let allItems = [];
 function reindex() {
     allItems.forEach((obj, idx) => obj.zIndex = idx + 1)
 }
@@ -8310,27 +8590,115 @@ function bringToFront(item) {
 function getAllItems() {
     return [...textObjects, ...images];
 }
-function sendToBack(item) {
-    // item.zIndex = Math.min(...getAllItems().map(i => i.zIndex || 0)) - 1;
-    const i = allItems.indexOf(item)
-    if (i === -1) return
-    allItems.splice(i, 1)     // remove it
-    allItems.unshift(item)    // insert at start (bottom)
-    reindex()
+//window.allItems = window.allItems || getAllItems();
+// ✅ ADD: whenever you add/remove an item elsewhere, call this to resync the working list
+
+function refreshAllItems() {
+    const current = getAllItems();
+    // Keep only those that still exist; add new ones that weren't tracked yet.
+    const set = new Set(current);
+    allItems = allItems.filter(it => set.has(it));
+    for (const it of current) if (!allItems.includes(it)) allItems.push(it);
+}
+// ✅ ADD: compact and normalize z-order based on current zIndex values
+function reindexZ() {
+    // Ensure we’re tracking current items
+    refreshAllItems();
+
+    // Sort by current zIndex (undefined ⇒ 0)
+    allItems.sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
+
+    // Reassign dense zIndex = 0..N-1
+    for (let i = 0; i < allItems.length; i++) {
+        allItems[i].zIndex = i;
+    }
+}
+// ✅ ADD: when a brand-new item is created, call this so it lands on top
+function giveTopZ(item) {
+    refreshAllItems();
+    const maxZ = allItems.reduce((m, it) => Math.max(m, it.zIndex ?? 0), -1);
+    item.zIndex = maxZ + 1;
+    refreshAllItems();
+    reindexZ();
+}
+// ✅ ADD: move one step toward front (increase z)
+function bringForward(item) {
+    refreshAllItems();
+    reindex(); // ensure dense 0..N-1
+    const i = allItems.indexOf(item);
+    if (i === -1 || i === allItems.length - 1) return; // already top or missing
+    const tmp = allItems[i + 1];
+    allItems[i + 1] = allItems[i];
+    allItems[i] = tmp;
+    reindex();
+}
+
+// ✅ ADD: move one step toward back (decrease z)
+function sendBackward(item) {
+    refreshAllItems();
+    reindex();
+    const i = allItems.indexOf(item);
+    if (i <= 0) return; // already bottom or missing
+    const tmp = allItems[i - 1];
+    allItems[i - 1] = allItems[i];
+    allItems[i] = tmp;
+    reindex();
+}
+
+// ✅ ADD: to absolute front (highest z)
+function bringToFront(item) {
+    refreshAllItems();
+    const i = allItems.indexOf(item);
+    if (i === -1) return;
+    allItems.splice(i, 1);
+    allItems.push(item);
+    reindex();
 }
 bringFrontOption.addEventListener('click', () => {
     if (!selectedForContextMenu) return;
-    bringToFront(selectedForContextMenu);
-    drawCanvas("Common");
+    bringToFront(selectedForContextMenu); // uses helper above
+    drawText();
     contextMenu.style.display = 'none';
 });
 
 sendBackOption.addEventListener('click', () => {
     if (!selectedForContextMenu) return;
-    sendToBack(selectedForContextMenu);
-    drawCanvas("Common");
+    sendToBack(selectedForContextMenu); // your existing function
+    drawText();
     contextMenu.style.display = 'none';
 });
+// define at top-level
+function sendToBack(item) {
+    const i = allItems.indexOf(item);
+    if (i === -1) return;
+    allItems.splice(i, 1);     // remove it
+    allItems.unshift(item);    // put at bottom
+    reindex();
+}
+
+
+
+//function sendToBack(item) {
+//    // item.zIndex = Math.min(...getAllItems().map(i => i.zIndex || 0)) - 1;
+//    const i = allItems.indexOf(item)
+//    if (i === -1) return
+//    allItems.splice(i, 1)     // remove it
+//    allItems.unshift(item)    // insert at start (bottom)
+//    reindex()
+//}
+//bringFrontOption.addEventListener('click', () => {
+//    if (!selectedForContextMenu) return;
+//    bringToFront(selectedForContextMenu);
+//    drawCanvas("Common");
+//    contextMenu.style.display = 'none';
+//});
+
+//sendBackOption.addEventListener('click', () => {
+//    if (!selectedForContextMenu) return;
+//    sendToBack(selectedForContextMenu);
+//    drawCanvas("Common");
+//    contextMenu.style.display = 'none';
+//});
 function transitionSelected() {
     if ($("#hdntransition").val() != '') {
         $('.sd-btn-right').addClass('activeB');
@@ -8701,6 +9069,7 @@ function pointInBox(b, x, y) {
     const h = Number(b.height) || 0;
     return x >= b.x && x <= b.x + w && y >= b.y && y <= b.y + h;
 }
+
 // 🟢 Fix line height calculation in drawText
 function drawText() {
     const designW = canvas.width;
@@ -8747,7 +9116,48 @@ function drawText() {
         const { w, h, cx, cy } = getBoxRect(box);
         const angleRad = deg2rad(box.rotation || 0);
 
-        
+        if (box.clip >= 1) {
+            ctx.restore();
+            return;
+        }
+
+        if (box.clip > 0 && box.clip < 1) {
+            const originalDir = box.clipDirection || "top";
+
+            // If clip is increasing (masking), invert direction automatically
+            const isHiding = box.clip > box.previousClip;
+            const effectiveDirection = isHiding ? invertDirection(originalDir) : originalDir;
+
+            box.previousClip = box.clip;   // Track for next render frame
+
+            const isImage = box.type === 'image';
+            const width = isImage ? box.width : box.boundingWidth;
+            const height = isImage ? box.height : box.boundingHeight;
+            const x = box.x;
+            const y = box.y;
+
+            ctx.beginPath();
+
+            if (effectiveDirection === "top") {
+                const visibleHeight = height * (1 - box.clip);
+                ctx.rect(x, y, width, visibleHeight);
+
+            } else if (effectiveDirection === "bottom") {
+                const visibleHeight = height * (1 - box.clip);
+                ctx.rect(x, y + height - visibleHeight, width, visibleHeight);
+
+            } else if (effectiveDirection === "left") {
+                const visibleWidth = width * (1 - box.clip);
+                ctx.rect(x, y, visibleWidth, height);
+
+            } else if (effectiveDirection === "right") {
+                const visibleWidth = width * (1 - box.clip);
+                ctx.rect(x + width - visibleWidth, y, visibleWidth, height);
+            }
+
+            ctx.clip();
+        }
+
         // ---- IMAGE ----
         if (box.type === "image") {
             const { w, h, cx, cy } = getBoxRect(box);
@@ -8767,19 +9177,15 @@ function drawText() {
                     img.onerror = () => { img.onerror = null; };
                 }
             }
-            ctx.restore();                     // ⬅️ back to world space
+            ctx.restore(); // back to world space
 
             if (box.selected && w > 0 && h > 0) {
-                drawRotatedSelection(ctx, box);  // ⬅️ now draw selection (single transform)
+                drawRotatedSelection(ctx, box);
             }
             continue;
         }
 
-
         // ---- TEXT ----
-     
-      
-
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(angleRad);
@@ -8819,8 +9225,12 @@ function drawText() {
         let cursorY = top + 5;
         let usedHeight = 0;
 
+        // NEW: trackers (inner widths; 5px pad each side → +10 when converting to outer)
+        let __maxRunWidthObserved = 0;   // widest wrapped line we draw
+        let __maxTokenWidthObserved = 0; // widest single word/token
+
         lines.forEach(lineNode => {
-            // alignment inside the rotated box
+            // alignment inside the rotated box (kept)
             let cursorX = left + 5;
             if (box.align === "center") {
                 ctx.textAlign = "center";
@@ -8832,11 +9242,47 @@ function drawText() {
                 ctx.textAlign = "left";
             }
 
+            // NEW: inner content edges + we'll align by shifting startX
+            const innerLeft = left + 5;
+            const innerRight = left + w - 5;
+            const innerWidth = Math.max(0, innerRight - innerLeft);
+            const alignMode = box.align || "left";
+            // force left alignment while drawing; we handle startX ourselves
+            ctx.textAlign = "left";
+
             let segments = [];
             let maxFontPx = 0;
 
             function measureWords(node, style) {
                 if (node.nodeType === 3) {
+                    // NEW: use word tokens (words + whitespace) so wrapping happens between words
+                    const USE_WORD_TOKENS = true;
+                    if (USE_WORD_TOKENS) {
+                        const tokens = (node.nodeValue.match(/(\s+|\S+)/g) || []);
+                        for (let tk of tokens) {
+                            const fs = style.fontSize || defaultFontSize;
+                            const ff = style.fontFamily || defaultFontFamily;
+                            const fw = style.fontWeight || defaultFontWeight;
+                            const fst = style.fontStyle || defaultFontStyle;
+                            const col = style.color || defaultColor;
+
+                            ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                            const width = ctx.measureText(tk).width;
+                            const px = parseFloat(fs);
+                            if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                            const isSpace = /^\s+$/.test(tk);
+                            segments.push({ text: tk, width, style: { fs, ff, fw, fst, col }, isSpace });
+
+                            // NEW: track the widest single non-space token
+                            if (!isSpace && width > __maxTokenWidthObserved) {
+                                __maxTokenWidthObserved = width;
+                            }
+                        }
+                        return; // keep char fallback below
+                    }
+
+                    // (original char-by-char fallback)
                     const chars = node.nodeValue.split("");
                     for (let ch of chars) {
                         const fs = style.fontSize || defaultFontSize;
@@ -8852,6 +9298,7 @@ function drawText() {
 
                         segments.push({ text: ch, width, style: { fs, ff, fw, fst, col } });
                     }
+                    return;
                 } else if (node.nodeType === 1) {
                     if (node.tagName === "BR") {
                         const fs = style.fontSize || defaultFontSize;
@@ -8865,7 +9312,7 @@ function drawText() {
                         const px = parseFloat(fs);
                         if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
 
-                        segments.push({ text: " ", width, style: { fs, ff, fw, fst, col } });
+                        segments.push({ text: " ", width, style: { fs, ff, fw, fst, col }, isSpace: true });
                         return;
                     }
                     const s = node.style || {};
@@ -8891,40 +9338,115 @@ function drawText() {
             const basePx = parseFloat(defaultFontSize) || 16;
             const lineHeight = (maxFontPx > 0 ? maxFontPx : basePx) * (box.lineSpacing || 1.2);
 
+            // ✅ NEW: treat <div><br></div> (and any spaces-only line) as a real blank line
+            const isBlankLine = (segments.length === 0) ||
+                segments.every(seg => seg.isSpace || ((seg.text || '').trim() === ''));
+
+            if (isBlankLine) {
+                cursorY += lineHeight;           // advance one line
+                usedHeight = cursorY - top + 5;  // keep height in sync
+                return;                          // next logical line
+            }
+
+            // ------------- NEW PER-RUN WRAP/DRAW -------------
+            const __usePerRun = true; // turn off to fall back to your old loop
+
+            if (__usePerRun) {
+                function startXForWidth(runWidth) {
+                    if (alignMode === "center") return innerLeft + Math.max(0, (innerWidth - runWidth) / 2);
+                    if (alignMode === "right") return innerRight - runWidth;
+                    return innerLeft;
+                }
+
+                let runSegs = [];
+                let runWidth = 0;
+                let runMaxPx = 0;
+
+                function flushRun() {
+                    if (runSegs.length === 0) return;
+                    let x2 = startXForWidth(runWidth);
+                    for (const seg of runSegs) {
+                        ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
+                        ctx.fillStyle = seg.style.col;
+                        ctx.fillText(seg.text, x2, cursorY);
+                        x2 += seg.width;
+                    }
+
+                    // NEW: remember widest wrapped line we rendered
+                    if (runWidth > __maxRunWidthObserved) __maxRunWidthObserved = runWidth;
+
+                    const lh = (runMaxPx || basePx) * (box.lineSpacing || 1.2);
+                    cursorY += lh;
+                    usedHeight = cursorY - top + 5;
+
+                    runSegs = [];
+                    runWidth = 0;
+                    runMaxPx = 0;
+                }
+
+                for (const seg of segments) {
+                    const segPx = parseFloat(seg.style.fs) || basePx;
+
+                    // don’t start a line with spaces
+                    if (seg.isSpace && runSegs.length === 0) continue;
+
+                    // wrap by tokens (words/spaces). If it doesn't fit, flush
+                    if (runWidth + seg.width > innerWidth && runSegs.length > 0) {
+                        flushRun();
+                        // after wrapping, still don't start the new line with a space
+                        if (seg.isSpace) continue;
+                    }
+
+                    runSegs.push(seg);
+                    runWidth += seg.width;
+                    if (segPx > runMaxPx) runMaxPx = segPx;
+                }
+
+                flushRun();
+            }
+            // ------------- END NEW PER-RUN WRAP/DRAW -------------
+
+            // ---- ORIGINAL PER-CHAR LOOP (kept; disabled by flag) ----
             let x = cursorX;
             let drewSomething = false;
 
-            segments.forEach(seg => {
-                if (x + seg.width > left + w - 0.01) {
-                    cursorY += lineHeight;     // wrap
-                    x = cursorX;
-                }
-                ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
-                ctx.fillStyle = seg.style.col;
-                ctx.fillText(seg.text, x, cursorY);
-                x += seg.width;
-                drewSomething = true;
-            });
+            if (!__usePerRun) {
+                segments.forEach(seg => {
+                    if (x + seg.width > left + w - 0.01) {
+                        cursorY += lineHeight;     // wrap
+                        x = cursorX;
+                    }
+                    ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
+                    ctx.fillStyle = seg.style.col;
+                    ctx.fillText(seg.text, x, cursorY);
+                    x += seg.width;
+                    drewSomething = true;
+                });
 
-            if (drewSomething) cursorY += lineHeight;
-            usedHeight = cursorY - top + 5;
+                if (drewSomething) cursorY += lineHeight;
+                usedHeight = cursorY - top + 5;
+            }
+            // ---- END ORIGINAL LOOP ----
         });
 
-        // keep size fields consistent for text
-        //box.height = usedHeight;
-        //syncTextDims(box);
+        // NEW: ensure the active box is at least as wide as the longest word (+ 5px pad each side)
+        const __minOuterWidthByWord = Math.ceil(__maxTokenWidthObserved + 10);
+        if (__minOuterWidthByWord > (box.width || 0)) {
+            box.width = __minOuterWidthByWord;  // expand only; never shrink
+        }
 
-        //if (box.selected && w > 0 && h > 0) drawRotatedSelection(ctx, box);
-        //ctx.restore();
+        // keep size fields consistent for text
         box.height = usedHeight;     // update size first
         syncTextDims(box);           // keep bounding* in sync if your other code uses it
-        ctx.restore();               // ⬅️ back to world space
+        ctx.restore();               // back to world space
 
         if (box.selected && w > 0 && h > 0) {
-            drawRotatedSelection(ctx, box);  // ⬅️ selection in world space (no double-rotate)
+            drawRotatedSelection(ctx, box);  // selection in world space (no double-rotate)
         }
     }
 }
+
+
 
 
 
@@ -9993,6 +10515,13 @@ canvas.addEventListener("mousemove", e => {
         drawText();
         return;
     }
+    // --- at top of the TEXT corner-scale block ---
+    if (activeBox && activeBox._orig && typeof activeBox._orig.text === 'string') {
+        // If original text has no inline font-size, bake in computed editor font once
+        if (!/font-size\s*:/i.test(activeBox._orig.text)) {
+            activeBox._orig.text = bakeInlineFontOnLinesHTML(activeBox._orig.text, textEditorNew);
+        }
+    }
 
     if (isCornerFontScale && activeBox && resizeDirectionNorm && CORNER_HANDLES.has(resizeDirectionNorm)) {
         const dir = resizeDirectionNorm;          // ← normalized "tl/tr/bl/br"
@@ -10254,7 +10783,7 @@ function restoreSelection() {
 //}
 function addDefaultText(opts = {}) {
     // --- defaults (kept from your working function + addDefaultText) ---
-    const fs = opts.fontSize ?? 30;
+    const fs = opts.fontSize ?? 24;
     const text = opts.text ?? "Default Text";
     const factor = opts.lineSpacing ?? 1.2;           // multiplier
     const fontFam = opts.fontFamily ?? "Arial";
@@ -10392,6 +10921,12 @@ if (window.textEditorNew) {
     textEditorNew.addEventListener('mouseup', captureEditorRange);
     textEditorNew.addEventListener('keyup', captureEditorRange);
     document.addEventListener('selectionchange', captureEditorRange);
+    textEditorNew.addEventListener('paste', () => {
+        setTimeout(() => {
+            hoistNestedLines(textEditorNew);                        // ✅ ADD
+            textEditorNew.dispatchEvent(new Event('input', { bubbles: true })); // reuse your pipeline
+        }, 0); // let the browser insert first
+    });
 }
 // on the <select id="fontSizeSelect">
 const fontSel = document.getElementById('fontSizeSelect');
@@ -10816,10 +11351,36 @@ function measureHTML(html, maxWidth = 1000) {
 //    drawText();
 //});
 // ✅ Enhance line spacing and increase activeBox height when Enter is pressed
-// ✅ Enhance line spacing and increase activeBox height when Enter is pressed
+function ensureEditorWrapping() {
+    if (!window.textEditorNew) return;
+
+    // Root must wrap
+    textEditorNew.style.whiteSpace = 'pre-wrap';
+
+    // Each top-level line should be a block and allowed to wrap
+    textEditorNew.querySelectorAll(':scope > div').forEach(d => {
+        if (d.style.display !== 'block') d.style.display = 'block';
+        if (d.style.whiteSpace && d.style.whiteSpace.toLowerCase() === 'nowrap') {
+            d.style.whiteSpace = 'pre-wrap';
+        }
+    });
+
+    // Remove accidental nowrap on descendants (spans created by styling)
+    textEditorNew.querySelectorAll('[style*="white-space"]').forEach(el => {
+        const ws = (el.style.whiteSpace || '').toLowerCase();
+        if (ws === 'nowrap') el.style.whiteSpace = ''; // let it inherit/wrap
+    });
+}
+
 textEditorNew.addEventListener("input", () => {
     if (!activeBox || !isEditing) return;
 
+    // ✅ add this line FIRST
+    ensureEditorWrapping();
+    hoistNestedLines(textEditorNew);        // ✅ ADD this line
+
+    // ✅ Add this: keeps pasted copies as top-level lines
+    hoistNestedLines(textEditorNew);
     const edStyle = window.getComputedStyle(textEditorNew);
     const lineSpacing = (typeof selectedLineSpacing === "number" ? selectedLineSpacing : 8);
 
@@ -10848,6 +11409,7 @@ textEditorNew.addEventListener("input", () => {
     activeBox.text = textEditorNew.innerHTML;
     drawText();
 });
+
 
 
 //textEditorNew.addEventListener("keydown", e => {
@@ -11171,13 +11733,41 @@ function showEditorAtBox(box) {
     const relativeY = canvasRect.top - containerRect.top + offsetY;
 
     textEditorNew.innerHTML = box.text;
+    hoistNestedLines(textEditorNew); // optional safety on open
     textEditorNew.style.textAlign = box.align || "left";
 
-    // position & size
+    // position & size (your existing lines)
     textEditorNew.style.left = `${relativeX}px`;
     textEditorNew.style.top = `${relativeY}px`;
     textEditorNew.style.width = `${box.width / scaleX}px`;
     textEditorNew.style.height = `${box.height / scaleY}px`; // ← keeps visual parity with canvas
+
+    // ──────────────── ADD BELOW (do not delete anything above) ────────────────
+    // Use the current visual size (after any resize/scale) so the editor matches the active box.
+    (function syncEditorOuterBoxToSelection() {
+        const snap = v => Math.round(v * window.devicePixelRatio) / window.devicePixelRatio;
+
+        // get the current on-canvas w/h that drawText() also uses
+        const { w, h } = getBoxRect(box);   // canvas pixels
+
+        // convert to CSS pixels
+        const outerWcss = w / scaleX;
+        const outerHcss = h / scaleY;
+
+        // ensure width/height are OUTER sizes (include padding + border)
+        textEditorNew.style.boxSizing = "border-box";
+
+        // reapply (override) with snapped values to avoid 1px drift after resizes
+        textEditorNew.style.left = `${snap(relativeX)}px`;
+        textEditorNew.style.top = `${snap(relativeY)}px`;
+        textEditorNew.style.width = `${snap(outerWcss)}px`;
+        textEditorNew.style.height = `${snap(outerHcss)}px`;
+
+        // optional: prevent layout from shrinking it by accident
+        textEditorNew.style.minWidth = `${snap(outerWcss)}px`;
+        textEditorNew.style.minHeight = `${snap(outerHcss)}px`;
+    })();
+    // ─────────────────────────────────────────────────────────────────────────
 
     // apply the box's spacing to the editor DOM
     syncEditorLineSpacingFromBox(box);
@@ -11197,6 +11787,7 @@ function showEditorAtBox(box) {
     textEditorNew.focus();
     isEditing = true;
 }
+
 function syncEditorLineSpacingFromBox(box) {
     const lh = String(box.lineSpacing || 1.2); // unitless multiplier
     // set on editor (fallback when there are no top-level divs)
@@ -12139,4 +12730,143 @@ function endMultiDrag(commit = true) {
     multiDragTargets = [];
     multiDragOffsets = [];
 }
+function ensureEditorWrapping(root = textEditorNew) {
+    if (!root) return;
+    root.style.whiteSpace = 'pre-wrap'; // the editor root must wrap
+    root.querySelectorAll(':scope > div').forEach(d => {
+        if (d.style.display !== 'block') d.style.display = 'block';
+        if (d.style.whiteSpace && d.style.whiteSpace.toLowerCase() === 'nowrap') {
+            d.style.whiteSpace = 'pre-wrap';
+        }
+    });
+    // remove accidental nowrap on descendants (from style buttons etc.)
+    root.querySelectorAll('[style*="white-space"]').forEach(el => {
+        if ((el.style.whiteSpace || '').toLowerCase() === 'nowrap') el.style.whiteSpace = '';
+    });
+}
 
+// Safely apply a font-family to the WHOLE BOX without breaking line <div>s
+function applyFontFamilyToWholeBoxHTML(html, fontFamily) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html || '';
+
+    const topLines = tmp.querySelectorAll(':scope > div');
+    const targets = topLines.length ? topLines : [tmp]; // if no lines, treat root as a single line
+
+    targets.forEach(div => {
+        // if it already has a single span, just update it
+        const onlyChild = div.childNodes.length === 1 && div.firstChild?.nodeType === 1 && div.firstChild.tagName === 'SPAN';
+        if (onlyChild) {
+            div.firstChild.style.fontFamily = fontFamily;
+        } else {
+            // wrap the line's content in a span (valid: DIV > SPAN > inline...)
+            const sp = document.createElement('span');
+            sp.style.fontFamily = fontFamily;
+            while (div.firstChild) sp.appendChild(div.firstChild);
+            div.appendChild(sp);
+        }
+    });
+
+    return tmp.innerHTML;
+}
+
+// Hoist any nested <div> blocks so the editor root has only top-level lines.
+function hoistNestedLines(root) {
+    if (!root) return;
+
+    // Keep hoisting until no nested blocks remain
+    let moved;
+    do {
+        moved = false;
+        const topLines = Array.from(root.children).filter(el => el.tagName === 'DIV');
+        for (const line of topLines) {
+            const nestedBlocks = Array.from(line.children).filter(el => el.tagName === 'DIV');
+            for (const block of nestedBlocks) {
+                const newLine = document.createElement('div');
+                while (block.firstChild) newLine.appendChild(block.firstChild);
+                line.parentNode.insertBefore(newLine, line.nextSibling);
+                block.remove();
+                moved = true;
+            }
+        }
+    } while (moved);
+
+    // Normalize truly empty lines → <div><br></div>
+    Array.from(root.children).forEach(d => {
+        if (d.tagName === 'DIV' && d.textContent.trim() === '' && d.children.length === 0) {
+            d.appendChild(document.createElement('br'));
+        }
+    });
+}
+function hoistNestedLines(root) {
+    if (!root) return;
+
+    const topLines = Array.from(root.children).filter(el => el.tagName === 'DIV');
+
+    topLines.forEach(line => {
+        // moving anchor so order is preserved
+        let anchor = line;
+        const nestedBlocks = Array.from(line.children).filter(el => el.tagName === 'DIV');
+        nestedBlocks.forEach(block => {
+            const newLine = document.createElement('div');
+            while (block.firstChild) newLine.appendChild(block.firstChild);
+            anchor.parentNode.insertBefore(newLine, anchor.nextSibling);
+            anchor = newLine;        // advance anchor to keep A,B,C order
+            block.remove();
+        });
+    });
+
+    // normalize truly empty lines
+    Array.from(root.children).forEach(d => {
+        if (d.tagName === 'DIV' && d.textContent.trim() === '' && d.children.length === 0) {
+            d.appendChild(document.createElement('br'));
+        }
+    });
+}
+function bakeInlineFontOnLinesHTML(html, refEl) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html || '';
+
+    const cs = refEl ? getComputedStyle(refEl) : null;
+    const fs = cs ? cs.fontSize : '16px';
+    const ff = cs ? cs.fontFamily : 'Arial';
+    const fw = cs ? cs.fontWeight : 'normal';
+    const fst = cs ? cs.fontStyle : 'normal';
+    const col = cs ? cs.color : '#000';
+
+    // ensure each top-level line is <div>…</div>
+    const top = tmp.children.length ? Array.from(tmp.children) : [tmp];
+
+    top.forEach(div => {
+        if (div.tagName !== 'DIV') return;
+
+        // already a span with font-size? leave it
+        const span = (div.children.length === 1 && div.firstElementChild.tagName === 'SPAN')
+            ? div.firstElementChild
+            : null;
+
+        if (span) {
+            // if span lacks inline font-size, bake it in
+            const st = span.style;
+            if (!st.fontSize) st.fontSize = fs;
+            if (!st.fontFamily) st.fontFamily = ff;
+            if (!st.fontWeight) st.fontWeight = fw;
+            if (!st.fontStyle) st.fontStyle = fst;
+            if (!st.color) st.color = col;
+            return;
+        }
+
+        // wrap existing nodes in a span with inline font styles
+        const sp = document.createElement('span');
+        sp.style.fontSize = fs;
+        sp.style.fontFamily = ff;
+        sp.style.fontWeight = fw;
+        sp.style.fontStyle = fst;
+        sp.style.color = col;
+
+        while (div.firstChild) sp.appendChild(div.firstChild);
+        div.appendChild(sp);
+    });
+
+    return tmp.innerHTML;
+}
