@@ -189,6 +189,8 @@
         </div>
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
 <script>
     function nextSlide(param, param_img, param_img2) {
       document.getElementById(param).style.display = "none";
@@ -199,7 +201,62 @@
     function finalClick() {
         document.getElementById("signup_options").style.display = "none";
         document.getElementById("successBox").style.display = "flex";
+
+        // 🎉 Confetti Celebration
+        var duration = 3 * 1000; // 3 seconds
+        var end = Date.now() + duration;
+
+        (function frame() {
+            confetti({
+                particleCount: 5,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 }
+            });
+            confetti({
+                particleCount: 5,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 }
+            });
+
+            if (Date.now() < end) {
+                requestAnimationFrame(frame);
+            }
+        })();
     }
+
+    //     function finalClick() {
+    //     document.getElementById("signup_options").style.display = "none";
+    //     document.getElementById("successBox").style.display = "flex";
+
+    //     // Confetti with streamer-like particles
+    //     var duration = 3 * 1000;
+    //     var end = Date.now() + duration;
+
+    //     (function frame() {
+    //         confetti({
+    //             particleCount: 5,
+    //             angle: 60,
+    //             spread: 55,
+    //             origin: { x: 0 },
+    //             shapes: ['circle', 'triangle'],
+    //             scalar: 1.4
+    //         });
+    //         confetti({
+    //             particleCount: 5,
+    //             angle: 120,
+    //             spread: 55,
+    //             origin: { x: 1 },
+    //             shapes: ['circle', 'triangle'], 
+    //         });
+
+    //         if (Date.now() < end) {
+    //             requestAnimationFrame(frame);
+    //         }
+    //     })();
+    // }
+
 
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
