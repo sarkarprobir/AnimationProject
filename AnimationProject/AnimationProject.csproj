@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Folder Include="wwwroot\css\Fonts\" />
     <Folder Include="wwwroot\images\client-logo\" />
     <Folder Include="wwwroot\images\client-logo\" />
     <Folder Include="wwwroot\SlideLargeVideo\" />
@@ -21,6 +22,15 @@
     <PackageReference Include="log4net" Version="3.0.4" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="ZXing.Net" Version="0.16.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="wwwroot\css\Fonts\arial_rounded_mt_bold_bold-webfont.ttf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="wwwroot\css\Fonts\arlrdbd.ttf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>
