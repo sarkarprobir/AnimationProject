@@ -11017,9 +11017,10 @@ if (window.textEditorNew) {
     document.addEventListener('selectionchange', captureEditorRange);
     textEditorNew.addEventListener('paste', () => {
         setTimeout(() => {
-            hoistNestedLines(textEditorNew);                        // ✅ ADD
-            textEditorNew.dispatchEvent(new Event('input', { bubbles: true })); // reuse your pipeline
-        }, 0); // let the browser insert first
+            // your existing hoist call already runs; this is an extra safety pass
+            __normalizeEmptyLinesPreservingNBSP(textEditorNew);
+            __saveLiveCaretRange(textEditorNew);
+        }, 0);
     });
 }
 // on the <select id="fontSizeSelect">
@@ -13128,4 +13129,40 @@ function stripInlineColorInRange(root, rng) {
 function __isBlockTag(tag) {
     return ["DIV", "P", "LI", "UL", "OL", "H1", "H2", "H3", "H4", "H5", "H6", "TABLE", "THEAD", "TBODY", "TFOOT", "TR", "TD", "TH"].includes(tag);
 }
+// ✅ ADD: keep the live caret cached so the next paste appends instead of replacing
+function __saveLiveCaretRange(root) {
+    try {
+        const s = window.getSelection && window.getSelection();
+        if (s && s.rangeCount) {
+            const r = s.getRangeAt(0);
+            if (root && root.contains(r.commonAncestorContainer)) {
+                window._lastEditorRange = r.cloneRange();
+            }
+        }
+    } catch (_) { }
+}
 
+// ✅ ADD: treat only truly-empty lines as empty (preserve &nbsp;)
+function __normalizeEmptyLinesPreservingNBSP(root) {
+    if (!root) return;
+    Array.from(root.children).forEach(d => {
+        if (d.tagName !== 'DIV') return;
+        const textNoZW = (d.textContent || "").replace(/\u200B/g, "");     // remove zero-width only
+        const asciiOnly = textNoZW.replace(/[ \t\r\n]/g, "");               // strip ASCII whitespace, keep \u00A0
+        const hasNBSP = /\u00A0/.test(d.innerHTML);
+        const isTrulyEmpty = !asciiOnly && !hasNBSP && d.children.length === 0;
+        if (isTrulyEmpty && !d.querySelector('br')) d.appendChild(document.createElement('br'));
+    });
+}
+// ✅ ADD: keep cached caret in sync after any input so next paste lands at the right place
+textEditorNew.addEventListener('input', () => {
+    requestAnimationFrame(() => {
+        __normalizeEmptyLinesPreservingNBSP(textEditorNew);
+        __saveLiveCaretRange(textEditorNew);
+    });
+});
+
+// ✅ ADD: also track selection changes driven by mouse/keyboard
+document.addEventListener('selectionchange', () => {
+    __saveLiveCaretRange(textEditorNew);
+});
