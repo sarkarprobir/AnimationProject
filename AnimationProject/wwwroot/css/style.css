@@ -1837,3 +1837,41 @@ body {
 .navbar-brand.layout-brand{
     color: #fff !important;
 }
+/*TTF integration*/
+/* Arial Rounded MT Bold */
+@font-face {
+    font-family: 'ArialRoundedMTBold';
+    src: url('Fonts/arial_rounded_mt_bold-webfont.eot');
+    src: url('Fonts/arial_rounded_mt_bold-webfont.eot?#iefix') format('embedded-opentype'), url('Fonts/arial_rounded_mt_bold-webfont.woff2') format('woff2'), url('Fonts/arial_rounded_mt_bold-webfont.woff') format('woff'), url('Fonts/arial_rounded_mt_bold-webfont.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Arlrdbd */
+@font-face {
+    font-family: 'Arlrdbd';
+    src: url('Fonts/arlrdbd.eot');
+    src: url('Fonts/arlrdbd.eot?#iefix') format('embedded-opentype'), url('Fonts/arlrdbd.woff2') format('woff2'), url('Fonts/arlrdbd.woff') format('woff'), url('Fonts/arlrdbd.ttf') format('truetype'), url('Fonts/arlrdbd.svg#Arlrdbd') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Lobster */
+@font-face {
+    font-family: 'Lobster';
+    src: url('Fonts/Lobster.eot');
+    src: url('Fonts/Lobster.eot?#iefix') format('embedded-opentype'), url('Fonts/Lobster.woff2') format('woff2'), url('Fonts/Lobster.woff') format('woff'), url('Fonts/Lobster.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Times Webfont */
+@font-face {
+    font-family: 'TimesWeb';
+    src: url('Fonts/times-webfont.eot');
+    src: url('Fonts/times-webfont.eot?#iefix') format('embedded-opentype'), url('Fonts/times-webfont.woff2') format('woff2'), url('Fonts/times-webfont.woff') format('woff'), url('Fonts/times-webfont.ttf') format('truetype'), url('Fonts/times-webfont.svg#TimesWeb') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+
