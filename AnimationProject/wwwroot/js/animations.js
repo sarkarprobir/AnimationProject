@@ -6517,40 +6517,49 @@ function stripInlineColorInside(rootEl) {
 }
 
 // Ensure everything intersecting current selection has the target color (important)
+// REPLACE your ensureSelectedInlineColor with this version
 function ensureSelectedInlineColor(ed, charSel, color) {
     if (!ed || !charSel) return;
-    const prevSel = window.getSelection();
-    const prevRange = (prevSel && prevSel.rangeCount) ? prevSel.getRangeAt(0).cloneRange() : null;
 
-    // Build a live range for the selection
+    const saveSel = window.getSelection && window.getSelection();
+    const prevRange = (saveSel && saveSel.rangeCount) ? saveSel.getRangeAt(0).cloneRange() : null;
+
     if (!setSelectionByCharacterOffsets(ed, charSel.start, charSel.end)) return;
     const sel = window.getSelection();
     if (!sel || !sel.rangeCount) return;
     const rng = sel.getRangeAt(0);
 
-    const common = rng.commonAncestorContainer.nodeType === 1
-        ? rng.commonAncestorContainer
-        : rng.commonAncestorContainer.parentElement;
-
-    if (common) {
-        const want = normalizeColorString(color);
-        const walker = document.createTreeWalker(common, NodeFilter.SHOW_ELEMENT, null, false);
-        while (walker.nextNode()) {
-            const el = walker.currentNode;
-            if (!ed.contains(el)) continue;
-            if (!rng.intersectsNode(el)) continue;
-            if (el.hasAttribute && el.hasAttribute('data-color-root')) continue;
-            const cur = getComputedStyle(el).color;
-            if (cur !== want) {
-                try { el.style.setProperty('color', color, 'important'); } catch (_) { }
+    const walker = document.createTreeWalker(
+        rng.commonAncestorContainer,
+        NodeFilter.SHOW_ELEMENT,
+        {
+            acceptNode(el) {
+                if (!ed.contains(el)) return NodeFilter.FILTER_REJECT;
+                if (!rng.intersectsNode(el)) return NodeFilter.FILTER_REJECT;
+                // ✅ only enforce color on inline-ish elements; skip blocks
+                return __isBlockTag(el.tagName) ? NodeFilter.FILTER_SKIP : NodeFilter.FILTER_ACCEPT;
             }
         }
-    }
+    );
+
+    const els = [];
+    while (walker.nextNode()) els.push(walker.currentNode);
+
+    // set explicit color on inline elements we intersect
+    const want = normalizeColorString ? normalizeColorString(color) : color;
+    els.forEach(el => {
+        if (el.hasAttribute && el.hasAttribute('data-color-root')) return;
+        try {
+            const cur = getComputedStyle(el).color;
+            if (!cur || cur !== want) el.style.setProperty('color', color, 'important');
+        } catch (_) { }
+    });
 
     // restore previous selection cache (you reselect later anyway)
-    if (prevRange) { prevSel.removeAllRanges(); prevSel.addRange(prevRange); }
+    if (prevRange) { saveSel.removeAllRanges(); saveSel.addRange(prevRange); }
 }
 function ChangeColor() {
+    // --- pick color & sync model ---
     const colorPicker = document.getElementById("favcolor");
     const color = (colorPicker && colorPicker.value) ? colorPicker.value : "#000000";
 
@@ -6563,106 +6572,191 @@ function ChangeColor() {
     if (!activeBox) return;
 
     const ed = textEditorNew;
-    const hasRange = !!_lastEditorRange && ed && ed.isConnected &&
-        ed.contains(_lastEditorRange.commonAncestorContainer);
+    if (!ed || !ed.isConnected) return;
 
-    if (isEditing && hasRange) {
+    // --- helpers (scoped) ---
+    const BLOCK_TAGS = new Set(["DIV", "P", "LI", "UL", "OL", "H1", "H2", "H3", "H4", "H5", "H6", "TABLE", "THEAD", "TBODY", "TFOOT", "TR", "TD", "TH"]);
+
+    function isBlock(el) { return el && el.nodeType === 1 && BLOCK_TAGS.has(el.tagName); }
+
+    function removeOnlyColorDecl(el) {
+        const st = el.getAttribute && el.getAttribute("style");
+        if (!st) return;
+        const cleaned = st.split(";").map(s => s.trim()).filter(s => s && !/^color\s*:/.test(s)).join("; ");
+        if (cleaned) el.setAttribute("style", cleaned); else el.removeAttribute("style");
+    }
+
+    function toComputedRGB(root, anyColor) {
+        try {
+            const probe = document.createElement("span");
+            probe.style.color = anyColor;
+            (root || document.body).appendChild(probe);
+            const rgb = (getComputedStyle(probe).color || "").toLowerCase();
+            probe.remove();
+            return rgb;
+        } catch { return ("" + anyColor).toLowerCase(); }
+    }
+
+    function rangeIntersectsNode(rng, node) {
+        try {
+            const tr = document.createRange();
+            tr.selectNode(node.nodeType === 3 ? node.parentNode : node);
+            return rng.compareBoundaryPoints(Range.END_TO_START, tr) < 0 &&
+                rng.compareBoundaryPoints(Range.START_TO_END, tr) > 0;
+        } catch { return false; }
+    }
+
+    function forEachTextNodeInRange(root, rng, cb) {
+        const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+        let n;
+        while ((n = tw.nextNode())) {
+            if (!n.nodeValue) continue;
+            // quickly skip nodes not intersecting
+            const nodeRange = document.createRange();
+            nodeRange.selectNodeContents(n);
+            if (rng.compareBoundaryPoints(Range.END_TO_START, nodeRange) >= 0) continue; // node starts after rng end
+            if (rng.compareBoundaryPoints(Range.START_TO_END, nodeRange) <= 0) continue; // node ends before rng start
+
+            // compute local start/end offsets within this text node
+            let start = 0, end = n.nodeValue.length;
+            if (n === rng.startContainer) start = rng.startOffset;
+            if (n === rng.endContainer) end = Math.min(end, rng.endOffset);
+            if (end > start) cb(n, start, end);
+        }
+    }
+
+    function wrapTextSliceWithSpan(node, start, end, colorCSS) {
+        // split end first to keep offsets stable
+        if (end < node.nodeValue.length) node.splitText(end);
+        let slice = node;
+        if (start > 0) slice = node.splitText(start);
+        const span = document.createElement("span");
+        span.setAttribute("data-color-root", "1");
+        span.style.setProperty("color", colorCSS, "important");
+        slice.parentNode.replaceChild(span, slice);
+        span.appendChild(slice); // moves text into span
+        return span;
+    }
+
+    function demoteAncestorColorInIntersectedBlocks(root, selectionRange, computedTarget) {
+        // Collect blocks the selection intersects
+        const blocks = [];
+        const bw = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
+            acceptNode(el) {
+                if (!isBlock(el)) return NodeFilter.FILTER_SKIP;
+                try {
+                    const br = document.createRange();
+                    br.selectNodeContents(el);
+                    const hit = selectionRange.compareBoundaryPoints(Range.END_TO_START, br) < 0 &&
+                        selectionRange.compareBoundaryPoints(Range.START_TO_END, br) > 0;
+                    return hit ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+                } catch { return NodeFilter.FILTER_SKIP; }
+            }
+        });
+        while (bw.nextNode()) blocks.push(bw.currentNode);
+
+        blocks.forEach(block => {
+            const colored = block.querySelectorAll('[style*="color"]');
+            colored.forEach(el => {
+                if (el.hasAttribute && el.hasAttribute("data-color-root")) return; // keep precise wraps
+                let cur = "";
+                try { cur = (getComputedStyle(el).color || "").toLowerCase(); } catch { }
+                if (cur !== computedTarget) return;
+
+                // If this element is completely outside the selection, strip color.
+                if (!rangeIntersectsNode(selectionRange, el)) {
+                    removeOnlyColorDecl(el);
+                    return;
+                }
+
+                // If only partially covered, or if it contains our precise wrappers, demote it.
+                try {
+                    const er = document.createRange(); er.selectNodeContents(el);
+                    const fullyCovered =
+                        selectionRange.compareBoundaryPoints(Range.START_TO_START, er) <= 0 &&
+                        selectionRange.compareBoundaryPoints(Range.END_TO_END, er) >= 0;
+                    if (!fullyCovered || el.querySelector('[data-color-root]')) {
+                        removeOnlyColorDecl(el);
+                    }
+                } catch {
+                    // best effort
+                    removeOnlyColorDecl(el);
+                }
+            });
+        });
+    }
+
+    // --- selection acquisition ---
+    let sel = window.getSelection && window.getSelection();
+    let rng = (sel && sel.rangeCount && ed.contains(sel.getRangeAt(0).commonAncestorContainer))
+        ? sel.getRangeAt(0).cloneRange()
+        : null;
+    if (!rng && _lastEditorRange && ed.contains(_lastEditorRange.commonAncestorContainer)) {
+        rng = _lastEditorRange.cloneRange();
+    }
+
+    const computedTarget = toComputedRGB(ed, color);
+
+    // --- editing path: precise, range-based coloring ---
+    if (isEditing && rng && !rng.collapsed) {
+        // focus & restore live selection
         ed.focus();
+        if (sel) { sel.removeAllRanges(); sel.addRange(rng); }
 
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(_lastEditorRange);
-
-        // ✅ ADD (A): capture selection as character offsets BEFORE any DOM change
-        const __rngNow = (function () {
-            const s = window.getSelection && window.getSelection();
-            return (s && s.rangeCount && ed.contains(s.getRangeAt(0).commonAncestorContainer))
-                ? s.getRangeAt(0)
-                : (_lastEditorRange && ed.contains(_lastEditorRange.commonAncestorContainer) ? _lastEditorRange : null);
-        })();
-        const __charSel = __rngNow ? getSelectionCharacterOffsetsWithin(ed, __rngNow) : null;
-
-        // 1) safe span wrap if within one block
-        let wrappedSpanRef = null; // ADD
-        let ok = wrapSelectionInSpan(span => {
-            span.style.color = color;
-            span.style.setProperty('color', color, 'important');   // ✅ ADD: make it win
-            span.setAttribute('data-color-root', '1');             // ✅ ADD: protect from stripper
-            wrappedSpanRef = span;                                 // capture the wrapper we just created
+        // 1) wrap ONLY the selected characters across all intersecting text nodes
+        const createdSpans = [];
+        forEachTextNodeInRange(ed, rng, (textNode, s, e) => {
+            const span = wrapTextSliceWithSpan(textNode, s, e, color);
+            createdSpans.push(span);
         });
 
-        // 2) else execCommand
-        if (!ok) ok = applyInlineStyleSafe('color', color);
-        // Optional extra fallback (kept very safe)
-        if (!ok) {
-            try { document.execCommand('styleWithCSS', false, true); } catch (_) { }
-            try { ok = document.execCommand('foreColor', false, color); } catch (_) { }
+        // 2) remove inline color from ancestors that are outside / partially inside selection
+        demoteAncestorColorInIntersectedBlocks(ed, rng, computedTarget);
+
+        // 3) sync & restore selection bounds (between first and last created span)
+        if (createdSpans.length) {
+            try {
+                const first = createdSpans[0];
+                const last = createdSpans[createdSpans.length - 1];
+                const newRange = document.createRange();
+                newRange.setStart(first.firstChild || first, 0);
+                const lastText = last.lastChild && last.lastChild.nodeType === 3 ? last.lastChild : last;
+                const endOffset = lastText.nodeType === 3 ? lastText.nodeValue.length : last.childNodes.length;
+                newRange.setEnd(lastText, endOffset);
+                sel.removeAllRanges(); sel.addRange(newRange);
+                _lastEditorRange = newRange.cloneRange();
+            } catch { }
         }
 
-        // 🔧 Make our color win over nested old colors (strip ONLY descendants)
-        if (ok) {
-            if (wrappedSpanRef) {
-                stripInlineColorInside(wrappedSpanRef); // removes child inline colors only
-            } else {
-                // best-effort clean for execCommand path: limit to current selection subtree
-                const r = sel && sel.rangeCount ? sel.getRangeAt(0) : null;
-                const common = r ? (r.commonAncestorContainer.nodeType === 1
-                    ? r.commonAncestorContainer
-                    : r.commonAncestorContainer.parentElement) : null;
-                if (common && ed.contains(common)) {
-                    // Avoid nuking containers we just colored: mark current selection container
-                    common.setAttribute && common.setAttribute('data-color-root', '1');
-                    stripInlineColorInside(common);
-                    common.removeAttribute && common.removeAttribute('data-color-root');
-                }
-            }
-        }
-
-        if (ok && typeof normalizeEditorInPlace === "function") {
-            normalizeEditorInPlace(ed);   // your existing normalizer
-        }
-
+        // 4) update backing model & visuals
         activeBox.text = ed.innerHTML;
         if (Obj) Obj.text = activeBox.text;
 
-        resizeEditorToContent(ed, activeBox);
+        resizeEditorToContent && resizeEditorToContent(ed, activeBox);
         if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
-
-        // ✅ ADD (B): enforce final color across all elements intersecting the selection
-        if (__charSel) {
-            ensureSelectedInlineColor(ed, __charSel, color);
-        }
-
-        // ✅ ADD (C): restore the SAME selection so highlight remains
-        if (__charSel) {
-            setSelectionByCharacterOffsets(ed, __charSel.start, __charSel.end);
-            ed.focus({ preventScroll: true });
-            requestAnimationFrame(() => {
-                setSelectionByCharacterOffsets(ed, __charSel.start, __charSel.end);
-                ed.focus({ preventScroll: true });
-                const s2 = window.getSelection();
-                if (s2 && s2.rangeCount) window._lastEditorRange = s2.getRangeAt(0).cloneRange();
-            });
-        }
-
-        drawText();
+        drawText && drawText();
         return;
     }
 
-    // Whole box (unchanged)
+    // --- whole-box path (no selection or not editing): wrap everything ---
     const holder = document.createElement("div");
     holder.innerHTML = activeBox.text || "";
     const spanAll = document.createElement("span");
-    spanAll.style.color = color;
-    spanAll.style.setProperty('color', color, 'important'); // ✅ ADD: keep consistent
+    spanAll.style.setProperty("color", color, "important");
     spanAll.innerHTML = holder.innerHTML;
     activeBox.text = spanAll.outerHTML;
     if (Obj) Obj.text = activeBox.text;
 
-    resizeEditorToContent(ed, activeBox);
+    resizeEditorToContent && resizeEditorToContent(ed, activeBox);
     if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
-    drawText();
+    drawText && drawText();
 }
+
+
+
+
+
+
 
 function ChangeColorOLD() {
     const colorPicker = document.getElementById("favcolor");
@@ -12870,3 +12964,168 @@ function bakeInlineFontOnLinesHTML(html, refEl) {
 
     return tmp.innerHTML;
 }
+// === NEW: block-aware check; only DIV/P/LI/Hx/etc are "blocks" (SPANs never) ===
+function selectionWithinSingleBlock(root, rng) {
+    if (!root || !rng) return false;
+    const blockTags = new Set(["DIV", "P", "LI", "H1", "H2", "H3", "H4", "H5", "H6"]);
+    const getBlock = (node) => {
+        let n = (node && node.nodeType === 3) ? node.parentNode : node;
+        while (n && n !== root) {
+            if (n.nodeType === 1 && blockTags.has(n.tagName)) return n;
+            n = n.parentNode;
+        }
+        return root; // treat editor root as a block boundary fallback
+    };
+    const startBlock = getBlock(rng.startContainer);
+    const endBlock = getBlock(rng.endContainer);
+    return startBlock === endBlock;
+}
+
+// === NEW: get a live DOM Range from char offsets ===
+function getLiveRangeFromCharOffsets(root, charSel) {
+    if (!root || !charSel) return null;
+    if (!setSelectionByCharacterOffsets(root, charSel.start, charSel.end)) return null;
+    const s = window.getSelection();
+    return (s && s.rangeCount) ? s.getRangeAt(0).cloneRange() : null;
+}
+
+// === NEW: wrap exact text portions inside the range with <span style="color:... !important"> ===
+// This is the "surgical" per-text-node path to avoid coloring everything.
+function colorizeRangePrecisely(root, charSel, color) {
+    const rng = getLiveRangeFromCharOffsets(root, charSel);
+    if (!rng) return false;
+
+    // Walk text nodes intersecting the selection and wrap only their overlapping slices.
+    const walker = document.createTreeWalker(
+        rng.commonAncestorContainer,
+        NodeFilter.SHOW_TEXT,
+        {
+            acceptNode(node) {
+                // only consider nodes in editor and that intersect rng
+                if (!root.contains(node)) return NodeFilter.FILTER_REJECT;
+                try {
+                    // Quick check: make a temp range covering this node to test intersection
+                    const tr = document.createRange();
+                    tr.selectNodeContents(node);
+                    const intersects = rng.compareBoundaryPoints(Range.END_TO_START, tr) < 0 &&
+                        rng.compareBoundaryPoints(Range.START_TO_END, tr) > 0;
+                    return intersects ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                } catch (_) { return NodeFilter.FILTER_REJECT; }
+            }
+        },
+        false
+    );
+
+    const toWrap = [];
+
+    // Collect exact sub-ranges to wrap (we’ll create small ranges per node)
+    while (walker.nextNode()) {
+        const node = walker.currentNode;
+        // Build a subrange = intersection(rng, nodeTextRange)
+        const sub = document.createRange();
+        sub.selectNodeContents(node);
+
+        // Clamp sub to rng boundaries
+        if (sub.compareBoundaryPoints(Range.START_TO_START, rng) < 0) {
+            sub.setStart(rng.startContainer, rng.startOffset);
+        }
+        if (sub.compareBoundaryPoints(Range.END_TO_END, rng) > 0) {
+            sub.setEnd(rng.endContainer, rng.endOffset);
+        }
+
+        // Ensure it's inside this text node (selection may start/end in other nodes)
+        if (sub.startContainer !== node) {
+            sub.setStart(node, 0);
+        }
+        if (sub.endContainer !== node) {
+            sub.setEnd(node, node.nodeValue.length);
+        }
+
+        if (!sub.collapsed) toWrap.push(sub);
+    }
+
+    // Wrap from last to first to avoid range invalidation while mutating
+    for (let i = toWrap.length - 1; i >= 0; i--) {
+        const r = toWrap[i];
+        // Extract the exact text slice and wrap it
+        const span = document.createElement("span");
+        span.setAttribute("data-color-root", "1");
+        span.style.setProperty("color", color, "important");
+        try {
+            const frag = r.extractContents();
+            span.appendChild(frag);
+            r.insertNode(span);
+        } catch (_) {
+            // Fall back: split text manually (rare)
+            const textNode = r.startContainer;
+            if (textNode && textNode.nodeType === 3) {
+                const full = textNode.nodeValue;
+                const a = full.slice(0, r.startOffset);
+                const b = full.slice(r.startOffset, r.endOffset);
+                const c = full.slice(r.endOffset);
+                const parent = textNode.parentNode;
+                const span2 = document.createElement("span");
+                span2.setAttribute("data-color-root", "1");
+                span2.style.setProperty("color", color, "important");
+                span2.textContent = b;
+                if (a) parent.insertBefore(document.createTextNode(a), textNode);
+                parent.insertBefore(span2, textNode);
+                if (c) parent.insertBefore(document.createTextNode(c), textNode);
+                parent.removeChild(textNode);
+            }
+        }
+    }
+
+    return toWrap.length > 0;
+}
+
+
+// REPLACE your stripInlineColorInRange with this version
+function stripInlineColorInRange(root, rng) {
+    if (!root || !rng) return;
+
+    const walker = document.createTreeWalker(
+        rng.commonAncestorContainer,
+        NodeFilter.SHOW_ELEMENT,
+        {
+            acceptNode(el) {
+                if (!root.contains(el)) return NodeFilter.FILTER_REJECT;
+                return rng.intersectsNode(el) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+            }
+        }
+    );
+
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+
+    nodes.forEach(el => {
+        if (el.hasAttribute && el.hasAttribute('data-color-root')) return;
+
+        // ✅ do NOT touch block elements unless the selection fully covers them
+        if (__isBlockTag(el.tagName)) {
+            try {
+                const er = document.createRange();
+                er.selectNodeContents(el);
+                const fullyCovered =
+                    rng.compareBoundaryPoints(Range.START_TO_START, er) <= 0 &&
+                    rng.compareBoundaryPoints(Range.END_TO_END, er) >= 0;
+                if (!fullyCovered) return; // skip partial-cover blocks
+            } catch (_) { return; }
+        }
+
+        const st = el.getAttribute && el.getAttribute("style");
+        if (!st) return;
+        const cleaned = st
+            .split(";")
+            .map(s => s.trim())
+            .filter(s => s && !/^color\s*:/.test(s))
+            .join("; ");
+        if (cleaned) el.setAttribute("style", cleaned);
+        else el.removeAttribute("style");
+    });
+}
+// helper: block tag check
+function __isBlockTag(tag) {
+    return ["DIV", "P", "LI", "UL", "OL", "H1", "H2", "H3", "H4", "H5", "H6", "TABLE", "THEAD", "TBODY", "TFOOT", "TR", "TD", "TH"].includes(tag);
+}
+
