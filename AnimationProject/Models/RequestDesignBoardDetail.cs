@@ -97,5 +97,13 @@
         public Guid CreatedBy { get; set; }
         public long CompanyUniqueId { get; set; }
     }
+    public class RequestGetEliment
+    {
+        public int CategoryId { get; set; }
+        public string searchKeyword { get; set; }
+        public int pageNo { get; set; }
+        public int recordPerPage { get; set; }
+        public int CompanyUniqueId { get; set; }
+    }
 
 }
