@@ -5580,9 +5580,41 @@ canvas.addEventListener("click", function onCanvasClick(e) {
             );
         }
     }
+    applyImagePaintToUI(activeImage);
 
     HideShowRightPannel?.(selectedType);
 });
+function applyImagePaintToUI(imgHit) {
+    if (!imgHit) return;
+
+    const fillPicker = document.getElementById('favFillcolor');
+    const strokePicker = document.getElementById('favStrockcolor');
+    const noFillBox = document.getElementById('noColorCheck');   // fill no-color
+    const noStrokeBox = document.getElementById('noColorCheck2');  // stroke no-color
+    const swEl = document.getElementById('ddlStrokeWidth');
+
+    // 1) Set checkboxes from statuses
+    if (noFillBox) noFillBox.checked = !!imgHit.fillNoColorStatus;
+    if (noStrokeBox) noStrokeBox.checked = !!imgHit.strokeNoColorStatus;
+
+    // 2) Push colors into the color inputs (only if they are valid hex)
+    const isHex = v => typeof v === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v);
+
+    if (fillPicker) {
+        const fv = imgHit.fillNoColor;
+        if (isHex(fv)) fillPicker.value = fv; // 'none' cannot be set on a color input
+        // keep hidden in sync (store 'none' if status true)
+        $('#hdnfillColor').val(imgHit.fillNoColorStatus ? 'none' : (isHex(fv) ? fv : fillPicker.value));
+    }
+
+    if (strokePicker) {
+        const sv = imgHit.strokeNoColor;
+        if (isHex(sv)) strokePicker.value = sv;
+        $('#hdnStrockColor').val(imgHit.strokeNoColorStatus ? 'none' : (isHex(sv) ? sv : strokePicker.value));
+    }
+
+    if (swEl && imgHit.strokeWidth != null) swEl.value = String(imgHit.strokeWidth);
+}
 
 
 ////KD Need to be Include in project////////
@@ -7044,7 +7076,7 @@ function ChangeFillColor() {
     target.fillNoColor = newFill;
     target.strokeNoColor = newStroke;
     target.strokeWidth = newStrokeWidth;
-
+    target.fillNoColor = document.getElementById('favFillcolor')?.value || "#FFFFFF";
     updateSelectedImageColors(target, newFill, newStroke, newStrokeWidth);
 }
 
@@ -7174,7 +7206,6 @@ function SetNoFillColor() {
         // mirror on object (optional, if you serialize these)
         target.fillNoColorStatus = true;
         target.fillNoColor = "none";
-
         // ✅ pass the target image FIRST
         updateSelectedImageColors(target, "none", strokeColor, strokeWidth);
 
@@ -7232,6 +7263,7 @@ function ChangeStrockColor() {
     // (optional) mirror on object if you serialize these
     target.strokeNoColor = newStroke;
     target.strokeWidth = strokeWidth;
+    target.strokeNoColor = document.getElementById('favStrockcolor')?.value || "#FFFFFF";
 }
 
 //No color option for stroke color 
@@ -7264,6 +7296,8 @@ function SetNoStrokeColor() {
         // mirror on object (optional for serialization)
         target.strokeNoColor = "none";
         target.strokeWidth = strokeWidth;
+        target.strokeNoColorStatus = true;
+
 
     } else {
         // restore stroke color (prefer saved value if present)
@@ -7289,6 +7323,7 @@ function SetNoStrokeColor() {
         // mirror on object (optional)
         target.strokeNoColor = restoreStroke;
         target.strokeWidth = strokeWidth;
+        target.strokeNoColorStatus = false;
     }
 }
 

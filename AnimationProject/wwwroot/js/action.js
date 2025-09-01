@@ -552,10 +552,10 @@ function saveCanvasData() {
                 groupId: img.groupId,
                 rotation: img.rotation,
                 zIndex: (typeof img.zIndex === "number") ? img.zIndex : 0,
-                fillNoColorStatus: $("#hdnfillNoColorStatus").val(),
-                strokeNoColorStatus: $("#hdnstrokeNoColorStatus").val(),
-                fillNoColor: $("#hdnfillColor").val(),
-                strokeNoColor: $("#hdnStrockColor").val(),
+                fillNoColorStatus: img.fillNoColorStatus,//$("#hdnfillNoColorStatus").val(),
+                strokeNoColorStatus: img.strokeNoColorStatus,//$("#hdnstrokeNoColorStatus").val(),
+                fillNoColor: img.fillNoColor,//$("#hdnfillColor").val(),
+                strokeNoColor: img.strokeNoColor, //$("#hdnStrockColor").val(),
                 strokeWidth: parseInt(document.getElementById('ddlStrokeWidth')?.value, 10) || 3
             };
         })
