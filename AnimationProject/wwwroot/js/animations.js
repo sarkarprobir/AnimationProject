@@ -7006,109 +7006,292 @@ function ChangeTranColor2() {
     drawCanvas('ChangeStyle');
 }
 
+function getSelectedImage() {
+    // Prefer activeImage if it’s a real image object
+    if (activeImage && (activeImage.type === 'image' || activeImage.img instanceof Image)) {
+        return activeImage;
+    }
+    // Else pick the selected image (topmost by zIndex if multiple)
+    if (Array.isArray(images)) {
+        const selected = images.filter(it => it && (it.type === 'image' || it.img instanceof Image) && it.selected);
+        if (selected.length) {
+            selected.sort((a, b) => (b.zIndex || 0) - (a.zIndex || 0));
+            return selected[0];
+        }
+    }
+    return null;
+}
+
 function ChangeFillColor() {
-    const noStrokeChecked = document.getElementById("noColorCheck2").checked;
-    if (activeImage) {
-        const fillColorPicker = document.getElementById("favFillcolor");
-        $("#hdnfillColor").val(fillColorPicker.value);
+    const target = getSelectedImage();
+    if (!target) return;
 
-        // Uncheck the "no color" box if color is manually changed
-        document.getElementById("noColorCheck").checked = false;
+    const fillColorPicker = document.getElementById("favFillcolor");
+    if (!fillColorPicker) return;
 
-        updateSelectedImageColors($("#hdnfillColor").val(), noStrokeChecked ? "none" : $("#hdnStrockColor").val(), document.getElementById("ddlStrokeWidth").value || 2);
-        $("#hdnfillNoColorStatus").val(false);
+    const noStrokeChecked =
+        (document.getElementById("noColorCheck2") || document.getElementById("noColorCheck"))?.checked || false;
+
+    const newFill = fillColorPicker.value;
+    const newStroke = noStrokeChecked ? "none" : ($("#hdnStrockColor").val() || "#000");
+    const newStrokeWidth = parseFloat(document.getElementById("ddlStrokeWidth")?.value) || 2;
+
+    $("#hdnfillColor").val(newFill);
+    $("#hdnfillNoColorStatus").val(false);
+
+    // optional: mirror on the object for serialization, if you track these
+    target.fillNoColorStatus = false;
+    target.fillNoColor = newFill;
+    target.strokeNoColor = newStroke;
+    target.strokeWidth = newStrokeWidth;
+
+    updateSelectedImageColors(target, newFill, newStroke, newStrokeWidth);
+}
+
+function updateSelectedImageColors(targetImage, newFill, newStroke, newStrokeWidth = null) {
+    if (!targetImage) return;
+
+    const svgUrl = targetImage.originalSrc || targetImage.src || "";
+    const isSvg = svgUrl.toLowerCase().endsWith(".svg") || svgUrl.startsWith("data:image/svg+xml");
+    if (!isSvg || !targetImage.img) { console.warn("Target is not an SVG"); return; }
+
+    // Cache original once
+    if (!targetImage.originalSrc) targetImage.originalSrc = targetImage.src;
+
+    // Race guard so fast re-clicks don’t repaint the wrong image
+    targetImage._paintJobId = (targetImage._paintJobId || 0) + 1;
+    const myJob = targetImage._paintJobId;
+
+    const origW = targetImage.width, origH = targetImage.height;
+    if (newStrokeWidth != null) targetImage.strokeWidth = newStrokeWidth;
+
+    // whitelist of paintable elements; skip <defs>, gradients, masks, etc.
+    const PAINT_TAGS = new Set(["path", "rect", "circle", "ellipse", "polygon", "polyline", "line", "g", "use", "text"]);
+
+    function patchSvg(svgText) {
+        const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+        const svg = doc.documentElement;
+
+        // Expand viewBox if stroke width grows
+        if (newStrokeWidth != null) {
+            svg.setAttribute("overflow", "visible");
+            let vb = svg.getAttribute("viewBox");
+            if (!vb) vb = `0 0 ${origW} ${origH}`;
+            let [x, y, w, h] = vb.split(/\s+|,/).map(Number);
+            const pad = newStrokeWidth / 2;
+            svg.setAttribute("viewBox", `${x - pad} ${y - pad} ${w + 2 * pad} ${h + 2 * pad}`);
+        }
+
+        // Update existing <style> rules (simple replacement, avoids stop-color)
+        const styleEl = svg.querySelector("style");
+        if (styleEl) {
+            if (newFill != null) styleEl.textContent = styleEl.textContent.replace(/(^|[^-])fill:[^;]+;/g, `$1fill:${newFill};`);
+            if (newStroke != null) styleEl.textContent = styleEl.textContent.replace(/stroke:[^;]+;/g, `stroke:${newStroke};`);
+            if (newStrokeWidth != null) styleEl.textContent = styleEl.textContent.replace(/stroke-width:[^;]+;/g, `stroke-width:${newStrokeWidth};`);
+        }
+
+        // Inline attributes for visible shapes only, and not inside <defs>
+        svg.querySelectorAll("*").forEach(el => {
+            if (!PAINT_TAGS.has(el.tagName.toLowerCase())) return;
+            if (el.closest("defs")) return; // don’t disturb gradients/masks/patterns
+
+            if (newFill != null) el.setAttribute("fill", newFill);
+            if (newStroke != null) el.setAttribute("stroke", newStroke);
+            if (newStrokeWidth != null) el.setAttribute("stroke-width", newStrokeWidth);
+        });
+
+        return new XMLSerializer().serializeToString(doc);
+    }
+
+    function redrawSVG(svgText) {
+        if (myJob !== targetImage._paintJobId) return; // still same job?
+
+        const uri = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgText);
+        const imgEl = targetImage.img;
+
+        imgEl.onload = () => {
+            if (myJob !== targetImage._paintJobId) return;
+            targetImage.width = origW;  // keep box size
+            targetImage.height = origH;
+            targetImage.src = uri;    // keep for save/serialize
+            if (typeof drawText === "function") drawText();
+        };
+        imgEl.onerror = () => {
+            console.warn("Failed to repaint SVG:", targetImage.originalSrc || targetImage.src);
+        };
+        imgEl.src = uri; // updates only this instance
+    }
+
+    // Source resolution (percent-encoded vs base64)
+    if (targetImage.originalSVG) {
+        redrawSVG(patchSvg(targetImage.originalSVG));
+    } else if (svgUrl.startsWith("data:image/svg+xml")) {
+        const afterComma = svgUrl.split(",")[1] || "";
+        let raw = "";
+        if (/;base64/i.test(svgUrl)) {
+            try { raw = atob(afterComma); } catch { raw = ""; }
+        } else {
+            try { raw = decodeURIComponent(afterComma); } catch { raw = ""; }
+        }
+        if (raw) {
+            targetImage.originalSVG = raw;
+            redrawSVG(patchSvg(raw));
+        } else {
+            console.warn("Could not decode inline SVG data.");
+        }
+    } else {
+        fetch(svgUrl)
+            .then(r => r.text())
+            .then(text => { targetImage.originalSVG = text; redrawSVG(patchSvg(text)); })
+            .catch(err => console.error("Fetch SVG failed:", err));
     }
 }
+
 //No color option for fill color 
 /*let previousFillColor = null; */
 
 function SetNoFillColor() {
-    const noColorChecked = document.getElementById("noColorCheck").checked;
+    const target = getSelectedImage();
+    if (!target) return;
+
+    const noColorChecked = document.getElementById("noColorCheck")?.checked || false;   // fill no-color
+    const noStrokeChecked = document.getElementById("noColorCheck2")?.checked || false;  // stroke no-color
     const fillColorPicker = document.getElementById("favFillcolor");
 
-    const noStrokeChecked = document.getElementById("noColorCheck2").checked;
-    if (activeImage) {
-        if (noColorChecked) {
-            // Store current color before removing
-           // previousFillColor = fillColorPicker.value;
-            $("#hdnfillColor").val("none");
-          //  updateSelectedImageColors("none", $("#hdnStrockColor").val());
+    const strokeWidth = parseFloat(document.getElementById("ddlStrokeWidth")?.value) || 2;
+    const strokeColor = noStrokeChecked ? "none" : ($("#hdnStrockColor").val() || "#000");
 
-            updateSelectedImageColors(
-                "none", noStrokeChecked ? "none" : $("#hdnStrockColor").val(),document.getElementById("ddlStrokeWidth").value || 2
-            );
+    if (noColorChecked) {
+        // Store current fill for restore if you have a hidden field for it
+        if ($("#hdnPrevFillColor").length) {
+            $("#hdnPrevFillColor").val(fillColorPicker?.value || "");
+        }
 
-            $("#hdnfillNoColorStatus").val(true);
-            $("#hdnfillColor").val(fillColorPicker.value);
-        } else {
-            $("#hdnfillNoColorStatus").val(false);
-            /*document.getElementById("noColorCheck").checked = false;*/
-            // Restore previous fill color
-            //if (previousFillColor) {
-            $("#hdnfillColor").val(fillColorPicker.value);
-           // updateSelectedImageColors($("#hdnfillColor").val(), $("#hdnStrockColor").val());
+        // Mark fill as 'none'
+        $("#hdnfillColor").val("none");
+        $("#hdnfillNoColorStatus").val(true);
 
-            updateSelectedImageColors(
-                $("#hdnfillColor").val(), noStrokeChecked ? "none" : $("#hdnStrockColor").val(), document.getElementById("ddlStrokeWidth").value || 2
-            );
+        // mirror on object (optional, if you serialize these)
+        target.fillNoColorStatus = true;
+        target.fillNoColor = "none";
 
-            //    // Also update the color picker value visually
-            //    fillColorPicker.value = previousFillColor;
-            //}
-           /* ChangeFillColor();*/
+        // ✅ pass the target image FIRST
+        updateSelectedImageColors(target, "none", strokeColor, strokeWidth);
+
+    } else {
+        // Restore previous color if available, else use picker
+        let restoreFill = fillColorPicker?.value || "#000";
+        if ($("#hdnPrevFillColor").length) {
+            const stored = $("#hdnPrevFillColor").val();
+            if (stored && stored !== "none") restoreFill = stored;
+        }
+
+        $("#hdnfillColor").val(restoreFill);
+        $("#hdnfillNoColorStatus").val(false);
+
+        // mirror on object
+        target.fillNoColorStatus = false;
+        target.fillNoColor = restoreFill;
+
+        // ✅ pass the target image FIRST
+        updateSelectedImageColors(target, restoreFill, strokeColor, strokeWidth);
+
+        // (optional) sync the picker UI if you restored from hidden
+        if ($("#hdnPrevFillColor").length && $("#hdnPrevFillColor").val()) {
+            if (fillColorPicker) fillColorPicker.value = restoreFill;
         }
     }
 }
 
+
 function ChangeStrockColor() {
-    const noColorChecked = document.getElementById("noColorCheck").checked;
-    if (activeImage) {
-        const strockColorPicker = document.getElementById("favStrockcolor");
-        $("#hdnStrockColor").val(strockColorPicker.value);
+    const target = getSelectedImage();
+    if (!target) return;
 
-        // Uncheck "no stroke color" checkbox
-        document.getElementById("noColorCheck2").checked = false;
+    const noFillChecked = document.getElementById("noColorCheck")?.checked || false;
 
-        updateSelectedImageColors(noColorChecked ? "none" : $("#hdnfillColor").val(), $("#hdnStrockColor").val(), document.getElementById("ddlStrokeWidth").value||2);
-        $("#hdnstrokeNoColorStatus").val(false);
-    }
+    const strockColorPicker = document.getElementById("favStrockcolor");
+    const newStroke = strockColorPicker?.value || "#000";
+    $("#hdnStrockColor").val(newStroke);
+
+    // Uncheck "no stroke color"
+    const noStrokeBox = document.getElementById("noColorCheck2");
+    if (noStrokeBox) noStrokeBox.checked = false;
+
+    const strokeWidth = parseFloat(document.getElementById("ddlStrokeWidth")?.value) || 2;
+
+    // Keep same logic for fill: if fill 'no color' is checked, send "none"
+    const fillValue = noFillChecked ? "none" : ($("#hdnfillColor").val() || "#000");
+
+    // ✅ pass target image as first argument
+    updateSelectedImageColors(target, fillValue, newStroke, strokeWidth);
+
+    // reflect state in hidden
+    $("#hdnstrokeNoColorStatus").val(false);
+
+    // (optional) mirror on object if you serialize these
+    target.strokeNoColor = newStroke;
+    target.strokeWidth = strokeWidth;
 }
+
 //No color option for stroke color 
 let previousStrokeColor = null; // Store the previous stroke color
 
 function SetNoStrokeColor() {
-    const noStrokeChecked = document.getElementById("noColorCheck2").checked;
+    const target = getSelectedImage();
+    if (!target) return;
+
+    const noStrokeChecked = document.getElementById("noColorCheck2")?.checked || false; // stroke no-color
     const strokeColorPicker = document.getElementById("favStrockcolor");
+    const noFillChecked = document.getElementById("noColorCheck")?.checked || false;    // fill no-color
+    const strokeWidth = parseFloat(document.getElementById("ddlStrokeWidth")?.value) || 2;
 
-    const noColorChecked = document.getElementById("noColorCheck").checked;
-    //previousStrokeColor = strokeColorPicker.value;
-    if (activeImage) {
-        if (noStrokeChecked) {
-            // Save current stroke color
-            /*previousStrokeColor = strokeColorPicker.value;*/
-            $("#hdnStrockColor").val("none");
-            updateSelectedImageColors(
-                noColorChecked ? "none" : $("#hdnfillColor").val(),
-                "none", document.getElementById("ddlStrokeWidth").value || 2
-            );
-          
-            $("#hdnstrokeNoColorStatus").val(true);
-            $("#hdnStrockColor").val(strokeColorPicker.value);
-        } else {
-            $("#hdnstrokeNoColorStatus").val(false);
-           /* document.getElementById("noColorCheck2").checked = false;*/
-            // Restore previous stroke color
-            //if (previousStrokeColor) {
-            $("#hdnStrockColor").val(strokeColorPicker.value);
-            updateSelectedImageColors(noColorChecked ? "none" : $("#hdnfillColor").val(), $("#hdnStrockColor").val(), document.getElementById("ddlStrokeWidth").value || 2);
-
-            //    // Also update the color picker UI
-            //    strokeColorPicker.value = previousStrokeColor;
-            //}
-            //ChangeStrockColor();
+    if (noStrokeChecked) {
+        // remember current stroke color (optional)
+        if ($("#hdnPrevStrokeColor").length) {
+            $("#hdnPrevStrokeColor").val(strokeColorPicker?.value || "");
         }
+
+        // mark stroke as none
+        $("#hdnStrockColor").val("none");
+        $("#hdnstrokeNoColorStatus").val(true);
+
+        const fillValue = noFillChecked ? "none" : ($("#hdnfillColor").val() || "#000");
+
+        // ✅ target image FIRST
+        updateSelectedImageColors(target, fillValue, "none", strokeWidth);
+
+        // mirror on object (optional for serialization)
+        target.strokeNoColor = "none";
+        target.strokeWidth = strokeWidth;
+
+    } else {
+        // restore stroke color (prefer saved value if present)
+        let restoreStroke = strokeColorPicker?.value || "#000";
+        if ($("#hdnPrevStrokeColor").length) {
+            const stored = $("#hdnPrevStrokeColor").val();
+            if (stored && stored !== "none") restoreStroke = stored;
+        }
+
+        $("#hdnStrockColor").val(restoreStroke);
+        $("#hdnstrokeNoColorStatus").val(false);
+
+        const fillValue = noFillChecked ? "none" : ($("#hdnfillColor").val() || "#000");
+
+        // ✅ target image FIRST
+        updateSelectedImageColors(target, fillValue, restoreStroke, strokeWidth);
+
+        // sync picker if we restored from hidden (optional)
+        if ($("#hdnPrevStrokeColor").length && $("#hdnPrevStrokeColor").val()) {
+            if (strokeColorPicker) strokeColorPicker.value = restoreStroke;
+        }
+
+        // mirror on object (optional)
+        target.strokeNoColor = restoreStroke;
+        target.strokeWidth = strokeWidth;
     }
 }
+
 //stroke width change function
 function strokeWidthChanges() {
     const selectEl = document.getElementById("ddlStrokeWidth");
@@ -7574,85 +7757,8 @@ if (canvas && typeof canvas.on === 'function') {
         activeImage = null;
     });
 }
-function updateSelectedImageColors(newFill, newStroke, newStrokeWidth = null) {
-    const svgUrl = activeImage.originalSrc || activeImage.src;
-    const isSvg = svgUrl.toLowerCase().endsWith('.svg');
-    const isData = svgUrl.startsWith('data:image/svg+xml');
-    if (!activeImage || (!isSvg && !isData) || !activeImage.img) {
-        console.warn("activeImage is not an SVG");
-        return;
-    }
-    if (!activeImage.originalSrc) activeImage.originalSrc = activeImage.src;
-    const origW = activeImage.width, origH = activeImage.height;
-    // stash strokeWidth so your selection‐box can pad accordingly:
-    activeImage.strokeWidth = newStrokeWidth;
 
-    function patchSvg(svgText) {
-        const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
-        const svg = doc.documentElement;
 
-        // 1) expand viewBox by half the stroke on each side:
-        if (newStrokeWidth != null) {
-            svg.setAttribute("overflow", "visible");
-            let vb = svg.getAttribute("viewBox");
-            if (!vb) {
-                // no viewBox? assume [0,0,width,height]
-                vb = [0, 0, origW, origH];
-            } else {
-                vb = vb.split(/\s+|,/).map(Number);
-            }
-            const pad = newStrokeWidth / 2;
-            vb[0] -= pad;
-            vb[1] -= pad;
-            vb[2] += pad * 2;
-            vb[3] += pad * 2;
-            svg.setAttribute("viewBox", vb.join(" "));
-        }
-
-        // 2) update <style>
-        const styleEl = svg.querySelector("style");
-        if (styleEl) {
-            if (newFill !== null) styleEl.textContent = styleEl.textContent.replace(/fill:[^;]+;/g, `fill:${newFill};`);
-            if (newStroke !== null) styleEl.textContent = styleEl.textContent.replace(/stroke:[^;]+;/g, `stroke:${newStroke};`);
-            if (newStrokeWidth !== null) styleEl.textContent = styleEl.textContent.replace(/stroke-width:[^;]+;/g, `stroke-width:${newStrokeWidth};`);
-        }
-
-        // 3) inline attributes
-        doc.querySelectorAll("*").forEach(el => {
-            if (newFill !== null) el.setAttribute("fill", newFill);
-            if (newStroke !== null) el.setAttribute("stroke", newStroke);
-            if (newStrokeWidth !== null) el.setAttribute("stroke-width", newStrokeWidth);
-        });
-
-        return new XMLSerializer().serializeToString(doc);
-    }
-
-    function redraw(svgText) {
-        const uri = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgText);
-        const imgEl = activeImage.img;
-        imgEl.onload = () => {
-            activeImage.width = origW;
-            activeImage.height = origH;
-            activeImage.src = uri;
-            //  drawCanvas("Common");
-            drawText();
-
-        };
-        imgEl.src = uri;
-    }
-
-    if (activeImage.originalSVG) {
-        redraw(patchSvg(activeImage.originalSVG));
-    } else {
-        fetch(svgUrl)
-            .then(r => r.text())
-            .then(text => {
-                activeImage.originalSVG = text;
-                redraw(patchSvg(text));
-            })
-            .catch(console.error);
-    }
-}
 
 
 
