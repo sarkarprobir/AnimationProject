@@ -101,7 +101,13 @@
               if (fallbackId) GetDesignBoardById(fallbackId);
             }
           })();
-              switchTab(null, 'shapes');
+          try{
+              switchTab(null, 'shapes', 1);
+          }
+          catch(ex)
+          {
+
+          }
         });
 
             const buttons = document.querySelectorAll('.toggle-btn');
@@ -269,7 +275,7 @@
          }
     </script>
 
-    <script>
+    <script>               
             function toggleMode() {
            // let button = document.getElementById("modeButton");
 
@@ -320,9 +326,142 @@
 
          }
 
+        // fires for current and future elements that match the selector
+        $(document).on('input', '#txtElementSearch', debounce(function () {
+            const val = this.value.trim();
+            if (val.length >= 3 || val.length==0) {
+                switchTab(null, 'shapes');
+            }
+        }, 250)); // debounce is optional but helps
+        // ✅ add this once in your JS
+        function debounce(fn, delay) {
+            let timer;
+            return function (...args) {
+                const context = this;
+                clearTimeout(timer);
+                timer = setTimeout(() => fn.apply(context, args), delay);
+            };
+        }
+                function switchTab(tabElement, tabName, pageNo) {
+          currentTabName = tabName;         // remember active tab
+          const recordPerPage = 20;         // your page size
+          if (!pageNo) {                    // tab changed / fresh load -> reset pager
+            elPage = 1;
+            elWindowStart = 1;
+          }
+
+          // Map tab -> CategoryId
+          let Categoryvalue = 0;
+          if (tabName === 'shapes')      Categoryvalue = 2;
+          else if (tabName === 'icons')  Categoryvalue = 3;
+          else if (tabName === 'photos') Categoryvalue = 1;
+          else if (tabName === 'my-images') Categoryvalue = 5;
+          else if (tabName === 'patterns')  Categoryvalue = 4;
+
+          const dataSlide = {
+            CategoryId: Number(Categoryvalue) || 0,
+            searchKeyword: (Array.isArray($("#txtElementSearch").val())
+              ? $("#txtElementSearch").val().join(" ")
+              : String($("#txtElementSearch").val() ?? "")
+            ).trim(),
+            pageNo: pageNo || elPage || 1,
+            recordPerPage: recordPerPage
+          };
+
+          $.ajax({
+            url: baseURL + "Canvas/GetAllElement",
+            type: "POST",
+            dataType: "json",
+            data: dataSlide,
+            success: function (slideResult) {
+              console.log("slideResult", slideResult);
+
+              // choose container
+              const targetIdMap = { 1: "#photoList", 2: "#shapesList", 3: "#iconList", 5: "#my-imagesList" };
+              const catNum = Number(Categoryvalue);
+              const $list = $(targetIdMap[catNum] || "#shapesList");
+              if ($list.length === 0) { console.warn("Target list not found"); return; }
+
+              // clear and render
+              $list.empty();
+
+              // items array normalize
+              const items = Array.isArray(slideResult)
+                ? slideResult
+                : (slideResult.list || slideResult.items || slideResult.data || slideResult.elementList || []);
+
+              // --- render thumbnails (your existing logic) ---
+              const joinURL = (...parts) => parts
+                .filter(Boolean)
+                .map((p, i) => i === 0 ? String(p).replace(/\/+$/,'') : String(p).replace(/^\/+|\/+$/g,''))
+                .join('/');
+
+              const frag = document.createDocumentFragment();
+              let appended = 0;
+
+              (items || []).forEach(it => {
+                const fileThumb = it.imageName || "";
+                const fileFull  = it.imageName || fileThumb;
+                if (!fileThumb) return;
+
+                const srcThumb = joinURL(baseURL, elementPath, encodeURIComponent(fileThumb));
+                const srcFull  = joinURL(baseURL, elementPath, encodeURIComponent(fileFull));
+
+                const img = new Image();
+                img.src = srcThumb;
+                img.alt = it.elementName || "";
+                img.loading = "lazy";
+                img.className = "shape-thumb";
+                img.dataset.elementId = it.elementId;
+                img.dataset.categoryId = it.categoryId;
+                img.dataset.full = srcFull;
+
+                if (Number(it.imageW) > 0) img.width  = Number(it.imageW);
+                if (Number(it.imageH) > 0) img.height = Number(it.imageH);
+
+                frag.appendChild(img);
+                appended++;
+              });
+
+              if (appended === 0) {
+                $list.append('<div class="text-muted p-2">No elements found.</div>');
+              } else {
+                $list[0].appendChild(frag);
+              }
+
+              // --- compute total pages from server response ---
+              // Prefer slideResult.totalPages; else compute from totalCount if provided
+              if (slideResult && Number(slideResult.totalPages) > 0) {
+                elTotalPages = Number(slideResult.totalPages);
+              } else if (slideResult && Number(slideResult.totalCount) >= 0) {
+                elTotalPages = Math.max(1, Math.ceil(Number(slideResult.totalCount) / recordPerPage));
+              } else {
+                // Fallback: if no totals provided, infer minimal
+                elTotalPages = Math.max(elPage, (items && items.length === recordPerPage) ? elPage + 1 : elPage);
+              }
+
+              // update current page and re-render pager
+              elPage = dataSlide.pageNo;
+              renderPagination();
+
+              // tab UI (as you had)
+              const tabs = document.querySelectorAll(".tab");
+              const contents = document.querySelectorAll(".left_content");
+              tabs.forEach((tab) => tab.classList.remove("active"));
+              try { tabElement && tabElement.classList.add("active"); } catch (ex) {}
+              contents.forEach((content) => content.classList.remove("active"));
+              document.getElementById(tabName)?.classList.add("active");
+            },
+            error: function (data) {
+              console.log("error in saving slide " + (slide?.slideSeq), data);
+              HideLoader && HideLoader();
+            }
+          });
+        }
+
 
             // tab open
-            function switchTab(tabElement, tabName) {
+            function switchTabOLD(tabElement, tabName) {
                 var Categoryvalue=0
                if(tabName=='shapes')
                {
@@ -347,12 +486,12 @@
 
                     var dataSlide = {
                                   CategoryId: Number(Categoryvalue) || 0,
-                                  searchKeyword: (Array.isArray($("#txtSearchElement").val())
-                                    ? $("#txtSearchElement").val().join(" ")
-                                    : String($("#txtSearchElement").val() ?? "")
+                                  searchKeyword: (Array.isArray($("#txtElementSearch").val())
+                                    ? $("#txtElementSearch").val().join(" ")
+                                    : String($("#txtElementSearch").val() ?? "")
                                   ).trim(),
                                   pageNo: 1,
-                                  recordPerPage: 200
+                                  recordPerPage: 20
                                 };
 
 
@@ -382,6 +521,7 @@
             // Clear only the chosen list
             $list.empty();
 
+
             // Normalize payload to an array
             const items = Array.isArray(slideResult)
                 ? slideResult
@@ -400,40 +540,45 @@
 
             const frag = document.createDocumentFragment();
 
-            items.forEach(it => {
-                // // const fileThumb = it.imageNameThumb || it.imageName || "";
-                // // const fileFull  = it.imageName || fileThumb;
-                const fileThumb = it.imageName || it.imageName || "";
-                const fileFull  = it.imageName || fileThumb;
-                if (!fileThumb) return;
+        items.forEach(it => {
+                  // // const fileThumb = it.imageNameThumb || it.imageName || "";
+                  // // const fileFull  = it.imageName || fileThumb;
+                  const fileThumb = it.imageName || it.imageName || "";
+                  const fileFull  = it.imageName || fileThumb;
+                  if (!fileThumb) return;
 
-                const srcThumb = joinURL(baseURL, elementPath, encodeURIComponent(fileThumb));
-                const srcFull  = joinURL(baseURL, elementPath, encodeURIComponent(fileFull));
+                  const srcThumb = joinURL(baseURL, elementPath, encodeURIComponent(fileThumb));
+                  const srcFull  = joinURL(baseURL, elementPath, encodeURIComponent(fileFull));
 
-                const img = new Image();
-                img.src = srcThumb;
-                img.alt = it.elementName || "";
-                img.loading = "lazy";
-                img.className = "shape-thumb"; // style class; reuse or change per list if you want
-                img.dataset.elementId = it.elementId;
-                img.dataset.categoryId = it.categoryId;
-                img.dataset.full = srcFull;
+                  const img = new Image();
+                  img.src = srcThumb;
+                  img.alt = it.elementName || "";
+                  img.loading = "lazy";
+                  img.className = "shape-thumb"; // style class; reuse or change per list if you want
+                  img.dataset.elementId = it.elementId;
+                  img.dataset.categoryId = it.categoryId;
+                  img.dataset.full = srcFull;
 
-                if (Number(it.imageW) > 0) img.width  = Number(it.imageW);
-                if (Number(it.imageH) > 0) img.height = Number(it.imageH);
+                  if (Number(it.imageW) > 0) img.width  = Number(it.imageW);
+                  if (Number(it.imageH) > 0) img.height = Number(it.imageH);
 
-                frag.appendChild(img);
-            });
+                  frag.appendChild(img);
+              });
+               $list[0].appendChild(frag);
+        
 
-            $list[0].appendChild(frag);
              let tabs = document.querySelectorAll(".tab");
             let contents = document.querySelectorAll(".left_content");
 
             // Remove active class from all tabs
             tabs.forEach((tab) => tab.classList.remove("active"));
+            try{
 
             // Add active class to clicked tab
             tabElement.classList.add("active");
+                    }
+                    catch(ex)
+                    {}
 
             // Hide all content sections
             contents.forEach((content) => content.classList.remove("active"));
@@ -449,20 +594,7 @@
                         }
                     });
 
-            // let tabs = document.querySelectorAll(".tab");
-            // let contents = document.querySelectorAll(".left_content");
 
-            // // Remove active class from all tabs
-            // tabs.forEach((tab) => tab.classList.remove("active"));
-
-            // // Add active class to clicked tab
-            // tabElement.classList.add("active");
-
-            // // Hide all content sections
-            // contents.forEach((content) => content.classList.remove("active"));
-
-            // // Show the selected tab's content
-            // document.getElementById(tabName).classList.add("active");
         }
         // file upload js
         function updateFileName() {
@@ -536,6 +668,80 @@
           });
         });
     </script>
+   <script>
+               // Pager state
+        const PAGE_WINDOW_SIZE = 6;
+        let elPage = 1;             // current selected page
+        let elTotalPages = 1;       // set from server
+        let elWindowStart = 1;      // first visible page number in the window
+        let currentTabName = 'shapes'; // track which tab is active
+
+        function clampWindowStart() {
+          const maxStart = Math.max(1, elTotalPages - PAGE_WINDOW_SIZE + 1);
+          elWindowStart = Math.min(Math.max(1, elWindowStart), maxStart);
+          // Ensure current page is visible
+          if (elPage < elWindowStart) elWindowStart = elPage;
+          const end = elWindowStart + PAGE_WINDOW_SIZE - 1;
+          if (elPage > end) elWindowStart = Math.max(1, elPage - PAGE_WINDOW_SIZE + 1);
+        }
+
+        function renderPagination() {
+          const $p = $('#elPagination');
+          if (elTotalPages <= 1) { $p.empty().hide(); return; }
+          $p.show();
+
+          clampWindowStart();
+
+          const frag = document.createDocumentFragment();
+
+          // ‹ prev-window
+          const prev = document.createElement('span');
+          prev.textContent = '‹';
+          prev.dataset.dir = 'prev';
+          if (elWindowStart === 1) prev.classList.add('disabled');
+          frag.appendChild(prev);
+
+          // page numbers
+          const end = Math.min(elWindowStart + PAGE_WINDOW_SIZE - 1, elTotalPages);
+          for (let i = elWindowStart; i <= end; i++) {
+            const s = document.createElement('span');
+            s.textContent = String(i);
+            s.dataset.page = String(i);
+            if (i === elPage) s.classList.add('active');
+            frag.appendChild(s);
+          }
+
+          // › next-window
+          const next = document.createElement('span');
+          next.textContent = '›';
+          next.dataset.dir = 'next';
+          if (end === elTotalPages) next.classList.add('disabled');
+          frag.appendChild(next);
+
+          $p.empty()[0].appendChild(frag);
+        }
+
+        // Handle clicks (delegated)
+        $(document).on('click', '#elPagination span', function () {
+          const dir = this.dataset.dir;
+          if (dir === 'prev') {
+            if (elWindowStart > 1) { elWindowStart--; renderPagination(); }
+            return;
+          }
+          if (dir === 'next') {
+            const maxStart = Math.max(1, elTotalPages - PAGE_WINDOW_SIZE + 1);
+            if (elWindowStart < maxStart) { elWindowStart++; renderPagination(); }
+            return;
+          }
+
+          const page = Number(this.dataset.page);
+          if (!page || page === elPage) return;
+          elPage = page;
+          // reload with selected page
+          switchTab(null, currentTabName, elPage);
+        });
+
+   </script>
 
     <script>
             (function(){

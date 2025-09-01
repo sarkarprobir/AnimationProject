@@ -1539,7 +1539,7 @@ function moveCaretToEnd(el) {
     <div class="d-flex justify-content-between gap-3">
         <!-- search box -->
         <div class="search-box w-50">
-            <input class="left-panel-imput" type="text" placeholder="Search..." />
+            <input class="left-panel-imput" type="text" id="txtElementSearch" placeholder="Search..." />
         </div>
 
     </div>
@@ -1609,7 +1609,9 @@ function moveCaretToEnd(el) {
             </div>
         </div>
     </div>
-        
+    <div class="pager">
+        <div id="elPagination" class="pagination"></div>
+    </div>
 </div>
 
 <div id="tranPopup" class="tran_popup" style="display: none;">

@@ -1873,5 +1873,56 @@ body {
     font-weight: normal;
     font-style: normal;
 }
+.thumb-wrapper {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 5px;
+    max-width: 120px; /* adjust as needed */
+    text-align: center;
+}
+
+.thumb-caption {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+.thumb-caption {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    cursor: pointer; /* 👈 shows hand cursor on hover */
+}
+.pagination {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    user-select: none;
+}
+
+    .pagination span {
+        padding: 4px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+        .pagination span.active {
+            font-weight: 600;
+            border: 1px solid #ccc;
+        }
+
+        .pagination span.disabled {
+            opacity: .4;
+            pointer-events: none;
+            cursor: default;
+        }
 
 
