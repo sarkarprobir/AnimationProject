@@ -78,6 +78,17 @@ namespace AnimationProject.Models
         public Guid Result { get; set; }
         public long PublishBoardUniqueId { get; set; }
     }
-
+    public class ResponseGetElimentDetails
+    {
+        public int ElementId { get; set; }
+        public int CategoryId { get; set; }
+        public int CompanyUniqueId { get; set; }
+        public string ElementName { get; set; }
+        public int ImageSize { get; set; }
+        public string ImageName { get; set; }
+        public string ImageNameThumb { get; set; }
+        public int ImageW { get; set; }
+        public int ImageH { get; set; }
+    }
 
 }

@@ -1378,7 +1378,7 @@ function moveCaretToEnd(el) {
                 <div class="d-flex justify-content-between gap-3">
                     <!-- search box -->
                     <div class="search-box w-50">
-                        <input class="left-panel-imput" type="text" placeholder="Search..." />
+                        <input class="left-panel-imput" id="txtSearchElement" type="text" placeholder="Search..." />
                     </div>
 
                 </div>
@@ -1554,21 +1554,21 @@ function moveCaretToEnd(el) {
     <!-- Shapes tab -->
     <div id="shapes" class="left_content active">
         <div class="gallery">
-            <div class="d-flex flex-wrap inside_wrapper" style="gap: 49px; height:max-content;">
+            <div class="d-flex flex-wrap inside_wrapper" style="gap: 49px; height:max-content;" id="shapesList">
                 @* <img class="svg_icons" src="~/images/Gallery-img/line.svg" />
                 <img class="svg_icons" src="~/images/Gallery-img/rectangle (1).svg" />
                 <img class="svg_icons" src="~/images/Gallery-img/hexagon.svg" />
                 <img class="svg_icons" src="~/images/Gallery-img/circle.svg" />
                 <img class="svg_icons" src="~/images/Gallery-img/triangle.svg" /> *@
                 @* <img class="svg_icons" src="~/images/Gallery-img/stripe.svg" /> *@
-                <img src="~/images/Gallery-img/circle shape1.svg" />
+              @*   <img src="~/images/Gallery-img/circle shape1.svg" />
                 <img src="~/images/Gallery-img/test-circle.svg" />
                 <img src="~/images/Gallery-img/shape1.svg" />
                 <img src="~/images/Gallery-img/Square.svg" />
                 <img src="~/images/Gallery-img/rounded square.svg" />
                 <img src="~/images/Gallery-img/rounded rectangle.svg" />
                 <img src="~/images/Gallery-img/rectangle.svg" />
-                <img src="~/images/Gallery-img/abstract.svg" />
+                <img src="~/images/Gallery-img/abstract.svg" /> *@
             </div>
         </div>
     </div>
@@ -1589,11 +1589,9 @@ function moveCaretToEnd(el) {
 
     <!-- Photos tab -->
     <div id="photos" class="left_content">
-        <div class="gallery">
-            <div class="d-flex flex-wrap inside_wrapper" style="gap: 54px;">
-                <img src="~/images/Gallery-img/man.png" />
-                <img src="~/images/Gallery-img/bag.png" />
-                <img src="~/images/Gallery-img/apple_watch.png" />
+        <div class="gallery" style="max-height:70vh; overflow-y:scroll; overflow-x:hidden; -webkit-overflow-scrolling:touch; scrollbar-gutter:stable;">
+            <div class="d-flex flex-wrap inside_wrapper" style="gap: 54px;" id="photoList">
+              
             </div>
         </div>
     </div>
@@ -1610,10 +1608,8 @@ function moveCaretToEnd(el) {
  
         <p class="my-3 gallery_type">All My Images</p>
         <div class="gallery my_img_gal">
-            <div class="d-flex flex-wrap justify-content-between gap-4 inside_wrapper">
-                <img src="~/images/Gallery-img/aniboard-logo.png" />
-                <img src="~/images/Gallery-img/aniboard-logo-white.png" />
-                <img src="~/images/Gallery-img/aniboard-logo-black.png" />
+            <div class="d-flex flex-wrap justify-content-between gap-4 inside_wrapper" id="my-imagesList">
+              
             </div>
         </div>
     </div>

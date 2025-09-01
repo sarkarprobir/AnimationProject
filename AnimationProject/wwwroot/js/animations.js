@@ -2612,29 +2612,7 @@ function animateText(direction, condition, loopCount) {
         tl.to({}, { duration: stayTime, ease: "none" }, delayP);
     }
 
-    //if (tabType === "Out") {
-    //    units.slice().reverse().forEach((unit, i) => {
-    //        const start = delayP + i * staggerOut;
-
-    //        tl.to(unit, {
-    //            scaleX: 0,
-    //            scaleY: 0,
-    //            duration: 0.3,
-    //            ease: "back.in"
-    //        }, start);
-    //    });
-    //}
-
-    //// 🔄 Reset everything at end of timeline
-    //tl.eventCallback("onComplete", () => {
-    //    [...animItems, ...staticItems].forEach(o => {
-    //        o.x = o.finalX;
-    //        o.y = o.finalY;
-    //        o.scaleX = 1;
-    //        o.scaleY = 1;
-    //    });
-    //    drawCanvas(condition);
-    //});
+    
 }
 
     else if (animationType === "zoom") {
@@ -9165,7 +9143,7 @@ function pointInBox(b, x, y) {
 }
 
 // 🟢 Fix line height calculation in drawText
-function drawText() {
+function drawTextOLD() {
     const designW = canvas.width;
     const designH = canvas.height;
 
@@ -9539,7 +9517,883 @@ function drawText() {
         }
     }
 }
+function drawText_mask() {
+    const designW = canvas.width;
+    const designH = canvas.height;
 
+    // clear & bg
+    ctx.clearRect(0, 0, designW, designH);
+
+    const bgEl = document.getElementById('hdnBackgroundSpecificColor');
+    const bgColor = (bgEl?.value || canvas.style.backgroundColor || "").trim();
+    if (bgColor) {
+        ctx.save();
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, designW, designH);
+        ctx.restore();
+    }
+
+    if (canvas._bgImg) {
+        if (canvas._bgImg.complete) {
+            ctx.drawImage(canvas._bgImg, 0, 0, designW, designH);
+        } else {
+            canvas._bgImg.onload = () => drawText();
+            canvas._bgImg.onerror = () => { };
+        }
+    }
+
+    // text defaults
+    ctx.textBaseline = "top";
+    const defaultStyle = window.getComputedStyle(textEditorNew);
+    const defaultFontSize = defaultStyle.fontSize || "16px";
+    const defaultFontFamily = defaultStyle.fontFamily || "Arial";
+    const defaultFontWeight = defaultStyle.fontWeight || "normal";
+    const defaultFontStyle = defaultStyle.fontStyle || "normal";
+    const defaultColor = defaultStyle.color || "#000";
+
+    // === ADD: local mask helper (rotated/local space) ===
+    function __applyLocalRectMask(ctx, w, h, clipVal, direction) {
+        if (!(clipVal > 0 && clipVal < 1)) return;
+
+        let vw = w, vh = h;
+        if (direction === "left" || direction === "right") vw = w * (1 - clipVal);
+        if (direction === "top" || direction === "bottom") vh = h * (1 - clipVal);
+
+        let rx = -w / 2, ry = -h / 2;
+        if (direction === "right") rx = (w / 2) - vw;
+        if (direction === "bottom") ry = (h / 2) - vh;
+
+        ctx.beginPath();
+        ctx.rect(rx, ry, vw, vh);
+        ctx.clip();
+    }
+
+    // z-ordered
+    const all = [...(images || []), ...(textObjects || [])]
+        .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+
+    for (const box of all) {
+        if (box.width == null || Number.isNaN(box.width)) box.width = 50;
+        if (box.height == null || Number.isNaN(box.height)) box.height = 30;
+
+        const { w, h, cx, cy } = getBoxRect(box);
+        const angleRad = deg2rad(box.rotation || 0);
+
+        // === ADD: normalize clip & compute effective direction; skip fully hidden ===
+        if (typeof box.previousClip !== "number") {
+            box.previousClip = Number(box.clip) || 0;
+        }
+        const __clipVal = Math.max(0, Math.min(1, Number(box.clip) || 0));
+        const __isHiding = __clipVal > box.previousClip;
+        const __origDir = box.clipDirection || "top";
+        const __effDir = __isHiding ? invertDirection(__origDir) : __origDir;
+        box.previousClip = __clipVal;
+
+        if (__clipVal >= 1) {
+            // fully masked → skip this item (prevents your old early return below)
+            continue;
+        }
+
+        // stash for later use in image/text blocks
+        box.__clipVal = __clipVal;
+        box.__effDir = __effDir;
+
+        // === ADD: sandbox the existing world-space clip so it can't leak ===
+        ctx.save();
+
+        if (box.clip >= 1) {
+            ctx.restore(); // === ADD: balance the save; do not delete your code below ===
+            // your original code:
+            ctx.restore();
+            return;
+        }
+
+        if (box.clip > 0 && box.clip < 1) {
+            const originalDir = box.clipDirection || "top";
+
+            // If clip is increasing (masking), invert direction automatically
+            const isHiding = box.clip > box.previousClip;
+            const effectiveDirection = isHiding ? invertDirection(originalDir) : originalDir;
+
+            box.previousClip = box.clip;   // Track for next render frame
+
+            const isImage = box.type === 'image';
+            const width = isImage ? box.width : box.boundingWidth;
+            const height = isImage ? box.height : box.boundingHeight;
+            const x = box.x;
+            const y = box.y;
+
+            ctx.beginPath();
+
+            if (effectiveDirection === "top") {
+                const visibleHeight = height * (1 - box.clip);
+                ctx.rect(x, y, width, visibleHeight);
+
+            } else if (effectiveDirection === "bottom") {
+                const visibleHeight = height * (1 - box.clip);
+                ctx.rect(x, y + height - visibleHeight, width, visibleHeight);
+
+            } else if (effectiveDirection === "left") {
+                const visibleWidth = width * (1 - box.clip);
+                ctx.rect(x, y, visibleWidth, height);
+
+            } else if (effectiveDirection === "right") {
+                const visibleWidth = width * (1 - box.clip);
+                ctx.rect(x + width - visibleWidth, y, visibleWidth, height);
+            }
+
+            ctx.clip();
+        }
+
+        // === ADD: drop the world-space clip; we'll apply local clip in element space
+        ctx.restore();
+
+        // ---- IMAGE ----
+        if (box.type === "image") {
+            const { w, h, cx, cy } = getBoxRect(box);
+            const angleRad = deg2rad(box.rotation || 0);
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(angleRad);
+            ctx.globalAlpha = normAlpha(box.opacity);
+
+            // === ADD: local (rotated) mask for images
+            if (box.__clipVal > 0 && box.__clipVal < 1) {
+                __applyLocalRectMask(ctx, w, h, box.__clipVal, box.__effDir || "top");
+            }
+
+            if (box.img) {
+                if (box.img.complete) {
+                    ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                } else {
+                    const img = box.img;
+                    img.onload = () => { img.onload = null; drawText(); };
+                    img.onerror = () => { img.onerror = null; };
+                }
+            }
+            ctx.restore(); // back to world space
+
+            if (box.selected && w > 0 && h > 0) {
+                drawRotatedSelection(ctx, box);
+            }
+            continue;
+        }
+
+        // ---- TEXT ----
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angleRad);
+        ctx.globalAlpha = normAlpha(box.opacity);
+
+        // === ADD: local (rotated) mask for text
+        if (box.__clipVal > 0 && box.__clipVal < 1) {
+            __applyLocalRectMask(ctx, w, h, box.__clipVal, box.__effDir || "top");
+        }
+
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = box.text || "";
+
+        // build logical lines
+        const lines = [];
+        wrapper.childNodes.forEach(n => {
+            if (n.nodeType === 1 && n.tagName === "DIV") {
+                const hasContent = n.textContent.trim().length > 0 || n.children.length > 0;
+                if (!hasContent) {
+                    const blank = document.createElement("div");
+                    blank.appendChild(document.createTextNode(" "));
+                    lines.push(blank);
+                } else {
+                    const ln = document.createElement("div");
+                    ln.append(...n.cloneNode(true).childNodes);
+                    lines.push(ln);
+                }
+            } else if (n.nodeType === 1 && n.tagName === "BR") {
+                const brLine = document.createElement("div");
+                brLine.appendChild(document.createTextNode(" "));
+                lines.push(brLine);
+            } else {
+                if (lines.length === 0) lines.push(document.createElement("div"));
+                lines[lines.length - 1].appendChild(n.cloneNode(true));
+            }
+        });
+
+        // local (rotated) coords: top-left is (-w/2, -h/2)
+        const left = -w / 2;
+        const top = -h / 2;
+
+        let cursorY = top + 5;
+        let usedHeight = 0;
+
+        // NEW: trackers (inner widths; 5px pad each side → +10 when converting to outer)
+        let __maxRunWidthObserved = 0;   // widest wrapped line we draw
+        let __maxTokenWidthObserved = 0; // widest single word/token
+
+        lines.forEach(lineNode => {
+            // alignment inside the rotated box (kept)
+            let cursorX = left + 5;
+            if (box.align === "center") {
+                ctx.textAlign = "center";
+                cursorX = left + w / 2;
+            } else if (box.align === "right") {
+                ctx.textAlign = "right";
+                cursorX = left + w - 5;
+            } else {
+                ctx.textAlign = "left";
+            }
+
+            // NEW: inner content edges + we'll align by shifting startX
+            const innerLeft = left + 5;
+            const innerRight = left + w - 5;
+            const innerWidth = Math.max(0, innerRight - innerLeft);
+            const alignMode = box.align || "left";
+            // force left alignment while drawing; we handle startX ourselves
+            ctx.textAlign = "left";
+
+            let segments = [];
+            let maxFontPx = 0;
+
+            function measureWords(node, style) {
+                if (node.nodeType === 3) {
+                    // NEW: use word tokens (words + whitespace) so wrapping happens between words
+                    const USE_WORD_TOKENS = true;
+                    if (USE_WORD_TOKENS) {
+                        const tokens = (node.nodeValue.match(/(\s+|\S+)/g) || []);
+                        for (let tk of tokens) {
+                            const fs = style.fontSize || defaultFontSize;
+                            const ff = style.fontFamily || defaultFontFamily;
+                            const fw = style.fontWeight || defaultFontWeight;
+                            const fst = style.fontStyle || defaultFontStyle;
+                            const col = style.color || defaultColor;
+
+                            ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                            const width = ctx.measureText(tk).width;
+                            const px = parseFloat(fs);
+                            if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                            const isSpace = /^\s+$/.test(tk);
+                            segments.push({ text: tk, width, style: { fs, ff, fw, fst, col }, isSpace });
+
+                            // NEW: track the widest single non-space token
+                            if (!isSpace && width > __maxTokenWidthObserved) {
+                                __maxTokenWidthObserved = width;
+                            }
+                        }
+                        return; // keep char fallback below
+                    }
+
+                    // (original char-by-char fallback)
+                    const chars = node.nodeValue.split("");
+                    for (let ch of chars) {
+                        const fs = style.fontSize || defaultFontSize;
+                        const ff = style.fontFamily || defaultFontFamily;
+                        const fw = style.fontWeight || defaultFontWeight;
+                        const fst = style.fontStyle || defaultFontStyle;
+                        const col = style.color || defaultColor;
+
+                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                        const width = ctx.measureText(ch).width;
+                        const px = parseFloat(fs);
+                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                        segments.push({ text: ch, width, style: { fs, ff, fw, fst, col } });
+                    }
+                    return;
+                } else if (node.nodeType === 1) {
+                    if (node.tagName === "BR") {
+                        const fs = style.fontSize || defaultFontSize;
+                        const ff = style.fontFamily || defaultFontFamily;
+                        const fw = style.fontWeight || defaultFontWeight;
+                        const fst = style.fontStyle || defaultFontStyle;
+                        const col = style.color || defaultColor;
+
+                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                        const width = ctx.measureText(" ").width;
+                        const px = parseFloat(fs);
+                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                        segments.push({ text: " ", width, style: { fs, ff, fw, fst, col }, isSpace: true });
+                        return;
+                    }
+                    const s = node.style || {};
+                    const nextStyle = {
+                        fontSize: s.fontSize || style.fontSize,
+                        fontFamily: s.fontFamily || style.fontFamily,
+                        fontWeight: s.fontWeight || style.fontWeight,
+                        fontStyle: s.fontStyle || style.fontStyle,
+                        color: s.color || style.color,
+                    };
+                    node.childNodes.forEach(child => measureWords(child, nextStyle));
+                }
+            }
+
+            measureWords(lineNode, {
+                fontSize: defaultFontSize,
+                fontFamily: defaultFontFamily,
+                fontWeight: defaultFontWeight,
+                fontStyle: defaultFontStyle,
+                color: defaultColor
+            });
+
+            const basePx = parseFloat(defaultFontSize) || 16;
+            const lineHeight = (maxFontPx > 0 ? maxFontPx : basePx) * (box.lineSpacing || 1.2);
+
+            // ✅ NEW: treat <div><br></div> (and any spaces-only line) as a real blank line
+            const isBlankLine = (segments.length === 0) ||
+                segments.every(seg => seg.isSpace || ((seg.text || '').trim() === ''));
+
+            if (isBlankLine) {
+                cursorY += lineHeight;           // advance one line
+                usedHeight = cursorY - top + 5;  // keep height in sync
+                return;                          // next logical line
+            }
+
+            // ------------- NEW PER-RUN WRAP/DRAW -------------
+            const __usePerRun = true; // turn off to fall back to your old loop
+
+            if (__usePerRun) {
+                function startXForWidth(runWidth) {
+                    if (alignMode === "center") return innerLeft + Math.max(0, (innerWidth - runWidth) / 2);
+                    if (alignMode === "right") return innerRight - runWidth;
+                    return innerLeft;
+                }
+
+                let runSegs = [];
+                let runWidth = 0;
+                let runMaxPx = 0;
+
+                function flushRun() {
+                    if (runSegs.length === 0) return;
+                    let x2 = startXForWidth(runWidth);
+                    for (const seg of runSegs) {
+                        ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
+                        ctx.fillStyle = seg.style.col;
+                        ctx.fillText(seg.text, x2, cursorY);
+                        x2 += seg.width;
+                    }
+
+                    // NEW: remember widest wrapped line we rendered
+                    if (runWidth > __maxRunWidthObserved) __maxRunWidthObserved = runWidth;
+
+                    const lh = (runMaxPx || basePx) * (box.lineSpacing || 1.2);
+                    cursorY += lh;
+                    usedHeight = cursorY - top + 5;
+
+                    runSegs = [];
+                    runWidth = 0;
+                    runMaxPx = 0;
+                }
+
+                for (const seg of segments) {
+                    const segPx = parseFloat(seg.style.fs) || basePx;
+
+                    // don’t start a line with spaces
+                    if (seg.isSpace && runSegs.length === 0) continue;
+
+                    // wrap by tokens (words/spaces). If it doesn't fit, flush
+                    if (runWidth + seg.width > innerWidth && runSegs.length > 0) {
+                        flushRun();
+                        // after wrapping, still don't start the new line with a space
+                        if (seg.isSpace) continue;
+                    }
+
+                    runSegs.push(seg);
+                    runWidth += seg.width;
+                    if (segPx > runMaxPx) runMaxPx = segPx;
+                }
+
+                flushRun();
+            }
+            // ------------- END NEW PER-RUN WRAP/DRAW -------------
+
+            // ---- ORIGINAL PER-CHAR LOOP (kept; disabled by flag) ----
+            let x = cursorX;
+            let drewSomething = false;
+
+            if (!__usePerRun) {
+                segments.forEach(seg => {
+                    if (x + seg.width > left + w - 0.01) {
+                        cursorY += lineHeight;     // wrap
+                        x = cursorX;
+                    }
+                    ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
+                    ctx.fillStyle = seg.style.col;
+                    ctx.fillText(seg.text, x, cursorY);
+                    x += seg.width;
+                    drewSomething = true;
+                });
+
+                if (drewSomething) cursorY += lineHeight;
+                usedHeight = cursorY - top + 5;
+            }
+            // ---- END ORIGINAL LOOP ----
+        });
+
+        // NEW: ensure the active box is at least as wide as the longest word (+ 5px pad each side)
+        const __minOuterWidthByWord = Math.ceil(__maxTokenWidthObserved + 10);
+        if (__minOuterWidthByWord > (box.width || 0)) {
+            box.width = __minOuterWidthByWord;  // expand only; never shrink
+        }
+
+        // keep size fields consistent for text
+        box.height = usedHeight;     // update size first
+        syncTextDims(box);           // keep bounding* in sync if your other code uses it
+        ctx.restore();               // back to world space
+
+        if (box.selected && w > 0 && h > 0) {
+            drawRotatedSelection(ctx, box);  // selection in world space (no double-rotate)
+        }
+    }
+}
+
+function drawText() {
+    const designW = canvas.width;
+    const designH = canvas.height;
+
+    // clear & bg
+    ctx.clearRect(0, 0, designW, designH);
+
+    const bgEl = document.getElementById('hdnBackgroundSpecificColor');
+    const bgColor = (bgEl?.value || canvas.style.backgroundColor || "").trim();
+    if (bgColor) {
+        ctx.save();
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, designW, designH);
+        ctx.restore();
+    }
+
+    if (canvas._bgImg) {
+        if (canvas._bgImg.complete) {
+            ctx.drawImage(canvas._bgImg, 0, 0, designW, designH);
+        } else {
+            canvas._bgImg.onload = () => drawText();
+            canvas._bgImg.onerror = () => { };
+        }
+    }
+
+    // text defaults
+    ctx.textBaseline = "top";
+    const defaultStyle = window.getComputedStyle(textEditorNew);
+    const defaultFontSize = defaultStyle.fontSize || "16px";
+    const defaultFontFamily = defaultStyle.fontFamily || "Arial";
+    const defaultFontWeight = defaultStyle.fontWeight || "normal";
+    const defaultFontStyle = defaultStyle.fontStyle || "normal";
+    const defaultColor = defaultStyle.color || "#000";
+
+    // === ADD: local mask helper (rotated/local space) ===
+    function __applyLocalRectMask(ctx, w, h, clipVal, direction) {
+        if (!(clipVal > 0 && clipVal < 1)) return;
+
+        let vw = w, vh = h;
+        if (direction === "left" || direction === "right") vw = w * (1 - clipVal);
+        if (direction === "top" || direction === "bottom") vh = h * (1 - clipVal);
+
+        let rx = -w / 2, ry = -h / 2;
+        if (direction === "right") rx = (w / 2) - vw;
+        if (direction === "bottom") ry = (h / 2) - vh;
+
+        ctx.beginPath();
+        ctx.rect(rx, ry, vw, vh);
+        ctx.clip();
+    }
+
+    // z-ordered
+    const all = [...(images || []), ...(textObjects || [])]
+        .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+
+    for (const box of all) {
+        if (box.width == null || Number.isNaN(box.width)) box.width = 50;
+        if (box.height == null || Number.isNaN(box.height)) box.height = 30;
+
+        const { w, h, cx, cy } = getBoxRect(box);
+        const angleRad = deg2rad(box.rotation || 0);
+
+        // === ADD: normalize clip & compute effective direction; skip fully hidden ===
+        if (typeof box.previousClip !== "number") {
+            box.previousClip = Number(box.clip) || 0;
+        }
+        const __clipVal = Math.max(0, Math.min(1, Number(box.clip) || 0));
+        const __isHiding = __clipVal > box.previousClip;
+        const __origDir = box.clipDirection || "top";
+        const __effDir = __isHiding ? invertDirection(__origDir) : __origDir;
+        box.previousClip = __clipVal;
+
+        if (__clipVal >= 1) {
+            // fully masked → skip this item (prevents your old early return below)
+            continue;
+        }
+
+        // stash for later use in image/text blocks
+        box.__clipVal = __clipVal;
+        box.__effDir = __effDir;
+
+        // === ADD: normalize scale for popcorn (or any scale-based) animations ===
+        if (typeof box.scaleX !== "number") box.scaleX = 1;
+        if (typeof box.scaleY !== "number") box.scaleY = 1;
+        const __sx = (Number(box.scaleX) || 0);
+        const __sy = (Number(box.scaleY) || 0);
+        if (__sx === 0 || __sy === 0) {
+            // collapsed this frame → nothing to draw
+            continue;
+        }
+
+        // === ADD: sandbox the existing world-space clip so it can't leak ===
+        ctx.save();
+
+        if (box.clip >= 1) {
+            ctx.restore(); // === ADD: balance the save; do not delete your code below ===
+            // your original code:
+            ctx.restore();
+            return;
+        }
+
+        if (box.clip > 0 && box.clip < 1) {
+            const originalDir = box.clipDirection || "top";
+
+            // If clip is increasing (masking), invert direction automatically
+            const isHiding = box.clip > box.previousClip;
+            const effectiveDirection = isHiding ? invertDirection(originalDir) : originalDir;
+
+            box.previousClip = box.clip;   // Track for next render frame
+
+            const isImage = box.type === 'image';
+            const width = isImage ? box.width : box.boundingWidth;
+            const height = isImage ? box.height : box.boundingHeight;
+            const x = box.x;
+            const y = box.y;
+
+            ctx.beginPath();
+
+            if (effectiveDirection === "top") {
+                const visibleHeight = height * (1 - box.clip);
+                ctx.rect(x, y, width, visibleHeight);
+
+            } else if (effectiveDirection === "bottom") {
+                const visibleHeight = height * (1 - box.clip);
+                ctx.rect(x, y + height - visibleHeight, width, visibleHeight);
+
+            } else if (effectiveDirection === "left") {
+                const visibleWidth = width * (1 - box.clip);
+                ctx.rect(x, y, visibleWidth, height);
+
+            } else if (effectiveDirection === "right") {
+                const visibleWidth = width * (1 - box.clip);
+                ctx.rect(x + width - visibleWidth, y, visibleWidth, height);
+            }
+
+            ctx.clip();
+        }
+
+        // === ADD: drop the world-space clip; we'll apply local clip in element space
+        ctx.restore();
+
+        // ---- IMAGE ----
+        if (box.type === "image") {
+            const { w, h, cx, cy } = getBoxRect(box);
+            const angleRad = deg2rad(box.rotation || 0);
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(angleRad);
+
+            // === ADD: apply popcorn (and other) scale here
+            ctx.scale(__sx, __sy);
+
+            ctx.globalAlpha = normAlpha(box.opacity);
+
+            // === ADD: local (rotated) mask for images
+            if (box.__clipVal > 0 && box.__clipVal < 1) {
+                __applyLocalRectMask(ctx, w, h, box.__clipVal, box.__effDir || "top");
+            }
+
+            if (box.img) {
+                if (box.img.complete) {
+                    ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                } else {
+                    const img = box.img;
+                    img.onload = () => { img.onload = null; drawText(); };
+                    img.onerror = () => { img.onerror = null; };
+                }
+            }
+            ctx.restore(); // back to world space
+
+            // === ADD: selection should reflect scaled size
+            if (box.selected && w > 0 && h > 0) {
+                drawRotatedSelection(ctx, { ...box, width: w * __sx, height: h * __sy });
+            }
+            continue;
+        }
+
+        // ---- TEXT ----
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angleRad);
+
+        // === ADD: apply popcorn (and other) scale here
+        ctx.scale(__sx, __sy);
+
+        ctx.globalAlpha = normAlpha(box.opacity);
+
+        // === ADD: local (rotated) mask for text
+        if (box.__clipVal > 0 && box.__clipVal < 1) {
+            __applyLocalRectMask(ctx, w, h, box.__clipVal, box.__effDir || "top");
+        }
+
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = box.text || "";
+
+        // build logical lines
+        const lines = [];
+        wrapper.childNodes.forEach(n => {
+            if (n.nodeType === 1 && n.tagName === "DIV") {
+                const hasContent = n.textContent.trim().length > 0 || n.children.length > 0;
+                if (!hasContent) {
+                    const blank = document.createElement("div");
+                    blank.appendChild(document.createTextNode(" "));
+                    lines.push(blank);
+                } else {
+                    const ln = document.createElement("div");
+                    ln.append(...n.cloneNode(true).childNodes);
+                    lines.push(ln);
+                }
+            } else if (n.nodeType === 1 && n.tagName === "BR") {
+                const brLine = document.createElement("div");
+                brLine.appendChild(document.createTextNode(" "));
+                lines.push(brLine);
+            } else {
+                if (lines.length === 0) lines.push(document.createElement("div"));
+                lines[lines.length - 1].appendChild(n.cloneNode(true));
+            }
+        });
+
+        // local (rotated) coords: top-left is (-w/2, -h/2)
+        const left = -w / 2;
+        const top = -h / 2;
+
+        let cursorY = top + 5;
+        let usedHeight = 0;
+
+        // NEW: trackers (inner widths; 5px pad each side → +10 when converting to outer)
+        let __maxRunWidthObserved = 0;   // widest wrapped line we draw
+        let __maxTokenWidthObserved = 0; // widest single word/token
+
+        lines.forEach(lineNode => {
+            // alignment inside the rotated box (kept)
+            let cursorX = left + 5;
+            if (box.align === "center") {
+                ctx.textAlign = "center";
+                cursorX = left + w / 2;
+            } else if (box.align === "right") {
+                ctx.textAlign = "right";
+                cursorX = left + w - 5;
+            } else {
+                ctx.textAlign = "left";
+            }
+
+            // NEW: inner content edges + we'll align by shifting startX
+            const innerLeft = left + 5;
+            const innerRight = left + w - 5;
+            const innerWidth = Math.max(0, innerRight - innerLeft);
+            const alignMode = box.align || "left";
+            // force left alignment while drawing; we handle startX ourselves
+            ctx.textAlign = "left";
+
+            let segments = [];
+            let maxFontPx = 0;
+
+            function measureWords(node, style) {
+                if (node.nodeType === 3) {
+                    // NEW: use word tokens (words + whitespace) so wrapping happens between words
+                    const USE_WORD_TOKENS = true;
+                    if (USE_WORD_TOKENS) {
+                        const tokens = (node.nodeValue.match(/(\s+|\S+)/g) || []);
+                        for (let tk of tokens) {
+                            const fs = style.fontSize || defaultFontSize;
+                            const ff = style.fontFamily || defaultFontFamily;
+                            const fw = style.fontWeight || defaultFontWeight;
+                            const fst = style.fontStyle || defaultFontStyle;
+                            const col = style.color || defaultColor;
+
+                            ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                            const width = ctx.measureText(tk).width;
+                            const px = parseFloat(fs);
+                            if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                            const isSpace = /^\s+$/.test(tk);
+                            segments.push({ text: tk, width, style: { fs, ff, fw, fst, col }, isSpace });
+
+                            // NEW: track the widest single non-space token
+                            if (!isSpace && width > __maxTokenWidthObserved) {
+                                __maxTokenWidthObserved = width;
+                            }
+                        }
+                        return; // keep char fallback below
+                    }
+
+                    // (original char-by-char fallback)
+                    const chars = node.nodeValue.split("");
+                    for (let ch of chars) {
+                        const fs = style.fontSize || defaultFontSize;
+                        const ff = style.fontFamily || defaultFontFamily;
+                        const fw = style.fontWeight || defaultFontWeight;
+                        const fst = style.fontStyle || defaultFontStyle;
+                        const col = style.color || defaultColor;
+
+                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                        const width = ctx.measureText(ch).width;
+                        const px = parseFloat(fs);
+                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                        segments.push({ text: ch, width, style: { fs, ff, fw, fst, col } });
+                    }
+                    return;
+                } else if (node.nodeType === 1) {
+                    if (node.tagName === "BR") {
+                        const fs = style.fontSize || defaultFontSize;
+                        const ff = style.fontFamily || defaultFontFamily;
+                        const fw = style.fontWeight || defaultFontWeight;
+                        const fst = style.fontStyle || defaultFontStyle;
+                        const col = style.color || defaultColor;
+
+                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                        const width = ctx.measureText(" ").width;
+                        const px = parseFloat(fs);
+                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                        segments.push({ text: " ", width, style: { fs, ff, fw, fst, col }, isSpace: true });
+                        return;
+                    }
+                    const s = node.style || {};
+                    const nextStyle = {
+                        fontSize: s.fontSize || style.fontSize,
+                        fontFamily: s.fontFamily || style.fontFamily,
+                        fontWeight: s.fontWeight || style.fontWeight,
+                        fontStyle: s.fontStyle || style.fontStyle,
+                        color: s.color || style.color,
+                    };
+                    node.childNodes.forEach(child => measureWords(child, nextStyle));
+                }
+            }
+
+            measureWords(lineNode, {
+                fontSize: defaultFontSize,
+                fontFamily: defaultFontFamily,
+                fontWeight: defaultFontWeight,
+                fontStyle: defaultFontStyle,
+                color: defaultColor
+            });
+
+            const basePx = parseFloat(defaultFontSize) || 16;
+            const lineHeight = (maxFontPx > 0 ? maxFontPx : basePx) * (box.lineSpacing || 1.2);
+
+            // ✅ NEW: treat <div><br></div> (and any spaces-only line) as a real blank line
+            const isBlankLine = (segments.length === 0) ||
+                segments.every(seg => seg.isSpace || ((seg.text || '').trim() === ''));
+
+            if (isBlankLine) {
+                cursorY += lineHeight;           // advance one line
+                usedHeight = cursorY - top + 5;  // keep height in sync
+                return;                          // next logical line
+            }
+
+            // ------------- NEW PER-RUN WRAP/DRAW -------------
+            const __usePerRun = true; // turn off to fall back to your old loop
+
+            if (__usePerRun) {
+                function startXForWidth(runWidth) {
+                    if (alignMode === "center") return innerLeft + Math.max(0, (innerWidth - runWidth) / 2);
+                    if (alignMode === "right") return innerRight - runWidth;
+                    return innerLeft;
+                }
+
+                let runSegs = [];
+                let runWidth = 0;
+                let runMaxPx = 0;
+
+                function flushRun() {
+                    if (runSegs.length === 0) return;
+                    let x2 = startXForWidth(runWidth);
+                    for (const seg of runSegs) {
+                        ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
+                        ctx.fillStyle = seg.style.col;
+                        ctx.fillText(seg.text, x2, cursorY);
+                        x2 += seg.width;
+                    }
+
+                    // NEW: remember widest wrapped line we rendered
+                    if (runWidth > __maxRunWidthObserved) __maxRunWidthObserved = runWidth;
+
+                    const lh = (runMaxPx || basePx) * (box.lineSpacing || 1.2);
+                    cursorY += lh;
+                    usedHeight = cursorY - top + 5;
+
+                    runSegs = [];
+                    runWidth = 0;
+                    runMaxPx = 0;
+                }
+
+                for (const seg of segments) {
+                    const segPx = parseFloat(seg.style.fs) || basePx;
+
+                    // don’t start a line with spaces
+                    if (seg.isSpace && runSegs.length === 0) continue;
+
+                    // wrap by tokens (words/spaces). If it doesn't fit, flush
+                    if (runWidth + seg.width > innerWidth && runSegs.length > 0) {
+                        flushRun();
+                        // after wrapping, still don't start the new line with a space
+                        if (seg.isSpace) continue;
+                    }
+
+                    runSegs.push(seg);
+                    runWidth += seg.width;
+                    if (segPx > runMaxPx) runMaxPx = segPx;
+                }
+
+                flushRun();
+            }
+            // ------------- END NEW PER-RUN WRAP/DRAW -------------
+
+            // ---- ORIGINAL PER-CHAR LOOP (kept; disabled by flag) ----
+            let x = cursorX;
+            let drewSomething = false;
+
+            if (!__usePerRun) {
+                segments.forEach(seg => {
+                    if (x + seg.width > left + w - 0.01) {
+                        cursorY += lineHeight;     // wrap
+                        x = cursorX;
+                    }
+                    ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
+                    ctx.fillStyle = seg.style.col;
+                    ctx.fillText(seg.text, x, cursorY);
+                    x += seg.width;
+                    drewSomething = true;
+                });
+
+                if (drewSomething) cursorY += lineHeight;
+                usedHeight = cursorY - top + 5;
+            }
+            // ---- END ORIGINAL LOOP ----
+        });
+
+        // NEW: ensure the active box is at least as wide as the longest word (+ 5px pad each side)
+        const __minOuterWidthByWord = Math.ceil(__maxTokenWidthObserved + 10);
+        if (__minOuterWidthByWord > (box.width || 0)) {
+            box.width = __minOuterWidthByWord;  // expand only; never shrink
+        }
+
+        // keep size fields consistent for text
+        box.height = usedHeight;     // update size first
+        syncTextDims(box);           // keep bounding* in sync if your other code uses it
+        ctx.restore();               // back to world space
+
+        // === ADD: selection should reflect scaled size for text
+        if (box.selected && w > 0 && h > 0) {
+            drawRotatedSelection(ctx, { ...box, width: w * __sx, height: h * __sy });
+        }
+    }
+}
 
 
 
