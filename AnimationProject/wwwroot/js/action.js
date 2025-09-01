@@ -130,23 +130,42 @@ function SaveDesignBoard() {
 
                             // Ensure all images & SVGs are fully loaded before capturing
                           //  const images = document.querySelectorAll("img, svg");
-                            let loadedCount = 0;
-                            images.forEach(img => {
-                                if (!img.img.complete) {
-                                    img.onload = () => {
-                                        loadedCount++;
-                                        if (loadedCount === images.length) captureSlide(activeSlide, slideResult);
-                                    };
-                                    img.onerror = () => {
-                                        console.warn("Failed to load image:", img.src);
-                                        loadedCount++;
-                                    };
-                                } else {
-                                    loadedCount++;
-                                }
-                            });
+                                let loadedCount = 0;
 
-                                if (loadedCount === images.length) captureSlide(activeSlide, slideResult); // If all images are already loaded
+                                // count only entries that actually have an <img> we can wait on
+                                const totalToWait = (Array.isArray(images) ? images : []).reduce((n, it) => {
+                                    const el = it && it.img;
+                                    return n + (el && typeof el.complete === "boolean" ? 1 : 0);
+                                }, 0);
+
+                                if (totalToWait === 0) {
+                                    captureSlide(activeSlide, slideResult);
+                                } else {
+                                    images.forEach(img => {
+                                        const el = img && img.img; // HTMLImageElement
+
+                                        // 🔒 guard: skip items without a real <img>
+                                        if (!el || typeof el.complete !== "boolean") return;
+
+                                        // ✅ keep the same sequence: if (!el.complete) { ... } else { ... }
+                                        if (!el.complete || el.naturalWidth === 0) {
+                                            const onDone = () => {
+                                                el.removeEventListener("load", onDone);
+                                                el.removeEventListener("error", onDone);
+                                                loadedCount++;
+                                                if (loadedCount === totalToWait) captureSlide(activeSlide, slideResult);
+                                            };
+                                            el.addEventListener("load", onDone, { once: true });
+                                            el.addEventListener("error", onDone, { once: true });
+                                        } else {
+                                            loadedCount++;
+                                            if (loadedCount === totalToWait) captureSlide(activeSlide, slideResult);
+                                        }
+                                    });
+                                }
+
+
+                               // if (loadedCount === images.length) captureSlide(activeSlide, slideResult); // If all images are already loaded
 
                         }
                         },
