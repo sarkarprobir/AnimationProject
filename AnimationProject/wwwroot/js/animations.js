@@ -1330,7 +1330,7 @@ if (famSel) {
 }
 function OnChangefontFamily(value) {
     $("#fontFamily").val(value);
-    const fontFamily = document.getElementById("fontFamily").value || "ArialRoundedMTBold";
+    const fontFamily = document.getElementById("fontFamily").value || "ArialCustom";
 
     const Obj = Array.isArray(textObjects) ? textObjects.find(o => o.selected) : null;
     if (Obj) Obj.fontFamily = fontFamily;
@@ -5792,6 +5792,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("text_alignment_tool").style.display = 'none';
         document.getElementById("text_decoration_tool").style.display = 'none';
         document.getElementById("text_color_tool").style.display = 'none';
+        document.getElementById("text_size_tool").style.display = 'none';
         document.getElementById("line_spacing_tool").style.display = 'none';
         document.getElementById("divStrockColor").style.display = 'none';
         document.getElementById("divFillColor").style.display = 'none';
@@ -5802,6 +5803,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("text_alignment_tool").style.display = 'block';
         document.getElementById("text_decoration_tool").style.display = 'flex';
         document.getElementById("text_color_tool").style.display = 'block';
+        document.getElementById("text_size_tool").style.display = 'block';
         document.getElementById("line_spacing_tool").style.display = 'block';
         document.getElementById("divStrockColor").style.display = 'none';
         document.getElementById("divFillColor").style.display = 'none';
@@ -5813,6 +5815,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("text_alignment_tool").style.display = 'none';
         document.getElementById("text_decoration_tool").style.display = 'none';
         document.getElementById("text_color_tool").style.display = 'none';
+        document.getElementById("text_size_tool").style.display = 'none';
         document.getElementById("line_spacing_tool").style.display = 'none';
         HideLoader();
     }

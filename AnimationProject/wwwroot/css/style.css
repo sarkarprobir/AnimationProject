@@ -1838,6 +1838,63 @@ body {
     color: #fff !important;
 }
 /*TTF integration*/
+
+/* Arial Regular */
+@font-face {
+    font-family: 'ArialCustom';
+    src: url('Fonts/arial.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Arial Narrow */
+@font-face {
+    font-family: 'ArialNarrow';
+    src: url('Fonts/Arialn.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Arial Thin */
+@font-face {
+    font-family: 'ArialThin';
+    src: url('Fonts/ArialTh.ttf') format('truetype');
+    font-weight: 100;
+    font-style: normal;
+}
+
+/* Arial Bold (ARIBL0) */
+@font-face {
+    font-family: 'ArialBold0';
+    src: url('Fonts/ARIBL0.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
+/* G Arial Bold */
+@font-face {
+    font-family: 'GArialBold';
+    src: url('Fonts/G_ari_bd.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
+/* G Arial Italic */
+@font-face {
+    font-family: 'GArialItalic';
+    src: url('Fonts/G_ari_i.ttf') format('truetype');
+    font-weight: normal;
+    font-style: italic;
+}
+
+/* Geo AI */
+@font-face {
+    font-family: 'GeoAI';
+    src: url('Fonts/GEO_AI__.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 /* Arial Rounded MT Bold */
 @font-face {
     font-family: 'ArialRoundedMTBold';
