@@ -1554,12 +1554,14 @@ function moveCaretToEnd(el) {
     <!-- Shapes tab -->
     <div id="shapes" class="left_content active">
         <div class="gallery">
-            <img class="svg_icons" src="~/images/Gallery-img/line.svg" />
-            <img class="svg_icons" src="~/images/Gallery-img/rectangle (1).svg" />
-            <img class="svg_icons" src="~/images/Gallery-img/hexagon.svg" />
-            <img class="svg_icons" src="~/images/Gallery-img/circle.svg" />
-            <img class="svg_icons" src="~/images/Gallery-img/triangle.svg" />
-            <div class="d-flex flex-wrap inside_wrapper" style="gap: 49px; height:max-content;" id="shapesList">
+            <div class="d-flex flex-wrap svg_inside_wrapper">
+                <img class="svg_icons" src="~/images/Gallery-img/line.svg" />
+                <img class="svg_icons" src="~/images/Gallery-img/rectangle (1).svg" />
+                <img class="svg_icons" src="~/images/Gallery-img/hexagon.svg" />
+                <img class="svg_icons" src="~/images/Gallery-img/circle.svg" />
+                <img class="svg_icons" src="~/images/Gallery-img/triangle.svg" />
+            </div>
+            <div class="d-flex flex-wrap inside_wrapper" id="shapesList">
                
                 @* <img class="svg_icons" src="~/images/Gallery-img/stripe.svg" /> *@
               @*   <img src="~/images/Gallery-img/circle shape1.svg" />
@@ -1577,7 +1579,7 @@ function moveCaretToEnd(el) {
     <!-- Icons tab -->
     <div id="icons" class="left_content">
         <div class="gallery">
-            <div class="d-flex flex-wrap inside_wrapper" style="gap: 49px; height:max-content;" id="iconList">
+            <div class="d-flex flex-wrap inside_wrapper" id="iconList">
                 
             </div>
         </div>
@@ -1590,8 +1592,8 @@ function moveCaretToEnd(el) {
 
     <!-- Photos tab -->
     <div id="photos" class="left_content">
-        <div class="gallery" style="max-height:70vh; overflow-y:hidden; overflow-x:hidden; -webkit-overflow-scrolling:touch; scrollbar-gutter:stable;">
-            <div class="d-flex flex-wrap inside_wrapper" style="gap: 54px;" id="photoList">
+        <div class="gallery">
+            <div class="d-flex flex-wrap inside_wrapper" id="photoList">
               
             </div>
         </div>
