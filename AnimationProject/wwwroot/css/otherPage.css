@@ -322,7 +322,16 @@ footer {
     height: 175px;
     width: 315px;
 }
-
+@media (min-width: 1900px) {
+    .pop_v {
+        height: 401px;
+        width: 221px;
+    }
+    .pop_h {
+        height: 221px;
+        width: 401px;
+    }
+}
 .pop_imgs {
     background-color: #DADDEC;
     padding-block: 100px;
@@ -772,7 +781,39 @@ plans {
     font-size: 6.5rem;
 }
 .partner {
-    margin-block: 100px;
+    margin-top: 100px;
+    margin-bottom: 30px;
+}
+.pricing_toggle-container {
+    display: inline-flex;
+    background-color: #eee;
+    padding: 4px;
+    border-radius: 3px;
+}
+.pricing_toggle-btn {
+    padding: 7px 16px;
+    font-size: 14px;
+    font-family: var(--font-nunito);
+    font-weight: 400;
+    color: #000;
+    background-color: #eee;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    width: 173px;
+}
+.pricing_span {
+    font-size: 12px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    padding-inline: 5px;
+}
+.pricing_toggle-btn.active {
+    background-color: #fff;
+}
+.pricing_span {
+    background-color: #eee;
 }
 /*pricing css end*/
 /*about css*/

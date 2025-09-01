@@ -116,9 +116,10 @@
 
 <h1 class="heading mb-4">Plans</h1>
 <div class="d-flex gap-3 justify-content-center mt-2 mb-5">
-    <button class="sub-btn ">Subscribe</button>
-    <button class="sub-btn">Monthly</button>
-    <button class="sub-btn active">Annually Save 20%</button>
+    <div class="pricing_toggle-container">
+        <button class="pricing_toggle-btn">Monthly</button>
+        <button class="pricing_toggle-btn active d-flex gap-2">Annually <span class="pricing_span">Save 15%</span></button>
+    </div>
 </div>
 
 <div class="plans Annually">
@@ -140,6 +141,23 @@
         </ul>
     </div>
 
+    <div class="plan">
+        <h2>Pro</h2>
+        <p class="align-center">Unlock premium features <br /> for your business needs.</p>
+        <div class="price">$29</div>
+        <p class="align-center">Per Month</p>
+        <p class="align-center">
+            <button class="create-new-btn">Subscribe</button>
+        </p>
+        <ul class="features">
+            <li>3 Aniboards with 9 Slides</li>
+            <li>Free Animation Templates</li>
+            <li>Full Animation Features</li>
+            <li>Free photos and graphics</li>
+            <li>No Water Mark</li>
+            <li>15 GB of cloud storage</li>
+        </ul>
+    </div>
     <div class="plan">
         <h2>Pro</h2>
         <p class="align-center">Unlock premium features <br /> for your business needs.</p>
@@ -326,4 +344,15 @@
                 });
             });
     });
+
+    // pricing toggle button
+    const buttons = document.querySelectorAll('.pricing_toggle-btn');
+
+    buttons.forEach(button => {
+      button.addEventListener('click', () => {
+        buttons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+      });
+    });
+
 </script>
