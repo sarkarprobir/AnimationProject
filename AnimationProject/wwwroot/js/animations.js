@@ -5885,6 +5885,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("line_spacing_tool").style.display = 'none';
         document.getElementById("divStrockColor").style.display = 'none';
         document.getElementById("divFillColor").style.display = 'none';
+        document.getElementById("divCurvature").style.display = 'none';
         HideLoader();
     }
     else if (selectedType == 'Text') {
@@ -5896,6 +5897,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("line_spacing_tool").style.display = 'block';
         document.getElementById("divStrockColor").style.display = 'none';
         document.getElementById("divFillColor").style.display = 'none';
+        document.getElementById("divCurvature").style.display = 'none';
         HideLoader();
     }
     else if (selectedType == 'Shape') {
@@ -5908,6 +5910,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("line_spacing_tool").style.display = 'none';
         document.getElementById("divStrockColor").style.display = 'block';
         document.getElementById("divFillColor").style.display = 'block';
+        document.getElementById("divCurvature").style.display = 'block';
         HideLoader();
     }
     else if (selectedType == 'Icon') {
@@ -5919,6 +5922,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("line_spacing_tool").style.display = 'none';
         document.getElementById("divStrockColor").style.display = 'block';
         document.getElementById("divFillColor").style.display = 'block';
+        document.getElementById("divCurvature").style.display = 'none';
         HideLoader();
     }
     else if (selectedType == null) {
@@ -5934,6 +5938,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("line_spacing_tool").style.display = 'block';
         document.getElementById("divStrockColor").style.display = 'none';
         document.getElementById("divFillColor").style.display = 'none';
+        document.getElementById("divCurvature").style.display = 'none';
         HideLoader();
     }
 }
@@ -7709,8 +7714,7 @@ canvas.addEventListener('drop', e => {
             strokeNoColorStatus: false,
             fillNoColor: "#FFFFFF",
             strokeNoColor: "#FFFFFF",
-            /*strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 3*/
-            strokeWidth: .5
+            strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || .5
         };
         images.forEach(it => it.selected = false);
         textObjects.forEach(t => t.selected = false);
@@ -13722,3 +13726,269 @@ textEditorNew.addEventListener('input', () => {
 document.addEventListener('selectionchange', () => {
     __saveLiveCaretRange(textEditorNew);
 });
+//function applySvgCurvature(targetImage, radiusPx, strokeWidthOpt) {
+//    if (!targetImage) return;
+
+//    const svgUrl = targetImage.originalSrc || targetImage.src || "";
+//    const isSvg = svgUrl.toLowerCase().endsWith(".svg") || svgUrl.startsWith("data:image/svg+xml");
+//    if (!isSvg || !targetImage.img) { console.warn("Target is not an SVG"); return; }
+
+//    // read stroke width from dropdown if not provided
+//    let sw = strokeWidthOpt;
+//    if (!Number.isFinite(sw)) {
+//        const swEl = document.getElementById("ddlStrokeWidth");
+//        sw = parseFloat(swEl?.value);
+//    }
+//    if (!Number.isFinite(sw)) sw = 0;
+//    targetImage.strokeWidth = sw;              // persist on object
+//    $("#hdnStrokeWidth").val(String(sw));      // keep UI in sync
+
+//    // race guard
+//    targetImage._curveJobId = (targetImage._curveJobId || 0) + 1;
+//    const myJob = targetImage._curveJobId;
+
+//    const origW = targetImage.width, origH = targetImage.height;
+
+//    function patchCurvature(svgText) {
+//        const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+//        const svg = doc.documentElement;
+
+//        // if we’re changing stroke width, avoid clipping by expanding viewBox
+//        if (sw > 0) {
+//            svg.setAttribute("overflow", "visible");
+//            let vb = svg.getAttribute("viewBox");
+//            if (!vb) vb = `0 0 ${origW} ${origH}`;
+//            let [x, y, w, h] = vb.split(/\s+|,/).map(Number);
+//            const pad = sw / 2;
+//            svg.setAttribute("viewBox", `${x - pad} ${y - pad} ${w + 2 * pad} ${h + 2 * pad}`);
+//        }
+
+//        // 1) Round joints/caps when radius > 0
+//        const PAINT_TAGS = new Set(["path", "rect", "circle", "ellipse", "polygon", "polyline", "line", "g", "use", "text"]);
+//        svg.querySelectorAll("*").forEach(el => {
+//            if (!PAINT_TAGS.has(el.tagName.toLowerCase())) return;
+//            if (radiusPx > 0) {
+//                el.setAttribute("stroke-linejoin", "round");
+//                el.setAttribute("stroke-linecap", "round");
+//                el.setAttribute("stroke-miterlimit", "1");
+//            } else {
+//                el.removeAttribute("stroke-linejoin");
+//                el.removeAttribute("stroke-linecap");
+//                el.removeAttribute("stroke-miterlimit");
+//            }
+//            // apply dropdown stroke width (even if stroke is 'none', harmless)
+//            el.setAttribute("stroke-width", String(sw));
+//        });
+
+//        // 2) True rounded corners for <rect>
+//        svg.querySelectorAll("rect").forEach(rect => {
+//            const w = parseFloat(rect.getAttribute("width") || "0");
+//            const h = parseFloat(rect.getAttribute("height") || "0");
+//            const maxR = Math.max(0, Math.min(radiusPx, Math.min(w, h) / 2));
+//            if (maxR > 0) {
+//                rect.setAttribute("rx", maxR);
+//                rect.setAttribute("ry", maxR);
+//            } else {
+//                rect.removeAttribute("rx");
+//                rect.removeAttribute("ry");
+//            }
+//        });
+
+//        return new XMLSerializer().serializeToString(doc);
+//    }
+
+//    function redraw(svgText) {
+//        if (myJob !== targetImage._curveJobId) return;
+//        const uri = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgText);
+//        const imgEl = targetImage.img;
+
+//        imgEl.onload = () => {
+//            if (myJob !== targetImage._curveJobId) return;
+//            targetImage.width = origW;
+//            targetImage.height = origH;
+//            targetImage.src = uri;
+//            drawText?.();
+//        };
+//        imgEl.onerror = () => console.warn("Curvature apply failed:", targetImage.originalSrc || targetImage.src);
+
+//        imgEl.src = uri;
+//    }
+
+//    // Source resolution (use cached original if available)
+//    const have = targetImage.originalSVG;
+//    if (have) { redraw(patchCurvature(have)); return; }
+
+//    if (svgUrl.startsWith("data:image/svg+xml")) {
+//        const afterComma = svgUrl.split(",")[1] || "";
+//        let raw = "";
+//        if (/;base64/i.test(svgUrl)) { try { raw = atob(afterComma); } catch { } }
+//        else { try { raw = decodeURIComponent(afterComma); } catch { } }
+//        if (raw) { targetImage.originalSVG = raw; redraw(patchCurvature(raw)); }
+//        return;
+//    }
+
+//    fetch(svgUrl)
+//        .then(r => r.text())
+//        .then(text => { targetImage.originalSVG = text; redraw(patchCurvature(text)); })
+//        .catch(err => console.error("Fetch SVG failed:", err));
+//}
+
+//function curvatureChanges() {
+//    if (!activeImage || !(activeImage.type === "image" && activeImage.img)) return;
+
+//    let r = parseFloat(document.getElementById("ddlCurvature").value);
+//    if (!Number.isFinite(r)) r = 0;
+
+//    // read current stroke width from dropdown and pass it in
+//    const swEl = document.getElementById("ddlStrokeWidth");
+//    let sw = parseFloat(swEl?.value);
+//    if (!Number.isFinite(sw)) sw = activeImage.strokeWidth || 0;
+
+//    applySvgCurvature(activeImage, r, sw);
+//}
+
+function applySvgCurvature(targetImage, radiusPx, strokeWidthOpt, paintOpt = {}) {
+    if (!targetImage) return;
+
+    const svgUrl = targetImage.originalSrc || targetImage.src || "";
+    const isSvg = svgUrl.toLowerCase().endsWith(".svg") || svgUrl.startsWith("data:image/svg+xml");
+    if (!isSvg || !targetImage.img) { console.warn("Target is not an SVG"); return; }
+
+    // read paint options
+    const fillOpt = Object.prototype.hasOwnProperty.call(paintOpt, "fill") ? paintOpt.fill : null;
+    const strokeOpt = Object.prototype.hasOwnProperty.call(paintOpt, "stroke") ? paintOpt.stroke : null;
+
+    // stroke width from dropdown if not provided
+    let sw = strokeWidthOpt;
+    if (!Number.isFinite(sw)) {
+        sw = parseFloat(document.getElementById("ddlStrokeWidth")?.value);
+    }
+    if (!Number.isFinite(sw)) sw = targetImage.strokeWidth || 0;
+
+    targetImage.strokeWidth = sw;
+    $("#hdnStrokeWidth").val(String(sw));
+
+    // race guard
+    targetImage._curveJobId = (targetImage._curveJobId || 0) + 1;
+    const myJob = targetImage._curveJobId;
+
+    const origW = targetImage.width, origH = targetImage.height;
+
+    function patch(svgText) {
+        const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+        const svg = doc.documentElement;
+
+        // avoid clipping when stroke grows
+        if (sw > 0) {
+            svg.setAttribute("overflow", "visible");
+            let vb = svg.getAttribute("viewBox");
+            if (!vb) vb = `0 0 ${origW} ${origH}`;
+            let [x, y, w, h] = vb.split(/\s+|,/).map(Number);
+            const pad = sw / 2;
+            svg.setAttribute("viewBox", `${x - pad} ${y - pad} ${w + 2 * pad} ${h + 2 * pad}`);
+        }
+
+        // curvature: rounded joints/caps
+        const PAINT_TAGS = new Set(["path", "rect", "circle", "ellipse", "polygon", "polyline", "line", "g", "use", "text"]);
+        svg.querySelectorAll("*").forEach(el => {
+            if (!PAINT_TAGS.has(el.tagName.toLowerCase())) return;
+            if (radiusPx > 0) {
+                el.setAttribute("stroke-linejoin", "round");
+                el.setAttribute("stroke-linecap", "round");
+                el.setAttribute("stroke-miterlimit", "1");
+            } else {
+                el.removeAttribute("stroke-linejoin");
+                el.removeAttribute("stroke-linecap");
+                el.removeAttribute("stroke-miterlimit");
+            }
+            // always apply the current stroke width
+            el.setAttribute("stroke-width", String(sw));
+        });
+
+        // true rounded corners for <rect>
+        svg.querySelectorAll("rect").forEach(rect => {
+            const w = parseFloat(rect.getAttribute("width") || "0");
+            const h = parseFloat(rect.getAttribute("height") || "0");
+            const maxR = Math.max(0, Math.min(radiusPx, Math.min(w, h) / 2));
+            if (maxR > 0) { rect.setAttribute("rx", maxR); rect.setAttribute("ry", maxR); }
+            else { rect.removeAttribute("rx"); rect.removeAttribute("ry"); }
+        });
+
+        // paint in the same pass (honor "none")
+        const styleEl = svg.querySelector("style");
+        if (styleEl) {
+            if (fillOpt != null) styleEl.textContent = styleEl.textContent.replace(/(^|[^-])fill:[^;]+;/g, `$1fill:${fillOpt};`);
+            if (strokeOpt != null) styleEl.textContent = styleEl.textContent.replace(/stroke:[^;]+;/g, `stroke:${strokeOpt};`);
+            styleEl.textContent = styleEl.textContent.replace(/stroke-width:[^;]+;/g, `stroke-width:${sw};`);
+        }
+
+        svg.querySelectorAll("*").forEach(el => {
+            if (!PAINT_TAGS.has(el.tagName.toLowerCase())) return;
+            if (el.closest("defs")) return;
+            if (fillOpt != null) el.setAttribute("fill", fillOpt);
+            if (strokeOpt != null) el.setAttribute("stroke", strokeOpt);
+            el.setAttribute("stroke-width", String(sw));
+        });
+
+        return new XMLSerializer().serializeToString(doc);
+    }
+
+    function redraw(svgText) {
+        if (myJob !== targetImage._curveJobId) return;
+        // ✅ update baseline so later recolors keep the curvature
+        targetImage.originalSVG = svgText;
+
+        const uri = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgText);
+        const imgEl = targetImage.img;
+
+        imgEl.onload = () => {
+            if (myJob !== targetImage._curveJobId) return;
+            targetImage.width = origW;
+            targetImage.height = origH;
+            targetImage.src = uri;
+            drawText?.();
+        };
+        imgEl.onerror = () => console.warn("Curvature apply failed:", targetImage.originalSrc || targetImage.src);
+
+        imgEl.src = uri;
+    }
+
+    const cached = targetImage.originalSVG;
+    if (cached) { redraw(patch(cached)); return; }
+
+    if (svgUrl.startsWith("data:image/svg+xml")) {
+        const after = svgUrl.split(",")[1] || "";
+        let raw = "";
+        if (/;base64/i.test(svgUrl)) { try { raw = atob(after); } catch { } }
+        else { try { raw = decodeURIComponent(after); } catch { } }
+        if (raw) { targetImage.originalSVG = raw; redraw(patch(raw)); }
+        return;
+    }
+
+    fetch(svgUrl)
+        .then(r => r.text())
+        .then(text => { targetImage.originalSVG = text; redraw(patch(text)); })
+        .catch(err => console.error("Fetch SVG failed:", err));
+}
+function curvatureChanges() {
+    const img = activeImage;
+    if (!(img && img.type === "image" && img.img)) return;
+
+    // curvature radius
+    let r = parseFloat(document.getElementById("ddlCurvature")?.value);
+    if (!Number.isFinite(r)) r = 0;
+
+    // stroke width from dropdown
+    let sw = parseFloat(document.getElementById("ddlStrokeWidth")?.value);
+    if (!Number.isFinite(sw)) sw = img.strokeWidth || 0;
+
+    // honor checkboxes
+    const noFill = !!document.getElementById("noColorCheck")?.checked;
+    const noStroke = !!document.getElementById("noColorCheck2")?.checked;
+
+    const fill = noFill ? "none" : ($("#hdnfillColor").val() || img.fillNoColor || "#FFFFFF");
+    const stroke = noStroke ? "none" : ($("#hdnStrockColor").val() || img.strokeNoColor || "#000000");
+
+    // one-pass patch: curvature + paint + strokeWidth
+    applySvgCurvature(img, r, sw, { fill, stroke });
+}
