@@ -1864,78 +1864,179 @@ body {
 }
 /*TTF integration*/
 
-/* Arial Regular */
 @font-face {
-    font-family: 'ArialCustom';
-    src: url('Fonts/arial.ttf') format('truetype');
+    font-family: 'Arial Regular';
+    font-style: normal;
     font-weight: normal;
-    font-style: normal;
+    src: local('Arial Regular'), url('ARIAL.woff') format('woff');
 }
 
-/* Arial Narrow */
+
 @font-face {
-    font-family: 'ArialNarrow';
-    src: url('Fonts/Arialn.ttf') format('truetype');
+    font-family: 'Arial Narrow';
+    font-style: normal;
     font-weight: normal;
-    font-style: normal;
+    src: local('Arial Narrow'), url('ARIALN.woff') format('woff');
 }
 
-/* Arial Thin */
-@font-face {
-    font-family: 'ArialThin';
-    src: url('Fonts/ArialTh.ttf') format('truetype');
-    font-weight: 100;
-    font-style: normal;
-}
 
-/* Arial Bold (ARIBL0) */
 @font-face {
-    font-family: 'ArialBold0';
-    src: url('Fonts/ARIBL0.ttf') format('truetype');
-    font-weight: bold;
+    font-family: 'Arial Italic';
     font-style: normal;
-}
-
-/* G Arial Bold */
-@font-face {
-    font-family: 'GArialBold';
-    src: url('Fonts/G_ari_bd.ttf') format('truetype');
-    font-weight: bold;
-    font-style: normal;
-}
-
-/* G Arial Italic */
-@font-face {
-    font-family: 'GArialItalic';
-    src: url('Fonts/G_ari_i.ttf') format('truetype');
     font-weight: normal;
-    font-style: italic;
+    src: local('Arial Italic'), url('ARIALI 1.woff') format('woff');
 }
 
-/* Geo AI */
+
 @font-face {
-    font-family: 'GeoAI';
-    src: url('Fonts/GEO_AI__.ttf') format('truetype');
-    font-weight: normal;
+    font-family: 'Arial Italic';
     font-style: normal;
+    font-weight: normal;
+    src: local('Arial Italic'), url('ARIALI.woff') format('woff');
 }
 
-/* Arial Rounded MT Bold */
+
 @font-face {
-    font-family: 'ArialRoundedMTBold';
-    src: url('Fonts/arial_rounded_mt_bold-webfont.eot');
-    src: url('Fonts/arial_rounded_mt_bold-webfont.eot?#iefix') format('embedded-opentype'), url('Fonts/arial_rounded_mt_bold-webfont.woff2') format('woff2'), url('Fonts/arial_rounded_mt_bold-webfont.woff') format('woff'), url('Fonts/arial_rounded_mt_bold-webfont.ttf') format('truetype');
-    font-weight: normal;
+    font-family: 'Arial Narrow Italic';
     font-style: normal;
+    font-weight: normal;
+    src: local('Arial Narrow Italic'), url('ARIALNI.woff') format('woff');
 }
 
-/* Arlrdbd */
+
 @font-face {
-    font-family: 'Arlrdbd';
-    src: url('Fonts/arlrdbd.eot');
-    src: url('Fonts/arlrdbd.eot?#iefix') format('embedded-opentype'), url('Fonts/arlrdbd.woff2') format('woff2'), url('Fonts/arlrdbd.woff') format('woff'), url('Fonts/arlrdbd.ttf') format('truetype'), url('Fonts/arlrdbd.svg#Arlrdbd') format('svg');
-    font-weight: normal;
+    font-family: 'Arial Medium';
     font-style: normal;
+    font-weight: normal;
+    src: local('Arial Medium'), url('ArialMdm.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Medium Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Medium Italic'), url('ArialMdmItl.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Bold';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Bold'), url('ARIALBD 1.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Bold';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Bold'), url('ARIALBD.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Narrow Bold';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Narrow Bold'), url('ARIALNB.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Bold Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Bold Italic'), url('ARIALBI 1.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Bold Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Bold Italic'), url('ARIALBI.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Narrow Bold Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Narrow Bold Italic'), url('ARIALNBI.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Black';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Black'), url('ARIBLK.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Black Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Black Italic'), url('ARIALBLACKITALIC.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Light Regular';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Light Regular'), url('ARIALLGT.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial CE Regular';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial CE Regular'), url('ArialCE.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial CE MT Black Regular';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial CE MT Black Regular'), url('ArialCEMTBlack.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial CE Bold';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial CE Bold'), url('arialceb.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Light Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Light Italic'), url('ARIALLGTITL.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial CE Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial CE Italic'), url('ArialCEItalic.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial CE Bold Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial CE Bold Italic'), url('ArialCEBoldItalic.woff') format('woff');
 }
 
 /* Lobster */
@@ -2007,4 +2108,9 @@ body {
             cursor: default;
         }
 
+.AccModal-content {
+    height: 335px !important;
+    width: 550px !important;
+    border-radius: 3px !important;
+}
 

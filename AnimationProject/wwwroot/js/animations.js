@@ -1330,7 +1330,7 @@ if (famSel) {
 }
 function OnChangefontFamily(value) {
     $("#fontFamily").val(value);
-    const fontFamily = document.getElementById("fontFamily").value || "ArialCustom";
+    const fontFamily = document.getElementById("fontFamily").value || "Arial Regular";
 
     const Obj = Array.isArray(textObjects) ? textObjects.find(o => o.selected) : null;
     if (Obj) Obj.fontFamily = fontFamily;

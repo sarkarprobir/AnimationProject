@@ -81,7 +81,7 @@
 
 <div class="container pay_sub_cont">
     <div>
-        <button class="btn btn-danger pay_button b_rad4">Pay to Renew</button>
+        <button class="btn btn-danger pay_button b_rad4" data-bs-toggle="modal" data-bs-target="#Acc_Modal">Pay to Renew</button>
         <span class="sub_span ms-2 fs-8">Subscription ends in 6 days</span>
     </div>
 </div>
@@ -186,6 +186,21 @@
                 <button type="button" class="cancel-btn" data-bs-dismiss="modal">Cancel</button>
                 <button class="create-btn" id="create-button">Create</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!--  Modal Structure -->
+<div class="modal fade Acc_modal" id="Acc_Modal" tabindex="-1" aria-labelledby="AccModalLabel" aria-modal="true">
+    <div class="modal-dialog">
+        <div class="modal-content AccModal-content p-3 text-center">
+            <h2 class="acc_modal_head">Your Subscription<br /> Has Expired!</h2>
+            <p class="acc_modal_para">
+                Your access to premium features has been paused.<br /> To continue enjoying uninterrupted service, please<br />
+                renew tour subscription.
+            </p>
+            <button class="btn btn-danger acc_modal_btn">Renew Now</button>
+            <p class="acc_modal_para mb-0">Thank you for being with us!</p>
         </div>
     </div>
 </div>
