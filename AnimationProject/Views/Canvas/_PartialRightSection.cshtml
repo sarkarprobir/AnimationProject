@@ -1513,6 +1513,8 @@ function moveCaretToEnd(el) {
                             @* <li><a class="neto" onclick="OnChangefontFamily('neto')">Neto</a></li> *@
                             <li><a class="pacifico" onclick="OnChangefontFamily('Pacifico')">Pacifico</a></li>
                             <li><a class="Roboto" onclick="OnChangefontFamily('Roboto')">Roboto</a></li>
+                            <li><a class="Georgia" onclick="OnChangefontFamily('Georgia Regular')">Georgia</a></li>
+                            <li><a class="Roboto" onclick="OnChangefontFamily('Helvetica')">Helvetica</a></li>
                         </ul>
                         <input type="hidden" id="fontFamily" />
                     </div>
@@ -1643,7 +1645,8 @@ function moveCaretToEnd(el) {
 </div>
 
 <div class="tranColorPopup" id="tranColor" style="display: none;">
-    <div class="headtext">Transition Style</div>
+    <div class="headtext">Transition</div>
+    <p class="headpara">Styles</p>
         <div class="d-flex flex-wrap gap-2 mb-4">
             <div class="tranBox active">
                 <img src="~/images/icons/tranLogo.png" alt="Alternate Text" />
@@ -1652,7 +1655,7 @@ function moveCaretToEnd(el) {
                 <img src="~/images/icons/tranLogo2.png" alt="Alternate Text" />
             </div>
         </div>
-    <div class="headtext">Transition Colors</div>
+    <p class="headpara">Colors</p>
 
     <div class="box">
         <div id="targetDiv1" class="view-color-1"></div>
@@ -1660,7 +1663,7 @@ function moveCaretToEnd(el) {
     </div>
     <div class="row FontSize mb-4">
         <div class="col-md-8  d-flex align-items-center">
-            <label>Transition Color 1</label>
+            <label>Color 1</label>
         </div>
         <div class="col-md-4 text-end d-flex align-items-center justify-content-end">
             <div class="color-palette">
@@ -1673,7 +1676,7 @@ function moveCaretToEnd(el) {
     </div>
     <div class="row FontSize mb-4">
         <div class="col-md-8  d-flex align-items-center">
-            <label>Transition Color 2</label>
+            <label>Color 2</label>
         </div>
         <div class="col-md-4 text-end d-flex align-items-center justify-content-end">
             <div class="color-palette">

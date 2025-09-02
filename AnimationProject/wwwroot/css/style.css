@@ -579,7 +579,16 @@ ul.TextStyle li a.monstro{ font-family: "Monstro"; font-style: normal;}
 ul.TextStyle li a.Montserrat{ font-family: "Montserrat", sans-serif; font-style: normal;} 
 ul.TextStyle li a.neto{ font-family: 'Noto Sans'; font-weight: normal; font-style: normal;}
 ul.TextStyle li a.pacifico{ font-family: "Pacifico", cursive; font-weight: normal; font-style: normal;}
-ul.TextStyle li a.Roboto{ font-family: "Roboto", sans-serif; font-weight: bold;}
+ul.TextStyle li a.Roboto{ font-family: "Roboto", sans-serif; font-weight: normal;}
+        ul.TextStyle li a.Georgia {
+            font-family: "Georgia Regular", sans-serif;
+            font-weight: normal;
+        }
+        ul.TextStyle li a.Helvetica {
+            font-family: "Helvetica", sans-serif;
+            font-weight: bold;
+        }
+
 
 .middle-resulation {
     width: 146px;
@@ -736,7 +745,12 @@ svg:hover {
 .dropdown-item:hover {
    background-color: #444;
 }
-
+.headpara{
+    font-size: 14px;
+    margin-bottom: 7px;
+    font-weight: 400;
+    color: #000;
+}
 .icon {
     width: 18px;
     height: 18px;
@@ -1863,7 +1877,7 @@ body {
     color: #fff !important;
 }
 /*TTF integration*/
-
+/*Arial*/
 @font-face {
     font-family: 'Arial Regular';
     font-style: normal;
@@ -2056,6 +2070,98 @@ body {
     font-weight: normal;
     font-style: normal;
 }
+@font-face {
+    font-family: 'Helvetica';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Helvetica'), url('Helvetica.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Helvetica Oblique';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Helvetica Oblique'), url('Helvetica-Oblique.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Helvetica Compressed';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Helvetica Compressed'), url('helvetica-compressed-5871d14b6903a.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Helvetica Rounded Bold';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Helvetica Rounded Bold'), url('helvetica-rounded-bold-5871d05ead8de.woff') format('woff');
+}
+
+/*Helvetica*/
+@font-face {
+    font-family: 'Helvetica';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Helvetica'), url('Helvetica-Bold.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Helvetica Bold Oblique';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Helvetica Bold Oblique'), url('Helvetica-BoldOblique.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Helvetica Light';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Helvetica Light'), url('helvetica-light-587ebe5a59211.woff') format('woff');
+}
+
+/*Georgia*/
+
+@font-face {
+    font-family: 'Georgia Regular';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Georgia Regular'), url('georgia.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Georgia Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Georgia Italic'), url('georgiai.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Georgia Bold';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Georgia Bold'), url('georgiab.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Georgia Bold Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Georgia Bold Italic'), url('georgiaz.woff') format('woff');
+}
+
+
+
+
+
 .thumb-wrapper {
     display: inline-flex;
     flex-direction: column;
