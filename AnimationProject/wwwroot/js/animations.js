@@ -7389,27 +7389,39 @@ function SetNoStrokeColor() {
 //stroke width change function
 function strokeWidthChanges() {
     const selectEl = document.getElementById("ddlStrokeWidth");
-    const strokeWidth = selectEl.value;
+    let strokeWidth = parseFloat(selectEl?.value ?? 0);
+    if (!Number.isFinite(strokeWidth)) strokeWidth = 0;
 
-    if (activeImage) {
-        $("#hdnStrokeWidth").val(strokeWidth);
-
-        // Update SVG stroke-width
-        const fill = $("#hdnfillColor").val();
-        const stroke = $("#hdnStrockColor").val();
-
-        const noColorChecked = document.getElementById("noColorCheck").checked;
-        const noStrokeChecked = document.getElementById("noColorCheck2").checked;
-
-        updateSelectedImageColors(noColorChecked ? "none" : $("#hdnfillColor").val(), noStrokeChecked ? "none" : $("#hdnStrockColor").val(), strokeWidth);
+    // highlight selected option
+    if (selectEl) {
+        Array.from(selectEl.options).forEach(opt => opt.classList.remove("selected"));
+        if (selectEl.selectedIndex >= 0) {
+            selectEl.options[selectEl.selectedIndex].classList.add("selected");
+        }
     }
 
-    // Remove 'selected' class from all options
-    Array.from(selectEl.options).forEach(opt => opt.classList.remove("selected"));
+    if (!activeImage) return;
 
-    // Add 'selected' class to the selected option
-    selectEl.options[selectEl.selectedIndex].classList.add("selected");
+    // persist in UI/model
+    $("#hdnStrokeWidth").val(String(strokeWidth));
+    activeImage.strokeWidth = strokeWidth;
+
+    // compute fill/stroke respecting "no color" checkboxes
+    const noFill = !!document.getElementById("noColorCheck")?.checked;
+    const noStroke = !!document.getElementById("noColorCheck2")?.checked;
+
+    const fill = noFill ? "none" : ($("#hdnfillColor").val() || activeImage.fillNoColor || "#FFFFFF");
+    const stroke = noStroke ? "none" : ($("#hdnStrockColor").val() || activeImage.strokeNoColor || "#000000");
+
+    // ✅ correct argument order: (targetImage, newFill, newStroke, newStrokeWidth)
+    if (activeImage.type === "image" && activeImage.img) {
+        updateSelectedImageColors(activeImage, fill, stroke, strokeWidth);
+    } else {
+        // non-SVG fallback
+        drawText?.();
+    }
 }
+
 
 
 
@@ -7637,7 +7649,7 @@ canvas.addEventListener('drop', e => {
     const img = new Image();
     img.onload = () => {
         // maximum dimension on drop
-        const MAX_DIM = 200;
+        const MAX_DIM = 50;
 
         // compute ratio so the longest side is MAX_DIM
         const ratio = img.width > img.height
@@ -7697,7 +7709,8 @@ canvas.addEventListener('drop', e => {
             strokeNoColorStatus: false,
             fillNoColor: "#FFFFFF",
             strokeNoColor: "#FFFFFF",
-            strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 3
+            /*strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 3*/
+            strokeWidth: .5
         };
         images.forEach(it => it.selected = false);
         textObjects.forEach(t => t.selected = false);
