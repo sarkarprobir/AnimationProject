@@ -343,45 +343,52 @@ let selectedType = null; // "text" or "image"
 
 
 // Show dynamic context menu on right-click.
-canvas.addEventListener("contextmenu", function (e) {
-    e.preventDefault(); // Prevent default browser context menu
-    const items = contextMenu.querySelectorAll('.context-options');
-    const rect = canvas.getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    const offsetY = e.clientY - rect.top;
-    const adjustX = -280;
-    const adjustY = -30;
-    const found = getObjectAtcontextmenu(offsetX, offsetY);
-    if (found) {
-        // ── If an object is found, show ALL menu items ────────────────
-        items.forEach(li => {
-            li.style.display = "block";
-        });
 
-        // Optionally disable/enable specific items based on 'found'
-        // e.g. disable "Paste" if your clipboard is empty, or enable "Copy", "Delete", etc.
 
-        contextMenu.style.left = e.clientX + adjustX + "px";
-        contextMenu.style.top = e.clientY + adjustY + "px";
-        contextMenu.style.display = "block";
-        selectedForContextMenu = found.obj;
-        selectedType = found.type;
+
+canvas.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Use the same coord helper you use everywhere else
+    const { x, y } = getCanvasMousePosition(e);
+
+    // Always resolve with the same topmost helper
+    const hit = getTopHitAt(x, y);
+    contextTarget = hit;
+    selectedForContextMenu = hit; // <-- keep legacy readers happy
+    selectedType = hit ? (isImageItem(hit) ? 'image' : 'text') : null; // if you still use it
+
+    // Show/hide items
+    const items = contextMenu.querySelectorAll(".context-options");
+    items.forEach(li => li.style.display = hit ? "block" : (li.id === "pasteOption" ? "block" : "none"));
+
+    // Position menu
+    const adjustX = -280, adjustY = -30;
+    contextMenu.style.left = (e.clientX + adjustX) + "px";
+    contextMenu.style.top = (e.clientY + adjustY) + "px";
+    contextMenu.style.display = "block";
+
+    // Visually select what we right-clicked (optional, but recommended)
+    if (hit) {
+        (textObjects || []).forEach(o => o.selected = (o === hit));
+        (images || []).forEach(o => o.selected = (o === hit));
+        activeBox = hit;
+        if (hit.type === "image" || hit.img) { activeImage = hit; activeText = null; }
+        else { activeText = hit; activeImage = null; }
+
+        // (Optional) sync any UI like rotation/opacity if your mousedown does it
+        // updateRotationUI(hit); updateOpacityUI(hit);
+    } else {
+        activeBox = null;
+        activeText = activeImage = null;
     }
-    else {
-        // ── No object under cursor: show ONLY "Paste" ────────────────
-        items.forEach(li => {
-            items.forEach(li => {
-                li.style.display = (li.id === "pasteOption") ? "block" : "none";
-            });
-        });
 
-        contextMenu.style.left = e.clientX + adjustX + "px";
-        contextMenu.style.top = e.clientY + adjustY + "px";
-        contextMenu.style.display = "block";
-        selectedForContextMenu = null;
-        selectedType = null;
-    }
+    drawText();
+    skipNextClick = true; // prevent the next click from clearing selection
 });
+
+
 
 // Hide the context menu when clicking elsewhere.
 document.addEventListener("click", function (e) {
@@ -403,32 +410,34 @@ document.addEventListener("click", function (e) {
 //        contextMenu.style.display = "none";
 //    }
 //});
+function isImageItem(obj) {
+    return !!obj && (obj.type === 'image' || obj.img === true || obj.isSVG === true);
+}
+
 document.getElementById("deleteOption").addEventListener("click", function (e) {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); e.stopPropagation();
 
-    if (!selectedForContextMenu) return;
+    const target = contextTarget || selectedForContextMenu || activeBox;
+    if (!target) return;
 
-    // pick the right collection
-    const arr = (selectedType === "image") ? images : textObjects;
+    const arr = isImageItem(target) ? (images || []) : (textObjects || []);
+    const idx = arr.indexOf(target);
+    if (idx > -1) arr.splice(idx, 1);
 
-    // IMPORTANT: delete in-place so existing references to the array stay valid
-    const idx = arr.indexOf(selectedForContextMenu);
-    if (idx > -1) {
-        arr.splice(idx, 1);
-    }
-
-    // clear any other selection state that could redraw it
-    if (selectedForContextMenu.selected) selectedForContextMenu.selected = false;
-    if (activeText === selectedForContextMenu) activeText = null;
-    if (activeImage === selectedForContextMenu) activeImage = null;
-    if (activeBox === selectedForContextMenu) activeBox = null;
+    // clear state
+    if (activeBox === target) activeBox = null;
+    if (activeText === target) activeText = null;
+    if (activeImage === target) activeImage = null;
+    target.selected = false;
 
     selectedForContextMenu = null;
-    contextMenu.style.display = "none";
+    contextTarget = null;
+    selectedType = null;
 
+    contextMenu.style.display = "none";
     drawText();
 });
+
 
 window.addEventListener("keydown", function (e) {
     const active = document.activeElement;
@@ -3709,31 +3718,43 @@ function getHandleUnderMouseForImage(imgObj, pos) {
 //        pos.y <= imageObj.y + h
 //    );
 //}
-function isMouseOverImage(imgObj, pos) {
-    // 1) Compute pixel dimensions & center
-    const w = imgObj.width * (imgObj.scaleX || 1);
-    const h = imgObj.height * (imgObj.scaleY || 1);
-    const cx = imgObj.x + w / 2;
-    const cy = imgObj.y + h / 2;
+function isMouseOverImage(img, pos) {
+    // --- effective size (handle both "already scaled" and "raw×scale" models)
+    const sx = Number(img.scaleX ?? 1);
+    const sy = Number(img.scaleY ?? 1);
 
-    // 2) Translate mouse into object‑center coords
-    let dx = pos.x - cx;
-    let dy = pos.y - cy;
+    // Many editors store width/height as the on-screen size already.
+    // We'll try both interpretations and accept a hit if either matches.
+    const wA = Number(img.width ?? 0);            // assume already scaled
+    const hA = Number(img.height ?? 0);
+    const wB = wA * sx;                             // assume raw; apply scale
+    const hB = hA * sy;
 
-    // 3) Inverse‐rotate the point by –rotation
-    const rad = -(imgObj.rotation || 0) * Math.PI / 180;
-    const cos = Math.cos(rad), sin = Math.sin(rad);
-    const localX = dx * cos - dy * sin;
-    const localY = dx * sin + dy * cos;
+    // Allow small padding (e.g., stroke) so clicks near edge still count
+    const pad = Number(img.hitPad ?? img.strokeWidth ?? 0) * 0.5;
 
-    // 4) Now do a simple half‑width/height check
-    return (
-        localX >= -w / 2 &&
-        localX <= w / 2 &&
-        localY >= -h / 2 &&
-        localY <= h / 2
-    );
+    // helper: point-in-rotated-rect around center
+    function hitWithSize(w, h) {
+        const cx = img.x + w / 2;
+        const cy = img.y + h / 2;
+
+        const dx = pos.x - cx;
+        const dy = pos.y - cy;
+
+        const rad = -Number(img.rotation || 0) * Math.PI / 180;
+        const cos = Math.cos(rad), sin = Math.sin(rad);
+        const lx = dx * cos - dy * sin;
+        const ly = dx * sin + dy * cos;
+
+        const hw = w / 2 + pad;
+        const hh = h / 2 + pad;
+        return (lx >= -hw && lx <= hw && ly >= -hh && ly <= hh);
+    }
+
+    // Try A (width/height already scaled). If miss, try B (raw×scale)
+    return hitWithSize(wA, hA) || hitWithSize(wB, hB);
 }
+
 
 function isMouseOverImageNewOLD(imgObj, pos) {
     const sx = (typeof imgObj.scaleX === 'number') ? imgObj.scaleX : 1;
@@ -5395,26 +5416,62 @@ function isPointInRotatedBox(box, x, y) {
 }
 
 // ✅ ADD: get the topmost item under (x,y) by zIndex
-function getTopHitAt(x, y) {
-    const all = [...(images || []), ...(textObjects || [])]
-        .slice()
-        .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0)); // bottom→top
+//function getTopHitAt(x, y) {
+//    const all = [...(images || []), ...(textObjects || [])]
+//        .slice()
+//        .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0)); // bottom→top
 
-    for (let i = all.length - 1; i >= 0; i--) {           // check from topmost
-        const it = all[i];
-        if (it.type === 'image') {
-            if (isMouseOverImage?.(it, { x, y })) return it;  // you already have this
-        } else {
-            if (isPointInRotatedBox(it, x, y)) return it;
-        }
+//    for (let i = all.length - 1; i >= 0; i--) {           // check from topmost
+//        const it = all[i];
+//        if (it.type === 'image') {
+//            if (isMouseOverImage?.(it, { x, y })) return it;  // you already have this
+//        } else {
+//            if (isPointInRotatedBox(it, x, y)) return it;
+//        }
+//    }
+//    return null;
+//}
+function getTopHitAt(x, y) {
+    const arr = sortTopFirst(getAllItems());
+    for (const { it } of arr) {
+        const hit = (it.type === 'image' || it.img)
+            ? (typeof isMouseOverImage === 'function' && isMouseOverImage(it, { x, y }))
+            : (typeof isPointInRotatedBox === 'function' && isPointInRotatedBox(it, x, y));
+        if (hit) return it;
     }
     return null;
 }
+function findHandleAt(x, y) {
+    const arr = sortTopFirst(getAllItems());        // check top → bottom
+    for (const { it: box } of arr) {
+        const raw = (typeof getResizeHandleRotated === 'function')
+            ? getResizeHandleRotated(box, x, y)
+            : getResizeHandle(box, x, y);
+        if (raw) return { box, raw, handle: normalizeHandle(raw) };
+    }
+    return null;
+}
+function setSelectionTarget(obj, { setActive = true, setContext = true } = {}) {
+    if (!obj) return;
+    // single select this object
+    (textObjects || []).forEach(o => o.selected = (o === obj));
+    (images || []).forEach(o => o.selected = (o === obj));
 
+    if (setContext) selectedForContextMenu = obj;
+
+    if (setActive) {
+        activeBox = obj;
+        if (obj.type === 'image' || obj.img) {
+            activeImage = obj; activeText = null;
+        } else {
+            activeText = obj; activeImage = null;
+        }
+    }
+}
 canvas.addEventListener("click", function onCanvasClick(e) {
     // ignore shift here
     if (e.shiftKey) return;
-
+    if (skipNextClick) { skipNextClick = false; return; }
     if (skipNextClick) {
         skipNextClick = false;
         return; // swallow this click so it doesn’t clear selection
@@ -5580,9 +5637,41 @@ canvas.addEventListener("click", function onCanvasClick(e) {
             );
         }
     }
+    applyImagePaintToUI(activeImage);
 
     HideShowRightPannel?.(selectedType);
 });
+function applyImagePaintToUI(imgHit) {
+    if (!imgHit) return;
+
+    const fillPicker = document.getElementById('favFillcolor');
+    const strokePicker = document.getElementById('favStrockcolor');
+    const noFillBox = document.getElementById('noColorCheck');   // fill no-color
+    const noStrokeBox = document.getElementById('noColorCheck2');  // stroke no-color
+    const swEl = document.getElementById('ddlStrokeWidth');
+
+    // 1) Set checkboxes from statuses
+    if (noFillBox) noFillBox.checked = !!imgHit.fillNoColorStatus;
+    if (noStrokeBox) noStrokeBox.checked = !!imgHit.strokeNoColorStatus;
+
+    // 2) Push colors into the color inputs (only if they are valid hex)
+    const isHex = v => typeof v === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v);
+
+    if (fillPicker) {
+        const fv = imgHit.fillNoColor;
+        if (isHex(fv)) fillPicker.value = fv; // 'none' cannot be set on a color input
+        // keep hidden in sync (store 'none' if status true)
+        $('#hdnfillColor').val(imgHit.fillNoColorStatus ? 'none' : (isHex(fv) ? fv : fillPicker.value));
+    }
+
+    if (strokePicker) {
+        const sv = imgHit.strokeNoColor;
+        if (isHex(sv)) strokePicker.value = sv;
+        $('#hdnStrockColor').val(imgHit.strokeNoColorStatus ? 'none' : (isHex(sv) ? sv : strokePicker.value));
+    }
+
+    if (swEl && imgHit.strokeWidth != null) swEl.value = String(imgHit.strokeWidth);
+}
 
 
 ////KD Need to be Include in project////////
@@ -5817,6 +5906,8 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("text_color_tool").style.display = 'none';
         document.getElementById("text_size_tool").style.display = 'none';
         document.getElementById("line_spacing_tool").style.display = 'none';
+        document.getElementById("divStrockColor").style.display = 'block';
+        document.getElementById("divFillColor").style.display = 'block';
         HideLoader();
     }
     else if (selectedType == 'Icon') {
@@ -5826,8 +5917,8 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("text_decoration_tool").style.display = 'none';
         document.getElementById("text_color_tool").style.display = 'none';
         document.getElementById("line_spacing_tool").style.display = 'none';
-        document.getElementById("divStrockColor").style.display = 'none';
-        document.getElementById("divFillColor").style.display = 'none';
+        document.getElementById("divStrockColor").style.display = 'block';
+        document.getElementById("divFillColor").style.display = 'block';
         HideLoader();
     }
     else if (selectedType == null) {
@@ -7044,7 +7135,7 @@ function ChangeFillColor() {
     target.fillNoColor = newFill;
     target.strokeNoColor = newStroke;
     target.strokeWidth = newStrokeWidth;
-
+    target.fillNoColor = document.getElementById('favFillcolor')?.value || "#FFFFFF";
     updateSelectedImageColors(target, newFill, newStroke, newStrokeWidth);
 }
 
@@ -7174,7 +7265,6 @@ function SetNoFillColor() {
         // mirror on object (optional, if you serialize these)
         target.fillNoColorStatus = true;
         target.fillNoColor = "none";
-
         // ✅ pass the target image FIRST
         updateSelectedImageColors(target, "none", strokeColor, strokeWidth);
 
@@ -7232,6 +7322,7 @@ function ChangeStrockColor() {
     // (optional) mirror on object if you serialize these
     target.strokeNoColor = newStroke;
     target.strokeWidth = strokeWidth;
+    target.strokeNoColor = document.getElementById('favStrockcolor')?.value || "#FFFFFF";
 }
 
 //No color option for stroke color 
@@ -7264,6 +7355,8 @@ function SetNoStrokeColor() {
         // mirror on object (optional for serialization)
         target.strokeNoColor = "none";
         target.strokeWidth = strokeWidth;
+        target.strokeNoColorStatus = true;
+
 
     } else {
         // restore stroke color (prefer saved value if present)
@@ -7289,6 +7382,7 @@ function SetNoStrokeColor() {
         // mirror on object (optional)
         target.strokeNoColor = restoreStroke;
         target.strokeWidth = strokeWidth;
+        target.strokeNoColorStatus = false;
     }
 }
 
@@ -8783,16 +8877,9 @@ function refreshAllItems() {
 }
 // ✅ ADD: compact and normalize z-order based on current zIndex values
 function reindexZ() {
-    // Ensure we’re tracking current items
-    refreshAllItems();
-
-    // Sort by current zIndex (undefined ⇒ 0)
-    allItems.sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
-
-    // Reassign dense zIndex = 0..N-1
-    for (let i = 0; i < allItems.length; i++) {
-        allItems[i].zIndex = i;
-    }
+    const arr = getAllItems().map((o, i) => ({ o, i, z: Number(o.zIndex ?? 0) }));
+    arr.sort((A, B) => A.z - B.z || A.i - B.i); // bottom → top
+    arr.forEach((rec, idx) => { rec.o.zIndex = idx; });
 }
 // ✅ ADD: when a brand-new item is created, call this so it lands on top
 function giveTopZ(item) {
@@ -8828,33 +8915,46 @@ function sendBackward(item) {
 
 // ✅ ADD: to absolute front (highest z)
 function bringToFront(item) {
-    refreshAllItems();
-    const i = allItems.indexOf(item);
-    if (i === -1) return;
-    allItems.splice(i, 1);
-    allItems.push(item);
-    reindex();
+    const all = getAllItems();
+    if (!all.includes(item)) return;
+    const maxZ = Math.max(0, ...all.map(o => Number(o.zIndex ?? 0)));
+    item.zIndex = maxZ + 1;
+    // reindexZ(); // uncomment if you want zIndex compacted each time
 }
-bringFrontOption.addEventListener('click', () => {
-    if (!selectedForContextMenu) return;
-    bringToFront(selectedForContextMenu); // uses helper above
+
+function sortTopFirst(arr) {
+    // top-first: higher zIndex first; tie -> later item first
+    return arr.map((it, i) => ({ it, i }))
+        .sort((A, B) => {
+            const za = Number(A.it.zIndex ?? 0), zb = Number(B.it.zIndex ?? 0);
+            if (za !== zb) return zb - za;
+            return B.i - A.i;
+        });
+}
+sendBackOption.addEventListener('click', () => {
+    const target = contextTarget || selectedForContextMenu || activeBox;
+    if (!target) return;
+    sendToBack(target);
     drawText();
     contextMenu.style.display = 'none';
 });
 
-sendBackOption.addEventListener('click', () => {
-    if (!selectedForContextMenu) return;
-    sendToBack(selectedForContextMenu); // your existing function
+bringFrontOption.addEventListener('click', () => {
+    const target = contextTarget || selectedForContextMenu || activeBox;
+    if (!target) return;
+    bringToFront(target);
     drawText();
     contextMenu.style.display = 'none';
 });
+
 // define at top-level
+
 function sendToBack(item) {
-    const i = allItems.indexOf(item);
-    if (i === -1) return;
-    allItems.splice(i, 1);     // remove it
-    allItems.unshift(item);    // put at bottom
-    reindex();
+    const all = getAllItems();
+    if (!all.includes(item)) return;
+    const minZ = Math.min(0, ...all.map(o => Number(o.zIndex ?? 0)));
+    item.zIndex = minZ - 1;
+    // reindexZ(); // uncomment if you want zIndex compacted each time
 }
 
 
@@ -10842,79 +10942,6 @@ function hitTestTextObject(mx, my) {
 }
 
 
-// Modified canvas mousedown, mousemove, and mouseup with scaleTextBoxWithHandle logic
-// Updated mouse handlers with integrated scaling and handle logic
-// ✅ MOUSE DOWN EVENT
-//canvas.addEventListener("mousedown", e => {
-//    const { x: mx, y: my } = getCanvasMousePosition(e);
-//    startX = e.clientX;
-//    startY = e.clientY;
-//    prevMouseX = mx;
-//    prevMouseY = my;
-//    startMXCanvas = mx;
-//    startMYCanvas = my;
-
-//    if (isEditing && activeBox) {
-//        cleanEditorHTMLPreserveCaret();
-//        activeBox.text = textEditorNew.innerHTML;
-//        activeBox.align = textEditorNew.style.textAlign || "left";
-//        isEditing = false;
-//        textEditorNew.style.display = "none";
-//    }
-
-//    for (const box of textObjects) {
-//        const handle = getResizeHandle(box, mx, my);
-//        if (handle) {
-//            activeBox = box;
-
-//            if (CORNER_HANDLES.has(handle)) {
-//                // CORNER: start font+box scale
-//                resizeDirection = handle;
-//                isCornerFontScale = true;
-//                isResizingNew = false; // block normal resize
-
-//                activeBox._orig = {
-//                    x: box.x, y: box.y,
-//                    width: box.width, height: box.height,
-//                    text: box.text
-//                };
-//                setGlobalCursor(HANDLE_CURSOR[handle] || "nwse-resize");
-//                const endCorner = () => { isCornerFontScale = false; setGlobalCursor(""); };
-//                document.addEventListener("mouseup", endCorner, { once: true });
-
-//                drawText();
-//                return;
-//            }
-
-//            // sides: keep your normal resize path
-//            resizeDirection = handle;
-//            isResizingNew = true;
-//            activeBox._orig = {
-//                x: box.x, y: box.y,
-//                width: box.width, height: box.height,
-//                fontSize: box.fontSize, text: box.text
-//            };
-//            drawText();
-//            return;
-//        }
-//    }
-
-//    const clickedBox = textObjects.find(box =>
-//        mx >= box.x && mx <= box.x + box.width &&
-//        my >= box.y && my <= box.y + box.height
-//    );
-//    activeBox = clickedBox;
-//    if (activeBox) {
-//        isDraggingNew = true;
-//        dragOffsetXNew = mx - activeBox.x;
-//        dragOffsetYNew = my - activeBox.y;
-//    } else {
-//        activeBox = null;
-//    }
-//   // drawText();
-//});
-
-// helpers
 function objW(o) { return Number.isFinite(o.width) ? o.width : (Number.isFinite(o.boundingWidth) ? o.boundingWidth : 0); }
 function objH(o) { return Number.isFinite(o.height) ? o.height : (Number.isFinite(o.boundingHeight) ? o.boundingHeight : 0); }
 function deselectAllText() { if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = false); }
@@ -10928,201 +10955,7 @@ function topmostAt(mx, my) {
     return null;
 }
 
-//canvas.addEventListener("mousedown", e => {
-//    const { x: mx, y: my } = getCanvasMousePosition(e);
-//    startX = e.clientX;
-//    startY = e.clientY;
-//    prevMouseX = mx;
-//    prevMouseY = my;
-//    startMXCanvas = mx;
-//    startMYCanvas = my;
 
-//    if (isEditing && activeBox) {
-//        cleanEditorHTMLPreserveCaret?.();
-//        activeBox.text = textEditorNew.innerHTML;
-//        activeBox.align = textEditorNew.style.textAlign || "left";
-//        isEditing = false;
-//        if (textEditorNew) textEditorNew.style.display = "none";
-//    }
-
-//    // check handles (topmost-by-zIndex recommended, but keeping your order)
-//    for (const box of textObjects) {
-//        const handle = getResizeHandle(box, mx, my);
-//        if (handle) {
-//            activeBox = box;
-
-//            // single-select the box you grabbed
-//            if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = (o === box));
-//            drawText(); // NEW: show selection immediately
-
-//            if (CORNER_HANDLES.has(handle)) {
-//                resizeDirection = handle;
-//                isCornerFontScale = true;
-//                isResizingNew = false;
-
-//                activeBox._orig = {
-//                    x: box.x, y: box.y,
-//                    width: box.width, height: box.height,
-//                    text: box.text
-//                };
-//                setGlobalCursor(HANDLE_CURSOR[handle] || "nwse-resize");
-//                const endCorner = () => { isCornerFontScale = false; setGlobalCursor(""); };
-//                document.addEventListener("mouseup", endCorner, { once: true });
-
-//                return;
-//            }
-
-//            // sides: normal resize
-//            resizeDirection = handle;
-//            isResizingNew = true;
-//            activeBox._orig = {
-//                x: box.x, y: box.y,
-//                width: box.width, height: box.height,
-//                fontSize: box.fontSize, text: box.text
-//            };
-//            return;
-//        }
-//    }
-
-//    // no handle → hit test object body
-//    const clickedBox = textObjects.find(box =>
-//        mx >= box.x && mx <= box.x + box.width &&
-//        my >= box.y && my <= box.y + box.height
-//    );
-
-//    activeBox = clickedBox;
-
-//    if (activeBox) {
-//        // single-select this one
-//        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = (o === activeBox));
-
-//        // prepare potential drag
-//        isDraggingNew = true;
-//        dragOffsetXNew = mx - activeBox.x;
-//        dragOffsetYNew = my - activeBox.y;
-
-//        drawText(); // NEW: reflect selection immediately
-//    } else {
-//        // blank click → deselect everything
-//        activeBox = null;
-//        isDraggingNew = false;
-//        isResizingNew = false;
-//        resizeDirection = null;
-//        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = false);
-
-//        drawText(); // NEW: clear selection immediately
-//    }
-//});
-
-
-
-
-//canvas.addEventListener("mousemove", e => {
-//    const { x: mx, y: my } = getCanvasMousePosition(e);
-//    const dx = mx - prevMouseX;
-//    const dy = my - prevMouseY;
-
-//    // ----- cursor handling -----
-//    let hoveredHandle = null;
-//    if (activeBox) {
-//        hoveredHandle = getResizeHandle(activeBox, mx, my);
-//    }
-
-//    // Force cursor while dragging/resizing
-//    if (isDraggingNew) {
-//        setGlobalCursor("move");
-//    } else if (isCornerFontScale && resizeDirection) {
-//        setGlobalCursor(HANDLE_CURSOR[resizeDirection] || "nwse-resize");
-//    } else if (isResizingNew && resizeDirection) {
-//        setGlobalCursor(HANDLE_CURSOR[resizeDirection] || "default");
-//    } else if (activeBox) {
-//        // Hover state
-//        if (hoveredHandle && HANDLE_CURSOR[hoveredHandle]) {
-//            setGlobalCursor(HANDLE_CURSOR[hoveredHandle]);
-//        } else if (
-//            mx >= activeBox.x && mx <= activeBox.x + activeBox.width &&
-//            my >= activeBox.y && my <= activeBox.y + activeBox.height
-//        ) {
-//            setGlobalCursor("move");
-//        } else {
-//            setGlobalCursor("default");
-//        }
-//    } else {
-//        setGlobalCursor("default");
-//    }
-//    // ----- end cursor handling -----
-
-//    if (isDraggingNew) {
-//        activeBox.x = mx - dragOffsetXNew;
-//        activeBox.y = my - dragOffsetYNew;
-
-//        prevMouseX = mx;
-//        prevMouseY = my;
-//        drawText();
-
-//    } else if (isCornerFontScale && activeBox && resizeDirection && CORNER_HANDLES.has(resizeDirection)) {
-//        // 🔥 CORNER: scale font + box together, anchored at dragged corner
-//        const ow = activeBox._orig.width;
-//        const oh = activeBox._orig.height;
-
-//        const dxAbs = mx - startMXCanvas;
-//        const dyAbs = my - startMYCanvas;
-
-//        let scaleX = 1, scaleY = 1;
-//        switch (resizeDirection) {
-//            case 'tl': scaleX = (ow - dxAbs) / ow; scaleY = (oh - dyAbs) / oh; break;
-//            case 'tr': scaleX = (ow + dxAbs) / ow; scaleY = (oh - dyAbs) / oh; break;
-//            case 'bl': scaleX = (ow - dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
-//            case 'br': scaleX = (ow + dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
-//        }
-
-//        scaleX = Math.max(0.1, scaleX);
-//        scaleY = Math.max(0.1, scaleY);
-//        const s = Math.min(scaleX, scaleY);          // uniform font scale
-//        const newW = ow * s, newH = oh * s;          // box scales with font
-
-//        // position so the dragged corner sticks to anchor
-//        switch (resizeDirection) {
-//            case 'tl':
-//                activeBox.x = activeBox._orig.x + (ow - newW);
-//                activeBox.y = activeBox._orig.y + (oh - newH);
-//                break;
-//            case 'tr':
-//                activeBox.x = activeBox._orig.x;
-//                activeBox.y = activeBox._orig.y + (oh - newH);
-//                break;
-//            case 'bl':
-//                activeBox.x = activeBox._orig.x + (ow - newW);
-//                activeBox.y = activeBox._orig.y;
-//                break;
-//            case 'br':
-//                activeBox.x = activeBox._orig.x;
-//                activeBox.y = activeBox._orig.y;
-//                break;
-//        }
-//        activeBox.width = newW;
-//        activeBox.height = newH;
-
-//        // scale the ORIGINAL html each move (no compounding)
-//        activeBox.text = scaleTextHTML(activeBox._orig.text, s);
-
-//        prevMouseX = mx;
-//        prevMouseY = my;
-//        drawText();
-
-//    } else if (isResizingNew && activeBox && resizeDirection) {
-//        // sides: normal behavior
-//        scaleTextBoxWithHandle(activeBox, resizeDirection, mx, my);
-
-//        prevMouseX = mx;
-//        prevMouseY = my;
-//        drawText();
-//    }
-
-//    //prevMouseX = mx;
-//    //prevMouseY = my;
-//    //drawText();
-//});
 
 function scaleTextHTML(html, scale) {
     const div = document.createElement("div");
@@ -11162,20 +10995,21 @@ function sizeToPx(size) {
     const map = { 1: 10, 2: 13, 3: 16, 4: 18, 5: 24, 6: 32, 7: 48 };
     return map[size] ?? 16;
 }
-
+let contextTarget = null;
 let   startDrag = null;
 // make canvas focusable once
 //if (!canvas.hasAttribute('tabindex')) canvas.setAttribute('tabindex', '0');
 canvas.addEventListener("mousedown", e => {
+    if (e.button === 2) return; // don't let right-click alter selection/drag
     canvas.focus({ preventScroll: true });
-    const { x: mx, y: my } = getCanvasMousePosition(e);
-    startX = e.clientX;
-    startY = e.clientY;
-    prevMouseX = mx;
-    prevMouseY = my;
-    startMXCanvas = mx;
-    startMYCanvas = my;
 
+    const RIGHT = 2;
+    const { x: mx, y: my } = getCanvasMousePosition(e);
+    startX = e.clientX; startY = e.clientY;
+    prevMouseX = mx; prevMouseY = my;
+    startMXCanvas = mx; startMYCanvas = my;
+
+    // finish editing if any
     if (isEditing && activeBox) {
         cleanEditorHTMLPreserveCaret?.();
         activeBox.text = textEditorNew.innerHTML;
@@ -11184,132 +11018,42 @@ canvas.addEventListener("mousedown", e => {
         if (textEditorNew) textEditorNew.style.display = "none";
     }
 
-    // 🔁 NEW: search topmost among images + text
-    const allTop = [...(images || []), ...(textObjects || [])].sort((a, b) => (b.zIndex || 0) - (a.zIndex || 0));
-    let hit = null;
-    selectedForContextMenu = null;
-    for (let i = allTop.length - 1; i >= 0; i--) {
-        const b = allTop[i];
-        if (pointInBox(b, mx, my)) { hit = b; break; }
-    }
-    //// ✅ Only clear selection when NOT holding Shift
-    //if (!e.shiftKey) {
-    //    (images || []).forEach(b => b.selected = false);
-    //    (textObjects || []).forEach(b => b.selected = false);
-    //    activeText = null;
-    //    activeImage = null;
-    //}
-    // ✅ Only clear when clicking a non-selected item or empty space
-    if (!e.shiftKey && (!hit || !hit.selected)) {
-        (images || []).forEach(b => b.selected = false);
-        (textObjects || []).forEach(b => b.selected = false);
-        activeText = null;
-        activeImage = null;
-    }
-    if (hit && !hit.selected && !e.shiftKey) {
-        // clear others and select this one
-        getAllItems().forEach(o => (o.selected = false));
-        hit.selected = true;
-        redraw();
-    }
-
-    // Only start drag if cursor is on any selected item
-    const onSelected = !!(hit && hit.selected);
-    if (onSelected) {
-        const sel = (images || []).concat(textObjects || []).filter(o => o && o.selected);
-        if (sel.length >= 2) {
-            e.preventDefault();
-            if (beginMultiDrag(e, mx, my)) {
-                // prevent single-drag path & any selection resets below
-                isDraggingNew = false;
-                isResizingNew = false;
-                return;
-            }
-        }
-    } else {
-        // else, you might be starting a marquee selection or doing nothing
-        isDraggingMulti = false;
-    }
-    // ✅ Shift-click toggles selection and exits early
-    if (e.shiftKey && hit) {
-        hit.selected = !hit.selected;
+    // Right button: don't start drags/resizes. Just remember target and exit.
+    if (e.button === RIGHT) {
+        const top = getTopHitAt(mx, my);
+        setSelectionTarget(top, { setActive: true, setContext: true });
         drawText();
-        return; // important: don't let later logic reselect/clear
+        return;
     }
-    // clear previous selection
-    (images || []).forEach(b => b.selected = false);
-    (textObjects || []).forEach(b => b.selected = false);
-    activeText = null;
-    activeImage = null;
 
-    if (hit) {
-        hit.selected = true;
-        selectedForContextMenu = hit;
-        // decide which "active" to set
-        if (hit.type === "image" || hit.img) {
-            activeImage = hit;
-            enableFillColorDiv();
-            enableStrockColorDiv();
-            const angle = hit.rotation || 0;
-            rotationSlider.value = angle;
-            document.getElementById("rotationValue").textContent = angle + "°";
-            rotationBadge.textContent = angle;
-
-        } else {
-            activeText = hit;
-            const angle = hit.rotation || 0;
-            rotationSlider.value = angle;
-            document.getElementById("rotationValue").textContent = angle + "°";
-            rotationBadge.textContent = angle;
+    // 1) HANDLE TEST (TOP → BOTTOM). If a handle is hit, that box WINS.
+    const h = findHandleAt(mx, my);
+    if (h) {
+        // clear others (unless you want shift-handle to multi-resize)
+        if (!e.shiftKey) {
+            (textObjects || []).forEach(o => o.selected = false);
+            (images || []).forEach(o => o.selected = false);
         }
-
-        // --- update opacity controls from the hit ---
-        const alpha = normAlpha(hit.opacity);
-        let opacity = Math.round(alpha * 100);
-        if (opacity > 100) opacity = 100;
-
-        const opacitySlider = document.getElementById("opacitySlider");
-        const opacityValue = document.getElementById("opacityValue");
-        const opacityBadge = document.getElementById("opacityBadge");
-
-        if (opacitySlider) opacitySlider.value = String(opacity);
-        if (opacityValue) opacityValue.textContent = String(opacity);
-        if (opacityBadge) opacityBadge.textContent = String(opacity);
-    }
-    // handles first
-
-    for (const box of allTop) {
-        const raw = (typeof getResizeHandleRotated === 'function')
-            ? getResizeHandleRotated(box, mx, my)
-            : getResizeHandle(box, mx, my);
-        if (!raw) continue;
-
-        const handle = normalizeHandle(raw);      // ← normalize HERE
-        resizeDirectionRaw = raw;                 // keep raw for text helpers if needed
-        resizeDirectionNorm = handle;             // use norm everywhere else
-        activeBox = box;
-
-        // single-select
-        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = (o === box));
-        if (Array.isArray(images)) images.forEach(o => o.selected = (o === box));
+        setSelectionTarget(h.box, { setActive: true, setContext: true });
         drawText();
 
-        if (CORNER_HANDLES.has(handle)) {         // ← use normalized in the test
-            // store for compatibility if your code uses it elsewhere
-            resizeDirection = handle;
+        // proceed with your existing handle logic
+        const handle = h.handle;
+        resizeDirectionRaw = h.raw;
+        resizeDirectionNorm = handle;
+        resizeDirection = handle;
 
-            if (box.type === "image") {
-                isCornerImageScale = true;
-                isResizingNew = false; isDraggingNew = false;
-                activeBox._orig = { x: box.x, y: box.y, width: box.width, height: box.height };
+        if (CORNER_HANDLES.has(handle)) {
+            if (h.box.type === "image") {
+                isCornerImageScale = true; isResizingNew = false; isDraggingNew = false;
+                activeBox._orig = { x: h.box.x, y: h.box.y, width: h.box.width, height: h.box.height };
                 activeBox._origMouse = { x: startMXCanvas, y: startMYCanvas };
                 setGlobalCursor("nwse-resize");
                 document.addEventListener("mouseup", () => { isCornerImageScale = false; setGlobalCursor(""); }, { once: true });
                 return;
             } else {
-                isCornerFontScale = true;
-                isResizingNew = false; isDraggingNew = false;
-                activeBox._orig = { x: box.x, y: box.y, width: box.width, height: box.height, text: box.text };
+                isCornerFontScale = true; isResizingNew = false; isDraggingNew = false;
+                activeBox._orig = { x: h.box.x, y: h.box.y, width: h.box.width, height: h.box.height, text: h.box.text };
                 activeBox._origMouse = { x: startMXCanvas, y: startMYCanvas };
                 setGlobalCursor("nwse-resize");
                 document.addEventListener("mouseup", () => { isCornerFontScale = false; setGlobalCursor(""); }, { once: true });
@@ -11317,228 +11061,64 @@ canvas.addEventListener("mousedown", e => {
             }
         }
 
-        // sides (not corners)
-        resizeDirection = handle;
+        // side handles
         isCornerFontScale = false; isCornerImageScale = false;
         isResizingNew = true; isDraggingNew = false;
 
-        activeBox._orig = (box.type === "image")
-            ? { x: box.x, y: box.y, width: box.width, height: box.height }
-            : { x: box.x, y: box.y, width: box.width, height: box.height, text: box.text, fontSize: box.fontSize };
+        activeBox._orig = (h.box.type === "image")
+            ? { x: h.box.x, y: h.box.y, width: h.box.width, height: h.box.height }
+            : { x: h.box.x, y: h.box.y, width: h.box.width, height: h.box.height, text: h.box.text, fontSize: h.box.fontSize };
 
         activeBox._origMouse = { x: startMXCanvas, y: startMYCanvas };
         setGlobalCursor((handle === "l" || handle === "r") ? "ew-resize" : "ns-resize");
 
-        // 🔹 NEW HOOK: start side-resize state for TEXT on left/right handle
-        if (box.type !== "image" && (handle === 'l' || handle === 'r')) {
-            // If you added the helper from earlier:
-            if (typeof startTextSideResize === 'function') {
-                startTextSideResize(activeBox);
-            }
-            // (no behavior change for images or top/bottom handles)
+        if (h.box.type !== "image" && (handle === "l" || handle === "r")) {
+            if (typeof startTextSideResize === "function") startTextSideResize(activeBox);
         }
+        return; // handle takes precedence; stop here
+    }
 
+    // 2) NO HANDLE → BODY HIT (TOPMOST)
+    const hit = getTopHitAt(mx, my);
+
+    // clear selection only when clicking empty or a different non-selected
+    if (!e.shiftKey && (!hit || !hit.selected)) {
+        (images || []).forEach(b => b.selected = false);
+        (textObjects || []).forEach(b => b.selected = false);
+        activeText = null; activeImage = null;
+    }
+
+    // Shift-click toggles and exits early
+    if (e.shiftKey && hit) {
+        hit.selected = !hit.selected;
+        drawText();
         return;
     }
 
-    // no handle → body hit (topmost)
-    const clickedBox = allTop.find(box =>
-        mx >= box.x && mx <= box.x + box.width &&
-        my >= box.y && my <= box.y + box.height
-    );
-    activeBox = clickedBox;
+    if (hit) {
+        setSelectionTarget(hit, { setActive: true, setContext: true });
 
-    if (activeBox) {
-        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = (o === activeBox));
-        if (Array.isArray(images)) images.forEach(o => o.selected = (o === activeBox));
+        // start drag on body
         isDraggingNew = true;
-        dragOffsetXNew = mx - activeBox.x;
-        dragOffsetYNew = my - activeBox.y;
+        dragOffsetXNew = mx - hit.x;
+        dragOffsetYNew = my - hit.y;
+
+        // (optional) update rotation/opacity UI here as you already do
         drawText();
     } else {
+        // empty space
         activeBox = null;
-        isDraggingNew = false;
-        isResizingNew = false;
-        resizeDirection = null;
-        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = false);
-        if (Array.isArray(images)) images.forEach(o => o.selected = false);
-        selectedForContextMenu = null;
-        selectedType = null;
-        activeText = activeImage = null;
-        rotationSlider.value = 0;
-        rotationBadge.textContent = "0";
+        isDraggingNew = false; isResizingNew = false; resizeDirection = null;
+        (textObjects || []).forEach(o => o.selected = false);
+        (images || []).forEach(o => o.selected = false);
+        selectedForContextMenu = null; activeText = activeImage = null;
         drawText();
     }
 });
 
-//canvas.addEventListener("mousedown", e => {
-//    canvas.focus({ preventScroll: true });
-//    const { x: mx, y: my } = getCanvasMousePosition(e);
-//    startX = e.clientX;
-//    startY = e.clientY;
-//    prevMouseX = mx;
-//    prevMouseY = my;
-//    startMXCanvas = mx;
-//    startMYCanvas = my;
-
-//    if (isEditing && activeBox) {
-//        cleanEditorHTMLPreserveCaret?.();
-//        activeBox.text = textEditorNew.innerHTML;
-//        activeBox.align = textEditorNew.style.textAlign || "left";
-//        isEditing = false;
-//        if (textEditorNew) textEditorNew.style.display = "none";
-//    }
-
-//    // 🔁 NEW: search topmost among images + text
-//    const allTop = [...(images || []), ...(textObjects || [])].sort((a, b) => (b.zIndex || 0) - (a.zIndex || 0));
-//    let hit = null;
-//    selectedForContextMenu = null;
-//    for (let i = allTop.length - 1; i >= 0; i--) {
-//        const b = allTop[i];
-//        if (pointInBox(b, mx, my)) { hit = b; break; }
-//    }
-//    // ✅ Only clear selection when NOT holding Shift
-//    if (!e.shiftKey) {
-//        (images || []).forEach(b => b.selected = false);
-//        (textObjects || []).forEach(b => b.selected = false);
-//        activeText = null;
-//        activeImage = null;
-//    }
-
-//    // ✅ Shift-click toggles selection and exits early
-//    if (e.shiftKey && hit) {
-//        hit.selected = !hit.selected;
-//        drawText();
-//        return; // important: don't let later logic reselect/clear
-//    }
-//    // clear previous selection
-//    (images || []).forEach(b => b.selected = false);
-//    (textObjects || []).forEach(b => b.selected = false);
-//    activeText = null;
-//    activeImage = null;
-
-//    if (hit) {
-//        hit.selected = true;
-//        selectedForContextMenu = hit;
-//        // decide which "active" to set
-//        if (hit.type === "image" || hit.img) {
-//            activeImage = hit;
-//            enableFillColorDiv();
-//            enableStrockColorDiv();
-//            const angle = hit.rotation || 0;
-//            rotationSlider.value = angle;
-//            document.getElementById("rotationValue").textContent = angle + "°";
-//            rotationBadge.textContent = angle;
-
-//        } else {
-//            activeText = hit;
-//            const angle = hit.rotation || 0;
-//            rotationSlider.value = angle;
-//            document.getElementById("rotationValue").textContent = angle + "°";
-//            rotationBadge.textContent = angle;
-//        }
-
-//        // --- update opacity controls from the hit ---
-//        // safer than `txtHit.opacity * 100 || 100` (that would turn 0% into 100%)
-//        const alpha = normAlpha(hit.opacity);
-//        let opacity = Math.round(alpha * 100);
-//        if (opacity > 100) opacity = 100;
-
-//        const opacitySlider = document.getElementById("opacitySlider");
-//        const opacityValue = document.getElementById("opacityValue");
-//        const opacityBadge = document.getElementById("opacityBadge");
-
-//        if (opacitySlider) opacitySlider.value = String(opacity);
-//        if (opacityValue) opacityValue.textContent = String(opacity);
-//        if (opacityBadge) opacityBadge.textContent = String(opacity);
-//    }
-//    // handles first
-   
-//    for (const box of allTop) {
-//        const raw = (typeof getResizeHandleRotated === 'function')
-//            ? getResizeHandleRotated(box, mx, my)
-//            : getResizeHandle(box, mx, my);
-//        if (!raw) continue;
-
-//        const handle = normalizeHandle(raw);      // ← normalize HERE
-//        resizeDirectionRaw = raw;                // keep raw for text helpers if needed
-//        resizeDirectionNorm = handle;             // use norm everywhere else
-//        activeBox = box;
-
-//        // single-select
-//        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = (o === box));
-//        if (Array.isArray(images)) images.forEach(o => o.selected = (o === box));
-//        drawText();
-
-//        if (CORNER_HANDLES.has(handle)) {         // ← use normalized in the test
-//            // store for compatibility if your code uses it elsewhere
-//            resizeDirection = handle;
-
-//            if (box.type === "image") {
-//                isCornerImageScale = true;
-//                isResizingNew = false; isDraggingNew = false;
-//                activeBox._orig = { x: box.x, y: box.y, width: box.width, height: box.height };
-//                activeBox._origMouse = { x: startMXCanvas, y: startMYCanvas };
-//                setGlobalCursor("nwse-resize");
-//                document.addEventListener("mouseup", () => { isCornerImageScale = false; setGlobalCursor(""); }, { once: true });
-//                return;
-//            } else {
-//                isCornerFontScale = true;
-//                isResizingNew = false; isDraggingNew = false;
-//                activeBox._orig = { x: box.x, y: box.y, width: box.width, height: box.height, text: box.text };
-//                activeBox._origMouse = { x: startMXCanvas, y: startMYCanvas };
-//                setGlobalCursor("nwse-resize");
-//                document.addEventListener("mouseup", () => { isCornerFontScale = false; setGlobalCursor(""); }, { once: true });
-//                return;
-//            }
-//        }
-
-//        // sides (not corners)
-//        resizeDirection = handle;                 // keep if referenced elsewhere
-//        isCornerFontScale = false; isCornerImageScale = false;
-//        isResizingNew = true; isDraggingNew = false;
-
-//        activeBox._orig = (box.type === "image")
-//            ? { x: box.x, y: box.y, width: box.width, height: box.height }
-//            : { x: box.x, y: box.y, width: box.width, height: box.height, text: box.text, fontSize: box.fontSize };
-
-//        activeBox._origMouse = { x: startMXCanvas, y: startMYCanvas };
-//        setGlobalCursor((handle === "l" || handle === "r") ? "ew-resize" : "ns-resize");
-//        return;
-//    }
 
 
 
-
-//    // no handle → body hit (topmost)
-//    const clickedBox = allTop.find(box =>
-//        mx >= box.x && mx <= box.x + box.width &&
-//        my >= box.y && my <= box.y + box.height
-//    );
-//    activeBox = clickedBox;
-
-//    if (activeBox) {
-//        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = (o === activeBox));
-//        if (Array.isArray(images)) images.forEach(o => o.selected = (o === activeBox));
-//        isDraggingNew = true;
-//        dragOffsetXNew = mx - activeBox.x;
-//        dragOffsetYNew = my - activeBox.y;
-//        drawText();
-//    } else {
-//        activeBox = null;
-//        isDraggingNew = false;
-//        isResizingNew = false;
-//        resizeDirection = null;
-//        if (Array.isArray(textObjects)) textObjects.forEach(o => o.selected = false);
-//        if (Array.isArray(images)) images.forEach(o => o.selected = false);
-//            selectedForContextMenu = null;
-//            selectedType = null;
-//            activeText = activeImage = null;
-//            rotationSlider.value = 0;
-//            rotationBadge.textContent = "0";
-//        drawText();
-//    }
-//});
 
 function redraw() { if (typeof drawText === 'function') drawText(); }
 canvas.addEventListener("mousemove", e => {
