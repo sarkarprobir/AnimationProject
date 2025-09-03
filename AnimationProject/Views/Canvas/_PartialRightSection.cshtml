@@ -1257,7 +1257,24 @@ function moveCaretToEnd(el) {
         </div>
 
     </div>
-
+    <div id="divCurvature" class="mb-3" style="display:none;">
+        <div class="d-flex justify-content-between align-items-center">
+            <p class="spacing_title m-0">
+                Curvature
+            </p>
+            <div class="d-flex justify-content-end spacing_buttons">
+                <div class="custom-dropdown">
+                    <select id="ddlCurvature" onchange="curvatureChanges()">
+                        <option value="0">Sharp (0)</option>
+                        <option value="4">Slight (4px)</option>
+                        <option value="8" selected>Medium (8px)</option>
+                        <option value="16">Round (16px)</option>
+                        <option value="24">Extra (24px)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
    
       <div id="group_tool" class="mb-3">
         <div class="d-flex justify-content-between align-items-center">
