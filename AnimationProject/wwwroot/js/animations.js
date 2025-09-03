@@ -7596,32 +7596,6 @@ canvas.addEventListener('dragover', e => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
 });
-// When an image is dropped onto the canvas, add it to our images array
-////canvas.addEventListener("drop", function (e) {
-////    e.preventDefault();
-////    const src = e.dataTransfer.getData("text/plain");
-////    if (src) {
-////        // Create a new image object
-////        const img = new Image();
-////        img.src = src;
-////        img.onload = function () {
-////            // Default position is drop position; default size is half the natural size
-////            const newImgObj = {
-////                img: img,
-////                src: src, // keep the src path
-////                x: e.offsetX,
-////                y: e.offsetY,
-////                width: img.width / 4,
-////                height: img.height / 4,
-////                scaleX: 1,
-////                scaleY: 1,
-////                selected: false
-////            };
-////            images.push(newImgObj);
-////            drawCanvas('Common');
-////        };
-////    }
-////});
 canvas.addEventListener('drop', e => {
     e.preventDefault();
 
@@ -7654,7 +7628,7 @@ canvas.addEventListener('drop', e => {
     const img = new Image();
     img.onload = () => {
         // maximum dimension on drop
-        const MAX_DIM = 50;
+        const MAX_DIM = 300;
 
         // compute ratio so the longest side is MAX_DIM
         const ratio = img.width > img.height
@@ -7667,33 +7641,6 @@ canvas.addEventListener('drop', e => {
         // new “design-space” dimensions
         const newWidth = img.width * scale;
         const newHeight = img.height * scale;
-
-        //images.push({
-        //    img,
-        //    src,
-        //    x: e.offsetX,
-        //    y: e.offsetY,
-        //    // assign downsized values here:
-        //    width: newWidth,
-        //    height: newHeight,
-        //    // keep these at 1 so drawCanvas draws at exactly width×height:
-        //    scaleX: 1,
-        //    scaleY: 1,
-        //    opacity: 100,
-        //    selected: false,
-        //    noAnim: false,
-        //    groupId: null,
-        //    rotation: 0,
-        //    type: "image",
-        //    zIndex: getNextZIndex(),
-        //    fillNoColorStatus: false,
-        //    strokeNoColorStatus: false,
-        //    fillNoColor: "#FFFFFF",
-        //    strokeNoColor: "#FFFFFF",
-        //    strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 3
-        //});
-        //drawCanvas('Common');
-
         const newImgObj = {
             img,
             src,
@@ -7721,6 +7668,7 @@ canvas.addEventListener('drop', e => {
         images.push(newImgObj);
         activeBox = newImgObj;       // ⬅ reuse same selected “box” concept
         drawText();
+        //ChangeFillColor();
     };
     img.src = src;
 });
@@ -10223,6 +10171,49 @@ function drawText() {
         ctx.clip();
     }
 
+    // === ADD: 3-slice drawer in LOCAL coordinates (we're already translated/rotated)
+    function __drawImageThreeSliceLocalX(ctx2, img, w, h) {
+        const sw = img.naturalWidth || img.width || 1;
+        const sh = img.naturalHeight || img.height || 1;
+
+        // cap width in source ≈ radius (half the height for pill/rounded ends)
+        const capSrc = Math.max(1, Math.round(sh / 2));
+        const midSrc = Math.max(1, sw - capSrc * 2);
+
+        // destination cap mirrors radius; cannot exceed half of dest width
+        const capDst = Math.min(Math.round(h / 2), Math.round(w / 2));
+        const midDst = Math.max(0, w - capDst * 2);
+
+        // If box too narrow for caps, just draw normally
+        if (capDst <= 0 || midDst < 0) {
+            ctx2.drawImage(img, -w / 2, -h / 2, w, h);
+            return;
+        }
+
+        // LEFT cap
+        ctx2.drawImage(
+            img,
+            0, 0, capSrc, sh,
+            -w / 2, -h / 2, capDst, h
+        );
+
+        // MID stretch (only this part scales horizontally)
+        if (midDst > 0) {
+            ctx2.drawImage(
+                img,
+                capSrc, 0, midSrc, sh,
+                -w / 2 + capDst, -h / 2, midDst, h
+            );
+        }
+
+        // RIGHT cap
+        ctx2.drawImage(
+            img,
+            capSrc + midSrc, 0, capSrc, sh,
+            -w / 2 + capDst + midDst, -h / 2, capDst, h
+        );
+    }
+
     // z-ordered
     const all = [...(images || []), ...(textObjects || [])]
         .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
@@ -10245,11 +10236,10 @@ function drawText() {
         box.previousClip = __clipVal;
 
         if (__clipVal >= 1) {
-            // fully masked → skip this item (prevents your old early return below)
             continue;
         }
 
-        // stash for later use in image/text blocks
+        // stash for later use
         box.__clipVal = __clipVal;
         box.__effDir = __effDir;
 
@@ -10259,7 +10249,6 @@ function drawText() {
         const __sx = (Number(box.scaleX) || 0);
         const __sy = (Number(box.scaleY) || 0);
         if (__sx === 0 || __sy === 0) {
-            // collapsed this frame → nothing to draw
             continue;
         }
 
@@ -10267,20 +10256,17 @@ function drawText() {
         ctx.save();
 
         if (box.clip >= 1) {
-            ctx.restore(); // === ADD: balance the save; do not delete your code below ===
-            // your original code:
+            ctx.restore(); // balance save
             ctx.restore();
             return;
         }
 
         if (box.clip > 0 && box.clip < 1) {
             const originalDir = box.clipDirection || "top";
-
-            // If clip is increasing (masking), invert direction automatically
             const isHiding = box.clip > box.previousClip;
             const effectiveDirection = isHiding ? invertDirection(originalDir) : originalDir;
 
-            box.previousClip = box.clip;   // Track for next render frame
+            box.previousClip = box.clip;
 
             const isImage = box.type === 'image';
             const width = isImage ? box.width : box.boundingWidth;
@@ -10293,15 +10279,12 @@ function drawText() {
             if (effectiveDirection === "top") {
                 const visibleHeight = height * (1 - box.clip);
                 ctx.rect(x, y, width, visibleHeight);
-
             } else if (effectiveDirection === "bottom") {
                 const visibleHeight = height * (1 - box.clip);
                 ctx.rect(x, y + height - visibleHeight, width, visibleHeight);
-
             } else if (effectiveDirection === "left") {
                 const visibleWidth = width * (1 - box.clip);
                 ctx.rect(x, y, visibleWidth, height);
-
             } else if (effectiveDirection === "right") {
                 const visibleWidth = width * (1 - box.clip);
                 ctx.rect(x + width - visibleWidth, y, visibleWidth, height);
@@ -10322,7 +10305,7 @@ function drawText() {
             ctx.translate(cx, cy);
             ctx.rotate(angleRad);
 
-            // === ADD: apply popcorn (and other) scale here
+            // === ADD: apply scale here
             ctx.scale(__sx, __sy);
 
             ctx.globalAlpha = normAlpha(box.opacity);
@@ -10334,7 +10317,23 @@ function drawText() {
 
             if (box.img) {
                 if (box.img.complete) {
-                    ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                    // === ADD: choose 3-slice when horizontally stretched (keeps curvature)
+                    const natW = box.img.naturalWidth || box.img.width || w;
+                    const natH = box.img.naturalHeight || box.img.height || h;
+                    const arImg = natW / Math.max(natH, 1e-6);
+                    const arBox = w / Math.max(h, 1e-6);
+
+                    // Horizontal stretch if box AR is greater than natural AR.
+                    const horizontallyStretched = (arBox - arImg) > 1e-3;
+
+                    // Optional flag to force/disable (default: auto by aspect)
+                    const preserveCaps = (box.preserveCaps === true) || horizontallyStretched;
+
+                    if (preserveCaps) {
+                        __drawImageThreeSliceLocalX(ctx, box.img, w, h);
+                    } else {
+                        ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                    }
                 } else {
                     const img = box.img;
                     img.onload = () => { img.onload = null; drawText(); };
@@ -10429,7 +10428,6 @@ function drawText() {
 
             function measureWords(node, style) {
                 if (node.nodeType === 3) {
-                    // NEW: use word tokens (words + whitespace) so wrapping happens between words
                     const USE_WORD_TOKENS = true;
                     if (USE_WORD_TOKENS) {
                         const tokens = (node.nodeValue.match(/(\s+|\S+)/g) || []);
@@ -10448,15 +10446,13 @@ function drawText() {
                             const isSpace = /^\s+$/.test(tk);
                             segments.push({ text: tk, width, style: { fs, ff, fw, fst, col }, isSpace });
 
-                            // NEW: track the widest single non-space token
                             if (!isSpace && width > __maxTokenWidthObserved) {
                                 __maxTokenWidthObserved = width;
                             }
                         }
-                        return; // keep char fallback below
+                        return;
                     }
 
-                    // (original char-by-char fallback)
                     const chars = node.nodeValue.split("");
                     for (let ch of chars) {
                         const fs = style.fontSize || defaultFontSize;
@@ -10512,18 +10508,16 @@ function drawText() {
             const basePx = parseFloat(defaultFontSize) || 16;
             const lineHeight = (maxFontPx > 0 ? maxFontPx : basePx) * (box.lineSpacing || 1.2);
 
-            // ✅ NEW: treat <div><br></div> (and any spaces-only line) as a real blank line
             const isBlankLine = (segments.length === 0) ||
                 segments.every(seg => seg.isSpace || ((seg.text || '').trim() === ''));
 
             if (isBlankLine) {
-                cursorY += lineHeight;           // advance one line
-                usedHeight = cursorY - top + 5;  // keep height in sync
-                return;                          // next logical line
+                cursorY += lineHeight;
+                usedHeight = cursorY - top + 5;
+                return;
             }
 
-            // ------------- NEW PER-RUN WRAP/DRAW -------------
-            const __usePerRun = true; // turn off to fall back to your old loop
+            const __usePerRun = true;
 
             if (__usePerRun) {
                 function startXForWidth(runWidth) {
@@ -10546,7 +10540,6 @@ function drawText() {
                         x2 += seg.width;
                     }
 
-                    // NEW: remember widest wrapped line we rendered
                     if (runWidth > __maxRunWidthObserved) __maxRunWidthObserved = runWidth;
 
                     const lh = (runMaxPx || basePx) * (box.lineSpacing || 1.2);
@@ -10561,13 +10554,10 @@ function drawText() {
                 for (const seg of segments) {
                     const segPx = parseFloat(seg.style.fs) || basePx;
 
-                    // don’t start a line with spaces
                     if (seg.isSpace && runSegs.length === 0) continue;
 
-                    // wrap by tokens (words/spaces). If it doesn't fit, flush
                     if (runWidth + seg.width > innerWidth && runSegs.length > 0) {
                         flushRun();
-                        // after wrapping, still don't start the new line with a space
                         if (seg.isSpace) continue;
                     }
 
@@ -10578,16 +10568,14 @@ function drawText() {
 
                 flushRun();
             }
-            // ------------- END NEW PER-RUN WRAP/DRAW -------------
 
-            // ---- ORIGINAL PER-CHAR LOOP (kept; disabled by flag) ----
             let x = cursorX;
             let drewSomething = false;
 
             if (!__usePerRun) {
                 segments.forEach(seg => {
                     if (x + seg.width > left + w - 0.01) {
-                        cursorY += lineHeight;     // wrap
+                        cursorY += lineHeight;
                         x = cursorX;
                     }
                     ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
@@ -10600,26 +10588,23 @@ function drawText() {
                 if (drewSomething) cursorY += lineHeight;
                 usedHeight = cursorY - top + 5;
             }
-            // ---- END ORIGINAL LOOP ----
         });
 
-        // NEW: ensure the active box is at least as wide as the longest word (+ 5px pad each side)
         const __minOuterWidthByWord = Math.ceil(__maxTokenWidthObserved + 10);
         if (__minOuterWidthByWord > (box.width || 0)) {
-            box.width = __minOuterWidthByWord;  // expand only; never shrink
+            box.width = __minOuterWidthByWord;
         }
 
-        // keep size fields consistent for text
-        box.height = usedHeight;     // update size first
-        syncTextDims(box);           // keep bounding* in sync if your other code uses it
-        ctx.restore();               // back to world space
+        box.height = usedHeight;
+        syncTextDims(box);
+        ctx.restore();
 
-        // === ADD: selection should reflect scaled size for text
         if (box.selected && w > 0 && h > 0) {
             drawRotatedSelection(ctx, { ...box, width: w * __sx, height: h * __sy });
         }
     }
 }
+
 
 
 
@@ -11060,6 +11045,16 @@ canvas.addEventListener("mousedown", e => {
         resizeDirectionNorm = handle;
         resizeDirection = handle;
 
+        // --- ADD: enable 3-slice draw on image L/R side handles (incl. ml/mr) ---
+        if (h.box && h.box.type === "image") {
+            const raw = resizeDirectionRaw || handle;            // e.g. 'ml','mr'
+            const isSideNorm = (handle === "l" || handle === "r");
+            const isSideRaw = (raw === "ml" || raw === "mr" || raw === "l" || raw === "r");
+            // true only for left/right side handles; false for corners/top/bottom
+            h.box.preserveCaps = !!(isSideNorm || isSideRaw);
+        }
+        // --- END ADD ---
+
         if (CORNER_HANDLES.has(handle)) {
             if (h.box.type === "image") {
                 isCornerImageScale = true; isResizingNew = false; isDraggingNew = false;
@@ -11132,6 +11127,7 @@ canvas.addEventListener("mousedown", e => {
         drawText();
     }
 });
+
 
 
 
@@ -11275,11 +11271,71 @@ function scaleImageBoxWithHandle(box, handle, mx, my) {
 
 
 
+// Draw image with horizontal 3-slice so caps don't distort when width changes.
+// Assumes a "pill/rounded-rect" style where the cap radius ≈ height/2.
+function drawImageThreeSliceX(ctx, o) {
+    const img = o.img;
+    if (!img) return;
+
+    const sw = img.naturalWidth || img.width || 1;
+    const sh = img.naturalHeight || img.height || 1;
+
+    const dw = o.width, dh = o.height;
+
+    // source cap width ~ half the source height (good for pill/rounded-rect SVGs)
+    const capSrc = Math.max(1, Math.round(sh / 2));
+
+    // destination cap width mirrors radius; also cannot exceed half of dest width
+    const capDst = Math.min(Math.round(dh / 2), Math.round(dw / 2));
+
+    const midSrc = Math.max(1, sw - capSrc * 2);
+    const midDst = Math.max(0, dw - capDst * 2);
+
+    ctx.save();
+
+    // respect rotation if you have it
+    if (o.rotation) {
+        const cx = o.x + dw / 2, cy = o.y + dh / 2;
+        ctx.translate(cx, cy);
+        ctx.rotate((o.rotation * Math.PI) / 180);
+        ctx.translate(-cx, -cy);
+    }
+
+    // Left cap
+    ctx.drawImage(img,
+        0, 0, capSrc, sh,
+        o.x, o.y, capDst, dh
+    );
+
+    // Middle stretch (only this part scales horizontally)
+    if (midDst > 0) {
+        ctx.drawImage(img,
+            capSrc, 0, midSrc, sh,
+            o.x + capDst, o.y, midDst, dh
+        );
+    }
+
+    // Right cap
+    ctx.drawImage(img,
+        capSrc + midSrc, 0, capSrc, sh,
+        o.x + capDst + midDst, o.y, capDst, dh
+    );
+
+    ctx.restore();
+}
 
 
-
+// ADD: helper to normalize handle ids
+function _normHandleId(h) {
+    const id = (typeof h === 'string') ? h : (h && (h.handle || h.raw)) || '';
+    // ml/mr/mt/mb → l/r/t/b
+    return ({ ml: 'l', mr: 'r', mt: 't', mb: 'b' }[id] || id);
+}
 
 const MIN_W = 10, MIN_H = 10;
+
+// NEW: tiny global to remember we're over an image side handle
+let _imgSideAsCornerHover = null;
 
 canvas.addEventListener('mousemove', (e) => {
     const { x: mx, y: my } = getCanvasMousePosition(e);
@@ -11293,11 +11349,23 @@ canvas.addEventListener('mousemove', (e) => {
     // 1) handles first (topmost first)
     for (const o of all) {
         const h = whichHandle(o, mx, my);
-        if (h) { cur = cursorForHandle(h); break; }
+        if (h) {
+            // ADD: normalize and override for side handles
+            const id = _normHandleId(h);          // 'l','r','t','b','tl','tr','bl','br'
+            if (id === 'l' || id === 'r') {
+                cur = 'ew-resize';                // ← horizontal arrows for left/right
+            } else if (id === 't' || id === 'b') {
+                cur = 'ns-resize';                // vertical arrows for top/bottom
+            } else {
+                cur = cursorForHandle(h);         // corners (tl/tr/bl/br) use your existing logic
+            }
+            break;
+        }
         if (pointInBox(o, mx, my)) { cur = 'move'; break; }
     }
     canvas.style.cursor = cur;
 });
+
 
 
 
