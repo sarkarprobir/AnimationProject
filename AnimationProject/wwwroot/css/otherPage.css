@@ -723,12 +723,26 @@ plans {
     }
 
 .price {
-    font-size: 2.2rem;
-    font-weight: 700;
+    font-size: 2.5rem;
+    font-weight: 800;
     margin: 20px 0;
     text-align: center;
+    position: relative;
 }
-
+.dollor {
+    font-size: 20px;
+    position: absolute;
+    top: 5px;
+    left: 119px;
+    font-weight: 800;
+}
+.dollor_free {
+    font-size: 20px;
+    position: absolute;
+    top: 5px;
+    left: 130px;
+    font-weight: 800;
+}
 .features {
     list-style: none;
     padding: 0;
