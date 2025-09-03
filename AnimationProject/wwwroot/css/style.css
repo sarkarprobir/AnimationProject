@@ -1110,10 +1110,10 @@ body {
 }
 
 .gallery {
-    display: flex;
-    flex-wrap: wrap;
+/*    display: flex;
+    flex-wrap: wrap;*/
     margin-top: 10px;
-    min-height: 64vh;
+    min-height: 67vh;
 }
 
 .my_img_gal {
@@ -1130,7 +1130,7 @@ body {
 .pagination {
     display: flex;
     justify-content: center;
-    margin-top: 27px;
+    margin-top: 10px;
 }
 
     .pagination span {
@@ -1286,7 +1286,8 @@ body {
 }
 @media (min-width: 1900px) {
     .gallery {
-        min-height: 70vh;
+        min-height: 68vh;
+        margin-top: 30px;
     }
 
     .temp_gallery {
@@ -1512,7 +1513,7 @@ body {
 }*/
 .elements-popup {
     background: #fff;
-    width: 575px;
+    width: 435px;
     /* z-index: 1; */
     border-radius: 0;
     box-shadow: none;
@@ -1526,12 +1527,13 @@ body {
     border-right: 1px solid #E4E3E7;
 }
 .inside_wrapper {
-    row-gap: 39px;
+    row-gap: 23px;
     column-gap: 23px;
+    height: fit-content;
 }
 .gallery img {
-    width: 87px;
-    max-height: 87px;
+    width: 79px;
+    max-height: 79px;
     object-fit: contain;
 }
 .svg_inside_wrapper {
@@ -1541,14 +1543,16 @@ body {
 @media (min-width: 1900px) {
     .elements-popup {
         height: 95.3vh;
+        width: 513px;
     }
     .inside_wrapper {
-        row-gap: 27px;
-        column-gap: 36px;
+        row-gap: 30px;
+        column-gap: 30px;
+        height: fit-content;
     }
     .gallery img {
-        width: 105px;
-        max-height: 105px;
+        width: 95px;
+        max-height: 95px;
     }
     .svg_inside_wrapper {
         column-gap: 50px;
