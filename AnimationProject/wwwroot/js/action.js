@@ -764,7 +764,7 @@ function RedirectToVerticalPageDirect() {
 function ensureFontsInitialized() {
     if (!window.__allFontsReady) {
         const families = [
-            'Arial', 'Anton', 'Bebas Neue', 'monstro', 'Montserrat', 'neto', 'Pacifico', 'Roboto'
+            'Arial Regular', 'Anton', 'Bebas Neue', 'monstro', 'Montserrat', 'neto', 'Pacifico', 'Roboto', 'Helvetica', 'Georgia Regular',
         ];
         window.__fontFamilyPromises = families.map(fam => {
            // console.log(`vertical Preloading font family: ${fam}`);
@@ -1200,7 +1200,7 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
             fillNoColor: im.fillNoColor || "#FFFFFF",
             strokeNoColor: im.strokeNoColor || "#FFFFFF",
             strokeWidth: im.strokeWidth || 3,
-            isBasic: im.isBasic
+            isBasic: im.isBasic??false
         };
     });
 
@@ -1209,8 +1209,12 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
         if (!o.fontSize || !o.fontFamily) return Promise.resolve();
         return document.fonts.load(`${o.fontSize}px ${o.fontFamily}`);
     });
+    try {
+        await Promise.all([bgPromise, ...fontPromises, document.fonts.ready]);
+    } catch (e) {
 
-    await Promise.all([bgPromise, ...fontPromises, document.fonts.ready]);
+    }
+   
 
     drawText();
 }
