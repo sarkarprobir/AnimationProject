@@ -7596,51 +7596,98 @@ canvas.addEventListener('dragover', e => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
 });
+// --------------------------------------------------------------------
+// Basic-shape detector
+// --------------------------------------------------------------------
+const __BASIC_SHAPES = new Set([
+    'ico-shapes-circle.svg',
+    'ico-shapes-heart.svg',
+    'ico-shapes-hexagon.svg',
+    'ico-shapes-line.svg',
+    'ico-shapes-rec.svg',
+    'ico-shapes-triangle.svg'
+]);
+
+function __isBasicFromSource(src, fileName = '') {
+    // 1) filename passed explicitly (e.g., File.name)
+    if (fileName) {
+        const n = fileName.toLowerCase();
+        if (__BASIC_SHAPES.has(n)) return true;
+    }
+
+    // 2) pull filename from URL / relative path
+    try {
+        const u = new URL(String(src), window.location.href);
+        const name = (u.pathname.split('/').pop() || '').toLowerCase();
+        if (__BASIC_SHAPES.has(name)) return true;
+    } catch {
+        const name = String(src).split(/[?#]/)[0].split('/').pop().toLowerCase();
+        if (__BASIC_SHAPES.has(name)) return true;
+    }
+
+    // 3) data: URLs — peek at the SVG text for the tokens
+    if (String(src).startsWith('data:image/svg')) {
+        let svgText = '';
+        try {
+            const payload = src.split(',')[1] || '';
+            // base64?
+            if (/;base64/i.test(src)) svgText = atob(payload);
+            else svgText = decodeURIComponent(payload);
+            const s = svgText.toLowerCase();
+            if (
+                s.includes('ico-shapes-circle') ||
+                s.includes('ico-shapes-heart') ||
+                s.includes('ico-shapes-hexagon') ||
+                s.includes('ico-shapes-line') ||
+                s.includes('ico-shapes-rec') ||
+                s.includes('ico-shapes-triangle')
+            ) return true;
+        } catch { /* ignore */ }
+    }
+
+    return false;
+}
+
+// --------------------------------------------------------------------
+// DROP: create image + mark whether it is a BASIC SHAPE
+// --------------------------------------------------------------------
 canvas.addEventListener('drop', e => {
     e.preventDefault();
 
     let src = "";
+    let droppedFileName = "";
 
-    // 1) Preferred: a real URI (e.g. dragging from another site)
-    // try text/uri-list first (for standards-compliant browsers)
-    if (e.dataTransfer.types.includes('text/uri-list')) {
+    // 1) text/uri-list (drag from web)
+    if (e.dataTransfer.types?.includes('text/uri-list')) {
         src = e.dataTransfer.getData('text/uri-list').trim();
-    }
-    // fallback: if plain text *looks* like an http URL
-    else {
-        const plain = e.dataTransfer.getData('text/plain').trim();
-        if (/^https?:\/\//i.test(plain)) {
-            src = plain;
-        }
+    } else {
+        // fallback: plain text that looks like a URL or path
+        const plain = (e.dataTransfer.getData('text/plain') || "").trim();
+        if (plain) src = plain;
     }
 
-    // 2) If that fails, check for File objects (drag from Finder or Explorer)
-    if (!src && e.dataTransfer.files.length > 0) {
+    // 2) local files (drag from Finder/Explorer)
+    if (!src && e.dataTransfer.files?.length > 0) {
         const file = e.dataTransfer.files[0];
         if (file.type.startsWith('image/')) {
             src = URL.createObjectURL(file);
+            droppedFileName = file.name || "";
         }
     }
 
-    // 3) Nothing valid? bail out
     if (!src) return;
 
     const img = new Image();
     img.onload = () => {
-        // maximum dimension on drop
         const MAX_DIM = 300;
-
-        // compute ratio so the longest side is MAX_DIM
-        const ratio = img.width > img.height
-            ? MAX_DIM / img.width
-            : MAX_DIM / img.height;
-
-        // never upscale small images
+        const ratio = img.width > img.height ? MAX_DIM / img.width : MAX_DIM / img.height;
         const scale = Math.min(ratio, 1);
-
-        // new “design-space” dimensions
         const newWidth = img.width * scale;
         const newHeight = img.height * scale;
+
+        // ✅ mark whether this is one of the 6 basic shape SVGs
+        const isBasic = __isBasicFromSource(src, droppedFileName);
+
         const newImgObj = {
             img,
             src,
@@ -7651,7 +7698,7 @@ canvas.addEventListener('drop', e => {
             scaleX: 1,
             scaleY: 1,
             opacity: 100,
-            selected: true,            // ⬅ select it
+            selected: true,
             noAnim: false,
             groupId: null,
             rotation: 0,
@@ -7661,17 +7708,98 @@ canvas.addEventListener('drop', e => {
             strokeNoColorStatus: false,
             fillNoColor: "#FFFFFF",
             strokeNoColor: "#FFFFFF",
-            strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || .5
+            strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 0.5,
+
+            // <-- Here’s the flag your renderer can read:
+            isBasic:isBasic
         };
+
         images.forEach(it => it.selected = false);
         textObjects.forEach(t => t.selected = false);
         images.push(newImgObj);
-        activeBox = newImgObj;       // ⬅ reuse same selected “box” concept
+        activeBox = newImgObj;
+
         drawText();
-        //ChangeFillColor();
     };
     img.src = src;
 });
+
+//canvas.addEventListener('drop', e => {
+//    e.preventDefault();
+
+//    let src = "";
+
+//    // 1) Preferred: a real URI (e.g. dragging from another site)
+//    // try text/uri-list first (for standards-compliant browsers)
+//    if (e.dataTransfer.types.includes('text/uri-list')) {
+//        src = e.dataTransfer.getData('text/uri-list').trim();
+//    }
+//    // fallback: if plain text *looks* like an http URL
+//    else {
+//        const plain = e.dataTransfer.getData('text/plain').trim();
+//        if (/^https?:\/\//i.test(plain)) {
+//            src = plain;
+//        }
+//    }
+
+//    // 2) If that fails, check for File objects (drag from Finder or Explorer)
+//    if (!src && e.dataTransfer.files.length > 0) {
+//        const file = e.dataTransfer.files[0];
+//        if (file.type.startsWith('image/')) {
+//            src = URL.createObjectURL(file);
+//        }
+//    }
+
+//    // 3) Nothing valid? bail out
+//    if (!src) return;
+
+//    const img = new Image();
+//    img.onload = () => {
+//        // maximum dimension on drop
+//        const MAX_DIM = 300;
+
+//        // compute ratio so the longest side is MAX_DIM
+//        const ratio = img.width > img.height
+//            ? MAX_DIM / img.width
+//            : MAX_DIM / img.height;
+
+//        // never upscale small images
+//        const scale = Math.min(ratio, 1);
+
+//        // new “design-space” dimensions
+//        const newWidth = img.width * scale;
+//        const newHeight = img.height * scale;
+//        const newImgObj = {
+//            img,
+//            src,
+//            x: e.offsetX,
+//            y: e.offsetY,
+//            width: newWidth,
+//            height: newHeight,
+//            scaleX: 1,
+//            scaleY: 1,
+//            opacity: 100,
+//            selected: true,            // ⬅ select it
+//            noAnim: false,
+//            groupId: null,
+//            rotation: 0,
+//            type: "image",
+//            zIndex: getNextZIndex(),
+//            fillNoColorStatus: false,
+//            strokeNoColorStatus: false,
+//            fillNoColor: "#FFFFFF",
+//            strokeNoColor: "#FFFFFF",
+//            strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || .5
+//        };
+//        images.forEach(it => it.selected = false);
+//        textObjects.forEach(t => t.selected = false);
+//        images.push(newImgObj);
+//        activeBox = newImgObj;       // ⬅ reuse same selected “box” concept
+//        drawText();
+//        //ChangeFillColor();
+//    };
+//    img.src = src;
+//});
 
 
 function deg2rad(a) { return a * Math.PI / 180; }
@@ -9316,9 +9444,6 @@ function pointInBox(b, x, y) {
     return x >= b.x && x <= b.x + w && y >= b.y && y <= b.y + h;
 }
 
-
-
-
 function drawText() {
     const designW = canvas.width;
     const designH = canvas.height;
@@ -9353,7 +9478,7 @@ function drawText() {
     const defaultFontStyle = defaultStyle.fontStyle || "normal";
     const defaultColor = defaultStyle.color || "#000";
 
-    // === ADD: local mask helper (rotated/local space) ===
+    // === local mask helper (rotated/local space) ===
     function __applyLocalRectMask(ctx, w, h, clipVal, direction) {
         if (!(clipVal > 0 && clipVal < 1)) return;
 
@@ -9370,48 +9495,125 @@ function drawText() {
         ctx.clip();
     }
 
-    // === ADD: 3-slice drawer in LOCAL coordinates (we're already translated/rotated)
+    // ===== BASIC SHAPES: detect by filename (case-insensitive; works with URLs/data URIs) =====
+    // --- BASIC SHAPES detection (filename only) ---
+    // BASIC shape list + detector
+    // ---- BASIC shapes only -------------------------------------------------
+    // ---- BASIC SHAPES list
+    const __BASIC_SHAPES = new Set([
+        'ico-shapes-circle.svg',
+        'ico-shapes-heart.svg',
+        'ico-shapes-hexagon.svg',
+        'ico-shapes-line.svg',
+        'ico-shapes-rec.svg',
+        'ico-shapes-triangle.svg'
+    ]);
+    
+    function __isBasicShapeSvg(box) {
+        if (!box || box.type !== 'image' || !box.src) return false;
+        let name = '';
+        try { name = new URL(String(box.src), location.href).pathname.split('/').pop() || ''; }
+        catch { name = String(box.src).split(/[?#]/)[0].split('/').pop() || ''; }
+        return __BASIC_SHAPES.has(name.toLowerCase());
+    }
+    function __applyLocalRectMask(ctx, w, h, clipVal, direction) {
+        if (!(clipVal > 0 && clipVal < 1)) return;
+
+        let vw = w, vh = h;
+        if (direction === "left" || direction === "right") vw = w * (1 - clipVal);
+        if (direction === "top" || direction === "bottom") vh = h * (1 - clipVal);
+
+        let rx = -w / 2, ry = -h / 2;
+        if (direction === "right") rx = (w / 2) - vw;
+        if (direction === "bottom") ry = (h / 2) - vh;
+
+        ctx.beginPath();
+        ctx.rect(rx, ry, vw, vh);
+        ctx.clip();
+    }
+
+    // === your existing 3-slice (kept) ===
+    // === REPLACE your 3-slice with this version (no gaps on wide/narrow) ===
     function __drawImageThreeSliceLocalX(ctx2, img, w, h) {
         const sw = img.naturalWidth || img.width || 1;
         const sh = img.naturalHeight || img.height || 1;
 
-        // cap width in source ≈ radius (half the height for pill/rounded ends)
+        // cap in source ≈ radius
         const capSrc = Math.max(1, Math.round(sh / 2));
-        const midSrc = Math.max(1, sw - capSrc * 2);
 
-        // destination cap mirrors radius; cannot exceed half of dest width
-        const capDst = Math.min(Math.round(h / 2), Math.round(w / 2));
+        // middle in source: at least 1px, centered if the true middle is 0/negative
+        let midSrcW = sw - capSrc * 2;
+        let midSrcX = capSrc;
+        if (midSrcW < 1) {
+            midSrcX = Math.max(0, Math.floor(sw / 2));
+            midSrcW = 1;
+        }
+
+        // destination pieces
+        const capDst = Math.max(1e-3, Math.min(h / 2, w / 2));
         const midDst = Math.max(0, w - capDst * 2);
 
-        // If box too narrow for caps, just draw normally
-        if (capDst <= 0 || midDst < 0) {
-            ctx2.drawImage(img, -w / 2, -h / 2, w, h);
-            return;
-        }
-
         // LEFT cap
-        ctx2.drawImage(
-            img,
-            0, 0, capSrc, sh,
-            -w / 2, -h / 2, capDst, h
-        );
+        ctx2.drawImage(img, 0, 0, capSrc, sh, -w / 2, -h / 2, capDst, h);
 
-        // MID stretch (only this part scales horizontally)
+        // MIDDLE (always when there's room in destination)
         if (midDst > 0) {
-            ctx2.drawImage(
-                img,
-                capSrc, 0, midSrc, sh,
-                -w / 2 + capDst, -h / 2, midDst, h
-            );
+            ctx2.drawImage(img, midSrcX, 0, midSrcW, sh, -w / 2 + capDst, -h / 2, midDst, h);
         }
 
-        // RIGHT cap
-        ctx2.drawImage(
-            img,
-            capSrc + midSrc, 0, capSrc, sh,
-            -w / 2 + capDst + midDst, -h / 2, capDst, h
-        );
+        // RIGHT cap (sample from the right edge)
+        const rightSrcX = Math.max(0, sw - capSrc);
+        ctx2.drawImage(img, rightSrcX, 0, capSrc, sh, -w / 2 + capDst + midDst, -h / 2, capDst, h);
     }
+
+    // === REPLACE your 9-slice with this version (keeps curvature vertically too) ===
+    function __drawImageNineSliceLocal(ctx2, img, w, h) {
+        const sw = img.naturalWidth || img.width || 1;
+        const sh = img.naturalHeight || img.height || 1;
+
+        const capSrc = Math.max(1, Math.round(sh / 2));
+
+        // middle source widths/heights: force ≥1px, centered if needed
+        let midSrcW = sw - capSrc * 2, midSrcX = capSrc;
+        if (midSrcW < 1) { midSrcX = Math.max(0, Math.floor(sw / 2)); midSrcW = 1; }
+
+        let midSrcH = sh - capSrc * 2, midSrcY = capSrc;
+        if (midSrcH < 1) { midSrcY = Math.max(0, Math.floor(sh / 2)); midSrcH = 1; }
+
+        // destination radii and middles
+        const r = Math.max(1e-3, Math.min(w / 2, h / 2));
+        const capDstX = r, capDstY = r;
+        const midDstX = Math.max(0, w - capDstX * 2);
+        const midDstY = Math.max(0, h - capDstY * 2);
+
+        const x0 = -w / 2, y0 = -h / 2;
+
+        // Top row: TL, T, TR
+        ctx2.drawImage(img, 0, 0, capSrc, capSrc, x0, y0, capDstX, capDstY);
+        if (midDstX > 0)
+            ctx2.drawImage(img, midSrcX, 0, midSrcW, capSrc, x0 + capDstX, y0, midDstX, capDstY);
+        ctx2.drawImage(img, Math.max(0, sw - capSrc), 0, capSrc, capSrc, x0 + capDstX + midDstX, y0, capDstX, capDstY);
+
+        // Middle row: L, C, R
+        if (midDstY > 0) {
+            ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH, x0, y0 + capDstY, capDstX, midDstY);
+            if (midDstX > 0)
+                ctx2.drawImage(img, midSrcX, midSrcY, midSrcW, midSrcH, x0 + capDstX, y0 + capDstY, midDstX, midDstY);
+            ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH, x0 + capDstX + midDstX, y0 + capDstY, capDstX, midDstY);
+        } else {
+            // no center height → stretch side strips to meet
+            ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH, x0, y0 + capDstY, capDstX, midDstY);
+            ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH, x0 + capDstX + midDstX, y0 + capDstY, capDstX, midDstY);
+        }
+
+        // Bottom row: BL, B, BR
+        ctx2.drawImage(img, 0, Math.max(0, sh - capSrc), capSrc, capSrc, x0, y0 + capDstY + midDstY, capDstX, capDstY);
+        if (midDstX > 0)
+            ctx2.drawImage(img, midSrcX, Math.max(0, sh - capSrc), midSrcW, capSrc, x0 + capDstX, y0 + capDstY + midDstY, midDstX, capDstY);
+        ctx2.drawImage(img, Math.max(0, sw - capSrc), Math.max(0, sh - capSrc), capSrc, capSrc,
+            x0 + capDstX + midDstX, y0 + capDstY + midDstY, capDstX, capDstY);
+    }
+
 
     // z-ordered
     const all = [...(images || []), ...(textObjects || [])]
@@ -9424,7 +9626,7 @@ function drawText() {
         const { w, h, cx, cy } = getBoxRect(box);
         const angleRad = deg2rad(box.rotation || 0);
 
-        // === ADD: normalize clip & compute effective direction; skip fully hidden ===
+        // normalize clip & compute effective direction; skip fully hidden
         if (typeof box.previousClip !== "number") {
             box.previousClip = Number(box.clip) || 0;
         }
@@ -9434,31 +9636,20 @@ function drawText() {
         const __effDir = __isHiding ? invertDirection(__origDir) : __origDir;
         box.previousClip = __clipVal;
 
-        if (__clipVal >= 1) {
-            continue;
-        }
+        if (__clipVal >= 1) continue;
 
-        // stash for later use
         box.__clipVal = __clipVal;
         box.__effDir = __effDir;
 
-        // === ADD: normalize scale for popcorn (or any scale-based) animations ===
         if (typeof box.scaleX !== "number") box.scaleX = 1;
         if (typeof box.scaleY !== "number") box.scaleY = 1;
         const __sx = (Number(box.scaleX) || 0);
         const __sy = (Number(box.scaleY) || 0);
-        if (__sx === 0 || __sy === 0) {
-            continue;
-        }
+        if (__sx === 0 || __sy === 0) continue;
 
-        // === ADD: sandbox the existing world-space clip so it can't leak ===
+        // sandbox world-space clip
         ctx.save();
-
-        if (box.clip >= 1) {
-            ctx.restore(); // balance save
-            ctx.restore();
-            return;
-        }
+        if (box.clip >= 1) { ctx.restore(); ctx.restore(); return; }
 
         if (box.clip > 0 && box.clip < 1) {
             const originalDir = box.clipDirection || "top";
@@ -9474,7 +9665,6 @@ function drawText() {
             const y = box.y;
 
             ctx.beginPath();
-
             if (effectiveDirection === "top") {
                 const visibleHeight = height * (1 - box.clip);
                 ctx.rect(x, y, width, visibleHeight);
@@ -9488,77 +9678,113 @@ function drawText() {
                 const visibleWidth = width * (1 - box.clip);
                 ctx.rect(x + width - visibleWidth, y, visibleWidth, height);
             }
-
             ctx.clip();
         }
 
-        // === ADD: drop the world-space clip; we'll apply local clip in element space
+        // drop world-space clip
         ctx.restore();
 
-        // ---- IMAGE ----
-        if (box.type === "image") {
-            const { w, h, cx, cy } = getBoxRect(box);
-            const angleRad = deg2rad(box.rotation || 0);
+        
+        const isBasic = box.isBasic;
+        if (isBasic) {
+            if (box.type === "image") {
+                console.log("isBasic", isBasic);
+                const { w, h, cx, cy } = getBoxRect(box);
+                const angleRad = deg2rad(box.rotation || 0);
 
-            ctx.save();
-            ctx.translate(cx, cy);
-            ctx.rotate(angleRad);
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(angleRad);
+                ctx.scale(__sx, __sy);
+                ctx.globalAlpha = normAlpha(box.opacity);
 
-            // === ADD: apply scale here
-            ctx.scale(__sx, __sy);
-
-            ctx.globalAlpha = normAlpha(box.opacity);
-
-            // === ADD: local (rotated) mask for images
-            if (box.__clipVal > 0 && box.__clipVal < 1) {
-                __applyLocalRectMask(ctx, w, h, box.__clipVal, box.__effDir || "top");
-            }
-
-            if (box.img) {
-                if (box.img.complete) {
-                    // === ADD: choose 3-slice when horizontally stretched (keeps curvature)
-                    const natW = box.img.naturalWidth || box.img.width || w;
-                    const natH = box.img.naturalHeight || box.img.height || h;
-                    const arImg = natW / Math.max(natH, 1e-6);
-                    const arBox = w / Math.max(h, 1e-6);
-
-                    // Horizontal stretch if box AR is greater than natural AR.
-                    const horizontallyStretched = (arBox - arImg) > 1e-3;
-
-                    // Optional flag to force/disable (default: auto by aspect)
-                    const preserveCaps = (box.preserveCaps === true) || horizontallyStretched;
-
-                    if (preserveCaps) {
-                        __drawImageThreeSliceLocalX(ctx, box.img, w, h);
-                    } else {
-                        ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
-                    }
-                } else {
-                    const img = box.img;
-                    img.onload = () => { img.onload = null; drawText(); };
-                    img.onerror = () => { img.onerror = null; };
+                if (box.__clipVal > 0 && box.__clipVal < 1) {
+                    __applyLocalRectMask(ctx, w, h, box.__clipVal, box.__effDir || "top");
                 }
-            }
-            ctx.restore(); // back to world space
 
-            // === ADD: selection should reflect scaled size
-            if (box.selected && w > 0 && h > 0) {
-                drawRotatedSelection(ctx, { ...box, width: w * __sx, height: h * __sy });
+                if (box.img) {
+                    if (box.img.complete) {
+                        const natW = box.img.naturalWidth || box.img.width || w;
+                        const natH = box.img.naturalHeight || box.img.height || h;
+                        const arImg = natW / Math.max(natH, 1e-6);
+                        const arBox = w / Math.max(h, 1e-6);
+
+                        const aspectChanged = Math.abs(arBox - arImg) > 1e-3;
+                        const preserveCaps = (box.preserveCaps === true) || aspectChanged;
+
+                        if (preserveCaps) {
+                            // NEW: 9-slice keeps curvature in both axes
+                            __drawImageNineSliceLocal(ctx, box.img, w, h);
+                            // (You can still call 3-slice if you only want horizontal preservation)
+                            // __drawImageThreeSliceLocalX(ctx, box.img, w, h);
+                        } else {
+                            ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                        }
+                    } else {
+                        const img = box.img;
+                        img.onload = () => { img.onload = null; drawText(); };
+                        img.onerror = () => { img.onerror = null; };
+                    }
+                }
+
+                ctx.restore();
+
+                if (box.selected && w > 0 && h > 0) {
+                    drawRotatedSelection(ctx, { ...box, width: w * __sx, height: h * __sy });
+                }
+                continue;
             }
-            continue;
+
+        }
+        else {
+            console.log("isBasic OFF", isBasic);
+            if (box.type === "image") {
+                const { w, h, cx, cy } = getBoxRect(box);
+                const angleRad = deg2rad(box.rotation || 0);
+
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(angleRad);
+
+                // === ADD: apply popcorn (and other) scale here
+                ctx.scale(__sx, __sy);
+
+                ctx.globalAlpha = normAlpha(box.opacity);
+
+                // === ADD: local (rotated) mask for images
+                if (box.__clipVal > 0 && box.__clipVal < 1) {
+                    __applyLocalRectMask(ctx, w, h, box.__clipVal, box.__effDir || "top");
+                }
+
+                if (box.img) {
+                    if (box.img.complete) {
+                        ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                    } else {
+                        const img = box.img;
+                        img.onload = () => { img.onload = null; drawText(); };
+                        img.onerror = () => { img.onerror = null; };
+                    }
+                }
+                ctx.restore(); // back to world space
+
+                // === ADD: selection should reflect scaled size
+                if (box.selected && w > 0 && h > 0) {
+                    drawRotatedSelection(ctx, { ...box, width: w * __sx, height: h * __sy });
+                }
+                continue;
+            }
+           
         }
 
-        // ---- TEXT ----
+
+
+         //---- TEXT ---- (unchanged)
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(angleRad);
-
-        // === ADD: apply popcorn (and other) scale here
         ctx.scale(__sx, __sy);
-
         ctx.globalAlpha = normAlpha(box.opacity);
 
-        // === ADD: local (rotated) mask for text
         if (box.__clipVal > 0 && box.__clipVal < 1) {
             __applyLocalRectMask(ctx, w, h, box.__clipVal, box.__effDir || "top");
         }
@@ -9566,7 +9792,6 @@ function drawText() {
         const wrapper = document.createElement("div");
         wrapper.innerHTML = box.text || "";
 
-        // build logical lines
         const lines = [];
         wrapper.childNodes.forEach(n => {
             if (n.nodeType === 1 && n.tagName === "DIV") {
@@ -9590,19 +9815,16 @@ function drawText() {
             }
         });
 
-        // local (rotated) coords: top-left is (-w/2, -h/2)
         const left = -w / 2;
         const top = -h / 2;
 
         let cursorY = top + 5;
         let usedHeight = 0;
 
-        // NEW: trackers (inner widths; 5px pad each side → +10 when converting to outer)
-        let __maxRunWidthObserved = 0;   // widest wrapped line we draw
-        let __maxTokenWidthObserved = 0; // widest single word/token
+        let __maxRunWidthObserved = 0;
+        let __maxTokenWidthObserved = 0;
 
         lines.forEach(lineNode => {
-            // alignment inside the rotated box (kept)
             let cursorX = left + 5;
             if (box.align === "center") {
                 ctx.textAlign = "center";
@@ -9614,12 +9836,10 @@ function drawText() {
                 ctx.textAlign = "left";
             }
 
-            // NEW: inner content edges + we'll align by shifting startX
             const innerLeft = left + 5;
             const innerRight = left + w - 5;
             const innerWidth = Math.max(0, innerRight - innerLeft);
             const alignMode = box.align || "left";
-            // force left alignment while drawing; we handle startX ourselves
             ctx.textAlign = "left";
 
             let segments = [];
@@ -9627,33 +9847,8 @@ function drawText() {
 
             function measureWords(node, style) {
                 if (node.nodeType === 3) {
-                    const USE_WORD_TOKENS = true;
-                    if (USE_WORD_TOKENS) {
-                        const tokens = (node.nodeValue.match(/(\s+|\S+)/g) || []);
-                        for (let tk of tokens) {
-                            const fs = style.fontSize || defaultFontSize;
-                            const ff = style.fontFamily || defaultFontFamily;
-                            const fw = style.fontWeight || defaultFontWeight;
-                            const fst = style.fontStyle || defaultFontStyle;
-                            const col = style.color || defaultColor;
-
-                            ctx.font = `${fst} ${fw} ${fs} ${ff}`;
-                            const width = ctx.measureText(tk).width;
-                            const px = parseFloat(fs);
-                            if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
-
-                            const isSpace = /^\s+$/.test(tk);
-                            segments.push({ text: tk, width, style: { fs, ff, fw, fst, col }, isSpace });
-
-                            if (!isSpace && width > __maxTokenWidthObserved) {
-                                __maxTokenWidthObserved = width;
-                            }
-                        }
-                        return;
-                    }
-
-                    const chars = node.nodeValue.split("");
-                    for (let ch of chars) {
+                    const tokens = (node.nodeValue.match(/(\s+|\S+)/g) || []);
+                    for (let tk of tokens) {
                         const fs = style.fontSize || defaultFontSize;
                         const ff = style.fontFamily || defaultFontFamily;
                         const fw = style.fontWeight || defaultFontWeight;
@@ -9661,11 +9856,16 @@ function drawText() {
                         const col = style.color || defaultColor;
 
                         ctx.font = `${fst} ${fw} ${fs} ${ff}`;
-                        const width = ctx.measureText(ch).width;
+                        const width = ctx.measureText(tk).width;
                         const px = parseFloat(fs);
                         if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
 
-                        segments.push({ text: ch, width, style: { fs, ff, fw, fst, col } });
+                        const isSpace = /^\s+$/.test(tk);
+                        segments.push({ text: tk, width, style: { fs, ff, fw, fst, col }, isSpace });
+
+                        if (!isSpace && width > __maxTokenWidthObserved) {
+                            __maxTokenWidthObserved = width;
+                        }
                     }
                     return;
                 } else if (node.nodeType === 1) {
@@ -9753,34 +9953,11 @@ function drawText() {
                 for (const seg of segments) {
                     const segPx = parseFloat(seg.style.fs) || basePx;
 
-                    // don't start a line with spaces
                     if (seg.isSpace && runSegs.length === 0) continue;
 
-                    // --- ADD: if a single token is wider than the available innerWidth,
-                    //          split it into characters so it wraps instead of overflowing.
-                    if (!seg.isSpace && seg.width > innerWidth) {
-                        // measure each character with the same style
-                        const text = seg.text;
-                        for (let i = 0; i < text.length; i++) {
-                            const ch = text[i];
-                            ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
-                            const cw = ctx.measureText(ch).width;
-
-                            if (runWidth + cw > innerWidth && runSegs.length > 0) {
-                                flushRun();                     // wrap before placing the char
-                            }
-                            runSegs.push({ text: ch, width: cw, style: seg.style, isSpace: false });
-                            runWidth += cw;
-                            if (segPx > runMaxPx) runMaxPx = segPx;
-                        }
-                        continue; // token fully handled as chars
-                    }
-                    // --- END ADD ---
-
-                    // wrap by tokens (words/spaces). If it doesn't fit, flush
+                    // wrap by tokens
                     if (runWidth + seg.width > innerWidth && runSegs.length > 0) {
                         flushRun();
-                        // after wrapping, still don't start the new line with a space
                         if (seg.isSpace) continue;
                     }
 
@@ -9789,14 +9966,10 @@ function drawText() {
                     if (segPx > runMaxPx) runMaxPx = segPx;
                 }
 
-
                 flushRun();
-            }
-
-            let x = cursorX;
-            let drewSomething = false;
-
-            if (!__usePerRun) {
+            } else {
+                let x = cursorX;
+                let drewSomething = false;
                 segments.forEach(seg => {
                     if (x + seg.width > left + w - 0.01) {
                         cursorY += lineHeight;
@@ -9828,6 +10001,496 @@ function drawText() {
         }
     }
 }
+
+
+
+
+
+function drawTextOLD_3_9() {
+    const designW = canvas.width;
+    const designH = canvas.height;
+
+    // clear & bg
+    ctx.clearRect(0, 0, designW, designH);
+
+    const bgEl = document.getElementById('hdnBackgroundSpecificColor');
+    const bgColor = (bgEl?.value || canvas.style.backgroundColor || "").trim();
+    if (bgColor) {
+        ctx.save();
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, designW, designH);
+        ctx.restore();
+    }
+
+    if (canvas._bgImg) {
+        if (canvas._bgImg.complete) {
+            ctx.drawImage(canvas._bgImg, 0, 0, designW, designH);
+        } else {
+            canvas._bgImg.onload = () => drawText();
+            canvas._bgImg.onerror = () => { };
+        }
+    }
+
+    // text defaults
+    ctx.textBaseline = "top";
+    const defaultStyle = window.getComputedStyle(textEditorNew);
+    const defaultFontSize = defaultStyle.fontSize || "16px";
+    const defaultFontFamily = defaultStyle.fontFamily || "Arial";
+    const defaultFontWeight = defaultStyle.fontWeight || "normal";
+    const defaultFontStyle = defaultStyle.fontStyle || "normal";
+    const defaultColor = defaultStyle.color || "#000";
+
+    // === local mask (unchanged) ===
+    function __applyLocalRectMask(ctx, w, h, clipVal, direction) {
+        if (!(clipVal > 0 && clipVal < 1)) return;
+        let vw = w, vh = h;
+        if (direction === "left" || direction === "right") vw = w * (1 - clipVal);
+        if (direction === "top" || direction === "bottom") vh = h * (1 - clipVal);
+        let rx = -w / 2, ry = -h / 2;
+        if (direction === "right") rx = (w / 2) - vw;
+        if (direction === "bottom") ry = (h / 2) - vh;
+        ctx.beginPath();
+        ctx.rect(rx, ry, vw, vh);
+        ctx.clip();
+    }
+
+    // === NEW: detect the 6 basic shape SVGs ===
+    const __SPECIAL_SVGS = new Set([
+        'ico-shapes-circle.svg',
+        'ico-shapes-heart.svg',
+        'ico-shapes-hexagon.svg',
+        'ico-shapes-line.svg',
+        'ico-shapes-rec.svg',
+        'ico-shapes-triangle.svg'
+    ]);
+    function __isSpecialShapeSvg(box) {
+        if (!box || box.type !== 'image' || !box.src) return false;
+        let name = '';
+        try {
+            const u = new URL(String(box.src), window.location.href);
+            name = (u.pathname || '').split('/').pop() || '';
+        } catch {
+            name = String(box.src).split(/[?#]/)[0].split('/').pop() || '';
+        }
+        return __SPECIAL_SVGS.has(name.toLowerCase());
+    }
+
+    // === NEW: 9-slice helper (capsule-safe, no seams) ===
+    function __drawImageNineSliceLocal(ctx2, img, w, h) {
+        const sw = img.naturalWidth || img.width || 1;
+        const sh = img.naturalHeight || img.height || 1;
+
+        // assume rounded-rect style, radius ~ sh/2 in source
+        const capSrc = Math.max(1, Math.round(sh / 2));
+
+        // middle source strips – at least 1px (prevents gaps on assets with no true middle)
+        let midSrcW = sw - capSrc * 2, midSrcX = capSrc;
+        if (midSrcW < 1) { midSrcW = 1; midSrcX = Math.min(Math.max(0, capSrc), Math.max(0, sw - 1)); }
+
+        let midSrcH = sh - capSrc * 2, midSrcY = capSrc;
+        if (midSrcH < 1) { midSrcH = 1; midSrcY = Math.min(Math.max(0, capSrc), Math.max(0, sh - 1)); }
+
+        // destination radii/middles
+        const r = Math.max(1e-3, Math.min(w / 2, h / 2));
+        const capDstX = r, capDstY = r;
+        const midDstX = Math.max(0, w - capDstX * 2);
+        const midDstY = Math.max(0, h - capDstY * 2);
+
+        const x0 = -w / 2, y0 = -h / 2;
+
+        // tiny overlaps to avoid sub-pixel seams
+        const OX = 0.5, OY = 0.5;
+
+        // Top row
+        ctx2.drawImage(img, 0, 0, capSrc, capSrc, x0, y0, capDstX + OX, capDstY + OY); // TL
+        if (midDstX > 0)
+            ctx2.drawImage(img, midSrcX, 0, midSrcW, capSrc,
+                x0 + capDstX - OX, y0, midDstX + 2 * OX, capDstY + OY);                 // T
+        ctx2.drawImage(img, Math.max(0, sw - capSrc), 0, capSrc, capSrc,
+            x0 + capDstX + midDstX - OX, y0, capDstX + OX, capDstY + OY);               // TR
+
+        // Middle row
+        if (midDstY > 0) {
+            ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH,
+                x0, y0 + capDstY - OY, capDstX + OX, midDstY + 2 * OY);                 // L
+            if (midDstX > 0)
+                ctx2.drawImage(img, midSrcX, midSrcY, midSrcW, midSrcH,
+                    x0 + capDstX - OX, y0 + capDstY - OY, midDstX + 2 * OX, midDstY + 2 * OY); // C
+            ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH,
+                x0 + capDstX + midDstX - OX, y0 + capDstY - OY, capDstX + OX, midDstY + 2 * OY); // R
+        } else {
+            // no center height → stretch side strips vertically to meet
+            ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH,
+                x0, y0 + capDstY - OY, capDstX + OX, midDstY + 2 * OY);
+            ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH,
+                x0 + capDstX + midDstX - OX, y0 + capDstY - OY, capDstX + OX, midDstY + 2 * OY);
+        }
+
+        // Bottom row
+        ctx2.drawImage(img, 0, Math.max(0, sh - capSrc), capSrc, capSrc,
+            x0, y0 + capDstY + midDstY - OY, capDstX + OX, capDstY + OY);               // BL
+        if (midDstX > 0)
+            ctx2.drawImage(img, midSrcX, Math.max(0, sh - capSrc), midSrcW, capSrc,
+                x0 + capDstX - OX, y0 + capDstY + midDstY - OY, midDstX + 2 * OX, capDstY + OY); // B
+        ctx2.drawImage(img, Math.max(0, sw - capSrc), Math.max(0, sh - capSrc), capSrc, capSrc,
+            x0 + capDstX + midDstX - OX, y0 + capDstY + midDstY - OY, capDstX + OX, capDstY + OY); // BR
+    }
+
+    // z-ordered
+    const all = [...(images || []), ...(textObjects || [])]
+        .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+
+    for (const box of all) {
+        if (box.width == null || Number.isNaN(box.width)) box.width = 50;
+        if (box.height == null || Number.isNaN(box.height)) box.height = 30;
+
+        const { w, h, cx, cy } = getBoxRect(box);
+        const angleRad = deg2rad(box.rotation || 0);
+
+        // clip normalization (unchanged)
+        if (typeof box.previousClip !== "number") {
+            box.previousClip = Number(box.clip) || 0;
+        }
+        const __clipVal = Math.max(0, Math.min(1, Number(box.clip) || 0));
+        const __isHiding = __clipVal > box.previousClip;
+        const __origDir = box.clipDirection || "top";
+        const __effDir = __isHiding ? invertDirection(__origDir) : __origDir;
+        box.previousClip = __clipVal;
+
+        if (__clipVal >= 1) continue;
+
+        box.__clipVal = __clipVal;
+        box.__effDir = __effDir;
+
+        if (typeof box.scaleX !== "number") box.scaleX = 1;
+        if (typeof box.scaleY !== "number") box.scaleY = 1;
+        const __sx = (Number(box.scaleX) || 0);
+        const __sy = (Number(box.scaleY) || 0);
+        if (__sx === 0 || __sy === 0) continue;
+
+        // sandbox world-space clip
+        ctx.save();
+        if (box.clip >= 1) { ctx.restore(); ctx.restore(); return; }
+
+        if (box.clip > 0 && box.clip < 1) {
+            const originalDir = box.clipDirection || "top";
+            const isHiding = box.clip > box.previousClip;
+            const effectiveDirection = isHiding ? invertDirection(originalDir) : originalDir;
+            box.previousClip = box.clip;
+
+            const isImage = box.type === 'image';
+            const width = isImage ? box.width : box.boundingWidth;
+            const height = isImage ? box.height : box.boundingHeight;
+            const x = box.x, y = box.y;
+
+            ctx.beginPath();
+            if (effectiveDirection === "top") {
+                const visibleHeight = height * (1 - box.clip);
+                ctx.rect(x, y, width, visibleHeight);
+            } else if (effectiveDirection === "bottom") {
+                const visibleHeight = height * (1 - box.clip);
+                ctx.rect(x, y + height - visibleHeight, width, visibleHeight);
+            } else if (effectiveDirection === "left") {
+                const visibleWidth = width * (1 - box.clip);
+                ctx.rect(x, y, visibleWidth, height);
+            } else if (effectiveDirection === "right") {
+                const visibleWidth = width * (1 - box.clip);
+                ctx.rect(x + width - visibleWidth, y, visibleWidth, height);
+            }
+            ctx.clip();
+        }
+        ctx.restore();
+
+        // ---- IMAGE ----
+        if (box.type === "image") {
+            const { w, h, cx, cy } = getBoxRect(box);
+            const angleRad = deg2rad(box.rotation || 0);
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(angleRad);
+            ctx.scale(__sx, __sy);
+            ctx.globalAlpha = normAlpha(box.opacity);
+
+            if (box.__clipVal > 0 && box.__clipVal < 1) {
+                __applyLocalRectMask(ctx, w, h, box.__clipVal, box.__effDir || "top");
+            }
+
+            if (box.img) {
+                if (box.img.complete) {
+                    // >>> ONLY these 6 svg files use the capsule-safe 9-slice <<<
+                    const useSpecial = __isSpecialShapeSvg(box);
+
+                    if (useSpecial) {
+                        //    // optional: only when aspect changed; otherwise normal draw is fine
+                        //    const natW = box.img.naturalWidth || box.img.width || w;
+                        //    const natH = box.img.naturalHeight || box.img.height || h;
+                        //    const arImg = natW / Math.max(natH, 1e-6);
+                        //    const arBox = w / Math.max(h, 1e-6);
+                        //    const aspectChanged = Math.abs(arBox - arImg) > 1e-3;
+
+                        //    if (aspectChanged) {
+                        //        __drawImageNineSliceLocal(ctx, box.img, w, h);
+                        //    } else {
+                        //        ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                        //    }
+                        //} else {
+                        //    // old behavior for everything else
+                        //    ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                        //}
+                        const natW = box.img.naturalWidth || box.img.width || w;
+                        const natH = box.img.naturalHeight || box.img.height || h;
+                        const arImg = natW / Math.max(natH, 1e-6);
+                        const arBox = w / Math.max(h, 1e-6);
+
+                        const aspectChanged = Math.abs(arBox - arImg) > 1e-3;
+                        const preserveCaps = (box.preserveCaps === true) || aspectChanged;
+
+                        if (preserveCaps) {
+                            // NEW: 9-slice keeps curvature in both axes
+                            __drawImageNineSliceLocal(ctx, box.img, w, h);
+                            // (You can still call 3-slice if you only want horizontal preservation)
+                            // __drawImageThreeSliceLocalX(ctx, box.img, w, h);
+                        } else {
+                            ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                        }
+                    }
+
+                } else {
+                    const img = box.img;
+                    img.onload = () => { img.onload = null; drawText(); };
+                    img.onerror = () => { img.onerror = null; };
+                }
+            }
+
+            ctx.restore();
+
+            if (box.selected && w > 0 && h > 0) {
+                drawRotatedSelection(ctx, { ...box, width: w * __sx, height: h * __sy });
+            }
+            continue;
+        }
+
+        // ---- TEXT ---- (unchanged)
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angleRad);
+        ctx.scale(__sx, __sy);
+        ctx.globalAlpha = normAlpha(box.opacity);
+
+        if (box.__clipVal > 0 && box.__clipVal < 1) {
+            __applyLocalRectMask(ctx, w, h, box.__clipVal, box.__effDir || "top");
+        }
+
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = box.text || "";
+
+        const lines = [];
+        wrapper.childNodes.forEach(n => {
+            if (n.nodeType === 1 && n.tagName === "DIV") {
+                const hasContent = n.textContent.trim().length > 0 || n.children.length > 0;
+                if (!hasContent) {
+                    const blank = document.createElement("div");
+                    blank.appendChild(document.createTextNode(" "));
+                    lines.push(blank);
+                } else {
+                    const ln = document.createElement("div");
+                    ln.append(...n.cloneNode(true).childNodes);
+                    lines.push(ln);
+                }
+            } else if (n.nodeType === 1 && n.tagName === "BR") {
+                const brLine = document.createElement("div");
+                brLine.appendChild(document.createTextNode(" "));
+                lines.push(brLine);
+            } else {
+                if (lines.length === 0) lines.push(document.createElement("div"));
+                lines[lines.length - 1].appendChild(n.cloneNode(true));
+            }
+        });
+
+        const left = -w / 2;
+        const top = -h / 2;
+
+        let cursorY = top + 5;
+        let usedHeight = 0;
+
+        let __maxRunWidthObserved = 0;
+        let __maxTokenWidthObserved = 0;
+
+        lines.forEach(lineNode => {
+            let cursorX = left + 5;
+            if (box.align === "center") {
+                ctx.textAlign = "center";
+                cursorX = left + w / 2;
+            } else if (box.align === "right") {
+                ctx.textAlign = "right";
+                cursorX = left + w - 5;
+            } else {
+                ctx.textAlign = "left";
+            }
+
+            const innerLeft = left + 5;
+            const innerRight = left + w - 5;
+            const innerWidth = Math.max(0, innerRight - innerLeft);
+            const alignMode = box.align || "left";
+            ctx.textAlign = "left";
+
+            let segments = [];
+            let maxFontPx = 0;
+
+            function measureWords(node, style) {
+                if (node.nodeType === 3) {
+                    const tokens = (node.nodeValue.match(/(\s+|\S+)/g) || []);
+                    for (let tk of tokens) {
+                        const fs = style.fontSize || defaultFontSize;
+                        const ff = style.fontFamily || defaultFontFamily;
+                        const fw = style.fontWeight || defaultFontWeight;
+                        const fst = style.fontStyle || defaultFontStyle;
+                        const col = style.color || defaultColor;
+
+                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                        const width = ctx.measureText(tk).width;
+                        const px = parseFloat(fs);
+                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                        const isSpace = /^\s+$/.test(tk);
+                        segments.push({ text: tk, width, style: { fs, ff, fw, fst, col }, isSpace });
+
+                        if (!isSpace && width > __maxTokenWidthObserved) {
+                            __maxTokenWidthObserved = width;
+                        }
+                    }
+                    return;
+                } else if (node.nodeType === 1) {
+                    if (node.tagName === "BR") {
+                        const fs = style.fontSize || defaultFontSize;
+                        const ff = style.fontFamily || defaultFontFamily;
+                        const fw = style.fontWeight || defaultFontWeight;
+                        const fst = style.fontStyle || defaultFontStyle;
+                        const col = style.color || defaultColor;
+
+                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                        const width = ctx.measureText(" ").width;
+                        const px = parseFloat(fs);
+                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                        segments.push({ text: " ", width, style: { fs, ff, fw, fst, col }, isSpace: true });
+                        return;
+                    }
+                    const s = node.style || {};
+                    const nextStyle = {
+                        fontSize: s.fontSize || style.fontSize,
+                        fontFamily: s.fontFamily || style.fontFamily,
+                        fontWeight: s.fontWeight || style.fontWeight,
+                        fontStyle: s.fontStyle || style.fontStyle,
+                        color: s.color || style.color,
+                    };
+                    node.childNodes.forEach(child => measureWords(child, nextStyle));
+                }
+            }
+
+            measureWords(lineNode, {
+                fontSize: defaultFontSize,
+                fontFamily: defaultFontFamily,
+                fontWeight: defaultFontWeight,
+                fontStyle: defaultFontStyle,
+                color: defaultColor
+            });
+
+            const basePx = parseFloat(defaultFontSize) || 16;
+            const lineHeight = (maxFontPx > 0 ? maxFontPx : basePx) * (box.lineSpacing || 1.2);
+
+            const isBlankLine = (segments.length === 0) ||
+                segments.every(seg => seg.isSpace || ((seg.text || '').trim() === ''));
+
+            if (isBlankLine) {
+                cursorY += lineHeight;
+                usedHeight = cursorY - top + 5;
+                return;
+            }
+
+            const __usePerRun = true;
+
+            if (__usePerRun) {
+                function startXForWidth(runWidth) {
+                    if (box.align === "center") return innerLeft + Math.max(0, (innerWidth - runWidth) / 2);
+                    if (box.align === "right") return innerRight - runWidth;
+                    return innerLeft;
+                }
+
+                let runSegs = [];
+                let runWidth = 0;
+                let runMaxPx = 0;
+
+                function flushRun() {
+                    if (runSegs.length === 0) return;
+                    let x2 = startXForWidth(runWidth);
+                    for (const seg of runSegs) {
+                        ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
+                        ctx.fillStyle = seg.style.col;
+                        ctx.fillText(seg.text, x2, cursorY);
+                        x2 += seg.width;
+                    }
+                    if (runWidth > __maxRunWidthObserved) __maxRunWidthObserved = runWidth;
+
+                    const lh = (runMaxPx || basePx) * (box.lineSpacing || 1.2);
+                    cursorY += lh;
+                    usedHeight = cursorY - top + 5;
+
+                    runSegs = [];
+                    runWidth = 0;
+                    runMaxPx = 0;
+                }
+
+                for (const seg of segments) {
+                    const segPx = parseFloat(seg.style.fs) || basePx;
+                    if (seg.isSpace && runSegs.length === 0) continue;
+
+                    if (runWidth + seg.width > innerWidth && runSegs.length > 0) {
+                        flushRun();
+                        if (seg.isSpace) continue;
+                    }
+
+                    runSegs.push(seg);
+                    runWidth += seg.width;
+                    if (segPx > runMaxPx) runMaxPx = segPx;
+                }
+
+                flushRun();
+            } else {
+                let x = left + 5, drewSomething = false;
+                segments.forEach(seg => {
+                    if (x + seg.width > left + w - 0.01) {
+                        cursorY += lineHeight;
+                        x = left + 5;
+                    }
+                    ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
+                    ctx.fillStyle = seg.style.col;
+                    ctx.fillText(seg.text, x, cursorY);
+                    x += seg.width;
+                    drewSomething = true;
+                });
+                if (drewSomething) cursorY += lineHeight;
+                usedHeight = cursorY - top + 5;
+            }
+        });
+
+        const __minOuterWidthByWord = Math.ceil(__maxTokenWidthObserved + 10);
+        if (__minOuterWidthByWord > (box.width || 0)) {
+            box.width = __minOuterWidthByWord;
+        }
+
+        box.height = usedHeight;
+        syncTextDims(box);
+        ctx.restore();
+
+        if (box.selected && w > 0 && h > 0) {
+            drawRotatedSelection(ctx, { ...box, width: w * __sx, height: h * __sy });
+        }
+    }
+}
+
+
 
 
 

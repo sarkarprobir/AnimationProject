@@ -556,7 +556,8 @@ function saveCanvasData() {
                 strokeNoColorStatus: img.strokeNoColorStatus,//$("#hdnstrokeNoColorStatus").val(),
                 fillNoColor: img.fillNoColor,//$("#hdnfillColor").val(),
                 strokeNoColor: img.strokeNoColor, //$("#hdnStrockColor").val(),
-                strokeWidth: parseInt(document.getElementById('ddlStrokeWidth')?.value, 10) || 3
+                strokeWidth: parseInt(document.getElementById('ddlStrokeWidth')?.value, 10) || 3,
+                isBasic: img.isBasic
             };
         })
     };
@@ -1198,7 +1199,8 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
             strokeNoColorStatus: !!im.strokeNoColorStatus,
             fillNoColor: im.fillNoColor || "#FFFFFF",
             strokeNoColor: im.strokeNoColor || "#FFFFFF",
-            strokeWidth: im.strokeWidth || 3
+            strokeWidth: im.strokeWidth || 3,
+            isBasic: im.isBasic
         };
     });
 
