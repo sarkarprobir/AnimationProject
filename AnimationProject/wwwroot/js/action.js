@@ -1209,8 +1209,12 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
         if (!o.fontSize || !o.fontFamily) return Promise.resolve();
         return document.fonts.load(`${o.fontSize}px ${o.fontFamily}`);
     });
+    try {
+        await Promise.all([bgPromise, ...fontPromises, document.fonts.ready]);
+    } catch (e) {
 
-    await Promise.all([bgPromise, ...fontPromises, document.fonts.ready]);
+    }
+   
 
     drawText();
 }
