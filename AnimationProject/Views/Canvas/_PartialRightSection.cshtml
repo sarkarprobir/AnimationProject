@@ -1265,11 +1265,13 @@ function moveCaretToEnd(el) {
             <div class="d-flex justify-content-end spacing_buttons">
                 <div class="custom-dropdown">
                     <select id="ddlCurvature" onchange="curvatureChanges()">
-                        <option value="0">Sharp (0)</option>
-                        <option value="4">Slight (4px)</option>
-                        <option value="8" selected>Medium (8px)</option>
-                        <option value="16">Round (16px)</option>
-                        <option value="24">Extra (24px)</option>
+                        <option value="0">0</option>
+                        <option value="4">4</option>
+                        <option value="8" selected>8</option>
+                        <option value="16">16</option>
+                        <option value="24">24</option>
+                        <option value="24">32</option>
+                        <option value="24">40</option>
                     </select>
                 </div>
             </div>
@@ -1646,6 +1648,13 @@ function moveCaretToEnd(el) {
         <button class="btn-cross b-radius-6 tab cross" id="close_button" type="button" onclick="hideTran()">
             ✕
         </button>
+    </div>
+
+    <div class="mb-3">
+        <form action="/action_page.php">
+            <input type="checkbox" id="no_transition">
+            <label class="tran_label" for="no_transition">No Transition</label>
+        </form>
     </div>
     <div class="d-flex gap-3 flex-wrap">
         <button class="tran_button" id="TslideLeft" onclick="tranTypeSet('slideLeft');transitionActive(this);">Side <br /> Left</button>
