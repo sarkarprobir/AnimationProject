@@ -68,12 +68,12 @@ const addTextBtn = document.getElementById("addTextBtn");
 
 // Settings for default text style
 const fontSize = 35;
-const fontFamily = "Arial";
+const fontFamily = "Arial Regular";
 const textColor = "black";
 
 // Default text style settings
 const defaultFontSize = 35;
-const defaultFontFamily = "Arial";
+const defaultFontFamily = "Arial Regular";
 const defaultTextColor = "black";
 const RECT_HEIGHT_ADJUST = 15;
 const RECT_WIDTH_ADJUST = 4;
@@ -9242,7 +9242,7 @@ const colorPickerNew = document.getElementById("colorPickerNew");
 let selectedLineSpacing = 8;
 const fontSizeNew = 30;
 const lineHeight = 20;
-const fontFamilyNew = "Arial";
+const fontFamilyNew = "Arial Regular";
 
 let boxes = [];
 let activeBox = null;
@@ -9473,7 +9473,7 @@ function drawText() {
     ctx.textBaseline = "top";
     const defaultStyle = window.getComputedStyle(textEditorNew);
     const defaultFontSize = defaultStyle.fontSize || "16px";
-    const defaultFontFamily = defaultStyle.fontFamily || "Arial";
+    const defaultFontFamily = defaultStyle.fontFamily || "Arial Regular";
     const defaultFontWeight = defaultStyle.fontWeight || "normal";
     const defaultFontStyle = defaultStyle.fontStyle || "normal";
     const defaultColor = defaultStyle.color || "#000";
@@ -9685,7 +9685,7 @@ function drawText() {
         ctx.restore();
 
         
-        const isBasic = box.isBasic;
+        const isBasic = box.isBasic??false;
         if (isBasic) {
             if (box.type === "image") {
                 console.log("isBasic", isBasic);
@@ -11027,7 +11027,7 @@ function computeMinTextOuterWidthPx(box) {
     const pad = 10; // matches your 5px left/right padding in draw
     const fallbackStyle = window.getComputedStyle(textEditorNew);
     const fs = fallbackStyle.fontSize || "16px";
-    const ff = fallbackStyle.fontFamily || "Arial";
+    const ff = fallbackStyle.fontFamily || "Arial Regular";
     const fw = fallbackStyle.fontWeight || "normal";
     const fst = fallbackStyle.fontStyle || "normal";
 
@@ -11322,12 +11322,19 @@ canvas.addEventListener("dblclick", e => {
     if (isEditing && activeBox !== box) {
         cleanEditorHTMLPreserveCaret();
         activeBox.text = textEditorNew.innerHTML;
-    }
+
+            }
 
     activeBox = box;
     // Now simply call our helper:
     showEditorAtBox(box);
 
+    //if (box.textColor === "#000000") {
+    //    // mostly‑opaque white
+    //    textEditorNew.style.background = "rgba(255,255,255,0.95)";
+    //} else {
+    //    textEditorNew.style.background = "rgba(34, 34, 34, 1)";
+    //}
     // And save the caret/selection if you need it:
     saveSelection();
 });
@@ -12509,7 +12516,7 @@ function scaleTextBoxWithHandle(box, dir, mx, my) {
         box.fontSize = Math.max(5, orig.fontSize * factor);
 
         const context = canvas.getContext("2d");
-        context.font = `${box.fontSize}px ${box.fontFamily || 'Arial'}`;
+        context.font = `${box.fontSize}px ${box.fontFamily || 'Arial Regular'}`;
         const lines = box.text.split(/<br\s*\/?>/);
         const widths = lines.map(line => context.measureText(stripHTML(line)).width);
         const maxWidth = Math.max(...widths);
@@ -13483,7 +13490,7 @@ function bakeInlineFontOnLinesHTML(html, refEl) {
 
     const cs = refEl ? getComputedStyle(refEl) : null;
     const fs = cs ? cs.fontSize : '16px';
-    const ff = cs ? cs.fontFamily : 'Arial';
+    const ff = cs ? cs.fontFamily : 'Arial Regular';
     const fw = cs ? cs.fontWeight : 'normal';
     const fst = cs ? cs.fontStyle : 'normal';
     const col = cs ? cs.color : '#000';
