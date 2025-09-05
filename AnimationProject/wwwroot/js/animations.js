@@ -7718,7 +7718,7 @@ canvas.addEventListener('drop', e => {
         textObjects.forEach(t => t.selected = false);
         images.push(newImgObj);
         activeBox = newImgObj;
-
+        //ChangeFillColor();
         drawText();
     };
     img.src = src;
@@ -9567,51 +9567,133 @@ function drawText() {
     }
 
     // === REPLACE your 9-slice with this version (keeps curvature vertically too) ===
-    function __drawImageNineSliceLocal(ctx2, img, w, h) {
+    //function __drawImageNineSliceLocal(ctx2, img, w, h) {
+    //    const sw = img.naturalWidth || img.width || 1;
+    //    const sh = img.naturalHeight || img.height || 1;
+
+    //    const capSrc = Math.max(1, Math.round(sh / 2));
+
+    //    // middle source widths/heights: force ≥1px, centered if needed
+    //    let midSrcW = sw - capSrc * 2, midSrcX = capSrc;
+    //    if (midSrcW < 1) { midSrcX = Math.max(0, Math.floor(sw / 2)); midSrcW = 1; }
+
+    //    let midSrcH = sh - capSrc * 2, midSrcY = capSrc;
+    //    if (midSrcH < 1) { midSrcY = Math.max(0, Math.floor(sh / 2)); midSrcH = 1; }
+
+    //    // destination radii and middles
+    //    const r = Math.max(1e-3, Math.min(w / 2, h / 2));
+    //    const capDstX = r, capDstY = r;
+    //    const midDstX = Math.max(0, w - capDstX * 2);
+    //    const midDstY = Math.max(0, h - capDstY * 2);
+
+    //    const x0 = -w / 2, y0 = -h / 2;
+
+    //    // Top row: TL, T, TR
+    //    ctx2.drawImage(img, 0, 0, capSrc, capSrc, x0, y0, capDstX, capDstY);
+    //    if (midDstX > 0)
+    //        ctx2.drawImage(img, midSrcX, 0, midSrcW, capSrc, x0 + capDstX, y0, midDstX, capDstY);
+    //    ctx2.drawImage(img, Math.max(0, sw - capSrc), 0, capSrc, capSrc, x0 + capDstX + midDstX, y0, capDstX, capDstY);
+
+    //    // Middle row: L, C, R
+    //    if (midDstY > 0) {
+    //        ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH, x0, y0 + capDstY, capDstX, midDstY);
+    //        if (midDstX > 0)
+    //            ctx2.drawImage(img, midSrcX, midSrcY, midSrcW, midSrcH, x0 + capDstX, y0 + capDstY, midDstX, midDstY);
+    //        ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH, x0 + capDstX + midDstX, y0 + capDstY, capDstX, midDstY);
+    //    } else {
+    //        // no center height → stretch side strips to meet
+    //        ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH, x0, y0 + capDstY, capDstX, midDstY);
+    //        ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH, x0 + capDstX + midDstX, y0 + capDstY, capDstX, midDstY);
+    //    }
+
+    //    // Bottom row: BL, B, BR
+    //    ctx2.drawImage(img, 0, Math.max(0, sh - capSrc), capSrc, capSrc, x0, y0 + capDstY + midDstY, capDstX, capDstY);
+    //    if (midDstX > 0)
+    //        ctx2.drawImage(img, midSrcX, Math.max(0, sh - capSrc), midSrcW, capSrc, x0 + capDstX, y0 + capDstY + midDstY, midDstX, capDstY);
+    //    ctx2.drawImage(img, Math.max(0, sw - capSrc), Math.max(0, sh - capSrc), capSrc, capSrc,
+    //        x0 + capDstX + midDstX, y0 + capDstY + midDstY, capDstX, capDstY);
+    //}
+    // === 9-slice (capsule-safe, constant curvature) ===
+    // curv: optional curvature; 0..0.5 => ratio of height, >1 => pixels
+    function __drawImageNineSliceLocal(ctx2, img, w, h, curv) {
         const sw = img.naturalWidth || img.width || 1;
         const sh = img.naturalHeight || img.height || 1;
 
-        const capSrc = Math.max(1, Math.round(sh / 2));
+        // ---- DESTINATION corner radius (keep constant while squishing) ----
+        // prefer explicit 'curv', else img.__curvatureRatio, else 0.5 (pill)
+        let k;
+        if (typeof curv === 'number' && isFinite(curv)) {
+            // <=1 => ratio; >1 => pixels converted to ratio by /h
+            k = (curv > 1) ? (curv / h) : curv;
+        } else if (typeof img.__curvatureRatio === 'number') {
+            k = img.__curvatureRatio;
+        } else {
+            k = 0.5; // default pill ends
+        }
+        // clamp to [0..0.5]
+        k = Math.max(0, Math.min(0.5, k));
 
-        // middle source widths/heights: force ≥1px, centered if needed
+        // Fixed destination corner size from HEIGHT, not from current width
+        const capDstX = k * h;         // radius horizontally
+        const capDstY = k * h;         // radius vertically
+        const midDstX = Math.max(0, w - 2 * capDstX); // center can collapse to 0
+        const midDstY = Math.max(0, h - 2 * capDstY);
+
+        // ---- SOURCE cap size: same ratio of the source asset ----
+        let capSrc = Math.round(k * sh);
+        capSrc = Math.max(1, Math.min(capSrc, Math.floor(Math.min(sw, sh) / 2)));
+
+        // source middles (≥1px to avoid gaps)
         let midSrcW = sw - capSrc * 2, midSrcX = capSrc;
-        if (midSrcW < 1) { midSrcX = Math.max(0, Math.floor(sw / 2)); midSrcW = 1; }
+        if (midSrcW < 1) { midSrcW = 1; midSrcX = Math.min(Math.max(0, capSrc), Math.max(0, sw - 1)); }
 
         let midSrcH = sh - capSrc * 2, midSrcY = capSrc;
-        if (midSrcH < 1) { midSrcY = Math.max(0, Math.floor(sh / 2)); midSrcH = 1; }
-
-        // destination radii and middles
-        const r = Math.max(1e-3, Math.min(w / 2, h / 2));
-        const capDstX = r, capDstY = r;
-        const midDstX = Math.max(0, w - capDstX * 2);
-        const midDstY = Math.max(0, h - capDstY * 2);
+        if (midSrcH < 1) { midSrcH = 1; midSrcY = Math.min(Math.max(0, capSrc), Math.max(0, sh - 1)); }
 
         const x0 = -w / 2, y0 = -h / 2;
 
-        // Top row: TL, T, TR
-        ctx2.drawImage(img, 0, 0, capSrc, capSrc, x0, y0, capDstX, capDstY);
-        if (midDstX > 0)
-            ctx2.drawImage(img, midSrcX, 0, midSrcW, capSrc, x0 + capDstX, y0, midDstX, capDstY);
-        ctx2.drawImage(img, Math.max(0, sw - capSrc), 0, capSrc, capSrc, x0 + capDstX + midDstX, y0, capDstX, capDstY);
+        // tiny overlaps to hide seams (DPI-aware)
+        const DPR = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
+        const OX = 1 / DPR, OY = 1 / DPR;
 
-        // Middle row: L, C, R
+        // Top row
+        ctx2.drawImage(img, 0, 0, capSrc, capSrc, x0, y0, capDstX + OX, capDstY + OY); // TL
+        if (midDstX > 0)
+            ctx2.drawImage(img, midSrcX, 0, midSrcW, capSrc,
+                x0 + capDstX - OX, y0, midDstX + 2 * OX, capDstY + OY);       // T
+        ctx2.drawImage(img, Math.max(0, sw - capSrc), 0, capSrc, capSrc,
+            x0 + capDstX + midDstX - OX, y0, capDstX + OX, capDstY + OY);   // TR
+
+        // Middle row
         if (midDstY > 0) {
-            ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH, x0, y0 + capDstY, capDstX, midDstY);
+            ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH,
+                x0, y0 + capDstY - OY, capDstX + OX, midDstY + 2 * OY);       // L
             if (midDstX > 0)
-                ctx2.drawImage(img, midSrcX, midSrcY, midSrcW, midSrcH, x0 + capDstX, y0 + capDstY, midDstX, midDstY);
-            ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH, x0 + capDstX + midDstX, y0 + capDstY, capDstX, midDstY);
+                ctx2.drawImage(img, midSrcX, midSrcY, midSrcW, midSrcH,
+                    x0 + capDstX - OX, y0 + capDstY - OY,
+                    midDstX + 2 * OX, midDstY + 2 * OY);                         // C
+            ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH,
+                x0 + capDstX + midDstX - OX, y0 + capDstY - OY,
+                capDstX + OX, midDstY + 2 * OY);                               // R
         } else {
             // no center height → stretch side strips to meet
-            ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH, x0, y0 + capDstY, capDstX, midDstY);
-            ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH, x0 + capDstX + midDstX, y0 + capDstY, capDstX, midDstY);
+            ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH,
+                x0, y0 + capDstY - OY, capDstX + OX, midDstY + 2 * OY);
+            ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH,
+                x0 + capDstX + midDstX - OX, y0 + capDstY - OY,
+                capDstX + OX, midDstY + 2 * OY);
         }
 
-        // Bottom row: BL, B, BR
-        ctx2.drawImage(img, 0, Math.max(0, sh - capSrc), capSrc, capSrc, x0, y0 + capDstY + midDstY, capDstX, capDstY);
+        // Bottom row
+        ctx2.drawImage(img, 0, Math.max(0, sh - capSrc), capSrc, capSrc,
+            x0, y0 + capDstY + midDstY - OY, capDstX + OX, capDstY + OY);   // BL
         if (midDstX > 0)
-            ctx2.drawImage(img, midSrcX, Math.max(0, sh - capSrc), midSrcW, capSrc, x0 + capDstX, y0 + capDstY + midDstY, midDstX, capDstY);
+            ctx2.drawImage(img, midSrcX, Math.max(0, sh - capSrc), midSrcW, capSrc,
+                x0 + capDstX - OX, y0 + capDstY + midDstY - OY,
+                midDstX + 2 * OX, capDstY + OY);                               // B
         ctx2.drawImage(img, Math.max(0, sw - capSrc), Math.max(0, sh - capSrc), capSrc, capSrc,
-            x0 + capDstX + midDstX, y0 + capDstY + midDstY, capDstX, capDstY);
+            x0 + capDstX + midDstX - OX, y0 + capDstY + midDstY - OY,
+            capDstX + OX, capDstY + OY);                                     // BR
     }
 
 
@@ -9688,7 +9770,6 @@ function drawText() {
         const isBasic = box.isBasic??false;
         if (isBasic) {
             if (box.type === "image") {
-                console.log("isBasic", isBasic);
                 const { w, h, cx, cy } = getBoxRect(box);
                 const angleRad = deg2rad(box.rotation || 0);
 
@@ -10075,65 +10156,89 @@ function drawTextOLD_3_9() {
     }
 
     // === NEW: 9-slice helper (capsule-safe, no seams) ===
-    function __drawImageNineSliceLocal(ctx2, img, w, h) {
-        const sw = img.naturalWidth || img.width || 1;
-        const sh = img.naturalHeight || img.height || 1;
+    // === 9-slice (capsule-safe, constant curvature) ===
+    // curv: optional curvature; 0..0.5 => ratio of height, >1 => pixels
+    //function __drawImageNineSliceLocal(ctx2, img, w, h, curv) {
+    //    const sw = img.naturalWidth || img.width || 1;
+    //    const sh = img.naturalHeight || img.height || 1;
 
-        // assume rounded-rect style, radius ~ sh/2 in source
-        const capSrc = Math.max(1, Math.round(sh / 2));
+    //    // ---- DESTINATION corner radius (keep constant while squishing) ----
+    //    // prefer explicit 'curv', else img.__curvatureRatio, else 0.5 (pill)
+    //    let k;
+    //    if (typeof curv === 'number' && isFinite(curv)) {
+    //        // <=1 => ratio; >1 => pixels converted to ratio by /h
+    //        k = (curv > 1) ? (curv / h) : curv;
+    //    } else if (typeof img.__curvatureRatio === 'number') {
+    //        k = img.__curvatureRatio;
+    //    } else {
+    //        k = 0.5; // default pill ends
+    //    }
+    //    // clamp to [0..0.5]
+    //    k = Math.max(0, Math.min(0.5, k));
 
-        // middle source strips – at least 1px (prevents gaps on assets with no true middle)
-        let midSrcW = sw - capSrc * 2, midSrcX = capSrc;
-        if (midSrcW < 1) { midSrcW = 1; midSrcX = Math.min(Math.max(0, capSrc), Math.max(0, sw - 1)); }
+    //    // Fixed destination corner size from HEIGHT, not from current width
+    //    const capDstX = k * h;         // radius horizontally
+    //    const capDstY = k * h;         // radius vertically
+    //    const midDstX = Math.max(0, w - 2 * capDstX); // center can collapse to 0
+    //    const midDstY = Math.max(0, h - 2 * capDstY);
 
-        let midSrcH = sh - capSrc * 2, midSrcY = capSrc;
-        if (midSrcH < 1) { midSrcH = 1; midSrcY = Math.min(Math.max(0, capSrc), Math.max(0, sh - 1)); }
+    //    // ---- SOURCE cap size: same ratio of the source asset ----
+    //    let capSrc = Math.round(k * sh);
+    //    capSrc = Math.max(1, Math.min(capSrc, Math.floor(Math.min(sw, sh) / 2)));
 
-        // destination radii/middles
-        const r = Math.max(1e-3, Math.min(w / 2, h / 2));
-        const capDstX = r, capDstY = r;
-        const midDstX = Math.max(0, w - capDstX * 2);
-        const midDstY = Math.max(0, h - capDstY * 2);
+    //    // source middles (≥1px to avoid gaps)
+    //    let midSrcW = sw - capSrc * 2, midSrcX = capSrc;
+    //    if (midSrcW < 1) { midSrcW = 1; midSrcX = Math.min(Math.max(0, capSrc), Math.max(0, sw - 1)); }
 
-        const x0 = -w / 2, y0 = -h / 2;
+    //    let midSrcH = sh - capSrc * 2, midSrcY = capSrc;
+    //    if (midSrcH < 1) { midSrcH = 1; midSrcY = Math.min(Math.max(0, capSrc), Math.max(0, sh - 1)); }
 
-        // tiny overlaps to avoid sub-pixel seams
-        const OX = 0.5, OY = 0.5;
+    //    const x0 = -w / 2, y0 = -h / 2;
 
-        // Top row
-        ctx2.drawImage(img, 0, 0, capSrc, capSrc, x0, y0, capDstX + OX, capDstY + OY); // TL
-        if (midDstX > 0)
-            ctx2.drawImage(img, midSrcX, 0, midSrcW, capSrc,
-                x0 + capDstX - OX, y0, midDstX + 2 * OX, capDstY + OY);                 // T
-        ctx2.drawImage(img, Math.max(0, sw - capSrc), 0, capSrc, capSrc,
-            x0 + capDstX + midDstX - OX, y0, capDstX + OX, capDstY + OY);               // TR
+    //    // tiny overlaps to hide seams (DPI-aware)
+    //    const DPR = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
+    //    const OX = 1 / DPR, OY = 1 / DPR;
 
-        // Middle row
-        if (midDstY > 0) {
-            ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH,
-                x0, y0 + capDstY - OY, capDstX + OX, midDstY + 2 * OY);                 // L
-            if (midDstX > 0)
-                ctx2.drawImage(img, midSrcX, midSrcY, midSrcW, midSrcH,
-                    x0 + capDstX - OX, y0 + capDstY - OY, midDstX + 2 * OX, midDstY + 2 * OY); // C
-            ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH,
-                x0 + capDstX + midDstX - OX, y0 + capDstY - OY, capDstX + OX, midDstY + 2 * OY); // R
-        } else {
-            // no center height → stretch side strips vertically to meet
-            ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH,
-                x0, y0 + capDstY - OY, capDstX + OX, midDstY + 2 * OY);
-            ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH,
-                x0 + capDstX + midDstX - OX, y0 + capDstY - OY, capDstX + OX, midDstY + 2 * OY);
-        }
+    //    // Top row
+    //    ctx2.drawImage(img, 0, 0, capSrc, capSrc, x0, y0, capDstX + OX, capDstY + OY); // TL
+    //    if (midDstX > 0)
+    //        ctx2.drawImage(img, midSrcX, 0, midSrcW, capSrc,
+    //            x0 + capDstX - OX, y0, midDstX + 2 * OX, capDstY + OY);       // T
+    //    ctx2.drawImage(img, Math.max(0, sw - capSrc), 0, capSrc, capSrc,
+    //        x0 + capDstX + midDstX - OX, y0, capDstX + OX, capDstY + OY);   // TR
 
-        // Bottom row
-        ctx2.drawImage(img, 0, Math.max(0, sh - capSrc), capSrc, capSrc,
-            x0, y0 + capDstY + midDstY - OY, capDstX + OX, capDstY + OY);               // BL
-        if (midDstX > 0)
-            ctx2.drawImage(img, midSrcX, Math.max(0, sh - capSrc), midSrcW, capSrc,
-                x0 + capDstX - OX, y0 + capDstY + midDstY - OY, midDstX + 2 * OX, capDstY + OY); // B
-        ctx2.drawImage(img, Math.max(0, sw - capSrc), Math.max(0, sh - capSrc), capSrc, capSrc,
-            x0 + capDstX + midDstX - OX, y0 + capDstY + midDstY - OY, capDstX + OX, capDstY + OY); // BR
-    }
+    //    // Middle row
+    //    if (midDstY > 0) {
+    //        ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH,
+    //            x0, y0 + capDstY - OY, capDstX + OX, midDstY + 2 * OY);       // L
+    //        if (midDstX > 0)
+    //            ctx2.drawImage(img, midSrcX, midSrcY, midSrcW, midSrcH,
+    //                x0 + capDstX - OX, y0 + capDstY - OY,
+    //                midDstX + 2 * OX, midDstY + 2 * OY);                         // C
+    //        ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH,
+    //            x0 + capDstX + midDstX - OX, y0 + capDstY - OY,
+    //            capDstX + OX, midDstY + 2 * OY);                               // R
+    //    } else {
+    //        // no center height → stretch side strips to meet
+    //        ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH,
+    //            x0, y0 + capDstY - OY, capDstX + OX, midDstY + 2 * OY);
+    //        ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH,
+    //            x0 + capDstX + midDstX - OX, y0 + capDstY - OY,
+    //            capDstX + OX, midDstY + 2 * OY);
+    //    }
+
+    //    // Bottom row
+    //    ctx2.drawImage(img, 0, Math.max(0, sh - capSrc), capSrc, capSrc,
+    //        x0, y0 + capDstY + midDstY - OY, capDstX + OX, capDstY + OY);   // BL
+    //    if (midDstX > 0)
+    //        ctx2.drawImage(img, midSrcX, Math.max(0, sh - capSrc), midSrcW, capSrc,
+    //            x0 + capDstX - OX, y0 + capDstY + midDstY - OY,
+    //            midDstX + 2 * OX, capDstY + OY);                               // B
+    //    ctx2.drawImage(img, Math.max(0, sw - capSrc), Math.max(0, sh - capSrc), capSrc, capSrc,
+    //        x0 + capDstX + midDstX - OX, y0 + capDstY + midDstY - OY,
+    //        capDstX + OX, capDstY + OY);                                     // BR
+    //}
+
 
     // z-ordered
     const all = [...(images || []), ...(textObjects || [])]
@@ -10244,12 +10349,10 @@ function drawTextOLD_3_9() {
 
                         const aspectChanged = Math.abs(arBox - arImg) > 1e-3;
                         const preserveCaps = (box.preserveCaps === true) || aspectChanged;
-
                         if (preserveCaps) {
-                            // NEW: 9-slice keeps curvature in both axes
-                            __drawImageNineSliceLocal(ctx, box.img, w, h);
-                            // (You can still call 3-slice if you only want horizontal preservation)
-                            // __drawImageThreeSliceLocalX(ctx, box.img, w, h);
+                            const k = (typeof box.curvatureRatio === 'number') ?
+                                Math.max(0, Math.min(1, box.curvatureRatio)) : 1; // default pill
+                            __drawImageNineSliceLocal(ctx, box.img, w, h, k /*ratio*/);
                         } else {
                             ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
                         }
@@ -11056,6 +11159,55 @@ canvas.addEventListener("mousemove", e => {
     const dx = mx - prevMouseX;
     const dy = my - prevMouseY;
 
+    // ──────────────────────────────────────────────────────────
+    // BASIC-shape helpers (local to this handler)
+    function __isBasicImage(box) {
+        return !!(box && box.type === 'image' && (
+            box.isBasic === true ||
+            (typeof __isBasicShapeSvg === 'function' && __isBasicShapeSvg(box))
+        ));
+    }
+    // Curvature you render with. Default = pill ends (0.5 of height).
+    function __curvRatio(box) {
+        let k = (typeof box?.curvatureRatio === 'number') ? box.curvatureRatio : 0.5;
+        if (!isFinite(k)) k = 0.5;
+        return Math.max(0, Math.min(0.5, k));
+    }
+    // Min feasible width for BASIC shape (keep ends round): minW = 2 * k * height
+    function __minWidthForBasic(box) {
+        return Math.max(8, 2 * __curvRatio(box) * (box.height || 0));
+    }
+    // Min feasible height for BASIC shape (symmetric rule, if you ever need top/bottom)
+    function __minHeightForBasic(box) {
+        return Math.max(8, 2 * __curvRatio(box) * (box.width || 0));
+    }
+    /**
+     * Clamp BASIC image during side resize; keep opposite edge anchored.
+     * Returns {clamped:boolean, edgeX:number|undefined, edgeY:number|undefined}
+     */
+    function __clampBasicSideResize(box, side /* 'l'|'r'|'t'|'b' */) {
+        if (!__isBasicImage(box)) return { clamped: false };
+        if (side === 'l' || side === 'r') {
+            const minW = __minWidthForBasic(box);
+            if ((box.width || 0) < minW) {
+                const right = box.x + box.width;
+                if (side === 'l') box.x = right - minW; // anchor right
+                box.width = minW;
+                return { clamped: true, edgeX: (side === 'l') ? box.x : (box.x + box.width) };
+            }
+        } else if (side === 't' || side === 'b') {
+            const minH = __minHeightForBasic(box);
+            if ((box.height || 0) < minH) {
+                const bottom = box.y + box.height;
+                if (side === 't') box.y = bottom - minH; // anchor bottom
+                box.height = minH;
+                return { clamped: true, edgeY: (side === 't') ? box.y : (box.y + box.height) };
+            }
+        }
+        return { clamped: false };
+    }
+    // ──────────────────────────────────────────────────────────
+
     // ✅ TEXT left/right side-resize in rotated space
     if (isResizingNew && activeBox && activeBox.type !== 'image' &&
         (resizeDirection === 'l' || resizeDirection === 'r')) {
@@ -11160,18 +11312,32 @@ canvas.addEventListener("mousemove", e => {
 
     // Sides (text or image)
     if (isResizingNew && activeBox && resizeDirection) {
+        const side = (resizeDirectionNorm || resizeDirection); // 'l'|'r'|'t'|'b'
+
         if (activeBox.type === "image") {
             // IMAGES: normalized ("l","r","t","b")
-            scaleImageBoxWithHandle(activeBox, resizeDirectionNorm || resizeDirection, mx, my);
+            scaleImageBoxWithHandle(activeBox, side, mx, my);
+
+            // NEW: Stop BASIC shapes exactly at curvature limit and freeze handle
+            const { clamped, edgeX, edgeY } = __clampBasicSideResize(activeBox, side);
+            if (clamped) {
+                if (side === 'l' || side === 'r') {
+                    if (typeof edgeX === 'number') prevMouseX = edgeX;
+                } else if (side === 't' || side === 'b') {
+                    if (typeof edgeY === 'number') prevMouseY = edgeY;
+                }
+            }
         } else {
             // TEXT: raw ("mr","ml","mt","mb" or already-short)
             scaleTextBoxWithHandle(activeBox, resizeDirectionRaw || resizeDirection, mx, my);
         }
+
         prevMouseX = mx; prevMouseY = my;
         drawText();
         return;
     }
 });
+
 
 window.addEventListener("mouseup", () => {
     isDraggingNew = false;
