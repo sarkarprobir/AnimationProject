@@ -7708,7 +7708,7 @@ canvas.addEventListener('drop', e => {
             strokeNoColorStatus: false,
             fillNoColor: "#FFFFFF",
             strokeNoColor: "#FFFFFF",
-            strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 0.5,
+            strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 1,
 
             // <-- Here’s the flag your renderer can read:
             isBasic:isBasic
@@ -7718,7 +7718,9 @@ canvas.addEventListener('drop', e => {
         textObjects.forEach(t => t.selected = false);
         images.push(newImgObj);
         activeBox = newImgObj;
-        //ChangeFillColor();
+        if (isBasic) {
+            ChangeFillColor();
+        }
         drawText();
     };
     img.src = src;
@@ -11318,25 +11320,29 @@ canvas.addEventListener("mousemove", e => {
             // IMAGES: normalized ("l","r","t","b")
             scaleImageBoxWithHandle(activeBox, side, mx, my);
 
-            // NEW: Stop BASIC shapes exactly at curvature limit and freeze handle
-            const { clamped, edgeX, edgeY } = __clampBasicSideResize(activeBox, side);
-            if (clamped) {
-                if (side === 'l' || side === 'r') {
-                    if (typeof edgeX === 'number') prevMouseX = edgeX;
-                } else if (side === 't' || side === 'b') {
-                    if (typeof edgeY === 'number') prevMouseY = edgeY;
-                }
+            // NEW: Stop BASIC shapes at curvature limit ONLY for left/right; keep top/bottom unchanged
+            let snappedX = null; // preserve snap so we don't overwrite later
+            if (side === 'l' || side === 'r') {
+                const { clamped, edgeX } = __clampBasicSideResize(activeBox, side);
+                if (clamped && typeof edgeX === 'number') snappedX = edgeX;
             }
+
+            // update prevs without losing snap
+            prevMouseX = (snappedX !== null ? snappedX : mx);
+            prevMouseY = my;
+
         } else {
             // TEXT: raw ("mr","ml","mt","mb" or already-short)
             scaleTextBoxWithHandle(activeBox, resizeDirectionRaw || resizeDirection, mx, my);
+            prevMouseX = mx;
+            prevMouseY = my;
         }
 
-        prevMouseX = mx; prevMouseY = my;
         drawText();
         return;
     }
 });
+
 
 
 window.addEventListener("mouseup", () => {
