@@ -7102,7 +7102,7 @@ function ChangeTranColor2() {
     drawCanvas('ChangeStyle');
 }
 
-function getSelectedImage() {
+function getSelectedImageOLD() {
     // Prefer activeImage if it’s a real image object
     if (activeImage && (activeImage.type === 'image' || activeImage.img instanceof Image)) {
         return activeImage;
@@ -7117,6 +7117,26 @@ function getSelectedImage() {
     }
     return null;
 }
+function getSelectedImage() {
+    // 1) Active box wins if it's an image (most reliable, always current)
+    if (activeBox && activeBox.type === 'image') return activeBox;
+
+    // 2) Fallback to legacy pointer if still used elsewhere
+    if (activeImage && (activeImage.type === 'image' || activeImage.img instanceof Image)) {
+        return activeImage;
+    }
+
+    // 3) Otherwise topmost selected image
+    if (Array.isArray(images)) {
+        const selected = images.filter(it => it && it.type === 'image' && it.selected);
+        if (selected.length) {
+            selected.sort((a, b) => (b.zIndex || 0) - (a.zIndex || 0));
+            return selected[0];
+        }
+    }
+    return null;
+}
+
 
 function ChangeFillColor() {
     const target = getSelectedImage();
@@ -7651,6 +7671,8 @@ function __isBasicFromSource(src, fileName = '') {
 // --------------------------------------------------------------------
 // DROP: create image + mark whether it is a BASIC SHAPE
 // --------------------------------------------------------------------
+
+
 canvas.addEventListener('drop', e => {
     e.preventDefault();
 
@@ -7678,53 +7700,77 @@ canvas.addEventListener('drop', e => {
     if (!src) return;
 
     const img = new Image();
+
+    // ✅ mark whether this is one of the 6 basic shape SVGs
+    const isBasic = __isBasicFromSource(src, droppedFileName);
+
+    // IMPORTANT: create & select the object *before* the image loads,
+    // so UI actions (fill/stroke) after drop hit THIS object.
+    const newImgObj = {
+        img,
+        src,
+        x: e.offsetX,
+        y: e.offsetY,
+        // provisional size; will be corrected in onload
+        width: 1,
+        height: 1,
+        scaleX: 1,
+        scaleY: 1,
+        opacity: 100,
+        selected: true,
+        noAnim: false,
+        groupId: null,
+        rotation: 0,
+        type: "image",
+        zIndex: getNextZIndex(),
+        fillNoColorStatus: false,
+        strokeNoColorStatus: false,
+        fillNoColor: "#42b3f5",
+        strokeNoColor: "#000000",
+        strokeWidth: 1,
+        isBasic: isBasic,
+        loading: true
+    };
+
+    // Deselect others and set selection pointers *now*
+    images.forEach(it => { if (it) it.selected = false; });
+    textObjects.forEach(t => { if (t) t.selected = false; });
+    images.push(newImgObj);
+
+    // keep both pointers in sync; many older paths still use activeImage
+    activeBox = newImgObj;
+    activeImage = newImgObj;
+
+   // try { ChangeFillColor(); } catch (_) { }
+
+
     img.onload = () => {
         const MAX_DIM = 300;
-        const ratio = img.width > img.height ? MAX_DIM / img.width : MAX_DIM / img.height;
-        const scale = Math.min(ratio, 1);
-        const newWidth = img.width * scale;
-        const newHeight = img.height * scale;
+        const iw = img.naturalWidth || img.width || 1;
+        const ih = img.naturalHeight || img.height || 1;
+        const scale = Math.min(1, MAX_DIM / Math.max(iw, ih));
 
-        // ✅ mark whether this is one of the 6 basic shape SVGs
-        const isBasic = __isBasicFromSource(src, droppedFileName);
+        newImgObj.width = Math.max(1, Math.round(iw * scale));
+        newImgObj.height = Math.max(1, Math.round(ih * scale));
+        newImgObj.loading = false;
 
-        const newImgObj = {
-            img,
-            src,
-            x: e.offsetX,
-            y: e.offsetY,
-            width: newWidth,
-            height: newHeight,
-            scaleX: 1,
-            scaleY: 1,
-            opacity: 100,
-            selected: true,
-            noAnim: false,
-            groupId: null,
-            rotation: 0,
-            type: "image",
-            zIndex: getNextZIndex(),
-            fillNoColorStatus: false,
-            strokeNoColorStatus: false,
-            fillNoColor: "#FFFFFF",
-            strokeNoColor: "#FFFFFF",
-            strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 1,
-
-            // <-- Here’s the flag your renderer can read:
-            isBasic:isBasic
-        };
-
-        images.forEach(it => it.selected = false);
-        textObjects.forEach(t => t.selected = false);
-        images.push(newImgObj);
+        // keep it selected after load
+        newImgObj.selected = true;
         activeBox = newImgObj;
-        if (isBasic) {
-            ChangeFillColor();
-        }
+        activeImage = newImgObj;
+
         drawText();
     };
+
+    img.onerror = () => {
+        // If it fails, clear the pointers to avoid coloring a stale object
+        if (activeBox === newImgObj) activeBox = null;
+        if (activeImage === newImgObj) activeImage = null;
+    };
+
     img.src = src;
 });
+
 
 //canvas.addEventListener('drop', e => {
 //    e.preventDefault();
