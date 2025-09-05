@@ -9737,7 +9737,6 @@ function drawText() {
 
         }
         else {
-            console.log("isBasic OFF", isBasic);
             if (box.type === "image") {
                 const { w, h, cx, cy } = getBoxRect(box);
                 const angleRad = deg2rad(box.rotation || 0);

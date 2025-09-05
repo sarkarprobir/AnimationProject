@@ -213,24 +213,56 @@ function SaveDesignBoard() {
         HideLoader();
     }
 }
+function waitForBoxImage(box) {
+    // box missing, not an image box, or no actual image element → nothing to wait for
+    const img = box && box.img;
+    if (!(img instanceof HTMLImageElement)) return Promise.resolve();
+
+    // already loaded & valid pixels?
+    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+
+    // modern: try decode(); falls back to load/error listeners
+    if (typeof img.decode === 'function') {
+        return img.decode().catch(() => { });  // treat decode error as non-fatal
+    }
+
+    return new Promise(resolve => {
+        const done = () => {
+            img.removeEventListener('load', done);
+            img.removeEventListener('error', done);
+            resolve();
+        };
+        img.addEventListener('load', done, { once: true });
+        img.addEventListener('error', done, { once: true });
+    });
+}
+
 async function captureSlide(activeSlide, slideResult) {
     const canvas = document.getElementById("myCanvas");
     const ctx = canvas.getContext("2d");
-    // 1) Update your canvas one last time:
-    // drawCanvas("Common");
+
+    // 1) Wait for fonts and images used by boxes (safer to wait BEFORE drawing)
+    const imgList = Array.isArray(images) ? images : [];
+    await Promise.all([
+        (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve(),
+        ...imgList.map(waitForBoxImage)
+    ]);
+
+    // 2) Now render once with everything loaded
     drawText();
     // 2) Wait for any <img> or <svg> in the DOM to be fully loaded:
     const imgs = images;//Array.from(document.querySelectorAll("img, svg"));
     await Promise.all(imgs.map(el => {
-        if (el.img.complete) return Promise.resolve();
+        const img = el?.img;
+        if (!(img instanceof HTMLImageElement)) return Promise.resolve();
+        if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+        if (typeof img.decode === 'function') return img.decode().catch(() => { });
         return new Promise(res => {
-            el.onload = () => res();
-            el.onerror = () => {
-                console.warn("Image failed to load before capture:", el.src);
-                res();
-            };
+            img.addEventListener('load', res, { once: true });
+            img.addEventListener('error', res, { once: true });
         });
     }));
+
 
     // 3) Wait for the next paint so the drawCanvas changes actually hit the GPU/composite:
     await new Promise(requestAnimationFrame);
