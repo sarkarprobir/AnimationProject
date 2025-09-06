@@ -11344,16 +11344,6 @@ canvas.addEventListener("mousemove", e => {
             (typeof __isBasicShapeSvg === 'function' && __isBasicShapeSvg(box))
         ));
     }
-    // ADDED: detect the "line" basic shape safely
-    function __isLineBasic(box) {
-        if (!box || box.type !== 'image' || !__isBasicImage(box)) return false;
-        const name = (String(box.basicName || box.src || '')
-            .split(/[?#]/)[0]
-            .split('/')
-            .pop() || '').toLowerCase();
-        return (name === 'ico-shapes-line.svg' || name === 'ico-shapes-line');
-    }
-
     // Curvature you render with. Default = pill ends (0.5 of height).
     function __curvRatio(box) {
         let k = (typeof box?.curvatureRatio === 'number') ? box.curvatureRatio : 0.5;
@@ -11394,83 +11384,6 @@ canvas.addEventListener("mousemove", e => {
         }
         return { clamped: false };
     }
-
-    // ADDED: canvas size + clamp to keep images inside bounds
-    function __canvasSize() {
-        // Safely read optional globals designW/designH if your app defines them.
-        const hasDesignW = (typeof designW !== 'undefined') && Number.isFinite(designW);
-        const hasDesignH = (typeof designH !== 'undefined') && Number.isFinite(designH);
-
-        const W = hasDesignW ? designW : ((canvas && canvas.width) || 0);
-        const H = hasDesignH ? designH : ((canvas && canvas.height) || 0);
-
-        return { W, H };
-    }
-    /**
-     * Clamp an IMAGE box so it cannot be outside the canvas.
-     * handle: 'drag' | 'l'|'r'|'t'|'b'|'tl'|'tr'|'bl'|'br'
-     */
-    function __clampImageToCanvas(box, handle) {
-        const { W, H } = __canvasSize();
-        if (!W || !H || !box) return;
-
-        // Minimums (respect BASIC min width on L/R; lock line height to 1)
-        const minW = __isBasicImage(box) ? Math.max(1, __minWidthForBasic(box)) : 1;
-        const minH = __isLineBasic(box) ? 1 : 1;
-
-        if (!Number.isFinite(box.width)) box.width = minW;
-        if (!Number.isFinite(box.height)) box.height = minH;
-        if (box.width < minW) box.width = minW;
-        if (box.height < minH) box.height = minH;
-
-        const h = String(handle || '');
-        const movingLeft = /(^|t|b)l$/.test(h) || h === 'l';
-        const movingRight = /(^|t|b)r$/.test(h) || h === 'r';
-        const movingTop = /t($|l|r)/.test(h) || h === 't';
-        const movingBottom = /b($|l|r)/.test(h) || h === 'b';
-
-        // Drag: just clamp position so full box stays inside
-        if (handle === 'drag' || !handle) {
-            if (box.x < 0) box.x = 0;
-            if (box.y < 0) box.y = 0;
-            if (box.x + box.width > W) box.x = Math.max(0, W - box.width);
-            if (box.y + box.height > H) box.y = Math.max(0, H - box.height);
-            return;
-        }
-
-        // Resizing: keep opposite edge anchored
-        // LEFT (anchor right)
-        if (movingLeft) {
-            const right = box.x + box.width;
-            if (box.x < 0) { box.width = right; box.x = 0; }
-            if (box.width < minW) { box.width = Math.min(minW, W); box.x = right - box.width; if (box.x < 0) { box.x = 0; box.width = right; } }
-        }
-        // RIGHT (anchor left)
-        if (movingRight) {
-            if (box.x + box.width > W) box.width = W - box.x;
-            if (box.width < minW) box.width = Math.min(minW, W - box.x);
-        }
-        // TOP (anchor bottom)
-        if (movingTop) {
-            const bottom = box.y + box.height;
-            if (box.y < 0) { box.height = bottom; box.y = 0; }
-            if (box.height < minH) { box.height = Math.min(minH, H); box.y = bottom - box.height; if (box.y < 0) { box.y = 0; box.height = bottom; } }
-        }
-        // BOTTOM (anchor top)
-        if (movingBottom) {
-            if (box.y + box.height > H) box.height = H - box.y;
-            if (box.height < minH) box.height = Math.min(minH, H - box.y);
-        }
-
-        // Final safety
-        if (box.x < 0) box.x = 0;
-        if (box.y < 0) box.y = 0;
-        if (box.x + box.width > W) box.width = W - box.x;
-        if (box.y + box.height > H) box.height = H - box.y;
-
-        if (box.width < minW) box.width = minW;
-        if (box.height < minH) box.height = minH;
-    }
     // ──────────────────────────────────────────────────────────
 
     // ✅ TEXT left/right side-resize in rotated space
@@ -11508,12 +11421,6 @@ canvas.addEventListener("mousemove", e => {
     if (isDraggingNew && activeBox) {
         activeBox.x = mx - dragOffsetXNew;
         activeBox.y = my - dragOffsetYNew;
-
-        // ADDED: keep images inside while dragging
-        if (activeBox.type === 'image') {
-            __clampImageToCanvas(activeBox, 'drag');
-        }
-
         prevMouseX = mx; prevMouseY = my;
         drawText();
         return;
@@ -11577,15 +11484,12 @@ canvas.addEventListener("mousemove", e => {
             case 'br': activeBox.x = activeBox._orig.x; activeBox.y = activeBox._orig.y; break;
         }
         activeBox.width = newW; activeBox.height = newH;
-
-        // ADDED: clamp after corner resize
-        __clampImageToCanvas(activeBox, dir);
-
         drawText();
         return;
     }
 
-    // Sides (text or image)
+
+    // Sides (text or image)  ⟵ REPLACE your current block with this one
     if (isResizingNew && activeBox && resizeDirection) {
         const side = (resizeDirectionNorm || resizeDirection); // 'l'|'r'|'t'|'b'
 
@@ -11605,20 +11509,12 @@ canvas.addEventListener("mousemove", e => {
                         } else { // 'b'
                             activeBox.height = 1;     // keep top anchored (y unchanged)
                         }
-
-                        // ADDED: clamp to canvas after lock
-                        __clampImageToCanvas(activeBox, side);
-
                         prevMouseX = mx; prevMouseY = my;
                     } else {
                         // For other BASIC shapes: allow T/B resize but clamp to min height
                         // so curvature constraints are respected.
                         scaleImageBoxWithHandle(activeBox, side, mx, my);
                         const { clamped, edgeY } = __clampBasicSideResize(activeBox, side);
-
-                        // ADDED: keep inside canvas
-                        __clampImageToCanvas(activeBox, side);
-
                         prevMouseX = mx;
                         prevMouseY = (typeof edgeY === 'number') ? edgeY : my;
                     }
@@ -11626,10 +11522,6 @@ canvas.addEventListener("mousemove", e => {
                 } else {
                     // ✅ NON-BASIC images → your current behavior
                     scaleImageBoxWithHandle(activeBox, side, mx, my);
-
-                    // ADDED: keep inside canvas
-                    __clampImageToCanvas(activeBox, side);
-
                     prevMouseX = mx; prevMouseY = my;
                 }
 
@@ -11646,9 +11538,6 @@ canvas.addEventListener("mousemove", e => {
                 if (clamped && typeof edgeX === 'number') snappedX = edgeX;
             }
 
-            // ADDED: keep inside canvas
-            __clampImageToCanvas(activeBox, side);
-
             prevMouseX = (snappedX !== null ? snappedX : mx);
             prevMouseY = my;
             drawText();
@@ -11662,6 +11551,7 @@ canvas.addEventListener("mousemove", e => {
         }
     }
 });
+
 
 //canvas.addEventListener("mousemove", e => {
 //    const { x: mx, y: my } = getCanvasMousePosition(e);
