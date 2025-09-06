@@ -7773,6 +7773,7 @@ canvas.addEventListener('drop', e => {
         newImgObj.width = Math.max(1, Math.round(iw * scale));
         if (isLine) {
             newImgObj.height = 5;
+            newImgObj.width = 250;
         }
         else {
             newImgObj.height = Math.max(1, Math.round(ih * scale));
