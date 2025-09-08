@@ -7447,6 +7447,26 @@ function strokeWidthChanges() {
     $("#hdnStrokeWidth").val(String(strokeWidth));
     activeImage.strokeWidth = strokeWidth;
 
+    // If this is the special line SVG, use stroke width as its visual thickness
+    if (activeImage.type === "image" && activeImage.isLINESvg === true) {
+        const H = canvas?.height ?? Infinity;
+        const minH = 1;
+        const newH = Math.max(minH, strokeWidth);
+
+        // keep center anchored
+        const cy = (activeImage.y || 0) + (activeImage.height || minH) / 2;
+        activeImage.height = newH;
+        activeImage.y = cy - newH / 2;
+
+        // clamp inside canvas vertically
+        if (Number.isFinite(H)) {
+            if (activeImage.y < 0) activeImage.y = 0;
+            if (activeImage.y + activeImage.height > H) {
+                activeImage.y = Math.max(0, H - activeImage.height);
+            }
+        }
+    }
+
     // compute fill/stroke respecting "no color" checkboxes
     const noFill = !!document.getElementById("noColorCheck")?.checked;
     const noStroke = !!document.getElementById("noColorCheck2")?.checked;
@@ -7461,7 +7481,11 @@ function strokeWidthChanges() {
         // non-SVG fallback
         drawText?.();
     }
+
+    // ensure the canvas reflects the new height immediately
+    drawText?.();
 }
+
 
 
 
