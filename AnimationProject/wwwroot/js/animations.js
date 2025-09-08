@@ -7777,6 +7777,7 @@ canvas.addEventListener('drop', e => {
         strokeWidth: 1,
         isBasic: isBasic,
         isLINESvg: isLine,
+        __capsOrientation: 'horizontal',
         basicName: basicName,
         loading: true
     };
@@ -9548,6 +9549,81 @@ function pointInBox(b, x, y) {
     const h = Number(b.height) || 0;
     return x >= b.x && x <= b.x + w && y >= b.y && y <= b.y + h;
 }
+function __drawImageThreeSliceLocalYOLD(ctx2, img, w, h) {
+    const sw = img.naturalWidth || img.width || 1;
+    const sh = img.naturalHeight || img.height || 1;
+
+    // use the source's half-height as the cap thickness
+    const capSrc = Math.max(1, Math.round(sh / 2));
+
+    // center slice in source, ≥1px
+    let midSrcH = sh - capSrc * 2;
+    let midSrcY = capSrc;
+    if (midSrcH < 1) { midSrcH = 1; midSrcY = Math.max(0, Math.floor(sh / 2)); }
+
+    // destination: cap radius = min(w/2, h/2) so pill ends never distort
+    const capDst = Math.max(1e-3, Math.min(w / 2, h / 2));
+    const midDst = Math.max(0, h - capDst * 2);
+
+    // TOP cap
+    ctx2.drawImage(img, 0, 0, sw, capSrc, -w / 2, -h / 2, w, capDst);
+
+    // MIDDLE (stretched vertically)
+    if (midDst > 0) {
+        ctx2.drawImage(img, 0, midSrcY, sw, midSrcH, -w / 2, -h / 2 + capDst, w, midDst);
+    }
+
+    // BOTTOM cap
+    const bottomSrcY = Math.max(0, sh - capSrc);
+    ctx2.drawImage(img, 0, bottomSrcY, sw, capSrc, -w / 2, -h / 2 + capDst + midDst, w, capDst);
+}
+// prev signature kept; just adds optional `curv`
+function __drawImageThreeSliceLocalY(ctx2, img, w, h, curv) {
+    const sw = img.naturalWidth || img.width || 1;
+    const sh = img.naturalHeight || img.height || 1;
+
+    // Resolve curvature k (ratio of HEIGHT). Prefer explicit curv, then img.__curvatureRatio, else 0.5.
+    let k;
+    if (typeof curv === 'number' && isFinite(curv)) {
+        // <=1 => ratio; >1 => pixels converted to ratio by /h
+        k = (curv > 1) ? (curv / h) : curv;
+    } else if (typeof img?.__curvatureRatio === 'number' && isFinite(img.__curvatureRatio)) {
+        k = img.__curvatureRatio;
+    } else {
+        k = 0.5; // default pill
+    }
+    // clamp to [0..0.5]
+    k = Math.max(0, Math.min(0.5, k));
+
+    // --- Source cap (keep same proportion on the source) ---
+    let capSrc = Math.round(k * sh);
+    capSrc = Math.max(1, Math.min(capSrc, Math.floor(sh / 2)));
+
+    // middle source (≥1px)
+    let midSrcH = sh - capSrc * 2;
+    let midSrcY = capSrc;
+    if (midSrcH < 1) { midSrcH = 1; midSrcY = Math.max(0, Math.floor(sh / 2)); }
+
+    // --- Destination cap: use curvature k*h but never exceed w/2 (so caps don't bulge out) ---
+    const capDst = Math.max(1e-3, Math.min((k * h), (w / 2)));
+    const midDst = Math.max(0, h - capDst * 2);
+
+    // Optional tiny overlap to hide seams on high-DPI
+    const DPR = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
+    const OY = 1 / DPR;
+
+    // TOP cap
+    ctx2.drawImage(img, 0, 0, sw, capSrc, -w / 2, -h / 2, w, capDst + OY);
+
+    // MIDDLE (stretched vertically)
+    if (midDst > 0) {
+        ctx2.drawImage(img, 0, midSrcY, sw, midSrcH, -w / 2, -h / 2 + capDst - OY, w, midDst + 2 * OY);
+    }
+
+    // BOTTOM cap
+    const bottomSrcY = Math.max(0, sh - capSrc);
+    ctx2.drawImage(img, 0, bottomSrcY, sw, capSrc, -w / 2, -h / 2 + capDst + midDst - OY, w, capDst + OY);
+}
 
 function drawText() {
     const designW = canvas.width;
@@ -9897,15 +9973,76 @@ function drawText() {
 
                         const aspectChanged = Math.abs(arBox - arImg) > 1e-3;
                         const preserveCaps = (box.preserveCaps === true) || aspectChanged;
-
                         if (preserveCaps) {
-                            // NEW: 9-slice keeps curvature in both axes
-                            __drawImageNineSliceLocal(ctx, box.img, w, h);
-                            // (You can still call 3-slice if you only want horizontal preservation)
-                            // __drawImageThreeSliceLocalX(ctx, box.img, w, h);
+                            const wantVerticalCaps = (box.__capsOrientation === 'vertical');
+                            const k = 0.480732281680149;   // your fixed curvature
+                            let __didCapsDraw = false;
+
+                            // Prefer rotated draw when caps are vertical so we sample the rounded sides
+                            if (wantVerticalCaps) {
+                                ctx.save();
+                                ctx.rotate(Math.PI / 2);
+
+                                // swap w/h because we rotated
+                                if (typeof __drawImageNineSliceLocal === 'function') {
+                                    __drawImageNineSliceLocal(ctx, box.img, h, w, k);  // curvature-aware, rounded top/bottom
+                                    __didCapsDraw = true;
+                                } else if (typeof __drawImageThreeSliceLocalX === 'function') {
+                                    // OK if your X-slice ignores the extra arg; JS just discards it
+                                    __drawImageThreeSliceLocalX(ctx, box.img, h, w, k);
+                                    __didCapsDraw = true;
+                                } else if (typeof __drawImageThreeSliceLocalY === 'function') {
+                                    // last resort (not ideal for caps), but keep as a fallback
+                                    __drawImageThreeSliceLocalY(ctx, box.img, w, h, k);
+                                    __didCapsDraw = true;
+                                }
+
+                                ctx.restore();
+                            }
+
+                            if (!__didCapsDraw) {
+                                // Horizontal caps (or generic fallback)
+                                if (typeof __drawImageNineSliceLocal === 'function') {
+                                    __drawImageNineSliceLocal(ctx, box.img, w, h, k);
+                                } else if (typeof __drawImageThreeSliceLocalX === 'function') {
+                                    __drawImageThreeSliceLocalX(ctx, box.img, w, h, k);
+                                } else {
+                                    ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                                }
+                            }
                         } else {
                             ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
                         }
+
+
+
+
+                        //if (preserveCaps) {
+                        //    const wantVerticalCaps = (box.__capsOrientation === 'vertical'); // ← ADD
+                        //    let __didCapsDraw = false;                                       // ← ADD
+
+                        //    if (wantVerticalCaps) {                                          // ← ADD
+                        //        // Draw with TOP/BOTTOM caps preserved (no canvas rotation)
+                        //        if (typeof __drawImageThreeSliceLocalY === 'function') {
+                        //            __drawImageThreeSliceLocalY(ctx, box.img, w, h);
+                        //            __didCapsDraw = true;
+                        //        } else {
+                        //            // Fallback: 9-slice with current curvature (still no rotation)
+                        //            __drawImageNineSliceLocal(ctx, box.img, w, h, box.img?.__curvatureRatio);
+                        //            __didCapsDraw = true;
+                        //        }
+                        //    }
+
+                        //    if (!__didCapsDraw) { // ← ADD
+                        //        // Horizontal caps preserved (your existing behavior)
+                        //        __drawImageNineSliceLocal(ctx, box.img, w, h);
+                        //        // If you prefer strict horizontal 3-slice instead, keep this alternative:
+                        //        // __drawImageThreeSliceLocalX(ctx, box.img, w, h);
+                        //    }
+                        //} else {
+                        //    ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                        //}
+
                     } else {
                         const img = box.img;
                         img.onload = () => { img.onload = null; drawText(); };
@@ -11189,14 +11326,44 @@ canvas.addEventListener("mousedown", e => {
             }
         }
 
-        // --- ADD: enable 3-slice draw on image L/R side handles (incl. ml/mr) ---
+        // --- ADD: enable preserved caps on L/R for all images, and also on T/B for BASIC images ---
         if (h.box && h.box.type === "image") {
-            const raw = (resizeDirectionRaw || handle || "").toLowerCase();
+            const raw = (resizeDirectionRaw || handle || "").toLowerCase(); // e.g. 'ml','mr','mt','mb'
             const norm = (resizeDirectionNorm || "").toLowerCase();
-            const isSide = (norm === "l" || norm === "r" || raw === "ml" || raw === "mr");
-            h.box.preserveCaps = !!isSide; // true only for left/right side handles
+
+            const isLR = (norm === "l" || norm === "r" || raw === "ml" || raw === "mr");
+            const isTB = (norm === "t" || norm === "b" || raw === "mt" || raw === "mb");
+
+            // For BASIC shapes, make top/bottom behave like left/right (preserve end caps / curvature)
+            h.box.preserveCaps = isLR || (h.box.isBasic === true && isTB);
         }
         // --- END ADD ---
+
+        // ─────────────────────────────────────────────────────────────
+        // A) BASIC-only: set caps orientation on mousedown based on handle
+        (function setCapsOrientationForBasic() {
+            const b = h.box;
+            const norm = (resizeDirectionNorm || "").toLowerCase();
+            if (!(b && b.type === "image" && b.isBasic === true && !__isLineSvg(b))) return;
+
+            // remember base curvature once
+            if (!Number.isFinite(b._baseCurvRatio)) {
+                const k = Number.isFinite(b.curvatureRatio) ? b.curvatureRatio : 0.5;
+                b._baseCurvRatio = Math.max(0, Math.min(0.5, k));
+            }
+
+            // keep 9-slice on for basic shapes during resize
+            b.preserveCaps = true;
+
+            if (norm === "l" || norm === "r") {
+                b.__capsOrientation = "horizontal";
+                if (b.img) b.img.__curvatureRatio = b._baseCurvRatio; // reset to base for smooth L/R
+            } else if (norm === "t" || norm === "b") {
+                b.__capsOrientation = "vertical";
+                if (b.img) b.img.__curvatureRatio = b._baseCurvRatio; // start from base; T/B path will clamp
+            }
+        })();
+        // ─────────────────────────────────────────────────────────────
 
         // NOTE: use the *normalized* direction for corner logic
         if (CORNER_HANDLES.has((resizeDirectionNorm || "").toLowerCase())) {
@@ -11276,6 +11443,7 @@ canvas.addEventListener("mousedown", e => {
         drawText();
     }
 });
+
 
 
 
@@ -11427,6 +11595,10 @@ const __LINE_HANDLES = new Set(['l', 'r']);
 function __allowedHandlesFor(box) {
     return __isLineSvg(box) ? __LINE_HANDLES : __ALL_HANDLES;
 }
+// ---- safe shim: treat "line basic" as (isBasic && isLINESvg) ----
+const __isLineBasic = (typeof globalThis.__isLineBasic === 'function')
+    ? globalThis.__isLineBasic
+    : (box) => !!(box && box.isBasic === true && box.isLINESvg === true);
 
 function redraw() { if (typeof drawText === 'function') drawText(); }
 canvas.addEventListener("mousemove", e => {
@@ -11607,51 +11779,85 @@ canvas.addEventListener("mousemove", e => {
 
     // Sides (text or image)
     if (isResizingNew && activeBox && resizeDirection) {
-        const side = (resizeDirectionNorm || resizeDirection);
+        const side = (resizeDirectionNorm || resizeDirection).toLowerCase(); // 'l'|'r'|'t'|'b'
 
         if (activeBox.type === "image") {
+
+            // --- TOP / BOTTOM handles for IMAGES ---
             if (side === 't' || side === 'b') {
-                if (__isBasicImage(activeBox)) {
-                    if (__isLineBasic(activeBox)) {
+
+                // NEW: BASIC images — make T/B act like L/R (anchor opposite edge)
+                // and clamp the visual cap radius so it never exceeds w/2.
+                if (activeBox.isBasic === true && !__isLineSvg?.(activeBox)) {
+                    const o = activeBox._orig || {
+                        x: activeBox.x, y: activeBox.y,
+                        width: activeBox.width, height: activeBox.height
+                    };
+
+                    const dyAbs = my - startMYCanvas;
+
+                    // tiny floor only; do NOT tie minH to width (prevents snap-to-circle)
+                    const minH = Math.max(
+                        1,
+                        Number.isFinite(activeBox.minHeight) ? activeBox.minHeight : 1
+                    );
+
+                    let newH = (side === 't') ? (o.height - dyAbs) : (o.height + dyAbs);
+                    if (newH < minH) newH = minH;
+
+                    // Anchor opposite edge
+                    if (side === 't') {
+                        activeBox.y = o.y + (o.height - newH);  // keep bottom fixed
+                    } else {
+                        activeBox.y = o.y;                      // keep top fixed
+                    }
+                    activeBox.height = newH;
+
+                    // ⛑️ Clamp visual curvature so caps never exceed half of width.
+                    const baseK = (Number.isFinite(activeBox.curvatureRatio)
+                        ? Math.max(0, Math.min(0.5, activeBox.curvatureRatio))
+                        : 0.5);
+
+                    const maxCap = (activeBox.width || 0) / 2;                   // max radius allowed
+                    const kEff = Math.min(baseK, maxCap / Math.max(1e-6, newH)); // ensures kEff*newH <= w/2
+                    if (activeBox.img) activeBox.img.__curvatureRatio = kEff;    // used by 9-slice draw
+
+                    // tell renderer to use vertical caps when H >= W
+                    activeBox.__capsOrientation = (newH >= (activeBox.width || 0) + 0.5)
+                        ? 'vertical'
+                        : 'horizontal';
+
+                    // (optional) keep the box inside the canvas
+                    const W = canvas.width, H = canvas.height;
+                    if (activeBox.y < 0) activeBox.y = 0;
+                    if (activeBox.y + activeBox.height > H) {
+                        activeBox.y = Math.max(0, H - activeBox.height);
+                    }
+
+                    prevMouseX = mx; prevMouseY = my;
+                    drawText();
+                    return; // IMPORTANT: skip the generic handler below
+                }
+
+                // ── your previous paths (kept) ─────────────────────────────────
+                if (activeBox.isBasic === true) {
+                    if (typeof __isLineBasic === 'function' && __isLineBasic(activeBox)) {
                         const bottom = activeBox.y + activeBox.height;
                         if (side === 't') {
                             activeBox.height = 1;
-                            activeBox.y = bottom - 1;
-                        } else {
-                            activeBox.height = 1;
+                            activeBox.y = bottom - 1; // keep bottom anchored
+                        } else { // 'b'
+                            activeBox.height = 1;     // keep top anchored
                         }
                         prevMouseX = mx; prevMouseY = my;
                     } else {
-                        if (__isLineSvg(activeBox) && (side === 'l' || side === 'r')) {
-                            const o = activeBox._orig || { x: activeBox.x, y: activeBox.y, width: activeBox.width, height: activeBox.height };
-                            const dxAbs = mx - startMXCanvas;
-                            let newW = (side === 'l') ? (o.width - dxAbs) : (o.width + dxAbs);
-                            newW = Math.max(1, newW);
-                            if (side === 'l') activeBox.x = o.x + (o.width - newW);
-                            else activeBox.x = o.x;
-                            activeBox.width = newW;
-                            prevMouseX = mx; prevMouseY = my;
-                            drawText();
-                            return;
-                        }
                         scaleImageBoxWithHandle(activeBox, side, mx, my);
                         const { edgeY } = __clampBasicSideResize(activeBox, side);
                         prevMouseX = mx;
                         prevMouseY = (typeof edgeY === 'number') ? edgeY : my;
                     }
                 } else {
-                    if (__isLineSvg(activeBox) && (side === 'l' || side === 'r')) {
-                        const o = activeBox._orig || { x: activeBox.x, y: activeBox.y, width: activeBox.width, height: activeBox.height };
-                        const dxAbs = mx - startMXCanvas;
-                        let newW = (side === 'l') ? (o.width - dxAbs) : (o.width + dxAbs);
-                        newW = Math.max(1, newW);
-                        if (side === 'l') activeBox.x = o.x + (o.width - newW);
-                        else activeBox.x = o.x;
-                        activeBox.width = newW;
-                        prevMouseX = mx; prevMouseY = my;
-                        drawText();
-                        return;
-                    }
+                    // NON-BASIC images
                     scaleImageBoxWithHandle(activeBox, side, mx, my);
                     prevMouseX = mx; prevMouseY = my;
                 }
@@ -11659,20 +11865,41 @@ canvas.addEventListener("mousemove", e => {
                 return;
             }
 
-            if (__isLineSvg(activeBox) && (side === 'l' || side === 'r')) {
+            // --- LEFT / RIGHT handles for IMAGES (unchanged, with BASIC clamp on width) ---
+            // SPECIAL CASE: line-SVGs → pure horizontal resize anchored on the opposite edge
+            if (__isLineSvg?.(activeBox) && (side === 'l' || side === 'r')) {
                 const o = activeBox._orig || { x: activeBox.x, y: activeBox.y, width: activeBox.width, height: activeBox.height };
                 const dxAbs = mx - startMXCanvas;
+
                 let newW = (side === 'l') ? (o.width - dxAbs) : (o.width + dxAbs);
                 newW = Math.max(1, newW);
-                if (side === 'l') activeBox.x = o.x + (o.width - newW);
-                else activeBox.x = o.x;
+
+                if (side === 'l') {
+                    activeBox.x = o.x + (o.width - newW); // anchor right
+                } else {
+                    activeBox.x = o.x;                    // anchor left
+                }
                 activeBox.width = newW;
+
                 prevMouseX = mx; prevMouseY = my;
                 drawText();
                 return;
             }
 
+            // fallback: generic side-resize path (kept)
             scaleImageBoxWithHandle(activeBox, side, mx, my);
+
+            // NEW (B): If BASIC and we just did L/R, flip caps back to horizontal
+            if (activeBox.isBasic === true && !__isLineSvg?.(activeBox) && (side === 'l' || side === 'r')) {
+                // ensure a base curvature is cached
+                if (!Number.isFinite(activeBox._baseCurvRatio)) {
+                    const k0 = Number.isFinite(activeBox.curvatureRatio) ? activeBox.curvatureRatio : 0.5;
+                    activeBox._baseCurvRatio = Math.max(0, Math.min(0.5, k0));
+                }
+                activeBox.__capsOrientation = 'horizontal';
+                activeBox.preserveCaps = true;
+                if (activeBox.img) activeBox.img.__curvatureRatio = activeBox._baseCurvRatio; // restore
+            }
 
             let snappedX = null;
             if (side === 'l' || side === 'r') {
@@ -11684,13 +11911,21 @@ canvas.addEventListener("mousemove", e => {
             prevMouseY = my;
             drawText();
             return;
+
         } else {
+            // TEXT (kept)
             scaleTextBoxWithHandle(activeBox, (resizeDirectionRaw || resizeDirection), mx, my);
             prevMouseX = mx; prevMouseY = my;
             drawText();
             return;
         }
     }
+
+
+
+
+
+
 
     // ──────────────────────────────────────────────────────────
     // HOVER CURSOR FIX FOR LINES (no active drag/resize)

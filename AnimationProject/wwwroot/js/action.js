@@ -590,7 +590,8 @@ function saveCanvasData() {
                 strokeNoColor: img.strokeNoColor, //$("#hdnStrockColor").val(),
                 strokeWidth: parseInt(document.getElementById('ddlStrokeWidth')?.value, 10) || 3,
                 isBasic: img.isBasic,
-                isLINESvg: img.isLINESvg
+                isLINESvg: img.isLINESvg,
+                __capsOrientation: img.__capsOrientation
             };
         })
     };
@@ -1257,7 +1258,8 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
             strokeNoColor: im.strokeNoColor || "#FFFFFF",
             strokeWidth: im.strokeWidth || 3,
             isBasic: im.isBasic ?? false,
-            isLINESvg: im.isLINESvg ?? false
+            isLINESvg: im.isLINESvg ?? false,
+            __capsOrientation: im.__capsOrientation ?? 'horizontal'
         };
 
         // ⛔️ NO clamp here — preserve exact saved layout (even if it overflows)
