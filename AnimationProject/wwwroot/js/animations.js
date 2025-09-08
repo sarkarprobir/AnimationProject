@@ -5599,7 +5599,7 @@ canvas.addEventListener("click", function onCanvasClick(e) {
 
         setGraphicModeActive();
         setOpacityUI(normAlpha(imgHit.opacity));
-
+        
         // initialize fill/stroke colors once if required
         if ($("#hdnFillStrockColorFlag").val() === '1') {
             $("#hdnfillColor").val(imgHit.fillNoColor || "#FFFFFF");
@@ -5650,6 +5650,12 @@ canvas.addEventListener("click", function onCanvasClick(e) {
     applyImagePaintToUI(activeImage);
 
     HideShowRightPannel?.(selectedType);
+    if (activeImage && activeImage.isBasic) {
+        document.getElementById("divCurvature").style.display = 'block';
+    }
+    else {
+        document.getElementById("divCurvature").style.display = 'none';
+    }
 });
 function applyImagePaintToUI(imgHit) {
     if (!imgHit) return;
@@ -7746,6 +7752,7 @@ canvas.addEventListener('drop', e => {
         strokeNoColor: "#000000",
         strokeWidth: 1,
         isBasic: isBasic,
+        isLINESvg: isLine,
         basicName: basicName,
         loading: true
     };
@@ -11074,6 +11081,35 @@ canvas.addEventListener("mousedown", e => {
     prevMouseX = mx; prevMouseY = my;
     startMXCanvas = mx; startMYCanvas = my;
 
+    // --- local safe helpers (used only if globals aren't defined) ---
+    const __isLineSvg = (typeof globalThis.__isLineSvg === "function")
+        ? globalThis.__isLineSvg
+        : (box) => !!(box && box.isLINESvg === true);
+
+    const __allowedHandlesFor =
+        (typeof globalThis.__allowedHandlesFor === "function")
+            ? globalThis.__allowedHandlesFor
+            : (box) => __isLineSvg(box)
+                ? new Set(["l", "r"])                                       // lines → only L/R
+                : new Set(["l", "r", "t", "b", "tl", "tr", "bl", "br"]);    // others → everything
+
+    // NEW: map any corner on a line to its nearest side; block t/b
+    function __mapHandleForLine(box, handleStr, rawStr) {
+        if (!__isLineSvg(box)) return (handleStr || rawStr || "").toLowerCase();
+        const s = String(handleStr || "").toLowerCase();
+        const r = String(rawStr || "").toLowerCase();
+        let h = s || r;
+        if (h === "ml") h = "l";
+        else if (h === "mr") h = "r";
+        // corners → sides (so side-resize works even when corners overlap)
+        if (h === "tl" || h === "l" || h === "bl") h = "l";
+        else if (h === "tr" || h === "r" || h === "br") h = "r";
+        // block top/bottom for lines
+        if (h === "t" || h === "b") h = "";
+        return h;
+    }
+    // -----------------------------------------------------------------
+
     // finish editing if any
     if (isEditing && activeBox) {
         cleanEditorHTMLPreserveCaret?.();
@@ -11103,22 +11139,43 @@ canvas.addEventListener("mousedown", e => {
         drawText();
 
         // proceed with your existing handle logic
-        const handle = h.handle;
+        const handle = h.handle;        // raw hit name (could be 'ml','mr','tl', etc.)
         resizeDirectionRaw = h.raw;
         resizeDirectionNorm = handle;
         resizeDirection = handle;
 
+        // NEW: normalize specifically for line items
+        if (__isLineSvg(h.box)) {
+            const mapped = __mapHandleForLine(h.box, handle, resizeDirectionRaw);
+            if (mapped === "l" || mapped === "r") {
+                // keep resizing but force to side
+                resizeDirectionNorm = mapped;
+                resizeDirection = mapped;
+            } else {
+                // not allowed (t/b or anything empty) → body drag
+                isCornerFontScale = false;
+                isCornerImageScale = false;
+                isResizingNew = false;
+                isDraggingNew = true;
+                dragOffsetXNew = mx - h.box.x;
+                dragOffsetYNew = my - h.box.y;
+                resizeDirectionRaw = resizeDirectionNorm = resizeDirection = null;
+                try { setGlobalCursor?.("move"); } catch { }
+                return;
+            }
+        }
+
         // --- ADD: enable 3-slice draw on image L/R side handles (incl. ml/mr) ---
         if (h.box && h.box.type === "image") {
-            const raw = resizeDirectionRaw || handle;            // e.g. 'ml','mr'
-            const isSideNorm = (handle === "l" || handle === "r");
-            const isSideRaw = (raw === "ml" || raw === "mr" || raw === "l" || raw === "r");
-            // true only for left/right side handles; false for corners/top/bottom
-            h.box.preserveCaps = !!(isSideNorm || isSideRaw);
+            const raw = (resizeDirectionRaw || handle || "").toLowerCase();
+            const norm = (resizeDirectionNorm || "").toLowerCase();
+            const isSide = (norm === "l" || norm === "r" || raw === "ml" || raw === "mr");
+            h.box.preserveCaps = !!isSide; // true only for left/right side handles
         }
         // --- END ADD ---
 
-        if (CORNER_HANDLES.has(handle)) {
+        // NOTE: use the *normalized* direction for corner logic
+        if (CORNER_HANDLES.has((resizeDirectionNorm || "").toLowerCase())) {
             if (h.box.type === "image") {
                 isCornerImageScale = true; isResizingNew = false; isDraggingNew = false;
                 activeBox._orig = { x: h.box.x, y: h.box.y, width: h.box.width, height: h.box.height };
@@ -11145,12 +11202,14 @@ canvas.addEventListener("mousedown", e => {
             : { x: h.box.x, y: h.box.y, width: h.box.width, height: h.box.height, text: h.box.text, fontSize: h.box.fontSize };
 
         activeBox._origMouse = { x: startMXCanvas, y: startMYCanvas };
-        setGlobalCursor((handle === "l" || handle === "r") ? "ew-resize" : "ns-resize");
 
-        if (h.box.type !== "image" && (handle === "l" || handle === "r")) {
+        // Use *normalized* direction for cursor (so ml/mr and corners mapped → ew-resize)
+        const norm = (resizeDirectionNorm || "").toLowerCase();
+        setGlobalCursor((norm === "l" || norm === "r") ? "ew-resize" : "ns-resize");
+
+        if (h.box.type !== "image" && (norm === "l" || norm === "r")) {
             if (typeof startTextSideResize === "function") startTextSideResize(activeBox);
-
-            // ADD: cache the minimum width for this resize interaction
+            // cache the minimum width for this resize interaction
             activeBox._minTextOuterWidth = computeMinTextOuterWidthPx(activeBox);
         }
         return; // handle takes precedence; stop here
@@ -11193,6 +11252,9 @@ canvas.addEventListener("mousedown", e => {
         drawText();
     }
 });
+
+
+
 
 
 
@@ -11329,6 +11391,18 @@ function __clampImageToCanvas(box, handle) {
     if (box.width < minW) box.width = minW;
     if (box.height < minH) box.height = minH;
 }
+// per-object switch (you said you have images.isLINESvg)
+function __isLineSvg(box) {
+    return !!(box && box.isLINESvg === true);
+}
+
+const __ALL_HANDLES = new Set(['tl', 't', 'tr', 'r', 'br', 'b', 'bl', 'l']);
+const __LINE_HANDLES = new Set(['l', 'r']);
+
+// which set is allowed for this box
+function __allowedHandlesFor(box) {
+    return __isLineSvg(box) ? __LINE_HANDLES : __ALL_HANDLES;
+}
 
 function redraw() { if (typeof drawText === 'function') drawText(); }
 canvas.addEventListener("mousemove", e => {
@@ -11344,24 +11418,17 @@ canvas.addEventListener("mousemove", e => {
             (typeof __isBasicShapeSvg === 'function' && __isBasicShapeSvg(box))
         ));
     }
-    // Curvature you render with. Default = pill ends (0.5 of height).
     function __curvRatio(box) {
         let k = (typeof box?.curvatureRatio === 'number') ? box.curvatureRatio : 0.5;
         if (!isFinite(k)) k = 0.5;
         return Math.max(0, Math.min(0.5, k));
     }
-    // Min feasible width for BASIC shape (keep ends round): minW = 2 * k * height
     function __minWidthForBasic(box) {
         return Math.max(8, 2 * __curvRatio(box) * (box.height || 0));
     }
-    // Min feasible height for BASIC shape (symmetric rule, if you ever need top/bottom)
     function __minHeightForBasic(box) {
         return Math.max(8, 2 * __curvRatio(box) * (box.width || 0));
     }
-    /**
-     * Clamp BASIC image during side resize; keep opposite edge anchored.
-     * Returns {clamped:boolean, edgeX:number|undefined, edgeY:number|undefined}
-     */
     function __clampBasicSideResize(box, side /* 'l'|'r'|'t'|'b' */) {
         if (!__isBasicImage(box)) return { clamped: false };
         if (side === 'l' || side === 'r') {
@@ -11384,22 +11451,40 @@ canvas.addEventListener("mousemove", e => {
         }
         return { clamped: false };
     }
+
     // ──────────────────────────────────────────────────────────
+    // ADD: line-only helpers (per your "images.isLINESvg")
+    function __isLineSvg(box) { return !!(box && box.isLINESvg === true); }    // ADD
+    const __LINE_HANDLES = (globalThis.__LINE_HANDLES instanceof Set)
+        ? globalThis.__LINE_HANDLES
+        : new Set(['l', 'r']);                                               // ADD
+
+    // ──────────────────────────────────────────────────────────
+    // When resizing, ignore disallowed handles on line items (belt & braces)
+    if (isResizingNew && activeBox && __isLineSvg(activeBox)) {
+        const side = (resizeDirectionNorm || resizeDirection || '').toLowerCase();
+        if (side && !__LINE_HANDLES.has(side)) {
+            // cancel the resize and fall back to drag
+            isResizingNew = false;
+            isDraggingNew = true;
+            dragOffsetXNew = mx - activeBox.x;
+            dragOffsetYNew = my - activeBox.y;
+            try { setGlobalCursor?.("move"); } catch { }
+            return;
+        }
+    }
 
     // ✅ TEXT left/right side-resize in rotated space
     if (isResizingNew && activeBox && activeBox.type !== 'image' &&
         (resizeDirection === 'l' || resizeDirection === 'r')) {
         resizeTextSideToMouse(activeBox, resizeDirection, mx, my);
-        // ADD: clamp to minimum width so you can't go narrower than the longest word
         const minW = Math.max(1, Math.ceil(activeBox._minTextOuterWidth || computeMinTextOuterWidthPx(activeBox)));
         if (activeBox.width < minW) {
             if (resizeDirection === 'l') {
-                // Anchor right edge when shrinking from the left
                 const right = activeBox.x + activeBox.width;
                 activeBox.width = minW;
                 activeBox.x = right - minW;
             } else {
-                // From right: just set width
                 activeBox.width = minW;
             }
         }
@@ -11407,10 +11492,8 @@ canvas.addEventListener("mousemove", e => {
         return;
     }
 
-    // 🔁 FIX: run multi-drag only when active; don't early-return otherwise
     if (isDraggingMulti) {
         updateMultiDrag(mx, my);
-        // (optional) keep these in sync if other code relies on them
         prevMouseX = mx;
         prevMouseY = my;
         return;
@@ -11425,16 +11508,15 @@ canvas.addEventListener("mousemove", e => {
         drawText();
         return;
     }
-    // --- at top of the TEXT corner-scale block ---
+
     if (activeBox && activeBox._orig && typeof activeBox._orig.text === 'string') {
-        // If original text has no inline font-size, bake in computed editor font once
         if (!/font-size\s*:/i.test(activeBox._orig.text)) {
             activeBox._orig.text = bakeInlineFontOnLinesHTML(activeBox._orig.text, textEditorNew);
         }
     }
 
     if (isCornerFontScale && activeBox && resizeDirectionNorm && CORNER_HANDLES.has(resizeDirectionNorm)) {
-        const dir = resizeDirectionNorm;          // ← normalized "tl/tr/bl/br"
+        const dir = resizeDirectionNorm;
         const ow = activeBox._orig.width, oh = activeBox._orig.height;
         const dxAbs = mx - startMXCanvas, dyAbs = my - startMYCanvas;
 
@@ -11463,6 +11545,17 @@ canvas.addEventListener("mousemove", e => {
     // IMAGE corner
     if (isCornerImageScale && activeBox && activeBox.type === "image" &&
         resizeDirectionNorm && CORNER_HANDLES.has(resizeDirectionNorm)) {
+
+        // block corner-resize for line items → fallback to drag
+        if (__isLineSvg(activeBox)) {
+            isCornerImageScale = false; isDraggingNew = true;
+            dragOffsetXNew = mx - activeBox.x;
+            dragOffsetYNew = my - activeBox.y;
+            prevMouseX = mx; prevMouseY = my;
+            try { setGlobalCursor?.("move"); } catch { }
+            return;
+        }
+
         const dir = resizeDirectionNorm;
         const ow = activeBox._orig.width, oh = activeBox._orig.height;
         const dxAbs = mx - startMXCanvas, dyAbs = my - startMYCanvas;
@@ -11488,54 +11581,79 @@ canvas.addEventListener("mousemove", e => {
         return;
     }
 
-
-    // Sides (text or image)  ⟵ REPLACE your current block with this one
+    // Sides (text or image)
     if (isResizingNew && activeBox && resizeDirection) {
-        const side = (resizeDirectionNorm || resizeDirection); // 'l'|'r'|'t'|'b'
+        const side = (resizeDirectionNorm || resizeDirection);
 
         if (activeBox.type === "image") {
-
-            // --- TOP / BOTTOM handles for IMAGES ---
             if (side === 't' || side === 'b') {
-
                 if (__isBasicImage(activeBox)) {
-                    // ✅ BASIC shapes
                     if (__isLineBasic(activeBox)) {
-                        // Lock line height to 1px; anchor the opposite edge
                         const bottom = activeBox.y + activeBox.height;
                         if (side === 't') {
                             activeBox.height = 1;
-                            activeBox.y = bottom - 1; // keep bottom anchored
-                        } else { // 'b'
-                            activeBox.height = 1;     // keep top anchored (y unchanged)
+                            activeBox.y = bottom - 1;
+                        } else {
+                            activeBox.height = 1;
                         }
                         prevMouseX = mx; prevMouseY = my;
                     } else {
-                        // For other BASIC shapes: allow T/B resize but clamp to min height
-                        // so curvature constraints are respected.
+                        if (__isLineSvg(activeBox) && (side === 'l' || side === 'r')) {
+                            const o = activeBox._orig || { x: activeBox.x, y: activeBox.y, width: activeBox.width, height: activeBox.height };
+                            const dxAbs = mx - startMXCanvas;
+                            let newW = (side === 'l') ? (o.width - dxAbs) : (o.width + dxAbs);
+                            newW = Math.max(1, newW);
+                            if (side === 'l') activeBox.x = o.x + (o.width - newW);
+                            else activeBox.x = o.x;
+                            activeBox.width = newW;
+                            prevMouseX = mx; prevMouseY = my;
+                            drawText();
+                            return;
+                        }
                         scaleImageBoxWithHandle(activeBox, side, mx, my);
-                        const { clamped, edgeY } = __clampBasicSideResize(activeBox, side);
+                        const { edgeY } = __clampBasicSideResize(activeBox, side);
                         prevMouseX = mx;
                         prevMouseY = (typeof edgeY === 'number') ? edgeY : my;
                     }
-
                 } else {
-                    // ✅ NON-BASIC images → your current behavior
+                    if (__isLineSvg(activeBox) && (side === 'l' || side === 'r')) {
+                        const o = activeBox._orig || { x: activeBox.x, y: activeBox.y, width: activeBox.width, height: activeBox.height };
+                        const dxAbs = mx - startMXCanvas;
+                        let newW = (side === 'l') ? (o.width - dxAbs) : (o.width + dxAbs);
+                        newW = Math.max(1, newW);
+                        if (side === 'l') activeBox.x = o.x + (o.width - newW);
+                        else activeBox.x = o.x;
+                        activeBox.width = newW;
+                        prevMouseX = mx; prevMouseY = my;
+                        drawText();
+                        return;
+                    }
                     scaleImageBoxWithHandle(activeBox, side, mx, my);
                     prevMouseX = mx; prevMouseY = my;
                 }
-
                 drawText();
                 return;
             }
 
-            // --- LEFT / RIGHT handles for IMAGES (unchanged, with BASIC clamp on width) ---
+            if (__isLineSvg(activeBox) && (side === 'l' || side === 'r')) {
+                const o = activeBox._orig || { x: activeBox.x, y: activeBox.y, width: activeBox.width, height: activeBox.height };
+                const dxAbs = mx - startMXCanvas;
+                let newW = (side === 'l') ? (o.width - dxAbs) : (o.width + dxAbs);
+                newW = Math.max(1, newW);
+                if (side === 'l') activeBox.x = o.x + (o.width - newW);
+                else activeBox.x = o.x;
+                activeBox.width = newW;
+                prevMouseX = mx; prevMouseY = my;
+                drawText();
+                return;
+            }
+
             scaleImageBoxWithHandle(activeBox, side, mx, my);
 
-            let snappedX = null; // preserve snap so we don't overwrite later
+            let snappedX = null;
             if (side === 'l' || side === 'r') {
-                const { clamped, edgeX } = __clampBasicSideResize(activeBox, side);
-                if (clamped && typeof edgeX === 'number') snappedX = edgeX;
+                const { edgeX } = __clampBasicSideResize(activeBox, side);
+                if (typeof edgeX === 'number') snappedX = edgeX;
             }
 
             prevMouseX = (snappedX !== null ? snappedX : mx);
@@ -11543,14 +11661,39 @@ canvas.addEventListener("mousemove", e => {
             drawText();
             return;
         } else {
-            // TEXT: raw ("mr","ml","mt","mb" or already-short)
             scaleTextBoxWithHandle(activeBox, (resizeDirectionRaw || resizeDirection), mx, my);
             prevMouseX = mx; prevMouseY = my;
             drawText();
             return;
         }
     }
+
+    // ──────────────────────────────────────────────────────────
+    // HOVER CURSOR FIX FOR LINES (no active drag/resize)
+    if (!isResizingNew && !isDraggingNew && !isCornerImageScale && !isCornerFontScale) {
+        const hHover = (typeof findHandleAt === 'function') ? findHandleAt(mx, my) : null;
+        if (hHover && hHover.box && __isLineSvg(hHover.box)) {
+            const norm = String(hHover.handle || '').toLowerCase();
+            const raw = String(hHover.raw || '').toLowerCase();
+            const isLR = (norm === 'l' || norm === 'r' || raw === 'ml' || raw === 'mr');
+            try { setGlobalCursor?.(isLR ? 'ew-resize' : 'move'); } catch { }
+            return; // prevent other code from flipping the cursor back
+        }
+
+        // If hovering a line body (no handle), show move
+        const hit = (typeof getTopHitAt === 'function') ? getTopHitAt(mx, my) : null;
+        if (hit && __isLineSvg(hit)) {
+            try { setGlobalCursor?.('move'); } catch { }
+            return;
+        }
+
+        // Otherwise, let your normal hover cursor logic (if any) run or clear:
+        // try { setGlobalCursor?.(''); } catch {}
+    }
 });
+
+
+
 
 
 //canvas.addEventListener("mousemove", e => {
@@ -13753,6 +13896,7 @@ function syncTextDims(box) {
     }
 }
 
+
 function drawRotatedSelection(ctx, box) {
     const { w, h, cx, cy } = getBoxRect(box);
     const ang = deg2rad(box.rotation || 0);
@@ -13767,16 +13911,28 @@ function drawRotatedSelection(ctx, box) {
 
     ctx.fillStyle = "blue";
     const s = HANDLE_SIZE, hs = s / 2, w2 = w / 2, h2 = h / 2;
-    const handles = [
-        [-w2, -h2], [0, -h2], [w2, -h2],      // top: left, mid, right
-        [w2, 0],                           // right mid
-        [w2, h2], [0, h2], [-w2, h2],     // bottom: right, mid, left
-        [-w2, 0]                            // left mid
+
+    // name each handle so we can filter
+    const handlesNamed = [
+        ['tl', -w2, -h2], ['t', 0, -h2], ['tr', w2, -h2], // top row
+        ['r', w2, 0],                                   // right mid
+        ['br', w2, h2], ['b', 0, h2], ['bl', -w2, h2], // bottom row
+        ['l', -w2, 0]                                    // left mid
     ];
-    for (const [hx, hy] of handles) ctx.fillRect(hx - hs, hy - hs, s, s);
+
+    const allowed = __allowedHandlesFor(box); // ← NEW
+
+    for (const [name, hx, hy] of handlesNamed) {
+        if (!allowed.has(name)) continue;       // ← hide disallowed handles for line items
+        ctx.fillRect(hx - hs, hy - hs, s, s);
+    }
 
     ctx.restore();
+
+    // (optional) expose which ones we drew—some hit-tests can reuse this
+    box.__visibleHandles = allowed;
 }
+
 function getResizeHandleRotated(box, mx, my) {
     const { w, h, cx, cy } = getBoxRect(box);
     const ang = deg2rad(box.rotation || 0);
