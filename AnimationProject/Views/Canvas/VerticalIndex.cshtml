@@ -401,8 +401,8 @@
               let appended = 0;
 
               (items || []).forEach(it => {
-                const fileThumb = it.imageName || "";
-                const fileFull  = it.imageName || fileThumb;
+                const fileThumb = it.imageNameThumb || "";
+                const fileFull  = it.ImageNameThumb || fileThumb;
                 if (!fileThumb) return;
 
                 const srcThumb = joinURL(baseURL, elementPath, encodeURIComponent(fileThumb));

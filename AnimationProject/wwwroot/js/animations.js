@@ -3482,7 +3482,9 @@ function cloneImageObject(srcObj) {
         strokeNoColorStatus: srcObj.strokeNoColorStatus || false,
         fillNoColor: srcObj.fillNoColor|| "#FFFFFF",
         strokeNoColor: srcObj.strokeNoColor ||"#FFFFFF",
-        strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 3
+        strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 3,
+        isBasic: srcObj.isBasic,
+        isLINESvg: srcObj.isLine
         // Copy any other custom fields if needed...
     };
 }
@@ -3534,7 +3536,7 @@ function cloneTextObject(src) {
 function cloneImageObject(src) {
     const fields = [
         "type", "x", "y", "width", "height", "scaleX", "scaleY", "rotate", "opacity",
-        "zIndex", "groupId", "noAnim", "crop", "flipX", "flipY", "src" // keep a plain src string if you have it
+        "zIndex", "groupId", "noAnim", "crop", "flipX", "flipY", "src", "isBasic","isLINESvg" // keep a plain src string if you have it
     ];
     const o = {};
     fields.forEach(k => { if (k in src) o[k] = structuredClone(src[k]); });
@@ -7752,6 +7754,39 @@ canvas.addEventListener('drop', e => {
 
     if (!src) return;
 
+    // ─────────────────────────────────────────────────────────────
+    // A) Normalize *_thumb → full filename (before creating Image)
+    //    Examples:
+    //    Car-Dealerships-02_20250830_011740_thumb.png
+    //    → Car-Dealerships-02_20250830_011740.png
+    (function normalizeThumbSuffix() {
+        const stripThumb = (name) => name.replace(/_thumb(?=\.[^.\/?#]+$)/i, "");
+
+        // Update visible dropped file name if present
+        if (droppedFileName && /_thumb(?=\.[^.\/?#]+$)/i.test(droppedFileName)) {
+            droppedFileName = stripThumb(droppedFileName);
+        }
+
+        // Update src if it looks like a URL/path string containing *_thumb.*
+        if (/_thumb(?=\.[^.\/?#]+$)/i.test(src)) {
+            try {
+                const u = new URL(src, location.href);
+                const parts = u.pathname.split("/");
+                const last = parts.pop() || "";
+                const fixed = stripThumb(last);
+                if (fixed !== last) {
+                    parts.push(fixed);
+                    u.pathname = parts.join("/");
+                    src = u.toString();
+                }
+            } catch {
+                // not a URL → plain path or data string; do a direct replace
+                src = stripThumb(src);
+            }
+        }
+    })();
+    // ─────────────────────────────────────────────────────────────
+
     const img = new Image();
 
     // ✅ mark whether this is one of the 6 basic shape SVGs
@@ -7804,8 +7839,7 @@ canvas.addEventListener('drop', e => {
     activeBox = newImgObj;
     activeImage = newImgObj;
 
-   // try { ChangeFillColor(); } catch (_) { }
-
+    // try { ChangeFillColor(); } catch (_) { }
 
     img.onload = () => {
         const MAX_DIM = 300;
@@ -7813,14 +7847,12 @@ canvas.addEventListener('drop', e => {
         const ih = img.naturalHeight || img.height || 1;
         const scale = Math.min(1, MAX_DIM / Math.max(iw, ih));
 
-        //newImgObj.width = Math.max(1, Math.round(iw * scale));
         newImgObj.height = Math.max(1, Math.round(ih * scale));
         newImgObj.width = Math.max(1, Math.round(iw * scale));
         if (isLine) {
             newImgObj.height = 5;
             newImgObj.width = 250;
-        }
-        else {
+        } else {
             newImgObj.height = Math.max(1, Math.round(ih * scale));
         }
         newImgObj.loading = false;
@@ -7841,6 +7873,7 @@ canvas.addEventListener('drop', e => {
 
     img.src = src;
 });
+
 
 
 //canvas.addEventListener('drop', e => {
@@ -11623,7 +11656,7 @@ canvas.addEventListener("mousemove", e => {
     const { x: mx, y: my } = getCanvasMousePosition(e);
     const dx = mx - prevMouseX;
     const dy = my - prevMouseY;
-
+    
     // ──────────────────────────────────────────────────────────
     // BASIC-shape helpers (local to this handler)
     function __isBasicImage(box) {
