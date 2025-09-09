@@ -11411,10 +11411,15 @@ canvas.addEventListener("mousedown", e => {
         const norm = (resizeDirectionNorm || "").toLowerCase();
         setGlobalCursor((norm === "l" || norm === "r") ? "ew-resize" : "ns-resize");
 
+        //if (h.box.type !== "image" && (norm === "l" || norm === "r")) {
+        //    if (typeof startTextSideResize === "function") startTextSideResize(activeBox);
+        //    // cache the minimum width for this resize interaction
+        //    activeBox._minTextOuterWidth = computeMinTextOuterWidthPx(activeBox);
+        //}
         if (h.box.type !== "image" && (norm === "l" || norm === "r")) {
             if (typeof startTextSideResize === "function") startTextSideResize(activeBox);
-            // cache the minimum width for this resize interaction
-            activeBox._minTextOuterWidth = computeMinTextOuterWidthPx(activeBox);
+            // allow extreme squish (no computed min width)
+            activeBox._minTextOuterWidth = 1; // tiny floor to avoid negatives
         }
         return; // handle takes precedence; stop here
     }
@@ -11687,19 +11692,22 @@ canvas.addEventListener("mousemove", e => {
     if (isResizingNew && activeBox && activeBox.type !== 'image' &&
         (resizeDirection === 'l' || resizeDirection === 'r')) {
         resizeTextSideToMouse(activeBox, resizeDirection, mx, my);
-        const minW = Math.max(1, Math.ceil(activeBox._minTextOuterWidth || computeMinTextOuterWidthPx(activeBox)));
-        if (activeBox.width < minW) {
+
+        // only prevent negative/zero; otherwise allow full squish
+        if (activeBox.width < 1) {
             if (resizeDirection === 'l') {
                 const right = activeBox.x + activeBox.width;
-                activeBox.width = minW;
-                activeBox.x = right - minW;
+                activeBox.width = 1;
+                activeBox.x = right - 1;      // keep the right edge anchored
             } else {
-                activeBox.width = minW;
+                activeBox.width = 1;          // keep the left edge anchored
             }
         }
+
         drawText();
         return;
     }
+
 
     if (isDraggingMulti) {
         updateMultiDrag(mx, my);
