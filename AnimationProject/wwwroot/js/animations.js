@@ -5656,6 +5656,15 @@ canvas.addEventListener("click", function onCanvasClick(e) {
     else {
         document.getElementById("divCurvature").style.display = 'none';
     }
+    if (activeImage && activeImage.isLINESvg) {
+        document.getElementById("divFillColor").style.display = 'none';
+        document.getElementById("divStrokeCheck").style.display = 'none';
+        
+    }
+    else {
+        document.getElementById("divFillColor").style.display = 'block';
+        document.getElementById("divStrokeCheck").style.display = 'block';
+    }
 });
 function applyImagePaintToUI(imgHit) {
     if (!imgHit) return;
@@ -7350,6 +7359,9 @@ function ChangeStrockColor() {
     if (noStrokeBox) noStrokeBox.checked = false;
 
     const strokeWidth = parseFloat(document.getElementById("ddlStrokeWidth")?.value) || 2;
+    if (target.isLINESvg) {
+        $("#hdnfillColor").val(newStroke);
+    }
 
     // Keep same logic for fill: if fill 'no color' is checked, send "none"
     const fillValue = noFillChecked ? "none" : ($("#hdnfillColor").val() || "#000");
@@ -7465,6 +7477,7 @@ function strokeWidthChanges() {
                 activeImage.y = Math.max(0, H - activeImage.height);
             }
         }
+        $("#hdnfillColor").val($("#hdnStrockColor").val());
     }
 
     // compute fill/stroke respecting "no color" checkboxes

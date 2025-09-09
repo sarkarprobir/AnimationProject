@@ -1221,11 +1221,12 @@ function moveCaretToEnd(el) {
             </div>
             <div class="d-flex gap-2 align-items-center justify-content-end">
                 <input type="hidden" id="hdnstrokeNoColorStatus" />
-                 
+                <div id="divStrokeCheck" class="slash-checkbox">
                 <label class="slash-checkbox">
                     <input type="checkbox" id="noColorCheck2" oninput="SetNoStrokeColor()"   />
                     <span class="custom-box"></span>
                 </label>
+                </div>
                 <div class="custom-dropdown">
                     <select id="ddlStrokeWidth" onchange="strokeWidthChanges()">
                         <option>0.1</option>
