@@ -9674,7 +9674,7 @@ function __drawImageThreeSliceLocalY(ctx2, img, w, h, curv) {
 function drawText() {
     const designW = canvas.width;
     const designH = canvas.height;
-
+    console.log("Load", designW, designH);
     // clear & bg
     ctx.clearRect(0, 0, designW, designH);
 
@@ -9793,53 +9793,6 @@ function drawText() {
         ctx2.drawImage(img, rightSrcX, 0, capSrc, sh, -w / 2 + capDst + midDst, -h / 2, capDst, h);
     }
 
-    // === REPLACE your 9-slice with this version (keeps curvature vertically too) ===
-    //function __drawImageNineSliceLocal(ctx2, img, w, h) {
-    //    const sw = img.naturalWidth || img.width || 1;
-    //    const sh = img.naturalHeight || img.height || 1;
-
-    //    const capSrc = Math.max(1, Math.round(sh / 2));
-
-    //    // middle source widths/heights: force ≥1px, centered if needed
-    //    let midSrcW = sw - capSrc * 2, midSrcX = capSrc;
-    //    if (midSrcW < 1) { midSrcX = Math.max(0, Math.floor(sw / 2)); midSrcW = 1; }
-
-    //    let midSrcH = sh - capSrc * 2, midSrcY = capSrc;
-    //    if (midSrcH < 1) { midSrcY = Math.max(0, Math.floor(sh / 2)); midSrcH = 1; }
-
-    //    // destination radii and middles
-    //    const r = Math.max(1e-3, Math.min(w / 2, h / 2));
-    //    const capDstX = r, capDstY = r;
-    //    const midDstX = Math.max(0, w - capDstX * 2);
-    //    const midDstY = Math.max(0, h - capDstY * 2);
-
-    //    const x0 = -w / 2, y0 = -h / 2;
-
-    //    // Top row: TL, T, TR
-    //    ctx2.drawImage(img, 0, 0, capSrc, capSrc, x0, y0, capDstX, capDstY);
-    //    if (midDstX > 0)
-    //        ctx2.drawImage(img, midSrcX, 0, midSrcW, capSrc, x0 + capDstX, y0, midDstX, capDstY);
-    //    ctx2.drawImage(img, Math.max(0, sw - capSrc), 0, capSrc, capSrc, x0 + capDstX + midDstX, y0, capDstX, capDstY);
-
-    //    // Middle row: L, C, R
-    //    if (midDstY > 0) {
-    //        ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH, x0, y0 + capDstY, capDstX, midDstY);
-    //        if (midDstX > 0)
-    //            ctx2.drawImage(img, midSrcX, midSrcY, midSrcW, midSrcH, x0 + capDstX, y0 + capDstY, midDstX, midDstY);
-    //        ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH, x0 + capDstX + midDstX, y0 + capDstY, capDstX, midDstY);
-    //    } else {
-    //        // no center height → stretch side strips to meet
-    //        ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH, x0, y0 + capDstY, capDstX, midDstY);
-    //        ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH, x0 + capDstX + midDstX, y0 + capDstY, capDstX, midDstY);
-    //    }
-
-    //    // Bottom row: BL, B, BR
-    //    ctx2.drawImage(img, 0, Math.max(0, sh - capSrc), capSrc, capSrc, x0, y0 + capDstY + midDstY, capDstX, capDstY);
-    //    if (midDstX > 0)
-    //        ctx2.drawImage(img, midSrcX, Math.max(0, sh - capSrc), midSrcW, capSrc, x0 + capDstX, y0 + capDstY + midDstY, midDstX, capDstY);
-    //    ctx2.drawImage(img, Math.max(0, sw - capSrc), Math.max(0, sh - capSrc), capSrc, capSrc,
-    //        x0 + capDstX + midDstX, y0 + capDstY + midDstY, capDstX, capDstY);
-    //}
     // === 9-slice (capsule-safe, constant curvature) ===
     // curv: optional curvature; 0..0.5 => ratio of height, >1 => pixels
     function __drawImageNineSliceLocal(ctx2, img, w, h, curv) {
