@@ -345,37 +345,21 @@
                 timer = setTimeout(() => fn.apply(context, args), delay);
             };
         }
-                      function switchTab(tabElement, tabName, pageNo) {
-          // Map tab <-> CategoryId
-          const nameToCat = { photos: 1, shapes: 2, icons: 3, 'my-images': 5, patterns: 4 };
-          const catToName = { 1: 'photos', 2: 'shapes', 3: 'icons', 5: 'my-images', 4: 'patterns' };
-
-          // Determine if this is an explicit tab switch (click) vs a search refresh
-          const explicitSwitch = !!tabElement || !!tabName;
-
-          // Figure out the effective tab name when none provided (search refresh)
-          let activePanelId = document.querySelector('.left_content.active')?.id || '';
-          let storedCat = Number($("#hdnActiveTab").val() || 0);
-          let inferredFromCat = storedCat ? (catToName[storedCat] || '') : '';
-
-          const effectiveTabName =
-            tabName && tabName.length
-              ? tabName
-              : (activePanelId || inferredFromCat || (window.currentTabName || 'photos'));
-
-          // Keep a sane current tab name (don’t blank it on search)
-          window.currentTabName = effectiveTabName;
-
-          // Paging
-          const recordPerPage = 20;
-          if (!pageNo || explicitSwitch) { // reset pager on explicit tab switch or fresh load
+                    function switchTab(tabElement, tabName, pageNo) {
+          currentTabName = tabName;         // remember active tab
+          const recordPerPage = 20;         // your page size
+          if (!pageNo) {                    // tab changed / fresh load -> reset pager
             elPage = 1;
             elWindowStart = 1;
           }
 
-          // Category from effective tab name, else hidden, else photos
-          let Categoryvalue = nameToCat[effectiveTabName] || storedCat || 1;
-          $("#hdnActiveTab").val(Categoryvalue);
+          // Map tab -> CategoryId
+          let Categoryvalue = 0;
+          if (tabName === 'shapes')      Categoryvalue = 2;
+          else if (tabName === 'icons')  Categoryvalue = 3;
+          else if (tabName === 'photos') Categoryvalue = 1;
+          else if (tabName === 'my-images') Categoryvalue = 5;
+          else if (tabName === 'patterns')  Categoryvalue = 4;
 
           const dataSlide = {
             CategoryId: Number(Categoryvalue) || 0,
@@ -395,8 +379,8 @@
             success: function (slideResult) {
               console.log("slideResult", slideResult);
 
-              // choose container by category
-              const targetIdMap = { 1: "#photoList", 2: "#shapesList", 3: "#iconList", 5: "#my-imagesList", 4: "#patternsList" };
+              // choose container
+              const targetIdMap = { 1: "#photoList", 2: "#shapesList", 3: "#iconList", 5: "#my-imagesList" };
               const catNum = Number(Categoryvalue);
               const $list = $(targetIdMap[catNum] || "#shapesList");
               if ($list.length === 0) { console.warn("Target list not found"); return; }
@@ -404,10 +388,12 @@
               // clear and render
               $list.empty();
 
+              // items array normalize
               const items = Array.isArray(slideResult)
                 ? slideResult
                 : (slideResult.list || slideResult.items || slideResult.data || slideResult.elementList || []);
 
+              // --- render thumbnails (your existing logic) ---
               const joinURL = (...parts) => parts
                 .filter(Boolean)
                 .map((p, i) => i === 0 ? String(p).replace(/\/+$/,'') : String(p).replace(/^\/+|\/+$/g,''))
@@ -418,7 +404,7 @@
 
               (items || []).forEach(it => {
                 const fileThumb = it.imageNameThumb || "";
-                const fileFull  = it.ImageNameThumb || fileThumb;
+                const fileFull  = it.imageNameThumb || fileThumb;
                 if (!fileThumb) return;
 
                 const srcThumb = joinURL(baseURL, elementPath, encodeURIComponent(fileThumb));
@@ -446,28 +432,28 @@
                 $list[0].appendChild(frag);
               }
 
-              // total pages
+              // --- compute total pages from server response ---
+              // Prefer slideResult.totalPages; else compute from totalCount if provided
               if (slideResult && Number(slideResult.totalPages) > 0) {
                 elTotalPages = Number(slideResult.totalPages);
               } else if (slideResult && Number(slideResult.totalCount) >= 0) {
                 elTotalPages = Math.max(1, Math.ceil(Number(slideResult.totalCount) / recordPerPage));
               } else {
+                // Fallback: if no totals provided, infer minimal
                 elTotalPages = Math.max(elPage, (items && items.length === recordPerPage) ? elPage + 1 : elPage);
               }
 
+              // update current page and re-render pager
               elPage = dataSlide.pageNo;
               renderPagination();
 
-              // ✨ Only change tab UI on explicit tab switch.
-              if (explicitSwitch) {
-                const tabs = document.querySelectorAll(".tab");
-                const contents = document.querySelectorAll(".left_content");
-                tabs.forEach((tab) => tab.classList.remove("active"));
-                try { tabElement && tabElement.classList.add("active"); } catch (ex) {}
-                contents.forEach((content) => content.classList.remove("active"));
-                document.getElementById(effectiveTabName)?.classList.add("active");
-              }
-              // On search refresh, leave the already-active panel as-is (visible).
+              // tab UI (as you had)
+              const tabs = document.querySelectorAll(".tab");
+              const contents = document.querySelectorAll(".left_content");
+              tabs.forEach((tab) => tab.classList.remove("active"));
+              try { tabElement && tabElement.classList.add("active"); } catch (ex) {}
+              contents.forEach((content) => content.classList.remove("active"));
+              document.getElementById(tabName)?.classList.add("active");
             },
             error: function (data) {
               console.log("error in saving slide " + (slide?.slideSeq), data);
@@ -475,6 +461,7 @@
             }
           });
         }
+
 
 
 
