@@ -213,24 +213,56 @@ function SaveDesignBoard() {
         HideLoader();
     }
 }
+function waitForBoxImage(box) {
+    // box missing, not an image box, or no actual image element → nothing to wait for
+    const img = box && box.img;
+    if (!(img instanceof HTMLImageElement)) return Promise.resolve();
+
+    // already loaded & valid pixels?
+    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+
+    // modern: try decode(); falls back to load/error listeners
+    if (typeof img.decode === 'function') {
+        return img.decode().catch(() => { });  // treat decode error as non-fatal
+    }
+
+    return new Promise(resolve => {
+        const done = () => {
+            img.removeEventListener('load', done);
+            img.removeEventListener('error', done);
+            resolve();
+        };
+        img.addEventListener('load', done, { once: true });
+        img.addEventListener('error', done, { once: true });
+    });
+}
+
 async function captureSlide(activeSlide, slideResult) {
     const canvas = document.getElementById("myCanvas");
     const ctx = canvas.getContext("2d");
-    // 1) Update your canvas one last time:
-    // drawCanvas("Common");
+
+    // 1) Wait for fonts and images used by boxes (safer to wait BEFORE drawing)
+    const imgList = Array.isArray(images) ? images : [];
+    await Promise.all([
+        (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve(),
+        ...imgList.map(waitForBoxImage)
+    ]);
+
+    // 2) Now render once with everything loaded
     drawText();
     // 2) Wait for any <img> or <svg> in the DOM to be fully loaded:
     const imgs = images;//Array.from(document.querySelectorAll("img, svg"));
     await Promise.all(imgs.map(el => {
-        if (el.img.complete) return Promise.resolve();
+        const img = el?.img;
+        if (!(img instanceof HTMLImageElement)) return Promise.resolve();
+        if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+        if (typeof img.decode === 'function') return img.decode().catch(() => { });
         return new Promise(res => {
-            el.onload = () => res();
-            el.onerror = () => {
-                console.warn("Image failed to load before capture:", el.src);
-                res();
-            };
+            img.addEventListener('load', res, { once: true });
+            img.addEventListener('error', res, { once: true });
         });
     }));
+
 
     // 3) Wait for the next paint so the drawCanvas changes actually hit the GPU/composite:
     await new Promise(requestAnimationFrame);
@@ -557,7 +589,9 @@ function saveCanvasData() {
                 fillNoColor: img.fillNoColor,//$("#hdnfillColor").val(),
                 strokeNoColor: img.strokeNoColor, //$("#hdnStrockColor").val(),
                 strokeWidth: parseInt(document.getElementById('ddlStrokeWidth')?.value, 10) || 3,
-                isBasic: img.isBasic
+                isBasic: img.isBasic,
+                isLINESvg: img.isLINESvg,
+                __capsOrientation: img.__capsOrientation
             };
         })
     };
@@ -1085,6 +1119,166 @@ async function loadCanvasFromJsonOLD(jsonData, condition = 'Common') {
     drawText();
 }
 async function loadCanvasFromJson(jsonData, condition = 'Common') {
+    await ensureFontsInitialized?.();
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    currentCondition = condition;
+
+    if (!jsonData) {
+        await document.fonts.ready;
+        drawText();
+        return;
+    }
+
+    const data = (typeof jsonData === "string") ? JSON.parse(jsonData) : jsonData;
+
+    // canvas size in design pixels
+    const W = canvas.width || 0;
+    const H = canvas.height || 0;
+
+    // unit -> px for TEXT only (keep your convenience here)
+    function unitToPxLocal(v, dim, FRACTION_THRESHOLD = 5) {
+        if (typeof v === 'string') {
+            const s = v.trim().toLowerCase();
+            if (s.endsWith('%')) return (parseFloat(s) / 100) * dim;
+            if (s.endsWith('px')) return parseFloat(s);
+            const n = Number(s);
+            if (Number.isFinite(n)) v = n; else return 0;
+        }
+        const n = Number(v);
+        if (!Number.isFinite(n)) return 0;
+        return (Math.abs(n) <= FRACTION_THRESHOLD) ? (n * dim) : n;
+    }
+
+    const fileName = (src) => {
+        try { return new URL(String(src), location.href).pathname.split('/').pop()?.toLowerCase() || ""; }
+        catch { return String(src).split(/[?#]/)[0].split('/').pop()?.toLowerCase() || ""; }
+    };
+
+    const isLineBasicBySrc = (im) => {
+        if (!im?.isBasic) return false;
+        const n = fileName(im.src);
+        return n === 'ico-shapes-line.svg' || n === 'ico-shapes-line';
+    };
+
+    // background
+    const bg = data.canvasBgColor || '#ffffff';
+    const bgEl = document.getElementById('hdnBackgroundSpecificColor');
+    if (bgEl) bgEl.value = bg;
+    canvas.style.backgroundColor = bg;
+
+    const bgPromise = data.canvasBgImage
+        ? new Promise(resolve => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => { canvas._bgImg = img; resolve(); };
+            img.onerror = () => { canvas._bgImg = null; resolve(); };
+            img.src = data.canvasBgImage;
+        })
+        : Promise.resolve(canvas._bgImg = null);
+
+    // TEXT
+    const padding = 5;
+    textObjects = (data.text || []).map(t => {
+        const wPx = unitToPxLocal(t.width ?? t.boundingWidth ?? 0.2, W);
+        const hPx = unitToPxLocal(t.height ?? t.boundingHeight ?? 0, H);
+
+        const fontPx = t.fontSize;
+        const lineH = (fontPx ? fontPx * (t.lineSpacing || 1.2) : 18);
+        const linesArr = String(t.text ?? "").split("\n");
+        const hasManual = linesArr.length > 1;
+        const neededH = hasManual ? (linesArr.length * lineH + 2 * padding) : (hPx || 0);
+
+        const finalW = Math.max(10, Number.isFinite(wPx) ? wPx : 50);
+        const finalH = Math.max(10, Number.isFinite(neededH) ? neededH : 30);
+
+        let xPx = unitToPxLocal(t.x ?? 0, W);
+        let yPx = unitToPxLocal(t.y ?? 0, H);
+
+        // keep the text inside on load (text is usually not meant to overflow)
+        if (xPx + finalW + padding > W) xPx = Math.max(0, W - finalW - padding);
+        if (yPx + finalH + padding > H) yPx = Math.max(0, H - finalH - padding);
+        if (xPx < 0) xPx = 0;
+        if (yPx < 0) yPx = 0;
+
+        return {
+            type: t.type || 'text',
+            text: t.text || "",
+            x: xPx, y: yPx,
+            width: finalW, height: finalH,
+            boundingWidth: finalW, boundingHeight: finalH,
+            align: t.align || t.textAlign || "left",
+            fontSize: t.fontSize, fontFamily: t.fontFamily, textColor: t.textColor,
+            opacity: (t.opacity ?? 100),
+            lineSpacing: (typeof t.lineSpacing === 'number') ? t.lineSpacing : 1.2,
+            noAnim: !!t.noAnim, groupId: t.groupId ?? null, rotation: t.rotation || 0,
+            isBold: !!t.isBold, isItalic: !!t.isItalic,
+            zIndex: (typeof t.zIndex === "number") ? t.zIndex : 0,
+            selected: false, _hasManualBreaks: hasManual
+        };
+    });
+
+    // IMAGES — ALWAYS normalized -> px, and **no clamp on load**
+    const imagesInput = data.images || [];
+    const imagePromises = imagesInput.map(imgObj => new Promise(resolve => {
+        if (!imgObj?.src) return resolve({ ok: false, img: null });
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve({ ok: true, img });
+        img.onerror = () => resolve({ ok: false, img: null });
+        img.src = imgObj.src;
+    }));
+    const loaded = await Promise.all(imagePromises);
+
+    images = imagesInput.map((im, i) => {
+        const entry = loaded[i];
+        const img = entry && entry.ok ? entry.img : null;
+
+        // 🔒 Interpret numbers as normalized fractions of the canvas
+        let x = (Number(im.x) || 0) * W;
+        let y = (Number(im.y) || 0) * H;
+        let width = Math.max(1, (Number(im.width) || 0.2) * W);
+        let height = Math.max(1, (Number(im.height) || 0.2) * H);
+
+        if (isLineBasicBySrc(im)) height = 1;
+
+        const box = {
+            type: im.type || 'image',
+            src: im.src,
+            img,
+            x, y, width, height,
+            scaleX: 1, scaleY: 1,
+            opacity: (typeof im.opacity === 'number') ? im.opacity : 100,
+            noAnim: !!im.noAnim, groupId: im.groupId ?? null, rotation: im.rotation || 0,
+            zIndex: (typeof im.zIndex === "number") ? im.zIndex : 0,
+            selected: false,
+            fillNoColorStatus: !!im.fillNoColorStatus,
+            strokeNoColorStatus: !!im.strokeNoColorStatus,
+            fillNoColor: im.fillNoColor || "#FFFFFF",
+            strokeNoColor: im.strokeNoColor || "#FFFFFF",
+            strokeWidth: im.strokeWidth || 3,
+            isBasic: im.isBasic ?? false,
+            isLINESvg: im.isLINESvg ?? false,
+            __capsOrientation: im.__capsOrientation ?? 'horizontal'
+        };
+
+        // ⛔️ NO clamp here — preserve exact saved layout (even if it overflows)
+        return box;
+    });
+
+    // fonts
+    const fontPromises = textObjects.map(o => {
+        if (!o.fontSize || !o.fontFamily) return Promise.resolve();
+        return document.fonts.load(`${o.fontSize}px ${o.fontFamily}`);
+    });
+
+    await Promise.allSettled([bgPromise, ...fontPromises, document.fonts.ready]);
+
+    drawText();
+}
+
+
+async function loadCanvasFromJson_06_09(jsonData, condition = 'Common') {
     await ensureFontsInitialized?.();
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
