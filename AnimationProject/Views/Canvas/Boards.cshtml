@@ -304,17 +304,17 @@
 
                                                 <div class="d-flex gap-4 mb-1">
                                                     <span><strong>Created</strong> <span style="margin-left: 23.1px;">:</span> </span>
-                                                    <span class="ms-2">28 May 2025</span>
+                                                        <span class="ms-2">@item.CreatedAtStr</span>
                                                 </div>
 
                                                 <div class="d-flex gap-4 mb-1">
                                                     <span><strong>Modified</strong> <span style="margin-left: 18px;">:</span> </span>
-                                                    <span class="ms-2">29 May 2025</span>
+                                                        <span class="ms-2">@item.updatedAtStr</span>
                                                 </div>
 
                                                 <div class="d-flex gap-4 mb-1">
                                                     <span><strong>Expiration</strong> <span style="margin-left: 9px;">:</span> </span>
-                                                    <span class="ms-2 text-danger">28 May 2026</span>
+                                                        <span class="ms-2 text-danger">@item.expirationStr</span>
                                                 </div>
                                             </div>
 
@@ -323,7 +323,7 @@
                                                 <span><strong>Link</strong></span>
                                                 <span style="margin-left: 51px;">:</span>
                                                 <div class="input-group link_board">
-                                                    <input type="text" class="form-control form-control-sm link-form" value="https://aniboard.com/v20560" readonly>
+                                                        <input type="text" class="form-control form-control-sm link-form" value="@item.DesignBoardURL" readonly>
                                                     <button class="btn copy-button" type="button">
                                                         <i class="fa-regular fa-copy"></i>
                                                     </button>
