@@ -5664,8 +5664,10 @@ canvas.addEventListener("click", function onCanvasClick(e) {
         
     }
     else {
-        document.getElementById("divFillColor").style.display = 'block';
-        document.getElementById("divStrokeCheck").style.display = 'block';
+        if (activeImage != null) {
+            document.getElementById("divFillColor").style.display = 'block';
+            document.getElementById("divStrokeCheck").style.display = 'block';
+        }
     }
 });
 function applyImagePaintToUI(imgHit) {
