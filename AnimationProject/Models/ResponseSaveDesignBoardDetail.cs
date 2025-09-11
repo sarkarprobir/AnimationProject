@@ -39,6 +39,10 @@ namespace AnimationProject.Models
         public Guid DesignBoardId { get; set; }
         public string DesignBoardName { get; set; }
         public string SlideType { get; set; }
+        public string DesignBoardURL { get; set; }
+        public string CreatedAtStr { get; set; }
+        public string updatedAtStr { get; set; }
+        public string expirationStr { get; set; }
         public List<DesignBoardDetailsList> DesignBoardDetailsList { get; set; }
     }
     public class ResponseGetDesignBoardById
