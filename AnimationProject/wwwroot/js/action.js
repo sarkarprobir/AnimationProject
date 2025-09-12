@@ -2224,8 +2224,10 @@ function getCompanyIdFromUrl() {
     //return segments.length ? segments[segments.length - 1] : null;
 }
 // Chunked uploader (replaces single-POST version)
-async function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
-    const chunkSize = 8 * 1024 * 1024; // 8MB chunks (tune as needed)
+// Chunked uploader with small chunks to avoid NGINX 413
+async function uploadLargeVideo(blob, existingFolderId = 'new') {
+    // Keep chunks safely under nginx default (1m). 512 KB is conservative.
+    const chunkSize = 512 * 1024; // 512 KB
     const fileId =
         (crypto && crypto.randomUUID) ? crypto.randomUUID()
             : `vid_${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -2263,8 +2265,8 @@ async function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1
             catch (e) {
                 lastErr = e;
                 const msg = String(e?.message || '');
-                if (/HTTP 404|HTTP 405/i.test(msg)) continue; // try next endpoint style
-                throw e; // real error
+                if (/HTTP 404|HTTP 405/i.test(msg)) continue; // try alternate route style
+                throw e;
             }
         }
         throw lastErr || new Error('No working chunk endpoint found.');
@@ -2285,8 +2287,7 @@ async function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1
     };
 
     try {
-        // optional UI
-        try { ShowLoader?.(); } catch { }
+        ShowLoader?.();
 
         // 1) Upload chunks
         for (let index = 0; index < total; index++) {
@@ -2303,15 +2304,15 @@ async function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1
 
             await sendChunk(fd);
 
-            // (optional) progress hook
-            // updateProgress?.(Math.round(((index+1)/total) * 100));
+            // optional: progress
+            // updateProgress?.(Math.round(((index + 1) / total) * 100));
         }
 
-        // 2) Finalize (stitch server-side)
+        // 2) Finalize (server stitches parts)
         const data = await finalizeOnServer({ fileId, folderId: existingFolderId });
         console.log('large Video saved successfully:', data);
 
-        // 3) Persist path in DB, then publish + close panel (keeps your existing flow)
+        // 3) Save path → publish → close
         const dataVideoPath = {
             DesignBoardId: $("#hdnDesignBoardId").val(),
             VideoPath: data.filePath
@@ -2327,14 +2328,15 @@ async function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1
         SaveDesignBoardInPublishTable();
         hideDownloadPanel();
 
-        return data.filePath; // for callers that want the URL
+        return data.filePath;
     } catch (error) {
         console.error('Error saving video (chunked):', error);
         throw error;
     } finally {
-        try { HideLoader?.(); } catch { }
+        HideLoader?.();
     }
 }
+
 
 function uploadLargeVideoOLD(blob, existingFolderId = 'new', currentIndex = 1) {
     const formData = new FormData();
