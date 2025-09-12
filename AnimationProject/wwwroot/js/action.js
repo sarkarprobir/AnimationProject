@@ -326,8 +326,8 @@ async function captureSlide(activeSlide, slideResult) {
 function RedirectToVerticalPageWithQueryString() {
     // Get the GUID from the hidden field
     var boardId = $("#hdnDesignBoardId").val();
-    HideLoader();
     window.location = `${baseURL}Canvas/VerticalIndex?id=${boardId}`;
+    HideLoader();
 }
 
 function saveCurrentSlide() {
@@ -2325,15 +2325,16 @@ async function uploadLargeVideo(blob, existingFolderId = 'new') {
             data: dataVideoPath
         });
 
-        SaveDesignBoardInPublishTable();
+       await SaveDesignBoardInPublishTable();
         hideDownloadPanel();
 
         return data.filePath;
     } catch (error) {
+        HideLoader?.();
         console.error('Error saving video (chunked):', error);
         throw error;
     } finally {
-        HideLoader?.();
+      //  HideLoader?.();
     }
 }
 
