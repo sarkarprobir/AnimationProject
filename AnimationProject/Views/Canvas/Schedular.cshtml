@@ -1,188 +1,12 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+﻿
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 @* google fonts *@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap" rel="stylesheet">
-<style>
-    body {
-        background-color: #fff;
-        font-family: "Nunito Sans", sans-serif;
-    }
+<link href="~/css/canvasInner.css" rel="stylesheet" />
 
-    p {
-        font-size: 15px;
-    }
-
-    .acc_cont {
-        margin-top: 3.5rem;
-        margin-bottom: 5.5rem;
-        padding-left: 86px !important;
-        padding-right: 86px !important;
-    }
-
-    .account {
-        color: white;
-        margin-bottom: 0;
-        font-size: 14px;
-        text-decoration: none;
-        cursor: pointer;
-    }
-
-    .header {
-        background-color: black;
-        padding: 10px 20px;
-    }
-
-    .heading_acc {
-        font-weight: 800;
-    }
-
-    .acc_input {
-        border: none !important;
-        padding-left: 0 !important;
-    }
-
-    .acc_btn {
-        border-radius: 0 !important;
-        width: 250px;
-        font-weight: 600 !important;
-        border: 2px solid #6666668c !important;
-    }
-
-    tr {
-        border-color: transparent !important;
-    }
-
-    .dropdown-menu.show {
-        background: #fff;
-        border-radius: 1rem;
-        border: 0px;
-        height: auto !important;
-        width: 240px;
-        -webkit-box-shadow: 0px 0px 7px #c1bbbb;
-        box-shadow: 0px 0px 7px #c1bbbb;
-        overflow: hidden !important;
-    }
-
-    .dropdown {
-        color: #000000 !important;
-    }
-
-
-
-
-    .dropdown-item:hover {
-        color: #fff !important;
-        background-color: #6214fe !important;
-    }
-
-    .nav-item .dropdown-item:hover {
-        background-color: #6214fe !important;
-    }
-
-    .profile {
-        color: #fff !important;
-        background-color: #6214fe !important;
-        width: 47px;
-        height: 47px;
-        font-size: 17px !important;
-        font-weight: 600 !important;
-    }
-
-    .acc_list:hover {
-        background-color: #2f2893 !important;
-    }
-
-    .my-button {
-        border-radius: 0 !important;
-        height: 47px;
-        width: 220px;
-        font-size: 15px !important;
-        font-weight: 600 !important;
-    }
-
-        .my-button:hover {
-            background-color: #000000 !important;
-            color: #fff !important;
-        }
-
-    .create_button {
-        background-color: #6214fe !important;
-        border-color: transparent !important;
-    }
-
-    .browse_button {
-        color: black !important;
-        background-color: #d4d3e1 !important;
-        border-color: transparent !important;
-    }
-
-    input::placeholder {
-        color: grey !important;
-        font-weight: 600 !important;
-        font-size: 15px !important;
-    }
-
-    .nav_active {
-        color: #3cbeee;
-    }
-
-    .schedule-table td, .schedule-table th {
-        text-align: center;
-        vertical-align: middle;
-        border: 1px solid #ccc !important;
-        padding: 4px;
-    }
-
-    .img-thumbnail {
-        max-height: 50px;
-        padding: 0 !important;
-        border: none !important;
-        border-radius: 0 !important;
-    }
-
-    .tv_button {
-        border: 2.3px solid black;
-        font-size: 13px;
-        padding: 3px 10px;
-        height: 32px;
-    }
-
-    .verticval_button {
-        width: 35px;
-        height: 60px;
-        padding: 0;
-    }
-
-    .selected-tv {
-        background-color: #6214fe;
-        color: #fff;
-    }
-
-    .vertical-aniboards img {
-        height: 200px;
-        margin: 10px;
-    }
-    /* table styles */
-    .table > :not(caption) > * > *{
-        padding: .15rem .15rem !important;
-    }
-
-    .schedule-table {
-        font-size: 14px;
-    }
-
-    .tv_links {
-        font-size: 22px;
-        font-weight: 600;
-    }
-</style>
 
 <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
       rel="stylesheet">
@@ -199,14 +23,7 @@
 <script src="~/js/wow.min.js"></script>
 
 
-
-@* <div class="header d-flex align-items-center"> *@
-@*     <p class="account">My Account</p> *@
-@*     <div class="icons ms-auto"> *@
-@*         <i class="fa-brands fa-square-youtube"></i> *@
-@*         <i class="fa-solid fa-download"></i> *@
-@*     </div> *@
-@* </div> *@
+<div class="schedular">
 <nav class="navbar bg-dark-topnav navbar-expand-lg fixed-top">
     <div class="container-fluid p-r-0" style="justify-content: center !important;">
         <div class="row">
@@ -217,7 +34,7 @@
                 <a class="account" asp-controller="Canvas" asp-action="Account">Account</a>
                 <a class="account" asp-controller="Canvas" asp-action="Boards">Boards</a>
                 <a class="account nav_active">TV/Screens</a>
-                <a class="account">Billing</a>
+                <a class="account" asp-controller="Canvas" asp-action="Billing">Billing</a>
             </div>
 
 
@@ -236,23 +53,23 @@
                                 </a>
                             </li>
                             <li class="w-100 acc_list">
-                                <a class="dropdown-item d-flex align-items-center text-white" href="/change-password">
+                                <a class="dropdown-item d-flex align-items-center text-white" asp-controller="Canvas" asp-action="Boards">
                                     Boards
                                 </a>
                             </li>
 
                             <li class="w-100 acc_list">
-                                <a class="dropdown-item d-flex align-items-center text-white" href="/logout">
+                                <a class="dropdown-item d-flex align-items-center text-white" asp-controller="Canvas" asp-action="Schedular">
                                     TV/Screens
                                 </a>
                             </li>
                             <li class="w-100 acc_list">
-                                <a class="dropdown-item d-flex align-items-center text-white" href="/logout">
+                                <a class="dropdown-item d-flex align-items-center text-white" asp-controller="Canvas" asp-action="Billing">
                                     Billing
                                 </a>
                             </li>
                             <li class="w-100 acc_list">
-                                <a class="dropdown-item d-flex align-items-center text-white" href="/logout">
+                                <a class="dropdown-item d-flex align-items-center text-white" asp-controller="Canvas" asp-action="Login">
                                     Sign Out
                                 </a>
                             </li>
@@ -268,13 +85,13 @@
 
 
 
-<div class="container  acc_cont">
+<div class="container">
     <div class="mt-5">
         <div class="d-flex justify-content-between align-items-center mb-5">
             <h2 class="heading_acc">TV / Screen</h2>
             <div class="d-flex gap-3">
                 <button class="btn btn-primary my-button create_button b_rad4" data-bs-toggle="modal" data-bs-target="#exampleModal">+ Create New Aniboard</button>
-                <button class="btn btn-secondary my-button browse_button b_rad4">Browse The Template</button>
+                <a href="/Canvas/Templates" class="d-flex justify-content-center align-items-center btn btn-secondary my-button browse_button b_rad4">Browse The Template</a>
             </div>
         </div>
 
@@ -284,18 +101,23 @@
             <button class="tv_button b_rad4">TV1</button>
             <button class="tv_button b_rad4">TV2</button>
             <button class="tv_button b_rad4">TV3</button>
+            <button class="tv_button b_rad4">TV4</button>
             <button class="tv_button verticval_button selected-tv b_rad4">TV1</button>
             <button class="tv_button verticval_button b_rad4">TV2</button>
             <button class="tv_button verticval_button b_rad4">TV3</button>
-            <span class="ms-2">&#9432;</span>
+            <button class="tv_button verticval_button b_rad4">TV4</button>
+            <button class="ms-2 board_schedule_info" id="info_TV_btn"><img src="~/images/icons/info.png" alt="Alternate Text" /></button>
+
         </div>
 
 
         <!-- Link -->
-        <p class="tv_links">https://aniboard.com/b1209</p>
-
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <p class="tv_links"><span class="tv_links_title">Vertical TV1: </span><span class="link_fortv">https://aniboard.com/b1209</span></p>
+            <button onclick="copyLink(this)" class="link_copy_btn"><i class="fa-regular fa-copy"></i></button>
+        </div>
         <div class="row">
-            <div class="col-md-9">
+            <div class="col-md-8">
                 <!-- Schedule Table -->
                 <table class="table table-bordered schedule-table">
                     <thead>
@@ -446,7 +268,7 @@
                         </tr>
                         <!-- Example static row -->
                         <tr>
-                            <td>06 AM <br />07 AM</td>
+                            <td>05 AM <br />06 AM</td>
                             <td></td>
                             <td></td>
                             <td></td>
@@ -459,7 +281,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <h6><strong>Vertical Aniboards</strong></h6>
                 <div class="vertical-aniboards d-flex  flex-wrap justify-content-start">
                     <img src="~/images/Vertical-Menuboard.png" class="img-fluid">
@@ -468,15 +290,49 @@
                 </div>
             </div>
         </div>
-
-       
     </div>
 
-    
+</div>
+    <div id="info_TV" class="info_container">
+        <h5 class="info-head">How to set up TV/Screen</h5>
+        <div>
+            <div class="step_name">Step 1</div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="tv">TV1</div>
+                <img class="ms-auto" width="40" height="25" src="~/images/icons/right-arrow.png" alt="Alternate Text" />
+                <div class="page_box d-flex">
+                    <p>Your TV/Screen</p>
+                </div>
+            </div>
+        </div>
+        <div>
+            <div class="step_name">Step 2</div>
+            <p class="tv_link_info">https://aniboard.com/b1209</p>
+            <div class="d-flex gap-3">
+                <p>Permanent Link <br /> for TV <br /> Type the URL into <br /> the TV Browser <br /> and Bookmark it.</p>
+                <img class="ms-auto mt-3" width="40" height="25" src="~/images/icons/right-arrow.png" alt="Alternate Text" />
+                <div class="page_box">
+                    <p class="link-on-tv">https://aniboard.com/b1209</p>
+                </div>
+            </div>
+        </div>
+        <div>
+            <div class="step_name">Step 3</div>
+            <div class="d-flex gap-3">
+                <div class="tv">TV1</div>
+                <img class="ms-auto mt-1" width="30" height="25" src="~/images/icons/left-arrow.png" alt="Alternate Text" />
+                <img width="60" height="37" src="~/images/laptop.png" alt="Alternate Text" />
+                <div class="page_box_noborder d-flex">
+                    <div>
+                        <p>Add aniboard or change any <br/> aniboard to this Container.</p>
+                        <p>No need to change TV browser link.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        
     </div>
-
+</div>
 
 <!-- Modal Structure -->
 <div class="modal fade layout_modal" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -493,18 +349,23 @@
                         <div class="portrait-icon"></div>
                         <span class="vertical_option">Vertical / Portrait</span>
                     </div>
-                    <span>1080x1920</span>
+                    <div class="d-flex align-items-center gap-3">
+                        <span>1080x1920</span>
+                        <span class="checkmark"></span>
+                    </div>
                 </div>
+
                 <!-- Horizontal Option -->
                 <div class="option-box d-flex justify-content-between align-items-center" id="horizontal-option">
                     <div class="d-flex align-items-center">
                         <div class="landscape-icon"></div>
                         <span>Horizontal / Landscape</span>
                     </div>
-                    <span>1920x1080</span>
+                    <div class="d-flex align-items-center gap-3">
+                        <span>1920x1080</span>
+                        <span class="checkmark"></span>
+                    </div>
                 </div>
-
-
             </div>
 
             <div class="modal-footer pt-0">
@@ -525,4 +386,112 @@
             button.classList.add('selected-tv');
           });
         });
+</script>
+
+<script>
+    // JavaScript for Handling Selection and Redirection
+
+    let selectedOption = ""; // Variable to store the selected board type
+
+    document.getElementById("horizontal-option").addEventListener("click", function () {
+        selectedOption = "horizontal";
+        highlightSelection("horizontal-option");
+    });
+
+    document.getElementById("vertical-option").addEventListener("click", function () {
+        selectedOption = "vertical";
+        highlightSelection("vertical-option");
+    });
+
+    document.getElementById("create-button").addEventListener("click", function () {
+        if (selectedOption === "horizontal") {
+            window.location.href = "/Canvas/HorizontalIndex"; // Redirect to horizontal page
+        } else if (selectedOption === "vertical") {
+            window.location.href = "/Canvas/VerticalIndex"; // Redirect to vertical page
+        } else {
+            // alert("Please select an option before proceeding!");
+            MessageShow('', 'Please select an option before proceeding!', 'error');
+        }
+    });
+
+    // Function to highlight selected option
+    function highlightSelection(selectedId) {
+        document.getElementById("horizontal-option").classList.remove("selected");
+        document.getElementById("vertical-option").classList.remove("selected");
+        document.getElementById(selectedId).classList.add("selected");
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.panel-vertical-scroll .menuboard-vertical-thum')
+            .forEach(item => {
+                item.addEventListener('click', function () {
+                    this.classList.toggle('active');
+                });
+            });
+    });
+
+    //info section script
+    function setupToggle(buttonId, divId) {
+      const btn = document.getElementById(buttonId);
+      const box = document.getElementById(divId);
+
+      // Toggle on button click
+      btn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        box.style.display =
+          box.style.display === "none" || box.style.display === ""
+            ? "block"
+            : "none";
+      });
+
+      // Hide when clicking outside
+      document.addEventListener("click", (event) => {
+        if (
+          box.style.display === "block" &&
+          !box.contains(event.target) &&
+          event.target !== btn
+        ) {
+          box.style.display = "none";
+        }
+      });
+    }
+
+    setupToggle("info_TV_btn", "info_TV");
+
+    //link copy functionality
+    function copyLink(button) {
+        const linkText = document.querySelector('.link_fortv').innerText.trim();
+
+        navigator.clipboard.writeText(linkText).then(() => {
+            // Change icon to check
+            const icon = button.querySelector('i');
+            const originalClass = icon.className;
+
+            icon.className = 'fa-solid fa-check'; // show check icon
+
+
+            // Revert after 1 second
+            setTimeout(() => {
+                icon.className = originalClass;
+            }, 1000);
+        });
+    }
+
+    const tvButtons = document.querySelectorAll(".tv_button");
+    const tvTitle = document.querySelector(".tv_links_title");
+    const tvLink = document.querySelector(".link_fortv");
+
+    tvButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const isVertical = btn.classList.contains("verticval_button");
+
+        // Get TV name
+        const tvName = btn.textContent.trim();
+        const group = isVertical ? "Vertical" : "Horizontal";
+
+        //change the title text
+        tvTitle.textContent = `${group} ${tvName}: `;
+      });
+    });
+
 </script>

@@ -1,0 +1,88 @@
+﻿/* Reset default styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Full height and center content */
+body, html {
+    height: 100%;
+    background-color: #fff;
+    font-family: "Nunito Sans", sans-serif;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.login-box {
+    text-align: center;
+    width: 375px;
+}
+
+.logo {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-family: "Montserrat", sans-serif;
+}
+
+.subtitle {
+    font-size: 0.9rem;
+    color: #333;
+    margin-bottom: 25px;
+}
+
+.input {
+    display: block;
+    width: 100%;
+    padding: 7px 16px;
+    margin-bottom: 10px;
+    border: none;
+    background-color: #e5ebed;
+    font-size: 1rem;
+    border-radius: 0;
+}
+
+.btn {
+    width: 100%;
+    padding: 8px 10px;
+    background-color: #6214fe;
+    color: #fff;
+    font-size: 1rem;
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+}
+
+    .btn:hover {
+        background-color: #000;
+        color: #fff !important;
+    }
+/*modal design*/
+.saving_modal {
+    height: fit-content !important;
+    border-radius: 5px !important;
+}
+
+.user-editable-modal .modal.fade .modal-dialog {
+    transform: translate(0, -175px) !important;
+    width: 18rem;
+}
+
+.ok_button {
+    background-color: #6214fe !important;
+}
+
+.btn-save {
+    color: #fff;
+    background-color: #6214fe;
+    border-color: transparent;
+    width: 80px;
+    border-radius: 5px;
+    font-size: 14px;
+}

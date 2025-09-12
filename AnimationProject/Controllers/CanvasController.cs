@@ -83,6 +83,10 @@ namespace AnimationProject.Controllers
         {
             return View();
         }
+        public IActionResult Landing()
+        {
+            return View();
+        }
         public IActionResult Templates()
         {
             return View();
@@ -103,9 +107,14 @@ namespace AnimationProject.Controllers
         {
             return View();
         }
-        public IActionResult Screen(int companyId)
+        public IActionResult About()
         {
-            return View(companyId);
+            return View();
+        }
+
+        public IActionResult Billing()
+        {
+            return View();
         }
         [HttpPost]
         public IActionResult CreateHeaderSectionhtml()
@@ -127,7 +136,11 @@ namespace AnimationProject.Controllers
         {
             return PartialView("_PartialBackgroundSection");
         }
-        
+        [HttpPost]
+        public IActionResult CreateLayoutModalSectionhtml()
+        {
+            return PartialView("_PartialLayoutSection");
+        }
         [HttpPost]
         public IActionResult CreateLeftSectionhtml()
         {
@@ -151,7 +164,13 @@ namespace AnimationProject.Controllers
         {
             return PartialView("_PartialRightSection");
         }
-        
+        public IActionResult Screen(int companyId, int projectId)
+        {
+            ViewBag.CompanyId = companyId;
+            ViewBag.ProjectId = projectId;
+            return View();
+        }
+
         public async Task<IActionResult> BoardsNew()
         {
             //if (!_checkSession.IsSession()) return Ok("login");
@@ -408,6 +427,7 @@ namespace AnimationProject.Controllers
                 {
                     return Json("NO");
                 }
+                request.Type = "Direct";
                 var getDesignBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetLoadPlaylist", JsonConvert.SerializeObject(request), user.token);
                 response = JsonConvert.DeserializeObject<Response<List<ResponseGetPlayList>>>(getDesignBoard);
                 return Json(response.Data[0].VideoPath);
@@ -487,10 +507,11 @@ namespace AnimationProject.Controllers
             var response = new Response<ResponseSaveDesignBoardSlideDetailPublish>();
             try
             {
-               // request.DesignBoardId = Guid.Parse("3664686F-7007-401A-850C-24916D63BD7A");
+                // request.DesignBoardId = Guid.Parse("3664686F-7007-401A-850C-24916D63BD7A");
                 request.CustomerId = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
                 request.CompanyId = Guid.Parse("F174A15A-76B7-4E19-BE4B-4E240983DE55");
                 request.CreatedBy = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
+                request.CompanyUniqueId = 1;
                 var PublishDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/PublishDesignSlideBoard", JsonConvert.SerializeObject(request), user.token);
                 response = JsonConvert.DeserializeObject<Response<ResponseSaveDesignBoardSlideDetailPublish>>(PublishDesignSlideBoard);
                 return Json(response.Data);
@@ -503,21 +524,27 @@ namespace AnimationProject.Controllers
 
         }
         [HttpPost]
-        public async Task<IActionResult> GetResponseDesignBoardDetailsPublishById(RequestDesignBoardDetailsPublish request)
+        public async Task<IActionResult> GetAllElement(RequestGetEliment request)
         {
-            var response = new Response<List<ResponseDesignBoardDetailsPublish>>();
-           
+            //if (!_checkSession.IsSession()) return Ok("login");
+            var response = new Response<List<ResponseGetElimentDetails>>();
             try
             {
-                var ResponseDesignBoardJsonList = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetResponseDesignBoardDetailsPublishById", JsonConvert.SerializeObject(request), user.token);
-                response = JsonConvert.DeserializeObject<Response<List<ResponseDesignBoardDetailsPublish>>>(ResponseDesignBoardJsonList);
+                request.CompanyUniqueId = 0;
+                if(request.searchKeyword==null)
+                {
+                    request.searchKeyword = "";
+                }
+                var saveDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetElement", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<List<ResponseGetElimentDetails>>>(saveDesignSlideBoard);
                 return Json(response.Data);
             }
             catch (Exception ex)
             {
-                log.Info("***GetResponseDesignBoardDetailsPublishById*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                log.Info("***GetAllElement*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
                 return Json("NO");
             }
+
         }
         #endregion
     }

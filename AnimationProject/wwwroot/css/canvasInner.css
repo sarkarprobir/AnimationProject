@@ -1,0 +1,512 @@
+﻿body {
+    background-color: #fff;
+    font-family: "Nunito Sans", sans-serif;
+}
+
+p {
+    font-size: 15px;
+}
+
+.acc_cont {
+    /*    margin-top: 3.5rem;
+    margin-bottom: 5.5rem;*/
+    padding-left: 86px !important;
+    padding-right: 86px !important;
+}
+.pay_sub_cont {
+    padding-inline: 86px !important;
+    margin-block: 20px;
+
+}
+.account {
+    color: white;
+    margin-bottom: 0;
+    font-size: 14px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.header {
+    background-color: black;
+    padding: 10px 20px;
+}
+
+.heading_acc {
+    font-weight: 800;
+}
+
+.acc_input {
+    border: none !important;
+    padding-left: 0 !important;
+}
+
+.acc_btn {
+    border-radius: 0 !important;
+    width: 250px;
+    font-weight: 600 !important;
+    border: 2px solid #6666668c !important;
+}
+.sub_span {
+    font-size: 14px;
+}
+
+tr {
+    border-color: transparent !important;
+}
+
+.dropdown-menu.show {
+    background: #fff;
+    border-radius: 1rem;
+    border: 0px;
+    height: auto !important;
+    width: 240px;
+    -webkit-box-shadow: 0px 0px 7px #c1bbbb;
+    box-shadow: 0px 0px 7px #c1bbbb;
+    overflow: hidden !important;
+}
+
+.dropdown {
+    color: #000000 !important;
+}
+
+.dropdown-item:hover {
+    color: #fff !important;
+    background-color: #6214fe !important;
+}
+
+.nav-item .dropdown-item:hover {
+    background-color: #6214fe !important;
+}
+
+.profile {
+    color: #fff !important;
+    background-color: #6214fe !important;
+    width: 47px;
+    height: 47px;
+    font-size: 17px !important;
+    font-weight: 600 !important;
+}
+
+.acc_list:hover {
+    background-color: #2f2893 !important;
+}
+
+.my-button {
+    border-radius: 0 !important;
+    height: 47px;
+    width: 220px;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+}
+
+    .my-button:hover {
+        background-color: #000000 !important;
+        color: #fff !important;
+    }
+
+.create_button {
+    background-color: #6214fe !important;
+    border-color: transparent !important;
+}
+
+.browse_button {
+    color: black !important;
+    background-color: #d4d3e1 !important;
+    border-color: transparent !important;
+}
+
+input::placeholder {
+    color: grey !important;
+    font-weight: 600 !important;
+    font-size: 15px !important;
+}
+
+.nav_active {
+    color: #3cbeee;
+}
+
+.schedule-table td, .schedule-table th {
+    text-align: center;
+    vertical-align: middle;
+    border: 1px solid #ccc !important;
+    padding: 4px;
+}
+
+.img-thumbnail {
+    max-height: 50px;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+}
+
+.tv_button {
+    border: 2.3px solid black;
+    font-size: 13px;
+    padding: 0;
+    height: 40px;
+    width: 70px;
+}
+
+.verticval_button {
+    width: 45px;
+    height: 70px;
+    padding: 0;
+}
+.board_schedule_info {
+    border: none;
+    background-color: transparent;
+}
+.selected-tv {
+    background-color: #6214fe;
+    color: #fff;
+}
+
+.vertical-aniboards img {
+    height: 200px;
+    margin: 10px;
+}
+.schedular {
+    position: relative;
+}
+
+/*info container css*/
+#info_TV{
+    display: none;
+}
+
+.info_container {
+    position: absolute;
+    top: -45px;
+    right: 0;
+    background-color: #f0f0f0;
+    padding: 17px 25px;
+    height: 105%;
+}
+.step_name {
+    background-color: #000;
+    color: #fff;
+    font-size: 14px;
+    border-radius: 3px;
+    width: 58px;
+    padding: 4px 8px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+.info-head {
+    font-weight: 600;
+    margin-bottom: 25px;    
+}
+.tv {
+    border: 2.3px solid black;
+    font-size: 13px;
+    padding: 0;
+    height: 35px;
+    width: 56px;
+    background-color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 3px;
+}
+.page_box {
+    border: 4px solid #000;
+    text-align: center;
+    width: 200px;
+    height: 115px;
+    align-items: center;
+    justify-content: center;
+}
+.page_box_noborder {
+    width: 200px;
+    height: 115px;
+    align-items: center;
+    justify-content: center;
+}
+.tv_link_info {
+    font-size: 16px;
+    font-weight: 600;
+}
+.link-on-tv {
+    font-size: 13px;
+    border-bottom: 2px solid #000;
+    text-align: left;
+    padding-left: 3px;
+}
+@media (min-width: 1900px) {
+    .info_container {
+        padding: 26px 40px;
+        height: 110%;
+    }
+}
+/*info container css end*/
+/* table styles */
+.table > :not(caption) > * > * {
+    padding: .15rem .15rem !important;
+}
+
+.schedule-table {
+    font-size: 14px;
+}
+.link_copy_btn {
+    border: none;
+    background-color: transparent;
+}
+.tv_links {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 0;
+}
+.tv_links_title {
+    color: #959595;
+}
+/*modal check mark*/
+.option-box .checkmark {
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.option-box.selected .checkmark {
+    background-color: #6214fe;
+    border-color: #6214fe;
+}
+
+    .option-box.selected .checkmark::after {
+        content: '';
+        position: absolute;
+        top: 2.5px;
+        left: 6px;
+        width: 5px;
+        height: 10px;
+        border: solid #fff;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+/*modal check mark*/
+
+/*account*/
+/* logo image upload */
+.upload-box {
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    padding: 5px;
+    text-align: center;
+    background-color: #f9f9f9;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+    .upload-box:hover {
+        background-color: #f0f0f0;
+    }
+
+    .upload-box img {
+        max-width: 250px;
+        height: auto;
+        border-radius: 6px;
+    }
+
+#logoInput {
+    display: none;
+}
+
+.btn-upload:hover {
+    background-color: #333;
+}
+
+.upload-box.active {
+    border-color: #6214fe !important;
+}
+.Acc_modal {
+    background-color: rgba(36, 7, 136, 0.49);
+}
+.AccModal-content {
+    height: 335px !important;
+    width: 550px !important;
+    border-radius: 3px !important;
+    align-items: center;
+    justify-content: center;
+}
+.acc_modal_head {
+    color: #dc3545;
+    font-weight: 800;
+    margin-bottom: 18px;
+}
+.acc_modal_para {
+    font-size: 14px;
+    color: #000;
+    margin-bottom: 18px;
+}
+.acc_modal_btn{
+    width: max-content;
+    border-radius: 3px !important;
+    margin-inline: auto;
+    margin-bottom: 18px !important;
+}
+/*account end*/
+
+/*boards*/
+.board_hori {
+    width: 263px;
+    aspect-ratio: 16/9;
+}
+
+.board_button {
+    font-size: 14px;
+    text-decoration: none;
+    color: #000000;
+    cursor: pointer;
+}
+
+    .board_button:hover {
+        color: #6214fe;
+    }
+
+.board_verti {
+    width: 167px;
+    height: 299px;
+}
+
+.board_info_icon {
+    padding: 0px 5px;
+    border-radius: 3px;
+}
+
+    .board_info_icon.active {
+        background-color: #000;
+        color: #fff;
+    }
+
+    .board_info_icon:hover {
+        background-color: #000;
+        color: #fff;
+    }
+
+.board_info_btn {
+    font-size: 17px;
+    border: none;
+    box-shadow: none;
+    background-color: transparent;
+    position: absolute;
+    top: 5px;
+    right: 9px;
+}
+
+    .board_info_btn:hover {
+        color: red !important;
+    }
+
+.board_info_card {
+    width: 380px !important;
+    position: absolute !important;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 3px !important;
+    font-size: 14px;
+    border: none !important;
+    box-shadow: rgba(9, 30, 66, 0.25) 0px 4px 8px -2px, rgba(9, 30, 66, 0.08) 0px 0px 0px 1px;
+    background-color: #fff;
+    z-index: 999;
+    display: none;
+}
+
+    /* Optional: arrow pointing down to the icon */
+    .board_info_card::after {
+        content: "";
+        position: absolute;
+        bottom: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 8px;
+        border-style: solid;
+        border-color: white transparent transparent transparent;
+    }
+
+.link_board {
+    position: relative;
+    border-radius: 3px !important;
+    border: 1.5px solid lightgrey !important;
+    margin-left: 22px !important;
+}
+
+.link-form {
+    background-color: transparent !important;
+}
+
+.copy-button {
+    position: absolute !important;
+    top: 0;
+    right: 0;
+}
+
+.arrow_info {
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid #fff;
+}
+
+.board_name p {
+    margin-bottom: 0;
+}
+/*boards end*/
+
+/*billing*/
+.payment-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.payment-head {
+   
+}
+
+.payment-th {
+    padding: 14px 16px 30px 16px;
+    font-size: 14px;
+    font-weight: 800;
+    text-align: left;
+}
+
+.payment-row:nth-child(odd) {
+    background-color: #F2F2F2;
+}
+.payment-row:nth-child(even) {
+    background-color: #F8F9FA;
+}
+
+
+.payment-row:hover {
+    background-color: #dcdcdc;
+    cursor: pointer;
+}
+
+.payment-td {
+    padding: 14px 16px;
+    font-size: 14px;
+    color: #333;
+}
+
+.payment-amount {
+    padding: 14px 16px;
+    font-size: 14px;
+}
+#downloadPdfBtn {
+    background-color: #6214fe;
+}
+#downloadPdfBtn:hover {
+    background-color: #000;
+}
+/*billing end*/

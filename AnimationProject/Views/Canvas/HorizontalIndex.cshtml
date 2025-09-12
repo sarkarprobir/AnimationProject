@@ -1,554 +1,249 @@
 ﻿@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @section scripts {
+        
     <script src="~/js/animation_min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <script src="~/js/animationhorizontal.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
-
+        <script src="~/js/HorizontalScript.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
           rel="stylesheet">
     <link href="~/css/animate/animate.min.css" rel="stylesheet">
     <link href="~/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" rel="stylesheet">
-    <link href="~/css/style.css" rel="stylesheet">
-    <link href="~/css/canvas.css" rel="stylesheet">
-    <link href="~/css/responsive.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src='https://code.jquery.com/jquery-3.2.1.slim.min.js'></script>
-@*  <script src='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js'></script> *@
     <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js'></script>
     <script src="~/js/wow.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
-    <style>
+    <link href="~/css/HorizontalStyle.css" rel="stylesheet">
+    <link href="~/css/canvas.css" rel="stylesheet">
+    <link href="~/css/responsive.css" rel="stylesheet">
+    <link href="~/css/style.css" rel="stylesheet">
 
-        input[type="color" i] {
-            width: 30px;
-            height: 30px;
-            padding: 0;
-            /* border: none; */
-            border-radius: 7px;
+}
+
+<script>
+      $(document).ready(function(){
+      (async () => {
+        try {
+                const savedHtml = sessionStorage.getItem("leftPanelHtml");
+        let leftPanelPromise;
+        if (savedHtml) {
+          document.getElementById("divpanelleftH").innerHTML = savedHtml;
+          sessionStorage.removeItem("leftPanelHtml"); // optional cleanup
+          leftPanelPromise = Promise.resolve(); // no async work needed
+        } else {
+          // Make sure CreateLeftSectionhtml returns a Promise
+          leftPanelPromise = CreateLeftSectionHorizontalhtml();
         }
-
-        .color-swatch {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 2px solid transparent;
-            cursor: pointer;
-            transition: transform 0.2s, border-color 0.2s;
-        }
-
-            .color-swatch:hover {
-                transform: scale(1.1);
-                border-color: #666;
-            }
-
-            .color-swatch.selected {
-                border-color: #000;
-                box-shadow: 0 0 5px rgba(0,0,0,0.3);
-            }
-        /* Custom context menu styling */
-        #contextMenu {
-            position: absolute;
-            display: none;
-            z-index: 1000;
-            background-color: #fff;
-            border: 1px solid #ccc;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-            padding: 5px;
-            border-radius: 4px;
-        }
-
-            #contextMenu ul {
-                list-style: none;
-                margin: 0;
-                padding: 0;
-            }
-
-            #contextMenu li {
-                padding: 5px 10px;
-                cursor: pointer;
-            }
-
-                #contextMenu li:hover {
-                    background-color: #eee;
-                }
-
-        .dropdown-toggle {
-            text-decoration: none;
-            color: #777b7c;
-        }
-
-        .dropdown-menu.show {
-            background: #fff;
-            border-radius: 1rem;
-            border: 0px;
-            height: auto !important;
-            width: 240px;
-            -webkit-box-shadow: 0px 0px 7px #c1bbbb;
-            box-shadow: 0px 0px 7px #c1bbbb;
-            overflow: hidden !important;
-        }
-
-        .dropdown {
-            color: #000000 !important;
-        }
-
-            .dropdown:hover {
-                color: #212529 !important;
-            }
-
-        .dropdown-item {
-            color: #212529 !important;
-        }
-
-            .dropdown-item:hover {
-                color: #fff !important;
-                background-color: #6214fe !important;
-            }
-
-
-
-        /* 
-
-
-styles */
-
-        :root {
-            --font-mont: "Montserrat", sans-serif;
-            --font-nunito: "Nunito Sans", sans-serif;
-            --color-white: #fff;
-            --color-blue: #6214fe;
-            --color-muted-grey: #777b7c;
-            --color-border-grey: #00000036;
-        }
-
-        body {
-            font-family: var(--font-nunito);
-            margin: 0;
-            padding: 0;
-            font-size: 1rem;
-        }
-
-        .panel-left-gallery {
-            width: 100%;
-            /* height: 100vh; */
-            background: var(--color-white);
-            /* z-index: 9; */
-            padding: 25px 30px;
-            position: absolute;
-            left: 0px;
-            top: 0px;
-        }
-
-        .tabs {
-            display: flex;
-            justify-content: space-between;
-            width: 47%;
-        }
-
-        .tab {
-            padding: 3px 7px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-            border: 1px solid transparent;
-            border-radius: 3px !important;
-        }
-
-            .tab:hover {
-                border: 1px solid #08080836;
-                border-radius: 5px;
-            }
-
-
-
-        .cross:hover {
-            color: red;
-        }
-
-        .tab.active {
-            background: var(--color-blue);
-            color: var(--color-white);
-            border-radius: 3px;
-        }
-
-        .left_content {
-            display: none;
-        }
-
-            .left_content.active {
-                display: block;
-            }
-
-        .search-box {
-            display: flex;
-        }
-
-            .search-box input {
-                flex: 1;
-                padding: 3px 5px;
-            }
-
-        .gallery {
-            display: flex;
-            flex-wrap: wrap;
-            margin-top: 10px;
-            min-height: 432px;
-        }
-
-        .my_img_gal {
-            min-height: 430.7px;
-        }
-
-        .gallery img {
-            width: 110px;
-            height: 110px;
-            object-fit: contain;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            margin-top: 24px;
-        }
-
-            .pagination span {
-                margin: 0 9px;
-                cursor: pointer;
-                font-size: 14px;
-                right-listone
-            }
-
-        .shapes_drop {
-            text-decoration: none;
-            color: var(--color-muted-grey);
-        }
-
-        .shapes_tabs a {
-            font-size: 14px;
-            text-decoration: none;
-            color: black;
-        }
-
-        .left-panel-imput {
-            flex: 1;
-            padding: 5px;
-            border-radius: 5px;
-            border-color: #00000036;
-        }
-
-        .search-box,
-        .choose_file {
-            margin-top: 15px;
-        }
-
-        .file_upload {
-            border-radius: 5px !important;
-        }
-
-        .temp_gallery {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            overflow-y: hidden;
-            min-height: 432px;
-        }
-
-            /* .temp_gallery img {
-                width: auto;
-                height: 147px;
-            } */
-
-        .gallery_head {
-            font-size: 18px;
-            font-weight: 700;
-        }
-
-        .gallery_type {
-            font-size: 15px;
-        }
-        /* file upload css */
-        .custom-file-input {
-            display: flex;
-            align-items: center;
-            opacity: unset !important;
-            border-radius: 5px;
-            overflow: hidden;
-            border: 2px solid #00000036 !important;
-            font-family: Arial, sans-serif;
-        }
-
-            .custom-file-input label {
-                background-color: #e6f4ea;
-                padding: 5px;
-                cursor: pointer;
-                font-size: 14px;
-                font-weight: bold;
-                color: #333;
-                margin-bottom: 0 !important;
-            }
-
-            .custom-file-input span {
-                flex: 1;
-                padding: 5px;
-                font-size: 14px;
-                color: #888;
-                background-color: #f9f9f9;
-            }
-
-            .custom-file-input input {
-                display: none;
-            }
-        /* background image upload */
-        #background_popup {
-            display: none;
-            width: 254px;
-            height: 100%;
-            background-color: #fff;
-            padding: 20px;
-            position: absolute;
-            top: 3px;
-            left: 0;
-        }
-
-        #close_button {
-            border: 0px solid #ddd;
-            float: right;
-            background: transparent;
-            font-weight: bold;
-            font-size: 15px;
-            border-radius: 3px;
-            padding-top: 2.3px;
-        }
-
-        .back_label {
-            font-size: 15px;
-        }
-
-        .background_edit {
-            font-family: "Nunito Sans", sans-serif;
-            font-size: 15px;
-        }
-
-        .texture_img {
-            width: 75px;
-            height: 75px;
-        }
-
-        
-        {
-            min-height: 469px;
-        }
-
-        .texture_palette {
-            width: 30px;
-            height: 30px;
-            padding: 0;
-            border: 2px solid #000000 !important;
-            border-radius: 7px;
-            overflow: hidden;
-        }
-
-            .texture_palette img {
-                width: 30px;
-                height: 30px;
-            }
-
-        #texture_box {
-            display: block;
-        }
-
-
-
-        /* play modal */
-
-        .play_modal_body .modal-content {
-            border-radius: 10px;
-            width: 411px !important;
-            height: 704px !important;
-            transform: translate(295px, -180px);
-        }
-
-        .play_modal_body .modal-body img {
-            width: 100%;
-        }
-
-        .modal-open .modal {
-            overflow-y: hidden !important;
-        }
-
-        .play_modal_body .modal.show .modal-dialog {
-            max-width: 1000px !important;
-        }
-
-        .play_modal_btn {
-            position: absolute;
-            top: -16px;
-            right: -16px;
-            background-color: #ff0000 !important;
-            opacity: 1 !important;
-            border-radius: 100% !important;
-            padding: 7px !important;
-            color: #fff !important;
-        }
-
-        .menuboard-vertical-thum .active {
-            border: 2px solid #0000ff80;
-        }
-
-        .miniCanvas {
-            border-radius: 5px;
-            width: 40px;
-            height: 40px;
-        }
-
-            .miniCanvas:hover {
-                border: 2px solid #ccc;
-            }
-
-
-        .miniCanvas_active {
-            border: 2px solid #ccc;
-        }
-        /* all time deropdown */
-        .time_dropdown {
-            font-size: 13.8px !important;
-            font-weight: 500 !important;
-        }
-
-        .hori_canvas{
-            width: 60%;
-            aspect-ratio: 16/9;
-        }
-    </style>
-    <script>
-                  $(document).ready(function(){
-                   CreateHeaderSectionHorizontalhtml();
-                    CreateBackgroundSectionHorizontalhtml();
-                     CreateLeftSectionHorizontalhtml();
-                      CreateRightSectionHorizontalhtml()
+          // 1) Load all four panels in parallel
+          await Promise.all([
+              leftPanelPromise,
+               CreateRightSectionHorizontalhtml(),
+            CreateHeaderSectionHorizontalhtml(),
+            CreateBackgroundSectionHorizontalhtml(),
+            CreateLeftSectionHorizontalhtml(),
+            CreateLayoutModalSectionhtml(),
+           // CreateRightSectionHorizontalhtml()
+            //CreateLeftSectionhtml()
+
+          ]);
+
+              // await Promise.all([
+              //   CreateLeftSectionhtml(),
+              //   CreateRightSectionhtml(),
+              //   CreateHeaderSectionhtml(),
+              //   CreateBackgroundSectionhtml()
+
+              // ]);
+          await document.fonts.ready;
+
+          // 3) Now your controls can be initialized
+          $("#hdnlLoopControl").val(1);
+          $("#hdnfillColor").val('#42b3f5');
+          $("#hdnStrockColor").val('#78f542');
+         // document.getElementById("modeButton").innerText = "Graphic Mode";
+
+          // 4) Pull the `id` from the URL and initialize your canvas
+          const params = new URLSearchParams(window.location.search);
+          const id     = params.get('id');
+          if (id) {
+            GetDesignBoardById(id);
+
+            // Wire up your custom context‑menu
+            // const canvas      = document.getElementById("myCanvas");
+            // const contextMenu = document.getElementById("contextMenu");
+            canvas.addEventListener("contextmenu", e => {
+              e.preventDefault();
+              const rect    = canvas.getBoundingClientRect();
+              const offsetX = e.clientX - rect.left;
+              const offsetY = e.clientY - rect.top;
+
+              const found = getObjectAtcontextmenu(offsetX, offsetY);
+              if (found) {
+                const adjustX = 280, adjustY = 64;
+                selectedForContextMenu = found.obj;
+                selectedType           = found.type;
+                contextMenu.style.left    = (offsetX + adjustX) + "px";
+                contextMenu.style.top     = (offsetY + adjustY) + "px";
+                contextMenu.style.display = "block";
+              } else {
+                contextMenu.style.display = "none";
+              }
             });
-                  // show the popup when the pattern icon is clicked
-        $(document).on('click', '#toggle_img', function(e) {
-          e.preventDefault();
-          CreateHeaderSectionHorizontalhtml();
-          $('#background_popup').show();
-        });
+          }
 
-        // hide the popup when the close button is clicked
-        $(document).on('click', '#close_button', function(e) {
-          e.preventDefault();
-          $('#background_popup').hide();
-        });
-        function opengl()
-             {
-              $("#opengl_popup").toggle();
-              if(document.getElementById("fontstyle_popup").style.display == "block"){
-                    $("#fontstyle_popup").hide();
-                    $(".right-sec-two").toggle();
-                    $(".right-sec-one").toggle();
-                }
-             }
-            function switchTab(tabElement, tabName) {
-            console.log("Arghadeep");  // Debugging log
-
-            let tabs = document.querySelectorAll(".tab");
-            let contents = document.querySelectorAll(".left_content");
-
-            // Remove active class from all tabs
-            tabs.forEach((tab) => tab.classList.remove("active"));
-
-            // Add active class to clicked tab
-            tabElement.classList.add("active");
-
-            // Hide all content sections
-            contents.forEach((content) => content.classList.remove("active"));
-
-            // Show the selected tab's content
-            document.getElementById(tabName).classList.add("active");
+          // 5) Optionally auto‑open the modal
+          if (params.get('openModal') === 'true') {
+            const modalEl = document.getElementById('exampleModal');
+            new bootstrap.Modal(modalEl).show();
+          }
         }
-    </script>
+        catch (err) {
+          console.error("Initialization failed:", err);
+          // fallback: at least try to draw board even if fonts or panels didn't load
+          const fallbackId = new URLSearchParams(window.location.search).get('id');
+          if (fallbackId) GetDesignBoardById(fallbackId);
+        }
+      })();
+    });
 
-    <script>
-                document.querySelectorAll('.H-link, .V-link').forEach(link => {
-          link.addEventListener('click', () => {
-            document.querySelectorAll('.H-link, .V-link').forEach(el => el.classList.remove('active'));
-            link.classList.add('active');
+        const buttons = document.querySelectorAll('.toggle-btn');
+
+        buttons.forEach(button => {
+          button.addEventListener('click', () => {
+            buttons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
           });
         });
-    </script>
-    <script>
-        function opengl()
-         {
-          $("#opengl_popup").toggle();
-          if(document.getElementById("fontstyle_popup").style.display == "block"){
-                $("#fontstyle_popup").hide();
-                $(".right-sec-two").toggle();
-                $(".right-sec-one").toggle();
+        async function DeleteSlide() {
+            try {
+                // const confirmDelete = confirm("Do you want to delete this slide?");
+                const confirmDelete = await customConfirm("Do you want to delete slide-"+activeSlide+"?");
+            if (!confirmDelete) return;
+
+                     let slideId;
+            if (activeSlide === 1) {
+                    slideId = $(`#hdnDesignBoardDetailsIdSlide1`).val();
+            } else if (activeSlide === 2) {
+                    slideId = $(`#hdnDesignBoardDetailsIdSlide2`).val();
+                }else if (activeSlide === 3) {
+                        slideId = $(`#hdnDesignBoardDetailsIdSlide3`).val();
+                }
+
+            // Check for blank, undefined, or default GUID
+            const isDefaultOrBlank = !slideId || slideId.trim() === "" || slideId === "00000000-0000-0000-0000-000000000000";
+
+            if (isDefaultOrBlank) {
+                // Delete only the in-memory saved JSON based on activeSlide
+                if (activeSlide === 1) {
+                    verticalSlide1 = "";
+                } else if (activeSlide === 2) {
+                    verticalSlide2 = "";
+                } else if (activeSlide === 3) {
+                    verticalSlide3 = "";
+                }
+
+                    MessageShow('RedirectToHorizontalPageWithQueryString()', 'Slide deleted from memory.', 'success');
+                return;
             }
-         }
-    </script>
 
-    <script>
-        function opentl()
-         {
-            if(document.getElementById("opengl_popup").style.display == "block"){
-                $("#opengl_popup").hide();
-            }
-          $("#fontstyle_popup").toggle();
-          $(".right-sec-two").toggle();
-          $(".right-sec-one").toggle();
-          
-         }
-    </script>
-    <!-- JavaScript for Handling Selection and Redirection -->
-    <script>
-        let selectedOption = ""; // Variable to store the selected board type
+            // If slideId is valid, continue with server delete
+            ShowLoader();
 
-        document.getElementById("horizontal-option").addEventListener("click", function () {
-            selectedOption = "horizontal";
-            highlightSelection("horizontal-option");
-        });
+            const dataSlide = {
+                DesignBoardDetailsId: slideId
+            };
 
-        document.getElementById("vertical-option").addEventListener("click", function () {
-            selectedOption = "vertical";
-            highlightSelection("vertical-option");
-        });
-
-        document.getElementById("create-button").addEventListener("click", function () {
-            if (selectedOption === "horizontal") {
-                window.location.href = "/Canvas/HorizontalIndex"; // Redirect to horizontal page
-            } else if (selectedOption === "vertical") {
-                window.location.href = "/Canvas/Vertical"; // Redirect to vertical page
-            } else {
-                // alert("Please select an option before proceeding!");
-                MessageShow('', 'Please select an option before proceeding!', 'error');
-            }
-        });
-
-        // Function to highlight selected option
-        function highlightSelection(selectedId) {
-            document.getElementById("horizontal-option").classList.remove("selected");
-            document.getElementById("vertical-option").classList.remove("selected");
-            document.getElementById(selectedId).classList.add("selected");
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-          document.querySelectorAll('.panel-vertical-scroll .menuboard-vertical-thum')
-            .forEach(item => {
-              item.addEventListener('click', function () {
-                this.classList.toggle('active');
-              });
+            $.ajax({
+                url: baseURL + "Canvas/DeleteDesignSlideBoard",
+                type: "POST",
+                dataType: "json",
+                data: dataSlide,
+                success: function (slideResult) {
+                    HideLoader();
+                    if (slideResult.response === 'ok') {
+                        MessageShow('RedirectToHorizontalPageWithQueryString()', 'Slide deleted successfully!', 'success');
+                    } else {
+                        MessageShow('', 'Failed to delete slide.', 'error');
+                    }
+                },
+                error: function (data) {
+                    console.log("Error in delete slide", data);
+                    HideLoader();
+                    MessageShow('', 'Error deleting slide.', 'error');
+                }
             });
-        });
 
-       
-
-    </script>
-
+        } catch (e) {
+            console.log("catch", e);
+            HideLoader();
+        }
         }
 
+     async function DuplicateSlide()
+        {
+             // const confirmduplicate = confirm("Do you want to duplicate "+activeSlide+" slide?");
+                 const confirmduplicate = await customConfirm("Do you want to duplicate slide-"+activeSlide+"?");
+                    if (!confirmduplicate) return;
 
+            if($(`#hdnDesignBoardDetailsIdSlide3`).val() !=='')
+            {
+                    MessageShow('', 'Already 3 slide created.Delete any one and then duplicate!', 'error');
+                        return;
+            }
+        let DesignBoardDetailsId;
+        if (activeSlide === 1) {
+            DesignBoardDetailsId = $(`#hdnDesignBoardDetailsIdSlide1`).val();
+        } else if (activeSlide === 2) {
+            DesignBoardDetailsId = $(`#hdnDesignBoardDetailsIdSlide2`).val();
+        }
+
+            const isDefaultOrBlank = !DesignBoardDetailsId || DesignBoardDetailsId.trim() === "" || DesignBoardDetailsId === "00000000-0000-0000-0000-000000000000";
+
+        if (!isDefaultOrBlank) {
+            try {
+            ShowLoader();
+            const dataSlide = {
+                    DesignBoardDetailsId: DesignBoardDetailsId
+            };
+
+            $.ajax({
+                url: baseURL + "Canvas/DuplicateDesignSlideBoard",
+                type: "POST",
+                dataType: "json",
+                data: dataSlide,
+                success: function (slideResult) {
+                    HideLoader();
+                    if (slideResult.response === 'ok') {
+                        MessageShow('RedirectToHorizontalPageWithQueryString()', 'Slide duplicate successfully!', 'success');
+                    } else {
+                        MessageShow('', 'Failed to duplicate slide.', 'error');
+                    }
+                },
+                error: function (data) {
+                    console.log("Error in delete slide", data);
+                    HideLoader();
+                    MessageShow('', 'Error duplicate slide.', 'error');
+                }
+            });
+
+        } catch (e) {
+            console.log("catch", e);
+            HideLoader();
+        }
+        }
+        }
+        //  $(document).on('click', '#toggle_img', function(e) {
+        //   e.preventDefault();
+        //   CreateBackgroundSectionHorizontalhtml();
+        //   $('#background_popup').show();
+        //   $('#fontstyle_popup').hide();
+        //   $('#opengl_popup').hide();
+        //   $('#elementsPopup').hide();
+        //   $('#tranPopup').hide();
+        // });
+</script>
 
     
 
@@ -561,43 +256,22 @@ styles */
             </div>
         </div>
     </nav>
-
+    <img src="/images/stripe.svg"
+     id="transition1"
+     data-color="#d6d61e"
+     style="display:none"
+     data-width="210" />
+<input type="hidden" id="hdnTransition1" />
+<input type="hidden" id="hdnTransition2" />
+<img src="/images/stripe2.svg"
+     id="transition2"
+     data-color="#1ed633"
+     data-width="300"
+     style="display:none" />
+<input type="hidden" id="hdntransition" />
     <!-- Modal Structure -->
     <div class="modal fade layout_modal" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" style="background-color: rgba(36, 7, 136, 0.49) !important;">
-        <div class="modal-dialog">
-            <div class="modal-content p-3">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="aniBoardModalLabel">New AniBoard</h5>
-                </div>
-
-                <div class="modal-body">
-                    <!-- Vertical Option -->
-                    <div class="option-box d-flex justify-content-between align-items-center mb-2" id="vertical-option">
-                        <div class="d-flex align-items-center">
-                            <div class="portrait-icon"></div>
-                            <span class="vertical_option">Vertical / Portrait</span>
-                        </div>
-                        <span>1080x1920</span>
-                    </div>
-
-                    <!-- Horizontal Option -->
-                    <div class="option-box d-flex justify-content-between align-items-center" id="horizontal-option">
-                        <div class="d-flex align-items-center">
-                            <div class="landscape-icon"></div>
-                            <span>Horizontal / Landscape</span>
-                        </div>
-                        <span>1920x1080</span>
-                    </div>
-
-                   
-                </div>
-
-                <div class="modal-footer pt-0">
-                    <button type="button" class="cancel-btn" data-bs-dismiss="modal">Cancel</button>
-                    <button class="create-btn" id="create-button">Create</button>
-                </div>
-            </div>
-        </div>
+        
     </div>
     <!-- The Modal -->
     <div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
@@ -616,57 +290,102 @@ styles */
             </div>
         </div>
     </div>
+     <!-- Modal for preview board design-->
+    <div class="play_modal_body" style="display:none;">
+        <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true" >
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                    <button type="button" class="btn-close play_modal_btn" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <input type="hidden" id="hdnBackgroundSpecificColor" />
+                    <input type="hidden" id="hdnBackgroundSpecificColorDownload" />
+                    <input type="hidden" id="hdnPublishBoardUniqueId" />
+                    <input type="hidden" id="hdnDesignBoardPublishId" />
+                    <div class="modal-body">
+                        <canvas id="myCanvasElement"
+                                class="clsmyCanvas"
+                                width="380"
+                                height="680"
+                                style="background: lightgray; display: block; width: 380px; height: 680px; position: relative;">
+                        </canvas>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+     <!-- Modal Structure -->
+    <div class="modal fade layout_modal" id="downloadModal" tabindex="-1" aria-labelledby="downloadModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content downloadModal-content p-3">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="aniBoardModalLabel">Link</h5>
+                    <button type="button" class="btn-cross b-radius-6 tab cross download-cross_btn" data-bs-dismiss="modal">x</button>
+                </div>
+
+                <div class="modal-body text-start">
+                    <p class="fileName" id="designBoardName"></p>
+                    <div class="fileLink">
+                        <span class="aniLink" id="designboardLink"></span> 
+                        <button class="copy-link-btn ms-2" onclick="copyLink(this)"><i class="fa-regular fa-copy"></i></button>
+                    </div>
+
+                </div>
+
+                @* <div class="modal-footer pt-0">
+                    <button type="button" class="cancel-btn" data-bs-dismiss="modal">Cancel</button>
+                    <button class="create-btn" id="create-button">Create</button>
+                </div> *@
+            </div>
+        </div>
+    </div>
+
+    <div id="canvasMainContainerDownload" class="d-flex align-items-stretch main-canvas-content hidden">
+        <div class="panel-left"></div>
+     
+                    <input type="hidden" id="hdnPublishBoardUniqueId" />
+                    <input type="hidden" id="hdnDesignBoardPublishId" />
+        <div id="canvasContainerDownload" class="panel-middle d-flex align-items-center justify-content-center hidden">
+            <canvas id="myCanvasElementDownload" class="clsmyCanvas"></canvas>
+        </div>
+
+        <div class="panel-right content"></div>
+    </div>
 
     <div class="d-flex align-items-stretch   main-canvas-content mt-0">
         <div class="panel-left " id="divpanelleftH">
-            
-          
-            @* <div class="panel-left-scroll ">
-                <ul>
-                    <li>
-                        <img src="~/images/banner.png" class="menuboard-thum" alt="Banner" style="width: 80%; height: auto;">
-                        <div class="d-flex justify-content-center align-items-center gap-3">
-                            <span>Slide 1</span>
-                            <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
-                            <div class="clear"></div>
-                        </div>
-                    </li>
-                    <li>
-                        <img src="~/images/banner-old.png" class="menuboard-thum" alt="Banner" style="width: 80%; height: auto;">
-                        <div class="d-flex justify-content-center align-items-center gap-3">
-                            <span>Slide 2</span>
-                            <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
-                            <div class="clear"></div>
-                        </div>
-                    </li>
-                    <li>
-                        <img src="~/images/banner.png" class="menuboard-thum" alt="Banner" style="width: 80%; height: auto;">
-                        <div class="d-flex justify-content-center align-items-center gap-3">
-                            <span>Slide 3</span>
-                            <button class="sd-btn-right"> <img src="~/images/icon-01.png" alt="Banner" style="width: 22px;"><b>FD</b></button>
-                            <div class="clear"></div>
-                        </div>
-                    </li>
 
-                </ul>
-            </div> *@
         </div>
-        <div class="panel-middle d-flex justify-content-center">
-            
-                
-                    <div class="canvas-top-btn">
+        <div class="panel-middle d-flex align-items-center justify-content-center" id="canvasContainer">
+            <div class="canvas-top-btn">
+                <div class="toggle-container">
+                    <button class="toggle-btn" data-mode="graphic">Graphic</button>
+                    <button class="toggle-btn active" data-mode="animation">Animation</button>
+                </div>
 
-                        <button class="Graphic-More active">Animation Mode</button>
-                    </div>
+            </div>
+            <canvas  id="myCanvas"></canvas>
+            <div id="contextMenu">
+                <ul>
+                    <li class="context-options" id="copyOption">Copy</li>
+                    <li class="context-options" id="pasteOption">Paste</li>
+                   @*  <li class="context-options" id="duplicateOption">Duplicate</li> *@
+                    <li class="context-options" id="bringFrontOption">Bring Front</li>
+                    <li class="context-options" id="sendBackOption">Send Back</li>
+                    <li class="context-options" id="deleteOption">Delete</li>
+                </ul>
+            </div>
 
-                    
-                        
-                        <div id="canvasContainer">
-                            <canvas class="hori_canvas" id="myCanvas" style="background-color:#fff"></canvas>
-                        </div>
-                        <p class="middle-resulation">Final Output 1920x1080</p>
-                    
-                
+              <p class="middle-resulation">Final Output 1920x1080</p>
+             @*  zoom div *@
+            <div class="zoom_scale" style="display: none;">
+                <button onclick="zoomOut()">-</button>
+                <span id="scaleValue">Scale: 1</span>
+                <button onclick="zoomIn()">+</button>
+            </div>
+            @*  zoom div *@
+            <textarea wrap="hard" style="display:none;" id="textEditor"></textarea>
         </div>
 
         <div class="panel-right content" id="divpanelrightH">
@@ -674,4 +393,25 @@ styles */
         </div>
     </div>
 </div>
+<!-- Modal Structure -->
+<div class="modal fade layout_modal" id="downloadModal" tabindex="-1" aria-labelledby="downloadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content downloadModal-content p-3">
+            <div class="modal-header">
+                <h5 class="modal-title" id="aniBoardModalLabel">Link</h5>
+                <button type="button" class="btn-cross b-radius-6 tab cross download-cross_btn" data-bs-dismiss="modal">x</button>
+            </div>
 
+            <div class="modal-body text-start">
+                <p class="fileName"> File : Sunday Adboard v01</p>
+                <div class="fileLink">
+                    <span class="aniLink">https://aniboard.com/v20560</span>
+                    <button class="copy-link-btn ms-2" onclick="copyLink(this)"><i class="fa-regular fa-copy"></i></button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

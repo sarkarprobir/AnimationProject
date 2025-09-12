@@ -67,6 +67,9 @@
         public long CompanyUniqueId { get; set; }
         public string ScreenType { get; set; }
         public int ScreenNo { get; set; }
+        public long PublishBoardUniqueId { get; set; }
+        public string Type { get; set; }
+
 
     }
     public class ScreenRefreshInterval
@@ -92,11 +95,15 @@
         public Guid CustomerId { get; set; }
         public Guid CompanyId { get; set; }
         public Guid CreatedBy { get; set; }
-        public string Jsondata { get; set; }
+        public long CompanyUniqueId { get; set; }
     }
-    public class RequestDesignBoardDetailsPublish
+    public class RequestGetEliment
     {
-        public Guid DesignBoardPublishId { get; set; }
-
+        public int CategoryId { get; set; }
+        public string searchKeyword { get; set; }
+        public int pageNo { get; set; }
+        public int recordPerPage { get; set; }
+        public int CompanyUniqueId { get; set; }
     }
+
 }

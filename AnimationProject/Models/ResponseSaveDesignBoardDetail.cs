@@ -39,6 +39,10 @@ namespace AnimationProject.Models
         public Guid DesignBoardId { get; set; }
         public string DesignBoardName { get; set; }
         public string SlideType { get; set; }
+        public string DesignBoardURL { get; set; }
+        public string CreatedAtStr { get; set; }
+        public string updatedAtStr { get; set; }
+        public string expirationStr { get; set; }
         public List<DesignBoardDetailsList> DesignBoardDetailsList { get; set; }
     }
     public class ResponseGetDesignBoardById
@@ -47,6 +51,7 @@ namespace AnimationProject.Models
         public string DesignBoardName { get; set; }
         public string SlideType { get; set; }
         public List<DesignBoardDetailsList> DesignBoardDetailsList { get; set; }
+        public string DesignBoardURL { get; set; }
     }
     public class ResponseGetPlayList
     {
@@ -75,9 +80,19 @@ namespace AnimationProject.Models
     {
         public string Response { get; set; }
         public Guid Result { get; set; }
+        public long PublishBoardUniqueId { get; set; }
     }
-    public class ResponseDesignBoardDetailsPublish
+    public class ResponseGetElimentDetails
     {
-        public string JsonFile { get; set; }
+        public int ElementId { get; set; }
+        public int CategoryId { get; set; }
+        public int CompanyUniqueId { get; set; }
+        public string ElementName { get; set; }
+        public int ImageSize { get; set; }
+        public string ImageName { get; set; }
+        public string ImageNameThumb { get; set; }
+        public int ImageW { get; set; }
+        public int ImageH { get; set; }
     }
+
 }

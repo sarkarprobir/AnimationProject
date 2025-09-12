@@ -1,4 +1,4 @@
-/*html strat on 10012025 Tapas Manna*/
+﻿/*html strat on 10012025 Tapas Manna*/
  
 :root {
  /*================font-size================*/
@@ -20,7 +20,9 @@ Body {
     overflow-y: auto;
     font-family: "Nunito Sans", serif;
 }
- 
+a:hover {
+    color: #c9cccf ;
+}
 
 .fixed-top {
     position: fixed;
@@ -93,9 +95,9 @@ p.collapsed{    font-size: var(--font-size14);}
     margin-top: 10px;
     font-size: var(--font-size14);
     position: absolute;
-    /*transform: translate(838px, -12px);*/
+    /*    transform: translate(838px, -12px);*/
     top: 2px;
-    right: 280px;
+    right: 10px;
 }
 .Graphic-More {
     width: 128px;
@@ -178,15 +180,15 @@ ul.right-listone li {
         font-weight: 400;
         text-decoration: none;
         color: #000;
-        width: 68px;
-        height: 50px;
+        width: 60px;
+        height: 48px;
         display: flex;
         justify-content: center;
         align-items: center;
     }
 ul.right-listone li a img {
-    width: 20px;
-    height: 20px;
+    width: 15px;
+    height: 15px;
 }
 ul.right-listone li a:hover {
     border: 2px solid #ccc;
@@ -224,13 +226,13 @@ ul.right-listone{padding:0px; margin:0px; width: 100%;
         }
     .nav-right ul li.play-btn .btn {
         color: #fff;
-        font-size: 16px;
-        font-weight: 600;
-        padding: 0.2px 7px;
+        font-size: 14px;
+        font-weight: 700;
+        padding: 0.5px 7px;
         border-radius: 3px;
         margin: 4px !important;
         box-shadow: none;
-        border: 1px solid #fff;
+        border: 1.5px solid #fff;
     }
         .nav-right ul li.play-btn .btn:hover {
             background-color: #6214fe;
@@ -403,7 +405,7 @@ ul.top-left-icon li {
 .nav-right{padding:0px;}
 .navbar {padding:0px;}
 .p-r-0{padding-right:0px; justify-content:center;}
- 
+
 .panel-left-gallery {
     width: 100%;
     min-height: 685px;
@@ -414,7 +416,7 @@ ul.top-left-icon li {
     position: absolute;
     left: 0px;
     top: 3px;
-    border-right: none;
+    border-right: 1px solid #E4E3E7;
 }
 .panel-left-fonts {
     width: 100%;
@@ -422,7 +424,7 @@ ul.top-left-icon li {
     height: 93vh;
     background: #fff;
     z-index: 9;
-    padding: 20px;
+    padding: 14px;
     position: absolute;
     left: 0px;
     top: 4px;
@@ -528,14 +530,17 @@ ul.speed-list li:hover{background:#f5f5f5; border-radius:6px; cursor:pointer;}
 
 .collapse.show-texteditor {
     position: absolute;
-    left: 0px;
+    /*    left: 0px;*/
+    left: 262px;
     top: 0px;
     bottom: 0px;
     background-color: transparent;
-    width: 260px;
-/*    z-index: 1;*/
+    /*width: 260px;*/
+    /*    z-index: 1;*/
+    width: 168px;
     border-radius: 0;
     box-shadow: none;
+    border-right: 1px solid #e4e3e6;
 }
 .collapse.show-background {
     position: absolute;
@@ -562,7 +567,8 @@ ul.TextStyle li {list-style-type:none; float:left; width:100%; margin-bottom:10p
  
  /*font-face css*/
     ul.TextStyle li a {
-        font-size: 30px;
+        /*font-size: 30px;*/
+        font-size: 24px;
     }
     ul.TextStyle li a.arial {
         font-family: 'Arial', sans-serif;
@@ -584,7 +590,16 @@ ul.TextStyle li a.monstro{ font-family: "Monstro"; font-style: normal;}
 ul.TextStyle li a.Montserrat{ font-family: "Montserrat", sans-serif; font-style: normal;} 
 ul.TextStyle li a.neto{ font-family: 'Noto Sans'; font-weight: normal; font-style: normal;}
 ul.TextStyle li a.pacifico{ font-family: "Pacifico", cursive; font-weight: normal; font-style: normal;}
-ul.TextStyle li a.Roboto{ font-family: "Roboto", sans-serif; font-weight: bold;}
+ul.TextStyle li a.Roboto{ font-family: "Roboto", sans-serif; font-weight: normal;}
+        ul.TextStyle li a.Georgia {
+            font-family: "Georgia Regular", sans-serif;
+            font-weight: normal;
+        }
+        ul.TextStyle li a.Helvetica {
+            font-family: "Helvetica", sans-serif;
+            font-weight: bold;
+        }
+
 
 .middle-resulation {
     width: 146px;
@@ -695,12 +710,12 @@ svg:hover {
 .vertical-Mboard img{width:auto;   }
 .vertical-Mboard p{text-align:center;}
 .panel-vertical-scroll li{text-align: center;}
-.panel-vertical-scroll .menuboard-vertical-thum{
-    margin-bottom:10px; 
-    width:100px; 
-    border: 2px solid #ddd; 
-    padding:4px;
-    height:158px;
+.panel-left-scroll .menuboard-vertical-thum {
+    margin-bottom: 10px;
+    width: 100px;
+    border: 2px solid #ddd;
+    padding: 4px;
+    height: 158px;
 }
     .panel-vertical-scroll .menuboard-vertical-thum:hover {
         border: 2px solid #4e43e191;
@@ -741,7 +756,12 @@ svg:hover {
 .dropdown-item:hover {
    background-color: #444;
 }
-
+.headpara{
+    font-size: 14px;
+    margin-bottom: 7px;
+    font-weight: 400;
+    color: #000;
+}
 .icon {
     width: 18px;
     height: 18px;
@@ -1048,19 +1068,9 @@ body {
     font-size: 1rem;
 }
 
-/*.panel-left-gallery {
-    width: 500px;
-    height: 100vh;
-    background: var(--color-white);*/
-    /* z-index: 9; */
-    /*padding: 25px 30px;
-    position: absolute;
-    left: 0px;
-    top: 10px;
-}*/
 .tabs {
     display: flex;
-    justify-content: space-between;
+    gap: 20px;
     width: 85% !important;
 }
 
@@ -1111,27 +1121,27 @@ body {
 }
 
 .gallery {
-    display: flex;
-    flex-wrap: wrap;
+/*    display: flex;
+    flex-wrap: wrap;*/
     margin-top: 10px;
-    min-height: 60vh;
+    min-height: 67vh;
 }
 
 .my_img_gal {
     min-height: 59.6vh;
 }
 
-.gallery img {
+/*.gallery img {
     width: 90px;
     max-height: 90px;
     height: auto;
     object-fit: contain;
 }
-
+*/
 .pagination {
     display: flex;
     justify-content: center;
-    margin-top: 27px;
+    margin-top: 10px;
 }
 
     .pagination span {
@@ -1231,7 +1241,10 @@ body {
     padding: 20px;
     position: absolute;
     top: 0;
-    left: 0;
+    /*    left: 0;*/
+    left: 262px;
+    border-right: 1px solid #e4e3e6;
+    height: 100%;
 }
 
 #close_button {
@@ -1284,7 +1297,8 @@ body {
 }
 @media (min-width: 1900px) {
     .gallery {
-        min-height: 70vh;
+        min-height: 68vh;
+        margin-top: 30px;
     }
 
     .temp_gallery {
@@ -1302,8 +1316,20 @@ body {
     }
     #background_popup{
         width: 279px;
+        left: 280px;
     }
-    
+    .collapse.show-texteditor{
+        left: 280px;
+    }
+    .collapse.show-texteditor {
+        width: 191px;
+    }
+    ul.TextStyle li a{
+        font-size: 24px;
+    }
+    .panel-left-fonts{
+        padding: 16px;
+    }
 }
 .loader {
     display: inline-block;
@@ -1338,6 +1364,34 @@ body {
 .layout_modal {
     background-color: rgba(36, 7, 136, 0.49);
 }
+/*modal check mark*/
+.option-box .checkmark {
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.option-box.selected .checkmark {
+    background-color: #6214fe; /* your brand purple */
+    border-color: #6214fe;
+}
+
+    .option-box.selected .checkmark::after {
+        content: '';
+        position: absolute;
+        top: 2.5px;
+        left: 6px;
+        width: 5px;
+        height: 10px;
+        border: solid #fff;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+/*modal check mark*/
 .modal-backdrop {
     background-color: transparent !important;
 }
@@ -1470,7 +1524,7 @@ body {
 }*/
 .elements-popup {
     background: #fff;
-    width: 575px;
+    width: 435px;
     /* z-index: 1; */
     border-radius: 0;
     box-shadow: none;
@@ -1481,12 +1535,40 @@ body {
     position: absolute;
     left: 0px;
     top: 3px;
-    border-right: none;
+    border-right: 1px solid #E4E3E7;
 }
+.inside_wrapper {
+    row-gap: 23px;
+    column-gap: 23px;
+    height: fit-content;
+}
+.gallery img {
+    width: 79px;
+    max-height: 79px;
+    object-fit: contain;
+}
+.svg_inside_wrapper {
+    column-gap: 50px;
+}
+
 @media (min-width: 1900px) {
     .elements-popup {
         height: 95.3vh;
+        width: 513px;
     }
+    .inside_wrapper {
+        row-gap: 30px;
+        column-gap: 30px;
+        height: fit-content;
+    }
+    .gallery img {
+        width: 95px;
+        max-height: 95px;
+    }
+    .svg_inside_wrapper {
+        column-gap: 50px;
+    }
+
 }
 .h-templates {
     width: 230px;
@@ -1521,7 +1603,11 @@ body {
     color: #888;
 }
 .svg_icons{
-    width: 40px !important;
+    width: 64px !important;
+}
+.tran_label {
+    font-size: 14px;
+    font-family: "Nunito", sans-serif;
 }
 .tran_popup {
     width: 260px;
@@ -1531,9 +1617,9 @@ body {
     z-index: 9;
     padding: 20px;
     position: absolute;
-    left: 0px;
+    left: 262px;
     top: 4px;
-    border-right: none;
+    border-right: 1px solid #e4e3e6;
     overflow: hidden;
 }
 .tran_button {
@@ -1716,19 +1802,440 @@ body {
     border-radius: 3px;
     padding: 3px 6px;
 }
-.font_size {
-    width: 50px;
-    border: 2px solid #ccc;
-    padding: 2px 4px;
-    border-radius: var(--border-radius6);
-    font-size: var(--font-size14);
+.slide-icon {
+    cursor: pointer;
+    color: #8b8585;
+    font-size: 14px;
 }
-.alignment_btn {
-    width: 42px;
-    height: 35px;
-    font-size: 21px;
-    background-color: transparent;
-    color: #000;
+.slide-icon:hover{
+    color: var(--color-blue)
+}
+    .slide-icon.delete:hover {
+        color: red;
+    }
+/* toggle button css */
+.toggle-container {
+    display: inline-flex;
+    background-color: #fff;
+    padding: 4px;
     border-radius: 3px;
-    border: 2px solid #ccc;
 }
+
+.toggle-btn {
+    padding: 7px 16px;
+    font-size: 14px;
+    font-family: var(--font-nunito);
+    font-weight: 400;
+    color: #000;
+    background-color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    width: 101px;
+}
+
+    .toggle-btn.active {
+        background-color: black;
+        color: white;
+    }
+
+.zoom_scale {
+    text-align: center;
+    margin-bottom: 10px;
+    position: absolute;
+    bottom: 11px;
+    right: 34px;
+}
+/*text editor css*/
+/*#textEditorNew {
+    position: absolute;
+    display: none;
+    border: 1px solid #aaa;
+    outline: none;
+    padding: 0px;
+    background: #fff;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    white-space: pre-wrap;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    line-height: 0px;
+    overflow-y: hidden;
+    max-height: 1000px;*/ /* allow scroll if text overflows manually resized box */
+    /*z-index: 9999;
+    height: auto;
+}*/
+
+#toolbar {
+    margin-bottom: 10px;
+}
+#textEditorNew {
+    position: absolute;
+    z-index: 9999;
+    display: none;
+    box-sizing: border-box;
+    /* Match canvas inset (you use +5px when drawing) */
+    padding: 5px;
+    border: 1px solid #aaa; /* or transparent if you don't want a visible border */
+    outline: none;
+    background: #fff;
+    box-shadow: 0 0 5px rgba(0,0,0,.2);
+    /* Wrapping/flow */
+    white-space: normal;
+    overflow: hidden; /* single overflow rule */
+    overflow-wrap: break-word; /* or: anywhere; */
+    /* Typographic defaults to mirror canvas */
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.2;
+    /* Let JS resize height; don't cap it here */
+    height: auto;
+    max-height: none;
+}
+.navbar-brand.layout-brand{
+    color: #fff !important;
+}
+/*TTF integration*/
+/*Arial*/
+@font-face {
+    font-family: 'Arial Regular';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Regular'), url('ARIAL.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Narrow';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Narrow'), url('ARIALN.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Italic'), url('ARIALI 1.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Italic'), url('ARIALI.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Narrow Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Narrow Italic'), url('ARIALNI.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Medium';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Medium'), url('ArialMdm.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Medium Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Medium Italic'), url('ArialMdmItl.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Bold';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Bold'), url('ARIALBD 1.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Bold';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Bold'), url('ARIALBD.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Narrow Bold';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Narrow Bold'), url('ARIALNB.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Bold Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Bold Italic'), url('ARIALBI 1.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Bold Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Bold Italic'), url('ARIALBI.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Narrow Bold Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Narrow Bold Italic'), url('ARIALNBI.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Black';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Black'), url('ARIBLK.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Black Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Black Italic'), url('ARIALBLACKITALIC.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Light Regular';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Light Regular'), url('ARIALLGT.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial CE Regular';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial CE Regular'), url('ArialCE.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial CE MT Black Regular';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial CE MT Black Regular'), url('ArialCEMTBlack.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial CE Bold';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial CE Bold'), url('arialceb.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial Light Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial Light Italic'), url('ARIALLGTITL.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial CE Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial CE Italic'), url('ArialCEItalic.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Arial CE Bold Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Arial CE Bold Italic'), url('ArialCEBoldItalic.woff') format('woff');
+}
+
+/* Lobster */
+@font-face {
+    font-family: 'Lobster';
+    src: url('Fonts/Lobster.eot');
+    src: url('Fonts/Lobster.eot?#iefix') format('embedded-opentype'), url('Fonts/Lobster.woff2') format('woff2'), url('Fonts/Lobster.woff') format('woff'), url('Fonts/Lobster.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Times Webfont */
+@font-face {
+    font-family: 'TimesWeb';
+    src: url('Fonts/times-webfont.eot');
+    src: url('Fonts/times-webfont.eot?#iefix') format('embedded-opentype'), url('Fonts/times-webfont.woff2') format('woff2'), url('Fonts/times-webfont.woff') format('woff'), url('Fonts/times-webfont.ttf') format('truetype'), url('Fonts/times-webfont.svg#TimesWeb') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Helvetica';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Helvetica'), url('Helvetica.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Helvetica Oblique';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Helvetica Oblique'), url('Helvetica-Oblique.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Helvetica Compressed';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Helvetica Compressed'), url('helvetica-compressed-5871d14b6903a.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Helvetica Rounded Bold';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Helvetica Rounded Bold'), url('helvetica-rounded-bold-5871d05ead8de.woff') format('woff');
+}
+
+/*Helvetica*/
+@font-face {
+    font-family: 'Helvetica';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Helvetica'), url('Helvetica-Bold.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Helvetica Bold Oblique';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Helvetica Bold Oblique'), url('Helvetica-BoldOblique.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Helvetica Light';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Helvetica Light'), url('helvetica-light-587ebe5a59211.woff') format('woff');
+}
+
+/*Georgia*/
+
+@font-face {
+    font-family: 'Georgia Regular';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Georgia Regular'), url('georgia.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Georgia Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Georgia Italic'), url('georgiai.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Georgia Bold';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Georgia Bold'), url('georgiab.woff') format('woff');
+}
+
+
+@font-face {
+    font-family: 'Georgia Bold Italic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Georgia Bold Italic'), url('georgiaz.woff') format('woff');
+}
+
+
+
+
+
+.thumb-wrapper {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 5px;
+    max-width: 120px; /* adjust as needed */
+    text-align: center;
+}
+
+.thumb-caption {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+.thumb-caption {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    cursor: pointer; /* 👈 shows hand cursor on hover */
+}
+.pagination {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    user-select: none;
+}
+
+    .pagination span {
+        padding: 4px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+        .pagination span.active {
+            font-weight: 600;
+            border: 1px solid #ccc;
+        }
+
+        .pagination span.disabled {
+            opacity: .4;
+            pointer-events: none;
+            cursor: default;
+        }
+
+.AccModal-content {
+    height: 335px !important;
+    width: 550px !important;
+    border-radius: 3px !important;
+}
+
