@@ -2223,8 +2223,120 @@ function getCompanyIdFromUrl() {
     //// Assuming the last segment is the company ID.
     //return segments.length ? segments[segments.length - 1] : null;
 }
+// Chunked uploader (replaces single-POST version)
+async function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
+    const chunkSize = 8 * 1024 * 1024; // 8MB chunks (tune as needed)
+    const fileId =
+        (crypto && crypto.randomUUID) ? crypto.randomUUID()
+            : `vid_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const total = Math.ceil(blob.size / chunkSize);
 
-function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
+    const chunkEndpoints = [baseURL + "video/save-Large-video-chunk", baseURL + "Video/SaveLargeVideoChunk"];
+    const finishEndpoints = [baseURL + "video/finish-Large-video", baseURL + "Video/FinishLargeVideo"];
+
+    const postForm = async (url, formData) => {
+        const res = await fetch(url, { method: 'POST', body: formData });
+        if (!res.ok) {
+            const text = await res.text().catch(() => '');
+            throw new Error(`HTTP ${res.status} ${res.statusText} ${text.slice(0, 300)}`);
+        }
+        return res;
+    };
+
+    const postJson = async (url, bodyObj) => {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bodyObj)
+        });
+        if (!res.ok) {
+            const text = await res.text().catch(() => '');
+            throw new Error(`HTTP ${res.status} ${res.statusText} ${text.slice(0, 300)}`);
+        }
+        return res.json();
+    };
+
+    const sendChunk = async (fd) => {
+        let lastErr;
+        for (const url of chunkEndpoints) {
+            try { await postForm(url, fd); return; }
+            catch (e) {
+                lastErr = e;
+                const msg = String(e?.message || '');
+                if (/HTTP 404|HTTP 405/i.test(msg)) continue; // try next endpoint style
+                throw e; // real error
+            }
+        }
+        throw lastErr || new Error('No working chunk endpoint found.');
+    };
+
+    const finalizeOnServer = async (payload) => {
+        let lastErr;
+        for (const url of finishEndpoints) {
+            try { return await postJson(url, payload); }
+            catch (e) {
+                lastErr = e;
+                const msg = String(e?.message || '');
+                if (/HTTP 404|HTTP 405/i.test(msg)) continue;
+                throw e;
+            }
+        }
+        throw lastErr || new Error('No working finish endpoint found.');
+    };
+
+    try {
+        // optional UI
+        try { ShowLoader?.(); } catch { }
+
+        // 1) Upload chunks
+        for (let index = 0; index < total; index++) {
+            const start = index * chunkSize;
+            const end = Math.min(start + chunkSize, blob.size);
+            const chunk = blob.slice(start, end);
+
+            const fd = new FormData();
+            fd.append('chunk', chunk, `part_${index}.bin`);
+            fd.append('fileId', fileId);
+            fd.append('index', index);
+            fd.append('total', total);
+            fd.append('folderId', existingFolderId);
+
+            await sendChunk(fd);
+
+            // (optional) progress hook
+            // updateProgress?.(Math.round(((index+1)/total) * 100));
+        }
+
+        // 2) Finalize (stitch server-side)
+        const data = await finalizeOnServer({ fileId, folderId: existingFolderId });
+        console.log('large Video saved successfully:', data);
+
+        // 3) Persist path in DB, then publish + close panel (keeps your existing flow)
+        const dataVideoPath = {
+            DesignBoardId: $("#hdnDesignBoardId").val(),
+            VideoPath: data.filePath
+        };
+
+        await $.ajax({
+            url: baseURL + "Canvas/UpdateDesignBoardLargeVideoPath",
+            type: "POST",
+            dataType: "json",
+            data: dataVideoPath
+        });
+
+        SaveDesignBoardInPublishTable();
+        hideDownloadPanel();
+
+        return data.filePath; // for callers that want the URL
+    } catch (error) {
+        console.error('Error saving video (chunked):', error);
+        throw error;
+    } finally {
+        try { HideLoader?.(); } catch { }
+    }
+}
+
+function uploadLargeVideoOLD(blob, existingFolderId = 'new', currentIndex = 1) {
     const formData = new FormData();
     formData.append('video', blob, 'animation.mp4');
 
@@ -3402,20 +3514,6 @@ async function drawTextForDownloadFake() {
     };
 
     //// background
-    //const bg = data.canvasBgColor || '#ffffff';
-    //const bgEl = document.getElementById('hdnBackgroundSpecificColor');
-    //if (bgEl) bgEl.value = bg;
-    //canvas.style.backgroundColor = bg;
-
-    //const bgPromise = data.canvasBgImage
-    //    ? new Promise(resolve => {
-    //        const img = new Image();
-    //        img.crossOrigin = 'anonymous';
-    //        img.onload = () => { canvas._bgImg = img; resolve(); };
-    //        img.onerror = () => { canvas._bgImg = null; resolve(); };
-    //        img.src = data.canvasBgImage;
-    //    })
-    //    : Promise.resolve(canvas._bgImg = null);
 
     const bg = data.canvasBgColor || '#ffffff';
     document.getElementById('hdnBackgroundSpecificColorDownload').value = bg;
@@ -3425,8 +3523,8 @@ async function drawTextForDownloadFake() {
     if (data.canvasBgImage) {
         canvasForDownload._bgImg = new Image();
         canvasForDownload._bgImg.crossOrigin = 'anonymous';
-        canvasForDownload._bgImg.onload = () => drawCanvasForDownload(condition);
-        canvasForDownload._bgImg.onerror = () => drawCanvasForDownload(condition);
+        canvasForDownload._bgImg.onload = () => drawTextForDownload();
+        canvasForDownload._bgImg.onerror = () => drawTextForDownload();
         canvasForDownload._bgImg.src = data.canvasBgImage;
     } else {
         canvasForDownload._bgImg = null;
