@@ -1591,7 +1591,8 @@ function showDownloadPanel() {
 }
 
 async function SaveDesignBoardInPublishTable() {
-    ShowLoader();
+    ShowLoaderTransferFile();
+    HideLoaderPreparingForPublish();
     var designBoardPublishId = $('#hdnDesignBoardPublishId').val() || '00000000-0000-0000-0000-000000000000'; // get GUID value
     try {
         var designBoardId = $('#hdnDesignBoardId').val(); // get GUID value
@@ -1625,6 +1626,7 @@ async function SaveDesignBoardInPublishTable() {
                RedirectToVerticalPageWithQueryString();
             },
             error: function (data) {
+                HideLoaderTransferFile();
                 console.log("error");
                 console.log(data);
             }
@@ -2224,7 +2226,8 @@ function getCompanyIdFromUrl() {
 // Chunked uploader (replaces single-POST version)
 // Chunked uploader with small chunks to avoid NGINX 413
 async function uploadLargeVideo(blob, existingFolderId = 'new') {
-    ShowLoader?.();
+    ShowLoaderPreparingForPublish?.();
+    HideLoader?.();
     // Keep chunks safely under nginx default (1m). 512 KB is conservative.
     const chunkSize = 512 * 1024; // 512 KB
     const fileId =
@@ -2286,7 +2289,7 @@ async function uploadLargeVideo(blob, existingFolderId = 'new') {
     };
 
     try {
-        ShowLoader?.();
+      //  ShowLoader?.();
 
         // 1) Upload chunks
         for (let index = 0; index < total; index++) {
@@ -2330,6 +2333,7 @@ async function uploadLargeVideo(blob, existingFolderId = 'new') {
         return data.filePath;
     } catch (error) {
         HideLoader?.();
+        HideLoaderPreparingForPublish?.();
         console.error('Error saving video (chunked):', error);
         throw error;
     } finally {
