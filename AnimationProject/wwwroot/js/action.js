@@ -1591,6 +1591,7 @@ function showDownloadPanel() {
 }
 
 async function SaveDesignBoardInPublishTable() {
+    ShowLoader();
     var designBoardPublishId = $('#hdnDesignBoardPublishId').val() || '00000000-0000-0000-0000-000000000000'; // get GUID value
     try {
         var designBoardId = $('#hdnDesignBoardId').val(); // get GUID value
@@ -1600,8 +1601,7 @@ async function SaveDesignBoardInPublishTable() {
             DesignBoardId: designBoardId,
             DesignBoardPublishId: designBoardPublishId
         };
-
-
+          
         const result = await $.ajax({
             url: baseURL + "Canvas/PublishDesignSlideBoard",
             type: "POST",
@@ -1621,9 +1621,8 @@ async function SaveDesignBoardInPublishTable() {
                 //window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
                 const url = `${baseURL.replace(/\/$/, '')}/s/v/${encodeURIComponent(companyId)}/${encodeURIComponent(projectId)}`;
                 window.open(url, "_blank");
-
-
-                RedirectToVerticalPageWithQueryString();
+                hideDownloadPanel();
+               RedirectToVerticalPageWithQueryString();
             },
             error: function (data) {
                 console.log("error");
@@ -1639,7 +1638,6 @@ async function SaveDesignBoardInPublishTable() {
            
 }
 async function GetDesignBoardByIdForDownload(condition) {
-   
     publishDownloadcondition = condition;
     var id = $('#hdnDesignBoardId').val(); // get GUID value
     if (id !== '') {
@@ -2181,7 +2179,7 @@ recorderForDownload.onstop = () => {
         a.download = 'animation.webm'; // Download as .webm file
         a.click();
     }
-    HideLoader();
+    //HideLoader();
 };
 function startVideoCapture() {
     //const canvas = document.getElementById("myCanvasElementDownload");
@@ -2226,6 +2224,7 @@ function getCompanyIdFromUrl() {
 // Chunked uploader (replaces single-POST version)
 // Chunked uploader with small chunks to avoid NGINX 413
 async function uploadLargeVideo(blob, existingFolderId = 'new') {
+    ShowLoader?.();
     // Keep chunks safely under nginx default (1m). 512 KB is conservative.
     const chunkSize = 512 * 1024; // 512 KB
     const fileId =
@@ -2326,7 +2325,7 @@ async function uploadLargeVideo(blob, existingFolderId = 'new') {
         });
 
        await SaveDesignBoardInPublishTable();
-        hideDownloadPanel();
+       
 
         return data.filePath;
     } catch (error) {
