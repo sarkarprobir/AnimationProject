@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace AnimationProject.Controllers
@@ -355,6 +356,205 @@ namespace AnimationProject.Controllers
                 folder = folderName,
                 filePath = relativeFilePath
             });
+        }
+
+
+        // ============================
+        // 1) CHUNK UPLOAD ENDPOINT
+        // ============================
+        // POST /video/save-Large-video-chunk
+        // form-data: chunk=<file>, fileId=<client guid>, index=<0..>, total=<N>, folderId=<new|existingId>
+        [HttpPost("save-Large-video-chunk")]
+        [DisableRequestSizeLimit]
+        [RequestFormLimits(MultipartBodyLengthLimit = long.MaxValue)]
+        public async Task<IActionResult> SaveLargeVideoChunk(
+            [FromForm] IFormFile chunk,
+            [FromForm] string fileId,
+            [FromForm] int index,
+            [FromForm] int total,
+            [FromForm] string? folderId // not used here; passed again to finalize
+        )
+        {
+            if (chunk == null || chunk.Length == 0) return BadRequest("No chunk uploaded.");
+            if (string.IsNullOrWhiteSpace(fileId)) return BadRequest("fileId is required.");
+            if (index < 0 || total <= 0 || index >= total) return BadRequest("Invalid index/total.");
+
+            var physicalRoot = (_appSettings.PhysicalPath ?? "").Trim().TrimEnd('\\', '/');
+            if (string.IsNullOrWhiteSpace(physicalRoot))
+                return StatusCode(500, "AppSettings:PhysicalPath not configured.");
+
+            // ...\SlideLargeVideo\_chunks\<fileId>\
+            var baseFolder = Path.Combine(physicalRoot, "SlideLargeVideo");
+            var chunksRoot = Path.Combine(baseFolder, "_chunks", Sanitize(fileId));
+            Directory.CreateDirectory(chunksRoot);
+
+            var partPath = Path.Combine(chunksRoot, $"part_{index:D7}");
+
+            try
+            {
+                await using var fs = System.IO.File.Create(partPath);
+                await chunk.CopyToAsync(fs); // stream straight to disk
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error writing chunk: {ex.Message}");
+            }
+
+            return Ok(new { ok = true, fileId, index, total });
+        }
+
+        // ============================
+        // 2) FINALIZE/STITCH ENDPOINT
+        // ============================
+        // POST /video/finish-Large-video
+        // JSON: { "fileId":"...", "folderId":"new" | "<existingId>" }
+        public class FinishDto
+        {
+            public string FileId { get; set; } = "";
+            public string? FolderId { get; set; }
+        }
+
+        [HttpPost("finish-Large-video")]
+        [DisableRequestSizeLimit]
+        public async Task<IActionResult> FinishLargeVideo([FromBody] FinishDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.FileId))
+                return BadRequest("fileId is required.");
+
+            var physicalRoot = (_appSettings.PhysicalPath ?? "").Trim().TrimEnd('\\', '/');
+            if (string.IsNullOrWhiteSpace(physicalRoot))
+                return StatusCode(500, "AppSettings:PhysicalPath not configured.");
+
+            var baseFolder = Path.Combine(physicalRoot, "SlideLargeVideo");
+            Directory.CreateDirectory(baseFolder);
+
+            var fileId = Sanitize(dto.FileId);
+            var chunksRoot = Path.Combine(baseFolder, "_chunks", fileId);
+            if (!Directory.Exists(chunksRoot))
+                return BadRequest("Chunks not found for the given fileId.");
+
+            // Intended publish folder (if locked on replace, we’ll fall back to a new GUID)
+            var intendedFolderId =
+                (!string.IsNullOrWhiteSpace(dto.FolderId) && !dto.FolderId.Equals("new", StringComparison.OrdinalIgnoreCase))
+                ? Sanitize(dto.FolderId!)
+                : Guid.NewGuid().ToString();
+
+            var intendedFolder = Path.Combine(baseFolder, intendedFolderId);
+            Directory.CreateDirectory(intendedFolder);
+
+            var parts = Directory.GetFiles(chunksRoot, "part_*")
+                                 .OrderBy(p => p, StringComparer.Ordinal)
+                                 .ToArray();
+            if (parts.Length == 0) return BadRequest("No chunks to stitch.");
+
+            const string finalName = "animation.mp4";
+            var finalPath = Path.Combine(intendedFolder, finalName);
+
+            // 1) Stitch into a temp file first (avoid conflicts with readers of animation.mp4)
+            var tempPath = Path.Combine(intendedFolder, $"animation_{Guid.NewGuid():N}.tmp");
+            try
+            {
+                await using var outStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.Read);
+                foreach (var part in parts)
+                {
+                    await using var inStream = System.IO.File.OpenRead(part);
+                    await inStream.CopyToAsync(outStream);
+                }
+            }
+            catch (Exception ex)
+            {
+                TryDeleteQuiet(tempPath);
+                return StatusCode(500, $"Error stitching to temp file: {ex.Message}");
+            }
+
+            // 2) Try to atomically swap into place; if locked, publish in a brand-new folder
+            bool replaced = false;
+            string publishedFolderId = intendedFolderId;
+            try
+            {
+                if (System.IO.File.Exists(finalPath))
+                    System.IO.File.Replace(tempPath, finalPath, destinationBackupFileName: null);
+                else
+                    System.IO.File.Move(tempPath, finalPath);
+                replaced = true;
+            }
+            catch
+            {
+                // fallback: publish to a new folder to avoid lock contention
+                publishedFolderId = Guid.NewGuid().ToString();
+                var fallbackFolder = Path.Combine(baseFolder, publishedFolderId);
+                Directory.CreateDirectory(fallbackFolder);
+                var fallbackPath = Path.Combine(fallbackFolder, finalName);
+
+                try
+                {
+                    if (System.IO.File.Exists(tempPath))
+                        System.IO.File.Move(tempPath, fallbackPath);
+                    else
+                    {
+                        // extremely rare: if Replace consumed temp, re-stitch
+                        await using var outStream = new FileStream(fallbackPath, FileMode.Create, FileAccess.Write, FileShare.Read);
+                        foreach (var part in parts)
+                        {
+                            await using var inStream = System.IO.File.OpenRead(part);
+                            await inStream.CopyToAsync(outStream);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    TryDeleteQuiet(tempPath);
+                    return StatusCode(500, $"Error writing fallback file: {ex.Message}");
+                }
+            }
+
+            // 3) Cleanup chunks (+ temp if still there)
+            TryDeleteQuiet(tempPath);
+            TryDeleteDirectoryQuiet(chunksRoot);
+
+            // Optional: if replaced, prune any stray .mp4 in the intended folder
+            if (replaced)
+            {
+                try
+                {
+                    foreach (var f in Directory.EnumerateFiles(intendedFolder, "*.mp4"))
+                        if (!Path.GetFileName(f).Equals(finalName, StringComparison.OrdinalIgnoreCase))
+                            System.IO.File.Delete(f);
+                }
+                catch { /* ignore */ }
+            }
+
+            // URL for client
+            var webPath = (_appSettings.WebPath ?? "/SlideLargeVideo").TrimEnd('/');
+            var relativeUrl = $"{webPath}/{Uri.EscapeDataString(publishedFolderId)}/{finalName}?nocache={Guid.NewGuid()}";
+
+            return Ok(new
+            {
+                message = replaced
+                    ? "Video saved successfully (replaced existing file)."
+                    : "Video saved successfully (published in a new folder due to file lock).",
+                fileName = finalName,
+                folder = publishedFolderId,
+                filePath = relativeUrl
+            });
+        }
+
+        // ============================
+        // Helpers
+        // ============================
+        private static string Sanitize(string input)
+        {
+            var safe = Regex.Replace(input ?? "", @"[^A-Za-z0-9_\-]", "");
+            return string.IsNullOrWhiteSpace(safe) ? Guid.NewGuid().ToString() : safe;
+        }
+
+        private static void TryDeleteQuiet(string path)
+        {
+            try { if (!string.IsNullOrEmpty(path) && System.IO.File.Exists(path)) System.IO.File.Delete(path); } catch { }
+        }
+        private static void TryDeleteDirectoryQuiet(string path)
+        {
+            try { if (!string.IsNullOrEmpty(path) && Directory.Exists(path)) Directory.Delete(path, true); } catch { }
         }
     }
 }

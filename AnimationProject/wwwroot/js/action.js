@@ -326,8 +326,8 @@ async function captureSlide(activeSlide, slideResult) {
 function RedirectToVerticalPageWithQueryString() {
     // Get the GUID from the hidden field
     var boardId = $("#hdnDesignBoardId").val();
-    HideLoader();
     window.location = `${baseURL}Canvas/VerticalIndex?id=${boardId}`;
+    HideLoader();
 }
 
 function saveCurrentSlide() {
@@ -1591,6 +1591,8 @@ function showDownloadPanel() {
 }
 
 async function SaveDesignBoardInPublishTable() {
+    ShowLoaderTransferFile();
+    HideLoaderPreparingForPublish();
     var designBoardPublishId = $('#hdnDesignBoardPublishId').val() || '00000000-0000-0000-0000-000000000000'; // get GUID value
     try {
         var designBoardId = $('#hdnDesignBoardId').val(); // get GUID value
@@ -1600,8 +1602,7 @@ async function SaveDesignBoardInPublishTable() {
             DesignBoardId: designBoardId,
             DesignBoardPublishId: designBoardPublishId
         };
-
-
+          
         const result = await $.ajax({
             url: baseURL + "Canvas/PublishDesignSlideBoard",
             type: "POST",
@@ -1621,11 +1622,11 @@ async function SaveDesignBoardInPublishTable() {
                 //window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
                 const url = `${baseURL.replace(/\/$/, '')}/s/v/${encodeURIComponent(companyId)}/${encodeURIComponent(projectId)}`;
                 window.open(url, "_blank");
-
-
-                RedirectToVerticalPageWithQueryString();
+                hideDownloadPanel();
+               RedirectToVerticalPageWithQueryString();
             },
             error: function (data) {
+                HideLoaderTransferFile();
                 console.log("error");
                 console.log(data);
             }
@@ -1639,7 +1640,6 @@ async function SaveDesignBoardInPublishTable() {
            
 }
 async function GetDesignBoardByIdForDownload(condition) {
-   
     publishDownloadcondition = condition;
     var id = $('#hdnDesignBoardId').val(); // get GUID value
     if (id !== '') {
@@ -2080,8 +2080,8 @@ async function runStripeTransition(type = 'slideLeft', duration = 2) {
 
     // add, render, animate, cleanup…
     temps.forEach(t => images.push(t));
-    drawCanvasForDownload('Common');
-
+    // drawCanvasForDownload('Common');
+    drawTextForDownload();
     await Promise.all(
         temps.map((t, i) =>
             animateCanvasImage(t, type, duration, i * 0.10)
@@ -2181,7 +2181,7 @@ recorderForDownload.onstop = () => {
         a.download = 'animation.webm'; // Download as .webm file
         a.click();
     }
-    HideLoader();
+    //HideLoader();
 };
 function startVideoCapture() {
     //const canvas = document.getElementById("myCanvasElementDownload");
@@ -2223,8 +2223,126 @@ function getCompanyIdFromUrl() {
     //// Assuming the last segment is the company ID.
     //return segments.length ? segments[segments.length - 1] : null;
 }
+// Chunked uploader (replaces single-POST version)
+// Chunked uploader with small chunks to avoid NGINX 413
+async function uploadLargeVideo(blob, existingFolderId = 'new') {
+    ShowLoaderPreparingForPublish?.();
+    HideLoader?.();
+    // Keep chunks safely under nginx default (1m). 512 KB is conservative.
+    const chunkSize = 512 * 1024; // 512 KB
+    const fileId =
+        (crypto && crypto.randomUUID) ? crypto.randomUUID()
+            : `vid_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const total = Math.ceil(blob.size / chunkSize);
 
-function uploadLargeVideo(blob, existingFolderId = 'new', currentIndex = 1) {
+    const chunkEndpoints = [baseURL + "video/save-Large-video-chunk", baseURL + "Video/SaveLargeVideoChunk"];
+    const finishEndpoints = [baseURL + "video/finish-Large-video", baseURL + "Video/FinishLargeVideo"];
+
+    const postForm = async (url, formData) => {
+        const res = await fetch(url, { method: 'POST', body: formData });
+        if (!res.ok) {
+            const text = await res.text().catch(() => '');
+            throw new Error(`HTTP ${res.status} ${res.statusText} ${text.slice(0, 300)}`);
+        }
+        return res;
+    };
+
+    const postJson = async (url, bodyObj) => {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bodyObj)
+        });
+        if (!res.ok) {
+            const text = await res.text().catch(() => '');
+            throw new Error(`HTTP ${res.status} ${res.statusText} ${text.slice(0, 300)}`);
+        }
+        return res.json();
+    };
+
+    const sendChunk = async (fd) => {
+        let lastErr;
+        for (const url of chunkEndpoints) {
+            try { await postForm(url, fd); return; }
+            catch (e) {
+                lastErr = e;
+                const msg = String(e?.message || '');
+                if (/HTTP 404|HTTP 405/i.test(msg)) continue; // try alternate route style
+                throw e;
+            }
+        }
+        throw lastErr || new Error('No working chunk endpoint found.');
+    };
+
+    const finalizeOnServer = async (payload) => {
+        let lastErr;
+        for (const url of finishEndpoints) {
+            try { return await postJson(url, payload); }
+            catch (e) {
+                lastErr = e;
+                const msg = String(e?.message || '');
+                if (/HTTP 404|HTTP 405/i.test(msg)) continue;
+                throw e;
+            }
+        }
+        throw lastErr || new Error('No working finish endpoint found.');
+    };
+
+    try {
+      //  ShowLoader?.();
+
+        // 1) Upload chunks
+        for (let index = 0; index < total; index++) {
+            const start = index * chunkSize;
+            const end = Math.min(start + chunkSize, blob.size);
+            const chunk = blob.slice(start, end);
+
+            const fd = new FormData();
+            fd.append('chunk', chunk, `part_${index}.bin`);
+            fd.append('fileId', fileId);
+            fd.append('index', index);
+            fd.append('total', total);
+            fd.append('folderId', existingFolderId);
+
+            await sendChunk(fd);
+
+            // optional: progress
+            // updateProgress?.(Math.round(((index + 1) / total) * 100));
+        }
+
+        // 2) Finalize (server stitches parts)
+        const data = await finalizeOnServer({ fileId, folderId: existingFolderId });
+        console.log('large Video saved successfully:', data);
+
+        // 3) Save path → publish → close
+        const dataVideoPath = {
+            DesignBoardId: $("#hdnDesignBoardId").val(),
+            VideoPath: data.filePath
+        };
+
+        await $.ajax({
+            url: baseURL + "Canvas/UpdateDesignBoardLargeVideoPath",
+            type: "POST",
+            dataType: "json",
+            data: dataVideoPath
+        });
+
+       await SaveDesignBoardInPublishTable();
+       
+
+        return data.filePath;
+    } catch (error) {
+        HideLoader?.();
+        HideLoaderPreparingForPublish?.();
+        console.error('Error saving video (chunked):', error);
+        throw error;
+    } finally {
+      //  HideLoader?.();
+    }
+}
+
+
+function uploadLargeVideoOLD(blob, existingFolderId = 'new', currentIndex = 1) {
     const formData = new FormData();
     formData.append('video', blob, 'animation.mp4');
 
@@ -2744,7 +2862,7 @@ function animateCanvasImage(obj, type, duration = 2, delay = 0) {
 
         gsap.to(obj, {
             ...toVars,
-            onUpdate: () => drawCanvasForDownload(currentCondition),
+            onUpdate: () => drawTextForDownload(),
             onComplete: resolve
         });
     });
@@ -3358,88 +3476,110 @@ async function drawTextForDownloadFake() {
 
 
 
+ function loadCanvasFromJsonForDownload(jsonData, condition = 'Common') {
+     ensureFontsInitialized?.();
 
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    currentCondition = condition;
 
-
-
-
-function loadCanvasFromJsonForDownload(jsonData, condition = 'Common') {
-    // await ensureFontsInitialized();
-    // Clear download canvas
-    ctxElementForDownload.clearRect(0, 0, canvasForDownload.width, canvasForDownload.height);
-    currentConditionForDownload = condition;
-
-    // No data: wait for fonts then draw
     if (!jsonData) {
-        document.fonts.ready.then(() => drawTextForDownload());
+         document.fonts.ready;
+        drawTextForDownload();
         return;
     }
 
-    // Parse JSON
-    const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
-    slideDataForDownload = data;
+    const data = (typeof jsonData === "string") ? JSON.parse(jsonData) : jsonData;
 
-    // Compute actual display size (CSS pixels)
+    // canvas size in design pixels
+    const W = canvas.width || 0;
+    const H = canvas.height || 0;
+
+    // unit -> px for TEXT only (keep your convenience here)
+    function unitToPxLocal(v, dim, FRACTION_THRESHOLD = 5) {
+        if (typeof v === 'string') {
+            const s = v.trim().toLowerCase();
+            if (s.endsWith('%')) return (parseFloat(s) / 100) * dim;
+            if (s.endsWith('px')) return parseFloat(s);
+            const n = Number(s);
+            if (Number.isFinite(n)) v = n; else return 0;
+        }
+        const n = Number(v);
+        if (!Number.isFinite(n)) return 0;
+        return (Math.abs(n) <= FRACTION_THRESHOLD) ? (n * dim) : n;
+    }
+
+    const fileName = (src) => {
+        try { return new URL(String(src), location.href).pathname.split('/').pop()?.toLowerCase() || ""; }
+        catch { return String(src).split(/[?#]/)[0].split('/').pop()?.toLowerCase() || ""; }
+    };
+
+    const isLineBasicBySrc = (im) => {
+        if (!im?.isBasic) return false;
+        const n = fileName(im.src);
+        return n === 'ico-shapes-line.svg' || n === 'ico-shapes-line';
+    };
+
+    //// background
+
+    const bg = data.canvasBgColor || '#ffffff';
+    document.getElementById('hdnBackgroundSpecificColorDownload').value = bg;
+    canvasForDownload.style.backgroundColor = bg;
+
+    // Preload background image if any
+    if (data.canvasBgImage) {
+        canvasForDownload._bgImg = new Image();
+        canvasForDownload._bgImg.crossOrigin = 'anonymous';
+        canvasForDownload._bgImg.onload = () => drawTextForDownload();
+        canvasForDownload._bgImg.onerror = () => drawTextForDownload();
+        canvasForDownload._bgImg.src = data.canvasBgImage;
+    } else {
+        canvasForDownload._bgImg = null;
+    }
+
+
+    // TEXT
+    const padding = 5;
+    textObjectsForDownload = (data.text || []).map(t => {
+        const wPx = unitToPxLocal(t.width ?? t.boundingWidth ?? 0.2, W);
+        const hPx = unitToPxLocal(t.height ?? t.boundingHeight ?? 0, H);
+
+        const fontPx = t.fontSize;
+        const lineH = (fontPx ? fontPx * (t.lineSpacing || 1.2) : 18);
+        const linesArr = String(t.text ?? "").split("\n");
+        const hasManual = linesArr.length > 1;
+        const neededH = hasManual ? (linesArr.length * lineH + 2 * padding) : (hPx || 0);
+
+        const finalW = Math.max(10, Number.isFinite(wPx) ? wPx : 50);
+        const finalH = Math.max(10, Number.isFinite(neededH) ? neededH : 30);
+
+        let xPx = unitToPxLocal(t.x ?? 0, W);
+        let yPx = unitToPxLocal(t.y ?? 0, H);
+
+        // keep the text inside on load (text is usually not meant to overflow)
+        if (xPx + finalW + padding > W) xPx = Math.max(0, W - finalW - padding);
+        if (yPx + finalH + padding > H) yPx = Math.max(0, H - finalH - padding);
+        if (xPx < 0) xPx = 0;
+        if (yPx < 0) yPx = 0;
+
+        return {
+            type: t.type || 'text',
+            text: t.text || "",
+            x: xPx, y: yPx,
+            width: finalW, height: finalH,
+            boundingWidth: finalW, boundingHeight: finalH,
+            align: t.align || t.textAlign || "left",
+            fontSize: t.fontSize, fontFamily: t.fontFamily, textColor: t.textColor,
+            opacity: (t.opacity ?? 100),
+            lineSpacing: (typeof t.lineSpacing === 'number') ? t.lineSpacing : 1.2,
+            noAnim: !!t.noAnim, groupId: t.groupId ?? null, rotation: t.rotation || 0,
+            isBold: !!t.isBold, isItalic: !!t.isItalic,
+            zIndex: (typeof t.zIndex === "number") ? t.zIndex : 0,
+            selected: false, _hasManualBreaks: hasManual
+        };
+    });
     const rect = canvasForDownload.getBoundingClientRect();
     const screenW = rect.width;
     const screenH = rect.height;
-
-    // Build text objects, adjust for manual line breaks and clamp at bottom
-    const textObjectsForDownload = (data.text || []).map(obj => {
-        const bw = obj.boundingWidth * screenW;
-        const bh = obj.boundingHeight * screenH;
-        const fontPx = obj.fontSize;
-        const lineH = fontPx * 1.2;
-
-        // Manual split
-        const lines = obj.text.split("\n");
-        const hasManual = lines.length > 1;
-
-        // Compute needed height
-        const neededH = hasManual
-            ? (lines.length * lineH + 2 * padding)
-            : bh;
-        const finalH = Math.max(bh, neededH);
-        const finalW = bw;
-
-        // Initial Y position
-        let ty = obj.y * screenH;
-        // Clamp to bottom if overflowing
-        if (ty + finalH + padding > screenH) {
-            ty = screenH - finalH - padding;
-        }
-
-        return {
-            text: obj.text,
-            x: obj.x * screenW,
-            y: ty,
-            boundingWidth: finalW,
-            boundingHeight: finalH,
-            fontSize: fontPx,
-            fontFamily: obj.fontFamily,
-            textColor: obj.textColor,
-            textAlign: obj.textAlign,
-            opacity: obj.opacity || 1,
-            selected: false,
-            _hasManualBreaks: hasManual,
-            // ← RIGHT HERE: hydrate or default lineSpacing
-            lineSpacing: (typeof obj.lineSpacing === 'number')
-                ? obj.lineSpacing
-                : obj.fontSize * 1.2,
-            noAnim: obj.noAnim,
-            groupId: obj.groupId,
-            rotation: obj.rotation,
-            isBold: obj.isBold || false,
-            isItalic: obj.isItalic || false,
-            type: obj.type || 'text',
-            zIndex: obj.zIndex || getNextZIndex(),
-            opacity: 100,
-            width: obj.width,
-            height: obj.height,
-            align: obj.align
-        };
-    });
-
     // Build images
     const imagesForDownload = (data.images || []).map(o => {
         const obj = { ...o };
@@ -3469,31 +3609,17 @@ function loadCanvasFromJsonForDownload(jsonData, condition = 'Common') {
         return obj;
     });
 
-    // Mirror into globals and set background
-    textObjects = textObjectsForDownload;
-    images = imagesForDownload;
-    const bg = data.canvasBgColor || '#ffffff';
-    document.getElementById('hdnBackgroundSpecificColorDownload').value = bg;
-    canvasForDownload.style.backgroundColor = bg;
-
-    // Preload background image if any
-    if (data.canvasBgImage) {
-        canvasForDownload._bgImg = new Image();
-        canvasForDownload._bgImg.crossOrigin = 'anonymous';
-        canvasForDownload._bgImg.onload = () => drawCanvasForDownload(condition);
-        canvasForDownload._bgImg.onerror = () => drawCanvasForDownload(condition);
-        canvasForDownload._bgImg.src = data.canvasBgImage;
-    } else {
-        canvasForDownload._bgImg = null;
-    }
-
+   
+     textObjects = textObjectsForDownload;
+     images = imagesForDownload;
+     try { allItems = [...textObjects, ...images]; } catch (_) { /* optional */ }
 
     // Load fonts, auto-fit (skip manual breaks), then draw
-    const fontPromises = textObjects.map(o =>
+    const fontPromises = textObjectsForDownload.map(o =>
         document.fonts.load(`${o.fontSize}px ${o.fontFamily}`)
     );
     Promise.all(fontPromises).finally(() => {
-        textObjects.forEach(obj => {
+        textObjectsForDownload.forEach(obj => {
             //if (!obj._hasManualBreaks) {
             //    autoFitText(obj, padding);
             //}
@@ -3505,6 +3631,197 @@ function loadCanvasFromJsonForDownload(jsonData, condition = 'Common') {
             obj.boundingHeight = fitResult.boundingHeight;
         });
         drawTextForDownload();
+    });
+}
+function loadCanvasFromJsonForDownload_11(jsonData, condition = 'Common') {
+    // ─────────────────────────────────────────────────────────
+    // Use the *download* canvas/ctx consistently
+    // ─────────────────────────────────────────────────────────
+    const ctx = ctxElementForDownload;
+    const canvas = canvasForDownload;
+
+    // init fonts if available
+    ensureFontsInitialized?.();
+
+    // clear & reset transform
+    if (typeof ctx.resetTransform === 'function') ctx.resetTransform();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // store condition for downstream draw
+    currentConditionForDownload = condition;
+    try { currentCondition = condition; } catch (_) { /* ignore if not used */ }
+
+    // if nothing passed, just wait for fonts then draw
+    if (!jsonData) {
+        (document.fonts?.ready ? document.fonts.ready : Promise.resolve()).then(() => {
+            drawTextForDownload();
+        });
+        return;
+    }
+
+    // parse JSON
+    const data = (typeof jsonData === "string") ? JSON.parse(jsonData) : jsonData;
+    slideDataForDownload = data;
+
+    // ─────────────────────────────────────────────────────────
+    // Background (color + optional image) on the SAME canvas we draw on
+    // ─────────────────────────────────────────────────────────
+    const bg = data.canvasBgColor || '#ffffff';
+    const bgEl = document.getElementById('hdnBackgroundSpecificColorDownload');
+    if (bgEl) bgEl.value = bg;
+    canvas.style.backgroundColor = bg;  // CSS bg; draw func may also paint a solid fill
+
+    if (data.canvasBgImage) {
+        canvas._bgImg = new Image();
+        canvas._bgImg.crossOrigin = 'anonymous';
+        const bgDone = () => drawTextForDownload();
+        canvas._bgImg.onload = bgDone;
+        canvas._bgImg.onerror = bgDone;
+        canvas._bgImg.src = data.canvasBgImage;
+    } else {
+        canvas._bgImg = null;
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // Size in CSS pixels (keep text & images in the same space)
+    // ─────────────────────────────────────────────────────────
+    const rect = canvas.getBoundingClientRect();
+    const screenW = rect.width;
+    const screenH = rect.height;
+
+    // unit -> px helper (supports %, px, plain number; small numbers treated as fractions of dim)
+    function unitToPxLocal(v, dim, FRACTION_THRESHOLD = 5) {
+        if (typeof v === 'string') {
+            const s = v.trim().toLowerCase();
+            if (s.endsWith('%')) return (parseFloat(s) / 100) * dim;
+            if (s.endsWith('px')) return parseFloat(s);
+            const n = Number(s);
+            if (Number.isFinite(n)) v = n; else return 0;
+        }
+        const n = Number(v);
+        if (!Number.isFinite(n)) return 0;
+        return (Math.abs(n) <= FRACTION_THRESHOLD) ? (n * dim) : n;
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // TEXT
+    // ─────────────────────────────────────────────────────────
+    const padding = 5;
+
+    const textObjectsForDownload = (data.text || []).map(t => {
+        const wPx = unitToPxLocal(t.width ?? t.boundingWidth ?? 0.2, screenW);
+        const hPx = unitToPxLocal(t.height ?? t.boundingHeight ?? 0, screenH);
+
+        const fontPx = parseFloat(t.fontSize) || 16;
+        const lineRatio = (typeof t.lineSpacing === 'number') ? t.lineSpacing : 1.2;
+        const lineH = fontPx * lineRatio;
+
+        const linesArr = String(t.text ?? "").split("\n");
+        const hasManual = linesArr.length > 1;
+        const neededH = hasManual ? (linesArr.length * lineH + 2 * padding) : (hPx || 0);
+
+        let xPx = unitToPxLocal(t.x ?? 0, screenW);
+        let yPx = unitToPxLocal(t.y ?? 0, screenH);
+
+        const finalW = Math.max(10, Number.isFinite(wPx) ? wPx : 50);
+        const finalH = Math.max(10, Number.isFinite(neededH) ? neededH : 30);
+
+        // keep text within bounds on load
+        if (xPx + finalW + padding > screenW) xPx = Math.max(0, screenW - finalW - padding);
+        if (yPx + finalH + padding > screenH) yPx = Math.max(0, screenH - finalH - padding);
+        if (xPx < 0) xPx = 0;
+        if (yPx < 0) yPx = 0;
+
+        return {
+            type: t.type || 'text',
+            text: t.text || "",
+            x: xPx, y: yPx,
+            width: finalW, height: finalH,
+            boundingWidth: finalW, boundingHeight: finalH,
+            align: t.align || t.textAlign || "left",
+            fontSize: t.fontSize, fontFamily: t.fontFamily, textColor: t.textColor,
+            opacity: (t.opacity ?? 100),                   // supports 0..1 or 0..100 depending on your normAlpha()
+            lineSpacing: lineRatio,                         // ratio (not pixels)
+            noAnim: !!t.noAnim, groupId: (t.groupId ?? null),
+            rotation: t.rotation || 0,
+            isBold: !!t.isBold, isItalic: !!t.isItalic,
+            zIndex: (t.zIndex ?? 0),                       // preserve zero
+            selected: false,
+            _hasManualBreaks: hasManual
+        };
+    });
+
+    // ─────────────────────────────────────────────────────────
+    // IMAGES (batch redraw after all loads)
+    // ─────────────────────────────────────────────────────────
+    let pendingImgs = 0;
+
+    const imagesForDownload = (data.images || []).map(o => {
+        const obj = { ...o };
+
+        obj.x = o.x * screenW;
+        obj.y = o.y * screenH;
+        obj.width = o.width * screenW;
+        obj.height = o.height * screenH;
+
+        obj.rotation = (typeof o.rotation === 'number') ? o.rotation : 0;
+        obj.selected = false;
+        obj.type = o.type || 'image';
+        obj.zIndex = (o.zIndex ?? getNextZIndex());
+
+        // carry style/meta
+        obj.fillNoColorStatus = o.fillNoColorStatus;
+        obj.strokeNoColorStatus = o.strokeNoColorStatus;
+        obj.fillNoColor = o.fillNoColor;
+        obj.strokeNoColor = o.strokeNoColor;
+        obj.strokeWidth = o.strokeWidth;
+        obj.isBasic = o.isBasic;
+        obj.isLINESvg = o.isLINESvg;
+        obj.__capsOrientation = o.__capsOrientation;
+
+        // image element
+        obj.img = new Image();
+        obj.img.crossOrigin = 'anonymous';
+        pendingImgs++;
+        const done = () => {
+            pendingImgs = Math.max(0, pendingImgs - 1);
+            if (pendingImgs === 0) drawTextForDownload();
+        };
+        obj.img.onload = done;
+        obj.img.onerror = done;
+        obj.img.src = o.src;
+
+        return obj;
+    });
+
+    // ─────────────────────────────────────────────────────────
+    // Mirror into globals used by the renderer (prevents “always first JSON”)
+    // ─────────────────────────────────────────────────────────
+    textObjects = textObjectsForDownload;
+    images = imagesForDownload;
+    try { allItems = [...textObjects, ...images]; } catch (_) { /* optional */ }
+
+    // ─────────────────────────────────────────────────────────
+    // Load fonts, auto-fit, then draw (or wait for images to finish)
+    // ─────────────────────────────────────────────────────────
+    const fontPromises = textObjectsForDownload.map(o => {
+        const fam = o.fontFamily || 'Arial';
+        const sz = parseInt(o.fontSize, 10) || 16;
+        return document.fonts?.load ? document.fonts.load(`${sz}px ${fam}`) : Promise.resolve();
+    });
+
+    Promise.allSettled(fontPromises).finally(() => {
+        textObjectsForDownload.forEach(obj => {
+            const fitResult = autoFitTextNewDownload(obj, padding);
+            obj._wrappedLines = fitResult.wrappedLines;
+            obj.boundingWidth = fitResult.boundingWidth;
+            obj.boundingHeight = fitResult.boundingHeight;
+        });
+
+        // if there are no images pending, render now
+        if (pendingImgs === 0) {
+            drawTextForDownload();
+        }
     });
 }
 
@@ -3871,10 +4188,662 @@ function applyClipMask(ctx, item) {
 
 
 
+async function drawTextForDownload() {
+    const ctx = ctxElementForDownload;
+    const canvas = canvasForDownload;
 
+    const designW = canvas.width;
+    const designH = canvas.height;
+    // clear & bg
+    ctx.clearRect(0, 0, designW, designH);
+
+    const bgEl = document.getElementById('hdnBackgroundSpecificColorDownload');
+    const bgColor = (bgEl?.value || canvas.style.backgroundColor || "").trim();
+    if (bgColor) {
+        ctx.save();
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, designW, designH);
+        ctx.restore();
+    }
+
+    if (canvas._bgImg) {
+        if (canvas._bgImg.complete) {
+            ctx.drawImage(canvas._bgImg, 0, 0, designW, designH);
+        } else {
+            canvas._bgImg.onload = () => drawText();
+            canvas._bgImg.onerror = () => { };
+        }
+    }
+
+    // text defaults
+    ctx.textBaseline = "top";
+    const defaultStyle = window.getComputedStyle(textEditorNew);
+    const defaultFontSize = defaultStyle.fontSize || "16px";
+    const defaultFontFamily = defaultStyle.fontFamily || "Arial Regular";
+    const defaultFontWeight = defaultStyle.fontWeight || "normal";
+    const defaultFontStyle = defaultStyle.fontStyle || "normal";
+    const defaultColor = defaultStyle.color || "#000";
+
+    // === local mask helper (rotated/local space) ===
+    function __applyLocalRectMask(ctx, w, h, clipVal, direction) {
+        if (!(clipVal > 0 && clipVal < 1)) return;
+
+        let vw = w, vh = h;
+        if (direction === "left" || direction === "right") vw = w * (1 - clipVal);
+        if (direction === "top" || direction === "bottom") vh = h * (1 - clipVal);
+
+        let rx = -w / 2, ry = -h / 2;
+        if (direction === "right") rx = (w / 2) - vw;
+        if (direction === "bottom") ry = (h / 2) - vh;
+
+        ctx.beginPath();
+        ctx.rect(rx, ry, vw, vh);
+        ctx.clip();
+    }
+
+    // ===== BASIC SHAPES: detect by filename (case-insensitive; works with URLs/data URIs) =====
+    // --- BASIC SHAPES detection (filename only) ---
+    // BASIC shape list + detector
+    // ---- BASIC shapes only -------------------------------------------------
+    // ---- BASIC SHAPES list
+    const __BASIC_SHAPES = new Set([
+        //'ico-shapes-circle.svg',
+        //'ico-shapes-heart.svg',
+        //'ico-shapes-hexagon.svg',
+        //'ico-shapes-line.svg',
+        'ico-shapes-rec.svg',
+        //'ico-shapes-triangle.svg'
+    ]);
+
+    function __isBasicShapeSvg(box) {
+        if (!box || box.type !== 'image' || !box.src) return false;
+        let name = '';
+        try { name = new URL(String(box.src), location.href).pathname.split('/').pop() || ''; }
+        catch { name = String(box.src).split(/[?#]/)[0].split('/').pop() || ''; }
+        return __BASIC_SHAPES.has(name.toLowerCase());
+    }
+    function __applyLocalRectMask(ctx, w, h, clipVal, direction) {
+        if (!(clipVal > 0 && clipVal < 1)) return;
+
+        let vw = w, vh = h;
+        if (direction === "left" || direction === "right") vw = w * (1 - clipVal);
+        if (direction === "top" || direction === "bottom") vh = h * (1 - clipVal);
+
+        let rx = -w / 2, ry = -h / 2;
+        if (direction === "right") rx = (w / 2) - vw;
+        if (direction === "bottom") ry = (h / 2) - vh;
+
+        ctx.beginPath();
+        ctx.rect(rx, ry, vw, vh);
+        ctx.clip();
+    }
+
+    // === your existing 3-slice (kept) ===
+    // === REPLACE your 3-slice with this version (no gaps on wide/narrow) ===
+    function __drawImageThreeSliceLocalX(ctx2, img, w, h) {
+        const sw = img.naturalWidth || img.width || 1;
+        const sh = img.naturalHeight || img.height || 1;
+
+        // cap in source ≈ radius
+        const capSrc = Math.max(1, Math.round(sh / 2));
+
+        // middle in source: at least 1px, centered if the true middle is 0/negative
+        let midSrcW = sw - capSrc * 2;
+        let midSrcX = capSrc;
+        if (midSrcW < 1) {
+            midSrcX = Math.max(0, Math.floor(sw / 2));
+            midSrcW = 1;
+        }
+
+        // destination pieces
+        const capDst = Math.max(1e-3, Math.min(h / 2, w / 2));
+        const midDst = Math.max(0, w - capDst * 2);
+
+        // LEFT cap
+        ctx2.drawImage(img, 0, 0, capSrc, sh, -w / 2, -h / 2, capDst, h);
+
+        // MIDDLE (always when there's room in destination)
+        if (midDst > 0) {
+            ctx2.drawImage(img, midSrcX, 0, midSrcW, sh, -w / 2 + capDst, -h / 2, midDst, h);
+        }
+
+        // RIGHT cap (sample from the right edge)
+        const rightSrcX = Math.max(0, sw - capSrc);
+        ctx2.drawImage(img, rightSrcX, 0, capSrc, sh, -w / 2 + capDst + midDst, -h / 2, capDst, h);
+    }
+
+    // === 9-slice (capsule-safe, constant curvature) ===
+    // curv: optional curvature; 0..0.5 => ratio of height, >1 => pixels
+    function __drawImageNineSliceLocal(ctx2, img, w, h, curv) {
+        const sw = img.naturalWidth || img.width || 1;
+        const sh = img.naturalHeight || img.height || 1;
+
+        // ---- DESTINATION corner radius (keep constant while squishing) ----
+        // prefer explicit 'curv', else img.__curvatureRatio, else 0.5 (pill)
+        let k;
+        if (typeof curv === 'number' && isFinite(curv)) {
+            // <=1 => ratio; >1 => pixels converted to ratio by /h
+            k = (curv > 1) ? (curv / h) : curv;
+        } else if (typeof img.__curvatureRatio === 'number') {
+            k = img.__curvatureRatio;
+        } else {
+            k = 0.5; // default pill ends
+        }
+        // clamp to [0..0.5]
+        k = Math.max(0, Math.min(0.5, k));
+
+        // Fixed destination corner size from HEIGHT, not from current width
+        const capDstX = k * h;         // radius horizontally
+        const capDstY = k * h;         // radius vertically
+        const midDstX = Math.max(0, w - 2 * capDstX); // center can collapse to 0
+        const midDstY = Math.max(0, h - 2 * capDstY);
+
+        // ---- SOURCE cap size: same ratio of the source asset ----
+        let capSrc = Math.round(k * sh);
+        capSrc = Math.max(1, Math.min(capSrc, Math.floor(Math.min(sw, sh) / 2)));
+
+        // source middles (≥1px to avoid gaps)
+        let midSrcW = sw - capSrc * 2, midSrcX = capSrc;
+        if (midSrcW < 1) { midSrcW = 1; midSrcX = Math.min(Math.max(0, capSrc), Math.max(0, sw - 1)); }
+
+        let midSrcH = sh - capSrc * 2, midSrcY = capSrc;
+        if (midSrcH < 1) { midSrcH = 1; midSrcY = Math.min(Math.max(0, capSrc), Math.max(0, sh - 1)); }
+
+        const x0 = -w / 2, y0 = -h / 2;
+
+        // tiny overlaps to hide seams (DPI-aware)
+        const DPR = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
+        const OX = 1 / DPR, OY = 1 / DPR;
+
+        // Top row
+        ctx2.drawImage(img, 0, 0, capSrc, capSrc, x0, y0, capDstX + OX, capDstY + OY); // TL
+        if (midDstX > 0)
+            ctx2.drawImage(img, midSrcX, 0, midSrcW, capSrc,
+                x0 + capDstX - OX, y0, midDstX + 2 * OX, capDstY + OY);       // T
+        ctx2.drawImage(img, Math.max(0, sw - capSrc), 0, capSrc, capSrc,
+            x0 + capDstX + midDstX - OX, y0, capDstX + OX, capDstY + OY);   // TR
+
+        // Middle row
+        if (midDstY > 0) {
+            ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH,
+                x0, y0 + capDstY - OY, capDstX + OX, midDstY + 2 * OY);       // L
+            if (midDstX > 0)
+                ctx2.drawImage(img, midSrcX, midSrcY, midSrcW, midSrcH,
+                    x0 + capDstX - OX, y0 + capDstY - OY,
+                    midDstX + 2 * OX, midDstY + 2 * OY);                         // C
+            ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH,
+                x0 + capDstX + midDstX - OX, y0 + capDstY - OY,
+                capDstX + OX, midDstY + 2 * OY);                               // R
+        } else {
+            // no center height → stretch side strips to meet
+            ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH,
+                x0, y0 + capDstY - OY, capDstX + OX, midDstY + 2 * OY);
+            ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH,
+                x0 + capDstX + midDstX - OX, y0 + capDstY - OY,
+                capDstX + OX, midDstY + 2 * OY);
+        }
+
+        // Bottom row
+        ctx2.drawImage(img, 0, Math.max(0, sh - capSrc), capSrc, capSrc,
+            x0, y0 + capDstY + midDstY - OY, capDstX + OX, capDstY + OY);   // BL
+        if (midDstX > 0)
+            ctx2.drawImage(img, midSrcX, Math.max(0, sh - capSrc), midSrcW, capSrc,
+                x0 + capDstX - OX, y0 + capDstY + midDstY - OY,
+                midDstX + 2 * OX, capDstY + OY);                               // B
+        ctx2.drawImage(img, Math.max(0, sw - capSrc), Math.max(0, sh - capSrc), capSrc, capSrc,
+            x0 + capDstX + midDstX - OX, y0 + capDstY + midDstY - OY,
+            capDstX + OX, capDstY + OY);                                     // BR
+    }
+
+
+    // z-ordered
+    const all = [...(images || []), ...(textObjects || [])]
+        .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+
+    for (const box of all) {
+        if (box.width == null || Number.isNaN(box.width)) box.width = 50;
+        if (box.height == null || Number.isNaN(box.height)) box.height = 30;
+
+        const { w, h, cx, cy } = getBoxRect(box);
+        const angleRad = deg2rad(box.rotation || 0);
+
+        // normalize clip & compute effective direction; skip fully hidden
+        if (typeof box.previousClip !== "number") {
+            box.previousClip = Number(box.clip) || 0;
+        }
+        const __clipVal = Math.max(0, Math.min(1, Number(box.clip) || 0));
+        const __isHiding = __clipVal > box.previousClip;
+        const __origDir = box.clipDirection || "top";
+        const __effDir = __isHiding ? invertDirection(__origDir) : __origDir;
+        box.previousClip = __clipVal;
+
+        if (__clipVal >= 1) continue;
+
+        box.__clipVal = __clipVal;
+        box.__effDir = __effDir;
+
+        if (typeof box.scaleX !== "number") box.scaleX = 1;
+        if (typeof box.scaleY !== "number") box.scaleY = 1;
+        const __sx = (Number(box.scaleX) || 0);
+        const __sy = (Number(box.scaleY) || 0);
+        if (__sx === 0 || __sy === 0) continue;
+
+        // sandbox world-space clip
+        ctx.save();
+        if (box.clip >= 1) { ctx.restore(); ctx.restore(); return; }
+
+        if (box.clip > 0 && box.clip < 1) {
+            const originalDir = box.clipDirection || "top";
+            const isHiding = box.clip > box.previousClip;
+            const effectiveDirection = isHiding ? invertDirection(originalDir) : originalDir;
+
+            box.previousClip = box.clip;
+
+            const isImage = box.type === 'image';
+            const width = isImage ? box.width : box.boundingWidth;
+            const height = isImage ? box.height : box.boundingHeight;
+            const x = box.x;
+            const y = box.y;
+
+            ctx.beginPath();
+            if (effectiveDirection === "top") {
+                const visibleHeight = height * (1 - box.clip);
+                ctx.rect(x, y, width, visibleHeight);
+            } else if (effectiveDirection === "bottom") {
+                const visibleHeight = height * (1 - box.clip);
+                ctx.rect(x, y + height - visibleHeight, width, visibleHeight);
+            } else if (effectiveDirection === "left") {
+                const visibleWidth = width * (1 - box.clip);
+                ctx.rect(x, y, visibleWidth, height);
+            } else if (effectiveDirection === "right") {
+                const visibleWidth = width * (1 - box.clip);
+                ctx.rect(x + width - visibleWidth, y, visibleWidth, height);
+            }
+            ctx.clip();
+        }
+
+        // drop world-space clip
+        ctx.restore();
+
+
+        const isBasic = box.isBasic ?? false;
+        if (isBasic) {
+            if (box.type === "image") {
+                const { w, h, cx, cy } = getBoxRect(box);
+                const angleRad = deg2rad(box.rotation || 0);
+
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(angleRad);
+                ctx.scale(__sx, __sy);
+                ctx.globalAlpha = normAlpha(box.opacity);
+
+                if (box.__clipVal > 0 && box.__clipVal < 1) {
+                    __applyLocalRectMask(ctx, w, h, box.__clipVal, box.__effDir || "top");
+                }
+
+                if (box.img) {
+                    if (box.img.complete) {
+                        const natW = box.img.naturalWidth || box.img.width || w;
+                        const natH = box.img.naturalHeight || box.img.height || h;
+                        const arImg = natW / Math.max(natH, 1e-6);
+                        const arBox = w / Math.max(h, 1e-6);
+
+                        const aspectChanged = Math.abs(arBox - arImg) > 1e-3;
+                        const preserveCaps = (box.preserveCaps === true) || aspectChanged;
+                        if (preserveCaps) {
+                            const wantVerticalCaps = (box.__capsOrientation === 'vertical');
+                            const k = 0.480732281680149;   // your fixed curvature
+                            let __didCapsDraw = false;
+
+                            // Prefer rotated draw when caps are vertical so we sample the rounded sides
+                            if (wantVerticalCaps) {
+                                ctx.save();
+                                ctx.rotate(Math.PI / 2);
+
+                                // swap w/h because we rotated
+                                if (typeof __drawImageNineSliceLocal === 'function') {
+                                    __drawImageNineSliceLocal(ctx, box.img, h, w, k);  // curvature-aware, rounded top/bottom
+                                    __didCapsDraw = true;
+                                } else if (typeof __drawImageThreeSliceLocalX === 'function') {
+                                    // OK if your X-slice ignores the extra arg; JS just discards it
+                                    __drawImageThreeSliceLocalX(ctx, box.img, h, w, k);
+                                    __didCapsDraw = true;
+                                } else if (typeof __drawImageThreeSliceLocalY === 'function') {
+                                    // last resort (not ideal for caps), but keep as a fallback
+                                    __drawImageThreeSliceLocalY(ctx, box.img, w, h, k);
+                                    __didCapsDraw = true;
+                                }
+
+                                ctx.restore();
+                            }
+
+                            if (!__didCapsDraw) {
+                                // Horizontal caps (or generic fallback)
+                                if (typeof __drawImageNineSliceLocal === 'function') {
+                                    __drawImageNineSliceLocal(ctx, box.img, w, h, k);
+                                } else if (typeof __drawImageThreeSliceLocalX === 'function') {
+                                    __drawImageThreeSliceLocalX(ctx, box.img, w, h, k);
+                                } else {
+                                    ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                                }
+                            }
+                        } else {
+                            ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                        }
+
+
+
+
+                        //if (preserveCaps) {
+                        //    const wantVerticalCaps = (box.__capsOrientation === 'vertical'); // ← ADD
+                        //    let __didCapsDraw = false;                                       // ← ADD
+
+                        //    if (wantVerticalCaps) {                                          // ← ADD
+                        //        // Draw with TOP/BOTTOM caps preserved (no canvas rotation)
+                        //        if (typeof __drawImageThreeSliceLocalY === 'function') {
+                        //            __drawImageThreeSliceLocalY(ctx, box.img, w, h);
+                        //            __didCapsDraw = true;
+                        //        } else {
+                        //            // Fallback: 9-slice with current curvature (still no rotation)
+                        //            __drawImageNineSliceLocal(ctx, box.img, w, h, box.img?.__curvatureRatio);
+                        //            __didCapsDraw = true;
+                        //        }
+                        //    }
+
+                        //    if (!__didCapsDraw) { // ← ADD
+                        //        // Horizontal caps preserved (your existing behavior)
+                        //        __drawImageNineSliceLocal(ctx, box.img, w, h);
+                        //        // If you prefer strict horizontal 3-slice instead, keep this alternative:
+                        //        // __drawImageThreeSliceLocalX(ctx, box.img, w, h);
+                        //    }
+                        //} else {
+                        //    ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                        //}
+
+                    } else {
+                        const img = box.img;
+                        img.onload = () => { img.onload = null; drawText(); };
+                        img.onerror = () => { img.onerror = null; };
+                    }
+                }
+
+                ctx.restore();
+
+                if (box.selected && w > 0 && h > 0) {
+                    drawRotatedSelection(ctx, { ...box, width: w * __sx, height: h * __sy });
+                }
+                continue;
+            }
+
+        }
+        else {
+            if (box.type === "image") {
+                const { w, h, cx, cy } = getBoxRect(box);
+                const angleRad = deg2rad(box.rotation || 0);
+
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(angleRad);
+
+                // === ADD: apply popcorn (and other) scale here
+                ctx.scale(__sx, __sy);
+
+                ctx.globalAlpha = normAlpha(box.opacity);
+
+                // === ADD: local (rotated) mask for images
+                if (box.__clipVal > 0 && box.__clipVal < 1) {
+                    __applyLocalRectMask(ctx, w, h, box.__clipVal, box.__effDir || "top");
+                }
+
+                if (box.img) {
+                    if (box.img.complete) {
+                        ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                    } else {
+                        const img = box.img;
+                        img.onload = () => { img.onload = null; drawText(); };
+                        img.onerror = () => { img.onerror = null; };
+                    }
+                }
+                ctx.restore(); // back to world space
+
+                // === ADD: selection should reflect scaled size
+                if (box.selected && w > 0 && h > 0) {
+                    drawRotatedSelection(ctx, { ...box, width: w * __sx, height: h * __sy });
+                }
+                continue;
+            }
+
+        }
+
+
+
+        //---- TEXT ---- (unchanged)
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angleRad);
+        ctx.scale(__sx, __sy);
+        ctx.globalAlpha = normAlpha(box.opacity);
+
+        if (box.__clipVal > 0 && box.__clipVal < 1) {
+            __applyLocalRectMask(ctx, w, h, box.__clipVal, box.__effDir || "top");
+        }
+
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = box.text || "";
+
+        const lines = [];
+        wrapper.childNodes.forEach(n => {
+            if (n.nodeType === 1 && n.tagName === "DIV") {
+                const hasContent = n.textContent.trim().length > 0 || n.children.length > 0;
+                if (!hasContent) {
+                    const blank = document.createElement("div");
+                    blank.appendChild(document.createTextNode(" "));
+                    lines.push(blank);
+                } else {
+                    const ln = document.createElement("div");
+                    ln.append(...n.cloneNode(true).childNodes);
+                    lines.push(ln);
+                }
+            } else if (n.nodeType === 1 && n.tagName === "BR") {
+                const brLine = document.createElement("div");
+                brLine.appendChild(document.createTextNode(" "));
+                lines.push(brLine);
+            } else {
+                if (lines.length === 0) lines.push(document.createElement("div"));
+                lines[lines.length - 1].appendChild(n.cloneNode(true));
+            }
+        });
+
+        const left = -w / 2;
+        const top = -h / 2;
+
+        let cursorY = top + 5;
+        let usedHeight = 0;
+
+        let __maxRunWidthObserved = 0;
+        let __maxTokenWidthObserved = 0;
+
+        lines.forEach(lineNode => {
+            let cursorX = left + 5;
+            if (box.align === "center") {
+                ctx.textAlign = "center";
+                cursorX = left + w / 2;
+            } else if (box.align === "right") {
+                ctx.textAlign = "right";
+                cursorX = left + w - 5;
+            } else {
+                ctx.textAlign = "left";
+            }
+
+            const innerLeft = left + 5;
+            const innerRight = left + w - 5;
+            const innerWidth = Math.max(0, innerRight - innerLeft);
+            const alignMode = box.align || "left";
+            ctx.textAlign = "left";
+
+            let segments = [];
+            let maxFontPx = 0;
+
+            function measureWords(node, style) {
+                if (node.nodeType === 3) {
+                    const tokens = (node.nodeValue.match(/(\s+|\S+)/g) || []);
+                    for (let tk of tokens) {
+                        const fs = style.fontSize || defaultFontSize;
+                        const ff = style.fontFamily || defaultFontFamily;
+                        const fw = style.fontWeight || defaultFontWeight;
+                        const fst = style.fontStyle || defaultFontStyle;
+                        const col = style.color || defaultColor;
+
+                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                        const width = ctx.measureText(tk).width;
+                        const px = parseFloat(fs);
+                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                        const isSpace = /^\s+$/.test(tk);
+                        segments.push({ text: tk, width, style: { fs, ff, fw, fst, col }, isSpace });
+
+                        if (!isSpace && width > __maxTokenWidthObserved) {
+                            __maxTokenWidthObserved = width;
+                        }
+                    }
+                    return;
+                } else if (node.nodeType === 1) {
+                    if (node.tagName === "BR") {
+                        const fs = style.fontSize || defaultFontSize;
+                        const ff = style.fontFamily || defaultFontFamily;
+                        const fw = style.fontWeight || defaultFontWeight;
+                        const fst = style.fontStyle || defaultFontStyle;
+                        const col = style.color || defaultColor;
+
+                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                        const width = ctx.measureText(" ").width;
+                        const px = parseFloat(fs);
+                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                        segments.push({ text: " ", width, style: { fs, ff, fw, fst, col }, isSpace: true });
+                        return;
+                    }
+                    const s = node.style || {};
+                    const nextStyle = {
+                        fontSize: s.fontSize || style.fontSize,
+                        fontFamily: s.fontFamily || style.fontFamily,
+                        fontWeight: s.fontWeight || style.fontWeight,
+                        fontStyle: s.fontStyle || style.fontStyle,
+                        color: s.color || style.color,
+                    };
+                    node.childNodes.forEach(child => measureWords(child, nextStyle));
+                }
+            }
+
+            measureWords(lineNode, {
+                fontSize: defaultFontSize,
+                fontFamily: defaultFontFamily,
+                fontWeight: defaultFontWeight,
+                fontStyle: defaultFontStyle,
+                color: defaultColor
+            });
+
+            const basePx = parseFloat(defaultFontSize) || 16;
+            const lineHeight = (maxFontPx > 0 ? maxFontPx : basePx) * (box.lineSpacing || 1.2);
+
+            const isBlankLine = (segments.length === 0) ||
+                segments.every(seg => seg.isSpace || ((seg.text || '').trim() === ''));
+
+            if (isBlankLine) {
+                cursorY += lineHeight;
+                usedHeight = cursorY - top + 5;
+                return;
+            }
+
+            const __usePerRun = true;
+
+            if (__usePerRun) {
+                function startXForWidth(runWidth) {
+                    if (alignMode === "center") return innerLeft + Math.max(0, (innerWidth - runWidth) / 2);
+                    if (alignMode === "right") return innerRight - runWidth;
+                    return innerLeft;
+                }
+
+                let runSegs = [];
+                let runWidth = 0;
+                let runMaxPx = 0;
+
+                function flushRun() {
+                    if (runSegs.length === 0) return;
+                    let x2 = startXForWidth(runWidth);
+                    for (const seg of runSegs) {
+                        ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
+                        ctx.fillStyle = seg.style.col;
+                        ctx.fillText(seg.text, x2, cursorY);
+                        x2 += seg.width;
+                    }
+
+                    if (runWidth > __maxRunWidthObserved) __maxRunWidthObserved = runWidth;
+
+                    const lh = (runMaxPx || basePx) * (box.lineSpacing || 1.2);
+                    cursorY += lh;
+                    usedHeight = cursorY - top + 5;
+
+                    runSegs = [];
+                    runWidth = 0;
+                    runMaxPx = 0;
+                }
+
+                for (const seg of segments) {
+                    const segPx = parseFloat(seg.style.fs) || basePx;
+
+                    if (seg.isSpace && runSegs.length === 0) continue;
+
+                    // wrap by tokens
+                    if (runWidth + seg.width > innerWidth && runSegs.length > 0) {
+                        flushRun();
+                        if (seg.isSpace) continue;
+                    }
+
+                    runSegs.push(seg);
+                    runWidth += seg.width;
+                    if (segPx > runMaxPx) runMaxPx = segPx;
+                }
+
+                flushRun();
+            } else {
+                let x = cursorX;
+                let drewSomething = false;
+                segments.forEach(seg => {
+                    if (x + seg.width > left + w - 0.01) {
+                        cursorY += lineHeight;
+                        x = cursorX;
+                    }
+                    ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
+                    ctx.fillStyle = seg.style.col;
+                    ctx.fillText(seg.text, x, cursorY);
+                    x += seg.width;
+                    drewSomething = true;
+                });
+
+                if (drewSomething) cursorY += lineHeight;
+                usedHeight = cursorY - top + 5;
+            }
+        });
+
+        const __minOuterWidthByWord = Math.ceil(__maxTokenWidthObserved + 10);
+        if (__minOuterWidthByWord > (box.width || 0)) {
+            box.width = __minOuterWidthByWord;
+        }
+
+        box.height = usedHeight;
+        syncTextDims(box);
+        ctx.restore();
+
+        if (box.selected && w > 0 && h > 0) {
+            drawRotatedSelection(ctx, { ...box, width: w * __sx, height: h * __sy });
+        }
+    }
+}
 
 // Async DOWNLOAD renderer with word-granular wrapping and space-safe behavior
-async function drawTextForDownload(condition) {
+async function drawTextForDownload_11_9(condition) {
     // ---------- setup ----------
     initializeLayers();
 
@@ -6006,7 +6975,9 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             }
            
         }
-        else if(animationType === "roll") {
+        else if (animationType === "roll") {
+            const animItems = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+            const staticItems = [...images.filter(i => i.noAnim), ...textObjects.filter(t => t.noAnim)];
             const allItems = [
                 ...images.filter(i => !i.noAnim),
                 ...textObjects.filter(t => !t.noAnim)
@@ -6369,6 +7340,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
 
             }
             else if (OutanimationType === "popcorn") {
+
                 const staggerTime = (outTime / 2) / units.length;
 
                 // Ensure all items are at full size before OUT begins

@@ -7117,7 +7117,8 @@ function ChangeTranColor1() {
     if (Obj) {
         Obj.textColor = textColor || 'black';
     }
-    drawCanvas('ChangeStyle');
+    //drawCanvas('ChangeStyle');
+    drawText();
 }
 
 function ChangeTranColor2() {
@@ -7128,7 +7129,8 @@ function ChangeTranColor2() {
     if (Obj) {
         Obj.textColor = textColor || 'black';
     }
-    drawCanvas('ChangeStyle');
+    //drawCanvas('ChangeStyle');
+    drawText();
 }
 
 function getSelectedImageOLD() {
