@@ -237,6 +237,23 @@
             }
             }
             }
+         document.addEventListener('DOMContentLoaded', () => {
+          try {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('openModal') === 'true') {
+              const modalEl = document.getElementById('exampleModal');
+              if (!modalEl) return; // nothing to show
+
+              // Make sure Bootstrap JS is present
+              if (!window.bootstrap || !bootstrap.Modal) return;
+
+              const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+              modal.show();
+            }
+          } catch (err) {
+            console.error('Failed to open modal:', err);
+          }
+        });
     </script>
    
 
