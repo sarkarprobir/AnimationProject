@@ -653,76 +653,76 @@
         })();
 
 
-                  (function () {
-          const canvas_d    = document.getElementById('myCanvasElementDownload');
-          const container_d = document.getElementById('canvasContainerDownload');
-                   // If the canvas isn't present (e.g., this page doesn't have it yet), just exit quietly.
-            if (!canvas_d) {
-              console.info('[initDownloadCanvas] #myCanvasElementDownload not found; skipping init.');
-              return;
-            }
+        //           (function () {
+        //   const canvas_d    = document.getElementById('myCanvasElementDownload');
+        //   const container_d = document.getElementById('canvasContainerDownload');
+        //            // If the canvas isn't present (e.g., this page doesn't have it yet), just exit quietly.
+        //     if (!canvas_d) {
+        //       console.info('[initDownloadCanvas] #myCanvasElementDownload not found; skipping init.');
+        //       return;
+        //     }
 
-            // Optional: also guard the container if you use it
-            if (!container_d) {
-              console.warn('[initDownloadCanvas] #canvasContainerDownload not found.');
-            }
+        //     // Optional: also guard the container if you use it
+        //     if (!container_d) {
+        //       console.warn('[initDownloadCanvas] #canvasContainerDownload not found.');
+        //     }
 
 
-          const ctx_d       = canvas_d.getContext('2d');
-          const dpr_d       = window.devicePixelRatio || 1;
+        //   const ctx_d       = canvas_d.getContext('2d');
+        //   const dpr_d       = window.devicePixelRatio || 1;
 
-          let DESIGN_W_d, DESIGN_H_d;
-          let scaleX_d = 1, scaleY_d = 1;
-          let firstRun_d = true;
+        //   let DESIGN_W_d, DESIGN_H_d;
+        //   let scaleX_d = 1, scaleY_d = 1;
+        //   let firstRun_d = true;
 
-          function resizeCanvas_d() {
-            const containerW_d = container_d.clientWidth;
-            const cssW_d = containerW_d * 0.34;
-            const cssH_d = cssW_d * (16 / 9);
+        //   function resizeCanvas_d() {
+        //     const containerW_d = container_d.clientWidth;
+        //     const cssW_d = containerW_d * 0.66;
+        //     const cssH_d = cssW_d * (9 / 16);
 
-            canvas_d.style.width  = cssW_d + 'px';
-            canvas_d.style.height = cssH_d + 'px';
+        //     canvas_d.style.width  = cssW_d + 'px';
+        //     canvas_d.style.height = cssH_d + 'px';
 
-            const bufW_d = Math.round(cssW_d * dpr_d);
-            const bufH_d = Math.round(cssH_d * dpr_d);
-            if (canvas_d.width !== bufW_d || canvas_d.height !== bufH_d) {
-              canvas_d.width  = bufW_d;
-              canvas_d.height = bufH_d;
-            }
+        //     const bufW_d = Math.round(cssW_d * dpr_d);
+        //     const bufH_d = Math.round(cssH_d * dpr_d);
+        //     if (canvas_d.width !== bufW_d || canvas_d.height !== bufH_d) {
+        //       canvas_d.width  = bufW_d;
+        //       canvas_d.height = bufH_d;
+        //     }
 
-            const screenW_d = canvas_d.width  / dpr_d;
-            const screenH_d = canvas_d.height / dpr_d;
+        //     const screenW_d = canvas_d.width  / dpr_d;
+        //     const screenH_d = canvas_d.height / dpr_d;
 
-            if (firstRun_d) {
-              DESIGN_W_d = screenW_d;
-              DESIGN_H_d = screenH_d;
-              firstRun_d = false;
-            }
+        //     if (firstRun_d) {
+        //       DESIGN_W_d = screenW_d;
+        //       DESIGN_H_d = screenH_d;
+        //       firstRun_d = false;
+        //     }
 
-            scaleX_d = screenW_d / DESIGN_W_d;
-            scaleY_d = screenH_d / DESIGN_H_d;
+        //     scaleX_d = screenW_d / DESIGN_W_d;
+        //     scaleY_d = screenH_d / DESIGN_H_d;
 
-            ctx_d.resetTransform();
-            ctx_d.scale(dpr_d, dpr_d);
-            ctx_d.scale(scaleX_d, scaleY_d);
-          }
+        //     ctx_d.resetTransform();
+        //     ctx_d.scale(dpr_d, dpr_d);
+        //     ctx_d.scale(scaleX_d, scaleY_d);
+        //   }
 
-          // 🔸 expose helpers so other code can use the same transform
-          window.downloadCanvas = {
-            resize: resizeCanvas_d,
-            applyTransform(ctx) {
-              ctx.resetTransform();
-              ctx.scale(dpr_d, dpr_d);
-              ctx.scale(scaleX_d, scaleY_d);
-            },
-            designSize() {
-              return { w: DESIGN_W_d, h: DESIGN_H_d };
-            }
-          };
+        //   // 🔸 expose helpers so other code can use the same transform
+        //   window.downloadCanvas = {
+        //     resize: resizeCanvas_d,
+        //     applyTransform(ctx) {
+        //       ctx.resetTransform();
+        //       ctx.scale(dpr_d, dpr_d);
+        //       ctx.scale(scaleX_d, scaleY_d);
+        //     },
+        //     designSize() {
+        //       return { w: DESIGN_W_d, h: DESIGN_H_d };
+        //     }
+        //   };
 
-          window.addEventListener('resize', resizeCanvas_d);
-          window.addEventListener('DOMContentLoaded', resizeCanvas_d);
-        })();
+        //   window.addEventListener('resize', resizeCanvas_d);
+        //   window.addEventListener('DOMContentLoaded', resizeCanvas_d);
+        // })();
               function copyLink(button) {
           const linkText = button.closest('.fileLink').querySelector('.aniLink').innerText.trim();
 
@@ -839,17 +839,19 @@
         </div>
     </div>
 
-    <div id="canvasMainContainerDownload" class="d-flex align-items-stretch main-canvas-content hidden">
+    <div id="canvasMainContainerDownload" class="d-flex align-items-stretch main-canvas-content">
         <div class="panel-left"></div>
      
                     <input type="hidden" id="hdnPublishBoardUniqueId" />
                     <input type="hidden" id="hdnDesignBoardPublishId" />
-        <div id="canvasContainerDownload" class="panel-middle d-flex align-items-center justify-content-center hidden">
+        <div id="canvasContainerDownload" class="panel-middle d-flex align-items-center justify-content-center">
             <canvas id="myCanvasElementDownload" class="clsmyCanvas"></canvas>
         </div>
 
         <div class="panel-right content"></div>
     </div>
+
+    <input type="hidden" id="hdntransition" />
 
     <div class="d-flex align-items-stretch   main-canvas-content mt-0">
         <div class="panel-left " id="divpanelleftH">

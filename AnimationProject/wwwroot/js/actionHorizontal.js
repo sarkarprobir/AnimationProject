@@ -8490,3 +8490,64 @@ function handleVThumbClick(clickedElement) {
     items.forEach(el => el.classList.remove('active_border'));
     clickedElement.classList.add('active_border');
 }
+const canvas_d = document.getElementById('myCanvasElementDownload');
+const container_d = document.getElementById('canvasContainerDownload');
+const ctx_d = canvas_d.getContext('2d');
+const dpr_d = window.devicePixelRatio || 1;
+//──────────────────────────────────────────────────────────
+// STATE: these will be set dynamically on first resize
+let DESIGN_W_d, DESIGN_H_d;
+let scaleX_d = 1, scaleY_d = 1;
+let firstRun_d = true;
+//──────────────────────────────────────────────────────────
+
+
+window.addEventListener('DOMContentLoaded', () => {
+    // 3) hook up events and initial draw
+    window.resizeCanvas = resizeCanvas_d;
+    window.addEventListener('resize', resizeCanvas_d);
+    window.addEventListener('DOMContentLoaded', resizeCanvas_d);
+    resizeCanvas_d();
+});
+
+function resizeCanvas_d() {
+    //console.log("resizeCanvas_d");
+    // 1) Figure out how big the canvas *looks* on the page (CSS px)
+    const containerW_d = container_d.clientWidth;
+    const cssW_d = containerW_d * 0.66;          // e.g. 23% of container containerW_d this is different 
+    const cssH_d = cssW_d * (9 / 16);              // your chosen aspect
+
+    canvas_d.style.width = cssW_d + 'px';
+    canvas_d.style.height = cssH_d + 'px';
+
+    // 2) Resize the internal buffer for HiDPI
+    const bufW_d = Math.round(cssW_d * dpr_d);
+    const bufH_d = Math.round(cssH_d * dpr_d);
+    if (canvas_d.width !== bufW_d || canvas_d.height !== bufH_d) {
+        canvas_d.width = bufW_d;
+        canvas_d.height = bufH_d;
+    }
+
+    // 3) Compute the *actual* drawing‐space size in CSS pixels
+    const screenW_d = canvas_d.width / dpr_d;
+    const screenH_d = canvas_d.height / dpr_d;
+
+    // 4) On very first run, “lock in” your design resolution
+    if (firstRun_d) {
+        DESIGN_W_d = screenW_d;
+        DESIGN_H_d = screenH_d;
+        firstRun_d = false;
+        console.log(`Captured design size: ${DESIGN_W_d}×${DESIGN_H_d}`);
+    }
+
+    // 5) Now compute how much to scale your design → screen
+    scaleX_d = screenW_d / DESIGN_W_d;
+    scaleY_d = screenH_d / DESIGN_H_d;
+
+    // 6) Reset any old transforms, then apply:
+    //   a) dpr for HiDPI (1 unit → 1 CSS px)
+    //   b) design→screen scale
+    ctx_d.resetTransform();
+    ctx_d.scale(dpr_d, dpr_d);
+    ctx_d.scale(scaleX_d, scaleY_d);
+}
