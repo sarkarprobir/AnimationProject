@@ -1167,7 +1167,7 @@ body {
 }
 
 .temp_gallery {
-    overflow-y: scroll;
+    overflow-y: scroll !important;
     min-height: 59.8vh;
     height: 70.8vh
 }
