@@ -527,7 +527,7 @@ namespace AnimationProject.Controllers
             try
             {
                 request.CompanyUniqueId = 0;
-                if(request.searchKeyword==null)
+                if (request.searchKeyword == null)
                 {
                     request.searchKeyword = "";
                 }
@@ -541,6 +541,24 @@ namespace AnimationProject.Controllers
                 return Json("NO");
             }
 
+        }
+        public async Task<IActionResult> GetAllTemplates()
+        {
+            var response = new Response<List<ResponseGetDesignBoardAll>>();
+            RequestGetDesignBoard request = new RequestGetDesignBoard();
+            try
+            {
+                request.CustomerId = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
+                request.CompanyId = Guid.Parse("F174A15A-76B7-4E19-BE4B-4E240983DE55");
+                var saveDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetDesignBoardDetailsAll", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<List<ResponseGetDesignBoardAll>>>(saveDesignSlideBoard);
+                return Json(response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***GetAllTemplates*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return Json("NO");
+            }
         }
         #endregion
     }
