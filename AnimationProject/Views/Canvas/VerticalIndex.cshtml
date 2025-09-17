@@ -237,6 +237,23 @@
             }
             }
             }
+         document.addEventListener('DOMContentLoaded', () => {
+          try {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('openModal') === 'true') {
+              const modalEl = document.getElementById('exampleModal');
+              if (!modalEl) return; // nothing to show
+
+              // Make sure Bootstrap JS is present
+              if (!window.bootstrap || !bootstrap.Modal) return;
+
+              const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+              modal.show();
+            }
+          } catch (err) {
+            console.error('Failed to open modal:', err);
+          }
+        });
     </script>
    
 
@@ -1108,9 +1125,9 @@
     <input type="hidden" id="hdntransition" />
 
     <!-- Modal Structure -->
-    <div class="modal fade layout_modal" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" >
+ @*    <div class="modal fade layout_modal" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" >
         
-    </div>
+    </div> *@
 
     <!-- Modal Structure -->
     <div class="modal fade layout_modal" id="downloadModal" tabindex="-1" aria-labelledby="downloadModalLabel" aria-hidden="true">
