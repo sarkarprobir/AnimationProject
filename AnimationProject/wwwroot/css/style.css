@@ -1167,8 +1167,9 @@ body {
 }
 
 .temp_gallery {
-    overflow-y: hidden;
+    overflow-y: scroll;
     min-height: 59.8vh;
+    height: 70.8vh
 }
 .temp_inside {
 /*    display: flex;
@@ -1292,6 +1293,7 @@ body {
 
     .temp_gallery {
         min-height: 69.8vh;
+        height: 76.8vh;
     }
 
     .my_img_gal {
