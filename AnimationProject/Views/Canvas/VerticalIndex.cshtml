@@ -555,8 +555,80 @@
         });
     </script>
    <script>
-               // Pager state
-        const PAGE_WINDOW_SIZE = 6;
+       //Pager state
+        // const PAGE_WINDOW_SIZE = 4;
+        // let elPage = 1;             // current selected page
+        // let elTotalPages = 1;       // set from server
+        // let elWindowStart = 1;      // first visible page number in the window
+        // let currentTabName = 'shapes'; // track which tab is active
+
+        // function clampWindowStart() {
+        //   const maxStart = Math.max(1, elTotalPages - PAGE_WINDOW_SIZE + 1);
+        //   elWindowStart = Math.min(Math.max(1, elWindowStart), maxStart);
+        //   // Ensure current page is visible
+        //   if (elPage < elWindowStart) elWindowStart = elPage;
+        //   const end = elWindowStart + PAGE_WINDOW_SIZE - 1;
+        //   if (elPage > end) elWindowStart = Math.max(1, elPage - PAGE_WINDOW_SIZE + 1);
+        // }
+
+        // function renderPagination() {
+        //   const $p = $('#elPagination');
+        //   if (elTotalPages <= 1) { $p.empty().hide(); return; }
+        //   $p.show();
+
+        //   clampWindowStart();
+
+        //   const frag = document.createDocumentFragment();
+
+        //   // ‹ prev-window
+        //   const prev = document.createElement('span');
+        //   prev.textContent = '‹‹ Prev';
+        //   prev.dataset.dir = 'prev';
+        //   if (elWindowStart === 1) prev.classList.add('disabled');
+        //   frag.appendChild(prev);
+
+        //   // page numbers
+        //   const end = Math.min(elWindowStart + PAGE_WINDOW_SIZE - 1, elTotalPages);
+        //   for (let i = elWindowStart; i <= end; i++) {
+        //     const s = document.createElement('span');
+        //     s.textContent = String(i);
+        //     s.dataset.page = String(i);
+        //     if (i === elPage) s.classList.add('active');
+        //     frag.appendChild(s);
+        //   }
+
+        //   // › next-window
+        //   const next = document.createElement('span');
+        //   next.textContent = 'Next ››';
+        //   next.dataset.dir = 'next';
+        //   if (end === elTotalPages) next.classList.add('disabled');
+        //   frag.appendChild(next);
+
+        //   $p.empty()[0].appendChild(frag);
+        // }
+
+        // // Handle clicks (delegated)
+        // $(document).on('click', '#elPagination span', function () {
+        //   const dir = this.dataset.dir;
+        //   if (dir === 'prev') {
+        //     if (elWindowStart > 1) { elWindowStart--; renderPagination(); }
+        //     return;
+        //   }
+        //   if (dir === 'next') {
+        //     const maxStart = Math.max(1, elTotalPages - PAGE_WINDOW_SIZE + 1);
+        //     if (elWindowStart < maxStart) { elWindowStart++; renderPagination(); }
+        //     return;
+        //   }
+
+        //   const page = Number(this.dataset.page);
+        //   if (!page || page === elPage) return;
+        //   elPage = page;
+        //   // reload with selected page
+        //   switchTab(null, currentTabName, elPage);
+        // });
+
+        // Pager state
+        const PAGE_WINDOW_SIZE = 4;
         let elPage = 1;             // current selected page
         let elTotalPages = 1;       // set from server
         let elWindowStart = 1;      // first visible page number in the window
@@ -581,26 +653,29 @@
           const frag = document.createDocumentFragment();
 
           // ‹ prev-window
-          const prev = document.createElement('span');
-          prev.textContent = '‹';
+          const prev = document.createElement('button');
+          prev.textContent = '‹‹ Prev';
           prev.dataset.dir = 'prev';
+           prev.className = 'btn btn-sm btn-outline-dark me-1 page-btn-2';
           if (elWindowStart === 1) prev.classList.add('disabled');
           frag.appendChild(prev);
 
           // page numbers
           const end = Math.min(elWindowStart + PAGE_WINDOW_SIZE - 1, elTotalPages);
           for (let i = elWindowStart; i <= end; i++) {
-            const s = document.createElement('span');
+            const s = document.createElement('button');
             s.textContent = String(i);
             s.dataset.page = String(i);
+             s.className = 'btn btn-sm btn-outline-dark me-1 page-btn';
             if (i === elPage) s.classList.add('active');
             frag.appendChild(s);
           }
 
           // › next-window
-          const next = document.createElement('span');
-          next.textContent = '›';
+          const next = document.createElement('button');
+          next.textContent = 'Next ››';
           next.dataset.dir = 'next';
+          next.className = 'btn btn-sm btn-outline-dark page-btn-2';
           if (end === elTotalPages) next.classList.add('disabled');
           frag.appendChild(next);
 
@@ -608,7 +683,7 @@
         }
 
         // Handle clicks (delegated)
-        $(document).on('click', '#elPagination span', function () {
+        $(document).on('click', '#elPagination button', function () {
           const dir = this.dataset.dir;
           if (dir === 'prev') {
             if (elWindowStart > 1) { elWindowStart--; renderPagination(); }
@@ -626,6 +701,142 @@
           // reload with selected page
           switchTab(null, currentTabName, elPage);
         });
+
+
+
+
+        //         const PAGE_WINDOW_SIZE = 4;
+        // let elPage = 1;             // current selected page
+        // let elTotalPages = 20;      // example, should come from server
+        // let elWindowStart = 1;      // first visible page number in the window
+        // let currentTabName = 'shapes'; // track which tab is active
+
+        // function clampWindowStart() {
+        //   const maxStart = Math.max(1, elTotalPages - PAGE_WINDOW_SIZE + 1);
+        //   elWindowStart = Math.min(Math.max(1, elWindowStart), maxStart);
+
+        //   // Ensure current page is visible
+        //   if (elPage < elWindowStart) elWindowStart = elPage;
+        //   const end = elWindowStart + PAGE_WINDOW_SIZE - 1;
+        //   if (elPage > end) elWindowStart = Math.max(1, elPage - PAGE_WINDOW_SIZE + 1);
+        // }
+
+        // function renderPagination() {
+        //   const $p = $('#elPagination');
+        //   if (elTotalPages <= 1) { $p.empty().hide(); return; }
+        //   $p.show();
+
+        //   clampWindowStart();
+
+        //   const frag = document.createDocumentFragment();
+
+        //   // ‹ prev-window
+        //   const prev = document.createElement('span');
+        //   prev.textContent = '‹‹ Prev';
+        //   prev.dataset.dir = 'prev';
+        //   prev.className = 'btn btn-sm btn-outline-primary me-1';
+        //   if (elWindowStart === 1) prev.classList.add('disabled');
+        //   frag.appendChild(prev);
+
+        //   // page numbers
+        //   const end = Math.min(elWindowStart + PAGE_WINDOW_SIZE - 1, elTotalPages);
+        //   for (let i = elWindowStart; i <= end; i++) {
+        //     const s = document.createElement('span');
+        //     s.textContent = String(i);
+        //     s.dataset.page = String(i);
+        //     s.className = 'btn btn-sm btn-outline-primary me-1';
+        //     if (i === elPage) s.classList.add('active');
+        //     frag.appendChild(s);
+        //   }
+
+        //   // › next-window
+        //   const next = document.createElement('span');
+        //   next.textContent = 'Next ››';
+        //   next.dataset.dir = 'next';
+        //   next.className = 'btn btn-sm btn-outline-primary me-2';
+        //   if (end === elTotalPages) next.classList.add('disabled');
+        //   frag.appendChild(next);
+
+        //   // input + go in safe wrapper
+        //   const wrapper = document.createElement('div');
+        //   wrapper.className = 'd-inline-flex align-items-center';
+
+        //   const input = document.createElement('input');
+        //   input.type = 'number';
+        //   input.min = '1';
+        //   input.max = String(elTotalPages);
+        //   input.placeholder = 'Page';
+        //   input.className = 'form-control form-control-sm d-inline-block';
+        //   input.style.width = '70px';
+        //   wrapper.appendChild(input);
+
+        //   const goBtn = document.createElement('button');
+        //   goBtn.type = 'button'; // 🚀 important
+        //   goBtn.textContent = 'Go';
+        //   goBtn.className = 'btn btn-sm btn-outline-primary ms-1';
+        //   wrapper.appendChild(goBtn);
+
+        //   frag.appendChild(wrapper);
+
+        //   // ---- FIXED goToPage ----
+        //   function goToPage() {
+        //     let target = parseInt(input.value, 10);
+        //     if (!target || target < 1) target = 1;
+        //     if (target > elTotalPages) target = elTotalPages;
+
+        //     if (target !== elPage) {
+        //       elPage = target;
+
+        //       // 🚀 move window so the target page is visible
+        //       elWindowStart = Math.max(1, elPage - Math.floor(PAGE_WINDOW_SIZE / 2));
+        //       const maxStart = Math.max(1, elTotalPages - PAGE_WINDOW_SIZE + 1);
+        //       if (elWindowStart > maxStart) elWindowStart = maxStart;
+
+        //       switchTab(null, currentTabName, elPage);
+        //       renderPagination();
+        //     }
+        //   }
+
+        //   goBtn.addEventListener('click', (e) => {
+        //     e.preventDefault();
+        //     e.stopPropagation();
+        //     goToPage();
+        //   });
+
+        //   input.addEventListener('keydown', (e) => {
+        //     if (e.key === 'Enter') {
+        //       e.preventDefault();
+        //       e.stopPropagation();
+        //       goToPage();
+        //     }
+        //   });
+
+        //   $p.empty()[0].appendChild(frag);
+        // }
+
+        // // Handle clicks (delegated)
+        // $(document).on('click', '#elPagination span', function (e) {
+        //   e.stopPropagation();
+        //   const dir = this.dataset.dir;
+        //   if (dir === 'prev') {
+        //     if (elWindowStart > 1) { elWindowStart--; renderPagination(); }
+        //     return;
+        //   }
+        //   if (dir === 'next') {
+        //     const maxStart = Math.max(1, elTotalPages - PAGE_WINDOW_SIZE + 1);
+        //     if (elWindowStart < maxStart) { elWindowStart++; renderPagination(); }
+        //     return;
+        //   }
+
+        //   const page = Number(this.dataset.page);
+        //   if (!page || page === elPage) return;
+        //   elPage = page;
+        //   switchTab(null, currentTabName, elPage);
+        //   renderPagination();
+        // });
+
+
+
        
    </script>
 
