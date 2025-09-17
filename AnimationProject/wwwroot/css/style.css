@@ -2233,3 +2233,8 @@ body {
 .page-btn-2 {
     padding: 3px 9px !important;
 }
+.board_switch .board_sw_input {
+    width: 2.2em !important;
+    height: 1.1rem !important;
+    box-shadow: none !important;
+}
