@@ -8395,6 +8395,7 @@ function handleNavButtonClick(event) {
         btn.classList.remove('active_nav_button');
     });
     event.currentTarget.classList.add('active_nav_button');
+    LoadAllHorizontalTemplates();
 }
 function CreateLeftSectionHorizontalhtml() {
     try {
@@ -8404,7 +8405,7 @@ function CreateLeftSectionHorizontalhtml() {
             dataType: "html",
             success: function (result) {
                 $("#divpanelleftH").html(result);
-
+               
             },
             error: function () {
             }
@@ -8550,4 +8551,75 @@ function resizeCanvas_d() {
     ctx_d.resetTransform();
     ctx_d.scale(dpr_d, dpr_d);
     ctx_d.scale(scaleX_d, scaleY_d);
+}
+
+function LoadAllHorizontalTemplates() {
+    const $list = $('#divTemplateList');
+    if ($list.length === 0) {
+        console.warn('#divTemplateList not found');
+        return;
+    }
+    $list.empty();
+
+    $.ajax({
+        url: joinUrl(baseURL, 'Canvas/GetAllTemplates'),
+        type: 'POST',
+        dataType: 'json'
+    })
+        .done((res) => {
+            console.log('GetAllTemplates', res);
+
+            // Normalize
+            const all = Array.isArray(res) ? res : (res?.data || []);
+
+            // ⛳ filter templates by slideType = "Vertical"
+            const vertical = all.filter(t =>
+                String(t?.slideType || t?.SlideType || '').toLowerCase() === 'horizontal'
+            );
+
+            const frag = document.createDocumentFragment();
+            let appended = 0;
+
+            vertical.forEach(tpl => {
+                const details = Array.isArray(tpl?.designBoardDetailsList) ? tpl.designBoardDetailsList : [];
+
+                // only Slide-1
+                details
+                    .filter(d => String(d?.slideName || '').toLowerCase() === 'slide-1')
+                    .forEach(d => {
+                        const imgPath = d?.animationImagePath || '';
+                        if (!imgPath) return;
+
+                        const img = document.createElement('img');
+                        img.className = 'v_temp';
+                        img.loading = 'lazy';
+                        img.decoding = 'async';
+                        img.alt = (tpl?.designBoardName || 'Template') + ' preview';
+                        img.src = joinUrl(baseURL, imgPath);
+
+                        if (tpl?.designBoardId != null) img.dataset.templateId = tpl.designBoardId;
+                        if (d?.designBoardDetailsId != null) img.dataset.detailId = d.designBoardDetailsId;
+
+                        frag.appendChild(img);
+                        appended++;
+                    });
+            });
+
+            if (appended === 0) {
+                $list.append('<div class="text-muted p-2">No Horizontal / Slide previews found.</div>');
+            } else {
+                $list[0].appendChild(frag);
+            }
+        })
+        .fail((xhr) => {
+            console.log('error in fetching templates', xhr);
+            $list.append('<div class="text-danger p-2">Failed to load templates.</div>');
+        })
+        .always(() => { if (typeof HideLoader === 'function') HideLoader(); });
+
+    function joinUrl(a, b) {
+        if (!a) return b || '';
+        if (!b) return a || '';
+        return String(a).replace(/\/+$/, '') + '/' + String(b).replace(/^\/+/, '');
+    }
 }
