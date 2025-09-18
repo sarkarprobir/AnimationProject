@@ -112,6 +112,10 @@ namespace AnimationProject.Controllers
         {
             return View();
         }
+        public IActionResult FAQ()
+        {
+            return View();
+        }
         [HttpPost]
         public IActionResult CreateHeaderSectionhtml()
         {
