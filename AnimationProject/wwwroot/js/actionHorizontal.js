@@ -8396,6 +8396,62 @@ function handleNavButtonClick(event) {
     });
     event.currentTarget.classList.add('active_nav_button');
     LoadAllHorizontalTemplates();
+    setTimeout(() => {
+        const items = document.querySelectorAll("#divTemplateList .v_temp");
+        const itemsPerPage = 8;
+        let currentPage = 1;
+        const totalPages = Math.ceil(items.length / itemsPerPage);
+
+        function showPage(page) {
+            currentPage = page;
+            const start = (page - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+
+            items.forEach((item, index) => {
+                item.style.display = (index >= start && index < end) ? "inline-block" : "none";
+            });
+
+            renderPagination();
+        }
+
+        function renderPagination() {
+            const pagination = document.getElementById("template-pagination");
+            pagination.innerHTML = "";
+
+            // Prev button
+            const prevBtn = document.createElement("button");
+            prevBtn.innerText = "« Prev";
+            prevBtn.className = "btn btn-sm btn-outline-dark me-1 page-btn-2";
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.addEventListener("click", () => {
+                if (currentPage > 1) showPage(currentPage - 1);
+            });
+            pagination.appendChild(prevBtn);
+
+            // Page number buttons
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = document.createElement("button");
+                btn.innerText = i;
+                btn.className = "btn btn-sm mx-1 page-btn " + (i === currentPage ? "btn-dark" : "btn-outline-dark");
+                btn.addEventListener("click", () => showPage(i));
+                pagination.appendChild(btn);
+            }
+
+            // Next button
+            const nextBtn = document.createElement("button");
+            nextBtn.innerText = "Next »";
+            nextBtn.className = "btn btn-sm btn-outline-dark ms-1 page-btn-2";
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.addEventListener("click", () => {
+                if (currentPage < totalPages) showPage(currentPage + 1);
+            });
+            pagination.appendChild(nextBtn);
+        }
+
+        // initialize
+        showPage(1);
+
+    }, 2500); // delay 2500ms so all items are available
 }
 function CreateLeftSectionHorizontalhtml() {
     try {

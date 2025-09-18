@@ -285,6 +285,68 @@
       });
     });
 </script> *@
+
+
+<script>
+    //pagination for templates
+    // setTimeout(() => {
+    //   const items = document.querySelectorAll("#divTemplateList .v_temp");
+    //   const itemsPerPage = 8;
+    //   let currentPage = 1;
+    //   const totalPages = Math.ceil(items.length / itemsPerPage);
+
+    //   function showPage(page) {
+    //     currentPage = page;
+    //     const start = (page - 1) * itemsPerPage;
+    //     const end = start + itemsPerPage;
+
+    //     items.forEach((item, index) => {
+    //       item.style.display = (index >= start && index < end) ? "inline-block" : "none";
+    //     });
+
+    //     renderPagination();
+    //   }
+
+    //   function renderPagination() {
+    //     const pagination = document.getElementById("template-pagination");
+    //     pagination.innerHTML = "";
+
+    //     // Prev button
+    //     const prevBtn = document.createElement("button");
+    //     prevBtn.innerText = "« Prev";
+    //     prevBtn.className = "btn btn-sm btn-outline-dark me-1 page-btn-2";
+    //     prevBtn.disabled = currentPage === 1;
+    //     prevBtn.addEventListener("click", () => {
+    //       if (currentPage > 1) showPage(currentPage - 1);
+    //     });
+    //     pagination.appendChild(prevBtn);
+
+    //     // Page number buttons
+    //     for (let i = 1; i <= totalPages; i++) {
+    //       const btn = document.createElement("button");
+    //       btn.innerText = i;
+    //       btn.className = "btn btn-sm mx-1 page-btn " + (i === currentPage ? "btn-dark" : "btn-outline-dark");
+    //       btn.addEventListener("click", () => showPage(i));
+    //       pagination.appendChild(btn);
+    //     }
+
+    //     // Next button
+    //     const nextBtn = document.createElement("button");
+    //     nextBtn.innerText = "Next »";
+    //     nextBtn.className = "btn btn-sm btn-outline-dark ms-1 page-btn-2";
+    //     nextBtn.disabled = currentPage === totalPages;
+    //     nextBtn.addEventListener("click", () => {
+    //       if (currentPage < totalPages) showPage(currentPage + 1);
+    //     });
+    //     pagination.appendChild(nextBtn);
+    //   }
+
+    //   // initialize
+    //   showPage(1);
+
+    // }, 4000); // delay 500ms so all items are available
+</script>
+
 <script>
     $(document).ready(function(){
     TabShowHide('In');
@@ -692,6 +754,26 @@ function moveCaretToEnd(el) {
         background-color: #1ed633;
     }
 </style>
+
+<style >
+    .pagination {
+        margin-top: 15px;
+        text-align: center;
+    }
+
+    .pagination button {
+        margin: 2px;
+        padding: 6px 10px;
+    }
+
+        .pagination button.active {
+            font-weight: bold;
+            background: #000;
+            color: #fff;
+        }
+</style>
+
+
 
 <div class="right-sec-one">
     <div class="headtext">Animation</div>
@@ -1487,11 +1569,7 @@ function moveCaretToEnd(el) {
                 <div class="temp_gallery">
                     <div class="inside_wrapper temp_inside">
                         <div class="temp-V_H">
-                            @* <div class="h-templates">
-                                <img class="h_temp" src="~/images/banner.png" />
-                                <img class="h_temp" src="~/images/banner.png" />
-                                <img class="h_temp" src="~/images/banner.png" />
-                            </div> *@
+                            
                             <div class="v-templates" id="divTemplateList">
                                 @* <img class="v_temp" src="~/images/Vertical-Menuboard.png" />
                                 <img class="v_temp" src="~/images/Vertical-Menuboard.png" />
@@ -1501,40 +1579,16 @@ function moveCaretToEnd(el) {
                                 <img class="v_temp" src="~/images/Vertical-Menuboard.png" />
                                 <img class="v_temp" src="~/images/Vertical-Menuboard.png" />
                                 <img class="v_temp" src="~/images/Vertical-Menuboard.png" /> *@
+                                
+
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- pagination container -->
+                <div id="template-pagination" class="pagination mt-5"></div>
             </div>
-            
-
-            @* <!-- templates tab -->
-            <div id="templates" class="left_content ">
-                <!-- serach box -->
-                <div class="search-box w-50">
-                    <input class="left-panel-imput" type="text" placeholder="Search..." />
-                </div>
-                <p class="my-3 gallery_type">Templates</p>
-                <div class="temp_gallery">
-                    <div class="inside_wrapper temp_inside">
-                    <img src="~/images/banner.png" />
-                    <img src="~/images/banner.png" />
-                    <img src="~/images/Vertical-Menuboard.png" />
-                    <img src="~/images/Vertical-Menuboard.png" />
-                    </div>
-                </div>
-            </div> *@
-            @* <div class="pagination" style="margin-top: 65px;">
-                <span>&lt;</span>
-                <span>4</span>
-                <span>6</span>
-                <span>7</span>
-                <span>9</span>
-                <span>10</span>
-                <span>11</span>
-                <span>&gt;</span>
-            </div> *@
         </div>
     </div>
 </div>
@@ -1740,3 +1794,4 @@ function moveCaretToEnd(el) {
         </div>
     </div>
 </div>
+
