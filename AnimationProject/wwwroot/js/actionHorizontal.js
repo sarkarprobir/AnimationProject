@@ -8623,7 +8623,6 @@ function LoadAllHorizontalTemplates() {
         dataType: 'json'
     })
         .done((res) => {
-            console.log('GetAllTemplates', res);
 
             // Normalize
             const all = Array.isArray(res) ? res : (res?.data || []);
