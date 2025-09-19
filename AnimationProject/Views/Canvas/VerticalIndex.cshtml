@@ -363,13 +363,11 @@
                 timer = setTimeout(() => fn.apply(context, args), delay);
             };
         }
-                    function switchTab(tabElement, tabName, pageNo) {
-          currentTabName = tabName;         // remember active tab
-          const recordPerPage = 20;         // your page size
-          if (!pageNo) {                    // tab changed / fresh load -> reset pager
-            elPage = 1;
-            elWindowStart = 1;
-          }
+                function switchTab(tabElement, tabName, pageNo) {
+          currentTabName = tabName;
+          const recordPerPage = 20;
+
+          if (!pageNo) { elPage = 1; elWindowStart = 1; }
 
           // Map tab -> CategoryId
           let Categoryvalue = 0;
@@ -390,12 +388,16 @@
           };
 
           $.ajax({
-            url: baseURL + "Canvas/GetAllElement",
+            url: baseURL + "Canvas/GetAllElementNew",
             type: "POST",
             dataType: "json",
             data: dataSlide,
             success: function (slideResult) {
-              console.log("slideResult", slideResult);
+              // helper to read either camelCase or PascalCase
+              const pick = (o, keys) => {
+                for (const k of keys) if (o && o[k] !== undefined && o[k] !== null) return o[k];
+                return undefined;
+              };
 
               // choose container
               const targetIdMap = { 1: "#photoList", 2: "#shapesList", 3: "#iconList", 5: "#my-imagesList" };
@@ -403,15 +405,15 @@
               const $list = $(targetIdMap[catNum] || "#shapesList");
               if ($list.length === 0) { console.warn("Target list not found"); return; }
 
-              // clear and render
+              // clear
               $list.empty();
 
-              // items array normalize
-              const items = Array.isArray(slideResult)
+              // normalize items (supports: array | {items|Items|list|data|elementList})
+              let items = Array.isArray(slideResult)
                 ? slideResult
-                : (slideResult.list || slideResult.items || slideResult.data || slideResult.elementList || []);
+                : (pick(slideResult, ["items","Items","list","data","elementList"]) || []);
 
-              // --- render thumbnails (your existing logic) ---
+              // --- render thumbnails ---
               const joinURL = (...parts) => parts
                 .filter(Boolean)
                 .map((p, i) => i === 0 ? String(p).replace(/\/+$/,'') : String(p).replace(/^\/+|\/+$/g,''))
@@ -421,8 +423,8 @@
               let appended = 0;
 
               (items || []).forEach(it => {
-                const fileThumb = it.imageNameThumb || "";
-                const fileFull  = it.imageNameThumb || fileThumb;
+                const fileThumb = it.imageNameThumb || it.ImageNameThumb || "";
+                const fileFull  = it.imageName || it.ImageName || fileThumb;
                 if (!fileThumb) return;
 
                 const srcThumb = joinURL(baseURL, elementPath, encodeURIComponent(fileThumb));
@@ -430,15 +432,17 @@
 
                 const img = new Image();
                 img.src = srcThumb;
-                img.alt = it.elementName || "";
+                img.alt = it.elementName || it.ElementName || "";
                 img.loading = "lazy";
                 img.className = "shape-thumb";
-                img.dataset.elementId = it.elementId;
-                img.dataset.categoryId = it.categoryId;
+                img.dataset.elementId = it.elementId ?? it.ElementId;
+                img.dataset.categoryId = it.categoryId ?? it.CategoryId;
                 img.dataset.full = srcFull;
 
-                if (Number(it.imageW) > 0) img.width  = Number(it.imageW);
-                if (Number(it.imageH) > 0) img.height = Number(it.imageH);
+                const w = Number(it.imageW ?? it.ImageW);
+                const h = Number(it.imageH ?? it.ImageH);
+                if (w > 0) img.width  = w;
+                if (h > 0) img.height = h;
 
                 frag.appendChild(img);
                 appended++;
@@ -450,22 +454,30 @@
                 $list[0].appendChild(frag);
               }
 
-              // --- compute total pages from server response ---
-              // Prefer slideResult.totalPages; else compute from totalCount if provided
-              if (slideResult && Number(slideResult.totalPages) > 0) {
-                elTotalPages = Number(slideResult.totalPages);
-              } else if (slideResult && Number(slideResult.totalCount) >= 0) {
-                elTotalPages = Math.max(1, Math.ceil(Number(slideResult.totalCount) / recordPerPage));
+              // --- totals / paging fields (supports camelCase or PascalCase) ---
+              const respTotalPages = Number(pick(slideResult, ["totalPages","TotalPages"]));
+              const respTotalCount = Number(pick(slideResult, ["totalCount","TotalCount"]));
+              const respPageNo     = Number(pick(slideResult, ["pageNo","PageNo"]));
+              const respPageSize   = Number(pick(slideResult, ["pageSize","PageSize"]));
+
+              if (respTotalPages > 0) {
+                elTotalPages = respTotalPages;
+              } else if (!isNaN(respTotalCount)) {
+                const size = respPageSize > 0 ? respPageSize : recordPerPage;
+                elTotalPages = Math.max(1, Math.ceil(respTotalCount / size));
               } else {
-                // Fallback: if no totals provided, infer minimal
+                // fallback if API doesn't send totals
                 elTotalPages = Math.max(elPage, (items && items.length === recordPerPage) ? elPage + 1 : elPage);
               }
 
-              // update current page and re-render pager
-              elPage = dataSlide.pageNo;
+              // keep selected page (prefer server echo if present)
+              elPage = respPageNo > 0 ? respPageNo : dataSlide.pageNo;
+
+              // make sure current page is visible and re-render pager
+              ensurePageVisible(elPage);
               renderPagination();
 
-              // tab UI (as you had)
+              // tabs UI (unchanged)
               const tabs = document.querySelectorAll(".tab");
               const contents = document.querySelectorAll(".left_content");
               tabs.forEach((tab) => tab.classList.remove("active"));
@@ -480,8 +492,120 @@
           });
         }
 
-         
-        // file upload js
+                // ──────────────────────────────────────────────────────────
+        // Your existing switchTab, with a tiny addition to re-sync pager
+        // function switchTab(tabElement, tabName, pageNo) {
+        //   currentTabName = tabName;
+        //   const recordPerPage = 20;
+
+        //   if (!pageNo) { elPage = 1; elWindowStart = 1; }
+
+        //   // Map tab -> CategoryId
+        //   let Categoryvalue = 0;
+        //   if (tabName === 'shapes')      Categoryvalue = 2;
+        //   else if (tabName === 'icons')  Categoryvalue = 3;
+        //   else if (tabName === 'photos') Categoryvalue = 1;
+        //   else if (tabName === 'my-images') Categoryvalue = 5;
+        //   else if (tabName === 'patterns')  Categoryvalue = 4;
+
+        //   const dataSlide = {
+        //     CategoryId: Number(Categoryvalue) || 0,
+        //     searchKeyword: (Array.isArray($("#txtElementSearch").val())
+        //       ? $("#txtElementSearch").val().join(" ")
+        //       : String($("#txtElementSearch").val() ?? "")
+        //     ).trim(),
+        //     pageNo: pageNo || elPage || 1,
+        //     recordPerPage: recordPerPage
+        //   };
+
+        //   $.ajax({
+        //     url: baseURL + "Canvas/GetAllElementNew",
+        //     type: "POST",
+        //     dataType: "json",
+        //     data: dataSlide,
+        //     success: function (slideResult) {
+        //                  // choose container
+        //           const targetIdMap = { 1: "#photoList", 2: "#shapesList", 3: "#iconList", 5: "#my-imagesList" };
+        //           const catNum = Number(Categoryvalue);
+        //           const $list = $(targetIdMap[catNum] || "#shapesList");
+        //           if ($list.length === 0) { console.warn("Target list not found"); return; }
+
+        //           // clear and render
+        //           $list.empty();
+
+        //           // items array normalize
+        //           const items = Array.isArray(slideResult)
+        //             ? slideResult
+        //             : (slideResult.list || slideResult.items || slideResult.data || slideResult.elementList || []);
+
+        //           // --- render thumbnails (your existing logic) ---
+        //           const joinURL = (...parts) => parts
+        //             .filter(Boolean)
+        //             .map((p, i) => i === 0 ? String(p).replace(/\/+$/,'') : String(p).replace(/^\/+|\/+$/g,''))
+        //             .join('/');
+
+        //           const frag = document.createDocumentFragment();
+        //           let appended = 0;
+
+        //           (items || []).forEach(it => {
+        //             const fileThumb = it.imageNameThumb || "";
+        //             const fileFull  = it.imageNameThumb || fileThumb;
+        //             if (!fileThumb) return;
+
+        //             const srcThumb = joinURL(baseURL, elementPath, encodeURIComponent(fileThumb));
+        //             const srcFull  = joinURL(baseURL, elementPath, encodeURIComponent(fileFull));
+
+        //             const img = new Image();
+        //             img.src = srcThumb;
+        //             img.alt = it.elementName || "";
+        //             img.loading = "lazy";
+        //             img.className = "shape-thumb";
+        //             img.dataset.elementId = it.elementId;
+        //             img.dataset.categoryId = it.categoryId;
+        //             img.dataset.full = srcFull;
+
+        //             if (Number(it.imageW) > 0) img.width  = Number(it.imageW);
+        //             if (Number(it.imageH) > 0) img.height = Number(it.imageH);
+
+        //             frag.appendChild(img);
+        //             appended++;
+        //           });
+
+        //           if (appended === 0) {
+        //             $list.append('<div class="text-muted p-2">No elements found.</div>');
+        //           } else {
+        //             $list[0].appendChild(frag);
+        //           }
+                 
+        //       // total pages from server
+        //       if (slideResult && Number(slideResult.totalPages) > 0) {
+        //         elTotalPages = Number(slideResult.totalPages);
+        //       } else if (slideResult && Number(slideResult.totalCount) >= 0) {
+        //         elTotalPages = Math.max(1, Math.ceil(Number(slideResult.totalCount) / recordPerPage));
+        //       } else {
+        //         elTotalPages = Math.max(elPage, 1);
+        //       }
+
+        //       // keep selected page and make sure it’s visible
+        //       elPage = dataSlide.pageNo;
+        //       ensurePageVisible(elPage);
+        //       renderPagination();
+
+        //       // tabs UI (unchanged)
+        //       const tabs = document.querySelectorAll(".tab");
+        //       const contents = document.querySelectorAll(".left_content");
+        //       tabs.forEach((tab) => tab.classList.remove("active"));
+        //       try { tabElement && tabElement.classList.add("active"); } catch (ex) {}
+        //       contents.forEach((content) => content.classList.remove("active"));
+        //       document.getElementById(tabName)?.classList.add("active");
+        //     },
+        //     error: function (data) {
+        //       console.log("error in saving slide " + (slide?.slideSeq), data);
+        //       HideLoader && HideLoader();
+        //     }
+        //   });
+        // }
+      
         function updateFileName() {
             const fileInput = document.getElementById('fileUpload');
             const fileName = document.getElementById('fileName');
@@ -684,11 +808,14 @@
         // });
 
         // Pager state
+                // ──────────────────────────────────────────────────────────
+        // Pager state
         const PAGE_WINDOW_SIZE = 4;
-        let elPage = 1;             // current selected page
-        let elTotalPages = 1;       // set from server
-        let elWindowStart = 1;      // first visible page number in the window
-        let currentTabName = 'shapes'; // track which tab is active
+        let elPage = 1;                  // selected page
+        let elTotalPages = 1;            // set from server
+        let elWindowStart = 1;           // first visible page in window
+        let currentTabName = 'shapes';   // track which tab is active
+        // ──────────────────────────────────────────────────────────
 
         function clampWindowStart() {
           const maxStart = Math.max(1, elTotalPages - PAGE_WINDOW_SIZE + 1);
@@ -697,6 +824,19 @@
           if (elPage < elWindowStart) elWindowStart = elPage;
           const end = elWindowStart + PAGE_WINDOW_SIZE - 1;
           if (elPage > end) elWindowStart = Math.max(1, elPage - PAGE_WINDOW_SIZE + 1);
+        }
+
+        function ensurePageVisible(targetPage) {
+          // Slide window so targetPage is within [start, start+size-1]
+          targetPage = Math.min(Math.max(1, targetPage), elTotalPages || 1);
+          const end = elWindowStart + PAGE_WINDOW_SIZE - 1;
+          if (targetPage < elWindowStart) {
+            elWindowStart = targetPage;
+          } else if (targetPage > end) {
+            elWindowStart = targetPage - PAGE_WINDOW_SIZE + 1;
+            if (elWindowStart < 1) elWindowStart = 1;
+          }
+          clampWindowStart();
         }
 
         function renderPagination() {
@@ -708,31 +848,31 @@
 
           const frag = document.createDocumentFragment();
 
-          // ‹ prev-window
+          // ‹ Prev page
           const prev = document.createElement('button');
-          prev.textContent = '‹‹ Prev';
-          prev.dataset.dir = 'prev';
-           prev.className = 'btn btn-sm btn-outline-dark me-1 page-btn-2';
-          if (elWindowStart === 1) prev.classList.add('disabled');
+          prev.textContent = '‹ Prev';
+          prev.dataset.dir = 'prevPage';
+          prev.className = 'btn btn-sm btn-outline-dark me-1 page-btn-2';
+          if (elPage <= 1) prev.classList.add('disabled');
           frag.appendChild(prev);
 
-          // page numbers
+          // page numbers (window)
           const end = Math.min(elWindowStart + PAGE_WINDOW_SIZE - 1, elTotalPages);
           for (let i = elWindowStart; i <= end; i++) {
             const s = document.createElement('button');
             s.textContent = String(i);
             s.dataset.page = String(i);
-             s.className = 'btn btn-sm btn-outline-dark me-1 page-btn';
+            s.className = 'btn btn-sm btn-outline-dark me-1 page-btn';
             if (i === elPage) s.classList.add('active');
             frag.appendChild(s);
           }
 
-          // › next-window
+          // Next page ›
           const next = document.createElement('button');
-          next.textContent = 'Next ››';
-          next.dataset.dir = 'next';
+          next.textContent = 'Next ›';
+          next.dataset.dir = 'nextPage';
           next.className = 'btn btn-sm btn-outline-dark page-btn-2';
-          if (end === elTotalPages) next.classList.add('disabled');
+          if (elPage >= elTotalPages) next.classList.add('disabled');
           frag.appendChild(next);
 
           $p.empty()[0].appendChild(frag);
@@ -741,22 +881,64 @@
         // Handle clicks (delegated)
         $(document).on('click', '#elPagination button', function () {
           const dir = this.dataset.dir;
-          if (dir === 'prev') {
-            if (elWindowStart > 1) { elWindowStart--; renderPagination(); }
+
+          if (dir === 'prevPage') {
+            if (elPage > 1) {
+              elPage = elPage - 1;
+              ensurePageVisible(elPage);
+              renderPagination();
+              switchTab(null, currentTabName, elPage);
+            }
             return;
           }
-          if (dir === 'next') {
-            const maxStart = Math.max(1, elTotalPages - PAGE_WINDOW_SIZE + 1);
-            if (elWindowStart < maxStart) { elWindowStart++; renderPagination(); }
+
+          if (dir === 'nextPage') {
+            if (elPage < elTotalPages) {
+              elPage = elPage + 1;               // e.g., to 6
+              ensurePageVisible(elPage);         // slide window if needed
+              renderPagination();
+              switchTab(null, currentTabName, elPage);
+            }
             return;
           }
 
           const page = Number(this.dataset.page);
           if (!page || page === elPage) return;
+
+          // If user clicks the last visible page, slide window forward by one
+          const lastInWindow = Math.min(elWindowStart + PAGE_WINDOW_SIZE - 1, elTotalPages);
           elPage = page;
-          // reload with selected page
+          if (page === lastInWindow && lastInWindow < elTotalPages) {
+            elWindowStart = elWindowStart + 1;
+          }
+          ensurePageVisible(elPage);
+          renderPagination();
           switchTab(null, currentTabName, elPage);
         });
+
+        // Jump box: Go button + Enter support
+        $(document).on('click', '#elPageJumpBtn', () => {
+          const v = Number($('#elPageJump').val());
+          if (!Number.isFinite(v)) return;
+          const target = Math.min(Math.max(1, Math.floor(v)), elTotalPages || 1);
+          elPage = target;
+          ensurePageVisible(elPage);
+          renderPagination();
+          switchTab(null, currentTabName, elPage);
+        });
+        $(document).on('keydown', '#elPageJump', (e) => {
+          if (e.key === 'Enter') {
+            $('#elPageJumpBtn').click();
+          }
+        });
+
+        // Call this after you know total pages (e.g., after AJAX success)
+        function initPager(totalPages) {
+          elTotalPages = Math.max(1, Number(totalPages) || 1);
+          elPage = 1;
+          elWindowStart = 1; // shows 1–4 initially
+          renderPagination();
+        }
 
 
 

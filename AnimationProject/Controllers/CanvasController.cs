@@ -546,6 +546,29 @@ namespace AnimationProject.Controllers
             }
 
         }
+        [HttpPost]
+        public async Task<IActionResult> GetAllElementNew(RequestGetEliment request)
+        {
+            //if (!_checkSession.IsSession()) return Ok("login");
+            var response = new Response<ElementListResult>();
+            try
+            {
+                request.CompanyUniqueId = 0;
+                if (request.searchKeyword == null)
+                {
+                    request.searchKeyword = "";
+                }
+                var saveDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetElementNew", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<ElementListResult>>(saveDesignSlideBoard);
+                return Json(response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***GetAllElementNew*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return Json("NO");
+            }
+
+        }
         public async Task<IActionResult> GetAllTemplates()
         {
             var response = new Response<List<ResponseGetDesignBoardAll>>();
