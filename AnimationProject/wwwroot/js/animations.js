@@ -11362,11 +11362,66 @@ canvas.addEventListener("mousemove", e => {
                 if (activeBox.img) activeBox.img.__curvatureRatio = activeBox._baseCurvRatio; // restore
             }
 
+            //let snappedX = null;
+            //if (side === 'l' || side === 'r') {
+
+            //    const { edgeX } = __clampBasicSideResize(activeBox, side);
+            //    if (typeof edgeX === 'number') snappedX = edgeX;
+            //}
+
             let snappedX = null;
             if (side === 'l' || side === 'r') {
-                const { edgeX } = __clampBasicSideResize(activeBox, side);
-                if (typeof edgeX === 'number') snappedX = edgeX;
+                if (activeBox.isBasic === true && !__isLineSvg?.(activeBox)) {
+                    // Use the same base curvature/radius you used for vertical
+                    const o = activeBox._orig || { x: activeBox.x, y: activeBox.y, width: activeBox.width, height: activeBox.height };
+                    const dxAbs = mx - startMXCanvas;
+
+                    let newW = (side === 'l') ? (o.width - dxAbs) : (o.width + dxAbs);
+
+                    const baseK = Number.isFinite(activeBox.curvatureRatio)
+                        ? Math.max(0, Math.min(0.5, activeBox.curvatureRatio))
+                        : 0.5;
+
+                    // pixel radius captured on mousedown; fallback if missing
+                    const capPx0 = Number.isFinite(activeBox._capPxBase)
+                        ? activeBox._capPxBase
+                        : Math.min(baseK * o.height, (o.width || 0) / 2);
+
+                    // ⛔ hard floor for width from curvature: need at least two caps
+                    const minWHard = Math.ceil(2 * capPx0);
+                    const minWUser = Number.isFinite(activeBox.minWidth) ? activeBox.minWidth : 1;
+                    const minW = Math.max(1, minWUser, minWHard);
+                    if (newW < minW) newW = minW;
+
+                    // anchor opposite edge
+                    if (side === 'l') {
+                        activeBox.x = o.x + (o.width - newW);
+                    } else {
+                        activeBox.x = o.x;
+                    }
+                    activeBox.width = newW;
+
+                    // keep caps non-stretchy and horizontal while doing L/R
+                    if (activeBox.img) {
+                        const kEff = Math.min(0.5, capPx0 / Math.max(1e-6, activeBox.height));
+                        activeBox.img.__curvatureRatio = kEff;
+                    }
+                    activeBox.preserveCaps = true;
+                    activeBox.__capsOrientation = 'horizontal';
+
+                    snappedX = (side === 'l') ? activeBox.x : (activeBox.x + activeBox.width);
+                } else {
+                    // non-BASIC (or lines) → your existing clamp
+                    const { edgeX } = __clampBasicSideResize(activeBox, side);
+                    if (typeof edgeX === 'number') snappedX = edgeX;
+                }
             }
+
+            prevMouseX = (snappedX !== null ? snappedX : mx);
+            prevMouseY = my;
+            drawText();
+            return;
+
 
             prevMouseX = (snappedX !== null ? snappedX : mx);
             prevMouseY = my;
