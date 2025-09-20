@@ -6081,7 +6081,8 @@ function GroupPropertySet() {
     }
 
     SaveDesignBoard();
-    drawCanvas('Common');
+    //drawCanvas('Common');
+    drawText();
     updateGroupCheckbox();
 }
 function generateUUID() {
@@ -11416,12 +11417,6 @@ canvas.addEventListener("mousemove", e => {
                     if (typeof edgeX === 'number') snappedX = edgeX;
                 }
             }
-
-            prevMouseX = (snappedX !== null ? snappedX : mx);
-            prevMouseY = my;
-            drawText();
-            return;
-
 
             prevMouseX = (snappedX !== null ? snappedX : mx);
             prevMouseY = my;

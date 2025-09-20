@@ -6066,7 +6066,8 @@ function GroupPropertySet() {
     }
 
     SaveDesignBoard();
-    drawCanvas('Common');
+    //drawCanvas('Common');
+    drawText();
     updateGroupCheckbox();
 }
 function generateUUID() {
@@ -9772,7 +9773,7 @@ function drawText() {
 
     // === 9-slice (capsule-safe, constant curvature) ===
     // curv: optional curvature; 0..0.5 => ratio of height, >1 => pixels
-    function __drawImageNineSliceLocal(ctx2, img, w, h, curv) {
+    function __drawImageNineSliceLocalOLD(ctx2, img, w, h, curv) {
         const sw = img.naturalWidth || img.width || 1;
         const sh = img.naturalHeight || img.height || 1;
 
@@ -9852,7 +9853,123 @@ function drawText() {
             x0 + capDstX + midDstX - OX, y0 + capDstY + midDstY - OY,
             capDstX + OX, capDstY + OY);                                     // BR
     }
+    function __drawImageNineSliceLocal(ctx2, img, w, h, curv) {
+        const sw = img.naturalWidth || img.width || 1;
+        const sh = img.naturalHeight || img.height || 1;
 
+        // Curvature ratio (0..0.5); allow absolute pixels via curv > 1
+        let k;
+        if (typeof curv === "number" && isFinite(curv)) {
+            k = (curv > 1) ? (curv / h) : curv;
+        } else if (typeof img.__curvatureRatio === "number" && isFinite(img.__curvatureRatio)) {
+            k = img.__curvatureRatio;
+        } else {
+            k = 0.5;
+        }
+        k = Math.max(0, Math.min(0.5, k));
+
+        // Destination radii in pixels (never exceed half width/height)
+        const cap = Math.min(k * h, w * 0.5, h * 0.5);
+        const capDstX = cap, capDstY = cap;
+        const midDstX = Math.max(0, w - 2 * capDstX);
+        const midDstY = Math.max(0, h - 2 * capDstY);
+
+        // Source caps proportional to source height
+        let capSrc = Math.round(k * sh);
+        capSrc = Math.max(1, Math.min(capSrc, Math.floor(Math.min(sw, sh) / 2)));
+
+        // Source middles (≥ 1px)
+        let midSrcW = sw - capSrc * 2; if (midSrcW < 1) midSrcW = 1;
+        let midSrcH = sh - capSrc * 2; if (midSrcH < 1) midSrcH = 1;
+        const midSrcX = capSrc;
+        const midSrcY = capSrc;
+
+        // Destination rect (centered draw)
+        const x0 = -w / 2, y0 = -h / 2;
+        const left = x0, right = x0 + w, top = y0, bottom = y0 + h;
+
+        // Clip to the box to avoid any bleed
+        ctx2.save();
+        ctx2.beginPath();
+        ctx2.rect(left, top, w, h);
+        ctx2.clip();
+
+        // ---- TOP ROW ----
+        // TL
+        ctx2.drawImage(img, 0, 0, capSrc, capSrc, left, top, capDstX, capDstY);
+        // T
+        if (midDstX > 0) {
+            ctx2.drawImage(img, midSrcX, 0, midSrcW, capSrc,
+                left + capDstX, top, midDstX, capDstY);
+        }
+        // TR (use remainder to right edge)
+        {
+            const trX = left + capDstX + midDstX;
+            const trW = Math.max(0, right - trX);
+            if (trW > 0) {
+                ctx2.drawImage(img, Math.max(0, sw - capSrc), 0, capSrc, capSrc,
+                    trX, top, trW, capDstY);
+            }
+        }
+
+        // ---- MIDDLE ROW ----
+        if (midDstY > 0) {
+            // L
+            ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH,
+                left, top + capDstY, capDstX, midDstY);
+            // C
+            if (midDstX > 0) {
+                ctx2.drawImage(img, midSrcX, midSrcY, midSrcW, midSrcH,
+                    left + capDstX, top + capDstY, midDstX, midDstY);
+            }
+            // R (remainder in X)
+            {
+                const rX = left + capDstX + midDstX;
+                const rW = Math.max(0, right - rX);
+                if (rW > 0) {
+                    ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH,
+                        rX, top + capDstY, rW, midDstY);
+                }
+            }
+        } else {
+            // Collapsed center height – just draw the side strips
+            if (capDstX > 0) {
+                ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH,
+                    left, top + capDstY, capDstX, midDstY);
+            }
+            const rX = left + capDstX + midDstX;
+            const rW = Math.max(0, right - rX);
+            if (rW > 0) {
+                ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH,
+                    rX, top + capDstY, rW, midDstY);
+            }
+        }
+
+        // ---- BOTTOM ROW (remainder in Y) ----
+        {
+            const blY = top + capDstY + midDstY;
+            const blH = Math.max(0, bottom - blY);
+            if (blH > 0) {
+                // BL
+                ctx2.drawImage(img, 0, Math.max(0, sh - capSrc), capSrc, capSrc,
+                    left, blY, capDstX, blH);
+                // B
+                if (midDstX > 0) {
+                    ctx2.drawImage(img, midSrcX, Math.max(0, sh - capSrc), midSrcW, capSrc,
+                        left + capDstX, blY, midDstX, blH);
+                }
+                // BR
+                const brX = left + capDstX + midDstX;
+                const brW = Math.max(0, right - brX);
+                if (brW > 0) {
+                    ctx2.drawImage(img, Math.max(0, sw - capSrc), Math.max(0, sh - capSrc), capSrc, capSrc,
+                        brX, blY, brW, blH);
+                }
+            }
+        }
+
+        ctx2.restore();
+    }
 
     // z-ordered
     const all = [...(images || []), ...(textObjects || [])]
@@ -9961,7 +10078,7 @@ function drawText() {
 
                                 // swap w/h because we rotated
                                 if (typeof __drawImageNineSliceLocal === 'function') {
-                                    __drawImageNineSliceLocal(ctx, box.img, h, w, k);  // curvature-aware, rounded top/bottom
+                                    __drawImageNineSliceLocal(ctx, box.img, h, w, k, box);  // curvature-aware, rounded top/bottom
                                     __didCapsDraw = true;
                                 } else if (typeof __drawImageThreeSliceLocalX === 'function') {
                                     // OK if your X-slice ignores the extra arg; JS just discards it
@@ -9979,7 +10096,7 @@ function drawText() {
                             if (!__didCapsDraw) {
                                 // Horizontal caps (or generic fallback)
                                 if (typeof __drawImageNineSliceLocal === 'function') {
-                                    __drawImageNineSliceLocal(ctx, box.img, w, h, k);
+                                    __drawImageNineSliceLocal(ctx, box.img, w, h, k, box);
                                 } else if (typeof __drawImageThreeSliceLocalX === 'function') {
                                     __drawImageThreeSliceLocalX(ctx, box.img, w, h, k);
                                 } else {
@@ -11331,12 +11448,20 @@ canvas.addEventListener("mousedown", e => {
             // keep 9-slice on for basic shapes during resize
             b.preserveCaps = true;
 
+            // NEW 👇: capture the initial cap radius in pixels (constant during vertical resizing)
+            {
+                const w0 = b._orig?.width ?? b.width ?? 0;
+                const h0 = b._orig?.height ?? b.height ?? 0;
+                const capPx0 = Math.min(b._baseCurvRatio * h0, (w0 / 2)); // cannot exceed w/2
+                b._capPxBase = Number.isFinite(capPx0) ? Math.max(0, capPx0) : 0;
+            }
+
             if (norm === "l" || norm === "r") {
                 b.__capsOrientation = "horizontal";
                 if (b.img) b.img.__curvatureRatio = b._baseCurvRatio; // reset to base for smooth L/R
             } else if (norm === "t" || norm === "b") {
                 b.__capsOrientation = "vertical";
-                if (b.img) b.img.__curvatureRatio = b._baseCurvRatio; // start from base; T/B path will clamp
+                if (b.img) b.img.__curvatureRatio = b._baseCurvRatio; // we’ll override per-frame on mousemove
             }
         })();
         // ─────────────────────────────────────────────────────────────
@@ -11582,6 +11707,43 @@ const __isLineBasic = (typeof globalThis.__isLineBasic === 'function')
     : (box) => !!(box && box.isBasic === true && box.isLINESvg === true);
 
 function redraw() { if (typeof drawText === 'function') drawText(); }
+
+function __ensureCapBasePx(box) {
+    if (!Number.isFinite(box._capPxBase)) {
+        // Prefer explicit px radius if you store it (curvature / curvaturePx)
+        let r = Number.isFinite(box.curvaturePx) ? box.curvaturePx
+            : Number.isFinite(box.curvature) ? box.curvature
+                : NaN;
+
+        const w0 = box._orig?.width ?? box.width ?? 0;
+        const h0 = box._orig?.height ?? box.height ?? 0;
+
+        if (!Number.isFinite(r)) {
+            const k = Number.isFinite(box.curvatureRatio) ? Math.max(0, Math.min(0.5, box.curvatureRatio)) : 0.5;
+            r = k * Math.min(w0, h0);
+        }
+        // radius can’t exceed half of either side
+        box._capPxBase = Math.max(0, Math.min(r, Math.min(w0, h0) / 2));
+    }
+}
+
+function __applyBasicDimsConstantCaps(box, newX, newY, newW, newH) {
+    const r0 = Number(box._capPxBase) || 0;
+    const minW = Math.max(1, 2 * r0);
+    const minH = Math.max(1, 2 * r0);
+    if (newW < minW) newW = minW;
+    if (newH < minH) newH = minH;
+
+    box.x = newX; box.y = newY; box.width = newW; box.height = newH;
+
+    // Keep a constant pixel corner radius by updating the curvatureRatio
+    // so your renderer derives r_px = kEff * min(w, h) = r0
+    const kEff = Math.min(0.5, r0 / Math.max(1e-6, Math.min(newW, newH)));
+    if (box.img) box.img.__curvatureRatio = kEff;
+
+    box.preserveCaps = true;
+    box.__capsOrientation = 'neutral'; // ignore H/V split; we’re using constant px radius
+}
 canvas.addEventListener("mousemove", e => {
     const { x: mx, y: my } = getCanvasMousePosition(e);
     const dx = mx - prevMouseX;
@@ -11601,10 +11763,10 @@ canvas.addEventListener("mousemove", e => {
         return Math.max(0, Math.min(0.5, k));
     }
     function __minWidthForBasic(box) {
-        return Math.max(8, 2 * __curvRatio(box) * (box.height || 0));
+        return Math.max(6, 2 * __curvRatio(box) * (box.width || 0));//box.height
     }
     function __minHeightForBasic(box) {
-        return Math.max(8, 2 * __curvRatio(box) * (box.width || 0));
+        return Math.max(6, 2 * __curvRatio(box) * (box.width || 0));
     }
     function __clampBasicSideResize(box, side /* 'l'|'r'|'t'|'b' */) {
         if (!__isBasicImage(box)) return { clamped: false };
@@ -11780,13 +11942,19 @@ canvas.addEventListener("mousemove", e => {
 
                     const dyAbs = my - startMYCanvas;
 
-                    // tiny floor only; do NOT tie minH to width (prevents snap-to-circle)
-                    const minH = Math.max(
-                        1,
-                        Number.isFinite(activeBox.minHeight) ? activeBox.minHeight : 1
-                    );
+                    // Start from the captured base cap radius; fallback if missing
+                    const baseK = Number.isFinite(activeBox.curvatureRatio) ? Math.max(0, Math.min(0.5, activeBox.curvatureRatio)) : 0.5;
+                    const capPx0 = Number.isFinite(activeBox._capPxBase)
+                        ? activeBox._capPxBase
+                        : Math.min(baseK * o.height, (o.width || 0) / 2);
 
+                    // Compute tentative new height (anchor opposite edge)
                     let newH = (side === 't') ? (o.height - dyAbs) : (o.height + dyAbs);
+
+                    // Enforce: at least enough height so that kEff <= 0.5 (i.e., 2*capPx0)
+                    const minHHard = Math.ceil(2 * capPx0);
+                    const minHUser = Number.isFinite(activeBox.minHeight) ? activeBox.minHeight : 1;
+                    const minH = Math.max(1, minHUser, minHHard);
                     if (newH < minH) newH = minH;
 
                     // Anchor opposite edge
@@ -11797,21 +11965,16 @@ canvas.addEventListener("mousemove", e => {
                     }
                     activeBox.height = newH;
 
-                    // ⛑️ Clamp visual curvature so caps never exceed half of width.
-                    const baseK = (Number.isFinite(activeBox.curvatureRatio)
-                        ? Math.max(0, Math.min(0.5, activeBox.curvatureRatio))
-                        : 0.5);
+                    // Constant cap radius: kEff = capPx0 / newH (clamped to 0..0.5)
+                    const kEff = Math.min(0.5, capPx0 / Math.max(1e-6, newH));
+                    if (activeBox.img) activeBox.img.__curvatureRatio = kEff;
 
-                    const maxCap = (activeBox.width || 0) / 2;                   // max radius allowed
-                    const kEff = Math.min(baseK, maxCap / Math.max(1e-6, newH)); // ensures kEff*newH <= w/2
-                    if (activeBox.img) activeBox.img.__curvatureRatio = kEff;    // used by 9-slice draw
-
-                    // tell renderer to use vertical caps when H >= W
+                    // Orientation hint (kept)
                     activeBox.__capsOrientation = (newH >= (activeBox.width || 0) + 0.5)
                         ? 'vertical'
                         : 'horizontal';
 
-                    // (optional) keep the box inside the canvas
+                    // Keep inside canvas (optional)
                     const W = canvas.width, H = canvas.height;
                     if (activeBox.y < 0) activeBox.y = 0;
                     if (activeBox.y + activeBox.height > H) {
@@ -11885,10 +12048,58 @@ canvas.addEventListener("mousemove", e => {
                 if (activeBox.img) activeBox.img.__curvatureRatio = activeBox._baseCurvRatio; // restore
             }
 
+            //let snappedX = null;
+            //if (side === 'l' || side === 'r') {
+            //    const { edgeX } = __clampBasicSideResize(activeBox, side);
+            //    if (typeof edgeX === 'number') snappedX = edgeX;
+            //}
+
             let snappedX = null;
             if (side === 'l' || side === 'r') {
-                const { edgeX } = __clampBasicSideResize(activeBox, side);
-                if (typeof edgeX === 'number') snappedX = edgeX;
+                if (activeBox.isBasic === true && !__isLineSvg?.(activeBox)) {
+                    // Use the same base curvature/radius you used for vertical
+                    const o = activeBox._orig || { x: activeBox.x, y: activeBox.y, width: activeBox.width, height: activeBox.height };
+                    const dxAbs = mx - startMXCanvas;
+
+                    let newW = (side === 'l') ? (o.width - dxAbs) : (o.width + dxAbs);
+
+                    const baseK = Number.isFinite(activeBox.curvatureRatio)
+                        ? Math.max(0, Math.min(0.5, activeBox.curvatureRatio))
+                        : 0.5;
+
+                    // pixel radius captured on mousedown; fallback if missing
+                    const capPx0 = Number.isFinite(activeBox._capPxBase)
+                        ? activeBox._capPxBase
+                        : Math.min(baseK * o.height, (o.width || 0) / 2);
+
+                    // ⛔ hard floor for width from curvature: need at least two caps
+                    const minWHard = Math.ceil(2 * capPx0);
+                    const minWUser = Number.isFinite(activeBox.minWidth) ? activeBox.minWidth : 1;
+                    const minW = Math.max(1, minWUser, minWHard);
+                    if (newW < minW) newW = minW;
+
+                    // anchor opposite edge
+                    if (side === 'l') {
+                        activeBox.x = o.x + (o.width - newW);
+                    } else {
+                        activeBox.x = o.x;
+                    }
+                    activeBox.width = newW;
+
+                    // keep caps non-stretchy and horizontal while doing L/R
+                    if (activeBox.img) {
+                        const kEff = Math.min(0.5, capPx0 / Math.max(1e-6, activeBox.height));
+                        activeBox.img.__curvatureRatio = kEff;
+                    }
+                    activeBox.preserveCaps = true;
+                    activeBox.__capsOrientation = 'horizontal';
+
+                    snappedX = (side === 'l') ? activeBox.x : (activeBox.x + activeBox.width);
+                } else {
+                    // non-BASIC (or lines) → your existing clamp
+                    const { edgeX } = __clampBasicSideResize(activeBox, side);
+                    if (typeof edgeX === 'number') snappedX = edgeX;
+                }
             }
 
             prevMouseX = (snappedX !== null ? snappedX : mx);
