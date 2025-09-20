@@ -7827,7 +7827,7 @@ canvas.addEventListener('drop', e => {
         strokeNoColorStatus: false,
         fillNoColor: "#42b3f5",
         strokeNoColor: "#000000",
-        strokeWidth: 1,
+        strokeWidth: 0.1,
         isBasic: isBasic,
         isLINESvg: isLine,
         __capsOrientation: 'horizontal',
@@ -14442,12 +14442,41 @@ function applySvgCurvature(targetImage, radiusPx, strokeWidthOpt, paintOpt = {})
 
         // avoid clipping when stroke grows
         if (sw > 0) {
+           // svg.setAttribute("overflow", "visible");
+           // let vb = svg.getAttribute("viewBox");
+           // if (!vb) vb = `0 0 ${origW} ${origH}`;
+           // let [x, y, w, h] = vb.split(/\s+|,/).map(Number);
+           ///*  const pad = sw / 2;*/
+           // const pad = 0;
+           // svg.setAttribute("viewBox", `${x - pad} ${y - pad} ${w + 2 * pad} ${h + 2 * pad}`);
+
+           // // ✅ TAG the image with the pad we added so the renderer can crop it out
+            // targetImage.__svgPad = { l: pad, t: pad, r: pad, b: pad };
+
+            // --- dynamic pad so rendered image is (w-0.1) × (h-0.1) inside the box
             svg.setAttribute("overflow", "visible");
+
+            // read/seed the current viewBox
             let vb = svg.getAttribute("viewBox");
             if (!vb) vb = `0 0 ${origW} ${origH}`;
             let [x, y, w, h] = vb.split(/\s+|,/).map(Number);
-            const pad = sw / 2;
-            svg.setAttribute("viewBox", `${x - pad} ${y - pad} ${w + 2 * pad} ${h + 2 * pad}`);
+
+            // we want to inset the final drawing by 0.1 in each dimension
+            const insetX = 0.1;             // active-box width - 0.1
+            const insetY = 0.1;             // active-box height - 0.1
+
+            // to get that, expand the viewBox by half the inset on each side
+            const padX = Math.max(0, insetX * 0.5);
+            const padY = Math.max(0, insetY * 0.5);
+
+            // apply expanded viewBox (width + insetX, height + insetY)
+            svg.setAttribute(
+                "viewBox",
+                `${x - padX} ${y - padY} ${w + insetX} ${h + insetY}`
+            );
+
+            // ✅ TAG the image with the pad we added so the renderer can crop it out later
+            targetImage.__svgPad = { l: padX, t: padY, r: padX, b: padY };
         }
 
         // curvature: rounded joints/caps
@@ -14494,6 +14523,7 @@ function applySvgCurvature(targetImage, radiusPx, strokeWidthOpt, paintOpt = {})
 
         return new XMLSerializer().serializeToString(doc);
     }
+
 
     function redraw(svgText) {
         if (myJob !== targetImage._curveJobId) return;
