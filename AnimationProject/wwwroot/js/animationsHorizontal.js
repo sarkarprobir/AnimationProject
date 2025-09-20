@@ -11745,7 +11745,7 @@ function __applyBasicDimsConstantCaps(box, newX, newY, newW, newH) {
     box.__capsOrientation = 'neutral'; // ignore H/V split; we’re using constant px radius
 }
 // rotation helpers
-function __deg2rad(a) { return (a || 0) * Math.PI / 180; }
+//function __deg2rad(a) { return (a || 0) * Math.PI / 180; }
 
 // project world-space mouse delta into box local axes
 function __localMouseDelta(mx, my, startMX, startMY, rotDeg) {
@@ -11832,7 +11832,12 @@ canvas.addEventListener("mousemove", e => {
         // rotate world delta by -rot to get local delta
         return { dxL: dx * c + dy * s, dyL: -dx * s + dy * c };
     }
-    // apply a local resize (keeps opposite edge anchored) (ADD)
+    // is box rotated?
+    function __isRotated(box) {
+        const a = ((box?.rotation || 0) % 360 + 360) % 360;
+        return Math.abs(a) > 0.0001;
+    }
+    // apply a local resize (keeps opposite edge anchored) for IMAGES (keep)
     // dir: 'l','r','t','b','tl','tr','bl','br'
     function __applyLocalResizeImage(box, dir, dxL, dyL) {
         const o = box._orig || { x: box.x, y: box.y, width: box.width, height: box.height };
@@ -11887,6 +11892,54 @@ canvas.addEventListener("mousemove", e => {
             else if (!signX && signY) box.__capsOrientation = 'vertical';
         }
     }
+
+    // ✨ NEW: rotation-aware uniform scaling for TEXT (corners & T/B sides)
+    function __applyLocalResizeText(box, dir, dxL, dyL) {
+        const o = box._orig || { x: box.x, y: box.y, width: box.width, height: box.height, text: box.text };
+        const ow = Math.max(1e-6, o.width), oh = Math.max(1e-6, o.height);
+
+        const ang = __deg2rad(box.rotation || 0);
+        const cosA = Math.cos(ang);
+        const sinA = Math.sin(ang);
+
+        const signX = (dir.includes('l') ? -1 : (dir.includes('r') ? +1 : 0));
+        const signY = (dir.includes('t') ? -1 : (dir.includes('b') ? +1 : 0));
+
+        let newW = ow + (signX ? signX * dxL : 0);
+        let newH = oh + (signY ? signY * dyL : 0);
+
+        const sx = (signX ? newW / ow : 1);
+        const sy = (signY ? newH / oh : 1);
+
+        // choose uniform scale
+        let s;
+        if (signX && signY) s = Math.min(sx > 0 ? sx : 1e-3, sy > 0 ? sy : 1e-3);
+        else if (signY) s = (sy > 0 ? sy : 1e-3);
+        else if (signX) s = (sx > 0 ? sx : 1e-3);
+        else s = 1;
+        s = Math.max(0.1, s);
+
+        const newWU = ow * s, newHU = oh * s;
+
+        // local → world center shift
+        const sLX = (signX ? dxL / 2 : 0);
+        const sLY = (signY ? dyL / 2 : 0);
+        const shiftX = sLX * cosA - sLY * sinA;
+        const shiftY = sLX * sinA + sLY * cosA;
+
+        const cx0 = o.x + ow / 2, cy0 = o.y + oh / 2;
+        const cx = cx0 + shiftX, cy = cy0 + shiftY;
+
+        box.x = cx - newWU / 2;
+        box.y = cy - newHU / 2;
+        box.width = newWU;
+        box.height = newHU;
+
+        if (typeof scaleTextHTML === 'function' && typeof o.text === 'string') {
+            box.text = scaleTextHTML(o.text, s);
+        }
+    }
+
 
     // ──────────────────────────────────────────────────────────
     // BASIC-shape helpers (local to this handler)
@@ -11952,7 +12005,7 @@ canvas.addEventListener("mousemove", e => {
         }
     }
 
-    // ✅ TEXT left/right side-resize in rotated space
+    // ✅ TEXT left/right side-resize (your function handles rotation)
     if (isResizingNew && activeBox && activeBox.type !== 'image' &&
         (resizeDirection === 'l' || resizeDirection === 'r')) {
         resizeTextSideToMouse(activeBox, resizeDirection, mx, my);
@@ -11965,6 +12018,16 @@ canvas.addEventListener("mousemove", e => {
                 activeBox.width = 1;
             }
         }
+        drawText();
+        return;
+    }
+
+    // ✨ NEW: TEXT top/bottom side-resize when rotated
+    if (isResizingNew && activeBox && activeBox.type !== 'image' &&
+        (resizeDirection === 't' || resizeDirection === 'b') && __isRotated(activeBox)) {
+        const { dyL } = __localMouseDelta(mx, my, startMXCanvas, startMYCanvas, activeBox.rotation || 0);
+        __applyLocalResizeText(activeBox, resizeDirection, 0, dyL);
+        prevMouseX = mx; prevMouseY = my;
         drawText();
         return;
     }
@@ -11990,31 +12053,41 @@ canvas.addEventListener("mousemove", e => {
         }
     }
 
+    // ✨ UPDATED: TEXT corner resize – rotation-aware if rotated, else your old logic
     if (isCornerFontScale && activeBox && resizeDirectionNorm && CORNER_HANDLES.has(resizeDirectionNorm)) {
-        const dir = resizeDirectionNorm;
-        const ow = activeBox._orig.width, oh = activeBox._orig.height;
-        const dxAbs = mx - startMXCanvas, dyAbs = my - startMYCanvas;
+        if (__isRotated(activeBox)) {
+            const { dxL, dyL } = __localMouseDelta(mx, my, startMXCanvas, startMYCanvas, activeBox.rotation || 0);
+            __applyLocalResizeText(activeBox, resizeDirectionNorm, dxL, dyL);
+            prevMouseX = mx; prevMouseY = my;
+            drawText();
+            return;
+        } else {
+            // your original unrotated corner-scaling path (kept)
+            const dir = resizeDirectionNorm;
+            const ow = activeBox._orig.width, oh = activeBox._orig.height;
+            const dxAbs = mx - startMXCanvas, dyAbs = my - startMYCanvas;
 
-        let scaleX = 1, scaleY = 1;
-        switch (dir) {
-            case 'tl': scaleX = (ow - dxAbs) / ow; scaleY = (oh - dyAbs) / oh; break;
-            case 'tr': scaleX = (ow + dxAbs) / ow; scaleY = (oh - dyAbs) / oh; break;
-            case 'bl': scaleX = (ow - dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
-            case 'br': scaleX = (ow + dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
-        }
-        scaleX = Math.max(0.1, scaleX); scaleY = Math.max(0.1, scaleY);
-        const s = Math.min(scaleX, scaleY), newW = ow * s, newH = oh * s;
+            let scaleX = 1, scaleY = 1;
+            switch (dir) {
+                case 'tl': scaleX = (ow - dxAbs) / ow; scaleY = (oh - dyAbs) / oh; break;
+                case 'tr': scaleX = (ow + dxAbs) / ow; scaleY = (oh - dyAbs) / oh; break;
+                case 'bl': scaleX = (ow - dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
+                case 'br': scaleX = (ow + dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
+            }
+            scaleX = Math.max(0.1, scaleX); scaleY = Math.max(0.1, scaleY);
+            const s = Math.min(scaleX, scaleY), newW = ow * s, newH = oh * s;
 
-        switch (dir) {
-            case 'tl': activeBox.x = activeBox._orig.x + (ow - newW); activeBox.y = activeBox._orig.y + (oh - newH); break;
-            case 'tr': activeBox.x = activeBox._orig.x; activeBox.y = activeBox._orig.y + (oh - newH); break;
-            case 'bl': activeBox.x = activeBox._orig.x + (ow - newW); activeBox.y = activeBox._orig.y; break;
-            case 'br': activeBox.x = activeBox._orig.x; activeBox.y = activeBox._orig.y; break;
+            switch (dir) {
+                case 'tl': activeBox.x = activeBox._orig.x + (ow - newW); activeBox.y = activeBox._orig.y + (oh - newH); break;
+                case 'tr': activeBox.x = activeBox._orig.x; activeBox.y = activeBox._orig.y + (oh - newH); break;
+                case 'bl': activeBox.x = activeBox._orig.x + (ow - newW); activeBox.y = activeBox._orig.y; break;
+                case 'br': activeBox.x = activeBox._orig.x; activeBox.y = activeBox._orig.y; break;
+            }
+            activeBox.width = newW; activeBox.height = newH;
+            activeBox.text = scaleTextHTML(activeBox._orig.text, s);
+            drawText();
+            return;
         }
-        activeBox.width = newW; activeBox.height = newH;
-        activeBox.text = scaleTextHTML(activeBox._orig.text, s);
-        drawText();
-        return;
     }
 
     // IMAGE corner
@@ -12071,7 +12144,7 @@ canvas.addEventListener("mousemove", e => {
                 if (!__isLineSvg?.(activeBox)) {
                     const { dyL } = __localMouseDelta(mx, my, startMXCanvas, startMYCanvas, activeBox.rotation || 0);
                     __applyLocalResizeImage(activeBox, side, 0, dyL);
-                    // optional: keep inside canvas if you want (your code had it for BASIC)
+                    // optional: keep inside canvas (kept from your BASIC block)
                     const W = canvas.width, H = canvas.height;
                     if (activeBox.y < 0) activeBox.y = 0;
                     if (activeBox.y + activeBox.height > H) activeBox.y = Math.max(0, H - activeBox.height);
@@ -12155,7 +12228,7 @@ canvas.addEventListener("mousemove", e => {
             return;
 
         } else {
-            // TEXT (kept)
+            // TEXT (kept) — for non-rotated T/B we keep your original path
             scaleTextBoxWithHandle(activeBox, (resizeDirectionRaw || resizeDirection), mx, my);
             prevMouseX = mx; prevMouseY = my;
             drawText();
