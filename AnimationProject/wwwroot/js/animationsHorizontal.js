@@ -11750,7 +11750,184 @@ canvas.addEventListener("mousemove", e => {
     const dy = my - prevMouseY;
 
     // ──────────────────────────────────────────────────────────
-    // BASIC-shape helpers (local to this handler)
+    // 🔧 ROTATION HELPERS (ADD)
+    function __deg2rad(a) { return (a || 0) * Math.PI / 180; }
+    // world delta → local delta (relative to start point)
+    function __toLocalDelta(mx, my, sx, sy, rotDeg) {
+        const dxx = mx - sx, dyy = my - sy;
+        const aa = __deg2rad(rotDeg || 0), cc = Math.cos(aa), ss = Math.sin(aa);
+        return { dxL: dxx * cc + dyy * ss, dyL: -dxx * ss + dyy * cc };
+    }
+
+    // Generic anchored resize (images/svg): opposite edge/corner fixed (ADD)
+    function __applyResizeGenericAnchRot(box, dir, dxL, dyL) {
+        const o = box._orig || { x: box.x, y: box.y, width: box.width, height: box.height };
+        const ow = o.width, oh = o.height;
+
+        const useX = dir.includes('l') || dir.includes('r');
+        const useY = dir.includes('t') || dir.includes('b');
+        const signX = dir.includes('l') ? -1 : (dir.includes('r') ? +1 : 0);
+        const signY = dir.includes('t') ? -1 : (dir.includes('b') ? +1 : 0);
+
+        let newW = ow, newH = oh;
+
+        if (useX && useY) {
+            let sX = 1 + (signX ? (signX * dxL) / Math.max(1e-6, ow) : 0);
+            let sY = 1 + (signY ? (signY * dyL) / Math.max(1e-6, oh) : 0);
+            sX = Math.max(0.1, sX); sY = Math.max(0.1, sY);
+            const sU = Math.min(sX, sY);
+            newW = ow * sU; newH = oh * sU;
+        } else {
+            if (useX) newW = Math.max(1, ow + signX * dxL);
+            if (useY) newH = Math.max(1, oh + signY * dyL);
+        }
+
+        const dW = newW - ow, dH = newH - oh;
+        const sLX = useX ? (signX * dW / 2) : 0;
+        const sLY = useY ? (signY * dH / 2) : 0;
+
+        const aa = __deg2rad(box.rotation || 0), cc = Math.cos(aa), ss = Math.sin(aa);
+        const shiftX = sLX * cc - sLY * ss;
+        const shiftY = sLX * ss + sLY * cc;
+
+        const cx0 = o.x + ow / 2, cy0 = o.y + oh / 2;
+        const cx = cx0 + shiftX, cy = cy0 + shiftY;
+
+        box.x = cx - newW / 2;
+        box.y = cy - newH / 2;
+        box.width = newW;
+        box.height = newH;
+    }
+
+    // BASIC SVG anchored resize with curvature floors + uniform corner scale (ADD / FIX)
+    function __applyResizeBasicAnchRot(box, dir, dxL, dyL) {
+        const o = box._orig || { x: box.x, y: box.y, width: box.width, height: box.height };
+        const ow = o.width, oh = o.height;
+
+        const useX = dir.includes('l') || dir.includes('r');
+        const useY = dir.includes('t') || dir.includes('b');
+        const signX = dir.includes('l') ? -1 : (dir.includes('r') ? +1 : 0);
+        const signY = dir.includes('t') ? -1 : (dir.includes('b') ? +1 : 0);
+
+        // --- floors (NO dynamic dependence on current box size) ---
+        const MIN_PX = 6;
+        const capPx0 = Number.isFinite(box._capPxBase) ? box._capPxBase : 0; // frozen on mousedown
+        const minWUser = Number.isFinite(box.minWidth) ? box.minWidth : 1;
+        const minHUser = Number.isFinite(box.minHeight) ? box.minHeight : 1;
+        const minW = Math.max(MIN_PX, minWUser, Math.ceil(2 * capPx0)); // side-X floor
+        const minH = Math.max(MIN_PX, minHUser, Math.ceil(2 * capPx0)); // side-Y floor
+
+        let newW = ow, newH = oh;
+
+        if (useX && useY) {
+            // CORNER → uniform scale (match your non-rotated feel)
+            let sX = 1 + (signX ? (signX * dxL) / Math.max(1e-6, ow) : 0);
+            let sY = 1 + (signY ? (signY * dyL) / Math.max(1e-6, oh) : 0);
+            let sU = Math.min(sX, sY);
+
+            // allow squish back in: clamp to 0.1 and pixel floors (not to current size)
+            const sMin = Math.max(0.1, MIN_PX / Math.max(1e-6, ow), MIN_PX / Math.max(1e-6, oh));
+            sU = Math.max(sU, sMin);
+
+            newW = ow * sU;
+            newH = oh * sU;
+        } else {
+            // SIDE → single axis with stable floors (so you can squish after scaling out)
+            if (useX) newW = Math.max(minW, ow + signX * dxL);
+            if (useY) newH = Math.max(minH, oh + signY * dyL);
+        }
+
+        // center shift along the active local axes (opposite edge stays fixed)
+        const dW = newW - ow, dH = newH - oh;
+        const sLX = useX ? (signX * dW / 2) : 0;
+        const sLY = useY ? (signY * dH / 2) : 0;
+
+        const aa = __deg2rad(box.rotation || 0), cc = Math.cos(aa), ss = Math.sin(aa);
+        const shiftX = sLX * cc - sLY * ss;
+        const shiftY = sLX * ss + sLY * cc;
+
+        const cx0 = o.x + ow / 2, cy0 = o.y + oh / 2;
+        const cx = cx0 + shiftX, cy = cy0 + shiftY;
+
+        box.x = cx - newW / 2;
+        box.y = cy - newH / 2;
+        box.width = newW;
+        box.height = newH;
+
+        // keep caps consistent (orientation hint same as your code)
+        if (box.img) {
+            const kEff = Math.min(0.5, capPx0 / Math.max(1e-6, box.height));
+            box.img.__curvatureRatio = kEff;
+        }
+        box.preserveCaps = true;
+        if (useX && !useY) box.__capsOrientation = 'horizontal';
+        else if (!useX && useY) box.__capsOrientation = 'vertical';
+    }
+
+
+    // TEXT corner + side anchored with rotation (ADD)
+    function __applyCornerTextAnchRot(box, dir, dxL, dyL) {
+        const o = box._orig; if (!o) return;
+        const ow = o.width, oh = o.height;
+        const sgnX = dir.includes('l') ? -1 : (dir.includes('r') ? +1 : 0);
+        const sgnY = dir.includes('t') ? -1 : (dir.includes('b') ? +1 : 0);
+
+        let sX = 1 + (sgnX ? (sgnX * dxL) / Math.max(1e-6, ow) : 0);
+        let sY = 1 + (sgnY ? (sgnY * dyL) / Math.max(1e-6, oh) : 0);
+        sX = Math.max(0.1, sX); sY = Math.max(0.1, sY);
+        const sU = Math.min(sX, sY);
+
+        const newW = ow * sU, newH = oh * sU;
+        const dW = newW - ow, dH = newH - oh;
+
+        const sLX = (sgnX ? (sgnX * dW / 2) : 0);
+        const sLY = (sgnY ? (sgnY * dH / 2) : 0);
+
+        const aa = __deg2rad(box.rotation || 0), cc = Math.cos(aa), ss = Math.sin(aa);
+        const shiftX = sLX * cc - sLY * ss;
+        const shiftY = sLX * ss + sLY * cc;
+
+        const cx0 = o.x + ow / 2, cy0 = o.y + oh / 2;
+        const cx = cx0 + shiftX, cy = cy0 + shiftY;
+
+        box.x = cx - newW / 2;
+        box.y = cy - newH / 2;
+        box.width = newW;
+        box.height = newH;
+        if (typeof box._orig.text === 'string') {
+            box.text = scaleTextHTML(box._orig.text, sU);
+        }
+    }
+    function __applySideTextAnchRot(box, side, deltaL) {
+        const o = box._orig || { x: box.x, y: box.y, width: box.width, height: box.height };
+        const ow = o.width, oh = o.height;
+        const isX = side === 'l' || side === 'r';
+        const isY = side === 't' || side === 'b';
+        const sgn = (side === 'l' || side === 't') ? -1 : +1;
+
+        let newW = ow, newH = oh;
+        if (isX) newW = Math.max(1, ow + sgn * deltaL);
+        if (isY) newH = Math.max(1, oh + sgn * deltaL);
+
+        const dW = newW - ow, dH = newH - oh;
+        const sLX = isX ? (sgn * dW / 2) : 0;
+        const sLY = isY ? (sgn * dH / 2) : 0;
+
+        const aa = __deg2rad(box.rotation || 0), cc = Math.cos(aa), ss = Math.sin(aa);
+        const shiftX = sLX * cc - sLY * ss;
+        const shiftY = sLX * ss + sLY * cc;
+
+        const cx0 = o.x + ow / 2, cy0 = o.y + oh / 2;
+        const cx = cx0 + shiftX, cy = cy0 + shiftY;
+
+        box.x = cx - newW / 2;
+        box.y = cy - newH / 2;
+        box.width = newW;
+        box.height = newH;
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // BASIC-shape helpers (your originals kept)
     function __isBasicImage(box) {
         return !!(box && box.type === 'image' && (
             box.isBasic === true ||
@@ -11792,18 +11969,17 @@ canvas.addEventListener("mousemove", e => {
     }
 
     // ──────────────────────────────────────────────────────────
-    // ADD: line-only helpers (per your "images.isLINESvg")
-    function __isLineSvg(box) { return !!(box && box.isLINESvg === true); }    // ADD
+    // ADD: line-only helpers (kept)
+    function __isLineSvg(box) { return !!(box && box.isLINESvg === true); }
     const __LINE_HANDLES = (globalThis.__LINE_HANDLES instanceof Set)
         ? globalThis.__LINE_HANDLES
-        : new Set(['l', 'r']);                                               // ADD
+        : new Set(['l', 'r']);
 
     // ──────────────────────────────────────────────────────────
-    // When resizing, ignore disallowed handles on line items (belt & braces)
+    // When resizing, ignore disallowed handles on line items (kept)
     if (isResizingNew && activeBox && __isLineSvg(activeBox)) {
         const side = (resizeDirectionNorm || resizeDirection || '').toLowerCase();
         if (side && !__LINE_HANDLES.has(side)) {
-            // cancel the resize and fall back to drag
             isResizingNew = false;
             isDraggingNew = true;
             dragOffsetXNew = mx - activeBox.x;
@@ -11813,12 +11989,20 @@ canvas.addEventListener("mousemove", e => {
         }
     }
 
-    // ✅ TEXT left/right side-resize in rotated space
+    // ✅ TEXT left/right side-resize — rotation-aware first, then your original
     if (isResizingNew && activeBox && activeBox.type !== 'image' &&
         (resizeDirection === 'l' || resizeDirection === 'r')) {
-        resizeTextSideToMouse(activeBox, resizeDirection, mx, my);
 
-        // only prevent negative/zero; otherwise allow full squish
+        if ((activeBox.rotation || 0) % 360 !== 0) {
+            const { dxL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, activeBox.rotation || 0);
+            __applySideTextAnchRot(activeBox, resizeDirection, dxL);
+            drawText();
+            prevMouseX = mx; prevMouseY = my;
+            return;
+        }
+
+        // your original non-rotated path
+        resizeTextSideToMouse(activeBox, resizeDirection, mx, my);
         if (activeBox.width < 1) {
             if (resizeDirection === 'l') {
                 const right = activeBox.x + activeBox.width;
@@ -11828,11 +12012,9 @@ canvas.addEventListener("mousemove", e => {
                 activeBox.width = 1;          // keep the left edge anchored
             }
         }
-
         drawText();
         return;
     }
-
 
     if (isDraggingMulti) {
         updateMultiDrag(mx, my);
@@ -11857,7 +12039,17 @@ canvas.addEventListener("mousemove", e => {
         }
     }
 
+    // TEXT corner — rotation-aware first, then your original
     if (isCornerFontScale && activeBox && resizeDirectionNorm && CORNER_HANDLES.has(resizeDirectionNorm)) {
+        if ((activeBox.rotation || 0) % 360 !== 0) {
+            const { dxL, dyL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, activeBox.rotation || 0);
+            __applyCornerTextAnchRot(activeBox, resizeDirectionNorm, dxL, dyL);
+            drawText();
+            prevMouseX = mx; prevMouseY = my;
+            return;
+        }
+
+        // your original non-rotated text-corner code (kept)
         const dir = resizeDirectionNorm;
         const ow = activeBox._orig.width, oh = activeBox._orig.height;
         const dxAbs = mx - startMXCanvas, dyAbs = my - startMYCanvas;
@@ -11870,7 +12062,7 @@ canvas.addEventListener("mousemove", e => {
             case 'br': scaleX = (ow + dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
         }
         scaleX = Math.max(0.1, scaleX); scaleY = Math.max(0.1, scaleY);
-        const s = Math.min(scaleX, scaleY), newW = ow * s, newH = oh * s;
+        const sU = Math.min(scaleX, scaleY), newW = ow * sU, newH = oh * sU;
 
         switch (dir) {
             case 'tl': activeBox.x = activeBox._orig.x + (ow - newW); activeBox.y = activeBox._orig.y + (oh - newH); break;
@@ -11879,7 +12071,7 @@ canvas.addEventListener("mousemove", e => {
             case 'br': activeBox.x = activeBox._orig.x; activeBox.y = activeBox._orig.y; break;
         }
         activeBox.width = newW; activeBox.height = newH;
-        activeBox.text = scaleTextHTML(activeBox._orig.text, s);
+        activeBox.text = scaleTextHTML(activeBox._orig.text, sU);
         drawText();
         return;
     }
@@ -11888,7 +12080,7 @@ canvas.addEventListener("mousemove", e => {
     if (isCornerImageScale && activeBox && activeBox.type === "image" &&
         resizeDirectionNorm && CORNER_HANDLES.has(resizeDirectionNorm)) {
 
-        // block corner-resize for line items → fallback to drag
+        // block corner-resize for line items → fallback to drag (kept)
         if (__isLineSvg(activeBox)) {
             isCornerImageScale = false; isDraggingNew = true;
             dragOffsetXNew = mx - activeBox.x;
@@ -11898,6 +12090,19 @@ canvas.addEventListener("mousemove", e => {
             return;
         }
 
+        // ➜ rotation-aware (BASIC or normal) (ADD)
+        if ((activeBox.rotation || 0) % 360 !== 0) {
+            const { dxL, dyL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, activeBox.rotation || 0);
+            if (__isBasicImage(activeBox)) {
+                __applyResizeBasicAnchRot(activeBox, resizeDirectionNorm, dxL, dyL);
+            } else {
+                __applyResizeGenericAnchRot(activeBox, resizeDirectionNorm, dxL, dyL);
+            }
+            prevMouseX = mx; prevMouseY = my; drawText();
+            return;
+        }
+
+        // your original non-rotated corner image scale (kept)
         const dir = resizeDirectionNorm;
         const ow = activeBox._orig.width, oh = activeBox._orig.height;
         const dxAbs = mx - startMXCanvas, dyAbs = my - startMYCanvas;
@@ -11910,7 +12115,7 @@ canvas.addEventListener("mousemove", e => {
             case 'br': scaleX = (ow + dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
         }
         scaleX = Math.max(0.1, scaleX); scaleY = Math.max(0.1, scaleY);
-        const s = Math.min(scaleX, scaleY), newW = ow * s, newH = oh * s;
+        const sImg = Math.min(scaleX, scaleY), newW = ow * sImg, newH = oh * sImg;
 
         switch (dir) {
             case 'tl': activeBox.x = activeBox._orig.x + (ow - newW); activeBox.y = activeBox._orig.y + (oh - newH); break;
@@ -11932,49 +12137,63 @@ canvas.addEventListener("mousemove", e => {
             // --- TOP / BOTTOM handles for IMAGES ---
             if (side === 't' || side === 'b') {
 
-                // NEW: BASIC images — make T/B act like L/R (anchor opposite edge)
-                // and clamp the visual cap radius so it never exceeds w/2.
                 if (activeBox.isBasic === true && !__isLineSvg?.(activeBox)) {
                     const o = activeBox._orig || {
                         x: activeBox.x, y: activeBox.y,
                         width: activeBox.width, height: activeBox.height
                     };
 
-                    const dyAbs = my - startMYCanvas;
-
-                    // Start from the captured base cap radius; fallback if missing
-                    const baseK = Number.isFinite(activeBox.curvatureRatio) ? Math.max(0, Math.min(0.5, activeBox.curvatureRatio)) : 0.5;
+                    // base cap radius (stable floor)
+                    const baseK = Number.isFinite(activeBox.curvatureRatio)
+                        ? Math.max(0, Math.min(0.5, activeBox.curvatureRatio)) : 0.5;
                     const capPx0 = Number.isFinite(activeBox._capPxBase)
                         ? activeBox._capPxBase
                         : Math.min(baseK * o.height, (o.width || 0) / 2);
 
-                    // Compute tentative new height (anchor opposite edge)
-                    let newH = (side === 't') ? (o.height - dyAbs) : (o.height + dyAbs);
+                    // compute delta in LOCAL space when rotated
+                    const rot = activeBox.rotation || 0;
+                    let delta = (side === 't')
+                        ? -(my - startMYCanvas)
+                        : +(my - startMYCanvas);
 
-                    // Enforce: at least enough height so that kEff <= 0.5 (i.e., 2*capPx0)
+                    if ((rot % 360) !== 0) {
+                        const { dyL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, rot);
+                        delta = (side === 't') ? -dyL : dyL; // use local-Y movement
+                    }
+
+                    // new height with floors
+                    let newH = o.height + delta;
                     const minHHard = Math.ceil(2 * capPx0);
                     const minHUser = Number.isFinite(activeBox.minHeight) ? activeBox.minHeight : 1;
                     const minH = Math.max(1, minHUser, minHHard);
                     if (newH < minH) newH = minH;
 
-                    // Anchor opposite edge
-                    if (side === 't') {
-                        activeBox.y = o.y + (o.height - newH);  // keep bottom fixed
-                    } else {
-                        activeBox.y = o.y;                      // keep top fixed
-                    }
+                    // keep opposite edge anchored:
+                    // shift center by half the change along local-Y, then rotate into world
+                    const dH = newH - o.height;
+                    const sgn = (side === 't') ? -1 : +1;              // which edge we drag
+                    const sLX = 0;
+                    const sLY = sgn * dH / 2;
+
+                    const aa = __deg2rad(rot), cc = Math.cos(aa), ss = Math.sin(aa);
+                    const shiftX = sLX * cc - sLY * ss;
+                    const shiftY = sLX * ss + sLY * cc;
+
+                    const cx0 = o.x + o.width / 2, cy0 = o.y + o.height / 2;
+                    const cx = cx0 + shiftX, cy = cy0 + shiftY;
+
+                    // write back (width unchanged for T/B)
+                    activeBox.x = cx - o.width / 2;
+                    activeBox.y = cy - newH / 2;
+                    activeBox.width = o.width;
                     activeBox.height = newH;
 
-                    // Constant cap radius: kEff = capPx0 / newH (clamped to 0..0.5)
+                    // update caps
                     const kEff = Math.min(0.5, capPx0 / Math.max(1e-6, newH));
                     if (activeBox.img) activeBox.img.__curvatureRatio = kEff;
+                    activeBox.__capsOrientation = (newH >= (activeBox.width || 0) + 0.5) ? 'vertical' : 'horizontal';
 
-                    // Orientation hint (kept)
-                    activeBox.__capsOrientation = (newH >= (activeBox.width || 0) + 0.5)
-                        ? 'vertical'
-                        : 'horizontal';
-
-                    // Keep inside canvas (optional)
+                    // (optional) keep inside canvas
                     const W = canvas.width, H = canvas.height;
                     if (activeBox.y < 0) activeBox.y = 0;
                     if (activeBox.y + activeBox.height > H) {
@@ -11984,6 +12203,15 @@ canvas.addEventListener("mousemove", e => {
                     prevMouseX = mx; prevMouseY = my;
                     drawText();
                     return; // IMPORTANT: skip the generic handler below
+                }
+                // 🔧 ADD: rotation-aware TOP/BOTTOM for NORMAL image / normal SVG (non-BASIC, non-line)
+                if (!__isBasicImage(activeBox) && !__isLineSvg?.(activeBox) && ((activeBox.rotation || 0) % 360 !== 0)) {
+                    // project mouse delta into box-local Y so the opposite edge stays anchored (no walk)
+                    const { dyL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, activeBox.rotation || 0);
+                    __applyResizeGenericAnchRot(activeBox, side, 0, dyL);
+                    prevMouseX = mx; prevMouseY = my;
+                    drawText();
+                    return;
                 }
 
                 // ── your previous paths (kept) ─────────────────────────────────
@@ -12012,15 +12240,43 @@ canvas.addEventListener("mousemove", e => {
                 return;
             }
 
-            // --- LEFT / RIGHT handles for IMAGES (unchanged, with BASIC clamp on width) ---
-            // SPECIAL CASE: line-SVGs → pure horizontal resize anchored on the opposite edge
+            // --- LEFT / RIGHT handles for IMAGES ---
+
+            // LINES: rotation-aware L/R so it doesn't walk (ADD / FIX)
             if (__isLineSvg?.(activeBox) && (side === 'l' || side === 'r')) {
                 const o = activeBox._orig || { x: activeBox.x, y: activeBox.y, width: activeBox.width, height: activeBox.height };
-                const dxAbs = mx - startMXCanvas;
+                const rot = activeBox.rotation || 0;
 
+                if ((rot % 360) !== 0) {
+                    const { dxL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, rot);
+                    const sgn = (side === 'l') ? -1 : +1;
+
+                    let newW = Math.max(1, o.width + sgn * dxL);
+
+                    // anchor opposite side in local-X
+                    const dW = newW - o.width;
+                    const sLX = sgn * dW / 2;
+
+                    const aa = __deg2rad(rot), cc = Math.cos(aa), ss = Math.sin(aa);
+                    const shiftX = sLX * cc;  // sLY=0
+                    const shiftY = sLX * ss;
+
+                    const cx0 = o.x + o.width / 2, cy0 = o.y + o.height / 2;
+                    const cx = cx0 + shiftX, cy = cy0 + shiftY;
+
+                    activeBox.x = cx - newW / 2;
+                    activeBox.y = cy - o.height / 2;
+                    activeBox.width = newW;
+                    activeBox.height = o.height;
+
+                    prevMouseX = mx; prevMouseY = my; drawText();
+                    return;
+                }
+
+                // your original non-rotated line path (kept)
+                const dxAbs = mx - startMXCanvas;
                 let newW = (side === 'l') ? (o.width - dxAbs) : (o.width + dxAbs);
                 newW = Math.max(1, newW);
-
                 if (side === 'l') {
                     activeBox.x = o.x + (o.width - newW); // anchor right
                 } else {
@@ -12033,12 +12289,27 @@ canvas.addEventListener("mousemove", e => {
                 return;
             }
 
-            // fallback: generic side-resize path (kept)
+            // rotation-aware BASIC L/R with floors (ADD)
+            if ((side === 'l' || side === 'r') && __isBasicImage(activeBox) && ((activeBox.rotation || 0) % 360 !== 0)) {
+                const { dxL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, activeBox.rotation || 0);
+                __applyResizeBasicAnchRot(activeBox, side, dxL, 0);
+                prevMouseX = mx; prevMouseY = my; drawText();
+                return;
+            }
+
+            // rotation-aware NORMAL L/R (ADD)
+            if ((side === 'l' || side === 'r') && !__isBasicImage(activeBox) && ((activeBox.rotation || 0) % 360 !== 0)) {
+                const { dxL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, activeBox.rotation || 0);
+                __applyResizeGenericAnchRot(activeBox, side, dxL, 0);
+                prevMouseX = mx; prevMouseY = my; drawText();
+                return;
+            }
+
+            // fallback: your generic side-resize path (kept)
             scaleImageBoxWithHandle(activeBox, side, mx, my);
 
-            // NEW (B): If BASIC and we just did L/R, flip caps back to horizontal
+            // BASIC post-fix (kept)
             if (activeBox.isBasic === true && !__isLineSvg?.(activeBox) && (side === 'l' || side === 'r')) {
-                // ensure a base curvature is cached
                 if (!Number.isFinite(activeBox._baseCurvRatio)) {
                     const k0 = Number.isFinite(activeBox.curvatureRatio) ? activeBox.curvatureRatio : 0.5;
                     activeBox._baseCurvRatio = Math.max(0, Math.min(0.5, k0));
@@ -12053,49 +12324,59 @@ canvas.addEventListener("mousemove", e => {
             //    const { edgeX } = __clampBasicSideResize(activeBox, side);
             //    if (typeof edgeX === 'number') snappedX = edgeX;
             //}
-
             let snappedX = null;
             if (side === 'l' || side === 'r') {
                 if (activeBox.isBasic === true && !__isLineSvg?.(activeBox)) {
-                    // Use the same base curvature/radius you used for vertical
                     const o = activeBox._orig || { x: activeBox.x, y: activeBox.y, width: activeBox.width, height: activeBox.height };
-                    const dxAbs = mx - startMXCanvas;
-
-                    let newW = (side === 'l') ? (o.width - dxAbs) : (o.width + dxAbs);
 
                     const baseK = Number.isFinite(activeBox.curvatureRatio)
-                        ? Math.max(0, Math.min(0.5, activeBox.curvatureRatio))
-                        : 0.5;
-
-                    // pixel radius captured on mousedown; fallback if missing
+                        ? Math.max(0, Math.min(0.5, activeBox.curvatureRatio)) : 0.5;
                     const capPx0 = Number.isFinite(activeBox._capPxBase)
                         ? activeBox._capPxBase
                         : Math.min(baseK * o.height, (o.width || 0) / 2);
-
-                    // ⛔ hard floor for width from curvature: need at least two caps
                     const minWHard = Math.ceil(2 * capPx0);
                     const minWUser = Number.isFinite(activeBox.minWidth) ? activeBox.minWidth : 1;
                     const minW = Math.max(1, minWUser, minWHard);
-                    if (newW < minW) newW = minW;
 
-                    // anchor opposite edge
-                    if (side === 'l') {
-                        activeBox.x = o.x + (o.width - newW);
+                    const rot = activeBox.rotation || 0;
+
+                    if ((rot % 360) !== 0) {
+                        // rotation-aware horizontal resize (no “walk”, can squish back)
+                        const { dxL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, rot);
+                        __applyResizeBasicAnchRot(activeBox, side, dxL, 0);
+                        prevMouseX = mx; prevMouseY = my; drawText(); return;
                     } else {
-                        activeBox.x = o.x;
-                    }
-                    activeBox.width = newW;
+                        // your original non-rotated BASIC path (unchanged)
+                        const dxAbs = mx - startMXCanvas;
+                        let newW = (side === 'l') ? (o.width - dxAbs) : (o.width + dxAbs);
+                        if (newW < minW) newW = minW;
 
-                    // keep caps non-stretchy and horizontal while doing L/R
-                    if (activeBox.img) {
-                        const kEff = Math.min(0.5, capPx0 / Math.max(1e-6, activeBox.height));
-                        activeBox.img.__curvatureRatio = kEff;
-                    }
-                    activeBox.preserveCaps = true;
-                    activeBox.__capsOrientation = 'horizontal';
+                        if (side === 'l') {
+                            activeBox.x = o.x + (o.width - newW); // anchor right
+                        } else {
+                            activeBox.x = o.x;                    // anchor left
+                        }
+                        activeBox.width = newW;
 
-                    snappedX = (side === 'l') ? activeBox.x : (activeBox.x + activeBox.width);
-                } else {
+                        if (activeBox.img) {
+                            const kEff = Math.min(0.5, capPx0 / Math.max(1e-6, activeBox.height));
+                            activeBox.img.__curvatureRatio = kEff;
+                        }
+                        activeBox.preserveCaps = true;
+                        activeBox.__capsOrientation = 'horizontal';
+
+                        snappedX = (side === 'l') ? activeBox.x : (activeBox.x + activeBox.width);
+                    }
+                }
+                else if (!__isBasicImage(activeBox) && ((activeBox.rotation || 0) % 360 !== 0)) {
+                    // 🔧 ADD: rotation-aware LEFT/RIGHT for NORMAL image / normal SVG (non-BASIC, non-line)
+                    const { dxL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, activeBox.rotation || 0);
+                    __applyResizeGenericAnchRot(activeBox, side, dxL, 0);
+                    prevMouseX = mx; prevMouseY = my;
+                    drawText();
+                    return; // important: skip the generic fallback to avoid walk
+                }
+                else {
                     // non-BASIC (or lines) → your existing clamp
                     const { edgeX } = __clampBasicSideResize(activeBox, side);
                     if (typeof edgeX === 'number') snappedX = edgeX;
@@ -12116,14 +12397,8 @@ canvas.addEventListener("mousemove", e => {
         }
     }
 
-
-
-
-
-
-
     // ──────────────────────────────────────────────────────────
-    // HOVER CURSOR FIX FOR LINES (no active drag/resize)
+    // HOVER CURSOR FIX FOR LINES (no active drag/resize) (kept)
     if (!isResizingNew && !isDraggingNew && !isCornerImageScale && !isCornerFontScale) {
         const hHover = (typeof findHandleAt === 'function') ? findHandleAt(mx, my) : null;
         if (hHover && hHover.box && __isLineSvg(hHover.box)) {
@@ -12134,15 +12409,12 @@ canvas.addEventListener("mousemove", e => {
             return; // prevent other code from flipping the cursor back
         }
 
-        // If hovering a line body (no handle), show move
         const hit = (typeof getTopHitAt === 'function') ? getTopHitAt(mx, my) : null;
         if (hit && __isLineSvg(hit)) {
             try { setGlobalCursor?.('move'); } catch { }
             return;
         }
-
-        // Otherwise, let your normal hover cursor logic (if any) run or clear:
-        // try { setGlobalCursor?.(''); } catch {}
+        // otherwise let normal hover logic run (if any)
     }
 });
 
