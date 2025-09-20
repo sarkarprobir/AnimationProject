@@ -64,7 +64,7 @@ let textPosition = { x: 100, y: 100, opacity: 100, content: text, }; // Default 
 let imagePosition = { x: 100, y: 20, scaleX: 1, scaleY: 1, opacity: 100, }; // Default start position
 
 const FACTOR_INCREMENT = 0.1;
-let selectedBox = null;
+
 /////this is for add multiple text
 const textEditor = document.getElementById("textEditor");
 const addTextBtn = document.getElementById("addTextBtn");
@@ -644,7 +644,6 @@ function changeLineSpacing(deltaFactor) {
 
     // redraw
     drawText();
-    console.log(textObjects);
 }
 
 // Apply line spacing in place without nuking selection/HTML
@@ -1325,7 +1324,6 @@ function ChangeAlignStyle(value) {
 
     // 6) redraw
     drawText()
-    console.log(textObjects);
 }
 function applyAlignInEditor(root, align) {
     // apply to top-level line <div>s so the editor WYSIWYG matches the canvas
@@ -1384,8 +1382,6 @@ function OnChangefontFamily(value) {
         resizeEditorToContent(ed, activeBox);
         if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
         drawText();
-        console.log(textObjects);
-        console.log(images);
         return;
     }
 
@@ -1402,8 +1398,6 @@ function OnChangefontFamily(value) {
         resizeEditorToContent(ed, activeBox);
         if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
         drawText();
-        console.log(textObjects);
-        console.log(images);
         return;
     }
 
@@ -1421,8 +1415,6 @@ function OnChangefontFamily(value) {
     resizeEditorToContent(ed, activeBox);
     if (typeof invalidateTextRaster === "function") invalidateTextRaster(activeBox);
     drawText();
-    console.log(textObjects);
-    console.log(images);
 }
 
 
@@ -1483,7 +1475,6 @@ function OnChangefontFamilyOLD(value) {
         if (Obj) Obj.text = activeBox.text;
 
         drawText();
-        console.log(textObjects);
         return;
     }
 
@@ -1492,7 +1483,6 @@ function OnChangefontFamilyOLD(value) {
     if (Obj) Obj.text = activeBox.text;
 
     drawText();
-    console.log(textObjects);
 }
 function applyFontFamilyToWholeBox(family) {
     const container = document.createElement("div");
@@ -1546,7 +1536,6 @@ function OnChangefontFamilyOld(value) {
     }
 
     drawText();
-    console.log(textObjects);
 }
 
 
@@ -1693,10 +1682,6 @@ function animateText(direction, condition, loopCount) {
                 obj.exitX = window.innerWidth;
                 obj.exitY = obj.finalY;
         }
-        console.log("Left dist:", -canvas.width / 2, canvas.width + margin);
-        console.log("Right dist:", canvas.width / 2 + 150, -obj.boundingWidth - margin);
-        console.log("top dist:", -canvas.width / 2 - 100, -obj.boundingWidth - margin);
-        console.log("bottom dist:", canvas.height, canvas.width);
     });
     // ----- IMAGE ANIMATION SECTION -----
     // (A similar approach can be applied to images.)
@@ -3372,152 +3357,71 @@ function addDefaultTextOld() {
 }
 function addDefaultTextNew() {
     images.forEach(img => img.selected = false);
-    ///Start KD Blocked///
-    //const fs = 30;
-    //const factor = 1.2;        // 120% of fontSize
-    //const buttons = document.querySelectorAll('.toggle-btn');
-    //const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]');
-    //const text = "Default Text";
-    //// 2) Clear `active` from all
-    //buttons.forEach(b => b.classList.remove('active'));
+    const fs = 30;
+    const factor = 1.2;        // 120% of fontSize
+    const buttons = document.querySelectorAll('.toggle-btn');
+    const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]');
+    const text = "Default Text";
+    // 2) Clear `active` from all
+    buttons.forEach(b => b.classList.remove('active'));
 
-    //// 3) Activate only the Graphic button
-    //graphicBtn.classList.add('active');
-    //// 1) Create with defaults
-    //const newObj = {
-    //    text,
-    //    x: 92,
-    //    y: 100,
-    //    selected: false,
-    //    editing: false,
-    //    fontFamily: "Arial",
-    //    textColor: "#000000",
-    //    textAlign: "left",
-    //    fontSize: fs,
+    // 3) Activate only the Graphic button
+    graphicBtn.classList.add('active');
+    // 1) Create with defaults
+    const newObj = {
+        text,
+        x: 92,
+        y: 100,
+        selected: false,
+        editing: false,
+        fontFamily: "Arial",
+        textColor: "#000000",
+        textAlign: "left",
+        fontSize: fs,
 
-    //    // store only the factor
-    //    lineSpacing: factor,
+        // store only the factor
+        lineSpacing: factor,
 
-    //    // bounding box placeholders—will be set below
-    //    boundingWidth: 0,
-    //    boundingHeight: 0,
-    //    noAnim: false,
-    //    groupId: null,
-    //    rotation: 0,
-    //    isBold: false,
-    //    isItalic: false,
-    //    type: 'text',
-    //    zIndex: getNextZIndex(),
-    //    opacity:100
-    //};
+        // bounding box placeholders—will be set below
+        boundingWidth: 0,
+        boundingHeight: 0,
+        noAnim: false,
+        groupId: null,
+        rotation: 0,
+        isBold: false,
+        isItalic: false,
+        type: 'text',
+        zIndex: getNextZIndex(),
+        opacity:100
+    };
 
-    //// 2) Measure it
-    //ctx.font = `${newObj.fontSize}px ${newObj.fontFamily}`;
-    //const metrics = ctx.measureText(text);
-    //const width = metrics.width;
-    //const ascent = metrics.actualBoundingBoxAscent || fs * 0.8;
-    //const descent = metrics.actualBoundingBoxDescent || fs * 0.2;
-    //const height = ascent + descent;
+    // 2) Measure it
+    ctx.font = `${newObj.fontSize}px ${newObj.fontFamily}`;
+    const metrics = ctx.measureText(text);
+    const width = metrics.width;
+    const ascent = metrics.actualBoundingBoxAscent || fs * 0.8;
+    const descent = metrics.actualBoundingBoxDescent || fs * 0.2;
+    const height = ascent + descent;
 
-    //// 3) Tiny padding around
-    //const offsetX = 20;
-    //const offsetY = 25;
+    // 3) Tiny padding around
+    const offsetX = 20;
+    const offsetY = 25;
 
-    //// 4) Assign your bounding dimensions
-    //newObj.boundingWidth = width + offsetX;
-    //newObj.boundingHeight = height + offsetY;
+    // 4) Assign your bounding dimensions
+    newObj.boundingWidth = width + offsetX;
+    newObj.boundingHeight = height + offsetY;
 
-    //// 5) Make it the only selected object
-    //textObjects.forEach(o => o.selected = false);
-    //newObj.selected = true;
-    //textObjects.push(newObj);
-
-    ///END KD Blocked///
+    // 5) Make it the only selected object
+    textObjects.forEach(o => o.selected = false);
+    newObj.selected = true;
+    textObjects.push(newObj);
 
     // 6) Redraw
     drawCanvas('Common');
     $("#opengl_popup").hide();
     $("#elementsPopup").hide();
-
-   
-    // 0) Deselect any previously selected box
-    $('.text-box').each(function () {
-        const $old = $(this);
-        $old.removeClass('selected');
-        if ($old.data('ui-draggable')) $old.draggable('destroy');
-        if ($old.data('ui-resizable')) $old.resizable('destroy');
-        $old.find('.drag-handle, .rotate-handle, .delete-handle').remove();
-        $old.find('.ui-resizable-handle').remove();
-    });
-
-    // 1) Create outer box
-    const $box = $('<div class="text-box selected"></div>')
-        .appendTo('#canvasContainer');
-
-    // 2) Create inner editable area
-    const $content = $('<div class="text-content" contenteditable="true">Default Text</div>')
-        .appendTo($box);
-
-    // 3) Append your custom handles
-    const $drag = $('<div class="drag-handle"><i class="fas fa-arrows-alt"></i></div>').appendTo($box);
-    const $rotate = $('<div class="rotate-handle"></div>').appendTo($box);
-    const $del = $('<div class="delete-handle"><i class="fas fa-trash"></i></div>').appendTo($box);
-
-    // 4) Position in center of container
-    const $cont = $('#canvasContainer');
-    const left = ($cont.width() - $box.outerWidth()) / 2;
-    const top = ($cont.height() - $box.outerHeight()) / 2;
-    $box.css({ position: 'absolute', left: `${left}px`, top: `${top}px`, transform: 'rotate(0deg)' });
-
-    // 5) **Only once**: make it draggable/resizable using the canvas‐based containment
-    makeBoxDraggableAndResizable($box);
-
-    // 6) Rotate logic (unchanged)
-    let rotating = false, center = {};
-    $rotate.on('mousedown', e => {
-        e.preventDefault();
-        rotating = true;
-        const offs = $box.offset();
-        center = {
-            x: offs.left + $box.outerWidth() / 2,
-            y: offs.top + $box.outerHeight() / 2
-        };
-        $(document).on('mousemove.rotate', e2 => {
-            if (!rotating) return;
-            const angle = Math.atan2(e2.pageY - center.y, e2.pageX - center.x) * 180 / Math.PI;
-            $box.css('transform', `rotate(${angle}deg)`);
-        }).on('mouseup.rotate', () => {
-            rotating = false;
-            $(document).off('.rotate');
-        });
-    });
-
-    // 7) Delete logic (unchanged)
-    $del.on('click', e => {
-        e.stopPropagation();
-        $box.remove();
-    });
-
-   
 }
-function addHandlesAndListeners(box) {
-    const rotateHandle = box.find('.rotate-handle');
-    const dragHandle = box.find('.drag-handle');
-    const deleteHandle = box.find('.delete-handle');
-    const resizeHandles = box.find('.resize-handle');
 
-    dragHandle.on('mousedown', startDrag);
-    rotateHandle.on('mousedown', startRotate);
-
-    deleteHandle.on('click', function (e) {
-        e.stopPropagation();
-        box.remove();
-    });
-
-    resizeHandles.each(function () {
-        $(this).on('mousedown', startResize);
-    });
-}
 // ─── 2) Clone helpers ────────────────────────────────────────────────
 function cloneTextObject(srcObj) {
     return {
@@ -6173,8 +6077,6 @@ function generateUUID() {
 }
 
 function ImagePropertySet() {
-    console.log(textObjects);
-    console.log(images);
     const noAnimCheckbox = document.getElementById('noAnimCheckbox');
     const isChecked = noAnimCheckbox.checked;
     
@@ -6209,8 +6111,6 @@ function ImagePropertySet() {
 
     // one save at the end
     SaveDesignBoard();
-    console.log(textObjects);
-    console.log(images);
 }
 //canvasContainer.addEventListener("dblclick", function (e) {
 //    const rect = canvas.getBoundingClientRect();
@@ -7057,7 +6957,6 @@ function ChangeColorOLD() {
     }
 
     drawText();
-    console.log(textObjects);
 }
 
 
@@ -7815,7 +7714,7 @@ function __isBasicFromSource(src, fileName = '') {
 
 
 canvas.addEventListener('drop', e => {
-    //e.preventDefault();
+    e.preventDefault();
 
     let src = "";
     let droppedFileName = "";
@@ -8720,7 +8619,7 @@ function CreateRightSectionhtml() {
         })
             .done(result => {
                 // 1) Inject the partial
-                $("#divpanelright").html(result);
+                $("#divpanelrightH").html(result);
 
                 // 2) Now it’s safe to wire up your controls
                 document.getElementById('lblSpeed').textContent = "4 Sec";
@@ -8956,7 +8855,6 @@ function boldText() {
         }
         if (typeof redrawCanvas === "function") redrawCanvas();
         else drawText();
-        console.log(textObjects);
         return;
     }
 
@@ -8967,7 +8865,6 @@ function boldText() {
 
     if (typeof redrawCanvas === "function") redrawCanvas();
     else drawText();
-    console.log(textObjects);
 }
 
 function italicText() {
@@ -9016,7 +8913,6 @@ function italicText() {
         }
         if (typeof redrawCanvas === "function") redrawCanvas();
         else drawText();
-        console.log(textObjects);
         return;
     }
 
@@ -9027,7 +8923,6 @@ function italicText() {
 
     if (typeof redrawCanvas === "function") redrawCanvas();
     else drawText();
-    console.log(textObjects);
 }
 
 function boldTextOLD() {
@@ -9050,7 +8945,6 @@ function boldTextOLD() {
             }
             redrawCanvas();
             updateFontStyleButtons();
-            console.log(textObjects);
             return;
         } catch (e) {
             // fall through to whole-box toggle if execCommand fails
@@ -9087,7 +8981,6 @@ function italicTextOLD() {
             }
             redrawCanvas();
             updateFontStyleButtons();
-            console.log(textObjects);
             return;
         } catch (e) {
             // fall through to whole-box toggle if execCommand fails
@@ -9880,9 +9773,7 @@ function drawText() {
 
     // === 9-slice (capsule-safe, constant curvature) ===
     // curv: optional curvature; 0..0.5 => ratio of height, >1 => pixels
-    function __drawImageNineSliceLocalOLD(ctx2, img, w, h, curv, box) {
-        //img.naturalWidth = box.width;
-        //img.naturalHeight = box.height;
+    function __drawImageNineSliceLocalOLD(ctx2, img, w, h, curv) {
         const sw = img.naturalWidth || img.width || 1;
         const sh = img.naturalHeight || img.height || 1;
 
@@ -9909,26 +9800,6 @@ function drawText() {
         // ---- SOURCE cap size: same ratio of the source asset ----
         let capSrc = Math.round(k * sh);
         capSrc = Math.max(1, Math.min(capSrc, Math.floor(Math.min(sw, sh) / 2)));
-        //let k;
-       
-        //if (typeof curv === 'number' && isFinite(curv)) {
-        //    k = (curv > 1) ? (curv / h) : curv;
-        //} else if (typeof img.__curvatureRatio === 'number') {
-        //    k = img.__curvatureRatio;
-        //} else {
-        //    k = 0.5;
-        //}
-        //k = Math.max(0, Math.min(0.5, k));
-
-        //// ---- destination geometry (width-safe) ----
-        //const capDstX = Math.min(k * h, w * 0.5);   // never wider than half the width
-        //const capDstY = Math.min(k * h, h * 0.5);
-        //const midDstX = Math.max(0, w - 2 * capDstX);
-        //const midDstY = Math.max(0, h - 2 * capDstY);
-
-        //// ---- source geometry (match ratio) ----
-        //let capSrc = Math.round(k * sh);
-        //capSrc = Math.max(1, Math.min(capSrc, Math.floor(Math.min(sw, sh) / 2)));
 
         // source middles (≥1px to avoid gaps)
         let midSrcW = sw - capSrc * 2, midSrcX = capSrc;
@@ -9982,7 +9853,6 @@ function drawText() {
             x0 + capDstX + midDstX - OX, y0 + capDstY + midDstY - OY,
             capDstX + OX, capDstY + OY);                                     // BR
     }
-
     function __drawImageNineSliceLocal(ctx2, img, w, h, curv) {
         const sw = img.naturalWidth || img.width || 1;
         const sh = img.naturalHeight || img.height || 1;
@@ -10101,7 +9971,6 @@ function drawText() {
         ctx2.restore();
     }
 
-
     // z-ordered
     const all = [...(images || []), ...(textObjects || [])]
         .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
@@ -10171,7 +10040,7 @@ function drawText() {
         // drop world-space clip
         ctx.restore();
 
-       
+        
         const isBasic = box.isBasic??false;
         if (isBasic) {
             if (box.type === "image") {
@@ -10220,8 +10089,10 @@ function drawText() {
                                     __drawImageThreeSliceLocalY(ctx, box.img, w, h, k);
                                     __didCapsDraw = true;
                                 }
+
                                 ctx.restore();
                             }
+
                             if (!__didCapsDraw) {
                                 // Horizontal caps (or generic fallback)
                                 if (typeof __drawImageNineSliceLocal === 'function') {
@@ -10237,6 +10108,33 @@ function drawText() {
                         }
 
 
+
+
+                        //if (preserveCaps) {
+                        //    const wantVerticalCaps = (box.__capsOrientation === 'vertical'); // ← ADD
+                        //    let __didCapsDraw = false;                                       // ← ADD
+
+                        //    if (wantVerticalCaps) {                                          // ← ADD
+                        //        // Draw with TOP/BOTTOM caps preserved (no canvas rotation)
+                        //        if (typeof __drawImageThreeSliceLocalY === 'function') {
+                        //            __drawImageThreeSliceLocalY(ctx, box.img, w, h);
+                        //            __didCapsDraw = true;
+                        //        } else {
+                        //            // Fallback: 9-slice with current curvature (still no rotation)
+                        //            __drawImageNineSliceLocal(ctx, box.img, w, h, box.img?.__curvatureRatio);
+                        //            __didCapsDraw = true;
+                        //        }
+                        //    }
+
+                        //    if (!__didCapsDraw) { // ← ADD
+                        //        // Horizontal caps preserved (your existing behavior)
+                        //        __drawImageNineSliceLocal(ctx, box.img, w, h);
+                        //        // If you prefer strict horizontal 3-slice instead, keep this alternative:
+                        //        // __drawImageThreeSliceLocalX(ctx, box.img, w, h);
+                        //    }
+                        //} else {
+                        //    ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                        //}
 
                     } else {
                         const img = box.img;
@@ -10520,6 +10418,719 @@ function drawText() {
 }
 
 
+
+
+
+function drawTextOLD_3_9() {
+    const designW = canvas.width;
+    const designH = canvas.height;
+
+    // clear & bg
+    ctx.clearRect(0, 0, designW, designH);
+
+    const bgEl = document.getElementById('hdnBackgroundSpecificColor');
+    const bgColor = (bgEl?.value || canvas.style.backgroundColor || "").trim();
+    if (bgColor) {
+        ctx.save();
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, designW, designH);
+        ctx.restore();
+    }
+
+    if (canvas._bgImg) {
+        if (canvas._bgImg.complete) {
+            ctx.drawImage(canvas._bgImg, 0, 0, designW, designH);
+        } else {
+            canvas._bgImg.onload = () => drawText();
+            canvas._bgImg.onerror = () => { };
+        }
+    }
+
+    // text defaults
+    ctx.textBaseline = "top";
+    const defaultStyle = window.getComputedStyle(textEditorNew);
+    const defaultFontSize = defaultStyle.fontSize || "16px";
+    const defaultFontFamily = defaultStyle.fontFamily || "Arial";
+    const defaultFontWeight = defaultStyle.fontWeight || "normal";
+    const defaultFontStyle = defaultStyle.fontStyle || "normal";
+    const defaultColor = defaultStyle.color || "#000";
+
+    // === local mask (unchanged) ===
+    function __applyLocalRectMask(ctx, w, h, clipVal, direction) {
+        if (!(clipVal > 0 && clipVal < 1)) return;
+        let vw = w, vh = h;
+        if (direction === "left" || direction === "right") vw = w * (1 - clipVal);
+        if (direction === "top" || direction === "bottom") vh = h * (1 - clipVal);
+        let rx = -w / 2, ry = -h / 2;
+        if (direction === "right") rx = (w / 2) - vw;
+        if (direction === "bottom") ry = (h / 2) - vh;
+        ctx.beginPath();
+        ctx.rect(rx, ry, vw, vh);
+        ctx.clip();
+    }
+
+    // === NEW: detect the 6 basic shape SVGs ===
+    const __SPECIAL_SVGS = new Set([
+        //'ico-shapes-circle.svg',
+        //'ico-shapes-heart.svg',
+        //'ico-shapes-hexagon.svg',
+       // 'ico-shapes-line.svg',
+        'ico-shapes-rec.svg',
+       // 'ico-shapes-triangle.svg'
+    ]);
+    function __isSpecialShapeSvg(box) {
+        if (!box || box.type !== 'image' || !box.src) return false;
+        let name = '';
+        try {
+            const u = new URL(String(box.src), window.location.href);
+            name = (u.pathname || '').split('/').pop() || '';
+        } catch {
+            name = String(box.src).split(/[?#]/)[0].split('/').pop() || '';
+        }
+        return __SPECIAL_SVGS.has(name.toLowerCase());
+    }
+
+    // === NEW: 9-slice helper (capsule-safe, no seams) ===
+    // === 9-slice (capsule-safe, constant curvature) ===
+    // curv: optional curvature; 0..0.5 => ratio of height, >1 => pixels
+    //function __drawImageNineSliceLocal(ctx2, img, w, h, curv) {
+    //    const sw = img.naturalWidth || img.width || 1;
+    //    const sh = img.naturalHeight || img.height || 1;
+
+    //    // ---- DESTINATION corner radius (keep constant while squishing) ----
+    //    // prefer explicit 'curv', else img.__curvatureRatio, else 0.5 (pill)
+    //    let k;
+    //    if (typeof curv === 'number' && isFinite(curv)) {
+    //        // <=1 => ratio; >1 => pixels converted to ratio by /h
+    //        k = (curv > 1) ? (curv / h) : curv;
+    //    } else if (typeof img.__curvatureRatio === 'number') {
+    //        k = img.__curvatureRatio;
+    //    } else {
+    //        k = 0.5; // default pill ends
+    //    }
+    //    // clamp to [0..0.5]
+    //    k = Math.max(0, Math.min(0.5, k));
+
+    //    // Fixed destination corner size from HEIGHT, not from current width
+    //    const capDstX = k * h;         // radius horizontally
+    //    const capDstY = k * h;         // radius vertically
+    //    const midDstX = Math.max(0, w - 2 * capDstX); // center can collapse to 0
+    //    const midDstY = Math.max(0, h - 2 * capDstY);
+
+    //    // ---- SOURCE cap size: same ratio of the source asset ----
+    //    let capSrc = Math.round(k * sh);
+    //    capSrc = Math.max(1, Math.min(capSrc, Math.floor(Math.min(sw, sh) / 2)));
+
+    //    // source middles (≥1px to avoid gaps)
+    //    let midSrcW = sw - capSrc * 2, midSrcX = capSrc;
+    //    if (midSrcW < 1) { midSrcW = 1; midSrcX = Math.min(Math.max(0, capSrc), Math.max(0, sw - 1)); }
+
+    //    let midSrcH = sh - capSrc * 2, midSrcY = capSrc;
+    //    if (midSrcH < 1) { midSrcH = 1; midSrcY = Math.min(Math.max(0, capSrc), Math.max(0, sh - 1)); }
+
+    //    const x0 = -w / 2, y0 = -h / 2;
+
+    //    // tiny overlaps to hide seams (DPI-aware)
+    //    const DPR = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
+    //    const OX = 1 / DPR, OY = 1 / DPR;
+
+    //    // Top row
+    //    ctx2.drawImage(img, 0, 0, capSrc, capSrc, x0, y0, capDstX + OX, capDstY + OY); // TL
+    //    if (midDstX > 0)
+    //        ctx2.drawImage(img, midSrcX, 0, midSrcW, capSrc,
+    //            x0 + capDstX - OX, y0, midDstX + 2 * OX, capDstY + OY);       // T
+    //    ctx2.drawImage(img, Math.max(0, sw - capSrc), 0, capSrc, capSrc,
+    //        x0 + capDstX + midDstX - OX, y0, capDstX + OX, capDstY + OY);   // TR
+
+    //    // Middle row
+    //    if (midDstY > 0) {
+    //        ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH,
+    //            x0, y0 + capDstY - OY, capDstX + OX, midDstY + 2 * OY);       // L
+    //        if (midDstX > 0)
+    //            ctx2.drawImage(img, midSrcX, midSrcY, midSrcW, midSrcH,
+    //                x0 + capDstX - OX, y0 + capDstY - OY,
+    //                midDstX + 2 * OX, midDstY + 2 * OY);                         // C
+    //        ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH,
+    //            x0 + capDstX + midDstX - OX, y0 + capDstY - OY,
+    //            capDstX + OX, midDstY + 2 * OY);                               // R
+    //    } else {
+    //        // no center height → stretch side strips to meet
+    //        ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH,
+    //            x0, y0 + capDstY - OY, capDstX + OX, midDstY + 2 * OY);
+    //        ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH,
+    //            x0 + capDstX + midDstX - OX, y0 + capDstY - OY,
+    //            capDstX + OX, midDstY + 2 * OY);
+    //    }
+
+    //    // Bottom row
+    //    ctx2.drawImage(img, 0, Math.max(0, sh - capSrc), capSrc, capSrc,
+    //        x0, y0 + capDstY + midDstY - OY, capDstX + OX, capDstY + OY);   // BL
+    //    if (midDstX > 0)
+    //        ctx2.drawImage(img, midSrcX, Math.max(0, sh - capSrc), midSrcW, capSrc,
+    //            x0 + capDstX - OX, y0 + capDstY + midDstY - OY,
+    //            midDstX + 2 * OX, capDstY + OY);                               // B
+    //    ctx2.drawImage(img, Math.max(0, sw - capSrc), Math.max(0, sh - capSrc), capSrc, capSrc,
+    //        x0 + capDstX + midDstX - OX, y0 + capDstY + midDstY - OY,
+    //        capDstX + OX, capDstY + OY);                                     // BR
+    //}
+
+
+    // z-ordered
+    const all = [...(images || []), ...(textObjects || [])]
+        .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+
+    for (const box of all) {
+        if (box.width == null || Number.isNaN(box.width)) box.width = 50;
+        if (box.height == null || Number.isNaN(box.height)) box.height = 30;
+
+        const { w, h, cx, cy } = getBoxRect(box);
+        const angleRad = deg2rad(box.rotation || 0);
+
+        // clip normalization (unchanged)
+        if (typeof box.previousClip !== "number") {
+            box.previousClip = Number(box.clip) || 0;
+        }
+        const __clipVal = Math.max(0, Math.min(1, Number(box.clip) || 0));
+        const __isHiding = __clipVal > box.previousClip;
+        const __origDir = box.clipDirection || "top";
+        const __effDir = __isHiding ? invertDirection(__origDir) : __origDir;
+        box.previousClip = __clipVal;
+
+        if (__clipVal >= 1) continue;
+
+        box.__clipVal = __clipVal;
+        box.__effDir = __effDir;
+
+        if (typeof box.scaleX !== "number") box.scaleX = 1;
+        if (typeof box.scaleY !== "number") box.scaleY = 1;
+        const __sx = (Number(box.scaleX) || 0);
+        const __sy = (Number(box.scaleY) || 0);
+        if (__sx === 0 || __sy === 0) continue;
+
+        // sandbox world-space clip
+        ctx.save();
+        if (box.clip >= 1) { ctx.restore(); ctx.restore(); return; }
+
+        if (box.clip > 0 && box.clip < 1) {
+            const originalDir = box.clipDirection || "top";
+            const isHiding = box.clip > box.previousClip;
+            const effectiveDirection = isHiding ? invertDirection(originalDir) : originalDir;
+            box.previousClip = box.clip;
+
+            const isImage = box.type === 'image';
+            const width = isImage ? box.width : box.boundingWidth;
+            const height = isImage ? box.height : box.boundingHeight;
+            const x = box.x, y = box.y;
+
+            ctx.beginPath();
+            if (effectiveDirection === "top") {
+                const visibleHeight = height * (1 - box.clip);
+                ctx.rect(x, y, width, visibleHeight);
+            } else if (effectiveDirection === "bottom") {
+                const visibleHeight = height * (1 - box.clip);
+                ctx.rect(x, y + height - visibleHeight, width, visibleHeight);
+            } else if (effectiveDirection === "left") {
+                const visibleWidth = width * (1 - box.clip);
+                ctx.rect(x, y, visibleWidth, height);
+            } else if (effectiveDirection === "right") {
+                const visibleWidth = width * (1 - box.clip);
+                ctx.rect(x + width - visibleWidth, y, visibleWidth, height);
+            }
+            ctx.clip();
+        }
+        ctx.restore();
+
+        // ---- IMAGE ----
+        if (box.type === "image") {
+            const { w, h, cx, cy } = getBoxRect(box);
+            const angleRad = deg2rad(box.rotation || 0);
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(angleRad);
+            ctx.scale(__sx, __sy);
+            ctx.globalAlpha = normAlpha(box.opacity);
+
+            if (box.__clipVal > 0 && box.__clipVal < 1) {
+                __applyLocalRectMask(ctx, w, h, box.__clipVal, box.__effDir || "top");
+            }
+
+            if (box.img) {
+                if (box.img.complete) {
+                    // >>> ONLY these 6 svg files use the capsule-safe 9-slice <<<
+                    const useSpecial = __isSpecialShapeSvg(box);
+
+                    if (useSpecial) {
+                        //    // optional: only when aspect changed; otherwise normal draw is fine
+                        //    const natW = box.img.naturalWidth || box.img.width || w;
+                        //    const natH = box.img.naturalHeight || box.img.height || h;
+                        //    const arImg = natW / Math.max(natH, 1e-6);
+                        //    const arBox = w / Math.max(h, 1e-6);
+                        //    const aspectChanged = Math.abs(arBox - arImg) > 1e-3;
+
+                        //    if (aspectChanged) {
+                        //        __drawImageNineSliceLocal(ctx, box.img, w, h);
+                        //    } else {
+                        //        ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                        //    }
+                        //} else {
+                        //    // old behavior for everything else
+                        //    ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                        //}
+                        const natW = box.img.naturalWidth || box.img.width || w;
+                        const natH = box.img.naturalHeight || box.img.height || h;
+                        const arImg = natW / Math.max(natH, 1e-6);
+                        const arBox = w / Math.max(h, 1e-6);
+
+                        const aspectChanged = Math.abs(arBox - arImg) > 1e-3;
+                        const preserveCaps = (box.preserveCaps === true) || aspectChanged;
+                        if (preserveCaps) {
+                            const k = (typeof box.curvatureRatio === 'number') ?
+                                Math.max(0, Math.min(1, box.curvatureRatio)) : 1; // default pill
+                            __drawImageNineSliceLocal(ctx, box.img, w, h, k /*ratio*/);
+                        } else {
+                            ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                        }
+                    }
+
+                } else {
+                    const img = box.img;
+                    img.onload = () => { img.onload = null; drawText(); };
+                    img.onerror = () => { img.onerror = null; };
+                }
+            }
+
+            ctx.restore();
+
+            if (box.selected && w > 0 && h > 0) {
+                drawRotatedSelection(ctx, { ...box, width: w * __sx, height: h * __sy });
+            }
+            continue;
+        }
+
+        // ---- TEXT ---- (unchanged)
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angleRad);
+        ctx.scale(__sx, __sy);
+        ctx.globalAlpha = normAlpha(box.opacity);
+
+        if (box.__clipVal > 0 && box.__clipVal < 1) {
+            __applyLocalRectMask(ctx, w, h, box.__clipVal, box.__effDir || "top");
+        }
+
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = box.text || "";
+
+        const lines = [];
+        wrapper.childNodes.forEach(n => {
+            if (n.nodeType === 1 && n.tagName === "DIV") {
+                const hasContent = n.textContent.trim().length > 0 || n.children.length > 0;
+                if (!hasContent) {
+                    const blank = document.createElement("div");
+                    blank.appendChild(document.createTextNode(" "));
+                    lines.push(blank);
+                } else {
+                    const ln = document.createElement("div");
+                    ln.append(...n.cloneNode(true).childNodes);
+                    lines.push(ln);
+                }
+            } else if (n.nodeType === 1 && n.tagName === "BR") {
+                const brLine = document.createElement("div");
+                brLine.appendChild(document.createTextNode(" "));
+                lines.push(brLine);
+            } else {
+                if (lines.length === 0) lines.push(document.createElement("div"));
+                lines[lines.length - 1].appendChild(n.cloneNode(true));
+            }
+        });
+
+        const left = -w / 2;
+        const top = -h / 2;
+
+        let cursorY = top + 5;
+        let usedHeight = 0;
+
+        let __maxRunWidthObserved = 0;
+        let __maxTokenWidthObserved = 0;
+
+        lines.forEach(lineNode => {
+            let cursorX = left + 5;
+            if (box.align === "center") {
+                ctx.textAlign = "center";
+                cursorX = left + w / 2;
+            } else if (box.align === "right") {
+                ctx.textAlign = "right";
+                cursorX = left + w - 5;
+            } else {
+                ctx.textAlign = "left";
+            }
+
+            const innerLeft = left + 5;
+            const innerRight = left + w - 5;
+            const innerWidth = Math.max(0, innerRight - innerLeft);
+            const alignMode = box.align || "left";
+            ctx.textAlign = "left";
+
+            let segments = [];
+            let maxFontPx = 0;
+
+            function measureWords(node, style) {
+                if (node.nodeType === 3) {
+                    const tokens = (node.nodeValue.match(/(\s+|\S+)/g) || []);
+                    for (let tk of tokens) {
+                        const fs = style.fontSize || defaultFontSize;
+                        const ff = style.fontFamily || defaultFontFamily;
+                        const fw = style.fontWeight || defaultFontWeight;
+                        const fst = style.fontStyle || defaultFontStyle;
+                        const col = style.color || defaultColor;
+
+                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                        const width = ctx.measureText(tk).width;
+                        const px = parseFloat(fs);
+                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                        const isSpace = /^\s+$/.test(tk);
+                        segments.push({ text: tk, width, style: { fs, ff, fw, fst, col }, isSpace });
+
+                        if (!isSpace && width > __maxTokenWidthObserved) {
+                            __maxTokenWidthObserved = width;
+                        }
+                    }
+                    return;
+                } else if (node.nodeType === 1) {
+                    if (node.tagName === "BR") {
+                        const fs = style.fontSize || defaultFontSize;
+                        const ff = style.fontFamily || defaultFontFamily;
+                        const fw = style.fontWeight || defaultFontWeight;
+                        const fst = style.fontStyle || defaultFontStyle;
+                        const col = style.color || defaultColor;
+
+                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                        const width = ctx.measureText(" ").width;
+                        const px = parseFloat(fs);
+                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                        segments.push({ text: " ", width, style: { fs, ff, fw, fst, col }, isSpace: true });
+                        return;
+                    }
+                    const s = node.style || {};
+                    const nextStyle = {
+                        fontSize: s.fontSize || style.fontSize,
+                        fontFamily: s.fontFamily || style.fontFamily,
+                        fontWeight: s.fontWeight || style.fontWeight,
+                        fontStyle: s.fontStyle || style.fontStyle,
+                        color: s.color || style.color,
+                    };
+                    node.childNodes.forEach(child => measureWords(child, nextStyle));
+                }
+            }
+
+            measureWords(lineNode, {
+                fontSize: defaultFontSize,
+                fontFamily: defaultFontFamily,
+                fontWeight: defaultFontWeight,
+                fontStyle: defaultFontStyle,
+                color: defaultColor
+            });
+
+            const basePx = parseFloat(defaultFontSize) || 16;
+            const lineHeight = (maxFontPx > 0 ? maxFontPx : basePx) * (box.lineSpacing || 1.2);
+
+            const isBlankLine = (segments.length === 0) ||
+                segments.every(seg => seg.isSpace || ((seg.text || '').trim() === ''));
+
+            if (isBlankLine) {
+                cursorY += lineHeight;
+                usedHeight = cursorY - top + 5;
+                return;
+            }
+
+            const __usePerRun = true;
+
+            if (__usePerRun) {
+                function startXForWidth(runWidth) {
+                    if (box.align === "center") return innerLeft + Math.max(0, (innerWidth - runWidth) / 2);
+                    if (box.align === "right") return innerRight - runWidth;
+                    return innerLeft;
+                }
+
+                let runSegs = [];
+                let runWidth = 0;
+                let runMaxPx = 0;
+
+                function flushRun() {
+                    if (runSegs.length === 0) return;
+                    let x2 = startXForWidth(runWidth);
+                    for (const seg of runSegs) {
+                        ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
+                        ctx.fillStyle = seg.style.col;
+                        ctx.fillText(seg.text, x2, cursorY);
+                        x2 += seg.width;
+                    }
+                    if (runWidth > __maxRunWidthObserved) __maxRunWidthObserved = runWidth;
+
+                    const lh = (runMaxPx || basePx) * (box.lineSpacing || 1.2);
+                    cursorY += lh;
+                    usedHeight = cursorY - top + 5;
+
+                    runSegs = [];
+                    runWidth = 0;
+                    runMaxPx = 0;
+                }
+
+                for (const seg of segments) {
+                    const segPx = parseFloat(seg.style.fs) || basePx;
+                    if (seg.isSpace && runSegs.length === 0) continue;
+
+                    if (runWidth + seg.width > innerWidth && runSegs.length > 0) {
+                        flushRun();
+                        if (seg.isSpace) continue;
+                    }
+
+                    runSegs.push(seg);
+                    runWidth += seg.width;
+                    if (segPx > runMaxPx) runMaxPx = segPx;
+                }
+
+                flushRun();
+            } else {
+                let x = left + 5, drewSomething = false;
+                segments.forEach(seg => {
+                    if (x + seg.width > left + w - 0.01) {
+                        cursorY += lineHeight;
+                        x = left + 5;
+                    }
+                    ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
+                    ctx.fillStyle = seg.style.col;
+                    ctx.fillText(seg.text, x, cursorY);
+                    x += seg.width;
+                    drewSomething = true;
+                });
+                if (drewSomething) cursorY += lineHeight;
+                usedHeight = cursorY - top + 5;
+            }
+        });
+
+        const __minOuterWidthByWord = Math.ceil(__maxTokenWidthObserved + 10);
+        if (__minOuterWidthByWord > (box.width || 0)) {
+            box.width = __minOuterWidthByWord;
+        }
+
+        box.height = usedHeight;
+        syncTextDims(box);
+        ctx.restore();
+
+        if (box.selected && w > 0 && h > 0) {
+            drawRotatedSelection(ctx, { ...box, width: w * __sx, height: h * __sy });
+        }
+    }
+}
+
+
+
+
+
+
+
+function drawTextOLD() {
+    const designW = canvas.width;
+    const designH = canvas.height;
+
+    // clear & bg
+    ctx.clearRect(0, 0, designW, designH);
+
+    const bgEl = document.getElementById('hdnBackgroundSpecificColor');
+    const bgColor = (bgEl?.value || canvas.style.backgroundColor || "").trim();
+    if (bgColor) {
+        ctx.save();
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, designW, designH);
+        ctx.restore();
+    }
+
+    if (canvas._bgImg) {
+        if (canvas._bgImg.complete) {
+            ctx.drawImage(canvas._bgImg, 0, 0, designW, designH);
+        } else {
+            canvas._bgImg.onload = () => drawText();
+            canvas._bgImg.onerror = () => { };
+        }
+    }
+
+    // defaults for text measuring
+    ctx.textBaseline = "top";
+    const defaultStyle = window.getComputedStyle(textEditorNew);
+    const defaultFontSize = defaultStyle.fontSize || "16px";
+    const defaultFontFamily = defaultStyle.fontFamily || "Arial";
+    const defaultFontWeight = defaultStyle.fontWeight || "normal";
+    const defaultFontStyle = defaultStyle.fontStyle || "normal";
+    const defaultColor = defaultStyle.color || "#000";
+
+    // z-ordered render of images + text (textObjects kept intact)
+    const all = [...(images || []), ...(textObjects || [])].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+
+    for (const box of all) {
+        if (!box.width || isNaN(box.width)) box.width = 50;
+        if (!box.height || isNaN(box.height)) box.height = 30;
+
+        // ---- IMAGE ----
+        if (box.type === "image") {
+            ctx.save();
+            // (no rotation here since your old code didn't do rotated text; keeps selection aligned)
+           
+            ctx.globalAlpha = normAlpha(box.opacity);
+            ctx.drawImage(box.img, box.x, box.y, box.width, box.height);
+            ctx.restore();
+
+            // same selection UI as old text (strokeRect + handle squares)
+            if (box.selected && box.width > 0 && box.height > 0) {
+                ctx.strokeStyle = "red";
+                ctx.lineWidth = 1;
+                ctx.strokeRect(box.x, box.y, box.width, box.height);
+                ctx.fillStyle = "blue";
+                for (let h of Object.values(getAllHandles(box))) {
+                    ctx.fillRect(h.x - 4, h.y - 4, 8, 8);
+                }
+                const rot = (box.rotation || 0) * Math.PI / 180;
+                ctx.rotate(rot);
+            }
+            continue;
+        }
+
+        // ---- TEXT (your old logic preserved) ----
+        ctx.save();
+        const rot = (box.rotation || 0) * Math.PI / 180;
+        ctx.rotate(rot);
+        ctx.globalAlpha = normAlpha(box.opacity);
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = box.text;
+
+        const lines = [];
+        wrapper.childNodes.forEach(n => {
+            if (n.nodeType === 1 && n.tagName === "DIV") {
+                const hasContent = n.textContent.trim().length > 0 || n.children.length > 0;
+                if (!hasContent) {
+                    const blankLine = document.createElement("div");
+                    blankLine.appendChild(document.createTextNode(" "));
+                    lines.push(blankLine);
+                } else {
+                    const newLine = document.createElement("div");
+                    newLine.append(...n.cloneNode(true).childNodes);
+                    lines.push(newLine);
+                }
+            } else if (n.nodeType === 1 && n.tagName === "BR") {
+                const brLine = document.createElement("div");
+                brLine.appendChild(document.createTextNode(" "));
+                lines.push(brLine);
+            } else {
+                if (lines.length === 0) lines.push(document.createElement("div"));
+                lines[lines.length - 1].appendChild(n.cloneNode(true));
+            }
+        });
+
+        let cursorY = box.y + 5;
+        let usedHeight = 0;
+
+        lines.forEach(lineNode => {
+            let cursorX = box.x + 5;
+            if (box.align === "center") {
+                ctx.textAlign = "center";
+                cursorX = box.x + box.width / 2;
+            } else if (box.align === "right") {
+                ctx.textAlign = "right";
+                cursorX = box.x + box.width - 5;
+            } else {
+                ctx.textAlign = "left";
+            }
+
+            let segments = [];
+            let maxFontPx = 0;
+
+            function measureWords(node, style) {
+                if (node.nodeType === 3) {
+                    const words = node.nodeValue.split("");
+                    for (let word of words) {
+                        const fs = style.fontSize || defaultFontSize;
+                        const ff = style.fontFamily || defaultFontFamily;
+                        const fw = style.fontWeight || defaultFontWeight;
+                        const fst = style.fontStyle || defaultFontStyle;
+                        const col = style.color || defaultColor;
+
+                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                        const width = ctx.measureText(word).width;
+                        const px = parseFloat(fs);
+                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+
+                        segments.push({ text: word, width, style: { fs, ff, fw, fst, col } });
+                    }
+                } else if (node.nodeType === 1) {
+                    if (node.tagName === "BR") {
+                        const fs = style.fontSize || defaultFontSize;
+                        const ff = style.fontFamily || defaultFontFamily;
+                        const fw = style.fontWeight || defaultFontWeight;
+                        const fst = style.fontStyle || defaultFontStyle;
+                        const col = style.color || defaultColor;
+
+                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
+                        const width = ctx.measureText(" ").width;
+                        const px = parseFloat(fs);
+                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
+                        segments.push({ text: " ", width, style: { fs, ff, fw, fst, col } });
+                        return;
+                    }
+                    const s = node.style;
+                    const nextStyle = {
+                        fontSize: s.fontSize || style.fontSize,
+                        fontFamily: s.fontFamily || style.fontFamily,
+                        fontWeight: s.fontWeight || style.fontWeight,
+                        fontStyle: s.fontStyle || style.fontStyle,
+                        color: s.color || style.color,
+                    };
+                    node.childNodes.forEach(child => measureWords(child, nextStyle));
+                }
+            }
+
+            measureWords(lineNode, {
+                fontSize: defaultFontSize,
+                fontFamily: defaultFontFamily,
+                fontWeight: defaultFontWeight,
+                fontStyle: defaultFontStyle,
+                color: defaultColor
+            });
+
+            const lineHeight = maxFontPx * (box.lineSpacing || 1.2);
+            let x = cursorX;
+            segments.forEach(segment => {
+                if (x + segment.width > box.x + box.width - .01) {
+                    cursorY += lineHeight;
+                    x = cursorX;
+                }
+                ctx.font = `${segment.style.fst} ${segment.style.fw} ${segment.style.fs} ${segment.style.ff}`;
+                ctx.fillStyle = segment.style.col;
+                ctx.fillText(segment.text, x, cursorY);
+                x += segment.width;
+            });
+
+            cursorY += lineHeight;
+            usedHeight = cursorY - box.y + 5;
+        });
+
+        box.height = usedHeight;
+
+        if (box.selected && box.width > 0 && box.height > 0) {
+            ctx.strokeStyle = "red";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(box.x, box.y, box.width, box.height);
+            ctx.fillStyle = "blue";
+            for (let h of Object.values(getAllHandles(box))) {
+                ctx.fillRect(h.x - 4, h.y - 4, 8, 8);
+            }
+        }
+
+        ctx.restore();
+    }
+}
 
 
 
@@ -10823,8 +11434,6 @@ canvas.addEventListener("mousedown", e => {
 
         // ─────────────────────────────────────────────────────────────
         // A) BASIC-only: set caps orientation on mousedown based on handle
-        // ─────────────────────────────────────────────────────────────
-        // A) BASIC-only: set caps orientation on mousedown based on handle
         (function setCapsOrientationForBasic() {
             const b = h.box;
             const norm = (resizeDirectionNorm || "").toLowerCase();
@@ -10855,7 +11464,6 @@ canvas.addEventListener("mousedown", e => {
                 if (b.img) b.img.__curvatureRatio = b._baseCurvRatio; // we’ll override per-frame on mousemove
             }
         })();
-
         // ─────────────────────────────────────────────────────────────
 
         // NOTE: use the *normalized* direction for corner logic
@@ -11100,47 +11708,42 @@ const __isLineBasic = (typeof globalThis.__isLineBasic === 'function')
 
 function redraw() { if (typeof drawText === 'function') drawText(); }
 
-
 function __ensureCapBasePx(box) {
-  if (!Number.isFinite(box._capPxBase)) {
-    // Prefer explicit px radius if you store it (curvature / curvaturePx)
-    let r = Number.isFinite(box.curvaturePx) ? box.curvaturePx
-          : Number.isFinite(box.curvature)   ? box.curvature
-          : NaN;
+    if (!Number.isFinite(box._capPxBase)) {
+        // Prefer explicit px radius if you store it (curvature / curvaturePx)
+        let r = Number.isFinite(box.curvaturePx) ? box.curvaturePx
+            : Number.isFinite(box.curvature) ? box.curvature
+                : NaN;
 
-    const w0 = box._orig?.width  ?? box.width  ?? 0;
-    const h0 = box._orig?.height ?? box.height ?? 0;
+        const w0 = box._orig?.width ?? box.width ?? 0;
+        const h0 = box._orig?.height ?? box.height ?? 0;
 
-    if (!Number.isFinite(r)) {
-      const k = Number.isFinite(box.curvatureRatio) ? Math.max(0, Math.min(0.5, box.curvatureRatio)) : 0.5;
-      r = k * Math.min(w0, h0);
+        if (!Number.isFinite(r)) {
+            const k = Number.isFinite(box.curvatureRatio) ? Math.max(0, Math.min(0.5, box.curvatureRatio)) : 0.5;
+            r = k * Math.min(w0, h0);
+        }
+        // radius can’t exceed half of either side
+        box._capPxBase = Math.max(0, Math.min(r, Math.min(w0, h0) / 2));
     }
-    // radius can’t exceed half of either side
-    box._capPxBase = Math.max(0, Math.min(r, Math.min(w0, h0) / 2));
-  }
 }
 
 function __applyBasicDimsConstantCaps(box, newX, newY, newW, newH) {
-  const r0 = Number(box._capPxBase) || 0;
-  const minW = Math.max(1, 2 * r0);
-  const minH = Math.max(1, 2 * r0);
-  if (newW < minW) newW = minW;
-  if (newH < minH) newH = minH;
+    const r0 = Number(box._capPxBase) || 0;
+    const minW = Math.max(1, 2 * r0);
+    const minH = Math.max(1, 2 * r0);
+    if (newW < minW) newW = minW;
+    if (newH < minH) newH = minH;
 
-  box.x = newX; box.y = newY; box.width = newW; box.height = newH;
+    box.x = newX; box.y = newY; box.width = newW; box.height = newH;
 
-  // Keep a constant pixel corner radius by updating the curvatureRatio
-  // so your renderer derives r_px = kEff * min(w, h) = r0
-  const kEff = Math.min(0.5, r0 / Math.max(1e-6, Math.min(newW, newH)));
-  if (box.img) box.img.__curvatureRatio = kEff;
+    // Keep a constant pixel corner radius by updating the curvatureRatio
+    // so your renderer derives r_px = kEff * min(w, h) = r0
+    const kEff = Math.min(0.5, r0 / Math.max(1e-6, Math.min(newW, newH)));
+    if (box.img) box.img.__curvatureRatio = kEff;
 
-  box.preserveCaps = true;
-  box.__capsOrientation = 'neutral'; // ignore H/V split; we’re using constant px radius
+    box.preserveCaps = true;
+    box.__capsOrientation = 'neutral'; // ignore H/V split; we’re using constant px radius
 }
-
-
-
-
 canvas.addEventListener("mousemove", e => {
     const { x: mx, y: my } = getCanvasMousePosition(e);
     const dx = mx - prevMouseX;
@@ -11161,7 +11764,6 @@ canvas.addEventListener("mousemove", e => {
     }
     function __minWidthForBasic(box) {
         return Math.max(6, 2 * __curvRatio(box) * (box.width || 0));//box.height
-       
     }
     function __minHeightForBasic(box) {
         return Math.max(6, 2 * __curvRatio(box) * (box.width || 0));
@@ -11330,6 +11932,8 @@ canvas.addEventListener("mousemove", e => {
             // --- TOP / BOTTOM handles for IMAGES ---
             if (side === 't' || side === 'b') {
 
+                // NEW: BASIC images — make T/B act like L/R (anchor opposite edge)
+                // and clamp the visual cap radius so it never exceeds w/2.
                 if (activeBox.isBasic === true && !__isLineSvg?.(activeBox)) {
                     const o = activeBox._orig || {
                         x: activeBox.x, y: activeBox.y,
@@ -11446,7 +12050,6 @@ canvas.addEventListener("mousemove", e => {
 
             //let snappedX = null;
             //if (side === 'l' || side === 'r') {
-
             //    const { edgeX } = __clampBasicSideResize(activeBox, side);
             //    if (typeof edgeX === 'number') snappedX = edgeX;
             //}
@@ -12049,22 +12652,7 @@ function restoreSelection() {
         sel.addRange(savedRange);
     }
 }
-// … include your cleanEditorHTMLPreserveCaret, applyStyleToSelection, etc …
 
-// ——————— Box Creation & JSON ———————
-// Ensure default text is drawn once at start
-//function addNewBox() {
-//    boxes.push({
-//        x: 120,
-//        y: 200,
-//        width: 200,
-//        height: 38,
-//        align: "left",
-//        text: "<span style='color:black;font-size:30px;'>Default Text</span>"
-//    });
-//    activeBox = boxes[boxes.length - 1];
-//    drawText();
-//}
 function addDefaultText(opts = {}) {
     // --- defaults (kept from your working function + addDefaultText) ---
     const fs = opts.fontSize ?? 24;
@@ -12073,8 +12661,8 @@ function addDefaultText(opts = {}) {
     const fontFam = opts.fontFamily ?? "Roboto";
     const color = opts.textColor ?? "#000000";
     const align = opts.align ?? "left";
-    const x0 = opts.x ?? 120;
-    const y0 = opts.y ?? 200;
+    const x0 = opts.x ?? 250;
+    const y0 = opts.y ?? 150;
     const minW = opts.width ?? 200;
     const minH = opts.height ?? 38;
 
@@ -12163,7 +12751,6 @@ function addDefaultText(opts = {}) {
     
     // (optional) if you also need your other pipeline:
     // if (typeof drawCanvas === 'function') drawCanvas('Common');
-    console.log("Add", textObjects);
 }
 
 
@@ -13404,7 +13991,6 @@ function ChangeFontSizeOld(val) {
     }
 
     drawText();
-    console.log("change", textObjects);
 }
 function ChangeFontSizeOLD1(val) {
     const px = /px$/i.test(val) ? val : (parseInt(val, 10) || 16) + 'px';
@@ -13459,7 +14045,6 @@ function ChangeFontSizeOLD1(val) {
             activeBox.text = ed.innerHTML;
             if (Obj) Obj.text = activeBox.text;
             drawText();
-            console.log("size",textObjects);
         }
         return;
     }
@@ -14523,17 +15108,12 @@ function applySvgCurvature(targetImage, radiusPx, strokeWidthOpt, paintOpt = {})
 
         // avoid clipping when stroke grows
         if (sw > 0) {
-           // svg.setAttribute("overflow", "visible");
-           // let vb = svg.getAttribute("viewBox");
-           // if (!vb) vb = `0 0 ${origW} ${origH}`;
-           // let [x, y, w, h] = vb.split(/\s+|,/).map(Number);
-           ///*  const pad = sw / 2;*/
-           // const pad = 0;
-           // svg.setAttribute("viewBox", `${x - pad} ${y - pad} ${w + 2 * pad} ${h + 2 * pad}`);
-
-           // // ✅ TAG the image with the pad we added so the renderer can crop it out
-            // targetImage.__svgPad = { l: pad, t: pad, r: pad, b: pad };
-
+            //svg.setAttribute("overflow", "visible");
+            //let vb = svg.getAttribute("viewBox");
+            //if (!vb) vb = `0 0 ${origW} ${origH}`;
+            //let [x, y, w, h] = vb.split(/\s+|,/).map(Number);
+            //const pad = sw / 2;
+            //svg.setAttribute("viewBox", `${x - pad} ${y - pad} ${w + 2 * pad} ${h + 2 * pad}`);
             // --- dynamic pad so rendered image is (w-0.1) × (h-0.1) inside the box
             svg.setAttribute("overflow", "visible");
 
@@ -14604,7 +15184,6 @@ function applySvgCurvature(targetImage, radiusPx, strokeWidthOpt, paintOpt = {})
 
         return new XMLSerializer().serializeToString(doc);
     }
-
 
     function redraw(svgText) {
         if (myJob !== targetImage._curveJobId) return;

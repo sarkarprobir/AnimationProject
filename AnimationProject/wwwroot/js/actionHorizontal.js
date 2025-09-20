@@ -47,7 +47,7 @@ function SaveDesignBoard() {
             CustomerId: '4DB56C68-0291-497B-BBCF-955609284A70',
             CompanyId: 'F174A15A-76B7-4E19-BE4B-4E240983DE55',
             DesignBoardName: $("#txtSaveDesignBoardName").val(),
-            SlideType: 'Vertical'
+            SlideType: 'Horizontal'
         };
 
        
@@ -306,8 +306,8 @@ async function captureSlide(activeSlide, slideResult) {
                     ImagePath: data.filePath
                 },
                 success: function (response) {
-                    sessionStorage.setItem("leftPanelHtml", document.getElementById("divpanelleft").innerHTML);
-                    MessageShow('RedirectToVerticalPageWithQueryString()', 'Design Board saved successfully!', 'success');          
+                    sessionStorage.setItem("leftPanelHtml", document.getElementById("divpanelleftH").innerHTML);
+                    MessageShow('RedirectToHorizontalPageWithQueryString()', 'Design Board saved successfully!', 'success');          
                 },
                 error: function (xhr, status, error) {
                     HideLoader();
@@ -323,11 +323,11 @@ async function captureSlide(activeSlide, slideResult) {
     }, "image/png");
 }
 
-function RedirectToVerticalPageWithQueryString() {
+function RedirectToHorizontalPageWithQueryString() {
     // Get the GUID from the hidden field
     var boardId = $("#hdnDesignBoardId").val();
-    window.location = `${baseURL}Canvas/VerticalIndex?id=${boardId}`;
     HideLoader();
+    window.location = `${baseURL}Canvas/HorizontalIndex?id=${boardId}`;
 }
 
 function saveCurrentSlide() {
@@ -645,10 +645,23 @@ function GetDesignBoardById(id) {
                     const [beforeTilde, afterTilde] = result.designBoardDetailsList[0].transitionColor.split('~');
 
 
+                    //$('#hdnTransition1').val(beforeTilde);
+                    //$('#hdnTransition2').val(afterTilde);
+                    //document.getElementById('targetDiv1').style.backgroundColor = beforeTilde;
+                    //document.getElementById('targetDiv2').style.backgroundColor = afterTilde;
+
                     $('#hdnTransition1').val(beforeTilde);
                     $('#hdnTransition2').val(afterTilde);
-                    document.getElementById('targetDiv1').style.backgroundColor = beforeTilde;
-                    document.getElementById('targetDiv2').style.backgroundColor = afterTilde;
+
+                    const t1 = document.getElementById('targetDiv1');
+                    const t2 = document.getElementById('targetDiv2');
+
+                    if (t1) t1.style.backgroundColor = beforeTilde;
+                    else console.warn('[transition] #targetDiv1 not found when applying color:', beforeTilde);
+
+                    if (t2) t2.style.backgroundColor = afterTilde;
+                    else console.warn('[transition] #targetDiv2 not found when applying color:', afterTilde);
+
 
                     $("#tranColor1").val(beforeTilde);
                     $("#tranColor2").val(afterTilde);
@@ -738,7 +751,7 @@ function GetDesignBoardById(id) {
                         const value = result.designBoardDetailsList[index]?.animationImagePath || '';
                         $(selector).val(value);
                         if (value !='')
-                            $(`#imageVertical${index + 1}`).attr('src', `${value}`);
+                            $(`#imageHorizontal${index + 1}`).attr('src', `${value}`);
                         console.log(`${value}`);
                     };
                     setHiddenSlideImageFilePath(0, '#hdnDesignBoardDetailsIdSlideImageFilePath1');
@@ -1623,7 +1636,7 @@ async function SaveDesignBoardInPublishTable() {
                 const url = `${baseURL.replace(/\/$/, '')}/s/v/${encodeURIComponent(companyId)}/${encodeURIComponent(projectId)}`;
                 window.open(url, "_blank");
                 hideDownloadPanel();
-               RedirectToVerticalPageWithQueryString();
+                RedirectToHorizontalPageWithQueryString();
             },
             error: function (data) {
                 HideLoaderTransferFile();
@@ -8376,7 +8389,227 @@ document.addEventListener('DOMContentLoaded', initModeToggle);
 function tranTypeSet(type) {
     $("#hdntransition").val(type);
 }
-function LoadAllVerticalTemplates() {
+
+function handleNavButtonClick(event) {
+    document.querySelectorAll('.nav_button').forEach(btn => {
+        btn.classList.remove('active_nav_button');
+    });
+    event.currentTarget.classList.add('active_nav_button');
+    LoadAllHorizontalTemplates();
+    setTimeout(() => {
+        const items = document.querySelectorAll("#divTemplateList .v_temp");
+        const itemsPerPage = 8;
+        let currentPage = 1;
+        const totalPages = Math.ceil(items.length / itemsPerPage);
+
+        function showPage(page) {
+            currentPage = page;
+            const start = (page - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+
+            items.forEach((item, index) => {
+                item.style.display = (index >= start && index < end) ? "inline-block" : "none";
+            });
+
+            renderPagination();
+        }
+
+        function renderPagination() {
+            const pagination = document.getElementById("template-pagination");
+            pagination.innerHTML = "";
+
+            // Prev button
+            const prevBtn = document.createElement("button");
+            prevBtn.innerText = "« Prev";
+            prevBtn.className = "btn btn-sm btn-outline-dark me-1 page-btn-2";
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.addEventListener("click", () => {
+                if (currentPage > 1) showPage(currentPage - 1);
+            });
+            pagination.appendChild(prevBtn);
+
+            // Page number buttons
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = document.createElement("button");
+                btn.innerText = i;
+                btn.className = "btn btn-sm mx-1 page-btn " + (i === currentPage ? "btn-dark" : "btn-outline-dark");
+                btn.addEventListener("click", () => showPage(i));
+                pagination.appendChild(btn);
+            }
+
+            // Next button
+            const nextBtn = document.createElement("button");
+            nextBtn.innerText = "Next »";
+            nextBtn.className = "btn btn-sm btn-outline-dark ms-1 page-btn-2";
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.addEventListener("click", () => {
+                if (currentPage < totalPages) showPage(currentPage + 1);
+            });
+            pagination.appendChild(nextBtn);
+        }
+
+        // initialize
+        showPage(1);
+
+    }, 2500); // delay 2500ms so all items are available
+}
+function CreateLeftSectionHorizontalhtml() {
+    try {
+        $.ajax({
+            url: baseURL + "Canvas/CreateLeftSectionHorizontalhtml",
+            type: "POST",
+            dataType: "html",
+            success: function (result) {
+                $("#divpanelleftH").html(result);
+               
+            },
+            error: function () {
+            }
+        })
+
+    } catch (e) {
+        console.log("catch", e);
+    }
+}
+
+function CreateRightSectionHorizontalhtml() {
+    try {
+        $.ajax({
+            url: baseURL + "Canvas/CreateRightSectionHorizontalhtml",
+            type: "POST",
+            dataType: "html",
+            success: function (result) {
+                $("#divpanelrightH").html(result);
+                // Now safe to access elements from the partial
+                document.getElementById('lblSpeed').textContent = "4 Sec";
+                document.getElementById('lblSeconds').textContent = "3 Sec";
+                document.getElementById('lblOutSpeed').textContent = "4 Sec";
+                document.getElementById('lblLoop').textContent = "1 time";
+
+            },
+            error: function () {
+            }
+        })
+
+    } catch (e) {
+        console.log("catch", e);
+    }
+}
+function CreateHeaderSectionHorizontalhtml() {
+    try {
+        $.ajax({
+            url: baseURL + "Canvas/CreateHeaderSectionHorizontalhtml",
+            type: "POST",
+            dataType: "html",
+            success: function (result) {
+                $("#divHeaderSectionH").html(result);
+
+                const lin = document.getElementById('alinear');
+                if (lin) {
+                    lin.classList.add('active_effect');
+                }
+
+
+                wireSpeedDropdown();
+                wireOutSpeedDropdown();
+                wireLoopDropdown();
+
+            },
+            error: function () {
+            }
+        })
+
+    } catch (e) {
+        console.log("catch", e);
+    }
+}
+function CreateBackgroundSectionHorizontalhtml() {
+    try {
+        $.ajax({
+            url: baseURL + "Canvas/CreateBackgroundHorizontalSectionhtml",
+            type: "POST",
+            dataType: "html",
+            success: function (result) {
+                $("#background_popup").html(result);
+                //  wireUpPopupHandlers();
+            },
+            error: function () {
+            }
+        })
+
+    } catch (e) {
+        console.log("catch", e);
+    }
+}
+function handleVThumbClick(clickedElement) {
+    const items = document.querySelectorAll('.menuboard-horizontal-thum');
+
+    items.forEach(el => el.classList.remove('active_border'));
+    clickedElement.classList.add('active_border');
+}
+const canvas_d = document.getElementById('myCanvasElementDownload');
+const container_d = document.getElementById('canvasContainerDownload');
+const ctx_d = canvas_d.getContext('2d');
+const dpr_d = window.devicePixelRatio || 1;
+//──────────────────────────────────────────────────────────
+// STATE: these will be set dynamically on first resize
+let DESIGN_W_d, DESIGN_H_d;
+let scaleX_d = 1, scaleY_d = 1;
+let firstRun_d = true;
+//──────────────────────────────────────────────────────────
+
+
+window.addEventListener('DOMContentLoaded', () => {
+    // 3) hook up events and initial draw
+    window.resizeCanvas = resizeCanvas_d;
+    window.addEventListener('resize', resizeCanvas_d);
+    window.addEventListener('DOMContentLoaded', resizeCanvas_d);
+    resizeCanvas_d();
+});
+
+function resizeCanvas_d() {
+    //console.log("resizeCanvas_d");
+    // 1) Figure out how big the canvas *looks* on the page (CSS px)
+    const containerW_d = container_d.clientWidth;
+    const cssW_d = containerW_d * 0.66;          // e.g. 23% of container containerW_d this is different 
+    const cssH_d = cssW_d * (9 / 16);              // your chosen aspect
+
+    canvas_d.style.width = cssW_d + 'px';
+    canvas_d.style.height = cssH_d + 'px';
+
+    // 2) Resize the internal buffer for HiDPI
+    const bufW_d = Math.round(cssW_d * dpr_d);
+    const bufH_d = Math.round(cssH_d * dpr_d);
+    if (canvas_d.width !== bufW_d || canvas_d.height !== bufH_d) {
+        canvas_d.width = bufW_d;
+        canvas_d.height = bufH_d;
+    }
+
+    // 3) Compute the *actual* drawing‐space size in CSS pixels
+    const screenW_d = canvas_d.width / dpr_d;
+    const screenH_d = canvas_d.height / dpr_d;
+
+    // 4) On very first run, “lock in” your design resolution
+    if (firstRun_d) {
+        DESIGN_W_d = screenW_d;
+        DESIGN_H_d = screenH_d;
+        firstRun_d = false;
+        console.log(`Captured design size: ${DESIGN_W_d}×${DESIGN_H_d}`);
+    }
+
+    // 5) Now compute how much to scale your design → screen
+    scaleX_d = screenW_d / DESIGN_W_d;
+    scaleY_d = screenH_d / DESIGN_H_d;
+
+    // 6) Reset any old transforms, then apply:
+    //   a) dpr for HiDPI (1 unit → 1 CSS px)
+    //   b) design→screen scale
+    ctx_d.resetTransform();
+    ctx_d.scale(dpr_d, dpr_d);
+    ctx_d.scale(scaleX_d, scaleY_d);
+}
+
+function LoadAllHorizontalTemplates() {
     const $list = $('#divTemplateList');
     if ($list.length === 0) {
         console.warn('#divTemplateList not found');
@@ -8396,7 +8629,7 @@ function LoadAllVerticalTemplates() {
 
             // ⛳ filter templates by slideType = "Vertical"
             const vertical = all.filter(t =>
-                String(t?.slideType || t?.SlideType || '').toLowerCase() === 'vertical'
+                String(t?.slideType || t?.SlideType || '').toLowerCase() === 'horizontal'
             );
 
             const frag = document.createDocumentFragment();
@@ -8428,7 +8661,7 @@ function LoadAllVerticalTemplates() {
             });
 
             if (appended === 0) {
-                $list.append('<div class="text-muted p-2">No Vertical / Slide previews found.</div>');
+                $list.append('<div class="text-muted p-2">No Horizontal / Slide previews found.</div>');
             } else {
                 $list[0].appendChild(frag);
             }
@@ -8445,6 +8678,3 @@ function LoadAllVerticalTemplates() {
         return String(a).replace(/\/+$/, '') + '/' + String(b).replace(/^\/+/, '');
     }
 }
-
-
-

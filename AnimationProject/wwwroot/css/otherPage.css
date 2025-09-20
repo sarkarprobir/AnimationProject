@@ -824,10 +824,12 @@ plans {
     padding-inline: 5px;
 }
 .pricing_toggle-btn.active {
-    background-color: #fff;
+    background-color: #000;
+    color: #fff;
 }
 .pricing_span {
-    background-color: #eee;
+    background-color: #fdff00;
+    color: #000;
 }
 /*pricing css end*/
 /*about css*/
@@ -859,3 +861,7 @@ plans {
     margin: auto;
 }
 /*about css end*/
+
+#hoverTarget{
+    color: #000 !important;
+}

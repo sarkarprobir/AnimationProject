@@ -459,8 +459,12 @@ input::placeholder {
 .board_name p {
     margin-bottom: 0;
 }
+.board_switch.board_sw_input {
+    width: 2.2em !important;
+    height: 1.1rem !important;
+    box-shadow: none !important;
+}
 /*boards end*/
-
 /*billing*/
 .payment-table {
     width: 100%;

@@ -3,8 +3,10 @@
         
     <script src="~/js/animation_min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <script src="~/js/animationhorizontal.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
-        <script src="~/js/HorizontalScript.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
+   @*  <script src="~/js/animationhorizontal.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
+        <script src="~/js/HorizontalScript.js?v=@Configuration["AppSettings:FilesVersion"]"></script> *@
+    <script src="~/js/animationsHorizontal.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
+    <script src="~/js/actionHorizontal.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
           rel="stylesheet">
     <link href="~/css/animate/animate.min.css" rel="stylesheet">
@@ -18,7 +20,7 @@
     <link href="~/css/HorizontalStyle.css" rel="stylesheet">
     <link href="~/css/canvas.css" rel="stylesheet">
     <link href="~/css/responsive.css" rel="stylesheet">
-    <link href="~/css/style.css" rel="stylesheet">
+    <link href="~/css/style.css?v=@Configuration["AppSettings:FilesVersion"]" rel="stylesheet">
 
 }
 
@@ -42,13 +44,13 @@
                CreateRightSectionHorizontalhtml(),
             CreateHeaderSectionHorizontalhtml(),
             CreateBackgroundSectionHorizontalhtml(),
-            CreateLeftSectionHorizontalhtml(),
+           // CreateLeftSectionHorizontalhtml(),
             CreateLayoutModalSectionhtml(),
            // CreateRightSectionHorizontalhtml()
             //CreateLeftSectionhtml()
 
           ]);
-
+          hideDownloadPanel();
               // await Promise.all([
               //   CreateLeftSectionhtml(),
               //   CreateRightSectionhtml(),
@@ -105,7 +107,16 @@
           const fallbackId = new URLSearchParams(window.location.search).get('id');
           if (fallbackId) GetDesignBoardById(fallbackId);
         }
+         try{
+                switchTab(null, 'shapes', 1);
+                
+            }
+            catch(ex)
+            {
+
+            }
       })();
+       
     });
 
         const buttons = document.querySelectorAll('.toggle-btn');
@@ -234,15 +245,519 @@
         }
         }
         }
-        //  $(document).on('click', '#toggle_img', function(e) {
-        //   e.preventDefault();
-        //   CreateBackgroundSectionHorizontalhtml();
-        //   $('#background_popup').show();
-        //   $('#fontstyle_popup').hide();
-        //   $('#opengl_popup').hide();
-        //   $('#elementsPopup').hide();
-        //   $('#tranPopup').hide();
-        // });
+         function opengl()
+         {
+         // document.getElementById("modeButton").innerText = "Graphic Mode";
+          $("#opengl_popup").toggle();
+
+          if(document.getElementById("fontstyle_popup").style.display == "block"){
+                $("#fontstyle_popup").hide();
+                $(".right-sec-two").toggle();
+                $(".right-sec-one").toggle();
+          }
+          if(document.getElementById("elementsPopup").style.display == "block"){
+              $("#elementsPopup").hide();
+          }
+          if(document.getElementById("tranPopup").style.display == "block"){
+              $("#tranPopup").hide();
+          }
+           if(document.getElementById("background_popup").style.display == "block"){
+              $("#background_popup").hide();
+          }
+         }
+
+          function toggleMode() {
+           // let button = document.getElementById("modeButton");
+
+            // Toggle visibility of elements
+            if (document.getElementById("opengl_popup").style.display == "block") {
+                $("#opengl_popup").hide();
+            }
+            $("#fontstyle_popup").toggle();
+            $(".right-sec-two").toggle();
+            $(".right-sec-one").toggle();
+
+            // Toggle button text between "Animation Mode" and "Graphic Mode"
+            if (button.innerText === "Animation Mode") {
+                button.innerText = "Graphic Mode";
+            } else {
+                button.innerText = "Animation Mode";
+            }
+        }
+        function opentl()
+         {
+            // document.getElementById("modeButton").innerText = "Animation Mode";
+            if(document.getElementById("opengl_popup").style.display == "block"){
+                $("#opengl_popup").hide();
+            }
+            if(document.getElementById("background_popup").style.display == "block"){
+                $("#background_popup").hide();
+            }
+            if(document.getElementById("tranPopup").style.display == "block"){
+                $("#tranPopup").hide();
+            }
+          $("#fontstyle_popup").toggle();
+          $(".right-sec-two").toggle();
+          $(".right-sec-one").toggle();
+         }
+          function opentlClose()
+         {
+             const animationBtn = document.querySelector('.toggle-btn[data-mode="animation"]')
+             const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]')
+             animationBtn.classList.add('active');
+             graphicBtn.classList.remove('active');
+             //document.getElementById("modeButton").innerText = "Graphic Mode";
+            if(document.getElementById("opengl_popup").style.display == "block"){
+                $("#opengl_popup").hide();
+            }
+            $("#fontstyle_popup").toggle();
+            $(".right-sec-two").toggle();
+            $(".right-sec-one").toggle();
+
+         }
+
+        // fires for current and future elements that match the selector
+               $(document).on('input', '#txtElementSearch', debounce(function () {
+          const val = this.value.trim();
+          if (val.length >= 3 || val.length === 0) {
+            const activeId = document.querySelector('.left_content.active')?.id || '';
+            switchTab(null, activeId); // keep current tab explicitly
+          }
+        }, 150));
+
+        // ✅ add this once in your JS
+        function debounce(fn, delay) {
+            let timer;
+            return function (...args) {
+                const context = this;
+                clearTimeout(timer);
+                timer = setTimeout(() => fn.apply(context, args), delay);
+            };
+        }
+                    function switchTab(tabElement, tabName, pageNo) {
+          currentTabName = tabName;         // remember active tab
+          const recordPerPage = 20;         // your page size
+          if (!pageNo) {                    // tab changed / fresh load -> reset pager
+            elPage = 1;
+            elWindowStart = 1;
+          }
+
+          // Map tab -> CategoryId
+          let Categoryvalue = 0;
+          if (tabName === 'shapes')      Categoryvalue = 2;
+          else if (tabName === 'icons')  Categoryvalue = 3;
+          else if (tabName === 'photos') Categoryvalue = 1;
+          else if (tabName === 'my-images') Categoryvalue = 5;
+          else if (tabName === 'patterns')  Categoryvalue = 4;
+
+          const dataSlide = {
+            CategoryId: Number(Categoryvalue) || 0,
+            searchKeyword: (Array.isArray($("#txtElementSearch").val())
+              ? $("#txtElementSearch").val().join(" ")
+              : String($("#txtElementSearch").val() ?? "")
+            ).trim(),
+            pageNo: pageNo || elPage || 1,
+            recordPerPage: recordPerPage
+          };
+
+          $.ajax({
+            url: baseURL + "Canvas/GetAllElementNew",
+            type: "POST",
+            dataType: "json",
+            data: dataSlide,
+            success: function (slideResult) {
+              console.log("slideResult", slideResult);
+
+              // choose container
+              const targetIdMap = { 1: "#photoList", 2: "#shapesList", 3: "#iconList", 5: "#my-imagesList" };
+              const catNum = Number(Categoryvalue);
+              const $list = $(targetIdMap[catNum] || "#shapesList");
+              if ($list.length === 0) { console.warn("Target list not found"); return; }
+
+              // clear and render
+              $list.empty();
+
+              // items array normalize
+              const items = Array.isArray(slideResult)
+                ? slideResult
+                : (slideResult.list || slideResult.items || slideResult.data || slideResult.elementList || []);
+
+              // --- render thumbnails (your existing logic) ---
+              const joinURL = (...parts) => parts
+                .filter(Boolean)
+                .map((p, i) => i === 0 ? String(p).replace(/\/+$/,'') : String(p).replace(/^\/+|\/+$/g,''))
+                .join('/');
+
+              const frag = document.createDocumentFragment();
+              let appended = 0;
+
+              (items || []).forEach(it => {
+                const fileThumb = it.imageNameThumb || "";
+                const fileFull  = it.imageNameThumb || fileThumb;
+                if (!fileThumb) return;
+
+                const srcThumb = joinURL(baseURL, elementPath, encodeURIComponent(fileThumb));
+                const srcFull  = joinURL(baseURL, elementPath, encodeURIComponent(fileFull));
+
+                const img = new Image();
+                img.src = srcThumb;
+                img.alt = it.elementName || "";
+                img.loading = "lazy";
+                img.className = "shape-thumb";
+                img.dataset.elementId = it.elementId;
+                img.dataset.categoryId = it.categoryId;
+                img.dataset.full = srcFull;
+
+                if (Number(it.imageW) > 0) img.width  = Number(it.imageW);
+                if (Number(it.imageH) > 0) img.height = Number(it.imageH);
+
+                frag.appendChild(img);
+                appended++;
+              });
+
+              if (appended === 0) {
+                $list.append('<div class="text-muted p-2">No elements found.</div>');
+              } else {
+                $list[0].appendChild(frag);
+              }
+
+              // --- compute total pages from server response ---
+              // Prefer slideResult.totalPages; else compute from totalCount if provided
+              if (slideResult && Number(slideResult.totalPages) > 0) {
+                elTotalPages = Number(slideResult.totalPages);
+              } else if (slideResult && Number(slideResult.totalCount) >= 0) {
+                elTotalPages = Math.max(1, Math.ceil(Number(slideResult.totalCount) / recordPerPage));
+              } else {
+                // Fallback: if no totals provided, infer minimal
+                elTotalPages = Math.max(elPage, (items && items.length === recordPerPage) ? elPage + 1 : elPage);
+              }
+
+              // update current page and re-render pager
+              elPage = dataSlide.pageNo;
+              renderPagination();
+
+              // tab UI (as you had)
+              const tabs = document.querySelectorAll(".tab");
+              const contents = document.querySelectorAll(".left_content");
+              tabs.forEach((tab) => tab.classList.remove("active"));
+              try { tabElement && tabElement.classList.add("active"); } catch (ex) {}
+              contents.forEach((content) => content.classList.remove("active"));
+              document.getElementById(tabName)?.classList.add("active");
+            },
+            error: function (data) {
+              console.log("error in saving slide " + (slide?.slideSeq), data);
+              HideLoader && HideLoader();
+            }
+          });
+        }
+
+            
+        // file upload js
+        function updateFileName() {
+            const fileInput = document.getElementById('fileUpload');
+            const fileName = document.getElementById('fileName');
+
+            if (fileInput.files.length > 0) {
+                fileName.textContent = fileInput.files[0].name;
+            } else {
+                fileName.textContent = 'No File';
+            }
+        }
+
+
+        // show the popup when the pattern icon is clicked
+        $(document).on('click', '#toggle_img', function(e) {
+          e.preventDefault();
+          CreateBackgroundSectionhtml();
+          $('#background_popup').show();
+          $('#fontstyle_popup').hide();
+          $('#opengl_popup').hide();
+          $('#elementsPopup').hide();
+          $('#tranPopup').hide();
+        });
+
+        // hide the popup when the close button is clicked
+        $(document).on('click', '#close_button', function(e) {
+          e.preventDefault();
+          $('#background_popup').hide();
+        });
+
+        // texture popuo show
+        document.querySelectorAll(".texture_palette").forEach(element => {
+            element.addEventListener("click", function() {
+                let box = document.getElementById("texture_box");
+                box.style.display = (box.style.display === "none" || box.style.display === "") ? "block" : "none";
+            });
+        });
+
+
+         function handleNavButtonClick(event) {
+                document.querySelectorAll('.nav_button').forEach(btn => {
+                    btn.classList.remove('active_nav_button');
+                });
+                event.currentTarget.classList.add('active_nav_button');
+           }
+
+           const elements = document.querySelectorAll('.miniCanvas');
+
+        elements.forEach(element => {
+          element.addEventListener('click', () => {
+            // Remove 'active' class from all elements
+            elements.forEach(el => el.classList.remove('miniCanvas_active'));
+
+            // Add 'active' to the clicked element
+            element.classList.add('miniCanvas_active');
+          });
+        });
+                 // Pager state
+        const PAGE_WINDOW_SIZE = 6;
+        let elPage = 1;             // current selected page
+        let elTotalPages = 1;       // set from server
+        let elWindowStart = 1;      // first visible page number in the window
+        let currentTabName = 'shapes'; // track which tab is active
+
+        function clampWindowStart() {
+          const maxStart = Math.max(1, elTotalPages - PAGE_WINDOW_SIZE + 1);
+          elWindowStart = Math.min(Math.max(1, elWindowStart), maxStart);
+          // Ensure current page is visible
+          if (elPage < elWindowStart) elWindowStart = elPage;
+          const end = elWindowStart + PAGE_WINDOW_SIZE - 1;
+          if (elPage > end) elWindowStart = Math.max(1, elPage - PAGE_WINDOW_SIZE + 1);
+        }
+
+        function renderPagination() {
+          const $p = $('#elPagination');
+          if (elTotalPages <= 1) { $p.empty().hide(); return; }
+          $p.show();
+
+          clampWindowStart();
+
+          const frag = document.createDocumentFragment();
+
+          // ‹ prev-window
+          const prev = document.createElement('span');
+          prev.textContent = '‹';
+          prev.dataset.dir = 'prev';
+          if (elWindowStart === 1) prev.classList.add('disabled');
+          frag.appendChild(prev);
+
+          // page numbers
+          const end = Math.min(elWindowStart + PAGE_WINDOW_SIZE - 1, elTotalPages);
+          for (let i = elWindowStart; i <= end; i++) {
+            const s = document.createElement('span');
+            s.textContent = String(i);
+            s.dataset.page = String(i);
+            if (i === elPage) s.classList.add('active');
+            frag.appendChild(s);
+          }
+
+          // › next-window
+          const next = document.createElement('span');
+          next.textContent = '›';
+          next.dataset.dir = 'next';
+          if (end === elTotalPages) next.classList.add('disabled');
+          frag.appendChild(next);
+
+          $p.empty()[0].appendChild(frag);
+        }
+
+        // Handle clicks (delegated)
+        $(document).on('click', '#elPagination span', function () {
+          const dir = this.dataset.dir;
+          if (dir === 'prev') {
+            if (elWindowStart > 1) { elWindowStart--; renderPagination(); }
+            return;
+          }
+          if (dir === 'next') {
+            const maxStart = Math.max(1, elTotalPages - PAGE_WINDOW_SIZE + 1);
+            if (elWindowStart < maxStart) { elWindowStart++; renderPagination(); }
+            return;
+          }
+
+          const page = Number(this.dataset.page);
+          if (!page || page === elPage) return;
+          elPage = page;
+          // reload with selected page
+          switchTab(null, currentTabName, elPage);
+        });
+
+
+          (function(){
+          // const canvas    = document.getElementById('myCanvas');
+          // const container = document.getElementById('canvasContainer');
+          //          // If the canvas isn't present (e.g., this page doesn't have it yet), just exit quietly.
+          //   if (!canvas) {
+          //     console.info('[initDownloadCanvas] #myCanvas not found; skipping init.');
+          //     return;
+          //   }
+
+          //   // Optional: also guard the container if you use it
+          //   if (!container) {
+          //     console.warn('[initDownloadCanvas] #myCanvas not found.');
+          //   }
+
+          // const ctx       = canvas.getContext('2d');
+          // const dpr       = window.devicePixelRatio || 1;
+
+          //──────────────────────────────────────────────────────────
+          // STATE: these will be set dynamically on first resize
+          let DESIGN_W, DESIGN_H;
+          let scaleX = 1, scaleY = 1;
+          let firstRun = true;
+          //──────────────────────────────────────────────────────────
+
+              function resizeCanvas() {
+        // console.log("resizeCanvas");
+        // 1) Figure out how big the canvas *looks* on the page (CSS px)
+        const containerW = canvasContainer.clientWidth;
+        const cssW = containerW * 0.66;          // e.g. 32% of container
+        const cssH = cssW * (9 / 16);              // your chosen aspect
+
+        canvas.style.width = cssW + 'px';
+        canvas.style.height = cssH + 'px';
+
+        // 2) Resize the internal buffer for HiDPI
+        const bufW = Math.round(cssW * dpr);
+        const bufH = Math.round(cssH * dpr);
+        if (canvas.width !== bufW || canvas.height !== bufH) {
+            canvas.width = bufW;
+            canvas.height = bufH;
+        }
+
+        // 3) Compute the *actual* drawing‐space size in CSS pixels
+        const screenW = canvas.width / dpr;
+        const screenH = canvas.height / dpr;
+
+        // 4) On very first run, “lock in” your design resolution
+        if (firstRun) {
+            DESIGN_W = screenW;
+            DESIGN_H = screenH;
+            firstRun = false;
+            console.log(`Captured design size: ${DESIGN_W}×${DESIGN_H}`);
+        }
+
+        // 5) Now compute how much to scale your design → screen
+        scaleX = screenW / DESIGN_W;
+        scaleY = screenH / DESIGN_H;
+
+        // 6) Reset any old transforms, then apply:
+        //   a) dpr for HiDPI (1 unit → 1 CSS px)
+        //   b) design→screen scale
+        ctx.resetTransform();
+        ctx.scale(dpr, dpr);
+        ctx.scale(scaleX, scaleY);
+    }
+
+          // expose & hook up
+          window.resizeCanvas = resizeCanvas;
+          window.addEventListener('resize',  resizeCanvas);
+          window.addEventListener('DOMContentLoaded', resizeCanvas);
+        })();
+
+
+        //           (function () {
+        //   const canvas_d    = document.getElementById('myCanvasElementDownload');
+        //   const container_d = document.getElementById('canvasContainerDownload');
+        //            // If the canvas isn't present (e.g., this page doesn't have it yet), just exit quietly.
+        //     if (!canvas_d) {
+        //       console.info('[initDownloadCanvas] #myCanvasElementDownload not found; skipping init.');
+        //       return;
+        //     }
+
+        //     // Optional: also guard the container if you use it
+        //     if (!container_d) {
+        //       console.warn('[initDownloadCanvas] #canvasContainerDownload not found.');
+        //     }
+
+
+        //   const ctx_d       = canvas_d.getContext('2d');
+        //   const dpr_d       = window.devicePixelRatio || 1;
+
+        //   let DESIGN_W_d, DESIGN_H_d;
+        //   let scaleX_d = 1, scaleY_d = 1;
+        //   let firstRun_d = true;
+
+        //   function resizeCanvas_d() {
+        //     const containerW_d = container_d.clientWidth;
+        //     const cssW_d = containerW_d * 0.66;
+        //     const cssH_d = cssW_d * (9 / 16);
+
+        //     canvas_d.style.width  = cssW_d + 'px';
+        //     canvas_d.style.height = cssH_d + 'px';
+
+        //     const bufW_d = Math.round(cssW_d * dpr_d);
+        //     const bufH_d = Math.round(cssH_d * dpr_d);
+        //     if (canvas_d.width !== bufW_d || canvas_d.height !== bufH_d) {
+        //       canvas_d.width  = bufW_d;
+        //       canvas_d.height = bufH_d;
+        //     }
+
+        //     const screenW_d = canvas_d.width  / dpr_d;
+        //     const screenH_d = canvas_d.height / dpr_d;
+
+        //     if (firstRun_d) {
+        //       DESIGN_W_d = screenW_d;
+        //       DESIGN_H_d = screenH_d;
+        //       firstRun_d = false;
+        //     }
+
+        //     scaleX_d = screenW_d / DESIGN_W_d;
+        //     scaleY_d = screenH_d / DESIGN_H_d;
+
+        //     ctx_d.resetTransform();
+        //     ctx_d.scale(dpr_d, dpr_d);
+        //     ctx_d.scale(scaleX_d, scaleY_d);
+        //   }
+
+        //   // 🔸 expose helpers so other code can use the same transform
+        //   window.downloadCanvas = {
+        //     resize: resizeCanvas_d,
+        //     applyTransform(ctx) {
+        //       ctx.resetTransform();
+        //       ctx.scale(dpr_d, dpr_d);
+        //       ctx.scale(scaleX_d, scaleY_d);
+        //     },
+        //     designSize() {
+        //       return { w: DESIGN_W_d, h: DESIGN_H_d };
+        //     }
+        //   };
+
+        //   window.addEventListener('resize', resizeCanvas_d);
+        //   window.addEventListener('DOMContentLoaded', resizeCanvas_d);
+        // })();
+              function copyLink(button) {
+          const linkText = button.closest('.fileLink').querySelector('.aniLink').innerText.trim();
+
+          navigator.clipboard.writeText(linkText).then(() => {
+            // Change icon to check
+            const icon = button.querySelector('i');
+            const originalClass = icon.className;
+
+            icon.className = 'fa-solid fa-check'; // show check icon
+
+            // Revert after 1 second
+            setTimeout(() => {
+              icon.className = originalClass;
+            }, 1000);
+          });
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+          try {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('openModal') === 'true') {
+              const modalEl = document.getElementById('exampleModal');
+              if (!modalEl) return; // nothing to show
+
+              // Make sure Bootstrap JS is present
+              if (!window.bootstrap || !bootstrap.Modal) return;
+
+              const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+              modal.show();
+            }
+          } catch (err) {
+            console.error('Failed to open modal:', err);
+          }
+        });
 </script>
 
     
@@ -257,22 +772,24 @@
         </div>
     </nav>
     <img src="/images/stripe.svg"
-     id="transition1"
-     data-color="#d6d61e"
-     style="display:none"
-     data-width="210" />
-<input type="hidden" id="hdnTransition1" />
-<input type="hidden" id="hdnTransition2" />
-<img src="/images/stripe2.svg"
-     id="transition2"
-     data-color="#1ed633"
-     data-width="300"
-     style="display:none" />
-<input type="hidden" id="hdntransition" />
+         id="transition1"
+         data-color="#d6d61e"
+         style="display:none"
+         data-width="210" />
+    <input type="hidden" id="hdnTransition1" />
+    <input type="hidden" id="hdnTransition2" />
+    <img src="/images/stripe2.svg"
+         id="transition2"
+         data-color="#1ed633"
+         data-width="300"
+         style="display:none" />
+
+
+    <input type="hidden" id="hdntransition" />
     <!-- Modal Structure -->
-    <div class="modal fade layout_modal" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" style="background-color: rgba(36, 7, 136, 0.49) !important;">
+ @*    <div class="modal fade layout_modal" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" style="background-color: rgba(36, 7, 136, 0.49) !important;">
         
-    </div>
+    </div> *@
     <!-- The Modal -->
     <div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -341,17 +858,19 @@
         </div>
     </div>
 
-    <div id="canvasMainContainerDownload" class="d-flex align-items-stretch main-canvas-content hidden">
+    <div id="canvasMainContainerDownload" class="d-flex align-items-stretch main-canvas-content">
         <div class="panel-left"></div>
      
                     <input type="hidden" id="hdnPublishBoardUniqueId" />
                     <input type="hidden" id="hdnDesignBoardPublishId" />
-        <div id="canvasContainerDownload" class="panel-middle d-flex align-items-center justify-content-center hidden">
+        <div id="canvasContainerDownload" class="panel-middle d-flex align-items-center justify-content-center">
             <canvas id="myCanvasElementDownload" class="clsmyCanvas"></canvas>
         </div>
 
         <div class="panel-right content"></div>
     </div>
+
+    <input type="hidden" id="hdntransition" />
 
     <div class="d-flex align-items-stretch   main-canvas-content mt-0">
         <div class="panel-left " id="divpanelleftH">
@@ -366,14 +885,14 @@
 
             </div>
             <canvas  id="myCanvas"></canvas>
-            <div id="contextMenu">
+            <div id="contextMenu" style="display:none">
                 <ul>
-                    <li class="context-options" id="copyOption">Copy</li>
-                    <li class="context-options" id="pasteOption">Paste</li>
-                   @*  <li class="context-options" id="duplicateOption">Duplicate</li> *@
-                    <li class="context-options" id="bringFrontOption">Bring Front</li>
-                    <li class="context-options" id="sendBackOption">Send Back</li>
-                    <li class="context-options" id="deleteOption">Delete</li>
+                    <li class="context-options" id="copyOption"><i class="fa-regular fa-copy me-2"></i>Copy</li>
+                    <li class="context-options" id="pasteOption"><i class="fa-regular fa-paste me-2"></i>Paste</li>
+                    @* <li class="context-options" id="duplicateOption">Duplicate</li> *@
+                    <li class="context-options" id="bringFrontOption"><i class="fas fa-layer-group me-2"></i>Bring Front</li>
+                    <li class="context-options" id="sendBackOption"><i class="fas fa-layer-group me-2"></i>Send Back</li>
+                    <li class="context-options" id="deleteOption"><i class="fa-regular fa-square-minus me-2"></i>Delete</li>
                 </ul>
             </div>
 
@@ -386,6 +905,7 @@
             </div>
             @*  zoom div *@
             <textarea wrap="hard" style="display:none;" id="textEditor"></textarea>
+            <div id="textEditorNew" contenteditable="true"></div>
         </div>
 
         <div class="panel-right content" id="divpanelrightH">

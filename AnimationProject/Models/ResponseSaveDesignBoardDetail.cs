@@ -93,6 +93,15 @@ namespace AnimationProject.Models
         public string ImageNameThumb { get; set; }
         public int ImageW { get; set; }
         public int ImageH { get; set; }
+        public int TotalPages { get; set; }
+    }
+    public sealed class ElementListResult
+    {
+        public List<ResponseGetElimentDetails> Items { get; set; } = new();
+        public int TotalCount { get; set; }
+        public int TotalPages { get; set; }
+        public int PageNo { get; set; }
+        public int PageSize { get; set; }
     }
 
 }
