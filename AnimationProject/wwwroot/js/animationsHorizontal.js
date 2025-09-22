@@ -8917,14 +8917,17 @@ function elementsTogglePopup() {
 }
 
 // Optional: click outside to close
-document.addEventListener('click', function (event) {
-    const popup = document.getElementById('elementsPopup');
-    const button = document.querySelector('.elementsToggleBtn');
+//document.addEventListener('click', function (event) {
+//    const popup = document.getElementById('elementsPopup');
+//    const button = document.querySelector('.elementsToggleBtn');
 
-    if (!popup.contains(event.target) && !button.contains(event.target)) {
-        popup.style.display = 'none';
-    }
-});
+//    if (!popup.contains(event.target) && !button.contains(event.target)) {
+//        popup.style.display = 'none';
+//    }
+//});
+
+
+
 function boldTextOLD() {
     //const paddingX = 23;
     //const paddingY = 15;
