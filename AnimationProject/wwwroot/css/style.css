@@ -1117,7 +1117,7 @@ body {
 }
 
 .my_img_gal {
-    min-height: 59.6vh;
+    min-height: 55.6vh;
 }
 
 /*.gallery img {
@@ -2241,4 +2241,7 @@ body {
     width: 2.2em !important;
     height: 1.1rem !important;
     box-shadow: none !important;
+}
+.form-control:focus{
+    border-color: #000 !important;
 }
