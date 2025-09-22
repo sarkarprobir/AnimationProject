@@ -284,8 +284,8 @@ input::placeholder {
 .option-box.selected .checkmark::after {
     content: '';
     position: absolute;
-    top: 2.5px;
-    left: 6px;
+    top: -6.5px !important;
+    left: -2px !important;
     width: 5px;
     height: 10px;
     border: solid #fff;
