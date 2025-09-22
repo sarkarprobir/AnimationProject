@@ -7218,82 +7218,83 @@ function updateSelectedImageColors(targetImage, newFill, newStroke, newStrokeWid
     const PAINT_TAGS = new Set(["path", "rect", "circle", "ellipse", "polygon", "polyline", "line", "g", "use", "text"]);
 
     function patchSvg(svgText) {
+        // parse
         const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
-  const svg = doc.documentElement;
+        const svg = doc.documentElement;
+        if (!svg || svg.nodeName.toLowerCase() === "parsererror") return svgText;
 
-  // 1) PADDING: compute per repaint (uses newStrokeWidth/origW/origH/targetImage)
-        // ── Dynamic per-side padding that collapses correctly after reload ──
-        (function applyDynamicViewBoxPadding() {
+        // 1) Dynamic per-side padding that collapses after reload
+        (function applyViewBoxForStroke() {
             const sw = Number(newStrokeWidth ?? targetImage?.strokeWidth ?? 0);
-            const half = Number.isFinite(sw) ? Math.max(0, sw / 2) : 0;
+            const half = (Number.isFinite(sw) && sw > 0) ? sw / 2 : 0;
 
-            function readBaseVB(svgEl) {
-                const vbStr = svgEl.getAttribute("viewBox");
-                if (vbStr) {
-                    const a = vbStr.trim().split(/[\s,]+/).map(Number);
-                    if (a.length >= 4 && a.every(Number.isFinite)) {
-                        return { x: a[0], y: a[1], w: a[2], h: a[3] };
-                    }
+            // current viewBox or fallback
+            let vbStr = (svg.getAttribute("viewBox") || "").trim();
+            let vbCur;
+            if (vbStr) {
+                const a = vbStr.split(/[\s,]+/).map(Number);
+                if (a.length >= 4 && a.every(Number.isFinite)) {
+                    vbCur = { x: a[0], y: a[1], w: a[2], h: a[3] };
                 }
-                const w = Number(svgEl.getAttribute("width")) || Number(origW) || 0;
-                const h = Number(svgEl.getAttribute("height")) || Number(origH) || 0;
-                return { x: 0, y: 0, w, h };
+            }
+            if (!vbCur) {
+                const w = Number(svg.getAttribute("width")) || Number(origW) || 0;
+                const h = Number(svg.getAttribute("height")) || Number(origH) || 0;
+                vbCur = { x: 0, y: 0, w, h };
             }
 
-            const baseVB = targetImage.__vb0 || (targetImage.__vb0 = readBaseVB(svg));
-
-            if (half === 0) {
-                svg.setAttribute("overflow", "visible");
-                svg.setAttribute("viewBox", `${baseVB.x} ${baseVB.y} ${baseVB.w} ${baseVB.h}`);
-                targetImage.__svgPad = { l: 0, t: 0, r: 0, b: 0 };
-                return;
-            }
-
+            // geometry bbox (stroke excluded)
             const SVG_NS = "http://www.w3.org/2000/svg";
-            let bbox = { x: baseVB.x, y: baseVB.y, width: baseVB.w, height: baseVB.h };
+            let bbox = { x: vbCur.x, y: vbCur.y, width: vbCur.w, height: vbCur.h };
             try {
                 const tmpSvg = document.createElementNS(SVG_NS, "svg");
-                tmpSvg.setAttribute("viewBox", `${baseVB.x} ${baseVB.y} ${baseVB.w} ${baseVB.h}`);
-                tmpSvg.style.position = "absolute";
-                tmpSvg.style.left = "-99999px";
-                tmpSvg.style.top = "-99999px";
-                tmpSvg.style.visibility = "hidden";
-                tmpSvg.style.width = "0";
-                tmpSvg.style.height = "0";
-
+                tmpSvg.setAttribute("viewBox", `${vbCur.x} ${vbCur.y} ${vbCur.w} ${vbCur.h}`);
+                tmpSvg.style.cssText = "position:absolute;left:-99999px;top:-99999px;visibility:hidden;width:0;height:0";
                 const g = document.createElementNS(SVG_NS, "g");
                 Array.from(svg.childNodes).forEach(n => g.appendChild(n.cloneNode(true)));
                 tmpSvg.appendChild(g);
                 document.body.appendChild(tmpSvg);
-
-                const gb = g.getBBox(); // geometry-only, no stroke
+                const gb = g.getBBox(); // excludes stroke
                 bbox = { x: gb.x, y: gb.y, width: gb.width, height: gb.height };
                 tmpSvg.remove();
-            } catch (_) { /* keep bbox as baseVB on failure */ }
+            } catch { /* keep bbox as vbCur */ }
 
-            const leftExisting = Math.max(0, bbox.x - baseVB.x);
-            const topExisting = Math.max(0, bbox.y - baseVB.y);
-            const rightExisting = Math.max(0, (baseVB.x + baseVB.w) - (bbox.x + bbox.width));
-            const bottomExisting = Math.max(0, (baseVB.y + baseVB.h) - (bbox.y + bbox.height));
+            // keep tiny author margin, drop prior saved padding
+            const tol = Math.max(0.25, Math.min(vbCur.w, vbCur.h) * 0.005); // 0.25 units or 0.5%
+            const keepL = Math.min(Math.max(0, bbox.x - vbCur.x), tol);
+            const keepT = Math.min(Math.max(0, bbox.y - vbCur.y), tol);
+            const keepR = Math.min(Math.max(0, (vbCur.x + vbCur.w) - (bbox.x + bbox.width)), tol);
+            const keepB = Math.min(Math.max(0, (vbCur.y + vbCur.h) - (bbox.y + bbox.height)), tol);
 
-            const padL = Math.max(0, half - leftExisting);
-            const padR = Math.max(0, half - rightExisting);
-            const padT = Math.max(0, half - topExisting);
-            const padB = Math.max(0, half - bottomExisting);
+            const base = {
+                x: bbox.x - keepL,
+                y: bbox.y - keepT,
+                w: bbox.width + keepL + keepR,
+                h: bbox.height + keepT + keepB
+            };
 
             svg.setAttribute("overflow", "visible");
+
+            if (half === 0) {
+                svg.setAttribute("viewBox", `${base.x} ${base.y} ${base.w} ${base.h}`);
+                targetImage.__svgPad = { l: 0, t: 0, r: 0, b: 0 };
+                return;
+            }
+
+            // add only what’s needed for current stroke
+            const padL = Math.max(0, half - keepL);
+            const padT = Math.max(0, half - keepT);
+            const padR = Math.max(0, half - keepR);
+            const padB = Math.max(0, half - keepB);
+
             svg.setAttribute(
                 "viewBox",
-                `${baseVB.x - padL} ${baseVB.y - padT} ${baseVB.w + padL + padR} ${baseVB.h + padT + padB}`
+                `${base.x - padL} ${base.y - padT} ${base.w + padL + padR} ${base.h + padT + padB}`
             );
-
             targetImage.__svgPad = { l: padL, t: padT, r: padR, b: padB };
         })();
 
-
-        // ─────────────────────────────────────────────────────────────
-
-        // Update <style> if present (tolerant regex; avoids "stop-color" etc.)
+        // 2) Style block updates
         const styleEl = svg.querySelector("style");
         if (styleEl) {
             let css = styleEl.textContent || "";
@@ -7303,19 +7304,23 @@ function updateSelectedImageColors(targetImage, newFill, newStroke, newStrokeWid
             styleEl.textContent = css;
         }
 
-        // Inline attributes on visible geometry (skip <defs>)
+        // 3) Inline attributes (skip <defs>)
         const PAINT_TAGS = new Set(["path", "rect", "circle", "ellipse", "polygon", "polyline", "line", "g", "use", "text"]);
         svg.querySelectorAll("*").forEach(el => {
             if (!PAINT_TAGS.has(el.tagName.toLowerCase())) return;
             if (el.closest("defs")) return;
-
             if (newFill != null) el.setAttribute("fill", newFill);
             if (newStroke != null) el.setAttribute("stroke", newStroke);
             if (newStrokeWidth != null) el.setAttribute("stroke-width", String(newStrokeWidth));
+            // optional for nicer corners:
+            // el.setAttribute("stroke-linejoin","round");
+            // el.setAttribute("stroke-linecap","round");
+            // el.setAttribute("paint-order","stroke fill");
         });
 
         return new XMLSerializer().serializeToString(doc);
     }
+
     function redrawSVG(svgText) {
         if (myJob !== targetImage._paintJobId) return null;
 
