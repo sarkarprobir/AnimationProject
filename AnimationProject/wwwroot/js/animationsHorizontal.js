@@ -5467,12 +5467,18 @@ function setSelectionTarget(obj, { setActive = true, setContext = true } = {}) {
     }
 }
 canvas.addEventListener("click", function onCanvasClick(e) {
-    // ignore shift here
+    // ignore shift-click additive selection here
     if (e.shiftKey) return;
+
+    // swallow a synthetic/next click if requested (only once)
     if (skipNextClick) { skipNextClick = false; return; }
-    if (skipNextClick) {
-        skipNextClick = false;
-        return; // swallow this click so it doesn’t clear selection
+
+    // NEW: if a group drag/resize just happened (or we routed group action on mousedown),
+    // ignore this click so it doesn't clear the multi-selection.
+    if (isDraggingMulti || isResizingMulti || isGroupAction) {
+        isGroupAction = false;
+        e.preventDefault(); e.stopPropagation();
+        return;
     }
 
     e.preventDefault();
@@ -5491,7 +5497,7 @@ canvas.addEventListener("click", function onCanvasClick(e) {
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
 
-    // --- helpers ---
+    // --- helpers (same as your version) ---
     function clearSelection() {
         (textObjects || []).forEach(o => o.selected = false);
         (images || []).forEach(i => i.selected = false);
@@ -5519,38 +5525,68 @@ canvas.addEventListener("click", function onCanvasClick(e) {
     }
 
     // --- hit testing (topmost) ---
-    let txtHit = getTextObjectAt(mouseX, mouseY);
+    let txtHit = getTextObjectAt?.(mouseX, mouseY) || null;
     let imgHit = null;
     for (let i = (images ? images.length : 0) - 1; i >= 0; i--) {
-        if (isMouseOverImage(images[i], { x: mouseX, y: mouseY })) { imgHit = images[i]; break; }
+        if (isMouseOverImage?.(images[i], { x: mouseX, y: mouseY })) { imgHit = images[i]; break; }
     }
-    // ✅ ADD: zIndex-aware resolution when both overlap
+    // Resolve overlap by zIndex using your top-hit
     (function resolveByZIndex() {
-        const top = getTopHitAt(mouseX, mouseY);
+        const top = getTopHitAt?.(mouseX, mouseY);
         if (!top) return;
-
         const topZ = top.zIndex || 0;
         const txtZ = txtHit ? (txtHit.zIndex || 0) : -Infinity;
         const imgZ = imgHit ? (imgHit.zIndex || 0) : -Infinity;
 
-        // If our simple per-type tests disagree with the real topmost, override them
         if (top.type === 'image') {
-            if (!imgHit || topZ >= imgZ) {        // image is really on top
-                imgHit = top;
-                // ensure text doesn't steal selection
-                if (txtHit && txtZ < topZ) txtHit = null;
-            }
+            if (!imgHit || topZ >= imgZ) { imgHit = top; if (txtHit && txtZ < topZ) txtHit = null; }
         } else {
-            if (!txtHit || topZ >= txtZ) {        // text is really on top
-                txtHit = top;
-                if (imgHit && imgZ < topZ) imgHit = null;
-            }
+            if (!txtHit || topZ >= txtZ) { txtHit = top; if (imgHit && imgZ < topZ) imgHit = null; }
         }
     })();
 
-    // always start fresh
-    clearSelection();
+    // Determine selection context BEFORE clearing anything
+    const topHit = getTopHitAt?.(mouseX, mouseY) || txtHit || imgHit || null;
+    const selCount =
+        (textObjects?.filter(o => o.selected).length || 0) +
+        (images?.filter(i => i.selected).length || 0);
 
+    // If clicking an already-selected item while multiple are selected,
+    // KEEP the whole selection; just set "active" and update UI. No clearing.
+    if (topHit && topHit.selected && selCount >= 2) {
+        if (topHit.type === 'image') { activeImage = topHit; activeText = null; }
+        else { activeText = topHit; activeImage = null; }
+
+        // UI follow-ups
+        drawText?.();
+        updateFontStyleButtons?.();
+        applyImagePaintToUI?.(activeImage);
+        HideShowRightPannel?.(getSelectedType?.());
+
+        // Curvature / stroke panels visibility (your existing logic)
+        if (activeImage && activeImage.isBasic) {
+            document.getElementById("divCurvature")?.style && (document.getElementById("divCurvature").style.display = 'block');
+        } else {
+            document.getElementById("divCurvature")?.style && (document.getElementById("divCurvature").style.display = 'none');
+        }
+        if (activeImage && activeImage.isLINESvg) {
+            document.getElementById("divFillColor")?.style && (document.getElementById("divFillColor").style.display = 'none');
+            document.getElementById("divStrokeCheck")?.style && (document.getElementById("divStrokeCheck").style.display = 'none');
+        } else if (activeImage != null) {
+            document.getElementById("divFillColor")?.style && (document.getElementById("divFillColor").style.display = 'block');
+            document.getElementById("divStrokeCheck")?.style && (document.getElementById("divStrokeCheck").style.display = 'block');
+        }
+        return; // <-- important
+    }
+
+    // Only clear when clicked empty OR an unselected item
+    const clickedEmpty = !txtHit && !imgHit;
+    const clickedUnselected = !!(topHit && !topHit.selected);
+    if (clickedEmpty || clickedUnselected) {
+        clearSelection();
+    }
+
+    // Apply selection + UI as in your original code
     if (txtHit) {
         // TEXT clicked
         txtHit.selected = true;
@@ -5568,7 +5604,7 @@ canvas.addEventListener("click", function onCanvasClick(e) {
         $("#opengl_popup").hide();
 
         setGraphicModeActive();
-        setOpacityUI(normAlpha(txtHit.opacity));
+        setOpacityUI(normAlpha?.(txtHit.opacity));
 
     } else if (imgHit) {
         // IMAGE clicked
@@ -5586,7 +5622,7 @@ canvas.addEventListener("click", function onCanvasClick(e) {
         $("#opengl_popup").hide();
 
         setGraphicModeActive();
-        setOpacityUI(normAlpha(imgHit.opacity));
+        setOpacityUI(normAlpha?.(imgHit.opacity));
 
         // initialize fill/stroke colors once if required
         if ($("#hdnFillStrockColorFlag").val() === '1') {
@@ -5605,10 +5641,9 @@ canvas.addEventListener("click", function onCanvasClick(e) {
     }
 
     // draw + UI follow-ups
-    drawText();
+    drawText?.();
     updateFontStyleButtons?.();
 
-    // use activeImage instead of imgHit here (imgHit may be null)
     const selectedType = getSelectedType?.();
     if (selectedType === "Shape" && activeImage) {
         $("#hdnfillNoColorStatus").val(activeImage.fillNoColorStatus || false);
@@ -5622,6 +5657,7 @@ canvas.addEventListener("click", function onCanvasClick(e) {
 
         if (noColorChecked) {
             updateSelectedImageColors(
+                activeImage,                                   // make sure to pass the target!
                 "none",
                 noStrokeChecked ? "none" : $("#hdnStrockColor").val(),
                 (document.getElementById("ddlStrokeWidth")?.value || 2)
@@ -5629,31 +5665,29 @@ canvas.addEventListener("click", function onCanvasClick(e) {
         }
         if (noStrokeChecked) {
             updateSelectedImageColors(
+                activeImage,
                 noColorChecked ? "none" : $("#hdnfillColor").val(),
                 "none",
                 (document.getElementById("ddlStrokeWidth")?.value || 2)
             );
         }
     }
-    applyImagePaintToUI(activeImage);
 
+    applyImagePaintToUI?.(activeImage);
     HideShowRightPannel?.(selectedType);
+
+    // Curvature / stroke panels visibility (same as before)
     if (activeImage && activeImage.isBasic) {
-        document.getElementById("divCurvature").style.display = 'block';
-    }
-    else {
-        document.getElementById("divCurvature").style.display = 'none';
+        document.getElementById("divCurvature")?.style && (document.getElementById("divCurvature").style.display = 'block');
+    } else {
+        document.getElementById("divCurvature")?.style && (document.getElementById("divCurvature").style.display = 'none');
     }
     if (activeImage && activeImage.isLINESvg) {
-        document.getElementById("divFillColor").style.display = 'none';
-        document.getElementById("divStrokeCheck").style.display = 'none';
-
-    }
-    else {
-        if (activeImage != null) {
-            document.getElementById("divFillColor").style.display = 'block';
-            document.getElementById("divStrokeCheck").style.display = 'block';
-        }
+        document.getElementById("divFillColor")?.style && (document.getElementById("divFillColor").style.display = 'none');
+        document.getElementById("divStrokeCheck")?.style && (document.getElementById("divStrokeCheck").style.display = 'none');
+    } else if (activeImage != null) {
+        document.getElementById("divFillColor")?.style && (document.getElementById("divFillColor").style.display = 'block');
+        document.getElementById("divStrokeCheck")?.style && (document.getElementById("divStrokeCheck").style.display = 'block');
     }
 });
 function applyImagePaintToUI(imgHit) {
@@ -10347,7 +10381,12 @@ function drawText() {
 
                 if (box.img) {
                     if (box.img.complete) {
-                        ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                        try {
+                            ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
+                        } catch (e) {
+
+                        }
+                        
                     } else {
                         const img = box.img;
                         img.onload = () => { img.onload = null; drawText(); };
@@ -11500,11 +11539,39 @@ let startDrag = null;
 // make canvas focusable once
 //if (!canvas.hasAttribute('tabindex')) canvas.setAttribute('tabindex', '0');
 canvas.addEventListener("mousedown", e => {
-    if (e.button === 2) return; // don't let right-click alter selection/drag
+    if (e.button === 2) return;
+    isGroupAction = false;
+
+    const { x: mx, y: my } = getCanvasMousePosition(e);
+    const sel = getSelectedItems?.() || [];
+    if (sel.length >= 2) {
+        const g = aabbOfItems(sel);
+        const dir = g ? hitGroupHandle(mx, my, g, 10) : null;
+        const top = getTopHitAt?.(mx, my);
+        const clickedSelected = !!(top && top.selected);
+
+        if (dir || clickedSelected) {
+            startGroupDragOrResize(mx, my, dir || null);
+            isGroupAction = true;
+            e.preventDefault();
+            return;               // ← don't fall into single-select path
+        }
+    }
+
+
+    // click handler (early exit)
+    if (isDraggingMulti || isResizingMulti || isGroupAction) {
+        isGroupAction = false;
+        e.preventDefault(); e.stopPropagation();
+        return;
+    }
+
+    
+    //if (e.button === 2) return; // don't let right-click alter selection/drag
     canvas.focus({ preventScroll: true });
 
     const RIGHT = 2;
-    const { x: mx, y: my } = getCanvasMousePosition(e);
+   // const { x: mx, y: my } = getCanvasMousePosition(e);
     startX = e.clientX; startY = e.clientY;
     prevMouseX = mx; prevMouseY = my;
     startMXCanvas = mx; startMYCanvas = my;
@@ -11920,6 +11987,10 @@ function __applyBasicDimsConstantCaps(box, newX, newY, newW, newH) {
 }
 canvas.addEventListener("mousemove", e => {
     const { x: mx, y: my } = getCanvasMousePosition(e);
+
+    if (isDraggingMulti) { updateGroupDrag(mx, my); return; }
+    if (isResizingMulti) { updateGroupResize(mx, my); return; }
+
     const dx = mx - prevMouseX;
     const dy = my - prevMouseY;
 
@@ -12856,6 +12927,8 @@ window.addEventListener("mouseup", () => {
     setGlobalCursor("default");
     if (!isDraggingMulti) return;
     endMultiDrag(true);
+    if (isDraggingMulti || isResizingMulti) finishGroupTransform();
+    isGroupAction = false;
 });
 
 function scaleImageBoxWithHandle(box, handle, mx, my) {
@@ -15690,3 +15763,550 @@ function curvatureChanges() {
     // one-pass patch: curvature + paint + strokeWidth
     applySvgCurvature(img, r, sw, { fill, stroke });
 }
+
+
+
+// ── Group transform state ─────────────────────────────────────────────
+let isResizingMulti = false;
+let multiResizeDir = null;  // 'l','r','t','b','tl','tr','bl','br'
+let groupSnap = null;  // snapshot of group & items for transform
+function getSelectedItems() {
+    allItems = [...images, ...textObjects];
+    // adapt to your selection flag/array
+    return (allItems || []).filter(it => it && it.selected);
+}
+
+function aabbOfItem(it) {
+    // axis-aligned bounding box in design space
+    // If you already have a rotated bbox helper, use it. This fallback assumes x,y,w,h are unrotated.
+    const x = it.x, y = it.y, w = it.width, h = it.height;
+    return { x, y, w, h, left: x, top: y, right: x + w, bottom: y + h, cx: x + w / 2, cy: y + h / 2 };
+}
+
+function aabbOfItems(items) {
+    let minX = +Infinity, minY = +Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const it of items) {
+        const b = aabbOfItem(it);
+        minX = Math.min(minX, b.left);
+        minY = Math.min(minY, b.top);
+        maxX = Math.max(maxX, b.right);
+        maxY = Math.max(maxY, b.bottom);
+    }
+    if (!isFinite(minX)) return null;
+    const w = Math.max(0, maxX - minX);
+    const h = Math.max(0, maxY - minY);
+    return { x: minX, y: minY, w, h, left: minX, top: minY, right: maxX, bottom: maxY, cx: minX + w / 2, cy: minY + h / 2 };
+}
+
+function hitGroupHandle(mx, my, box, hs = 10) {
+    // Bigger corner squares win; sides exclude those squares
+    const near = (x, y) => Math.abs(mx - x) <= hs && Math.abs(my - y) <= hs;
+
+    // 1) Corners FIRST
+    if (near(box.left, box.top)) return 'tl';
+    if (near(box.right, box.top)) return 'tr';
+    if (near(box.left, box.bottom)) return 'bl';
+    if (near(box.right, box.bottom)) return 'br';
+
+    // 2) Sides (exclude corners with padding)
+    const thick = hs, pad = hs;
+    const onTop = (my >= box.top - thick) && (my <= box.top + thick) &&
+        (mx >= box.left + pad) && (mx <= box.right - pad);
+    const onBottom = (my >= box.bottom - thick) && (my <= box.bottom + thick) &&
+        (mx >= box.left + pad) && (mx <= box.right - pad);
+    const onLeft = (mx >= box.left - thick) && (mx <= box.left + thick) &&
+        (my >= box.top + pad) && (my <= box.bottom - pad);
+    const onRight = (mx >= box.right - thick) && (mx <= box.right + thick) &&
+        (my >= box.top + pad) && (my <= box.bottom - pad);
+
+    if (onTop) return 't';
+    if (onBottom) return 'b';
+    if (onLeft) return 'l';
+    if (onRight) return 'r';
+
+    return null;
+}
+
+
+
+
+function startGroupDragOrResize(mx, my, maybeDir = null) {
+    const sel = getSelectedItems?.() || [];
+    if (sel.length < 2) return false;
+
+    const g = aabbOfItems(sel);
+    if (!g) return false;
+
+    // fixed point (anchor) and original dragged-corner point
+    let ax = g.left, ay = g.top, bx0 = g.right, by0 = g.bottom; // defaults
+    const d = (maybeDir || "").toLowerCase();
+    if (d === 'tl') { ax = g.right; ay = g.bottom; bx0 = g.left; by0 = g.top; }
+    if (d === 'tr') { ax = g.left; ay = g.bottom; bx0 = g.right; by0 = g.top; }
+    if (d === 'bl') { ax = g.right; ay = g.top; bx0 = g.left; by0 = g.bottom; }
+    if (d === 'br') { ax = g.left; ay = g.top; bx0 = g.right; by0 = g.bottom; }
+    if (d === 'l') { ax = g.right; ay = g.cy; }
+    if (d === 'r') { ax = g.left; ay = g.cy; }
+    if (d === 't') { ax = g.cx; ay = g.bottom; }
+    if (d === 'b') { ax = g.cx; ay = g.top; }
+
+    groupSnap = {
+        startMX: mx, startMY: my,
+        box0: {
+            left: g.left, top: g.top, right: g.right, bottom: g.bottom,
+            w: g.w, h: g.h, cx: g.cx, cy: g.cy,
+            dir: d, ax, ay, bx0, by0
+        },
+        items: sel.map(it => {
+            const x0 = it.x, y0 = it.y, w0 = it.width, h0 = it.height;
+            const cx0 = x0 + w0 / 2, cy0 = y0 + h0 / 2;
+            return {
+                ref: it,
+                x0, y0, w0, h0, cx0, cy0,
+                ox: cx0 - ax,            // center offset from anchor
+                oy: cy0 - ay,
+                _origText: (it.type !== 'image' && typeof it.text === 'string') ? { text: it.text } : null
+            };
+        })
+    };
+
+    if (d) { isResizingMulti = true; isDraggingMulti = false; multiResizeDir = d; }
+    else { isDraggingMulti = true; isResizingMulti = false; multiResizeDir = null; }
+
+    const onceUp = () => { finishGroupTransform(); document.removeEventListener('mouseup', onceUp, true); };
+    document.addEventListener('mouseup', onceUp, true);
+    return true;
+}
+
+
+
+
+function startGroupDragOrResizeOLD(mx, my, maybeDir = null) {
+    const sel = getSelectedItems();
+    if (sel.length < 2) return false;
+
+    const groupBox = aabbOfItems(sel);
+    if (!c) return false;
+
+    // snapshot base for transform
+    //groupSnap = {
+    //    startMX: mx, startMY: my,
+    //    box0: { ...groupBox },
+    //    items: sel.map(it => ({
+    //        ref: it,
+    //        x0: it.x, y0: it.y,
+    //        w0: it.width, h0: it.height,
+    //        rot0: it.rotation || 0
+    //    }))
+    //};
+
+    groupSnap = {
+        box0: { left: groupBox.left, top: groupBox.top, right: groupBox.right, bottom: groupBox.bottom, w: groupBox.w, h: groupBox.h, cx: groupBox.cx, cy: groupBox.cy },
+        items: sel.map(it => ({ ref: it, x0: it.x, y0: it.y, w0: it.width, h0: it.height, _type: it.type }))
+    };
+
+    if (maybeDir) {
+        isResizingMulti = true;
+        multiResizeDir = maybeDir;
+    } else {
+        isDraggingMulti = true;
+    }
+
+    if (maybeDir) { isResizingMulti = true; multiResizeDir = maybeDir; }
+    else { isDraggingMulti = true; }
+
+    // one-shot fallback to guarantee release
+    const onceUp = () => { finishGroupTransform(); document.removeEventListener('mouseup', onceUp, true); };
+    document.addEventListener('mouseup', onceUp, true);
+
+    return true;
+
+}
+
+function updateGroupDrag(mx, my) {
+    if (!isDraggingMulti || !groupSnap) return;
+
+    const dx = mx - groupSnap.startMX;
+    const dy = my - groupSnap.startMY;
+
+    for (const s of groupSnap.items) {
+        s.ref.x = s.x0 + dx;
+        s.ref.y = s.y0 + dy;
+    }
+    if (typeof drawText === "function") drawText();
+}
+
+function updateGroupResize_Old(mx, my) {
+    if (!isResizingMulti || !groupSnap) return;
+
+    const b0 = groupSnap.box0 || {};
+    const dir = (b0.dir || multiResizeDir || "").toLowerCase();
+    if (!dir) return;
+
+    // ---- Rebuild anchor & dragged-corner if not captured (self-heal) ----
+    const left = Number.isFinite(b0.left) ? b0.left : 0;
+    const top = Number.isFinite(b0.top) ? b0.top : 0;
+    const right = Number.isFinite(b0.right) ? b0.right : left + (b0.w || 0);
+    const bottom = Number.isFinite(b0.bottom) ? b0.bottom : top + (b0.h || 0);
+    const cx = Number.isFinite(b0.cx) ? b0.cx : (left + right) / 2;
+    const cy = Number.isFinite(b0.cy) ? b0.cy : (top + bottom) / 2;
+
+    let ax = b0.ax, ay = b0.ay, bx0 = b0.bx0, by0 = b0.by0;
+
+    function ensureAnchorAndCorner() {
+        if (dir === "tl") { ax = right; ay = bottom; bx0 = left; by0 = top; }
+        if (dir === "tr") { ax = left; ay = bottom; bx0 = right; by0 = top; }
+        if (dir === "bl") { ax = right; ay = top; bx0 = left; by0 = bottom; }
+        if (dir === "br") { ax = left; ay = top; bx0 = right; by0 = bottom; }
+        if (dir === "l") { ax = right; ay = cy; }
+        if (dir === "r") { ax = left; ay = cy; }
+        if (dir === "t") { ax = cx; ay = bottom; }
+        if (dir === "b") { ax = cx; ay = top; }
+    }
+    if (!Number.isFinite(ax) || !Number.isFinite(ay) || (dir.length === 2 && (!Number.isFinite(bx0) || !Number.isFinite(by0)))) {
+        ensureAnchorAndCorner();
+    }
+    // persist back for future frames
+    b0.ax = ax; b0.ay = ay;
+    if (dir.length === 2) { b0.bx0 = bx0; b0.by0 = by0; }
+
+    // ---- Ensure per-item center offsets exist (ox/oy) ----
+    for (const s of groupSnap.items) {
+        if (!s) continue;
+        if (!Number.isFinite(s.ox) || !Number.isFinite(s.oy)) {
+            const cx0 = Number.isFinite(s.cx0) ? s.cx0 : (s.x0 + s.w0 / 2);
+            const cy0 = Number.isFinite(s.cy0) ? s.cy0 : (s.y0 + s.h0 / 2);
+            s.ox = cx0 - ax;
+            s.oy = cy0 - ay;
+        }
+    }
+
+    const isCorner = (dir.length === 2);
+
+    // ---------- Corner: anchor-based UNIFORM scaling (robust) ----------
+    if (isCorner) {
+        const EPS = 1e-6;
+
+        // original vector from anchor to dragged corner
+        let dx0 = (bx0 - ax), dy0 = (by0 - ay);
+        if (!Number.isFinite(dx0)) dx0 = EPS;
+        if (!Number.isFinite(dy0)) dy0 = EPS;
+        if (Math.abs(dx0) < EPS) dx0 = (dx0 >= 0 ? EPS : -EPS);
+        if (Math.abs(dy0) < EPS) dy0 = (dy0 >= 0 ? EPS : -EPS);
+
+        // current vector from anchor to mouse
+        let dx = (mx - ax), dy = (my - ay);
+        if (!Number.isFinite(dx)) dx = 0;
+        if (!Number.isFinite(dy)) dy = 0;
+
+        let kx = dx / dx0, ky = dy / dy0;
+        if (!Number.isFinite(kx)) kx = 1;
+        if (!Number.isFinite(ky)) ky = 1;
+
+        const uAbs = Math.max(0.02, Math.min(50, Math.min(Math.abs(kx), Math.abs(ky))));
+        const sx = (kx >= 0 ? 1 : -1);
+        const sy = (ky >= 0 ? 1 : -1);
+
+        const posKx = sx * uAbs;
+        const posKy = sy * uAbs;
+
+        for (const s of groupSnap.items) {
+            const it = s.ref; if (!it) continue;
+
+            // new center from anchor (no walking)
+            const cx1 = ax + s.ox * posKx;
+            const cy1 = ay + s.oy * posKy;
+
+            const w1 = Math.max(1, s.w0 * uAbs);
+            const h1 = Math.max(1, s.h0 * uAbs);
+
+            it.x = cx1 - w1 / 2;
+            it.y = cy1 - h1 / 2;
+            it.width = w1;
+            it.height = h1;
+
+            // text content scaling (uniform)
+            const isText = (it.type !== 'image');
+            if (isText && s._origText && typeof scaleTextHTML === 'function') {
+                it.text = scaleTextHTML(s._origText.text, uAbs);
+            }
+        }
+
+        drawText?.();
+        return;
+    }
+
+    // ---------- Sides: mirror single-item; lock non-active axis for centers ----------
+    let L = left, T = top, R = right, B = bottom;
+    if (dir === "l") L = mx;
+    if (dir === "r") R = mx;
+    if (dir === "t") T = my;
+    if (dir === "b") B = my;
+
+    const MINW = 3, MINH = 3;
+    if (R - L < MINW) { if (dir === 'l') L = R - MINW; else if (dir === 'r') R = L + MINW; }
+    if (B - T < MINH) { if (dir === 't') T = B - MINH; else if (dir === 'b') B = T + MINH; }
+
+    const EPS = 1e-6;
+    const gw = Math.max(EPS, (right - left));
+    const gh = Math.max(EPS, (bottom - top));
+    let kx = (R - L) / gw;
+    let ky = (B - T) / gh;
+
+    // centers move only on active axis
+    let posKx = kx, posKy = ky;
+    if (dir === 'l' || dir === 'r') posKy = 1;
+    if (dir === 't' || dir === 'b') posKx = 1;
+
+    // clamp absurd scales
+    posKx = Math.max(0.02, Math.min(50, posKx));
+    posKy = Math.max(0.02, Math.min(50, posKy));
+    kx = Math.max(0.02, Math.min(50, Math.abs(kx))) * Math.sign(kx || 1);
+    ky = Math.max(0.02, Math.min(50, Math.abs(ky))) * Math.sign(ky || 1);
+
+    for (const s of groupSnap.items) {
+        const it = s.ref; if (!it) continue;
+        const isText = (it.type !== 'image');
+
+        const cx1 = ax + s.ox * posKx;
+        const cy1 = ay + s.oy * posKy;
+
+        let sizeKx = 1, sizeKy = 1;
+        if (dir === 'l' || dir === 'r') {
+            // L/R
+            if (isText) { sizeKx = Math.abs(kx); sizeKy = 1; }      // text width-only
+            else { sizeKx = Math.abs(kx); sizeKy = 1; }      // image/svg width-only
+        } else {
+            // T/B
+            if (isText) { const u = Math.abs(ky); sizeKx = u; sizeKy = u; } // text uniform via vertical
+            else { sizeKx = 1; sizeKy = Math.abs(ky); }              // image/svg height-only
+        }
+
+        const w1 = Math.max(1, s.w0 * sizeKx);
+        const h1 = Math.max(1, s.h0 * sizeKy);
+        it.x = cx1 - w1 / 2;
+        it.y = cy1 - h1 / 2;
+        it.width = w1;
+        it.height = h1;
+
+        if (isText) {
+            const uniform = Math.abs(sizeKx - sizeKy) < 1e-6;
+            if (uniform && s._origText && typeof scaleTextHTML === 'function') {
+                it.text = scaleTextHTML(s._origText.text, sizeKx);
+            }
+        }
+
+        if (!isText && it.isBasic === true && !it.isLINESvg) {
+            if (dir === 'l' || dir === 'r') { it.__capsOrientation = 'horizontal'; it.preserveCaps = true; }
+            else { it.__capsOrientation = 'vertical'; it.preserveCaps = true; }
+        }
+    }
+
+    drawText?.();
+}
+function updateGroupResize(mx, my) {
+    if (!isResizingMulti || !groupSnap) return;
+
+    const b0 = groupSnap.box0 || {};
+    const dir = String(multiResizeDir || b0.dir || "").toLowerCase();
+    if (!dir) return;
+
+    // Rebuild group box if needed
+    const left = Number.isFinite(b0.left) ? b0.left : 0;
+    const top = Number.isFinite(b0.top) ? b0.top : 0;
+    const right = Number.isFinite(b0.right) ? b0.right : left + (b0.w || 0);
+    const bottom = Number.isFinite(b0.bottom) ? b0.bottom : top + (b0.h || 0);
+    const cx = Number.isFinite(b0.cx) ? b0.cx : (left + right) / 2;
+    const cy = Number.isFinite(b0.cy) ? b0.cy : (top + bottom) / 2;
+
+    // Ensure anchor & dragged-corner present
+    let { ax, ay, bx0, by0 } = b0;
+    const fillAnchorAndCorner = () => {
+        if (dir === "tl") { ax = right; ay = bottom; bx0 = left; by0 = top; }
+        if (dir === "tr") { ax = left; ay = bottom; bx0 = right; by0 = top; }
+        if (dir === "bl") { ax = right; ay = top; bx0 = left; by0 = bottom; }
+        if (dir === "br") { ax = left; ay = top; bx0 = right; by0 = bottom; }
+        if (dir === "l") { ax = right; ay = cy; }
+        if (dir === "r") { ax = left; ay = cy; }
+        if (dir === "t") { ax = cx; ay = bottom; }
+        if (dir === "b") { ax = cx; ay = top; }
+    };
+    if (!Number.isFinite(ax) || !Number.isFinite(ay) ||
+        (dir.length === 2 && (!Number.isFinite(bx0) || !Number.isFinite(by0)))) {
+        fillAnchorAndCorner();
+    }
+    b0.ax = ax; b0.ay = ay; if (dir.length === 2) { b0.bx0 = bx0; b0.by0 = by0; }
+
+    // Ensure per-item offsets
+    for (const s of (groupSnap.items || [])) {
+        if (!Number.isFinite(s.ox) || !Number.isFinite(s.oy)) {
+            const cx0 = Number.isFinite(s.cx0) ? s.cx0 : (s.x0 + s.w0 / 2);
+            const cy0 = Number.isFinite(s.cy0) ? s.cy0 : (s.y0 + s.h0 / 2);
+            s.ox = cx0 - ax; s.oy = cy0 - ay;
+        }
+    }
+
+    const isCorner = (dir.length === 2);
+
+    // ---------- CORNERS: anchor-based uniform signed scaling ----------
+    if (isCorner) {
+        const EPS = 1e-6;
+
+        let dx0 = (bx0 - ax), dy0 = (by0 - ay);
+        if (!Number.isFinite(dx0)) dx0 = EPS;
+        if (!Number.isFinite(dy0)) dy0 = EPS;
+        if (Math.abs(dx0) < EPS) dx0 = (dx0 >= 0 ? EPS : -EPS);
+        if (Math.abs(dy0) < EPS) dy0 = (dy0 >= 0 ? EPS : -EPS);
+
+        let dx = (mx - ax), dy = (my - ay);
+        if (!Number.isFinite(dx)) dx = 0;
+        if (!Number.isFinite(dy)) dy = 0;
+
+        let kx = dx / dx0, ky = dy / dy0;
+        if (!Number.isFinite(kx)) kx = 1;
+        if (!Number.isFinite(ky)) ky = 1;
+
+        const clamp = v => Math.max(0.02, Math.min(50, v));
+        const uAbs = clamp(Math.min(Math.abs(kx), Math.abs(ky)));
+        const sx = (kx >= 0 ? 1 : -1);
+        const sy = (ky >= 0 ? 1 : -1);
+
+        const posKx = sx * uAbs;   // centers move uniformly from anchor
+        const posKy = sy * uAbs;
+        const u = uAbs;        // uniform size factor
+
+        for (const s of (groupSnap.items || [])) {
+            const it = s.ref; if (!it) continue;
+
+            const cx1 = ax + s.ox * posKx;
+            const cy1 = ay + s.oy * posKy;
+
+            const w1 = Math.max(1, s.w0 * u);
+            const h1 = Math.max(1, s.h0 * u);
+
+            it.x = cx1 - w1 / 2;
+            it.y = cy1 - h1 / 2;
+            it.width = w1;
+            it.height = h1;
+
+            // TEXT content update on uniform
+            if (it.type !== 'image' && s._origText && typeof scaleTextHTML === 'function') {
+                it.text = scaleTextHTML(s._origText.text, u);
+            }
+        }
+
+        drawText?.();
+        return;
+    }
+
+    // ---------- SIDES: mirror single-item & lock non-active axis ----------
+    let L = left, T = top, R = right, B = bottom;
+    if (dir === "l") L = mx;
+    if (dir === "r") R = mx;
+    if (dir === "t") T = my;
+    if (dir === "b") B = my;
+
+    const MINW = 3, MINH = 3;
+    if (R - L < MINW) { if (dir === 'l') L = R - MINW; else if (dir === 'r') R = L + MINW; }
+    if (B - T < MINH) { if (dir === 't') T = B - MINH; else if (dir === 'b') B = T + MINH; }
+
+    const EPS = 1e-6;
+    const gw = Math.max(EPS, right - left);
+    const gh = Math.max(EPS, bottom - top);
+    let kx = (R - L) / gw;
+    let ky = (B - T) / gh;
+
+    // centers move only on active axis (no “walk”)
+    let posKx = kx, posKy = ky;
+    if (dir === 'l' || dir === 'r') posKy = 1;
+    if (dir === 't' || dir === 'b') posKx = 1;
+
+    const clamp = v => Math.max(0.02, Math.min(50, v));
+    posKx = clamp(posKx);
+    posKy = clamp(posKy);
+    kx = Math.sign(kx || 1) * clamp(Math.abs(kx));
+    ky = Math.sign(ky || 1) * clamp(Math.abs(ky));
+
+    for (const s of (groupSnap.items || [])) {
+        const it = s.ref; if (!it) continue;
+        const isText = (it.type !== 'image');
+
+        const cx1 = ax + s.ox * posKx;
+        const cy1 = ay + s.oy * posKy;
+
+        // per-type size behavior (same as single-item)
+        let sizeKx = 1, sizeKy = 1;
+        if (dir === 'l' || dir === 'r') {
+            // width-only
+            sizeKx = Math.abs(kx); sizeKy = 1;
+        } else {
+            // top/bottom
+            if (isText) {
+                const u = Math.abs(ky); sizeKx = u; sizeKy = u;   // text uniform via vertical
+            } else {
+                sizeKx = 1; sizeKy = Math.abs(ky);                // image/svg height-only
+            }
+        }
+
+        const w1 = Math.max(1, s.w0 * sizeKx);
+        const h1 = Math.max(1, s.h0 * sizeKy);
+
+        it.x = cx1 - w1 / 2;
+        it.y = cy1 - h1 / 2;
+        it.width = w1;
+        it.height = h1;
+
+        if (isText) {
+            const uniform = Math.abs(sizeKx - sizeKy) < 1e-6;
+            if (uniform && s._origText && typeof scaleTextHTML === 'function') {
+                it.text = scaleTextHTML(s._origText.text, sizeKx);
+            }
+        }
+
+        if (!isText && it.isBasic === true && !it.isLINESvg) {
+            if (dir === 'l' || dir === 'r') { it.__capsOrientation = 'horizontal'; it.preserveCaps = true; }
+            else { it.__capsOrientation = 'vertical'; it.preserveCaps = true; }
+        }
+    }
+
+    drawText?.();
+}
+
+
+
+
+
+
+
+
+
+
+function finishGroupTransform() {
+    isDraggingMulti = false;
+    isResizingMulti = false;
+    multiResizeDir = null;
+    groupSnap = null;
+    isGroupAction = false;
+    canvas.style.cursor = 'default';
+}
+//function groupCursorFor(dir) {
+//    return ({
+//        tl: 'nwse-resize', br: 'nwse-resize', tr: 'nesw-resize', bl: 'nesw-resize',
+//        l: 'ew-resize', r: 'ew-resize', t: 'ns-resize', b: 'ns-resize'
+//    })[dir] || 'default';
+//}
+function groupCursorFor(dir) {
+    return ({
+        tl: 'nwse-resize', br: 'nwse-resize',
+        tr: 'nesw-resize', bl: 'nesw-resize',
+        l: 'ew-resize', r: 'ew-resize', t: 'ns-resize', b: 'ns-resize'
+    })[dir] || 'default';
+}
+
+
+function onGlobalMouseUp() { if (isDraggingMulti || isResizingMulti) finishGroupTransform(); }
+
+window.addEventListener('mouseup', onGlobalMouseUp);
+canvas.addEventListener('mouseleave', onGlobalMouseUp);
+
+
+
