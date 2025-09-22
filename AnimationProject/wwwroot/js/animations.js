@@ -3482,9 +3482,10 @@ function cloneImageObject(srcObj) {
         strokeNoColorStatus: srcObj.strokeNoColorStatus || false,
         fillNoColor: srcObj.fillNoColor || "#FFFFFF",
         strokeNoColor: srcObj.strokeNoColor || "#FFFFFF",
-        strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 3,
+        strokeWidth: srcObj.strokeWidth || 0.1,
         isBasic: srcObj.isBasic,
-        isLINESvg: srcObj.isLine
+        isLINESvg: srcObj.isLine,
+        curvature: srcObj.curvature||0
         // Copy any other custom fields if needed...
     };
 }
@@ -5678,6 +5679,7 @@ function applyImagePaintToUI(imgHit) {
     const noFillBox = document.getElementById('noColorCheck');   // fill no-color
     const noStrokeBox = document.getElementById('noColorCheck2');  // stroke no-color
     const swEl = document.getElementById('ddlStrokeWidth');
+    const curvature = document.getElementById('ddlCurvature');
 
     // 1) Set checkboxes from statuses
     if (noFillBox) noFillBox.checked = !!imgHit.fillNoColorStatus;
@@ -5700,6 +5702,9 @@ function applyImagePaintToUI(imgHit) {
     }
 
     if (swEl && imgHit.strokeWidth != null) swEl.value = String(imgHit.strokeWidth);
+    if (curvature && imgHit.curvature != null) curvature.value = String(imgHit.curvature);
+
+    
 }
 
 
@@ -7195,8 +7200,175 @@ function ChangeFillColor() {
     target.fillNoColor = document.getElementById('favFillcolor')?.value || "#FFFFFF";
     updateSelectedImageColors(target, newFill, newStroke, newStrokeWidth);
 }
-
 function updateSelectedImageColors(targetImage, newFill, newStroke, newStrokeWidth = null) {
+    if (!targetImage) return null;
+
+    const svgUrl = targetImage.originalSrc || targetImage.src || "";
+    const isSvg = svgUrl.toLowerCase().endsWith(".svg") || svgUrl.startsWith("data:image/svg+xml");
+    if (!isSvg || !targetImage.img) { console.warn("Target is not an SVG"); return null; }
+
+    if (!targetImage.originalSrc) targetImage.originalSrc = targetImage.src;
+
+    targetImage._paintJobId = (targetImage._paintJobId || 0) + 1;
+    const myJob = targetImage._paintJobId;
+
+    const origW = targetImage.width, origH = targetImage.height;
+    if (newStrokeWidth != null) targetImage.strokeWidth = newStrokeWidth; // keep numeric too
+
+    const PAINT_TAGS = new Set(["path", "rect", "circle", "ellipse", "polygon", "polyline", "line", "g", "use", "text"]);
+
+    function patchSvg(svgText) {
+        const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+  const svg = doc.documentElement;
+
+  // 1) PADDING: compute per repaint (uses newStrokeWidth/origW/origH/targetImage)
+        // ── Dynamic per-side padding that collapses correctly after reload ──
+        (function applyDynamicViewBoxPadding() {
+            const sw = Number(newStrokeWidth ?? targetImage?.strokeWidth ?? 0);
+            const half = Number.isFinite(sw) ? Math.max(0, sw / 2) : 0;
+
+            function readBaseVB(svgEl) {
+                const vbStr = svgEl.getAttribute("viewBox");
+                if (vbStr) {
+                    const a = vbStr.trim().split(/[\s,]+/).map(Number);
+                    if (a.length >= 4 && a.every(Number.isFinite)) {
+                        return { x: a[0], y: a[1], w: a[2], h: a[3] };
+                    }
+                }
+                const w = Number(svgEl.getAttribute("width")) || Number(origW) || 0;
+                const h = Number(svgEl.getAttribute("height")) || Number(origH) || 0;
+                return { x: 0, y: 0, w, h };
+            }
+
+            const baseVB = targetImage.__vb0 || (targetImage.__vb0 = readBaseVB(svg));
+
+            if (half === 0) {
+                svg.setAttribute("overflow", "visible");
+                svg.setAttribute("viewBox", `${baseVB.x} ${baseVB.y} ${baseVB.w} ${baseVB.h}`);
+                targetImage.__svgPad = { l: 0, t: 0, r: 0, b: 0 };
+                return;
+            }
+
+            const SVG_NS = "http://www.w3.org/2000/svg";
+            let bbox = { x: baseVB.x, y: baseVB.y, width: baseVB.w, height: baseVB.h };
+            try {
+                const tmpSvg = document.createElementNS(SVG_NS, "svg");
+                tmpSvg.setAttribute("viewBox", `${baseVB.x} ${baseVB.y} ${baseVB.w} ${baseVB.h}`);
+                tmpSvg.style.position = "absolute";
+                tmpSvg.style.left = "-99999px";
+                tmpSvg.style.top = "-99999px";
+                tmpSvg.style.visibility = "hidden";
+                tmpSvg.style.width = "0";
+                tmpSvg.style.height = "0";
+
+                const g = document.createElementNS(SVG_NS, "g");
+                Array.from(svg.childNodes).forEach(n => g.appendChild(n.cloneNode(true)));
+                tmpSvg.appendChild(g);
+                document.body.appendChild(tmpSvg);
+
+                const gb = g.getBBox(); // geometry-only, no stroke
+                bbox = { x: gb.x, y: gb.y, width: gb.width, height: gb.height };
+                tmpSvg.remove();
+            } catch (_) { /* keep bbox as baseVB on failure */ }
+
+            const leftExisting = Math.max(0, bbox.x - baseVB.x);
+            const topExisting = Math.max(0, bbox.y - baseVB.y);
+            const rightExisting = Math.max(0, (baseVB.x + baseVB.w) - (bbox.x + bbox.width));
+            const bottomExisting = Math.max(0, (baseVB.y + baseVB.h) - (bbox.y + bbox.height));
+
+            const padL = Math.max(0, half - leftExisting);
+            const padR = Math.max(0, half - rightExisting);
+            const padT = Math.max(0, half - topExisting);
+            const padB = Math.max(0, half - bottomExisting);
+
+            svg.setAttribute("overflow", "visible");
+            svg.setAttribute(
+                "viewBox",
+                `${baseVB.x - padL} ${baseVB.y - padT} ${baseVB.w + padL + padR} ${baseVB.h + padT + padB}`
+            );
+
+            targetImage.__svgPad = { l: padL, t: padT, r: padR, b: padB };
+        })();
+
+
+        // ─────────────────────────────────────────────────────────────
+
+        // Update <style> if present (tolerant regex; avoids "stop-color" etc.)
+        const styleEl = svg.querySelector("style");
+        if (styleEl) {
+            let css = styleEl.textContent || "";
+            if (newFill != null) css = css.replace(/(^|[^\w-])fill\s*:\s*[^;]+;?/g, `$1fill:${newFill};`);
+            if (newStroke != null) css = css.replace(/(^|[^\w-])stroke\s*:\s*[^;]+;?/g, `$1stroke:${newStroke};`);
+            if (newStrokeWidth != null) css = css.replace(/stroke-width\s*:\s*[^;]+;?/g, `stroke-width:${newStrokeWidth};`);
+            styleEl.textContent = css;
+        }
+
+        // Inline attributes on visible geometry (skip <defs>)
+        const PAINT_TAGS = new Set(["path", "rect", "circle", "ellipse", "polygon", "polyline", "line", "g", "use", "text"]);
+        svg.querySelectorAll("*").forEach(el => {
+            if (!PAINT_TAGS.has(el.tagName.toLowerCase())) return;
+            if (el.closest("defs")) return;
+
+            if (newFill != null) el.setAttribute("fill", newFill);
+            if (newStroke != null) el.setAttribute("stroke", newStroke);
+            if (newStrokeWidth != null) el.setAttribute("stroke-width", String(newStrokeWidth));
+        });
+
+        return new XMLSerializer().serializeToString(doc);
+    }
+    function redrawSVG(svgText) {
+        if (myJob !== targetImage._paintJobId) return null;
+
+        const uri = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgText);
+        const imgEl = targetImage.img;
+
+        // Ensure we persist the modified source regardless of onload timing
+        targetImage.modifiedSVG = svgText;        // raw svg text (optional but handy)
+        targetImage.modifiedSrc = uri;            // persist this to DB
+        targetImage.hasPaintOverrides = true;     // boolean flag for your loader
+        targetImage.src = uri;                    // keep model in sync (used by your serializer?)
+
+        // Update the display image
+        imgEl.onload = () => {
+            if (myJob !== targetImage._paintJobId) return;
+            targetImage.width = origW;
+            targetImage.height = origH;
+            if (typeof drawText === "function") drawText();
+        };
+        imgEl.onerror = () => {
+            console.warn("Failed to repaint SVG:", targetImage.originalSrc || targetImage.src);
+        };
+        imgEl.src = uri;
+
+        return uri; // allow caller to persist immediately
+    }
+
+    if (targetImage.originalSVG) {
+        return redrawSVG(patchSvg(targetImage.originalSVG));
+    } else if (svgUrl.startsWith("data:image/svg+xml")) {
+        const afterComma = svgUrl.split(",")[1] || "";
+        let raw = "";
+        if (/;base64/i.test(svgUrl)) {
+            try { raw = atob(afterComma); } catch { raw = ""; }
+        } else {
+            try { raw = decodeURIComponent(afterComma); } catch { raw = ""; }
+        }
+        if (raw) {
+            targetImage.originalSVG = raw;
+            return redrawSVG(patchSvg(raw));
+        } else {
+            console.warn("Could not decode inline SVG data.");
+            return null;
+        }
+    } else {
+        return fetch(svgUrl)
+            .then(r => r.text())
+            .then(text => { targetImage.originalSVG = text; return redrawSVG(patchSvg(text)); })
+            .catch(err => { console.error("Fetch SVG failed:", err); return null; });
+    }
+}
+
+function updateSelectedImageColorsOLD1(targetImage, newFill, newStroke, newStrokeWidth = null) {
     if (!targetImage) return;
 
     const svgUrl = targetImage.originalSrc || targetImage.src || "";
@@ -7465,7 +7637,6 @@ function strokeWidthChanges() {
     // persist in UI/model
     $("#hdnStrokeWidth").val(String(strokeWidth));
     activeImage.strokeWidth = strokeWidth;
-
     // If this is the special line SVG, use stroke width as its visual thickness
     if (activeImage.type === "image" && activeImage.isLINESvg === true) {
         const H = canvas?.height ?? Infinity;
@@ -7832,7 +8003,8 @@ canvas.addEventListener('drop', e => {
         isLINESvg: isLine,
         __capsOrientation: 'horizontal',
         basicName: basicName,
-        loading: true
+        loading: true,
+        curvature:0
     };
 
     // Deselect others and set selection pointers *now*
@@ -14853,7 +15025,7 @@ function curvatureChanges() {
 
     const fill = noFill ? "none" : ($("#hdnfillColor").val() || img.fillNoColor || "#FFFFFF");
     const stroke = noStroke ? "none" : ($("#hdnStrockColor").val() || img.strokeNoColor || "#000000");
-
+    activeImage.curvature = r;
     // one-pass patch: curvature + paint + strokeWidth
     applySvgCurvature(img, r, sw, { fill, stroke });
 }

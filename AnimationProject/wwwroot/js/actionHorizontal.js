@@ -535,6 +535,24 @@ function saveCanvasDataOLD() {
 
     return JSON.stringify(data, null, 2);
 }
+function readStrokeWidth(selector = '#ddlStrokeWidth', fallback = 1) {
+    const el = document.querySelector(selector);
+    const raw = el?.value;
+
+    if (raw == null || raw === '') return fallback;
+
+    // allow "0,5" -> 0.5 too
+    const n = Number(String(raw).trim().replace(',', '.'));
+    if (!Number.isFinite(n)) return fallback;
+
+    // snap to one decimal place
+    const snapped = Math.round(n * 10) / 10;
+
+    // return a Number, formatted as:
+    //  - integer: 0, 1, 5
+    //  - decimal: 0.1, 0.5 (one decimal place)
+    return Number.isInteger(snapped) ? snapped : Number.parseFloat(snapped.toFixed(1));
+}
 function saveCanvasData() {
     const rect = canvas.getBoundingClientRect();
     const screenW = rect.width || 1;
@@ -588,10 +606,11 @@ function saveCanvasData() {
                 strokeNoColorStatus: img.strokeNoColorStatus,//$("#hdnstrokeNoColorStatus").val(),
                 fillNoColor: img.fillNoColor,//$("#hdnfillColor").val(),
                 strokeNoColor: img.strokeNoColor, //$("#hdnStrockColor").val(),
-                strokeWidth: parseInt(document.getElementById('ddlStrokeWidth')?.value, 10) || 3,
+                strokeWidth: img.strokeWidth,
                 isBasic: img.isBasic,
                 isLINESvg: img.isLINESvg,
-                __capsOrientation: img.__capsOrientation
+                __capsOrientation: img.__capsOrientation,
+                curvature: img.curvature
             };
         })
     };
@@ -1272,7 +1291,8 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
             strokeWidth: im.strokeWidth || 3,
             isBasic: im.isBasic ?? false,
             isLINESvg: im.isLINESvg ?? false,
-            __capsOrientation: im.__capsOrientation ?? 'horizontal'
+            __capsOrientation: im.__capsOrientation ?? 'horizontal',
+            curvature: im.curvature || 0
         };
 
         // ⛔️ NO clamp here — preserve exact saved layout (even if it overflows)
