@@ -261,32 +261,39 @@ input::placeholder {
 }
 /*modal check mark*/
 .option-box .checkmark {
-    width: 20px;
-    height: 20px;
     display: inline-block;
     border: 2px solid transparent;
-    border-radius: 50%;
     position: relative;
     transition: all 0.3s ease;
 }
 
 .option-box.selected .checkmark {
-    background-color: #6214fe;
-    border-color: #6214fe;
+    background-color: transparent;
+    border-color: transparent;
 }
 
-    .option-box.selected .checkmark::after {
-        content: '';
-        position: absolute;
-        top: 2.5px;
-        left: 6px;
-        width: 5px;
-        height: 10px;
-        border: solid #fff;
-        border-width: 0 2px 2px 0;
-        transform: rotate(45deg);
-    }
+.option-box.selected .portrait-icon {
+    background-color: #6214fe;
+}
+
+.option-box.selected .landscape-icon {
+    background-color: #6214fe;
+}
+
+
+.option-box.selected .checkmark::after {
+    content: '';
+    position: absolute;
+    top: -6.5px !important;
+    left: -2px !important;
+    width: 5px;
+    height: 10px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
 /*modal check mark*/
+
 
 /*account*/
 /* logo image upload */
