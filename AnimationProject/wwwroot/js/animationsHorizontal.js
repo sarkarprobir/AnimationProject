@@ -38,7 +38,7 @@ function getNextZIndex() {
     return ++currentZIndex;
 }
 const __LINE_SVGS = new Set([
-     'ico-shapes-line.svg',
+    'ico-shapes-line.svg',
 ]);
 let layers = []; // global
 //document.getElementById('alinear').classList.add('active_effect');
@@ -100,11 +100,11 @@ let dragOffset = { x: 0, y: 0 };
 let activeImageHandle = null;
 
 // Configuration constants.
-const padding =5;         // Padding inside the bounding box
+const padding = 5;         // Padding inside the bounding box
 const handleSize = 10;     // Resize handle square size (in pixels)
 const minWidth = 50;       // Minimum bounding width
 const minHeight = 30;      // Minimum bounding height
-const HANDLE_HIT_RADIUS = handleSize * 2; 
+const HANDLE_HIT_RADIUS = handleSize * 2;
 /////////Image Section///////////////////
 let images = []; // Array to store image objects
 // Each image object: { img, src, x, y, width, height, scaleX, scaleY, selected }
@@ -134,10 +134,10 @@ let skipNextClick = false;
 ////This is for delete text///////////////////
 // Utility: Returns an object (text or image) if the (x,y) falls within its bounding box."
 function __isLINESvg(name) {
-   
+
     try {
         if (__LINE_SVGS.has(name)) return true;
-}
+    }
     catch { false }
     return __LINE_SVGS.has(name);
 }
@@ -341,9 +341,9 @@ function getTextResizeHandles(obj) {
         { x: boxX + boxW, y: boxY }, // top‐right
         //{ x: boxX + boxW, y: boxY + boxH / 2 }, // right‐middle
         { x: boxX + boxW, y: boxY + boxH }, // bottom‐right
-       // { x: boxX + boxW / 2, y: boxY + boxH }, // bottom‐middle
+        // { x: boxX + boxW / 2, y: boxY + boxH }, // bottom‐middle
         { x: boxX, y: boxY + boxH }, // bottom‐left
-       // { x: boxX, y: boxY + boxH / 2 }  // left‐middle
+        // { x: boxX, y: boxY + boxH / 2 }  // left‐middle
     ];
 }
 
@@ -639,7 +639,7 @@ function changeLineSpacing(deltaFactor) {
         // sync editor → model → canvas
         activeBox.text = textEditorNew.innerHTML;
         if (obj) obj.text = activeBox.text;
-       
+
     }
 
     // redraw
@@ -704,7 +704,7 @@ function drawCanvas(condition) {
     if (canvas._bgImg) {
         ctx.drawImage(canvas._bgImg, 0, 0, designW, designH);
     }
-   
+
     // ── 1) MARQUEE SELECTION LOGIC ─────────────────────────────────────
     if (isDraggingSelectionBox) {
         const x1 = Math.min(selectionStart.x, selectionEnd.x);
@@ -914,7 +914,7 @@ function drawCanvas(condition) {
         });
     });
 
-   
+
     toPixelSpace(() => {
         textObjects.forEach(obj => {
             if (!obj.selected || obj.type !== 'text') return;
@@ -1589,7 +1589,7 @@ function OnChangefontFamilyOLD(value) {
     const Obj = textObjects.find(obj => obj.selected);
     if (Obj) {
         Obj.fontFamily = fontFamily || 'Arial';
-        
+
     }
 
     drawCanvas('ChangeStyle');
@@ -1618,12 +1618,12 @@ function uploadImage(blob, existingFolderId = 'new') {
         });
 }
 function animateText(direction, condition, loopCount) {
-    const hiddenField = ($("#hdnTabType").val()  === 'In')
+    const hiddenField = ($("#hdnTabType").val() === 'In')
         ? `#hdnEffectSlide${activeSlide}`
         : `#hdnOutEffectSlide${activeSlide}`;
     const effectType = $(hiddenField).val();
 
-   // const animationType = document.getElementById("hdnTextAnimationType").value;
+    // const animationType = document.getElementById("hdnTextAnimationType").value;
     const animationType = effectType;
     let tabType = $("#hdnTabType").val();
 
@@ -1651,26 +1651,26 @@ function animateText(direction, condition, loopCount) {
         switch (direction) {
             case "top":
                 obj.x = obj.finalX;
-                obj.y = -canvas.height / 2 + offscreenMargin ;
+                obj.y = -canvas.height / 2 + offscreenMargin;
                 obj.exitX = obj.finalX;
-                obj.exitY = canvas.height ;
+                obj.exitY = canvas.height;
                 break;
 
             case "bottom":
                 obj.x = obj.finalX;
                 obj.y = canvas.height / 2 + 250;
                 obj.exitX = obj.finalX;
-                obj.exitY = -canvas.height/2;
+                obj.exitY = -canvas.height / 2;
                 break;
             case "left":
-                obj.x = -canvas.width/2 ;
+                obj.x = -canvas.width / 2;
                 obj.y = obj.finalY;
                 obj.exitX = canvas.width + margin;
                 obj.exitY = obj.finalY;
                 break;
 
             case "right":
-                obj.x = canvas.width /2 +150;
+                obj.x = canvas.width / 2 + 150;
                 obj.y = obj.finalY;
                 obj.exitX = -obj.boundingWidth - margin;
                 obj.exitY = obj.finalY;
@@ -1699,7 +1699,7 @@ function animateText(direction, condition, loopCount) {
                 imgObj.x = imgObj.finalX;
                 imgObj.y = -canvas.height / 2 + offscreenMargin;
                 imgObj.exitX = imgObj.finalX;
-                imgObj.exitY = canvas.height ;
+                imgObj.exitY = canvas.height;
                 break;
             case "bottom":
                 //imgObj.x = imgObj.finalX;
@@ -1742,7 +1742,7 @@ function animateText(direction, condition, loopCount) {
     });
 
 
-  
+
 
     if (animationType === "delaylinear") {
         // 1) Collect animatable items
@@ -1769,7 +1769,7 @@ function animateText(direction, condition, loopCount) {
         });
 
 
-        
+
 
         // 3) Compute timings
         const scaleInText = inTime;
@@ -1824,7 +1824,7 @@ function animateText(direction, condition, loopCount) {
                 tlText.to(unit, {
                     x: (i, target) => target.finalX,
                     y: (i, target) => target.finalY,
-                    duration: scaleInText*.20,
+                    duration: scaleInText * .20,
                     ease: "power1.in",
                     onUpdate: () => drawText()
                 }, 0);
@@ -1973,7 +1973,7 @@ function animateText(direction, condition, loopCount) {
             : 0;
 
         // ── STAY ── (for both Stay and Out)
-        if (tabType === "Stay" ) {
+        if (tabType === "Stay") {
             tlText.to({}, {
                 duration: stayTime,
                 ease: "none"
@@ -2000,7 +2000,7 @@ function animateText(direction, condition, loopCount) {
 
         // ── RESET “snap‐back” at end ──
         // total duration = inEndTime + stayTime + (if Out) last exit end
-        let totalDuration = inEndTime ;
+        let totalDuration = inEndTime;
         if (tabType === "Out") {
             totalDuration += (units.length - 1) * staggerOut + individualOut;
         }
@@ -2025,7 +2025,7 @@ function animateText(direction, condition, loopCount) {
         // const ratio     = tlText.duration() / slideExec;
         // tlText.timeScale(ratio);
     }
-    
+
 
     // ── Fade (canvas-only)  not working───────────────────────────
     else if (animationType === "fadeCanvas") {
@@ -2297,7 +2297,7 @@ function animateText(direction, condition, loopCount) {
         });
     }
 
-        // ── Roll (canvas-only) working───────────────────────────
+    // ── Roll (canvas-only) working───────────────────────────
     else if (animationType === "roll") {
         const animItems = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
         const staticItems = [...images.filter(i => i.noAnim), ...textObjects.filter(t => t.noAnim)];
@@ -2318,10 +2318,10 @@ function animateText(direction, condition, loopCount) {
                 units.push([item]);
             }
         });
-        
+
         const halfIn = inTime * 0.5;
         const halfOut = outTime * 0.5;
-       
+
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
 
@@ -2399,7 +2399,7 @@ function animateText(direction, condition, loopCount) {
         if (["Stay"].includes(tabType)) {
             tl.to({}, { duration: 0.5, ease: "none" }, delayR);
         }
-       
+
         // 🔴 OUT phase — animate grouped units
         if (tabType === "Out") {
             units.forEach((unit, idx) => {
@@ -2479,13 +2479,13 @@ function animateText(direction, condition, loopCount) {
         // 🔄 Reset
         tl.eventCallback("onComplete", () => {
             [...animItems, ...staticItems].forEach(o => o.rotation = o.rotation);
-           
+
         });
     }
 
-    
 
-    
+
+
 
 
 
@@ -2540,130 +2540,130 @@ function animateText(direction, condition, loopCount) {
         });
     }
 
-        // ── Popcorn (canvas-only) In working Out not working and only Image working not tex ────────────────────────
-        else if (animationType === "popcorn") {
-    const animItems = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
-    const staticItems = [...images.filter(i => i.noAnim), ...textObjects.filter(t => t.noAnim)];
+    // ── Popcorn (canvas-only) In working Out not working and only Image working not tex ────────────────────────
+    else if (animationType === "popcorn") {
+        const animItems = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+        const staticItems = [...images.filter(i => i.noAnim), ...textObjects.filter(t => t.noAnim)];
 
-    // Group animatable items by groupId
-    const groupMap = new Map();
-    const units = [];
-    animItems.forEach(item => {
-        const gid = item.groupId;
-        if (gid != null) {
-            if (!groupMap.has(gid)) {
-                groupMap.set(gid, []);
-                units.push(groupMap.get(gid));
+        // Group animatable items by groupId
+        const groupMap = new Map();
+        const units = [];
+        animItems.forEach(item => {
+            const gid = item.groupId;
+            if (gid != null) {
+                if (!groupMap.has(gid)) {
+                    groupMap.set(gid, []);
+                    units.push(groupMap.get(gid));
+                }
+                groupMap.get(gid).push(item);
+            } else {
+                units.push([item]);
             }
-            groupMap.get(gid).push(item);
-        } else {
-            units.push([item]);
-        }
-    });
+        });
 
-    // Set initial positions and scales
-    animItems.forEach(o => {
-        o.x = o.finalX;
-        o.y = o.finalY;
-        o.scaleX = 0;
-        o.scaleY = 0;
-    });
-    staticItems.forEach(o => {
-        o.x = o.finalX;
-        o.y = o.finalY;
-        o.scaleX = 1;
-        o.scaleY = 1;
-    });
+        // Set initial positions and scales
+        animItems.forEach(o => {
+            o.x = o.finalX;
+            o.y = o.finalY;
+            o.scaleX = 0;
+            o.scaleY = 0;
+        });
+        staticItems.forEach(o => {
+            o.x = o.finalX;
+            o.y = o.finalY;
+            o.scaleX = 1;
+            o.scaleY = 1;
+        });
 
-    const tl = gsap.timeline({
-        repeat: loopCount - 1,
-        onUpdate: () => drawText()
-    });
+        const tl = gsap.timeline({
+            repeat: loopCount - 1,
+            onUpdate: () => drawText()
+        });
 
-    // 🧷 Pin static items immediately
-    staticItems.forEach(o => {
-        tl.set(o, { x: o.finalX, y: o.finalY, scaleX: 1, scaleY: 1 }, 0);
-    });
+        // 🧷 Pin static items immediately
+        staticItems.forEach(o => {
+            tl.set(o, { x: o.finalX, y: o.finalY, scaleX: 1, scaleY: 1 }, 0);
+        });
 
-    const totalUnits = units.length;
-    const staggerIn = (inTime / 2) / totalUnits;
-    const staggerOut = (outTime / 2) / totalUnits;
+        const totalUnits = units.length;
+        const staggerIn = (inTime / 2) / totalUnits;
+        const staggerOut = (outTime / 2) / totalUnits;
 
         if (tabType === "In" || tabType === "Out") {
-        units.forEach((unit, i) => {
-            const start = i * staggerIn;
-            tl.set(unit, { scaleX: 0, scaleY: 0 }, 0);
+            units.forEach((unit, i) => {
+                const start = i * staggerIn;
+                tl.set(unit, { scaleX: 0, scaleY: 0 }, 0);
 
-            tl.to(unit, {
-                scaleX: 1.3,
-                scaleY: 1.3,
-                duration: 0.2,
-                ease: "power2.out"
-            }, start);
+                tl.to(unit, {
+                    scaleX: 1.3,
+                    scaleY: 1.3,
+                    duration: 0.2,
+                    ease: "power2.out"
+                }, start);
 
-            tl.to(unit, {
-                scaleX: 1.0,
-                scaleY: 1.0,
-                duration: 0.3,
-                ease: "bounce.out"
-            }, start + 0.2);
-        });
+                tl.to(unit, {
+                    scaleX: 1.0,
+                    scaleY: 1.0,
+                    duration: 0.3,
+                    ease: "bounce.out"
+                }, start + 0.2);
+            });
+        }
+
+        const delayP = (tabType === "In") ? inTime : 0;
+
+        if (["Stay", "Out"].includes(tabType)) {
+            tl.to({}, { duration: stayTime, ease: "none" }, delayP);
+        }
+
+
     }
-
-    const delayP = (tabType === "In") ? inTime : 0;
-
-    if (["Stay", "Out"].includes(tabType)) {
-        tl.to({}, { duration: stayTime, ease: "none" }, delayP);
-    }
-
-    
-}
 
     else if (animationType === "zoom") {
-    const animItems = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
-    const staticItems = [...images.filter(i => i.noAnim), ...textObjects.filter(t => t.noAnim)];
+        const animItems = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+        const staticItems = [...images.filter(i => i.noAnim), ...textObjects.filter(t => t.noAnim)];
 
-    // Group items by groupId
-    const groupMap = new Map();
-    const units = [];
-    animItems.forEach(item => {
-        const gid = item.groupId;
-        if (gid != null) {
-            if (!groupMap.has(gid)) {
-                groupMap.set(gid, []);
-                units.push(groupMap.get(gid));
+        // Group items by groupId
+        const groupMap = new Map();
+        const units = [];
+        animItems.forEach(item => {
+            const gid = item.groupId;
+            if (gid != null) {
+                if (!groupMap.has(gid)) {
+                    groupMap.set(gid, []);
+                    units.push(groupMap.get(gid));
+                }
+                groupMap.get(gid).push(item);
+            } else {
+                units.push([item]);
             }
-            groupMap.get(gid).push(item);
-        } else {
-            units.push([item]);
-        }
-    });
+        });
 
-    // Initialize all
-    animItems.forEach(o => {
-        o.x = o.finalX;
-        o.y = o.finalY;
-        o.scaleX = 0.5;
-        o.scaleY = 0.5;
-    });
-    staticItems.forEach(o => {
-        o.x = o.finalX;
-        o.y = o.finalY;
-        o.scaleX = 1;
-        o.scaleY = 1;
-    });
+        // Initialize all
+        animItems.forEach(o => {
+            o.x = o.finalX;
+            o.y = o.finalY;
+            o.scaleX = 0.5;
+            o.scaleY = 0.5;
+        });
+        staticItems.forEach(o => {
+            o.x = o.finalX;
+            o.y = o.finalY;
+            o.scaleX = 1;
+            o.scaleY = 1;
+        });
 
-    const tl = gsap.timeline({
-        repeat: loopCount - 1,
-        onUpdate: () => drawText()
-    });
+        const tl = gsap.timeline({
+            repeat: loopCount - 1,
+            onUpdate: () => drawText()
+        });
 
-    // Pin static items immediately
-    staticItems.forEach(o => {
-        tl.set(o, { x: o.finalX, y: o.finalY, scaleX: 1, scaleY: 1 }, 0);
-    });
+        // Pin static items immediately
+        staticItems.forEach(o => {
+            tl.set(o, { x: o.finalX, y: o.finalY, scaleX: 1, scaleY: 1 }, 0);
+        });
 
-        if(tabType === "In") {
+        if (tabType === "In") {
             // Start small (or invisible)
             tl.set(units.flat(), {
                 scaleX: 0.1,
@@ -2681,12 +2681,12 @@ function animateText(direction, condition, loopCount) {
         }
 
 
-    const delayP = (tabType === "In") ? inTime : 0;
+        const delayP = (tabType === "In") ? inTime : 0;
 
-    // STAY phase (optional)
-    if (["Stay", "Out"].includes(tabType)) {
-        tl.to({}, { duration: stayTime, ease: "none" }, delayP);
-    }
+        // STAY phase (optional)
+        if (["Stay", "Out"].includes(tabType)) {
+            tl.to({}, { duration: stayTime, ease: "none" }, delayP);
+        }
 
         if (tabType === "Out") {
             // Ensure full size before starting OUT
@@ -2703,9 +2703,9 @@ function animateText(direction, condition, loopCount) {
                 ease: "power2.inOut",
                 onUpdate: () => drawText()
             }, 0);
-            
+
         }
-}
+    }
 
     // ── Glitch (canvas-only) working ─────────────────────────
     else if (animationType === "glitchCanvas") {
@@ -2738,8 +2738,8 @@ function animateText(direction, condition, loopCount) {
 
 
 
-   
-   
+
+
 }
 
 
@@ -2774,7 +2774,7 @@ function textAnimationClick(clickedElement, type, from) {
         clickedElement.classList.add("active_effect");
     }
     else if (from == 'In') {
-       
+
         if (activeSlide === 1) {
             $("#hdnEffectSlide1").val(type);
         }
@@ -2792,8 +2792,8 @@ function textAnimationClick(clickedElement, type, from) {
     //    document.getElementById('atop')?.classList.add('disabled-ani-button');
     //    document.getElementById('obottom')?.classList.add('disabled-ani-button');
     //    document.getElementById('otop')?.classList.add('disabled-ani-button');
-        
-        
+
+
     //} else {
     //    document.getElementById('abottom')?.classList.remove('disabled-ani-button');
     //    document.getElementById('atop')?.classList.remove('disabled-ani-button');
@@ -2825,12 +2825,12 @@ function textAnimationClick(clickedElement, type, from) {
     //for (var i = 0; i < links.length; i++) {
     //    links[i].classList.remove("active_effect");
     //}
-   // initMiniCanvasHandlers();
+    // initMiniCanvasHandlers();
 }
 // miniCanvasHandlers.js
 
 (function (window, document, gsap) {
-    
+
     // all your canvases & centers live here:
     let miniCanvasAtop,
         miniCanvasAleft,
@@ -3163,7 +3163,7 @@ function loadImage(src) {
 function ShowAnimationOption() {
     document.getElementById("imageCoordinationforBounce").style.display = "block";
 }
-function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imageEndX, imageEndY,from) {
+function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imageEndX, imageEndY, from) {
     // Get the container using its ID.
     var ulDirection = document.getElementById("uldirection");
     if (from == 'In') {
@@ -3220,7 +3220,7 @@ function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imag
         $('#oleft').addClass('active_effect');
     }
     if ($("#hdnDirectiontSlide1").val() == "") {
-       
+
         $("#hdnDirectiontSlide1").val('left');
         $("#hdnOutDirectiontSlide1").val('left');
 
@@ -3228,24 +3228,24 @@ function setCoordinate(clickedElement, direction, imageStartX, imageStartY, imag
         $('#oleft').addClass('active_effect');
     }
 
-        document.getElementById("imageStartX").value = imageStartX;
-        document.getElementById("imageStartY").value = imageStartY;
-        document.getElementById("imageEndX").value = imageEndX;
-        document.getElementById("imageEndY").value = imageEndY;
-       // document.getElementById("imageAnimation").value = $("#imageAnimation option:selected").val();
-        applyAnimations(direction, 'applyAnimations');
-        //// Start recording before starting your GSAP animation
-        //recorder.start();
+    document.getElementById("imageStartX").value = imageStartX;
+    document.getElementById("imageStartY").value = imageStartY;
+    document.getElementById("imageEndX").value = imageEndX;
+    document.getElementById("imageEndY").value = imageEndY;
+    // document.getElementById("imageAnimation").value = $("#imageAnimation option:selected").val();
+    applyAnimations(direction, 'applyAnimations');
+    //// Start recording before starting your GSAP animation
+    //recorder.start();
 
-        //// Later, when you want to stop recording (e.g., after the animation completes)
-        //setTimeout(() => {
-        //    recorder.stop();
-        //}, 4000);
-    }
-    //else {
-    //    //alert('Please select Text Animation')
-    //    MessageShow('', 'Please select text Animation', 'error');
-    //}
+    //// Later, when you want to stop recording (e.g., after the animation completes)
+    //setTimeout(() => {
+    //    recorder.stop();
+    //}, 4000);
+}
+//else {
+//    //alert('Please select Text Animation')
+//    MessageShow('', 'Please select text Animation', 'error');
+//}
 
 //}
 
@@ -3392,7 +3392,7 @@ function addDefaultTextNew() {
         isItalic: false,
         type: 'text',
         zIndex: getNextZIndex(),
-        opacity:100
+        opacity: 100
     };
 
     // 2) Measure it
@@ -3463,13 +3463,14 @@ function cloneImageObject(srcObj) {
         selected: false,
         zIndex: getNextZIndex(),
         type: 'image',
-        fillNoColorStatus: srcObj.fillNoColorStatus|| false,
+        fillNoColorStatus: srcObj.fillNoColorStatus || false,
         strokeNoColorStatus: srcObj.strokeNoColorStatus || false,
-        fillNoColor: srcObj.fillNoColor|| "#FFFFFF",
-        strokeNoColor: srcObj.strokeNoColor ||"#FFFFFF",
-        strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 3,
+        fillNoColor: srcObj.fillNoColor || "#FFFFFF",
+        strokeNoColor: srcObj.strokeNoColor || "#FFFFFF",
+        strokeWidth: srcObj.isBasic,
         isBasic: srcObj.isBasic,
-        isLINESvg: srcObj.isLine
+        isLINESvg: srcObj.isLine,
+        curvature: srcObj.curvature || 0
         // Copy any other custom fields if needed...
     };
 }
@@ -3521,7 +3522,7 @@ function cloneTextObject(src) {
 function cloneImageObject(src) {
     const fields = [
         "type", "x", "y", "width", "height", "scaleX", "scaleY", "rotate", "opacity",
-        "zIndex", "groupId", "noAnim", "crop", "flipX", "flipY", "src", "isBasic","isLINESvg" // keep a plain src string if you have it
+        "zIndex", "groupId", "noAnim", "crop", "flipX", "flipY", "src", "isBasic", "isLINESvg" // keep a plain src string if you have it
     ];
     const o = {};
     fields.forEach(k => { if (k in src) o[k] = structuredClone(src[k]); });
@@ -4325,7 +4326,7 @@ function isInsideRotatedText(mouseX, mouseY, txt) {
 
 //        opacitySlider.value = 100;
 //        opacityBadge.textContent = "100";
-       
+
 
 //        // begin drag-to-select
 //        isDraggingSelectionBox = true;
@@ -4489,7 +4490,7 @@ function onMultiResizeUp() {
     window.removeEventListener('mousemove', onMultiResizeMove);
     window.removeEventListener('mouseup', onMultiResizeUp);
     resizeState = null;
-   // SaveDesignBoard();
+    // SaveDesignBoard();
 }
 
 // Helpers
@@ -5195,7 +5196,7 @@ function updateRotation(angle) {
         if (obj.selected) obj.rotation = angle;
     });
     drawText();
-   // drawCanvas('Common');
+    // drawCanvas('Common');
 }
 
 
@@ -5586,7 +5587,7 @@ canvas.addEventListener("click", function onCanvasClick(e) {
 
         setGraphicModeActive();
         setOpacityUI(normAlpha(imgHit.opacity));
-        
+
         // initialize fill/stroke colors once if required
         if ($("#hdnFillStrockColorFlag").val() === '1') {
             $("#hdnfillColor").val(imgHit.fillNoColor || "#FFFFFF");
@@ -5646,7 +5647,7 @@ canvas.addEventListener("click", function onCanvasClick(e) {
     if (activeImage && activeImage.isLINESvg) {
         document.getElementById("divFillColor").style.display = 'none';
         document.getElementById("divStrokeCheck").style.display = 'none';
-        
+
     }
     else {
         if (activeImage != null) {
@@ -5663,6 +5664,7 @@ function applyImagePaintToUI(imgHit) {
     const noFillBox = document.getElementById('noColorCheck');   // fill no-color
     const noStrokeBox = document.getElementById('noColorCheck2');  // stroke no-color
     const swEl = document.getElementById('ddlStrokeWidth');
+    const curvature = document.getElementById('ddlCurvature');
 
     // 1) Set checkboxes from statuses
     if (noFillBox) noFillBox.checked = !!imgHit.fillNoColorStatus;
@@ -5685,6 +5687,7 @@ function applyImagePaintToUI(imgHit) {
     }
 
     if (swEl && imgHit.strokeWidth != null) swEl.value = String(imgHit.strokeWidth);
+    if (curvature && imgHit.curvature != null) curvature.value = String(imgHit.curvature);
 }
 
 
@@ -5701,8 +5704,8 @@ function applyImagePaintToUI(imgHit) {
 //    const buttons = document.querySelectorAll('.toggle-btn');
 //    const graphicBtn = document.querySelector('.toggle-btn[data-mode="graphic"]');
 
-   
-   
+
+
 
 
 //    const rect = canvas.getBoundingClientRect();
@@ -5817,7 +5820,7 @@ function applyImagePaintToUI(imgHit) {
 //            $("#favStrockcolor").val($("#hdnStrockColor").val());
 //            $("#hdnFillStrockColorFlag").val('2');
 //        }
-       
+
 //    }
 //    else {
 //                // — clicked empty space —
@@ -5852,7 +5855,7 @@ function applyImagePaintToUI(imgHit) {
 //        //if ($("#hdnStrockColor").val() == imgHit.strokeNoColor) {
 //        //    $("#hdnStrockColor").val(imgHit.strokeNoColor || "#FFFFFF");
 //        //}
-       
+
 //        //$("#favFillcolor").val($("#hdnfillColor").val());
 //        //$("#favStrockcolor").val($("#hdnStrockColor").val());
 
@@ -5868,7 +5871,7 @@ function applyImagePaintToUI(imgHit) {
 //            );
 //        }
 
-      
+
 //        if (noStrokeChecked) {
 //            updateSelectedImageColors(
 //                noColorChecked ? "none" : $("#hdnfillColor").val(),
@@ -5876,7 +5879,7 @@ function applyImagePaintToUI(imgHit) {
 //            );
 //        }
 
-       
+
 //    }
 //    console.log("Selected Type:", selectedType);
 //    HideShowRightPannel(selectedType);
@@ -6079,7 +6082,7 @@ function generateUUID() {
 function ImagePropertySet() {
     const noAnimCheckbox = document.getElementById('noAnimCheckbox');
     const isChecked = noAnimCheckbox.checked;
-    
+
     // collect whatever is currently selected
     const selectedImgs = images.filter(img => img.selected);
     const selectedTexts = textObjects.filter(txt => txt.selected);
@@ -6161,10 +6164,10 @@ function ImagePropertySet() {
 //        //    textEditor.setSelectionRange(0, 0);
 //        //});
 //        setTimeout(() => textEditor.setSelectionRange(0, 0), 0);
-     
+
 
 //        // Finish editing when Enter is pressed (unless using Shift+Enter for a new line) or on blur.
-       
+
 
 //        function finishEditing() {
 //            const editedText = textEditor.value;
@@ -7175,8 +7178,179 @@ function ChangeFillColor() {
     target.fillNoColor = document.getElementById('favFillcolor')?.value || "#FFFFFF";
     updateSelectedImageColors(target, newFill, newStroke, newStrokeWidth);
 }
-
 function updateSelectedImageColors(targetImage, newFill, newStroke, newStrokeWidth = null) {
+    if (!targetImage) return null;
+
+    const svgUrl = targetImage.originalSrc || targetImage.src || "";
+    const isSvg = svgUrl.toLowerCase().endsWith(".svg") || svgUrl.startsWith("data:image/svg+xml");
+    if (!isSvg || !targetImage.img) { console.warn("Target is not an SVG"); return null; }
+
+    if (!targetImage.originalSrc) targetImage.originalSrc = targetImage.src;
+
+    targetImage._paintJobId = (targetImage._paintJobId || 0) + 1;
+    const myJob = targetImage._paintJobId;
+
+    const origW = targetImage.width, origH = targetImage.height;
+    if (newStrokeWidth != null) targetImage.strokeWidth = newStrokeWidth; // keep numeric too
+
+    const PAINT_TAGS = new Set(["path", "rect", "circle", "ellipse", "polygon", "polyline", "line", "g", "use", "text"]);
+
+    function patchSvg(svgText) {
+        // parse
+        const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+        const svg = doc.documentElement;
+        if (!svg || svg.nodeName.toLowerCase() === "parsererror") return svgText;
+
+        // 1) Dynamic per-side padding that collapses after reload
+        (function applyViewBoxForStroke() {
+            const sw = Number(newStrokeWidth ?? targetImage?.strokeWidth ?? 0);
+            const half = (Number.isFinite(sw) && sw > 0) ? sw / 2 : 0;
+
+            // current viewBox or fallback
+            let vbStr = (svg.getAttribute("viewBox") || "").trim();
+            let vbCur;
+            if (vbStr) {
+                const a = vbStr.split(/[\s,]+/).map(Number);
+                if (a.length >= 4 && a.every(Number.isFinite)) {
+                    vbCur = { x: a[0], y: a[1], w: a[2], h: a[3] };
+                }
+            }
+            if (!vbCur) {
+                const w = Number(svg.getAttribute("width")) || Number(origW) || 0;
+                const h = Number(svg.getAttribute("height")) || Number(origH) || 0;
+                vbCur = { x: 0, y: 0, w, h };
+            }
+
+            // geometry bbox (stroke excluded)
+            const SVG_NS = "http://www.w3.org/2000/svg";
+            let bbox = { x: vbCur.x, y: vbCur.y, width: vbCur.w, height: vbCur.h };
+            try {
+                const tmpSvg = document.createElementNS(SVG_NS, "svg");
+                tmpSvg.setAttribute("viewBox", `${vbCur.x} ${vbCur.y} ${vbCur.w} ${vbCur.h}`);
+                tmpSvg.style.cssText = "position:absolute;left:-99999px;top:-99999px;visibility:hidden;width:0;height:0";
+                const g = document.createElementNS(SVG_NS, "g");
+                Array.from(svg.childNodes).forEach(n => g.appendChild(n.cloneNode(true)));
+                tmpSvg.appendChild(g);
+                document.body.appendChild(tmpSvg);
+                const gb = g.getBBox(); // excludes stroke
+                bbox = { x: gb.x, y: gb.y, width: gb.width, height: gb.height };
+                tmpSvg.remove();
+            } catch { /* keep bbox as vbCur */ }
+
+            // keep tiny author margin, drop prior saved padding
+            const tol = Math.max(0.25, Math.min(vbCur.w, vbCur.h) * 0.005); // 0.25 units or 0.5%
+            const keepL = Math.min(Math.max(0, bbox.x - vbCur.x), tol);
+            const keepT = Math.min(Math.max(0, bbox.y - vbCur.y), tol);
+            const keepR = Math.min(Math.max(0, (vbCur.x + vbCur.w) - (bbox.x + bbox.width)), tol);
+            const keepB = Math.min(Math.max(0, (vbCur.y + vbCur.h) - (bbox.y + bbox.height)), tol);
+
+            const base = {
+                x: bbox.x - keepL,
+                y: bbox.y - keepT,
+                w: bbox.width + keepL + keepR,
+                h: bbox.height + keepT + keepB
+            };
+
+            svg.setAttribute("overflow", "visible");
+
+            if (half === 0) {
+                svg.setAttribute("viewBox", `${base.x} ${base.y} ${base.w} ${base.h}`);
+                targetImage.__svgPad = { l: 0, t: 0, r: 0, b: 0 };
+                return;
+            }
+
+            // add only what’s needed for current stroke
+            const padL = Math.max(0, half - keepL);
+            const padT = Math.max(0, half - keepT);
+            const padR = Math.max(0, half - keepR);
+            const padB = Math.max(0, half - keepB);
+
+            svg.setAttribute(
+                "viewBox",
+                `${base.x - padL} ${base.y - padT} ${base.w + padL + padR} ${base.h + padT + padB}`
+            );
+            targetImage.__svgPad = { l: padL, t: padT, r: padR, b: padB };
+        })();
+
+        // 2) Style block updates
+        const styleEl = svg.querySelector("style");
+        if (styleEl) {
+            let css = styleEl.textContent || "";
+            if (newFill != null) css = css.replace(/(^|[^\w-])fill\s*:\s*[^;]+;?/g, `$1fill:${newFill};`);
+            if (newStroke != null) css = css.replace(/(^|[^\w-])stroke\s*:\s*[^;]+;?/g, `$1stroke:${newStroke};`);
+            if (newStrokeWidth != null) css = css.replace(/stroke-width\s*:\s*[^;]+;?/g, `stroke-width:${newStrokeWidth};`);
+            styleEl.textContent = css;
+        }
+
+        // 3) Inline attributes (skip <defs>)
+        const PAINT_TAGS = new Set(["path", "rect", "circle", "ellipse", "polygon", "polyline", "line", "g", "use", "text"]);
+        svg.querySelectorAll("*").forEach(el => {
+            if (!PAINT_TAGS.has(el.tagName.toLowerCase())) return;
+            if (el.closest("defs")) return;
+            if (newFill != null) el.setAttribute("fill", newFill);
+            if (newStroke != null) el.setAttribute("stroke", newStroke);
+            if (newStrokeWidth != null) el.setAttribute("stroke-width", String(newStrokeWidth));
+            // optional for nicer corners:
+            // el.setAttribute("stroke-linejoin","round");
+            // el.setAttribute("stroke-linecap","round");
+            // el.setAttribute("paint-order","stroke fill");
+        });
+
+        return new XMLSerializer().serializeToString(doc);
+    }
+    function redrawSVG(svgText) {
+        if (myJob !== targetImage._paintJobId) return null;
+
+        const uri = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgText);
+        const imgEl = targetImage.img;
+
+        // Ensure we persist the modified source regardless of onload timing
+        targetImage.modifiedSVG = svgText;        // raw svg text (optional but handy)
+        targetImage.modifiedSrc = uri;            // persist this to DB
+        targetImage.hasPaintOverrides = true;     // boolean flag for your loader
+        targetImage.src = uri;                    // keep model in sync (used by your serializer?)
+
+        // Update the display image
+        imgEl.onload = () => {
+            if (myJob !== targetImage._paintJobId) return;
+            targetImage.width = origW;
+            targetImage.height = origH;
+            if (typeof drawText === "function") drawText();
+        };
+        imgEl.onerror = () => {
+            console.warn("Failed to repaint SVG:", targetImage.originalSrc || targetImage.src);
+        };
+        imgEl.src = uri;
+
+        return uri; // allow caller to persist immediately
+    }
+
+    if (targetImage.originalSVG) {
+        return redrawSVG(patchSvg(targetImage.originalSVG));
+    } else if (svgUrl.startsWith("data:image/svg+xml")) {
+        const afterComma = svgUrl.split(",")[1] || "";
+        let raw = "";
+        if (/;base64/i.test(svgUrl)) {
+            try { raw = atob(afterComma); } catch { raw = ""; }
+        } else {
+            try { raw = decodeURIComponent(afterComma); } catch { raw = ""; }
+        }
+        if (raw) {
+            targetImage.originalSVG = raw;
+            return redrawSVG(patchSvg(raw));
+        } else {
+            console.warn("Could not decode inline SVG data.");
+            return null;
+        }
+    } else {
+        return fetch(svgUrl)
+            .then(r => r.text())
+            .then(text => { targetImage.originalSVG = text; return redrawSVG(patchSvg(text)); })
+            .catch(err => { console.error("Fetch SVG failed:", err); return null; });
+    }
+}
+
+function updateSelectedImageColorsOLD1(targetImage, newFill, newStroke, newStrokeWidth = null) {
     if (!targetImage) return;
 
     const svgUrl = targetImage.originalSrc || targetImage.src || "";
@@ -7517,7 +7691,7 @@ function TabShowHide(type) {
     } else if (type === 'Out') {
         document.getElementById("tab3").checked = true;
     }
-   
+
 }
 function updateEffectButtons(type) {
     // 1) pick the right hidden‑field based on In vs Out
@@ -7527,7 +7701,7 @@ function updateEffectButtons(type) {
     const effectType = $(hiddenField).val();
 
     // 2) clear any previously active button
-   // $('.effect_btn').removeClass('active_effect');
+    // $('.effect_btn').removeClass('active_effect');
 
     // 3) pick the button selector
     let btnSelector = null;
@@ -7574,7 +7748,7 @@ function updateDirectionButtons(type) {
     const directionType = $(hiddenField).val();
 
     // 2) clear any previously active button
-   // $('.effect_btn').removeClass('active_effect');
+    // $('.effect_btn').removeClass('active_effect');
 
     // 3) pick the button selector
     let btnSelector = null;
@@ -7600,7 +7774,7 @@ function updateDirectionButtons(type) {
 
 
 
- //Listen for clicks on the dropdown menu.
+//Listen for clicks on the dropdown menu.
 //document.getElementById('ddlSpeedControl').addEventListener('click', function (event) {
 //    if (event.target.matches('a.dropdown-item')) {
 //        // Retrieve the 'value' attribute from the clicked dropdown item.
@@ -7661,8 +7835,8 @@ canvas.addEventListener('dragover', e => {
 // --------------------------------------------------------------------
 const __BASIC_SHAPES = new Set([
     //'ico-shapes-circle.svg',
-   // 'ico-shapes-heart.svg',
-   // 'ico-shapes-hexagon.svg',
+    // 'ico-shapes-heart.svg',
+    // 'ico-shapes-hexagon.svg',
     //'ico-shapes-line.svg',
     'ico-shapes-rec.svg',
     //'ico-shapes-triangle.svg'
@@ -7695,12 +7869,12 @@ function __isBasicFromSource(src, fileName = '') {
             else svgText = decodeURIComponent(payload);
             const s = svgText.toLowerCase();
             if (
-             //   s.includes('ico-shapes-circle') ||
-              //  s.includes('ico-shapes-heart') ||
-              //  s.includes('ico-shapes-hexagon') ||
-             //   s.includes('ico-shapes-line') ||
-                s.includes('ico-shapes-rec') 
-              //  s.includes('ico-shapes-triangle')
+                //   s.includes('ico-shapes-circle') ||
+                //  s.includes('ico-shapes-heart') ||
+                //  s.includes('ico-shapes-hexagon') ||
+                //   s.includes('ico-shapes-line') ||
+                s.includes('ico-shapes-rec')
+                //  s.includes('ico-shapes-triangle')
             ) return true;
         } catch { /* ignore */ }
     }
@@ -8092,31 +8266,31 @@ if (canvas && typeof canvas.on === 'function') {
 
 
 
-    function applySvgColorChangesOld(svgText) {
-        // Update fill attributes
-        let updatedSvg = svgText.replace(/fill="[^"]*"/gi, `fill="${newFill}"`);
-        // Update stroke attributes (if exists, replace; if not, insert stroke attribute)
-        if (/stroke="[^"]*"/gi.test(updatedSvg)) {
-            updatedSvg = updatedSvg.replace(/stroke="[^"]*"/gi, `stroke="${newStroke}"`);
-        } else {
-            updatedSvg = updatedSvg.replace(/<svg([^>]*)>/i, `<svg$1 stroke="${newStroke}">`);
-        }
-
-        // Save the updated markup to a property (for later saving)
-        activeImage.svgData = updatedSvg;
-
-        // Create a new Blob URL for displaying the updated image
-        const svgBlob = new Blob([updatedSvg], { type: 'image/svg+xml;charset=utf-8' });
-        const newUrl = URL.createObjectURL(svgBlob);
-
-        const updatedImg = new Image();
-        updatedImg.onload = function () {
-            activeImage.img = updatedImg;
-            activeImage.src = newUrl;
-            drawCanvas('Common');
-        };
-        updatedImg.src = newUrl;
+function applySvgColorChangesOld(svgText) {
+    // Update fill attributes
+    let updatedSvg = svgText.replace(/fill="[^"]*"/gi, `fill="${newFill}"`);
+    // Update stroke attributes (if exists, replace; if not, insert stroke attribute)
+    if (/stroke="[^"]*"/gi.test(updatedSvg)) {
+        updatedSvg = updatedSvg.replace(/stroke="[^"]*"/gi, `stroke="${newStroke}"`);
+    } else {
+        updatedSvg = updatedSvg.replace(/<svg([^>]*)>/i, `<svg$1 stroke="${newStroke}">`);
     }
+
+    // Save the updated markup to a property (for later saving)
+    activeImage.svgData = updatedSvg;
+
+    // Create a new Blob URL for displaying the updated image
+    const svgBlob = new Blob([updatedSvg], { type: 'image/svg+xml;charset=utf-8' });
+    const newUrl = URL.createObjectURL(svgBlob);
+
+    const updatedImg = new Image();
+    updatedImg.onload = function () {
+        activeImage.img = updatedImg;
+        activeImage.src = newUrl;
+        drawCanvas('Common');
+    };
+    updatedImg.src = newUrl;
+}
 
 function applySvgColorChanges(svgText, newFill, newStroke) {
     // parse it
@@ -8147,7 +8321,7 @@ function hideBack() {
     if (popup) {
         popup.style.display = "none";
     }
-   // document.getElementById("modeButton").innerText = "Graphic Mode";
+    // document.getElementById("modeButton").innerText = "Graphic Mode";
 }
 
 function ChangeAllBackgroundColor() {
@@ -8170,7 +8344,7 @@ function ChangeSpecificBackgroundColor(controlid) {
 function setCanvasBackgroundOld(canvasId, color) {
     /* document.getElementById(canvasId).style.backgroundColor = color;*/
     ctx.fillStyle = color;
-   // ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 function setAllCanvasesBackground(selector, color) {
     const canvases = document.querySelectorAll(selector);
@@ -8511,19 +8685,19 @@ function CreateHeaderSectionhtml() {
             dataType: "html",
             success: function (result) {
                 $("#divHeaderSection").html(result);
-               
+
                 const lin = document.getElementById('alinear');
                 if (lin) {
                     lin.classList.add('active_effect');
                 } else {
-                   // console.warn("#alinear still not found!");
+                    // console.warn("#alinear still not found!");
                 }
-              
+
 
                 wireSpeedDropdown();
                 wireOutSpeedDropdown();
                 wireLoopDropdown();
-               /* wireUpPopupHandlers();*/
+                /* wireUpPopupHandlers();*/
             },
             error: function () {
             }
@@ -8541,7 +8715,7 @@ function CreateBackgroundSectionhtml() {
             dataType: "html",
             success: function (result) {
                 $("#background_popup").html(result);
-              //  wireUpPopupHandlers();
+                //  wireUpPopupHandlers();
             },
             error: function () {
             }
@@ -8640,7 +8814,7 @@ function CreateRightSectionhtml() {
 function wireSpeedDropdown() {
     const ddl = document.getElementById('ddlSpeedControl');
     if (!ddl) {
-       // console.warn("#ddlSpeedControl not found!");
+        // console.warn("#ddlSpeedControl not found!");
         return;
     }
     ddl.addEventListener('click', function (event) {
@@ -8668,7 +8842,7 @@ function wireSecondsDropdown() {
 function wireOutSpeedDropdown() {
     const ddlOut = document.getElementById('ddlOutSpeedControl');
     if (!ddlOut) {
-       // console.warn("#ddlOutSpeedControl not found!");
+        // console.warn("#ddlOutSpeedControl not found!");
         return;
     }
 
@@ -8688,7 +8862,7 @@ function wireOutSpeedDropdown() {
 function wireLoopDropdown() {
     const ddlLoop = document.getElementById('ddlLoopControl');
     if (!ddlLoop) {
-     //   console.warn("#ddlLoopControl not found!");
+        //   console.warn("#ddlLoopControl not found!");
         return;
     }
 
@@ -8747,23 +8921,26 @@ function elementsTogglePopup() {
 }
 
 // Optional: click outside to close
-document.addEventListener('click', function (event) {
-    const popup = document.getElementById('elementsPopup');
-    const button = document.querySelector('.elementsToggleBtn');
+//document.addEventListener('click', function (event) {
+//    const popup = document.getElementById('elementsPopup');
+//    const button = document.querySelector('.elementsToggleBtn');
 
-    if (!popup.contains(event.target) && !button.contains(event.target)) {
-        popup.style.display = 'none';
-    }
-});
+//    if (!popup.contains(event.target) && !button.contains(event.target)) {
+//        popup.style.display = 'none';
+//    }
+//});
+
+
+
 function boldTextOLD() {
     //const paddingX = 23;
     //const paddingY = 15;
     textObjects.forEach(obj => {
         if (obj.selected) obj.isBold = !obj.isBold;
-        
-     
+
+
     });
-   
+
     drawCanvas("Common");
     updateFontStyleButtons();
 }
@@ -8958,7 +9135,7 @@ function boldTextOLD() {
 
     redrawCanvas();
     updateFontStyleButtons();
-    
+
 }
 
 function italicTextOLD() {
@@ -8994,7 +9171,7 @@ function italicTextOLD() {
 
     redrawCanvas();
     updateFontStyleButtons();
-  
+
 }
 
 // Apply a style to the entire box without nuking existing spans.
@@ -9236,7 +9413,7 @@ function tranTogglePopup() {
 
     // clear any previously active transition buttons
     $('.tran_button').removeClass('active_tran');
-    
+
     // if it’s slideLeft, add `.active` to the #TslideLeft button
     if (t === 'slideLeft') {
         $('#TslideLeft').addClass('active_tran');
@@ -9248,8 +9425,8 @@ function tranTogglePopup() {
     else {
         $('.tran_button').removeClass('active_tran');
     }
-   
-    
+
+
 }
 
 function hideTran() {
@@ -9345,10 +9522,10 @@ let activeHandleKey = null;          // 'tl','tr','bl','br','t','r','b','l'
 let resizeDirectionRaw = null;   // e.g. "mr","ml","mt","mb","top-left", etc
 let resizeDirectionNorm = null;  // "r","l","t","b","tl","tr","bl","br"
 function applyScale() {
- /*   resizeCanvas();*/
+    /*   resizeCanvas();*/
     canvas.style.transform = `scale(${scale})`;
     scaleText.textContent = `Scale: ${scale.toFixed(1)}`;
-   /* drawCanvas("Common");*/
+    /* drawCanvas("Common");*/
 }
 
 function zoomIn() {
@@ -9713,7 +9890,7 @@ function drawText() {
         'ico-shapes-rec.svg',
         //'ico-shapes-triangle.svg'
     ]);
-    
+
     function __isBasicShapeSvg(box) {
         if (!box || box.type !== 'image' || !box.src) return false;
         let name = '';
@@ -10040,8 +10217,8 @@ function drawText() {
         // drop world-space clip
         ctx.restore();
 
-        
-        const isBasic = box.isBasic??false;
+
+        const isBasic = box.isBasic ?? false;
         if (isBasic) {
             if (box.type === "image") {
                 const { w, h, cx, cy } = getBoxRect(box);
@@ -10188,12 +10365,12 @@ function drawText() {
                 }
                 continue;
             }
-           
+
         }
 
 
 
-         //---- TEXT ---- (unchanged)
+        //---- TEXT ---- (unchanged)
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(angleRad);
@@ -10474,9 +10651,9 @@ function drawTextOLD_3_9() {
         //'ico-shapes-circle.svg',
         //'ico-shapes-heart.svg',
         //'ico-shapes-hexagon.svg',
-       // 'ico-shapes-line.svg',
+        // 'ico-shapes-line.svg',
         'ico-shapes-rec.svg',
-       // 'ico-shapes-triangle.svg'
+        // 'ico-shapes-triangle.svg'
     ]);
     function __isSpecialShapeSvg(box) {
         if (!box || box.type !== 'image' || !box.src) return false;
@@ -10978,7 +11155,7 @@ function drawTextOLD() {
         if (box.type === "image") {
             ctx.save();
             // (no rotation here since your old code didn't do rotated text; keeps selection aligned)
-           
+
             ctx.globalAlpha = normAlpha(box.opacity);
             ctx.drawImage(box.img, box.x, box.y, box.width, box.height);
             ctx.restore();
@@ -11322,7 +11499,7 @@ function sizeToPx(size) {
     return map[size] ?? 16;
 }
 let contextTarget = null;
-let   startDrag = null;
+let startDrag = null;
 // make canvas focusable once
 //if (!canvas.hasAttribute('tabindex')) canvas.setAttribute('tabindex', '0');
 canvas.addEventListener("mousedown", e => {
@@ -11748,9 +11925,186 @@ canvas.addEventListener("mousemove", e => {
     const { x: mx, y: my } = getCanvasMousePosition(e);
     const dx = mx - prevMouseX;
     const dy = my - prevMouseY;
-    
+
     // ──────────────────────────────────────────────────────────
-    // BASIC-shape helpers (local to this handler)
+    // 🔧 ROTATION HELPERS (ADD)
+    function __deg2rad(a) { return (a || 0) * Math.PI / 180; }
+    // world delta → local delta (relative to start point)
+    function __toLocalDelta(mx, my, sx, sy, rotDeg) {
+        const dxx = mx - sx, dyy = my - sy;
+        const aa = __deg2rad(rotDeg || 0), cc = Math.cos(aa), ss = Math.sin(aa);
+        return { dxL: dxx * cc + dyy * ss, dyL: -dxx * ss + dyy * cc };
+    }
+
+    // Generic anchored resize (images/svg): opposite edge/corner fixed (ADD)
+    function __applyResizeGenericAnchRot(box, dir, dxL, dyL) {
+        const o = box._orig || { x: box.x, y: box.y, width: box.width, height: box.height };
+        const ow = o.width, oh = o.height;
+
+        const useX = dir.includes('l') || dir.includes('r');
+        const useY = dir.includes('t') || dir.includes('b');
+        const signX = dir.includes('l') ? -1 : (dir.includes('r') ? +1 : 0);
+        const signY = dir.includes('t') ? -1 : (dir.includes('b') ? +1 : 0);
+
+        let newW = ow, newH = oh;
+
+        if (useX && useY) {
+            let sX = 1 + (signX ? (signX * dxL) / Math.max(1e-6, ow) : 0);
+            let sY = 1 + (signY ? (signY * dyL) / Math.max(1e-6, oh) : 0);
+            sX = Math.max(0.1, sX); sY = Math.max(0.1, sY);
+            const sU = Math.min(sX, sY);
+            newW = ow * sU; newH = oh * sU;
+        } else {
+            if (useX) newW = Math.max(1, ow + signX * dxL);
+            if (useY) newH = Math.max(1, oh + signY * dyL);
+        }
+
+        const dW = newW - ow, dH = newH - oh;
+        const sLX = useX ? (signX * dW / 2) : 0;
+        const sLY = useY ? (signY * dH / 2) : 0;
+
+        const aa = __deg2rad(box.rotation || 0), cc = Math.cos(aa), ss = Math.sin(aa);
+        const shiftX = sLX * cc - sLY * ss;
+        const shiftY = sLX * ss + sLY * cc;
+
+        const cx0 = o.x + ow / 2, cy0 = o.y + oh / 2;
+        const cx = cx0 + shiftX, cy = cy0 + shiftY;
+
+        box.x = cx - newW / 2;
+        box.y = cy - newH / 2;
+        box.width = newW;
+        box.height = newH;
+    }
+
+    // BASIC SVG anchored resize with curvature floors + uniform corner scale (ADD / FIX)
+    function __applyResizeBasicAnchRot(box, dir, dxL, dyL) {
+        const o = box._orig || { x: box.x, y: box.y, width: box.width, height: box.height };
+        const ow = o.width, oh = o.height;
+
+        const useX = dir.includes('l') || dir.includes('r');
+        const useY = dir.includes('t') || dir.includes('b');
+        const signX = dir.includes('l') ? -1 : (dir.includes('r') ? +1 : 0);
+        const signY = dir.includes('t') ? -1 : (dir.includes('b') ? +1 : 0);
+
+        // --- floors (NO dynamic dependence on current box size) ---
+        const MIN_PX = 6;
+        const capPx0 = Number.isFinite(box._capPxBase) ? box._capPxBase : 0; // frozen on mousedown
+        const minWUser = Number.isFinite(box.minWidth) ? box.minWidth : 1;
+        const minHUser = Number.isFinite(box.minHeight) ? box.minHeight : 1;
+        const minW = Math.max(MIN_PX, minWUser, Math.ceil(2 * capPx0)); // side-X floor
+        const minH = Math.max(MIN_PX, minHUser, Math.ceil(2 * capPx0)); // side-Y floor
+
+        let newW = ow, newH = oh;
+
+        if (useX && useY) {
+            // CORNER → uniform scale (match your non-rotated feel)
+            let sX = 1 + (signX ? (signX * dxL) / Math.max(1e-6, ow) : 0);
+            let sY = 1 + (signY ? (signY * dyL) / Math.max(1e-6, oh) : 0);
+            let sU = Math.min(sX, sY);
+
+            // allow squish back in: clamp to 0.1 and pixel floors (not to current size)
+            const sMin = Math.max(0.1, MIN_PX / Math.max(1e-6, ow), MIN_PX / Math.max(1e-6, oh));
+            sU = Math.max(sU, sMin);
+
+            newW = ow * sU;
+            newH = oh * sU;
+        } else {
+            // SIDE → single axis with stable floors (so you can squish after scaling out)
+            if (useX) newW = Math.max(minW, ow + signX * dxL);
+            if (useY) newH = Math.max(minH, oh + signY * dyL);
+        }
+
+        // center shift along the active local axes (opposite edge stays fixed)
+        const dW = newW - ow, dH = newH - oh;
+        const sLX = useX ? (signX * dW / 2) : 0;
+        const sLY = useY ? (signY * dH / 2) : 0;
+
+        const aa = __deg2rad(box.rotation || 0), cc = Math.cos(aa), ss = Math.sin(aa);
+        const shiftX = sLX * cc - sLY * ss;
+        const shiftY = sLX * ss + sLY * cc;
+
+        const cx0 = o.x + ow / 2, cy0 = o.y + oh / 2;
+        const cx = cx0 + shiftX, cy = cy0 + shiftY;
+
+        box.x = cx - newW / 2;
+        box.y = cy - newH / 2;
+        box.width = newW;
+        box.height = newH;
+
+        // keep caps consistent (orientation hint same as your code)
+        if (box.img) {
+            const kEff = Math.min(0.5, capPx0 / Math.max(1e-6, box.height));
+            box.img.__curvatureRatio = kEff;
+        }
+        box.preserveCaps = true;
+        if (useX && !useY) box.__capsOrientation = 'horizontal';
+        else if (!useX && useY) box.__capsOrientation = 'vertical';
+    }
+
+
+    // TEXT corner + side anchored with rotation (ADD)
+    function __applyCornerTextAnchRot(box, dir, dxL, dyL) {
+        const o = box._orig; if (!o) return;
+        const ow = o.width, oh = o.height;
+        const sgnX = dir.includes('l') ? -1 : (dir.includes('r') ? +1 : 0);
+        const sgnY = dir.includes('t') ? -1 : (dir.includes('b') ? +1 : 0);
+
+        let sX = 1 + (sgnX ? (sgnX * dxL) / Math.max(1e-6, ow) : 0);
+        let sY = 1 + (sgnY ? (sgnY * dyL) / Math.max(1e-6, oh) : 0);
+        sX = Math.max(0.1, sX); sY = Math.max(0.1, sY);
+        const sU = Math.min(sX, sY);
+
+        const newW = ow * sU, newH = oh * sU;
+        const dW = newW - ow, dH = newH - oh;
+
+        const sLX = (sgnX ? (sgnX * dW / 2) : 0);
+        const sLY = (sgnY ? (sgnY * dH / 2) : 0);
+
+        const aa = __deg2rad(box.rotation || 0), cc = Math.cos(aa), ss = Math.sin(aa);
+        const shiftX = sLX * cc - sLY * ss;
+        const shiftY = sLX * ss + sLY * cc;
+
+        const cx0 = o.x + ow / 2, cy0 = o.y + oh / 2;
+        const cx = cx0 + shiftX, cy = cy0 + shiftY;
+
+        box.x = cx - newW / 2;
+        box.y = cy - newH / 2;
+        box.width = newW;
+        box.height = newH;
+        if (typeof box._orig.text === 'string') {
+            box.text = scaleTextHTML(box._orig.text, sU);
+        }
+    }
+    function __applySideTextAnchRot(box, side, deltaL) {
+        const o = box._orig || { x: box.x, y: box.y, width: box.width, height: box.height };
+        const ow = o.width, oh = o.height;
+        const isX = side === 'l' || side === 'r';
+        const isY = side === 't' || side === 'b';
+        const sgn = (side === 'l' || side === 't') ? -1 : +1;
+
+        let newW = ow, newH = oh;
+        if (isX) newW = Math.max(1, ow + sgn * deltaL);
+        if (isY) newH = Math.max(1, oh + sgn * deltaL);
+
+        const dW = newW - ow, dH = newH - oh;
+        const sLX = isX ? (sgn * dW / 2) : 0;
+        const sLY = isY ? (sgn * dH / 2) : 0;
+
+        const aa = __deg2rad(box.rotation || 0), cc = Math.cos(aa), ss = Math.sin(aa);
+        const shiftX = sLX * cc - sLY * ss;
+        const shiftY = sLX * ss + sLY * cc;
+
+        const cx0 = o.x + ow / 2, cy0 = o.y + oh / 2;
+        const cx = cx0 + shiftX, cy = cy0 + shiftY;
+
+        box.x = cx - newW / 2;
+        box.y = cy - newH / 2;
+        box.width = newW;
+        box.height = newH;
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // BASIC-shape helpers (your originals kept)
     function __isBasicImage(box) {
         return !!(box && box.type === 'image' && (
             box.isBasic === true ||
@@ -11792,18 +12146,17 @@ canvas.addEventListener("mousemove", e => {
     }
 
     // ──────────────────────────────────────────────────────────
-    // ADD: line-only helpers (per your "images.isLINESvg")
-    function __isLineSvg(box) { return !!(box && box.isLINESvg === true); }    // ADD
+    // ADD: line-only helpers (kept)
+    function __isLineSvg(box) { return !!(box && box.isLINESvg === true); }
     const __LINE_HANDLES = (globalThis.__LINE_HANDLES instanceof Set)
         ? globalThis.__LINE_HANDLES
-        : new Set(['l', 'r']);                                               // ADD
+        : new Set(['l', 'r']);
 
     // ──────────────────────────────────────────────────────────
-    // When resizing, ignore disallowed handles on line items (belt & braces)
+    // When resizing, ignore disallowed handles on line items (kept)
     if (isResizingNew && activeBox && __isLineSvg(activeBox)) {
         const side = (resizeDirectionNorm || resizeDirection || '').toLowerCase();
         if (side && !__LINE_HANDLES.has(side)) {
-            // cancel the resize and fall back to drag
             isResizingNew = false;
             isDraggingNew = true;
             dragOffsetXNew = mx - activeBox.x;
@@ -11813,12 +12166,20 @@ canvas.addEventListener("mousemove", e => {
         }
     }
 
-    // ✅ TEXT left/right side-resize in rotated space
+    // ✅ TEXT left/right side-resize — rotation-aware first, then your original
     if (isResizingNew && activeBox && activeBox.type !== 'image' &&
         (resizeDirection === 'l' || resizeDirection === 'r')) {
-        resizeTextSideToMouse(activeBox, resizeDirection, mx, my);
 
-        // only prevent negative/zero; otherwise allow full squish
+        if ((activeBox.rotation || 0) % 360 !== 0) {
+            const { dxL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, activeBox.rotation || 0);
+            __applySideTextAnchRot(activeBox, resizeDirection, dxL);
+            drawText();
+            prevMouseX = mx; prevMouseY = my;
+            return;
+        }
+
+        // your original non-rotated path
+        resizeTextSideToMouse(activeBox, resizeDirection, mx, my);
         if (activeBox.width < 1) {
             if (resizeDirection === 'l') {
                 const right = activeBox.x + activeBox.width;
@@ -11828,11 +12189,9 @@ canvas.addEventListener("mousemove", e => {
                 activeBox.width = 1;          // keep the left edge anchored
             }
         }
-
         drawText();
         return;
     }
-
 
     if (isDraggingMulti) {
         updateMultiDrag(mx, my);
@@ -11857,7 +12216,17 @@ canvas.addEventListener("mousemove", e => {
         }
     }
 
+    // TEXT corner — rotation-aware first, then your original
     if (isCornerFontScale && activeBox && resizeDirectionNorm && CORNER_HANDLES.has(resizeDirectionNorm)) {
+        if ((activeBox.rotation || 0) % 360 !== 0) {
+            const { dxL, dyL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, activeBox.rotation || 0);
+            __applyCornerTextAnchRot(activeBox, resizeDirectionNorm, dxL, dyL);
+            drawText();
+            prevMouseX = mx; prevMouseY = my;
+            return;
+        }
+
+        // your original non-rotated text-corner code (kept)
         const dir = resizeDirectionNorm;
         const ow = activeBox._orig.width, oh = activeBox._orig.height;
         const dxAbs = mx - startMXCanvas, dyAbs = my - startMYCanvas;
@@ -11870,7 +12239,7 @@ canvas.addEventListener("mousemove", e => {
             case 'br': scaleX = (ow + dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
         }
         scaleX = Math.max(0.1, scaleX); scaleY = Math.max(0.1, scaleY);
-        const s = Math.min(scaleX, scaleY), newW = ow * s, newH = oh * s;
+        const sU = Math.min(scaleX, scaleY), newW = ow * sU, newH = oh * sU;
 
         switch (dir) {
             case 'tl': activeBox.x = activeBox._orig.x + (ow - newW); activeBox.y = activeBox._orig.y + (oh - newH); break;
@@ -11879,7 +12248,7 @@ canvas.addEventListener("mousemove", e => {
             case 'br': activeBox.x = activeBox._orig.x; activeBox.y = activeBox._orig.y; break;
         }
         activeBox.width = newW; activeBox.height = newH;
-        activeBox.text = scaleTextHTML(activeBox._orig.text, s);
+        activeBox.text = scaleTextHTML(activeBox._orig.text, sU);
         drawText();
         return;
     }
@@ -11888,7 +12257,7 @@ canvas.addEventListener("mousemove", e => {
     if (isCornerImageScale && activeBox && activeBox.type === "image" &&
         resizeDirectionNorm && CORNER_HANDLES.has(resizeDirectionNorm)) {
 
-        // block corner-resize for line items → fallback to drag
+        // block corner-resize for line items → fallback to drag (kept)
         if (__isLineSvg(activeBox)) {
             isCornerImageScale = false; isDraggingNew = true;
             dragOffsetXNew = mx - activeBox.x;
@@ -11898,6 +12267,19 @@ canvas.addEventListener("mousemove", e => {
             return;
         }
 
+        // ➜ rotation-aware (BASIC or normal) (ADD)
+        if ((activeBox.rotation || 0) % 360 !== 0) {
+            const { dxL, dyL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, activeBox.rotation || 0);
+            if (__isBasicImage(activeBox)) {
+                __applyResizeBasicAnchRot(activeBox, resizeDirectionNorm, dxL, dyL);
+            } else {
+                __applyResizeGenericAnchRot(activeBox, resizeDirectionNorm, dxL, dyL);
+            }
+            prevMouseX = mx; prevMouseY = my; drawText();
+            return;
+        }
+
+        // your original non-rotated corner image scale (kept)
         const dir = resizeDirectionNorm;
         const ow = activeBox._orig.width, oh = activeBox._orig.height;
         const dxAbs = mx - startMXCanvas, dyAbs = my - startMYCanvas;
@@ -11910,7 +12292,7 @@ canvas.addEventListener("mousemove", e => {
             case 'br': scaleX = (ow + dxAbs) / ow; scaleY = (oh + dyAbs) / oh; break;
         }
         scaleX = Math.max(0.1, scaleX); scaleY = Math.max(0.1, scaleY);
-        const s = Math.min(scaleX, scaleY), newW = ow * s, newH = oh * s;
+        const sImg = Math.min(scaleX, scaleY), newW = ow * sImg, newH = oh * sImg;
 
         switch (dir) {
             case 'tl': activeBox.x = activeBox._orig.x + (ow - newW); activeBox.y = activeBox._orig.y + (oh - newH); break;
@@ -11932,49 +12314,63 @@ canvas.addEventListener("mousemove", e => {
             // --- TOP / BOTTOM handles for IMAGES ---
             if (side === 't' || side === 'b') {
 
-                // NEW: BASIC images — make T/B act like L/R (anchor opposite edge)
-                // and clamp the visual cap radius so it never exceeds w/2.
                 if (activeBox.isBasic === true && !__isLineSvg?.(activeBox)) {
                     const o = activeBox._orig || {
                         x: activeBox.x, y: activeBox.y,
                         width: activeBox.width, height: activeBox.height
                     };
 
-                    const dyAbs = my - startMYCanvas;
-
-                    // Start from the captured base cap radius; fallback if missing
-                    const baseK = Number.isFinite(activeBox.curvatureRatio) ? Math.max(0, Math.min(0.5, activeBox.curvatureRatio)) : 0.5;
+                    // base cap radius (stable floor)
+                    const baseK = Number.isFinite(activeBox.curvatureRatio)
+                        ? Math.max(0, Math.min(0.5, activeBox.curvatureRatio)) : 0.5;
                     const capPx0 = Number.isFinite(activeBox._capPxBase)
                         ? activeBox._capPxBase
                         : Math.min(baseK * o.height, (o.width || 0) / 2);
 
-                    // Compute tentative new height (anchor opposite edge)
-                    let newH = (side === 't') ? (o.height - dyAbs) : (o.height + dyAbs);
+                    // compute delta in LOCAL space when rotated
+                    const rot = activeBox.rotation || 0;
+                    let delta = (side === 't')
+                        ? -(my - startMYCanvas)
+                        : +(my - startMYCanvas);
 
-                    // Enforce: at least enough height so that kEff <= 0.5 (i.e., 2*capPx0)
+                    if ((rot % 360) !== 0) {
+                        const { dyL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, rot);
+                        delta = (side === 't') ? -dyL : dyL; // use local-Y movement
+                    }
+
+                    // new height with floors
+                    let newH = o.height + delta;
                     const minHHard = Math.ceil(2 * capPx0);
                     const minHUser = Number.isFinite(activeBox.minHeight) ? activeBox.minHeight : 1;
                     const minH = Math.max(1, minHUser, minHHard);
                     if (newH < minH) newH = minH;
 
-                    // Anchor opposite edge
-                    if (side === 't') {
-                        activeBox.y = o.y + (o.height - newH);  // keep bottom fixed
-                    } else {
-                        activeBox.y = o.y;                      // keep top fixed
-                    }
+                    // keep opposite edge anchored:
+                    // shift center by half the change along local-Y, then rotate into world
+                    const dH = newH - o.height;
+                    const sgn = (side === 't') ? -1 : +1;              // which edge we drag
+                    const sLX = 0;
+                    const sLY = sgn * dH / 2;
+
+                    const aa = __deg2rad(rot), cc = Math.cos(aa), ss = Math.sin(aa);
+                    const shiftX = sLX * cc - sLY * ss;
+                    const shiftY = sLX * ss + sLY * cc;
+
+                    const cx0 = o.x + o.width / 2, cy0 = o.y + o.height / 2;
+                    const cx = cx0 + shiftX, cy = cy0 + shiftY;
+
+                    // write back (width unchanged for T/B)
+                    activeBox.x = cx - o.width / 2;
+                    activeBox.y = cy - newH / 2;
+                    activeBox.width = o.width;
                     activeBox.height = newH;
 
-                    // Constant cap radius: kEff = capPx0 / newH (clamped to 0..0.5)
+                    // update caps
                     const kEff = Math.min(0.5, capPx0 / Math.max(1e-6, newH));
                     if (activeBox.img) activeBox.img.__curvatureRatio = kEff;
+                    activeBox.__capsOrientation = (newH >= (activeBox.width || 0) + 0.5) ? 'vertical' : 'horizontal';
 
-                    // Orientation hint (kept)
-                    activeBox.__capsOrientation = (newH >= (activeBox.width || 0) + 0.5)
-                        ? 'vertical'
-                        : 'horizontal';
-
-                    // Keep inside canvas (optional)
+                    // (optional) keep inside canvas
                     const W = canvas.width, H = canvas.height;
                     if (activeBox.y < 0) activeBox.y = 0;
                     if (activeBox.y + activeBox.height > H) {
@@ -11984,6 +12380,15 @@ canvas.addEventListener("mousemove", e => {
                     prevMouseX = mx; prevMouseY = my;
                     drawText();
                     return; // IMPORTANT: skip the generic handler below
+                }
+                // 🔧 ADD: rotation-aware TOP/BOTTOM for NORMAL image / normal SVG (non-BASIC, non-line)
+                if (!__isBasicImage(activeBox) && !__isLineSvg?.(activeBox) && ((activeBox.rotation || 0) % 360 !== 0)) {
+                    // project mouse delta into box-local Y so the opposite edge stays anchored (no walk)
+                    const { dyL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, activeBox.rotation || 0);
+                    __applyResizeGenericAnchRot(activeBox, side, 0, dyL);
+                    prevMouseX = mx; prevMouseY = my;
+                    drawText();
+                    return;
                 }
 
                 // ── your previous paths (kept) ─────────────────────────────────
@@ -12012,15 +12417,43 @@ canvas.addEventListener("mousemove", e => {
                 return;
             }
 
-            // --- LEFT / RIGHT handles for IMAGES (unchanged, with BASIC clamp on width) ---
-            // SPECIAL CASE: line-SVGs → pure horizontal resize anchored on the opposite edge
+            // --- LEFT / RIGHT handles for IMAGES ---
+
+            // LINES: rotation-aware L/R so it doesn't walk (ADD / FIX)
             if (__isLineSvg?.(activeBox) && (side === 'l' || side === 'r')) {
                 const o = activeBox._orig || { x: activeBox.x, y: activeBox.y, width: activeBox.width, height: activeBox.height };
-                const dxAbs = mx - startMXCanvas;
+                const rot = activeBox.rotation || 0;
 
+                if ((rot % 360) !== 0) {
+                    const { dxL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, rot);
+                    const sgn = (side === 'l') ? -1 : +1;
+
+                    let newW = Math.max(1, o.width + sgn * dxL);
+
+                    // anchor opposite side in local-X
+                    const dW = newW - o.width;
+                    const sLX = sgn * dW / 2;
+
+                    const aa = __deg2rad(rot), cc = Math.cos(aa), ss = Math.sin(aa);
+                    const shiftX = sLX * cc;  // sLY=0
+                    const shiftY = sLX * ss;
+
+                    const cx0 = o.x + o.width / 2, cy0 = o.y + o.height / 2;
+                    const cx = cx0 + shiftX, cy = cy0 + shiftY;
+
+                    activeBox.x = cx - newW / 2;
+                    activeBox.y = cy - o.height / 2;
+                    activeBox.width = newW;
+                    activeBox.height = o.height;
+
+                    prevMouseX = mx; prevMouseY = my; drawText();
+                    return;
+                }
+
+                // your original non-rotated line path (kept)
+                const dxAbs = mx - startMXCanvas;
                 let newW = (side === 'l') ? (o.width - dxAbs) : (o.width + dxAbs);
                 newW = Math.max(1, newW);
-
                 if (side === 'l') {
                     activeBox.x = o.x + (o.width - newW); // anchor right
                 } else {
@@ -12033,12 +12466,27 @@ canvas.addEventListener("mousemove", e => {
                 return;
             }
 
-            // fallback: generic side-resize path (kept)
+            // rotation-aware BASIC L/R with floors (ADD)
+            if ((side === 'l' || side === 'r') && __isBasicImage(activeBox) && ((activeBox.rotation || 0) % 360 !== 0)) {
+                const { dxL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, activeBox.rotation || 0);
+                __applyResizeBasicAnchRot(activeBox, side, dxL, 0);
+                prevMouseX = mx; prevMouseY = my; drawText();
+                return;
+            }
+
+            // rotation-aware NORMAL L/R (ADD)
+            if ((side === 'l' || side === 'r') && !__isBasicImage(activeBox) && ((activeBox.rotation || 0) % 360 !== 0)) {
+                const { dxL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, activeBox.rotation || 0);
+                __applyResizeGenericAnchRot(activeBox, side, dxL, 0);
+                prevMouseX = mx; prevMouseY = my; drawText();
+                return;
+            }
+
+            // fallback: your generic side-resize path (kept)
             scaleImageBoxWithHandle(activeBox, side, mx, my);
 
-            // NEW (B): If BASIC and we just did L/R, flip caps back to horizontal
+            // BASIC post-fix (kept)
             if (activeBox.isBasic === true && !__isLineSvg?.(activeBox) && (side === 'l' || side === 'r')) {
-                // ensure a base curvature is cached
                 if (!Number.isFinite(activeBox._baseCurvRatio)) {
                     const k0 = Number.isFinite(activeBox.curvatureRatio) ? activeBox.curvatureRatio : 0.5;
                     activeBox._baseCurvRatio = Math.max(0, Math.min(0.5, k0));
@@ -12053,49 +12501,59 @@ canvas.addEventListener("mousemove", e => {
             //    const { edgeX } = __clampBasicSideResize(activeBox, side);
             //    if (typeof edgeX === 'number') snappedX = edgeX;
             //}
-
             let snappedX = null;
             if (side === 'l' || side === 'r') {
                 if (activeBox.isBasic === true && !__isLineSvg?.(activeBox)) {
-                    // Use the same base curvature/radius you used for vertical
                     const o = activeBox._orig || { x: activeBox.x, y: activeBox.y, width: activeBox.width, height: activeBox.height };
-                    const dxAbs = mx - startMXCanvas;
-
-                    let newW = (side === 'l') ? (o.width - dxAbs) : (o.width + dxAbs);
 
                     const baseK = Number.isFinite(activeBox.curvatureRatio)
-                        ? Math.max(0, Math.min(0.5, activeBox.curvatureRatio))
-                        : 0.5;
-
-                    // pixel radius captured on mousedown; fallback if missing
+                        ? Math.max(0, Math.min(0.5, activeBox.curvatureRatio)) : 0.5;
                     const capPx0 = Number.isFinite(activeBox._capPxBase)
                         ? activeBox._capPxBase
                         : Math.min(baseK * o.height, (o.width || 0) / 2);
-
-                    // ⛔ hard floor for width from curvature: need at least two caps
                     const minWHard = Math.ceil(2 * capPx0);
                     const minWUser = Number.isFinite(activeBox.minWidth) ? activeBox.minWidth : 1;
                     const minW = Math.max(1, minWUser, minWHard);
-                    if (newW < minW) newW = minW;
 
-                    // anchor opposite edge
-                    if (side === 'l') {
-                        activeBox.x = o.x + (o.width - newW);
+                    const rot = activeBox.rotation || 0;
+
+                    if ((rot % 360) !== 0) {
+                        // rotation-aware horizontal resize (no “walk”, can squish back)
+                        const { dxL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, rot);
+                        __applyResizeBasicAnchRot(activeBox, side, dxL, 0);
+                        prevMouseX = mx; prevMouseY = my; drawText(); return;
                     } else {
-                        activeBox.x = o.x;
-                    }
-                    activeBox.width = newW;
+                        // your original non-rotated BASIC path (unchanged)
+                        const dxAbs = mx - startMXCanvas;
+                        let newW = (side === 'l') ? (o.width - dxAbs) : (o.width + dxAbs);
+                        if (newW < minW) newW = minW;
 
-                    // keep caps non-stretchy and horizontal while doing L/R
-                    if (activeBox.img) {
-                        const kEff = Math.min(0.5, capPx0 / Math.max(1e-6, activeBox.height));
-                        activeBox.img.__curvatureRatio = kEff;
-                    }
-                    activeBox.preserveCaps = true;
-                    activeBox.__capsOrientation = 'horizontal';
+                        if (side === 'l') {
+                            activeBox.x = o.x + (o.width - newW); // anchor right
+                        } else {
+                            activeBox.x = o.x;                    // anchor left
+                        }
+                        activeBox.width = newW;
 
-                    snappedX = (side === 'l') ? activeBox.x : (activeBox.x + activeBox.width);
-                } else {
+                        if (activeBox.img) {
+                            const kEff = Math.min(0.5, capPx0 / Math.max(1e-6, activeBox.height));
+                            activeBox.img.__curvatureRatio = kEff;
+                        }
+                        activeBox.preserveCaps = true;
+                        activeBox.__capsOrientation = 'horizontal';
+
+                        snappedX = (side === 'l') ? activeBox.x : (activeBox.x + activeBox.width);
+                    }
+                }
+                else if (!__isBasicImage(activeBox) && ((activeBox.rotation || 0) % 360 !== 0)) {
+                    // 🔧 ADD: rotation-aware LEFT/RIGHT for NORMAL image / normal SVG (non-BASIC, non-line)
+                    const { dxL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, activeBox.rotation || 0);
+                    __applyResizeGenericAnchRot(activeBox, side, dxL, 0);
+                    prevMouseX = mx; prevMouseY = my;
+                    drawText();
+                    return; // important: skip the generic fallback to avoid walk
+                }
+                else {
                     // non-BASIC (or lines) → your existing clamp
                     const { edgeX } = __clampBasicSideResize(activeBox, side);
                     if (typeof edgeX === 'number') snappedX = edgeX;
@@ -12116,14 +12574,8 @@ canvas.addEventListener("mousemove", e => {
         }
     }
 
-
-
-
-
-
-
     // ──────────────────────────────────────────────────────────
-    // HOVER CURSOR FIX FOR LINES (no active drag/resize)
+    // HOVER CURSOR FIX FOR LINES (no active drag/resize) (kept)
     if (!isResizingNew && !isDraggingNew && !isCornerImageScale && !isCornerFontScale) {
         const hHover = (typeof findHandleAt === 'function') ? findHandleAt(mx, my) : null;
         if (hHover && hHover.box && __isLineSvg(hHover.box)) {
@@ -12134,15 +12586,12 @@ canvas.addEventListener("mousemove", e => {
             return; // prevent other code from flipping the cursor back
         }
 
-        // If hovering a line body (no handle), show move
         const hit = (typeof getTopHitAt === 'function') ? getTopHitAt(mx, my) : null;
         if (hit && __isLineSvg(hit)) {
             try { setGlobalCursor?.('move'); } catch { }
             return;
         }
-
-        // Otherwise, let your normal hover cursor logic (if any) run or clear:
-        // try { setGlobalCursor?.(''); } catch {}
+        // otherwise let normal hover logic run (if any)
     }
 });
 
@@ -12550,7 +12999,7 @@ canvas.addEventListener("dblclick", e => {
         cleanEditorHTMLPreserveCaret();
         activeBox.text = textEditorNew.innerHTML;
 
-            }
+    }
 
     activeBox = box;
     // Now simply call our helper:
@@ -12698,7 +13147,7 @@ function addDefaultText(opts = {}) {
     newBox.height = Math.max(minH, Math.ceil(textH + padY));
 
     // --- push to boxes and set active ---
-  //  boxes.push(newBox);
+    //  boxes.push(newBox);
     activeBox = newBox;
 
     // --- mirror into textObjects with your exact selection flow ---
@@ -12748,7 +13197,7 @@ function addDefaultText(opts = {}) {
             $("#elementsPopup").hide();
         }
     } catch (_) { /* noop */ }
-    
+
     // (optional) if you also need your other pipeline:
     // if (typeof drawCanvas === 'function') drawCanvas('Common');
 }
@@ -12763,7 +13212,7 @@ window.onload = () => {
     // size canvas to container
     canvas.width = canvas.clientWidth;
     canvas.height = canvas.clientHeight;
-   // addNewBox();
+    // addNewBox();
 };
 
 
@@ -12883,7 +13332,7 @@ alignLinks.forEach(link => {
 //    isEditing = true;
 //}
 // ✅ showEditorAtBox with correct offset + line spacing support
- // Default fallback
+// Default fallback
 
 //function showEditorAtBox(box) {
 //    if (!box) return;
@@ -13004,7 +13453,7 @@ function showEditorAtBoxNew(box) {
 
     applyTextEditorStyleFromBox(box);
 
-   // textEditorNew.dispatchEvent(new Event("input"));
+    // textEditorNew.dispatchEvent(new Event("input"));
     textEditorNew.focus();
     isEditing = true;
 }
@@ -13298,7 +13747,7 @@ textEditorNew.addEventListener("keydown", e => {
             // Check if we're still editing and an activeBox exists
             if (activeBox && isEditing) {
                 activeBox.text = textEditorNew.innerHTML;
-             
+
                 drawText();
             }
         }, 0);
@@ -13432,40 +13881,40 @@ textEditorNew.addEventListener("keydown", e => {
 //    //    }
 //    //});
 //});
-    // ✅ Line spacing will apply at box level if a box is active and editor has multiline
-    //lineSpacingSelect.addEventListener("change", () => {
-    //    const val = parseFloat(lineSpacingSelect.value);
-    //    selectedLineSpacing = isNaN(val) ? defaultLineSpacing : val * 8; // px value
+// ✅ Line spacing will apply at box level if a box is active and editor has multiline
+//lineSpacingSelect.addEventListener("change", () => {
+//    const val = parseFloat(lineSpacingSelect.value);
+//    selectedLineSpacing = isNaN(val) ? defaultLineSpacing : val * 8; // px value
 
-    //    // ✅ Apply even when not editing yet
-    //    const html = textEditorNew.innerHTML;
-    //    const divCount = (html.match(/<div>|<br>/g) || []).length;
-    //    const hasMultipleLines = divCount >= 1;
+//    // ✅ Apply even when not editing yet
+//    const html = textEditorNew.innerHTML;
+//    const divCount = (html.match(/<div>|<br>/g) || []).length;
+//    const hasMultipleLines = divCount >= 1;
 
-    //    const sel = window.getSelection();
+//    const sel = window.getSelection();
 
-    //    // ✅ CASE 1: If actively editing
-    //    if (activeBox && isEditing) {
-    //        if (sel && sel.rangeCount === 1 && sel.isCollapsed && hasMultipleLines) {
-    //            applyTextEditorStyleFromBox(activeBox);
-    //            textEditorNew.dispatchEvent(new Event("input"));
-    //            activeBox.text = textEditorNew.innerHTML;
-    //            drawText();
-    //        }
-    //        // Optional inline selection logic
-    //        // else if (sel && !sel.isCollapsed) {
-    //        //     applyStyleToSelection("lineSpacing", selectedLineSpacing);
-    //        // }
-    //    }
+//    // ✅ CASE 1: If actively editing
+//    if (activeBox && isEditing) {
+//        if (sel && sel.rangeCount === 1 && sel.isCollapsed && hasMultipleLines) {
+//            applyTextEditorStyleFromBox(activeBox);
+//            textEditorNew.dispatchEvent(new Event("input"));
+//            activeBox.text = textEditorNew.innerHTML;
+//            drawText();
+//        }
+//        // Optional inline selection logic
+//        // else if (sel && !sel.isCollapsed) {
+//        //     applyStyleToSelection("lineSpacing", selectedLineSpacing);
+//        // }
+//    }
 
-    //    // ✅ CASE 2: Not editing but we have a multiline activeBox
-    //    else if (activeBox && !isEditing && hasMultipleLines) {
-    //        showEditorAtBox(activeBox);
-    //        applyTextEditorStyleFromBox(activeBox);
-    //        activeBox.text = textEditorNew.innerHTML;
-    //        drawText();
-    //    }
-    //});
+//    // ✅ CASE 2: Not editing but we have a multiline activeBox
+//    else if (activeBox && !isEditing && hasMultipleLines) {
+//        showEditorAtBox(activeBox);
+//        applyTextEditorStyleFromBox(activeBox);
+//        activeBox.text = textEditorNew.innerHTML;
+//        drawText();
+//    }
+//});
 
 /*});*/
 
@@ -13586,7 +14035,7 @@ function showEditorAtBoxOLD(box) {
     textEditorNew.style.top = `${relativeY}px`;
     textEditorNew.style.width = `${box.width / scaleX}px`;
     textEditorNew.style.display = "block";
-    textEditorNew.style.cursor = "text"; 
+    textEditorNew.style.cursor = "text";
     applyTextEditorStyleFromBox(box);
     textEditorNew.focus();
     isEditing = true;
@@ -14305,7 +14754,7 @@ function enableEditorKeyboard() {
     if (!ed) return;
 
     ed.setAttribute('contenteditable', 'true');
-   // ed.setAttribute('tabindex', '0');
+    // ed.setAttribute('tabindex', '0');
     ed.spellcheck = false;
     ed.autocapitalize = 'off';
     ed.autocomplete = 'off';
@@ -15240,7 +15689,7 @@ function curvatureChanges() {
 
     const fill = noFill ? "none" : ($("#hdnfillColor").val() || img.fillNoColor || "#FFFFFF");
     const stroke = noStroke ? "none" : ($("#hdnStrockColor").val() || img.strokeNoColor || "#000000");
-
+    activeImage.curvature = r;
     // one-pass patch: curvature + paint + strokeWidth
     applySvgCurvature(img, r, sw, { fill, stroke });
 }

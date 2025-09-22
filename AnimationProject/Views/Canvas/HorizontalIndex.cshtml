@@ -107,14 +107,14 @@
           const fallbackId = new URLSearchParams(window.location.search).get('id');
           if (fallbackId) GetDesignBoardById(fallbackId);
         }
-         try{
-                switchTab(null, 'shapes', 1);
+         // try{
+         //    switchTab(null, 'shapes', 1);
                 
-            }
-            catch(ex)
-            {
+         //    }
+         //    catch(ex)
+         //    {
 
-            }
+         //    }
       })();
        
     });
@@ -510,11 +510,82 @@
           });
         });
                  // Pager state
-        const PAGE_WINDOW_SIZE = 6;
-        let elPage = 1;             // current selected page
-        let elTotalPages = 1;       // set from server
-        let elWindowStart = 1;      // first visible page number in the window
-        let currentTabName = 'shapes'; // track which tab is active
+        // const PAGE_WINDOW_SIZE = 6;
+        // let elPage = 1;             // current selected page
+        // let elTotalPages = 1;       // set from server
+        // let elWindowStart = 1;      // first visible page number in the window
+        // let currentTabName = 'shapes'; // track which tab is active
+
+        // function clampWindowStart() {
+        //   const maxStart = Math.max(1, elTotalPages - PAGE_WINDOW_SIZE + 1);
+        //   elWindowStart = Math.min(Math.max(1, elWindowStart), maxStart);
+        //   // Ensure current page is visible
+        //   if (elPage < elWindowStart) elWindowStart = elPage;
+        //   const end = elWindowStart + PAGE_WINDOW_SIZE - 1;
+        //   if (elPage > end) elWindowStart = Math.max(1, elPage - PAGE_WINDOW_SIZE + 1);
+        // }
+
+        // function renderPagination() {
+        //   const $p = $('#elPagination');
+        //   if (elTotalPages <= 1) { $p.empty().hide(); return; }
+        //   $p.show();
+
+        //   clampWindowStart();
+
+        //   const frag = document.createDocumentFragment();
+
+        //   // ‹ prev-window
+        //   const prev = document.createElement('span');
+        //   prev.textContent = '‹';
+        //   prev.dataset.dir = 'prev';
+        //   if (elWindowStart === 1) prev.classList.add('disabled');
+        //   frag.appendChild(prev);
+
+        //   // page numbers
+        //   const end = Math.min(elWindowStart + PAGE_WINDOW_SIZE - 1, elTotalPages);
+        //   for (let i = elWindowStart; i <= end; i++) {
+        //     const s = document.createElement('span');
+        //     s.textContent = String(i);
+        //     s.dataset.page = String(i);
+        //     if (i === elPage) s.classList.add('active');
+        //     frag.appendChild(s);
+        //   }
+
+        //   // › next-window
+        //   const next = document.createElement('span');
+        //   next.textContent = '›';
+        //   next.dataset.dir = 'next';
+        //   if (end === elTotalPages) next.classList.add('disabled');
+        //   frag.appendChild(next);
+
+        //   $p.empty()[0].appendChild(frag);
+        // }
+
+        // // Handle clicks (delegated)
+        // $(document).on('click', '#elPagination span', function () {
+        //   const dir = this.dataset.dir;
+        //   if (dir === 'prev') {
+        //     if (elWindowStart > 1) { elWindowStart--; renderPagination(); }
+        //     return;
+        //   }
+        //   if (dir === 'next') {
+        //     const maxStart = Math.max(1, elTotalPages - PAGE_WINDOW_SIZE + 1);
+        //     if (elWindowStart < maxStart) { elWindowStart++; renderPagination(); }
+        //     return;
+        //   }
+
+        //   const page = Number(this.dataset.page);
+        //   if (!page || page === elPage) return;
+        //   elPage = page;
+        //   // reload with selected page
+        //   switchTab(null, currentTabName, elPage);
+        // });
+          const PAGE_WINDOW_SIZE = 4;
+        let elPage = 1;                  // selected page
+        let elTotalPages = 1;            // set from server
+        let elWindowStart = 1;           // first visible page in window
+        let currentTabName = 'shapes';   // track which tab is active
+        // ──────────────────────────────────────────────────────────
 
         function clampWindowStart() {
           const maxStart = Math.max(1, elTotalPages - PAGE_WINDOW_SIZE + 1);
@@ -523,6 +594,19 @@
           if (elPage < elWindowStart) elWindowStart = elPage;
           const end = elWindowStart + PAGE_WINDOW_SIZE - 1;
           if (elPage > end) elWindowStart = Math.max(1, elPage - PAGE_WINDOW_SIZE + 1);
+        }
+
+        function ensurePageVisible(targetPage) {
+          // Slide window so targetPage is within [start, start+size-1]
+          targetPage = Math.min(Math.max(1, targetPage), elTotalPages || 1);
+          const end = elWindowStart + PAGE_WINDOW_SIZE - 1;
+          if (targetPage < elWindowStart) {
+            elWindowStart = targetPage;
+          } else if (targetPage > end) {
+            elWindowStart = targetPage - PAGE_WINDOW_SIZE + 1;
+            if (elWindowStart < 1) elWindowStart = 1;
+          }
+          clampWindowStart();
         }
 
         function renderPagination() {
@@ -534,52 +618,97 @@
 
           const frag = document.createDocumentFragment();
 
-          // ‹ prev-window
-          const prev = document.createElement('span');
-          prev.textContent = '‹';
-          prev.dataset.dir = 'prev';
-          if (elWindowStart === 1) prev.classList.add('disabled');
+          // ‹ Prev page
+          const prev = document.createElement('button');
+          prev.textContent = '‹ Prev';
+          prev.dataset.dir = 'prevPage';
+          prev.className = 'btn btn-sm btn-outline-dark me-1 page-btn-2';
+          if (elPage <= 1) prev.classList.add('disabled');
           frag.appendChild(prev);
 
-          // page numbers
+          // page numbers (window)
           const end = Math.min(elWindowStart + PAGE_WINDOW_SIZE - 1, elTotalPages);
           for (let i = elWindowStart; i <= end; i++) {
-            const s = document.createElement('span');
+            const s = document.createElement('button');
             s.textContent = String(i);
             s.dataset.page = String(i);
+            s.className = 'btn btn-sm btn-outline-dark me-1 page-btn';
             if (i === elPage) s.classList.add('active');
             frag.appendChild(s);
           }
 
-          // › next-window
-          const next = document.createElement('span');
-          next.textContent = '›';
-          next.dataset.dir = 'next';
-          if (end === elTotalPages) next.classList.add('disabled');
+          // Next page ›
+          const next = document.createElement('button');
+          next.textContent = 'Next ›';
+          next.dataset.dir = 'nextPage';
+          next.className = 'btn btn-sm btn-outline-dark page-btn-2';
+          if (elPage >= elTotalPages) next.classList.add('disabled');
           frag.appendChild(next);
 
           $p.empty()[0].appendChild(frag);
         }
 
         // Handle clicks (delegated)
-        $(document).on('click', '#elPagination span', function () {
+        $(document).on('click', '#elPagination button', function () {
           const dir = this.dataset.dir;
-          if (dir === 'prev') {
-            if (elWindowStart > 1) { elWindowStart--; renderPagination(); }
+
+          if (dir === 'prevPage') {
+            if (elPage > 1) {
+              elPage = elPage - 1;
+              ensurePageVisible(elPage);
+              renderPagination();
+              switchTab(null, currentTabName, elPage);
+            }
             return;
           }
-          if (dir === 'next') {
-            const maxStart = Math.max(1, elTotalPages - PAGE_WINDOW_SIZE + 1);
-            if (elWindowStart < maxStart) { elWindowStart++; renderPagination(); }
+
+          if (dir === 'nextPage') {
+            if (elPage < elTotalPages) {
+              elPage = elPage + 1;               // e.g., to 6
+              ensurePageVisible(elPage);         // slide window if needed
+              renderPagination();
+              switchTab(null, currentTabName, elPage);
+            }
             return;
           }
 
           const page = Number(this.dataset.page);
           if (!page || page === elPage) return;
+
+          // If user clicks the last visible page, slide window forward by one
+          const lastInWindow = Math.min(elWindowStart + PAGE_WINDOW_SIZE - 1, elTotalPages);
           elPage = page;
-          // reload with selected page
+          if (page === lastInWindow && lastInWindow < elTotalPages) {
+            elWindowStart = elWindowStart + 1;
+          }
+          ensurePageVisible(elPage);
+          renderPagination();
           switchTab(null, currentTabName, elPage);
         });
+
+        // Jump box: Go button + Enter support
+        $(document).on('click', '#elPageJumpBtn', () => {
+          const v = Number($('#elPageJump').val());
+          if (!Number.isFinite(v)) return;
+          const target = Math.min(Math.max(1, Math.floor(v)), elTotalPages || 1);
+          elPage = target;
+          ensurePageVisible(elPage);
+          renderPagination();
+          switchTab(null, currentTabName, elPage);
+        });
+        $(document).on('keydown', '#elPageJump', (e) => {
+          if (e.key === 'Enter') {
+            $('#elPageJumpBtn').click();
+          }
+        });
+
+        // Call this after you know total pages (e.g., after AJAX success)
+        function initPager(totalPages) {
+          elTotalPages = Math.max(1, Number(totalPages) || 1);
+          elPage = 1;
+          elWindowStart = 1; // shows 1–4 initially
+          renderPagination();
+        }
 
 
           (function(){

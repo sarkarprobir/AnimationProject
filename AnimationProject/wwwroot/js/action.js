@@ -459,82 +459,26 @@ function pxToUnit(px, screen) {
 // ──────────────────────────────────────────────────────────────────────
 // 1) SAVE: record everything as relative % of the canvas
 // ──────────────────────────────────────────────────────────────────────
-function saveCanvasDataOLD() {
-    const dpr = window.devicePixelRatio || 1;
-    // current “logical” canvas size in CSS‑pixels
-   // const screenW = canvas.width / dpr;
-   // const screenH = canvas.height / dpr;
+function readStrokeWidth(selector = '#ddlStrokeWidth', fallback = 1) {
+    const el = document.querySelector(selector);
+    const raw = el?.value;
 
-    const rect = canvas.getBoundingClientRect();   // CSS pixels
-    const screenW = rect.width;
-    const screenH = rect.height;
+    if (raw == null || raw === '') return fallback;
 
+    // allow "0,5" -> 0.5 too
+    const n = Number(String(raw).trim().replace(',', '.'));
+    if (!Number.isFinite(n)) return fallback;
 
-    // background
-    const canvasBgColor = canvas.style.backgroundColor || "#ffffff";
-    const canvasBgImage = canvas._bgImg ? canvas._bgImg.src : "";
+    // snap to one decimal place
+    const snapped = Math.round(n * 10) / 10;
 
-    const data = {
-        canvasBgColor: canvasBgColor,
-        canvasBgImage: canvasBgImage,
-        slideEffect: $("#hdnTextAnimationType").val(),
-        slideDedirection: $("#hdnslideDedirection").val(),
-
-        // store text blocks as percentages + their static style
-        text: textObjects.map(obj => {
-            return {
-                text: obj.text,
-                x: obj.x / screenW,
-                y: obj.y / screenH,
-                boundingWidth: obj.boundingWidth / screenW,
-                boundingHeight: obj.boundingHeight / screenH,
-                fontSize: obj.fontSize,
-                fontFamily: obj.fontFamily,
-                textColor: obj.textColor,
-                textAlign: obj.textAlign,
-                opacity: obj.opacity,
-                lineSpacing: obj.lineSpacing,
-                noAnim: obj.noAnim,
-                groupId: obj.groupId,
-                rotation: obj.rotation,
-                isBold: obj.isBold || false,
-                isItalic: obj.isItalic || false,
-                type: obj.type || 'text',
-                zIndex: obj.zIndex || getNextZIndex(),
-                width: obj.width,
-                height: obj.height,
-                align: obj.align,
-            };
-        }),
-
-        // store images likewise
-        images: images.map(imgObj => {
-            // actual displayed width/height after per‑object scale:
-            const dispW = (imgObj.width * (imgObj.scaleX || 1));
-            const dispH = (imgObj.height * (imgObj.scaleY || 1));
-            return {
-                src: imgObj.svgData || imgObj.src,
-                x: imgObj.x / screenW,
-                y: imgObj.y / screenH,
-                width: dispW / screenW,
-                height: dispH / screenH,
-                opacity: imgObj.opacity,
-                noAnim: imgObj.noAnim,
-                groupId: imgObj.groupId,
-                rotation: imgObj.rotation,
-                type: imgObj.type || 'image',
-                zIndex: imgObj.zIndex || getNextZIndex(),
-                fillNoColorStatus: $("#hdnfillNoColorStatus").val(),
-                strokeNoColorStatus: $("#hdnstrokeNoColorStatus").val(),
-                fillNoColor: $("#hdnfillColor").val(),
-                strokeNoColor: $("#hdnStrockColor").val(),
-                strokeWidth: parseInt(document.getElementById('ddlStrokeWidth').value, 10) || 3
-            };
-        })
-    };
-
-    return JSON.stringify(data, null, 2);
+    // return a Number, formatted as:
+    //  - integer: 0, 1, 5
+    //  - decimal: 0.1, 0.5 (one decimal place)
+    return Number.isInteger(snapped) ? snapped : Number.parseFloat(snapped.toFixed(1));
 }
+
+
 function saveCanvasData() {
     const rect = canvas.getBoundingClientRect();
     const screenW = rect.width || 1;
@@ -588,10 +532,11 @@ function saveCanvasData() {
                 strokeNoColorStatus: img.strokeNoColorStatus,//$("#hdnstrokeNoColorStatus").val(),
                 fillNoColor: img.fillNoColor,//$("#hdnfillColor").val(),
                 strokeNoColor: img.strokeNoColor, //$("#hdnStrockColor").val(),
-                strokeWidth: parseInt(document.getElementById('ddlStrokeWidth')?.value, 10) || 3,
+                strokeWidth: img.strokeWidth,
                 isBasic: img.isBasic,
                 isLINESvg: img.isLINESvg,
-                __capsOrientation: img.__capsOrientation
+                __capsOrientation: img.__capsOrientation,
+                curvature: img.curvature
             };
         })
     };
@@ -1259,7 +1204,8 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
             strokeWidth: im.strokeWidth || 3,
             isBasic: im.isBasic ?? false,
             isLINESvg: im.isLINESvg ?? false,
-            __capsOrientation: im.__capsOrientation ?? 'horizontal'
+            __capsOrientation: im.__capsOrientation ?? 'horizontal',
+            curvature: im.curvature||0
         };
 
         // ⛔️ NO clamp here — preserve exact saved layout (even if it overflows)
