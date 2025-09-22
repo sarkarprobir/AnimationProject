@@ -531,14 +531,15 @@ footer {
 }
 
 .landscape-icon {
-    width: 30px;
-    height: 20px;
+    width: 37px;
+    height: 25px;
 }
 
 .portrait-icon {
-    width: 20px;
-    height: 30px;
+    width: 25px;
+    height: 37px;
 }
+
 
 .create-btn {
     background-color: #000;
@@ -573,32 +574,39 @@ footer {
 }
 /*modal check mark*/
 .option-box .checkmark {
-    width: 20px;
-    height: 20px;
     display: inline-block;
     border: 2px solid transparent;
-    border-radius: 50%;
     position: relative;
     transition: all 0.3s ease;
 }
 
 .option-box.selected .checkmark {
-    background-color: #6214fe; /* your brand purple */
-    border-color: #6214fe;
+    background-color: transparent;
+    border-color: transparent;
 }
 
-    .option-box.selected .checkmark::after {
-        content: '';
-        position: absolute;
-        top: 2.5px;
-        left: 6px;
-        width: 5px;
-        height: 10px;
-        border: solid #fff;
-        border-width: 0 2px 2px 0;
-        transform: rotate(45deg);
-    }
+.option-box.selected .portrait-icon {
+    background-color: #6214fe;
+}
+
+.option-box.selected .landscape-icon {
+    background-color: #6214fe;
+}
+
+
+.option-box.selected .checkmark::after {
+    content: '';
+    position: absolute;
+    top: 2.5px;
+    left: 6px;
+    width: 5px;
+    height: 10px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
 /*modal check mark*/
+
 
 /*contact css*/
 .contact-box {

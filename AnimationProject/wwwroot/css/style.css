@@ -986,13 +986,13 @@ svg:hover {
 }
 
 .landscape-icon {
-    width: 30px;
-    height: 20px;
+    width: 37px;
+    height: 25px;
 }
 
 .portrait-icon {
-    width: 20px;
-    height: 30px;
+    width: 25px;
+    height: 37px;
 }
 
 .create-btn {
@@ -1355,19 +1355,23 @@ body {
 }
 /*modal check mark*/
 .option-box .checkmark {
-    width: 20px;
-    height: 20px;
     display: inline-block;
     border: 2px solid transparent;
-    border-radius: 50%;
     position: relative;
     transition: all 0.3s ease;
 }
 
 .option-box.selected .checkmark {
-    background-color: #6214fe; /* your brand purple */
-    border-color: #6214fe;
+    background-color: transparent;
+    border-color: transparent;
 }
+.option-box.selected .portrait-icon {
+    background-color: #6214fe; 
+}
+.option-box.selected .landscape-icon {
+    background-color: #6214fe; 
+}
+
 
     .option-box.selected .checkmark::after {
         content: '';
