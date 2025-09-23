@@ -64,7 +64,7 @@ let textPosition = { x: 100, y: 100, opacity: 100, content: text, }; // Default 
 let imagePosition = { x: 100, y: 20, scaleX: 1, scaleY: 1, opacity: 100, }; // Default start position
 
 const FACTOR_INCREMENT = 0.1;
-
+window.__paintChangeRequested = false; 
 /////this is for add multiple text
 const textEditor = document.getElementById("textEditor");
 const addTextBtn = document.getElementById("addTextBtn");
@@ -5684,24 +5684,36 @@ canvas.addEventListener("click", function onCanvasClick(e) {
         const swEl = document.getElementById('ddlStrokeWidth');
         if (swEl) swEl.value = String(activeImage.strokeWidth || 3);
 
+        // sync visible checkboxes to the active image (optional but recommended)
+        const fillNoneEl = document.getElementById("noColorCheck");
+        const strokeNoneEl = document.getElementById("noColorCheck2");
+        if (fillNoneEl) fillNoneEl.checked = !!activeImage.fillNoColorStatus;
+        if (strokeNoneEl) strokeNoneEl.checked = !!activeImage.strokeNoColorStatus;
+
+        // READ UI
         const noColorChecked = document.getElementById("noColorCheck")?.checked;
         const noStrokeChecked = document.getElementById("noColorCheck2")?.checked;
 
-        if (noColorChecked) {
-            updateSelectedImageColors(
-                activeImage,
-                "none",
-                noStrokeChecked ? "none" : $("#hdnStrockColor").val(),
-                (document.getElementById("ddlStrokeWidth")?.value || 2)
-            );
-        }
-        if (noStrokeChecked) {
-            updateSelectedImageColors(
-                activeImage,
-                noColorChecked ? "none" : $("#hdnfillColor").val(),
-                "none",
-                (document.getElementById("ddlStrokeWidth")?.value || 2)
-            );
+        // ✅ ONLY apply colors when user explicitly changed something (picker/checkbox)
+        if (window.__paintChangeRequested === true) {
+            if (noColorChecked) {
+                updateSelectedImageColors(
+                    activeImage,
+                    "none",
+                    noStrokeChecked ? "none" : $("#hdnStrockColor").val(),
+                    (document.getElementById("ddlStrokeWidth")?.value || 2)
+                );
+            }
+            if (noStrokeChecked) {
+                updateSelectedImageColors(
+                    activeImage,
+                    noColorChecked ? "none" : $("#hdnfillColor").val(),
+                    "none",
+                    (document.getElementById("ddlStrokeWidth")?.value || 2)
+                );
+            }
+            // reset after applying from UI
+            window.__paintChangeRequested = false;
         }
     }
 
@@ -5754,6 +5766,58 @@ function applyImagePaintToUI(imgHit) {
     if (swEl && imgHit.strokeWidth != null) swEl.value = String(imgHit.strokeWidth);
     if (curvature && imgHit.curvature != null) curvature.value = String(imgHit.curvature);
 }
+function applyPaintFromUI() {
+    if (!window.activeImage) return;
+    window.__paintChangeRequested = true;
+
+    // Reuse the same logic your click block uses:
+    const noColorChecked = document.getElementById("noColorCheck")?.checked;
+    const noStrokeChecked = document.getElementById("noColorCheck2")?.checked;
+    const sw = (document.getElementById("ddlStrokeWidth")?.value || 2);
+
+    if (noColorChecked) {
+        updateSelectedImageColors(
+            activeImage,
+            "none",
+            noStrokeChecked ? "none" : $("#hdnStrockColor").val(),
+            sw
+        );
+    }
+    if (noStrokeChecked) {
+        updateSelectedImageColors(
+            activeImage,
+            noColorChecked ? "none" : $("#hdnfillColor").val(),
+            "none",
+            sw
+        );
+    }
+
+    window.__paintChangeRequested = false;
+    if (typeof drawText === "function") drawText();
+}
+
+// Hook UI events (run once after DOM ready)
+document.getElementById("noColorCheck")?.addEventListener("change", () => {
+    applyPaintFromUI();
+});
+document.getElementById("noColorCheck2")?.addEventListener("change", () => {
+    applyPaintFromUI();
+});
+document.getElementById("favFillcolor")?.addEventListener("input", () => {
+    // Fill picker changed → apply with current states
+    window.__paintChangeRequested = true;
+    applyPaintFromUI();
+});
+document.getElementById("favStrockcolor")?.addEventListener("input", () => {
+    // Stroke picker changed → apply
+    window.__paintChangeRequested = true;
+    applyPaintFromUI();
+});
+document.getElementById("ddlStrokeWidth")?.addEventListener("change", () => {
+    // Stroke width changed → apply
+    window.__paintChangeRequested = true;
+    applyPaintFromUI();
+});
 
 
 ////KD Need to be Include in project////////
