@@ -8417,8 +8417,8 @@ function handleNavButtonClick(event) {
     event.currentTarget.classList.add('active_nav_button');
     LoadAllHorizontalTemplates();
     setTimeout(() => {
-        const items = document.querySelectorAll("#divTemplateList .v_temp");
-        const itemsPerPage = 8;
+        const items = document.querySelectorAll("#divTemplateList .h_temp");
+        const itemsPerPage = 12;
         let currentPage = 1;
         const totalPages = Math.ceil(items.length / itemsPerPage);
 
@@ -8666,7 +8666,7 @@ function LoadAllHorizontalTemplates() {
                         if (!imgPath) return;
 
                         const img = document.createElement('img');
-                        img.className = 'v_temp';
+                        img.className = 'h_temp';
                         img.loading = 'lazy';
                         img.decoding = 'async';
                         img.alt = (tpl?.designBoardName || 'Template') + ' preview';
