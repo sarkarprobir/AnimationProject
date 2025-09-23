@@ -64,7 +64,7 @@ app.UseAuthorization();
 //  MVC & SSE Endpoints 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Canvas}/{action=Login}/{id?}");
+    pattern: "{controller=Canvas}/{action=Home}/{id?}");
 // 1) Specific “screen” route:
 app.MapControllerRoute(
     name: "animationScreen",
