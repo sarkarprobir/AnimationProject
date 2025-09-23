@@ -19,12 +19,16 @@ rel="stylesheet" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
 <link href="~/css/otherPage.css" rel="stylesheet" />
-<script src="~/js/home.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
+<script src="~/js/Home.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
 <script>
     $(document).ready(function(){
         LoadHomeTemplates();
     });
 </script>
+<style>
+    .img-box img { opacity: 0; transition: opacity .25s ease; }
+.img-box img.loaded { opacity: 1; }
+</style>
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg bg-white">
     <div class="container-fluid d-flex justify-content-between align-items-center">
@@ -150,18 +154,12 @@ rel="stylesheet" />
         <p>No experinece? No problem. AniBoards empowers any <br /> designer to create sleek animations in minutes.</p>
     </div>
     <div class="row column-gap-3 d-flex justify-content-center" id="divhomeTemplateRow">
-        <!-- Column 1: Horizontal (first 3) -->
-        <div class="col-auto p-0"></div>
+  <div class="col-auto p-0"></div> <!-- Horizontals (left half) -->
+  <div class="col-auto p-0"></div> <!-- Verticals (left half) -->
+  <div class="col-auto p-0"></div> <!-- Horizontals (right half) -->
+  <div class="col-auto p-0"></div> <!-- Verticals (right half) -->
+</div>
 
-        <!-- Column 2: Vertical (first 2) -->
-        <div class="col-auto p-0"></div>
-
-        <!-- Column 3: Horizontal (rest after first 3) -->
-        <div class="col-auto p-0"></div>
-
-        <!-- Column 4: Vertical (rest after first 2) -->
-        <div class="col-auto p-0"></div>
-    </div>
 
     @*<div class="row column-gap-3 d-flex justify-content-center" id="divhomeTemplateRow">
         <!-- Column 1: Horizontal Images -->

@@ -63,7 +63,7 @@ function LoadHomeTemplates() {
                 else if (type === 'vertical') verticals.push({ tpl, src });
             }
 
-            // Split evenly (preserve order): left column gets ceil half
+            // Split evenly (preserve order) across the two columns for each orientation
             const midH = Math.ceil(horizontals.length / 2);
             const hCol1 = horizontals.slice(0, midH);
             const hCol3 = horizontals.slice(midH);
@@ -72,10 +72,9 @@ function LoadHomeTemplates() {
             const vCol2 = verticals.slice(0, midV);
             const vCol4 = verticals.slice(midV);
 
-            // Render
+            // Render and lazy-observe
             renderColumn($col1, hCol1, 'horizontal', DEFAULT_IMG_H);
             renderColumn($col3, hCol3, 'horizontal', DEFAULT_IMG_H);
-
             renderColumn($col2, vCol2, 'vertical', DEFAULT_IMG_V);
             renderColumn($col4, vCol4, 'vertical', DEFAULT_IMG_V);
         })
@@ -106,28 +105,77 @@ function LoadHomeTemplates() {
     }
 
     function renderColumn($col, items, orientation, defaultSrc) {
-        if (!items || items.length === 0) {
-            $col.append(makeImgBox(orientation, defaultSrc, 'Default'));
-            return;
-        }
         const frag = document.createDocumentFragment();
-        for (const it of items) {
-            frag.appendChild(makeImgBox(orientation, it.src, it.tpl?.DesignBoardName || 'Template'));
+
+        if (!items || items.length === 0) {
+            frag.appendChild(makeImgBox(orientation, defaultSrc, 'Default'));
+        } else {
+            for (const it of items) {
+                frag.appendChild(makeImgBox(orientation, it.src, it.tpl?.DesignBoardName || 'Template'));
+            }
         }
+
         $col[0].appendChild(frag);
+        setupLazyLoader($col[0]); // observe newly added images
     }
 
-    function makeImgBox(orientation, src, alt) {
+    // Create box + a lazy <img> that swaps data-src → src when in view
+    function makeImgBox(orientation, realSrc, alt) {
         const box = document.createElement('div');
         box.className = `img-box ${orientation}`;
+
         const img = document.createElement('img');
-        img.className = 'border3';
-        img.loading = 'lazy';
+        img.className = 'border3 lazy';
+        img.loading = 'lazy';         // native hint
         img.decoding = 'async';
         img.alt = alt || 'Template';
-        img.src = src;
+
+        // tiny transparent placeholder to avoid broken image icon
+        const PLACEHOLDER_1x1 =
+            'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+        img.src = PLACEHOLDER_1x1;    // initial src (very cheap)
+        img.dataset.src = realSrc;    // real URL loaded by IntersectionObserver
+
+        // pretty fade-in
+        img.addEventListener('load', () => img.classList.add('loaded'), { once: true });
+
         box.appendChild(img);
         return box;
+    }
+
+    // One observer for the page; attach to each column as we render
+    let __lazyObserver = window.__lazyObserver || null;
+    function setupLazyLoader(scopeEl) {
+        if ('IntersectionObserver' in window) {
+            if (!__lazyObserver) {
+                __lazyObserver = new IntersectionObserver((entries, obs) => {
+                    for (const entry of entries) {
+                        if (!entry.isIntersecting) continue;
+                        const img = entry.target;
+                        const real = img.dataset.src;
+                        if (real) {
+                            img.src = real;
+                            img.removeAttribute('data-src');
+                            img.classList.remove('lazy');
+                        }
+                        obs.unobserve(img);
+                    }
+                }, {
+                    root: null,
+                    rootMargin: '300px 0px', // start loading a bit before visible
+                    threshold: 0.01
+                });
+                window.__lazyObserver = __lazyObserver; // save singleton
+            }
+            scopeEl.querySelectorAll('img.lazy[data-src]').forEach(img => __lazyObserver.observe(img));
+        } else {
+            // Fallback: no IO support -> load immediately
+            scopeEl.querySelectorAll('img.lazy[data-src]').forEach(img => {
+                img.src = img.dataset.src;
+                img.removeAttribute('data-src');
+                img.classList.remove('lazy');
+            });
+        }
     }
 
     function joinUrl(a, b) {
@@ -136,4 +184,5 @@ function LoadHomeTemplates() {
         return String(a).replace(/\/+$/, '') + '/' + String(b).replace(/^\/+/, '');
     }
 }
+
 
