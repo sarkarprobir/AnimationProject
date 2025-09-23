@@ -130,6 +130,15 @@ let isDraggingSelectionBox = false;
 let selectionStart = { x: 0, y: 0 };
 let selectionEnd = { x: 0, y: 0 };
 let skipNextClick = false;
+window.__marqueeCommittedAt = 0;
+// ─── Marquee selection state ────────────────────────────────────────────────
+let isMarquee = false;
+let marqueeStart = { x: 0, y: 0 };   // in canvas/design space
+let marqueeNow = { x: 0, y: 0 };   // in canvas/design space
+const MARQUEE_MIN_DRAG = 4;          // px threshold to switch from click → box
+// Globals you likely already have:
+globalThis.ItemsSelected ??= []; // keep your existing structure
+
 
 ////This is for delete text///////////////////
 // Utility: Returns an object (text or image) if the (x,y) falls within its bounding box."
@@ -5275,7 +5284,14 @@ function updateCheckboxFor(groupId) {
 }
 
 
-canvas.addEventListener("mouseleave", function () {
+canvas.addEventListener("mouseleave", function (e) {
+    if (isMarquee) {
+        // use the last rubber-band point we drew to
+        finalizeMarqueeSelection(marqueeNow.x, marqueeNow.y, e);
+        return; // finalizeMarqueeSelection() already clears flags & redraws
+    }
+
+    // reset transient drag/resize flags so nothing gets “stuck”
     currentDrag = null;
     isResizing = false;
     isDragging = false;
@@ -5285,6 +5301,17 @@ canvas.addEventListener("mouseleave", function () {
     isResizingImage = false;
 
     isDraggingToSelect = false;
+
+    // if you also use these elsewhere, clear them too:
+    isDraggingNew = false;
+    isResizingNew = false;
+    isCornerImageScale = false;
+    isCornerFontScale = false;
+    isDraggingMulti = false;
+    isResizingMulti = false;
+
+    resizeDirection = resizeDirectionNorm = null;
+
     canvas.style.cursor = "default";
 });
 
@@ -5467,11 +5494,23 @@ function setSelectionTarget(obj, { setActive = true, setContext = true } = {}) {
     }
 }
 canvas.addEventListener("click", function onCanvasClick(e) {
+    // one-time init
+    window.__marqueeCommittedAt ??= 0;
+
     // ignore shift-click additive selection here
     if (e.shiftKey) return;
 
-    // swallow a synthetic/next click if requested (only once)
-    if (skipNextClick) { skipNextClick = false; return; }
+    // ✅ SOFT-SWALLOW: don't return; just mark to ignore a single empty/unselected clear
+    let ignoreClearOnce = false;
+    if (skipNextClick) {
+        skipNextClick = false;
+        ignoreClearOnce = true;
+    }
+    // also treat the first click right after a marquee commit as ignorable-clear
+    if (window.__marqueeCommittedAt && (performance.now() - window.__marqueeCommittedAt) < 300) {
+        window.__marqueeCommittedAt = 0;
+        ignoreClearOnce = true;
+    }
 
     // NEW: if a group drag/resize just happened (or we routed group action on mousedown),
     // ignore this click so it doesn't clear the multi-selection.
@@ -5530,7 +5569,6 @@ canvas.addEventListener("click", function onCanvasClick(e) {
     for (let i = (images ? images.length : 0) - 1; i >= 0; i--) {
         if (isMouseOverImage?.(images[i], { x: mouseX, y: mouseY })) { imgHit = images[i]; break; }
     }
-    // Resolve overlap by zIndex using your top-hit
     (function resolveByZIndex() {
         const top = getTopHitAt?.(mouseX, mouseY);
         if (!top) return;
@@ -5557,13 +5595,11 @@ canvas.addEventListener("click", function onCanvasClick(e) {
         if (topHit.type === 'image') { activeImage = topHit; activeText = null; }
         else { activeText = topHit; activeImage = null; }
 
-        // UI follow-ups
         drawText?.();
         updateFontStyleButtons?.();
         applyImagePaintToUI?.(activeImage);
         HideShowRightPannel?.(getSelectedType?.());
 
-        // Curvature / stroke panels visibility (your existing logic)
         if (activeImage && activeImage.isBasic) {
             document.getElementById("divCurvature")?.style && (document.getElementById("divCurvature").style.display = 'block');
         } else {
@@ -5583,19 +5619,19 @@ canvas.addEventListener("click", function onCanvasClick(e) {
     const clickedEmpty = !txtHit && !imgHit;
     const clickedUnselected = !!(topHit && !topHit.selected);
     if (clickedEmpty || clickedUnselected) {
+        // ✅ if this is the synthetic click right after marquee, ignore the clear ONCE
+        if (ignoreClearOnce) return;
         clearSelection();
     }
 
     // Apply selection + UI as in your original code
     if (txtHit) {
-        // TEXT clicked
         txtHit.selected = true;
         activeText = txtHit;
 
         selectGroup(txtHit.groupId);
         setGroupCheckbox(txtHit.groupId);
 
-        // UI panels
         $("#favcolor").val(txtHit.textColor);
         $("#noAnimCheckbox").prop("checked", !!txtHit.noAnim);
         $("#fontstyle_popup").show();
@@ -5607,14 +5643,12 @@ canvas.addEventListener("click", function onCanvasClick(e) {
         setOpacityUI(normAlpha?.(txtHit.opacity));
 
     } else if (imgHit) {
-        // IMAGE clicked
         imgHit.selected = true;
         activeImage = imgHit;
 
         selectGroup(imgHit.groupId);
         setGroupCheckbox(imgHit.groupId);
 
-        // UI panels
         $("#noAnimCheckbox").prop("checked", !!imgHit.noAnim);
         $("#fontstyle_popup").show();
         $(".right-sec-two").show();
@@ -5624,7 +5658,6 @@ canvas.addEventListener("click", function onCanvasClick(e) {
         setGraphicModeActive();
         setOpacityUI(normAlpha?.(imgHit.opacity));
 
-        // initialize fill/stroke colors once if required
         if ($("#hdnFillStrockColorFlag").val() === '1') {
             $("#hdnfillColor").val(imgHit.fillNoColor || "#FFFFFF");
             $("#hdnStrockColor").val(imgHit.strokeNoColor || "#FFFFFF");
@@ -5634,13 +5667,11 @@ canvas.addEventListener("click", function onCanvasClick(e) {
         }
 
     } else {
-        // clicked empty space
         setGroupCheckbox(null);
         setGraphicModeActive();
         setOpacityUI(1);
     }
 
-    // draw + UI follow-ups
     drawText?.();
     updateFontStyleButtons?.();
 
@@ -5657,7 +5688,7 @@ canvas.addEventListener("click", function onCanvasClick(e) {
 
         if (noColorChecked) {
             updateSelectedImageColors(
-                activeImage,                                   // make sure to pass the target!
+                activeImage,
                 "none",
                 noStrokeChecked ? "none" : $("#hdnStrockColor").val(),
                 (document.getElementById("ddlStrokeWidth")?.value || 2)
@@ -5676,7 +5707,6 @@ canvas.addEventListener("click", function onCanvasClick(e) {
     applyImagePaintToUI?.(activeImage);
     HideShowRightPannel?.(selectedType);
 
-    // Curvature / stroke panels visibility (same as before)
     if (activeImage && activeImage.isBasic) {
         document.getElementById("divCurvature")?.style && (document.getElementById("divCurvature").style.display = 'block');
     } else {
@@ -11546,6 +11576,14 @@ canvas.addEventListener("mousedown", e => {
     isGroupAction = false;
 
     const { x: mx, y: my } = getCanvasMousePosition(e);
+
+    // Remember starting point (design space)
+    marqueeStart.x = mx;
+    marqueeStart.y = my;
+    marqueeNow.x = mx;
+    marqueeNow.y = my;
+    isMarquee = true;
+
     const sel = getSelectedItems?.() || [];
     if (sel.length >= 2) {
         const g = aabbOfItems(sel);
@@ -11996,6 +12034,16 @@ canvas.addEventListener("mousemove", e => {
 
     const dx = mx - prevMouseX;
     const dy = my - prevMouseY;
+
+    // ✨ EARLY-RETURN MARQUEE (prevents falling into resize/drag logic)
+    if (isMarquee) {
+        marqueeNow.x = mx;
+        marqueeNow.y = my;
+        try { setGlobalCursor?.("crosshair"); } catch { }
+        drawText();
+        drawMarqueeOverlay(ctx);   // or drawMarqueeOverlay() if it uses the global ctx
+        return;                    // <— important: stop here while band-selecting
+    }
 
     // ──────────────────────────────────────────────────────────
     // 🔧 ROTATION HELPERS (ADD)
@@ -12921,17 +12969,107 @@ canvas.addEventListener("mousemove", e => {
 
 
 
-window.addEventListener("mouseup", () => {
+
+
+// ensure this exists once globally
+// let skipNextClick = false;
+
+window.addEventListener("mouseup", (e) => {
+    // 1) Commit marquee selection on window mouseup
+    if (isMarquee) {
+        const { x: mx, y: my } = getCanvasMousePosition(e);
+        marqueeNow.x = mx; marqueeNow.y = my;
+
+        const dragDist = Math.hypot(marqueeNow.x - marqueeStart.x, marqueeNow.y - marqueeStart.y);
+        const additive = e.shiftKey;
+        const toggle = e.ctrlKey || e.metaKey;
+
+        const imgs = Array.isArray(images) ? images : [];
+        const txts = Array.isArray(textObjects) ? textObjects : [];
+        const all = imgs.concat(txts);
+
+        const newSel = new Set(all.filter(it => it.selected));
+
+        function topHit(mx, my) {
+            if (typeof getTopHitAt === 'function') return getTopHitAt(mx, my);
+            const sorted = [...all].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+            for (let i = sorted.length - 1; i >= 0; i--) {
+                const a = getItemAABB(sorted[i]);
+                if (mx >= a.x && mx <= a.x + a.w && my >= a.y && my <= a.y + a.h) return sorted[i];
+            }
+            return null;
+        }
+
+        if (dragDist < (typeof MARQUEE_MIN_DRAG === 'number' ? MARQUEE_MIN_DRAG : 4)) {
+            const hit = topHit(mx, my);
+            if (!additive && !toggle) newSel.clear();
+            if (hit) {
+                if (toggle && newSel.has(hit)) newSel.delete(hit); else newSel.add(hit);
+                activeBox = hit;
+            } else if (!additive && !toggle) {
+                newSel.clear();
+                activeBox = null;
+            }
+        } else {
+            const box = rectFromPoints(marqueeStart, marqueeNow);
+            if (!additive && !toggle) newSel.clear();
+            for (const it of all) {
+                if (rectsIntersect(box, getItemAABB(it))) {
+                    if (toggle && newSel.has(it)) newSel.delete(it); else newSel.add(it);
+                }
+            }
+            const hoverHit = topHit(mx, my);
+            if (hoverHit && newSel.has(hoverHit)) {
+                activeBox = hoverHit;
+            } else if (newSel.size) {
+                let top = null, topZ = -Infinity;
+                for (const it of newSel) {
+                    const z = it.zIndex || 0;
+                    if (z >= topZ) { topZ = z; top = it; }
+                }
+                activeBox = top;
+            } else {
+                activeBox = null;
+            }
+        }
+
+        // write flags your renderer reads
+        for (const it of all) it.selected = false;
+        for (const it of newSel) it.selected = true;
+
+        if (activeBox) {
+            if (activeBox.type === 'image') { activeImage = activeBox; activeText = null; }
+            else { activeText = activeBox; activeImage = null; }
+        } else {
+            activeText = null; activeImage = null;
+        }
+
+        // optional legacy mirrors
+        globalThis.ItemsSelected = all.filter(it => it.selected);
+        globalThis.selectedItems = globalThis.ItemsSelected;
+
+        isMarquee = false;
+
+        // ✨ swallow the next canvas click so it doesn't clear selection on empty release
+        skipNextClick = true;
+
+        try { setGlobalCursor?.("default"); } catch { }
+        drawText();
+    }
+
+    // 2) your original resets
     isDraggingNew = false;
     isResizingNew = false;
     isCornerFontScale = false;
-    isCornerImageScale = false;    // ⬅ NEW
+    isCornerImageScale = false;
     resizeDirection = null;
     setGlobalCursor("default");
-    if (!isDraggingMulti) return;
-    endMultiDrag(true);
+
+    if (isDraggingMulti) endMultiDrag(true);
     if (isDraggingMulti || isResizingMulti) finishGroupTransform();
     isGroupAction = false;
+    skipNextClick = true;                      // swallow the very next click
+    window.__marqueeCommittedAt = performance.now();
 });
 
 function scaleImageBoxWithHandle(box, handle, mx, my) {
@@ -13045,6 +13183,108 @@ canvas.addEventListener('mousemove', (e) => {
     }
     canvas.style.cursor = cur;
 });
+
+
+
+canvas.addEventListener("mouseup", (e) => {
+    if (!isMarquee) return;
+
+    const { x: mx, y: my } = getCanvasMousePosition(e);
+    marqueeNow.x = mx; marqueeNow.y = my;
+
+    const dragDist = Math.hypot(marqueeNow.x - marqueeStart.x, marqueeNow.y - marqueeStart.y);
+    const additive = e.shiftKey;
+    const toggle = e.ctrlKey || e.metaKey;
+
+    const all = __drawables(); // images + textObjects
+    const newSel = new Set(all.filter(it => it.selected)); // ← start from current flags
+
+    if (dragDist < (typeof MARQUEE_MIN_DRAG === 'number' ? MARQUEE_MIN_DRAG : 4)) {
+        // CLICK path
+        const hit = (typeof getTopHitAt === 'function') ? getTopHitAt(mx, my) : __hitTopDrawable(mx, my);
+
+        if (!additive && !toggle) newSel.clear();
+
+        if (hit) {
+            if (toggle && newSel.has(hit)) newSel.delete(hit);
+            else newSel.add(hit);
+            activeBox = hit; // make it active
+        } else if (!additive && !toggle) {
+            newSel.clear();
+            activeBox = null;
+        }
+    } else {
+        // MARQUEE path
+        const box = rectFromPoints(marqueeStart, marqueeNow);
+        if (!additive && !toggle) newSel.clear();
+
+        for (const it of all) {
+            if (rectsIntersect(box, getItemAABB(it))) {
+                if (toggle && newSel.has(it)) newSel.delete(it);
+                else newSel.add(it);
+            }
+        }
+
+        // Prefer item under mouse if it’s selected; else topmost selected
+        const hoverHit = (typeof getTopHitAt === 'function') ? getTopHitAt(mx, my) : __hitTopDrawable(mx, my);
+        if (hoverHit && newSel.has(hoverHit)) {
+            activeBox = hoverHit;
+        } else if (newSel.size) {
+            let top = null, topZ = -Infinity;
+            for (const it of newSel) {
+                const z = it.zIndex || 0;
+                if (z >= topZ) { topZ = z; top = it; }
+            }
+            activeBox = top;
+        } else {
+            activeBox = null;
+        }
+    }
+
+    // ── Write back to the exact flags your renderer reads ──
+    for (const it of all) it.selected = false;   // clear old
+    for (const it of newSel) it.selected = true; // set new
+
+    // Keep your active* globals in sync with click-logic
+    if (activeBox) {
+        if (activeBox.type === 'image') { activeImage = activeBox; activeText = null; }
+        else { activeText = activeBox; activeImage = null; }
+    } else {
+        activeText = null; activeImage = null;
+    }
+
+    // Optional: keep arrays for any legacy paths
+    globalThis.ItemsSelected = all.filter(it => it.selected);
+    globalThis.selectedItems = globalThis.ItemsSelected; // compat alias
+
+    isMarquee = false;
+    try { setGlobalCursor?.("default"); } catch { }
+    drawText(); // redraw without marquee overlay
+    skipNextClick = true;                      // swallow the very next click
+    window.__marqueeCommittedAt = performance.now();
+});
+
+
+
+function drawMarqueeOverlay(ctxIn) {
+    if (!isMarquee) return;
+
+    // use provided ctx or fall back to your global ctx
+    const c = ctxIn || (typeof ctx !== "undefined" ? ctx : null);
+    if (!c) return; // nothing to draw on
+
+    const r = rectFromPoints(marqueeStart, marqueeNow);
+
+    c.save();
+    c.setLineDash([6, 4]);
+    c.lineWidth = 1;
+    c.strokeStyle = 'rgba(0,0,0,0.7)';
+    c.strokeRect(r.x, r.y, r.w, r.h);
+
+    c.fillStyle = 'rgba(0,0,0,0.07)';
+    c.fillRect(r.x, r.y, r.w, r.h);
+    c.restore();
+}
 
 
 
@@ -16311,5 +16551,168 @@ function onGlobalMouseUp() { if (isDraggingMulti || isResizingMulti) finishGroup
 window.addEventListener('mouseup', onGlobalMouseUp);
 canvas.addEventListener('mouseleave', onGlobalMouseUp);
 
+// Utility: axis-aligned rect from two points
+function rectFromPoints(p0, p1) {
+    const x = Math.min(p0.x, p1.x);
+    const y = Math.min(p0.y, p1.y);
+    const w = Math.abs(p1.x - p0.x);
+    const h = Math.abs(p1.y - p0.y);
+    return { x, y, w, h };
+}
+function rectsIntersect(a, b) {
+    return !(a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y);
+}
 
+// Rotation-aware AABB (works for text + image objects that have x,y,width,height,rotation)
+function getItemAABB(item) {
+    const cx = item.x + item.width / 2, cy = item.y + item.height / 2;
+    const rad = ((item.rotation || 0) * Math.PI) / 180;
+    const c = Math.cos(rad), s = Math.sin(rad);
+    const hw = item.width / 2, hh = item.height / 2;
+    const pts = [
+        { x: -hw, y: -hh }, { x: hw, y: -hh }, { x: hw, y: hh }, { x: -hw, y: hh }
+    ].map(p => ({ x: p.x * c - p.y * s + cx, y: p.x * s + p.y * c + cy }));
+    const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+// Topmost hit (fallback if you already have getTopHitAt)
+function hitTopItem(mx, my, items = allItems) {
+    const sorted = [...items].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+    for (let i = sorted.length - 1; i >= 0; i--) {
+        const a = getItemAABB(sorted[i]);
+        if (mx >= a.x && mx <= a.x + a.w && my >= a.y && my <= a.y + a.h) return sorted[i];
+    }
+    return null;
+}
+
+// Commit marquee selection at mx,my (design/canvas coords)
+// Commit the marquee selection directly into images/textObjects via `.selected`
+function finalizeMarqueeSelection(mx, my, e) {
+    if (!isMarquee) return;
+
+    // Close the band at the last point
+    marqueeNow.x = mx; marqueeNow.y = my;
+
+    const dragDist = Math.hypot(marqueeNow.x - marqueeStart.x, marqueeNow.y - marqueeStart.y);
+    const additive = !!(e && e.shiftKey);            // Shift adds
+    const toggle = !!(e && (e.ctrlKey || e.metaKey)); // Ctrl/Cmd toggles
+
+    const all = __drawables();
+
+    // Build current selection set from the flags your drawText() already uses
+    const currSel = new Set(all.filter(it => it.selected));
+
+    if (dragDist < (typeof MARQUEE_MIN_DRAG === 'number' ? MARQUEE_MIN_DRAG : 4)) {
+        // CLICK path: behave like your click (single select, with optional toggle/add)
+        const hit = __topHitAt(mx, my);
+
+        if (!additive && !toggle) currSel.clear();
+
+        if (hit) {
+            if (toggle) {
+                if (currSel.has(hit)) currSel.delete(hit); else currSel.add(hit);
+            } else {
+                currSel.add(hit);
+            }
+        } else if (!additive && !toggle) {
+            currSel.clear();
+        }
+    } else {
+        // MARQUEE path: select everything intersecting the band
+        const box = rectFromPoints(marqueeStart, marqueeNow);
+        if (!additive && !toggle) currSel.clear();
+
+        for (const it of all) {
+            if (rectsIntersect(box, getItemAABB(it))) {
+                if (toggle && currSel.has(it)) currSel.delete(it); else currSel.add(it);
+            }
+        }
+    }
+
+    // Write back the exact flags your renderer reads
+    for (const it of all) it.selected = false;
+    for (const it of currSel) it.selected = true;
+
+    // Set active item like your click does:
+    // 1) prefer the item under mouse if it’s selected
+    // 2) else topmost among selected
+    let active = null;
+    const hoverHit = __topHitAt(mx, my);
+    if (hoverHit && hoverHit.selected) {
+        active = hoverHit;
+    } else if (currSel.size) {
+        let top = null, topZ = -Infinity;
+        for (const it of currSel) {
+            const z = it.zIndex || 0;
+            if (z >= topZ) { topZ = z; top = it; }
+        }
+        active = top;
+    }
+
+    // Update your globals exactly like the click path
+    if (active && active.type === 'image') {
+        activeImage = active;
+        activeText = null;
+    } else if (active) {
+        activeText = active;
+        activeImage = null;
+    } else {
+        activeText = null;
+        activeImage = null;
+    }
+
+    // (Optional) keep a list if you also track it elsewhere
+    globalThis.ItemsSelected = all.filter(it => it.selected);
+
+    isMarquee = false;
+    try { setGlobalCursor?.('default'); } catch { }
+    drawText(); // no changes needed inside drawText()
+}
+function isBoxSelected(it) {
+    return !!(
+        it?.isSelected === true ||
+        (Array.isArray(globalThis.ItemsSelected) && globalThis.ItemsSelected.includes(it)) ||
+        (Array.isArray(globalThis.selectedItems) && globalThis.selectedItems.includes(it)) // compat
+    );
+}
+
+// example usage inside your draw loop
+for (const it of allItems) {
+    drawItem(it);
+    if (isBoxSelected(it) || it === activeBox) {
+        drawSelectionHandles(it); // your existing handle/outline drawer
+    }
+}
+function __drawables() {
+    const imgs = Array.isArray(images) ? images : [];
+    const texts = Array.isArray(textObjects) ? textObjects : [];
+    return imgs.concat(texts);
+}
+function __zsorted(list) {
+    return [...list].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+}
+function __topHitAt(mx, my) {
+    // Prefer your existing hit if available (uses your own precise logic)
+    if (typeof getTopHitAt === 'function') return getTopHitAt(mx, my);
+    // Fallback: rotated AABB scan, topmost by zIndex
+    const sorted = __zsorted(__drawables());
+    for (let i = sorted.length - 1; i >= 0; i--) {
+        const a = getItemAABB(sorted[i]);
+        if (mx >= a.x && mx <= a.x + a.w && my >= a.y && my <= a.y + a.h) return sorted[i];
+    }
+    return null;
+}
+function __hitTopDrawable(mx, my) {
+    const sorted = __zsorted(__drawables());
+    for (let i = sorted.length - 1; i >= 0; i--) {
+        const aabb = getItemAABB(sorted[i]);
+        if (mx >= aabb.x && mx <= aabb.x + aabb.w &&
+            my >= aabb.y && my <= aabb.y + aabb.h) {
+            return sorted[i];
+        }
+    }
+    return null;
+}
 
