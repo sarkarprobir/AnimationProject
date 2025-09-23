@@ -873,3 +873,54 @@ plans {
 #hoverTarget{
     color: #000 !important;
 }
+
+/*FAQ page CSS*/
+.accordion-button::after {
+    display: none !important; /* Hide Bootstrap default arrow */
+}
+
+.faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    /* transition: max-height 0.4s ease, opacity 0.4s ease; */
+    opacity: 0;
+}
+
+    .faq-answer.show {
+        max-height: 500px;
+        opacity: 1;
+        padding: 20px;
+    }
+
+.faq-toggle {
+    font-size: 20px;
+    cursor: pointer;
+    transition: transform 0.8s ease;
+}
+
+.faq_head {
+    font-weight: 700;
+    font-family: "Inter", sans-serif;
+    font-size: 1.2rem;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.06) 0px 1px 2px 0px;
+    padding: 20px;
+}
+
+.accordion-item {
+    border: none !important;
+}
+
+.accordion {
+    width: 60%;
+}
+
+.accordion-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.faq-answer p {
+    font-size: 1rem !important;
+}
