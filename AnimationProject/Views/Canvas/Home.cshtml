@@ -25,11 +25,14 @@ rel="stylesheet" />
         LoadHomeTemplates();
     });
 </script>
-<style>
-    .img-box img { opacity: 0; transition: opacity .25s ease; }
+@* <style>
+ .img-box img { opacity: 0; transition: opacity .25s ease; }
 .img-box img.loaded { opacity: 1; }
+.hero-image .hero-video,
+.hero-image img { display:block; width:100%; height:auto; }
+
 </style>
-<!-- Navbar -->
+ *@<!-- Navbar -->
 <nav class="navbar navbar-expand-lg bg-white">
     <div class="container-fluid d-flex justify-content-between align-items-center">
         <!-- Left: Logo + Links -->
@@ -121,7 +124,7 @@ rel="stylesheet" />
     </div>
 </div>
 
-<!-- Hero Section -->
+@* <!-- Hero Section -->
 <div class="container" id="main_hero">
     <section class="hero">
         <div class="hero-text">
@@ -137,7 +140,25 @@ rel="stylesheet" />
         </div>
     </section>
 </div>
+ *@
+ <!-- Hero Section -->
+<div class="container" id="main_hero">
+  <section class="hero">
+    <div class="hero-text">
+      <h1>Animation <br /> on Every <br /> Screen.</h1>
+      <p>
+        Easily create animations with a simple preset motion <br />
+        tool—no designer or animator needed. Do it all yourself!
+      </p>
+      <button class="create-new-btn" data-bs-toggle="modal" data-bs-target="#exampleModal">Create New</button>
+    </div>
 
+    <!-- JS will swap this image with a video if LargeVideoPath is present -->
+    <div class="hero-image" id="divHomePromo">
+     @*  <img src="~/images/hero_sec_img.png" alt="Nike Promo Image" /> *@
+    </div>
+  </section>
+</div>
 <div class="partner d-flex justify-content-center gap-5 align-items-center container ">
     <img src="~/images/Layer 1.png" alt="" />
     <img src="~/images/Layer 2.png" alt="" />

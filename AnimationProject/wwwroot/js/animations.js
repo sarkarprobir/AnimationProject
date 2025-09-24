@@ -116,7 +116,7 @@ let dragOffsetImage = { x: 0, y: 0 };
 let isDraggingImage = false;
 let isResizingImage = false;
 let activeImage = null;
-
+window.__paintChangeRequested = false;  // only true when user changed a picker/checkbox
 
 let scrollSelectionMode = false;
 let scrollStartY = 0;
@@ -131,7 +131,7 @@ let selectionStart = { x: 0, y: 0 };
 let selectionEnd = { x: 0, y: 0 };
 let skipNextClick = false;
 window.__marqueeCommittedAt = 0;          // timestamp of last marquee commit
-
+let isClickSingle = false;
 // ─── Marquee selection state ────────────────────────────────────────────────
 let isMarquee = false;
 let marqueeStart = { x: 0, y: 0 };   // in canvas/design space
@@ -5658,11 +5658,12 @@ canvas.addEventListener("click", function onCanvasClick(e) {
 
         setGraphicModeActive();
         setOpacityUI(normAlpha?.(txtHit.opacity));
+        isMarquee = false;  
 
     } else if (imgHit) {
         imgHit.selected = true;
         activeImage = imgHit;
-
+        isMarquee = false;  
         selectGroup(imgHit.groupId);
         setGroupCheckbox(imgHit.groupId);
 
@@ -5693,6 +5694,7 @@ canvas.addEventListener("click", function onCanvasClick(e) {
     updateFontStyleButtons?.();
 
     const selectedType = getSelectedType?.();
+    
     if (selectedType === "Shape" && activeImage) {
         $("#hdnfillNoColorStatus").val(activeImage.fillNoColorStatus || false);
         $("#hdnstrokeNoColorStatus").val(activeImage.strokeNoColorStatus || false);
@@ -5700,24 +5702,36 @@ canvas.addEventListener("click", function onCanvasClick(e) {
         const swEl = document.getElementById('ddlStrokeWidth');
         if (swEl) swEl.value = String(activeImage.strokeWidth || 3);
 
+        // sync visible checkboxes to the active image (optional but recommended)
+        const fillNoneEl = document.getElementById("noColorCheck");
+        const strokeNoneEl = document.getElementById("noColorCheck2");
+        if (fillNoneEl) fillNoneEl.checked = !!activeImage.fillNoColorStatus;
+        if (strokeNoneEl) strokeNoneEl.checked = !!activeImage.strokeNoColorStatus;
+
+        // READ UI
         const noColorChecked = document.getElementById("noColorCheck")?.checked;
         const noStrokeChecked = document.getElementById("noColorCheck2")?.checked;
 
-        if (noColorChecked) {
-            updateSelectedImageColors(
-                activeImage,
-                "none",
-                noStrokeChecked ? "none" : $("#hdnStrockColor").val(),
-                (document.getElementById("ddlStrokeWidth")?.value || 2)
-            );
-        }
-        if (noStrokeChecked) {
-            updateSelectedImageColors(
-                activeImage,
-                noColorChecked ? "none" : $("#hdnfillColor").val(),
-                "none",
-                (document.getElementById("ddlStrokeWidth")?.value || 2)
-            );
+        // ✅ ONLY apply colors when user explicitly changed something (picker/checkbox)
+        if (window.__paintChangeRequested === true) {
+            if (noColorChecked) {
+                updateSelectedImageColors(
+                    activeImage,
+                    "none",
+                    noStrokeChecked ? "none" : $("#hdnStrockColor").val(),
+                    (document.getElementById("ddlStrokeWidth")?.value || 2)
+                );
+            }
+            if (noStrokeChecked) {
+                updateSelectedImageColors(
+                    activeImage,
+                    noColorChecked ? "none" : $("#hdnfillColor").val(),
+                    "none",
+                    (document.getElementById("ddlStrokeWidth")?.value || 2)
+                );
+            }
+            // reset after applying from UI
+            window.__paintChangeRequested = false;
         }
     }
 
@@ -5776,6 +5790,58 @@ function applyImagePaintToUI(imgHit) {
 
     
 }
+function applyPaintFromUI() {
+    if (!window.activeImage) return;
+    window.__paintChangeRequested = true;
+
+    // Reuse the same logic your click block uses:
+    const noColorChecked = document.getElementById("noColorCheck")?.checked;
+    const noStrokeChecked = document.getElementById("noColorCheck2")?.checked;
+    const sw = (document.getElementById("ddlStrokeWidth")?.value || 2);
+
+    if (noColorChecked) {
+        updateSelectedImageColors(
+            activeImage,
+            "none",
+            noStrokeChecked ? "none" : $("#hdnStrockColor").val(),
+            sw
+        );
+    }
+    if (noStrokeChecked) {
+        updateSelectedImageColors(
+            activeImage,
+            noColorChecked ? "none" : $("#hdnfillColor").val(),
+            "none",
+            sw
+        );
+    }
+
+    window.__paintChangeRequested = false;
+    if (typeof drawText === "function") drawText();
+}
+
+// Hook UI events (run once after DOM ready)
+document.getElementById("noColorCheck")?.addEventListener("change", () => {
+    applyPaintFromUI();
+});
+document.getElementById("noColorCheck2")?.addEventListener("change", () => {
+    applyPaintFromUI();
+});
+document.getElementById("favFillcolor")?.addEventListener("input", () => {
+    // Fill picker changed → apply with current states
+    window.__paintChangeRequested = true;
+    applyPaintFromUI();
+});
+document.getElementById("favStrockcolor")?.addEventListener("input", () => {
+    // Stroke picker changed → apply
+    window.__paintChangeRequested = true;
+    applyPaintFromUI();
+});
+document.getElementById("ddlStrokeWidth")?.addEventListener("change", () => {
+    // Stroke width changed → apply
+    window.__paintChangeRequested = true;
+    applyPaintFromUI();
+});
 
 
 ////KD Need to be Include in project////////
@@ -10886,10 +10952,13 @@ let startDrag = null;
 // make canvas focusable once
 //if (!canvas.hasAttribute('tabindex')) canvas.setAttribute('tabindex', '0');
 canvas.addEventListener("mousedown", e => {
-    if (e.button === 2) return;  
+    if (e.button === 2) return;
     isGroupAction = false;
 
     const { x: mx, y: my } = getCanvasMousePosition(e);
+
+    // ⬅️ ADDED: reset single-click/drag mode BEFORE any mousemove
+    isClickSingle = false;
 
     // Remember starting point (design space)
     marqueeStart.x = mx;
@@ -10906,6 +10975,10 @@ canvas.addEventListener("mousedown", e => {
         const clickedSelected = !!(top && top.selected);
 
         if (dir || clickedSelected) {
+            // ⬅️ ADDED: we’re acting on selection → no marquee, it’s a single/group action
+            isMarquee = false;
+            isClickSingle = true;
+
             startGroupDragOrResize(mx, my, dir || null);
             isGroupAction = true;
             e.preventDefault();
@@ -10921,11 +10994,11 @@ canvas.addEventListener("mousedown", e => {
         return;
     }
 
-   // if (e.button === 2) return; // don't let right-click alter selection/drag
+    // if (e.button === 2) return; // don't let right-click alter selection/drag
     canvas.focus({ preventScroll: true });
 
     const RIGHT = 2;
-   // const { x: mx, y: my } = getCanvasMousePosition(e);
+    // const { x: mx, y: my } = getCanvasMousePosition(e);
     startX = e.clientX; startY = e.clientY;
     prevMouseX = mx; prevMouseY = my;
     startMXCanvas = mx; startMYCanvas = my;
@@ -10979,6 +11052,10 @@ canvas.addEventListener("mousedown", e => {
     // 1) HANDLE TEST (TOP → BOTTOM). If a handle is hit, that box WINS.
     const h = findHandleAt(mx, my);
     if (h) {
+        // ⬅️ ADDED
+        isMarquee = false;
+        isClickSingle = true;
+
         // clear others (unless you want shift-handle to multi-resize)
         if (!e.shiftKey) {
             (textObjects || []).forEach(o => o.selected = false);
@@ -11122,12 +11199,20 @@ canvas.addEventListener("mousedown", e => {
 
     // Shift-click toggles and exits early
     if (e.shiftKey && hit) {
+        // ⬅️ ADDED: we are acting on an item; don't let marquee engage
+        isMarquee = false;
+        isClickSingle = true;
+
         hit.selected = !hit.selected;
         drawText();
         return;
     }
 
     if (hit) {
+        // ⬅️ ADDED: body hit is a single-item action → disable marquee
+        isMarquee = false;
+        isClickSingle = true;
+
         setSelectionTarget(hit, { setActive: true, setContext: true });
 
         // start drag on body
@@ -11138,15 +11223,22 @@ canvas.addEventListener("mousedown", e => {
         // (optional) update rotation/opacity UI here as you already do
         drawText();
     } else {
-        // empty space
+        // empty space → keep marquee armed
         activeBox = null;
         isDraggingNew = false; isResizingNew = false; resizeDirection = null;
         (textObjects || []).forEach(o => o.selected = false);
         (images || []).forEach(o => o.selected = false);
         selectedForContextMenu = null; activeText = activeImage = null;
+
+        // ⬅️ ADDED: explicitly in marquee mode on empty
+        isMarquee = true;
+        isClickSingle = false;
+        try { setGlobalCursor?.("crosshair"); } catch { }
+
         drawText();
     }
 });
+
 
 
 
@@ -11357,14 +11449,14 @@ canvas.addEventListener("mousemove", e => {
     const dx = mx - prevMouseX;
     const dy = my - prevMouseY;
 
-    // ✨ EARLY-RETURN MARQUEE (prevents falling into resize/drag logic)
-    if (isMarquee) {
+    // ✨ EARLY-RETURN MARQUEE (only when not acting on a single item)
+    if (isMarquee && !isClickSingle) {
         marqueeNow.x = mx;
         marqueeNow.y = my;
         try { setGlobalCursor?.("crosshair"); } catch { }
         drawText();
-        drawMarqueeOverlay(ctx);   // or drawMarqueeOverlay() if it uses the global ctx
-        return;                    // <— important: stop here while band-selecting
+        drawMarqueeOverlay(ctx);   // or drawMarqueeOverlay()
+        return;                    // stop here while band-selecting
     }
 
 
@@ -12297,6 +12389,12 @@ canvas.addEventListener("mousemove", e => {
 // let skipNextClick = false;
 
 window.addEventListener("mouseup", (e) => {
+    // ⬅ ADD: if any direct action finished, reset the per-action flag AND disarm marquee
+    if (isDraggingNew || isResizingNew || isCornerFontScale || isCornerImageScale ||
+        isDraggingMulti || isResizingMulti) {
+        isClickSingle = false;   // done with item/handle action
+        isMarquee = false;       // ⬅ ADD: ensure band mode is not left on after a drag/resize
+    }
     // 1) Commit marquee selection on window mouseup
     if (isMarquee) {
         const { x: mx, y: my } = getCanvasMousePosition(e);
