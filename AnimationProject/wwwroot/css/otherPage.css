@@ -101,7 +101,7 @@ a:hover {
 
     .hero-text h1 {
         font-family: "Inter", sans-serif;
-        font-size: 6.5rem;
+        font-size: 5.3rem;
         font-weight: 800;
         line-height: 1;
         margin-bottom: 1rem;
@@ -110,7 +110,7 @@ a:hover {
     .hero-text p {
         font-size: 0.95rem;
         margin-bottom: 1.5rem;
-        color: #333;
+        color: #000;
     }
 
 .hero-image {
@@ -313,7 +313,7 @@ footer {
 .temp_head {
     font-weight: 800;
     font-family: "Inter", sans-serif;
-    font-size: 6.5rem;
+    font-size: 5.3rem;
 }
 
 .pop_v {
@@ -634,7 +634,7 @@ footer {
 }
 
 .contact-title {
-    font-size: 6.5rem;
+    font-size: 5.3rem;
     font-weight: 800;
     font-family: "Inter", sans-serif !important;
 }
@@ -803,7 +803,7 @@ plans {
     font-weight: 800;
     color: #000;
     font-family: "Inter", sans-serif !important;
-    font-size: 6.5rem;
+    font-size: 5.3rem;
 }
 .partner {
     margin-top: 100px;
@@ -847,7 +847,7 @@ plans {
 .about_title {
     font-family: "Inter", sans-serif;
     font-weight: 800;
-    font-size: 6.5rem;
+    font-size: 5.3rem;
     margin-bottom: 2.3rem;
 }
 .rignt-sec-about{
