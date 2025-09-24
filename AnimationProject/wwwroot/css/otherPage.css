@@ -92,7 +92,7 @@ a:hover {
     gap: 8rem;
     align-items: center;
     padding: 0px 8.5rem;
-    min-height: 85vh;
+    min-height: 65vh;
 }
 
 .hero-text {
@@ -114,13 +114,10 @@ a:hover {
     }
 
 .hero-image {
-   
-    
-    
 }
 
     .hero-image video {
-        width: 335px;
+        width: 340px;
         height: auto;
         object-fit: contain;
         border: 7px solid #000;
