@@ -605,6 +605,24 @@ namespace AnimationProject.Controllers
                 return Json("NO");
             }
         }
+        public async Task<IActionResult> GetTemplatesForTemplatePage()
+        {
+            var response = new Response<List<ResponseGetDesignBoardAll>>();
+            RequestGetDesignBoard request = new RequestGetDesignBoard();
+            try
+            {
+                request.CustomerId = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
+                request.CompanyId = Guid.Parse("F174A15A-76B7-4E19-BE4B-4E240983DE55");
+                var saveDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/TemplatesForTemplatePage", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<List<ResponseGetDesignBoardAll>>>(saveDesignSlideBoard);
+                return Json(response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***GetTemplatesForTemplatePage*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return Json("NO");
+            }
+        }
         #endregion
     }
 }
