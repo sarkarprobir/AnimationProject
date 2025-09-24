@@ -1554,7 +1554,7 @@ async function SaveDesignBoardInPublishTable() {
             type: "POST",
             dataType: "json",
             data: data,
-            success: function (result) {
+            success: async function (result) {
                 $("#hdnDesignBoardPublishId").val(result.result);
                 $("#hdnPublishBoardUniqueId").val(result.publishBoardUniqueId);
 
@@ -1568,6 +1568,21 @@ async function SaveDesignBoardInPublishTable() {
                 //window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
                 const url = `${baseURL.replace(/\/$/, '')}/s/v/${encodeURIComponent(companyId)}/${encodeURIComponent(projectId)}`;
                 window.open(url, "_blank");
+
+                // notify SSE hub (requires CORS on Server B and some auth strategy)
+                try {
+                    await fetch('https://aniboard.com/s/api/publish', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // 'X-Aniboard-Signature': '<computed HMAC>' // if you go with a public call, design a safe scheme
+                        },
+                        body: JSON.stringify({ companyId: Number(companyId), projectId: Number(projectId), version: versionString })
+                    });
+                } catch (err) {
+                    console.error('publish notify failed', err);
+                }
+
                 hideDownloadPanel();
                RedirectToVerticalPageWithQueryString();
             },
