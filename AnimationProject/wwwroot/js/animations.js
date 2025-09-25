@@ -9163,7 +9163,7 @@ function boldText() {
                 const r = sel.getRangeAt(0);
                 if (!r.collapsed) {
                     const span = document.createElement("span");
-                    span.style.fontWeight = "bold";
+                    span.style.fontWeight = "900";
                     span.appendChild(r.extractContents());
                     r.insertNode(span);
 
