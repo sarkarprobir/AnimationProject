@@ -27,6 +27,8 @@ a:hover {
 .nav-link {
     margin-right: 1.5rem;
     cursor: pointer;
+    color: #000 !important;
+    font-family: "Nunito Sans", sans-serif;
 }
 
 .create-new-btn {
