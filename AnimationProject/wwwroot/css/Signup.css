@@ -403,8 +403,8 @@ h2 {
 .option-box.selected .checkmark::after {
     content: '';
     position: absolute;
-    top: 2.5px;
-    left: 6px;
+    top: -6.5px;
+    left: -2px;
     width: 5px;
     height: 10px;
     border: solid #fff;
