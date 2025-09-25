@@ -116,6 +116,9 @@ a:hover {
     }
 
 .hero-image {
+    width: 345px;
+    height: auto;
+    object-fit: contain;
 }
 
     .hero-image video {
@@ -125,6 +128,7 @@ a:hover {
         border: 7px solid #000;
         -webkit-box-shadow: 7px 7px 20px -4px rgba(0,0,0,0.61);
         box-shadow: 7px 7px 20px -4px rgba(0,0,0,0.61);
+        background-color: #6214fe;
     }
 .category_head {
     font-family: "Inter", sans-serif;
