@@ -421,7 +421,7 @@ ul.top-left-icon li {
 .panel-left-fonts {
     width: 100%;
     min-height: 685px;
-    height: 93vh;
+    height: 94vh;
     background: #fff;
     z-index: 9;
     padding: 14px;
@@ -431,12 +431,19 @@ ul.top-left-icon li {
     border-right: none;
     overflow: hidden;
 }
-
-.panel-left-gallery h2 {
-    font-family: "Nunito Sans", serif;
-    font-size: var(--font-size18);
-    font-weight: bold;
+@media only screen and (min-height: 900px) {
+    .panel-left-fonts {
+        height: 95vh;
+        left: -4px;
+    }
 }
+
+
+    .panel-left-gallery h2 {
+        font-family: "Nunito Sans", serif;
+        font-size: var(--font-size18);
+        font-weight: bold;
+    }
 /*.gl-box{width:100%; height:100%;}*/
 .gallery-search-right button{border:0px;  position:absolute; right:6px; top:5px; background:transparent;}
 .gallery-search-right .form-search{border:2px solid #ddd; padding:5px 0px 5px 5px; float:right;}
