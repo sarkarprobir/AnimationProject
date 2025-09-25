@@ -119,7 +119,7 @@ a:hover {
 }
 
     .hero-image video {
-        width: 320px;
+        width: 345px;
         height: auto;
         object-fit: contain;
         border: 7px solid #000;
@@ -925,4 +925,46 @@ plans {
 
 .faq-answer p {
     font-size: 1rem !important;
+}
+
+/*//hover*/
+.img-box {
+    position: relative;
+}
+.img-box img{
+    opacity: 1;
+    transition: .5s ease;
+    backface-visibility: hidden;
+}
+.img_hover_btn {
+    display: flex;
+    gap: 20px;
+    transition: .5s ease;
+    opacity: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    text-align: center;
+}
+.img-box:hover img {
+    filter: blur(3px);
+}
+.img-box:hover .img_hover_btn {
+    opacity: 1;
+    z-index: 999;
+}
+.img_hover_btn button {
+    border-radius: 50%;
+    color: #000;
+    background-color: #fff;
+    box-shadow: none;
+    width: 40px;
+    border: none;
+    height: 40px;
+}
+.img_hover_btn button:hover {
+    color: #fff;
+    background-color: #000;
 }
