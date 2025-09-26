@@ -124,6 +124,7 @@ a:hover {
     .hero-image video {
         width: 345px;
         height: auto;
+        min-height: 595px;
         object-fit: contain;
         border: 7px solid #000;
         -webkit-box-shadow: 7px 7px 20px -4px rgba(0,0,0,0.61);
