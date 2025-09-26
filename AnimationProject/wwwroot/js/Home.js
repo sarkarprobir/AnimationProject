@@ -377,6 +377,23 @@ function LoadHomeTemplates() {
         img.addEventListener('load', () => img.classList.add('loaded'), { once: true });
 
         box.appendChild(img);
+
+        // ✅ ADDED: hover buttons right after the <img>
+        const hover = document.createElement('div');
+        hover.className = 'img_hover_btn';
+        hover.innerHTML = `
+      <button title="View" type="button" class="">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <span class="visually-hidden">View</span>
+      </button>
+      <button title="Edit" type="button" class="">
+        <i class="fa-solid fa-pen" aria-hidden="true"></i>
+        <span class="visually-hidden">Edit</span>
+      </button>
+    `;
+        box.appendChild(hover);
+        // ✅ END ADD
+
         return box;
     }
 
@@ -422,6 +439,24 @@ function LoadHomeTemplates() {
 // Call after DOM ready
 // $(LoadHomeTemplates);
 
+// Create <div class="img-box {orientation}"><img class="border3 lazy" .../><div class="img_hover_btn">…</div></div>
 
+
+
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.img_hover_btn button');
+    if (!btn) return;
+    const box = btn.closest('.img-box');
+    const img = box?.querySelector('img');
+
+    if (btn.title === 'View') {
+        // TODO: open preview modal using the image src
+        const src = img?.getAttribute('src') || img?.dataset.src;
+        console.log('View', src);
+    } else if (btn.title === 'Edit') {
+        // TODO: navigate to editor / load template
+        console.log('Edit clicked for', img?.alt);
+    }
+});
 
 

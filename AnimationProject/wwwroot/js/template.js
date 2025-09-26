@@ -130,6 +130,23 @@
         img.addEventListener('load', () => img.classList.add('loaded'), { once: true });
 
         box.appendChild(img);
+
+        // ✅ ADDED: hover buttons right after the <img>
+        const hover = document.createElement('div');
+        hover.className = 'img_hover_btn';
+        hover.innerHTML = `
+      <button title="View" type="button" class="">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <span class="visually-hidden">View</span>
+      </button>
+      <button title="Edit" type="button" class="">
+        <i class="fa-solid fa-pen" aria-hidden="true"></i>
+        <span class="visually-hidden">Edit</span>
+      </button>
+    `;
+        box.appendChild(hover);
+        // ✅ END ADD
+
         return box;
     }
 
