@@ -149,8 +149,8 @@
                                     <div class="d-flex justify-content-center gap-2">
                                         <a class="board_button"
                                            onclick="RedirectToHorizontalPage('@item.DesignBoardId')"><i class="fa-regular fa-pen-to-square"></i>
-                                        </a>
-                                        <a class="board_button" href="#"><i class="fa-regular fa-clone"></i></a>
+                                            </a>
+                                            <a class="board_button" onclick="event.preventDefault(); event.stopPropagation(); DuplicateHorizontalBoard('@item.DesignBoardId');"><i class="fa-regular fa-clone"></i></a>
                                     </div>
                                     <div class="position-relative board_info_wrapper">
                                         <div class="board_info_dots d-flex justify-content-center">
@@ -293,7 +293,7 @@
                                             onclick="RedirectToVerticalPage('@item.DesignBoardId')">
                                             <i class="fa-regular fa-pen-to-square"></i>
                                         </a>
-                                        <a class="board_button" href="#"><i class="fa-regular fa-clone"></i></a>
+                                            <a class="board_button" onclick="event.preventDefault(); event.stopPropagation(); DuplicateVerticalBoard('@item.DesignBoardId');"><i class="fa-regular fa-clone"></i></a>
                                     </div>
                                     <div class="position-relative board_info_wrapper">
                                         <div class="board_info_dots d-flex justify-content-center">
@@ -411,10 +411,24 @@
             // Use encodeURIComponent for URL safety
             window.location = `${baseURL}Canvas/VerticalIndex?id=${encodeURIComponent(id)}`;
         }
+           async function DuplicateVerticalBoard(id) {
+                      const confirmDelete = await customConfirm("Do you want to duplicate this board?");
+                      if (!confirmDelete) return;
+                      window.location.href =
+                        `${String(baseURL).replace(/\/+$/, '')}/Canvas/VerticalIndex?id=${encodeURIComponent(id)}&type=duplicate`;
+                    }
+
           function RedirectToHorizontalPage(id) {
             // Use encodeURIComponent for URL safety
             window.location = `${baseURL}Canvas/HorizontalIndex?id=${encodeURIComponent(id)}`;
         }
+            async function DuplicateHorizontalBoard(id) {
+                 const confirmDelete = await customConfirm("Do you want to duplicate this board?");
+                      if (!confirmDelete) return;
+          window.location.href =
+                `${String(baseURL).replace(/\/+$/, '')}/Canvas/HorizontalIndex?id=${encodeURIComponent(id)}&type=duplicate`;
+        }
+
         let selectedOption = ""; // Variable to store the selected board type
 
         document.getElementById("horizontal-option").addEventListener("click", function () {

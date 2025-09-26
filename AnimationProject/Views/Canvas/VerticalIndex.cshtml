@@ -62,8 +62,10 @@
               // 4) Pull the `id` from the URL and initialize your canvas
               const params = new URLSearchParams(window.location.search);
               const id     = params.get('id');
+              const type = (params.get('type') || '').trim().toLowerCase(); // may be '', 'duplicate', etc.
+
               if (id) {
-                GetDesignBoardById(id);
+                 GetDesignBoardById(id, type || '');
 
                 // Wire up your custom context‑menu
                 const canvas      = document.getElementById("myCanvas");
@@ -100,14 +102,7 @@
               const fallbackId = new URLSearchParams(window.location.search).get('id');
               if (fallbackId) GetDesignBoardById(fallbackId);
             }
-            //    try{
-            //     switchTab(null, 'shapes', 1);
-                  
-            // }
-            // catch(ex)
-            // {
-
-            // }
+            
           })();
          
         });
@@ -1336,13 +1331,13 @@
 
 
      <div id="canvasMainContainerDownload" class="d-flex align-items-stretch main-canvas-content ">
-        <div class="panel-left"></div>
+        <div class="panel-left" id="divpanelleftDownload"></div>
 
         <div id="canvasContainerDownload" class="panel-middle d-flex align-items-center justify-content-center ">
             <canvas id="myCanvasElementDownload" class="clsmyCanvas"></canvas>
         </div>
 
-        <div class="panel-right content"></div>
+        <div class="panel-right content" id="divpanelrightDownload"></div>
     </div>
    @*  </div> *@
 
@@ -1397,7 +1392,7 @@
 
 
 
-    <div class="d-flex align-items-stretch  main-canvas-content">
+    <div class="d-flex align-items-stretch  main-canvas-content" id="canvasMainContainer">
 
         <div class="panel-left " id="divpanelleft">
         </div>

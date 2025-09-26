@@ -69,8 +69,9 @@
           // 4) Pull the `id` from the URL and initialize your canvas
           const params = new URLSearchParams(window.location.search);
           const id     = params.get('id');
+           const type = (params.get('type') || '').trim().toLowerCase(); // may be '', 'duplicate', etc.
           if (id) {
-            GetDesignBoardById(id);
+            GetDesignBoardById(id, type || '');
 
             // Wire up your custom context‑menu
             // const canvas      = document.getElementById("myCanvas");
@@ -988,7 +989,7 @@
     </div>
 
     <div id="canvasMainContainerDownload" class="d-flex align-items-stretch main-canvas-content">
-        <div class="panel-left"></div>
+        <div class="panel-left" id="divpanelleftHDownload"></div>
      
                     <input type="hidden" id="hdnPublishBoardUniqueId" />
                     <input type="hidden" id="hdnDesignBoardPublishId" />
@@ -996,12 +997,12 @@
             <canvas id="myCanvasElementDownload" class="clsmyCanvas"></canvas>
         </div>
 
-        <div class="panel-right content"></div>
+        <div class="panel-right content" id="divpanelrightHDownload"></div>
     </div>
 
     <input type="hidden" id="hdntransition" />
 
-    <div class="d-flex align-items-stretch   main-canvas-content mt-0">
+    <div class="d-flex align-items-stretch   main-canvas-content mt-0" id="canvasMainContainer">
         <div class="panel-left " id="divpanelleftH">
 
         </div>

@@ -8892,7 +8892,7 @@ function CreateLeftSectionhtml() {
             dataType: "html",
             success: function (result) {
                 $("#divpanelleft").html(result);
-
+               
             },
             error: function () {
             }
