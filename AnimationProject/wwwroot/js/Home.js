@@ -203,9 +203,10 @@ function LoadHomeTemplates() {
 
     // Use whatever hero <img> is already in markup as the poster/fallback (works with Razor "~/" too)
     const heroFallbackSrc = (function () {
-        if (!$promo.length) return '/images/hero_sec_img.png';
-        const img = $promo.find('img').attr('src');
-        return img || '/images/hero_sec_img.png';
+        //if (!$promo.length) return '/images/hero_sec_img.png';
+        //const img = $promo.find('img').attr('src');
+        //return img || '/images/hero_sec_img.png';
+        return '';
     })();
 
     // Defaults for grid placeholders
