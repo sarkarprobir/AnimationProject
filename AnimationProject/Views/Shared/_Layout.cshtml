@@ -30,7 +30,110 @@
     <link href="~/css/Common/jquery-ui.css?v=@Configuration["AppSettings:FilesVersion"]" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- Bootstrap Bundle with Popper -->
-    
+
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script>
+        (function () {
+          // ----- helpers -----
+          function modeFromUl(ul) {
+            const img = ul.querySelector('li img');
+            if (!img) return 'Vertical';
+            return img.id.toLowerCase().includes('horizontal') ? 'Horizontal' : 'Vertical';
+          }
+          function idPrefix(ul) {
+            return modeFromUl(ul) === 'Horizontal' ? 'imageHorizontal' : 'imageVertical';
+          }
+          function renumberSlides(ul) {
+            const prefix = idPrefix(ul);
+            const lis = Array.from(ul.children).filter(el => el.tagName === 'LI');
+            lis.forEach((li, idx) => {
+              const n = idx + 1;
+              const label = li.querySelector('.d-flex span');
+              if (label) label.textContent = `Slide-${n}`;
+              const img = li.querySelector('img');
+              if (img) {
+                img.id = `${prefix}${n}`;
+                const oldOnclick = img.getAttribute('onclick') || '';
+                const updated = oldOnclick.replace(/SaveDesignBoardSlide\(\s*\d+\s*\)/, `SaveDesignBoardSlide(${n})`);
+                img.setAttribute('onclick', updated);
+              }
+            });
+          }
+
+          // ensure each <li> has a stable "slot" (owner of its JSON). do not change on reorder.
+          function ensureSlots() {
+            const ul = document.querySelector('.panel-left-scroll ul');
+            if (!ul) return;
+            Array.from(ul.children).forEach((li, i) => {
+              if (!li.dataset.slot) li.dataset.slot = String(i + 1); // 1..N
+            });
+          }
+
+          // public: get current order for saving
+          window.getCurrentSlideOrder = function () {
+            const ul = document.querySelector('.panel-left-scroll ul');
+            if (!ul) return [];
+            return Array.from(ul.querySelectorAll(':scope > li')).map((li, i) => ({
+              sequence: i + 1,
+              slot: Number(li.dataset.slot || i + 1),
+              designBoardDetailsId: li.dataset.designId || null
+            }));
+          };
+
+          // bind Sortable (idempotent)
+          function bindUl(ul) {
+            if (!ul || ul.__sortableBound) return;
+            ul.__sortableBound = true;
+
+            // stop native img drag—Sortable handles everything
+            ul.querySelectorAll(':scope > li img').forEach(img => img.setAttribute('draggable', 'false'));
+
+            Sortable.create(ul, {
+              animation: 150,
+              // prevent starting a drag from delete/duplicate icons
+              filter: '.slide-icon, .fa-trash-can, .fa-clone',
+              preventOnFilter: true,
+              // whole <li> is draggable by default
+              onEnd: () => {
+                renumberSlides(ul);
+                // optional: expose last order for debugging
+                window.__lastSlideOrder = window.getCurrentSlideOrder();
+              }
+            });
+          }
+
+          // init any current list(s)
+          function initSlidesDnD() {
+            ensureSlots();
+            document.querySelectorAll('.panel-left-scroll ul').forEach(bindUl);
+          }
+          window.initSlidesDnD = initSlidesDnD; // expose so you can call it after AJAX if you want
+
+          // run when DOM is ready
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initSlidesDnD, { once: true });
+          } else {
+            initSlidesDnD();
+          }
+
+          // safety net: re-bind automatically whenever the partial updates
+          (function watchSlidesArea() {
+            function startObserver() {
+              const root = document.querySelector('.panel-left-scroll') || document.body || document.documentElement;
+              if (!root) return;
+              if (window.__slidesObs) return; // already observing
+              window.__slidesObs = new MutationObserver(() => initSlidesDnD());
+              window.__slidesObs.observe(root, { childList: true, subtree: true });
+            }
+            if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', startObserver, { once: true });
+            } else {
+              startObserver();
+            }
+          })();
+        })();
+    </script>
+
 </head>
 <body>
     @if (ViewBag.HideNavbar != true) {

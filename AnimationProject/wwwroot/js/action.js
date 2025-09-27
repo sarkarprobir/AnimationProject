@@ -8507,4 +8507,3 @@ function clearrightDownloadPanel() {
     $('#divpanelrightDownload').empty();
 }
 
-

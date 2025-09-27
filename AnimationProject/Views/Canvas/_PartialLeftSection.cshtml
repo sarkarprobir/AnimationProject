@@ -5,6 +5,53 @@
     var mode = (string)(ViewBag.Orientation ?? "Unknown");
 }
 <style>
+
+    /* Apply to the list no matter what */
+    .panel-left-scroll ul.slides-ul {
+        list-style: none;
+        padding-left: 0;
+        margin: 0;
+    }
+
+        .panel-left-scroll ul.slides-ul > li {
+            cursor: grab;
+        }
+
+            .panel-left-scroll ul.slides-ul > li.dragging {
+                opacity: 0.5;
+            }
+
+            /* Use a unique class to avoid Bootstrap's .placeholder conflicts */
+            .panel-left-scroll ul.slides-ul > li.dnd-placeholder {
+                outline: none !important;
+                min-height: 48px; /* visible drop spot */
+            }
+
+        /* base card look */
+        .panel-left-scroll ul.slides-ul > li {
+            background: #fff; /* so the shadow looks clean */
+            border-radius: 12px;
+            transition: box-shadow .15s ease, transform .15s ease;
+        }
+
+            /* the item you grabbed */
+            .panel-left-scroll ul.slides-ul > li.sortable-chosen {
+                transform: scale(1.02);
+            }
+
+            /* the “ghost” that follows the pointer while dragging */
+            .panel-left-scroll ul.slides-ul > li.sortable-ghost {
+                box-shadow: 0 12px 28px rgba(0,0,0,.18), 0 8px 10px rgba(0,0,0,.12);
+                opacity: 1; /* keep it fully visible */
+                z-index: 1000; /* above neighbors */
+                outline: none !important; /* kill any dashed outlines */
+                border: none !important; /* just in case */
+                background: #fff;
+            }
+
+
+</style>
+@* <style>
     .slides-ul {
         list-style: none;
         padding-left: 0;
@@ -23,198 +70,42 @@
                 outline: 2px dashed #999;
                 min-height: 48px; /* fallback height so you can see the drop spot */
             }
-</style>
+
+    /* Apply to the list no matter what */
+    .panel-left-scroll ul.slides-ul {
+        list-style: none;
+        padding-left: 0;
+        margin: 0;
+    }
+
+        .panel-left-scroll ul.slides-ul > li {
+            cursor: grab; /* remove if you set inline cursor in JS */
+        }
+
+            .panel-left-scroll ul.slides-ul > li.dragging {
+                opacity: 0.5;
+            }
+
+            /* renamed to avoid Bootstrap's .placeholder */
+            .panel-left-scroll ul.slides-ul > li.dnd-placeholder {
+                outline: 2px dashed #999;
+                min-height: 48px;
+            }
+
+</style> *@
+
+
 <script>
     (function () {
-      // Helper: detect vertical vs horizontal block by image id prefix
-      function modeFromUl(ul) {
-        const img = ul.querySelector('li img');
-        if (!img) return 'Vertical'; // default
-        return img.id.toLowerCase().includes('horizontal') ? 'Horizontal' : 'Vertical';
-      }
+      // ensure the UL has the class so your CSS applies
+      const ul = document.querySelector('.panel-left-scroll ul');
+      if (ul && !ul.classList.contains('slides-ul')) ul.classList.add('slides-ul');
 
-      // Helper: build the correct id prefix for images in this UL
-      function idPrefix(ul) {
-        return modeFromUl(ul) === 'Horizontal' ? 'imageHorizontal' : 'imageVertical';
-      }
-
-      // Helper: update numbers after reordering
-      function renumberSlides(ul) {
-        const prefix = idPrefix(ul);
-        const lis = Array.from(ul.children).filter(el => el.tagName === 'LI');
-
-        lis.forEach((li, idx) => {
-          const n = idx + 1;
-
-          // 1) Slide label: <span>Slide-X</span>
-          const label = li.querySelector('.d-flex span');
-          if (label) label.textContent = `Slide-${n}`;
-
-          // 2) Image id and classes
-          const img = li.querySelector('img');
-          if (img) {
-            img.id = `${prefix}${n}`;
-
-            // 3) onclick update: keep your existing chain but fix SaveDesignBoardSlide(n)
-            const oldOnclick = img.getAttribute('onclick') || '';
-            const updated = oldOnclick.replace(/SaveDesignBoardSlide\(\s*\d+\s*\)/, `SaveDesignBoardSlide(${n})`);
-            img.setAttribute('onclick', updated);
-          }
-        });
-
-        // Optional: persist new order to server (example payload)
-        // sendNewOrderToServer(ul);
-      }
-
-      // Optional: persist order (you can wire this to your actual API)
-      function sendNewOrderToServer(ul) {
-        const prefix = idPrefix(ul);
-        const order = Array.from(ul.children)
-          .filter(li => li.tagName === 'LI')
-          .map((li, i) => {
-            const img = li.querySelector('img');
-            return {
-              seq: i + 1,
-              // If you have a unique slide id in DOM, include it here:
-              // designBoardDetailsId: li.dataset.designBoardDetailsId,
-              imgId: img ? img.id : null,
-              label: li.querySelector('.d-flex span')?.textContent || ''
-            };
-          });
-
-        // Example POST (replace URL/body to your real endpoint)
-        /*
-        fetch(baseURL + "Canvas/ReorderSlides", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode: modeFromUl(ul), order })
-        }).catch(console.error);
-        */
-      }
-
-      // Only allow drag when not starting from the duplicate/delete icons
-      function isDragAllowed(target) {
-        const icon = target.closest('.slide-icon');
-        const trash = target.closest('.fa-trash-can');
-        const clone = target.closest('.fa-clone');
-        return !(icon || trash || clone);
-      }
-
-      function initDraggableUl(ul) {
-        // Mark up easily
-        ul.classList.add('slides-ul');
-
-        let draggedLi = null;
-        let placeholder = null;
-
-        // Make each LI draggable
-        function armLis() {
-          ul.querySelectorAll(':scope > li').forEach(li => {
-            li.setAttribute('draggable', 'true');
-          });
-        }
-
-        armLis();
-
-        // Delegate: dragstart
-        ul.addEventListener('dragstart', (e) => {
-          const li = e.target.closest('li');
-          if (!li || !ul.contains(li)) return;
-
-          // If drag starts from icon area, cancel
-          if (!isDragAllowed(e.target)) {
-            e.preventDefault();
-            return;
-          }
-
-          draggedLi = li;
-          li.classList.add('dragging');
-
-          // Data for Firefox (required)
-          try { e.dataTransfer.setData('text/plain', 'drag'); } catch (_) {}
-          e.dataTransfer.effectAllowed = 'move';
-
-          // Create a placeholder element to show insertion point
-          placeholder = document.createElement('li');
-          placeholder.className = 'placeholder';
-          placeholder.style.height = `${li.getBoundingClientRect().height}px`;
-          li.after(placeholder);
-        });
-
-        // Needed so drop can fire
-        ul.addEventListener('dragover', (e) => {
-          if (!draggedLi) return;
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'move';
-
-          const after = getLiAfterY(ul, e.clientY);
-          if (after == null) {
-            // Append at end
-            ul.appendChild(placeholder);
-          } else {
-            ul.insertBefore(placeholder, after);
-          }
-        });
-
-        // Handle drop (reorder)
-        ul.addEventListener('drop', (e) => {
-          if (!draggedLi || !placeholder) return;
-          e.preventDefault();
-
-          ul.insertBefore(draggedLi, placeholder);
-          cleanupDrag();
-          renumberSlides(ul);
-          // sendNewOrderToServer(ul); // uncomment if you want persistence here
-        });
-
-        // Clean on dragend or leave
-        ul.addEventListener('dragend', cleanupDrag);
-        ul.addEventListener('dragleave', (e) => {
-          // If leaving the UL entirely, ignore; browser fires many dragleave events.
-          // We'll rely on drop/dragend for cleanup.
-        });
-
-        function cleanupDrag() {
-          if (draggedLi) draggedLi.classList.remove('dragging');
-          if (placeholder && placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
-          draggedLi = null;
-          placeholder = null;
-          // re-arm in case DOM changed
-          armLis();
-        }
-
-        // Find the first LI below the given mouse Y to decide insert position
-        function getLiAfterY(container, mouseY) {
-          const lis = [...container.querySelectorAll(':scope > li:not(.placeholder):not(.dragging)')];
-          let closest = null;
-          let closestOffset = Number.NEGATIVE_INFINITY;
-
-          for (const li of lis) {
-            const box = li.getBoundingClientRect();
-            const offset = mouseY - (box.top + box.height / 2);
-            if (offset < 0 && offset > closestOffset) {
-              closestOffset = offset;
-              closest = li;
-            }
-          }
-          return closest;
-        }
-      }
-
-      // Initialize for both Vertical and Horizontal lists
-      function initAllSlideLists() {
-        const lists = document.querySelectorAll('.panel-left-scroll ul');
-        lists.forEach(initDraggableUl);
-      }
-
-      // Run once DOM is ready
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initAllSlideLists);
-      } else {
-        initAllSlideLists();
-      }
+      // hand control to the global Sortable binder
+      if (window.initSlidesDnD) window.initSlidesDnD();
     })();
 </script>
+
 
 
 
@@ -223,26 +114,26 @@
 
     @if (mode == "Vertical")
     {
-        <ul>
-            <li>
+        <ul class="slides-ul">
+            <li class="dnd-placeholder">
                 <img src="~/images/Default_Slide_Image.jpeg" id="imageVertical1" class="menuboard-vertical-thum active_border" alt="Banner" onclick="SaveDesignBoardSlide(1); handleThumbClick(this);TabShowHide('In');updateEffectButtons('In');updateEffectButtons('Out');updateDirectionButtons('In');updateDirectionButtons('Out');">
                 <div class="d-flex justify-content-center align-items-center gap-2">
                     <span>Slide-1</span>
-                    <div class="slide-icon"><i class="fa-regular fa-clone"  title="Duplicate" onclick="DuplicateSlide();"></i></div>
-                    <div class="slide-icon delete"><i class="fa-regular fa-trash-can"  title="Delete" onclick="DeleteSlide();"></i></div>
-                    <div class="clear"></div>
-                </div>
-            </li>
-            <li>
-                <img src="~/images/Default_Slide_Image.jpeg" id="imageVertical2" class="menuboard-vertical-thum" alt="Banner" onclick="SaveDesignBoardSlide(2); handleThumbClick(this);TabShowHide('In');updateEffectButtons('In');updateEffectButtons('Out');updateDirectionButtons('In');updateDirectionButtons('Out');">
-                <div class="d-flex justify-content-center align-items-center gap-2">
-                    <span>Slide-2</span>
-                    <div class="slide-icon"><i class="fa-regular fa-clone"  title="Duplicate" onclick="DuplicateSlide();"></i></div>
+                    <div class="slide-icon"><i class="fa-regular fa-clone" title="Duplicate" onclick="DuplicateSlide();"></i></div>
                     <div class="slide-icon delete"><i class="fa-regular fa-trash-can" title="Delete" onclick="DeleteSlide();"></i></div>
                     <div class="clear"></div>
                 </div>
             </li>
-            <li>
+            <li class="dnd-placeholder">
+                <img src="~/images/Default_Slide_Image.jpeg" id="imageVertical2" class="menuboard-vertical-thum" alt="Banner" onclick="SaveDesignBoardSlide(2); handleThumbClick(this);TabShowHide('In');updateEffectButtons('In');updateEffectButtons('Out');updateDirectionButtons('In');updateDirectionButtons('Out');">
+                <div class="d-flex justify-content-center align-items-center gap-2">
+                    <span>Slide-2</span>
+                    <div class="slide-icon"><i class="fa-regular fa-clone" title="Duplicate" onclick="DuplicateSlide();"></i></div>
+                    <div class="slide-icon delete"><i class="fa-regular fa-trash-can" title="Delete" onclick="DeleteSlide();"></i></div>
+                    <div class="clear"></div>
+                </div>
+            </li>
+            <li class="dnd-placeholder">
                 <img src="~/images/Default_Slide_Image.jpeg" id="imageVertical3" class="menuboard-vertical-thum" alt="Banner" onclick="SaveDesignBoardSlide(3); handleThumbClick(this);TabShowHide('In');updateEffectButtons('In');updateEffectButtons('Out');updateDirectionButtons('In');updateDirectionButtons('Out');">
                 <div class="d-flex justify-content-center align-items-center gap-2">
                     <span>Slide-3</span>
@@ -255,36 +146,36 @@
     }
     else if (mode == "Horizontal")
     {
-                <ul>
-                    <li>
+        <ul class="slides-ul">
+            <li class="dnd-placeholder">
                 <img src="~/images/Default_Slide_Image.jpeg" id="imageHorizontal1" class="menuboard-horizontal-thum active_border" alt="Banner" onclick="SaveDesignBoardSlide(1);handleVThumbClick(this);TabShowHide('In');updateEffectButtons('In');updateEffectButtons('Out');updateDirectionButtons('In');updateDirectionButtons('Out');">
-                        <div class="d-flex justify-content-center align-items-center gap-2">
-                            <span>Slide-1</span>
+                <div class="d-flex justify-content-center align-items-center gap-2">
+                    <span>Slide-1</span>
                     <div class="slide-icon"><i class="fa-regular fa-clone" title="Duplicate" onclick="DuplicateSlide();"></i></div>
                     <div class="slide-icon delete"><i class="fa-regular fa-trash-can" title="Delete" onclick="DeleteSlide();"></i></div>
-                            <div class="clear"></div>
-                        </div>
-                    </li>
-                    <li>
+                    <div class="clear"></div>
+                </div>
+            </li>
+            <li class="dnd-placeholder">
                 <img src="~/images/Default_Slide_Image.jpeg" id="imageHorizontal2" class="menuboard-horizontal-thum" alt="Banner" onclick="SaveDesignBoardSlide(2);handleVThumbClick(this);TabShowHide('In');updateEffectButtons('In');updateEffectButtons('Out');updateDirectionButtons('In');updateDirectionButtons('Out');">
-                        <div class="d-flex justify-content-center align-items-center gap-2">
-                            <span>Slide-2</span>
+                <div class="d-flex justify-content-center align-items-center gap-2">
+                    <span>Slide-2</span>
                     <div class="slide-icon"><i class="fa-regular fa-clone" title="Duplicate" onclick="DuplicateSlide();"></i></div>
                     <div class="slide-icon delete"><i class="fa-regular fa-trash-can" title="Delete" onclick="DeleteSlide();"></i></div>
-                            <div class="clear"></div>
-                        </div>
-                    </li>
-                    <li>
+                    <div class="clear"></div>
+                </div>
+            </li>
+            <li class="dnd-placeholder">
                 <img src="~/images/Default_Slide_Image.jpeg" id="imageHorizontal3" class="menuboard-horizontal-thum" alt="Banner" onclick="SaveDesignBoardSlide(3);handleVThumbClick(this);TabShowHide('In');updateEffectButtons('In');updateEffectButtons('Out');updateDirectionButtons('In');updateDirectionButtons('Out');">
-                        <div class="d-flex justify-content-center align-items-center gap-2">
-                            <span>Slide-3</span>
+                <div class="d-flex justify-content-center align-items-center gap-2">
+                    <span>Slide-3</span>
                     <div class="slide-icon"><i class="fa-regular fa-clone" title="Duplicate" onclick="DuplicateSlide();"></i></div>
                     <div class="slide-icon delete"><i class="fa-regular fa-trash-can" title="Delete" onclick="DeleteSlide();"></i></div>
-                            <div class="clear"></div>
-                        </div>
-                    </li>
+                    <div class="clear"></div>
+                </div>
+            </li>
 
-                </ul>
+        </ul>
     }
 </div>
 
