@@ -4,27 +4,219 @@
 @{
     var mode = (string)(ViewBag.Orientation ?? "Unknown");
 }
-@* <script>
-    //slide options js
-    const thumbs = document.querySelectorAll('.menuboard-vertical-thum');
-    const slideOptions = document.getElementById('slideOptions');
-    let currentImage = null;
-    thumbs.forEach(image => {
-        image.addEventListener('contextmenu', function (e) {
-            e.preventDefault();
-            currentImage = image;
-            const rect = image.getBoundingClientRect();
-            slideOptions.style.display = 'block';
-            slideOptions.style.left = `${e.clientX + window.scrollX}px`;
-            slideOptions.style.top = `${e.clientY + window.scrollY}px`;
-            document.body.appendChild(slideOptions);
-        });
-    });
+<style>
+    .slides-ul {
+        list-style: none;
+        padding-left: 0;
+        margin: 0;
+    }
 
-    document.addEventListener('click', function () {
-        slideOptions.style.display = 'none';
-    });
-</script> *@
+        .slides-ul > li {
+            cursor: grab;
+        }
+
+            .slides-ul > li.dragging {
+                opacity: 0.5;
+            }
+
+            .slides-ul > li.placeholder {
+                outline: 2px dashed #999;
+                min-height: 48px; /* fallback height so you can see the drop spot */
+            }
+</style>
+<script>
+    (function () {
+      // Helper: detect vertical vs horizontal block by image id prefix
+      function modeFromUl(ul) {
+        const img = ul.querySelector('li img');
+        if (!img) return 'Vertical'; // default
+        return img.id.toLowerCase().includes('horizontal') ? 'Horizontal' : 'Vertical';
+      }
+
+      // Helper: build the correct id prefix for images in this UL
+      function idPrefix(ul) {
+        return modeFromUl(ul) === 'Horizontal' ? 'imageHorizontal' : 'imageVertical';
+      }
+
+      // Helper: update numbers after reordering
+      function renumberSlides(ul) {
+        const prefix = idPrefix(ul);
+        const lis = Array.from(ul.children).filter(el => el.tagName === 'LI');
+
+        lis.forEach((li, idx) => {
+          const n = idx + 1;
+
+          // 1) Slide label: <span>Slide-X</span>
+          const label = li.querySelector('.d-flex span');
+          if (label) label.textContent = `Slide-${n}`;
+
+          // 2) Image id and classes
+          const img = li.querySelector('img');
+          if (img) {
+            img.id = `${prefix}${n}`;
+
+            // 3) onclick update: keep your existing chain but fix SaveDesignBoardSlide(n)
+            const oldOnclick = img.getAttribute('onclick') || '';
+            const updated = oldOnclick.replace(/SaveDesignBoardSlide\(\s*\d+\s*\)/, `SaveDesignBoardSlide(${n})`);
+            img.setAttribute('onclick', updated);
+          }
+        });
+
+        // Optional: persist new order to server (example payload)
+        // sendNewOrderToServer(ul);
+      }
+
+      // Optional: persist order (you can wire this to your actual API)
+      function sendNewOrderToServer(ul) {
+        const prefix = idPrefix(ul);
+        const order = Array.from(ul.children)
+          .filter(li => li.tagName === 'LI')
+          .map((li, i) => {
+            const img = li.querySelector('img');
+            return {
+              seq: i + 1,
+              // If you have a unique slide id in DOM, include it here:
+              // designBoardDetailsId: li.dataset.designBoardDetailsId,
+              imgId: img ? img.id : null,
+              label: li.querySelector('.d-flex span')?.textContent || ''
+            };
+          });
+
+        // Example POST (replace URL/body to your real endpoint)
+        /*
+        fetch(baseURL + "Canvas/ReorderSlides", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: modeFromUl(ul), order })
+        }).catch(console.error);
+        */
+      }
+
+      // Only allow drag when not starting from the duplicate/delete icons
+      function isDragAllowed(target) {
+        const icon = target.closest('.slide-icon');
+        const trash = target.closest('.fa-trash-can');
+        const clone = target.closest('.fa-clone');
+        return !(icon || trash || clone);
+      }
+
+      function initDraggableUl(ul) {
+        // Mark up easily
+        ul.classList.add('slides-ul');
+
+        let draggedLi = null;
+        let placeholder = null;
+
+        // Make each LI draggable
+        function armLis() {
+          ul.querySelectorAll(':scope > li').forEach(li => {
+            li.setAttribute('draggable', 'true');
+          });
+        }
+
+        armLis();
+
+        // Delegate: dragstart
+        ul.addEventListener('dragstart', (e) => {
+          const li = e.target.closest('li');
+          if (!li || !ul.contains(li)) return;
+
+          // If drag starts from icon area, cancel
+          if (!isDragAllowed(e.target)) {
+            e.preventDefault();
+            return;
+          }
+
+          draggedLi = li;
+          li.classList.add('dragging');
+
+          // Data for Firefox (required)
+          try { e.dataTransfer.setData('text/plain', 'drag'); } catch (_) {}
+          e.dataTransfer.effectAllowed = 'move';
+
+          // Create a placeholder element to show insertion point
+          placeholder = document.createElement('li');
+          placeholder.className = 'placeholder';
+          placeholder.style.height = `${li.getBoundingClientRect().height}px`;
+          li.after(placeholder);
+        });
+
+        // Needed so drop can fire
+        ul.addEventListener('dragover', (e) => {
+          if (!draggedLi) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+
+          const after = getLiAfterY(ul, e.clientY);
+          if (after == null) {
+            // Append at end
+            ul.appendChild(placeholder);
+          } else {
+            ul.insertBefore(placeholder, after);
+          }
+        });
+
+        // Handle drop (reorder)
+        ul.addEventListener('drop', (e) => {
+          if (!draggedLi || !placeholder) return;
+          e.preventDefault();
+
+          ul.insertBefore(draggedLi, placeholder);
+          cleanupDrag();
+          renumberSlides(ul);
+          // sendNewOrderToServer(ul); // uncomment if you want persistence here
+        });
+
+        // Clean on dragend or leave
+        ul.addEventListener('dragend', cleanupDrag);
+        ul.addEventListener('dragleave', (e) => {
+          // If leaving the UL entirely, ignore; browser fires many dragleave events.
+          // We'll rely on drop/dragend for cleanup.
+        });
+
+        function cleanupDrag() {
+          if (draggedLi) draggedLi.classList.remove('dragging');
+          if (placeholder && placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
+          draggedLi = null;
+          placeholder = null;
+          // re-arm in case DOM changed
+          armLis();
+        }
+
+        // Find the first LI below the given mouse Y to decide insert position
+        function getLiAfterY(container, mouseY) {
+          const lis = [...container.querySelectorAll(':scope > li:not(.placeholder):not(.dragging)')];
+          let closest = null;
+          let closestOffset = Number.NEGATIVE_INFINITY;
+
+          for (const li of lis) {
+            const box = li.getBoundingClientRect();
+            const offset = mouseY - (box.top + box.height / 2);
+            if (offset < 0 && offset > closestOffset) {
+              closestOffset = offset;
+              closest = li;
+            }
+          }
+          return closest;
+        }
+      }
+
+      // Initialize for both Vertical and Horizontal lists
+      function initAllSlideLists() {
+        const lists = document.querySelectorAll('.panel-left-scroll ul');
+        lists.forEach(initDraggableUl);
+      }
+
+      // Run once DOM is ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAllSlideLists);
+      } else {
+        initAllSlideLists();
+      }
+    })();
+</script>
+
+
 
 <div class="panel-left-scroll">
     <button onclick="tranTogglePopup(); transitionSelected(this);" class="sd-btn-right mb-3"> <img src="~/images/icon-01.png" alt="Banner" style="width: 19px;">Transition</button>
