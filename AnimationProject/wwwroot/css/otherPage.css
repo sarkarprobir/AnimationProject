@@ -562,6 +562,7 @@ footer {
     border: 2px solid #ccc;
     padding: 6px 32px;
     border-radius: 3px;
+    text-decoration: none;
 }
 
 .create-btn:hover {
@@ -570,6 +571,7 @@ footer {
 
 .cancel-btn:hover {
     background-color: #d1d1d1;
+    color: #000;
 }
 
 .vertical_option {
