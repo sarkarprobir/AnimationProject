@@ -6,96 +6,40 @@
 }
 <style>
 
-    /* Apply to the list no matter what */
-    .panel-left-scroll ul.slides-ul {
-        list-style: none;
-        padding-left: 0;
-        margin: 0;
+    /* base card look */
+    .panel-left-scroll ul.slides-ul > li {
+        background: #fff;
+        border-radius: 12px;
+        transition: box-shadow .15s ease, transform .15s ease;
     }
 
-        .panel-left-scroll ul.slides-ul > li {
-            cursor: grab;
+        /* picked-up / dragging element */
+        .panel-left-scroll ul.slides-ul > li.sortable-chosen,
+        .panel-left-scroll ul.slides-ul > li.sortable-drag,
+        .panel-left-scroll ul.slides-ul > li.slide-chosen,
+        .panel-left-scroll ul.slides-ul > li.slide-drag {
+            transform: scale(1.02);
+            z-index: 3;
+            box-shadow: 0 12px 28px rgba(0,0,0,.18), 0 8px 12px rgba(0,0,0,.12);
         }
 
-            .panel-left-scroll ul.slides-ul > li.dragging {
-                opacity: 0.5;
-            }
-
-            /* Use a unique class to avoid Bootstrap's .placeholder conflicts */
-            .panel-left-scroll ul.slides-ul > li.dnd-placeholder {
-                outline: none !important;
-                min-height: 48px; /* visible drop spot */
-            }
-
-        /* base card look */
-        .panel-left-scroll ul.slides-ul > li {
-            background: #fff; /* so the shadow looks clean */
-            border-radius: 12px;
-            transition: box-shadow .15s ease, transform .15s ease;
+        /* the “ghost/placeholder” following the cursor */
+        .panel-left-scroll ul.slides-ul > li.sortable-ghost,
+        .panel-left-scroll ul.slides-ul > li.slide-ghost {
+            opacity: 1;
+            background: #fff;
+            z-index: 2;
+            box-shadow: 0 8px 20px rgba(0,0,0,.14), 0 4px 8px rgba(0,0,0,.10);
+            outline: none !important;
+            border: none !important;
         }
 
-            /* the item you grabbed */
-            .panel-left-scroll ul.slides-ul > li.sortable-chosen {
-                transform: scale(1.02);
-            }
-
-            /* the “ghost” that follows the pointer while dragging */
-            .panel-left-scroll ul.slides-ul > li.sortable-ghost {
-                box-shadow: 0 12px 28px rgba(0,0,0,.18), 0 8px 10px rgba(0,0,0,.12);
-                opacity: 1; /* keep it fully visible */
-                z-index: 1000; /* above neighbors */
-                outline: none !important; /* kill any dashed outlines */
-                border: none !important; /* just in case */
-                background: #fff;
-            }
 
 
 </style>
-@* <style>
-    .slides-ul {
-        list-style: none;
-        padding-left: 0;
-        margin: 0;
-    }
-
-        .slides-ul > li {
-            cursor: grab;
-        }
-
-            .slides-ul > li.dragging {
-                opacity: 0.5;
-            }
-
-            .slides-ul > li.placeholder {
-                outline: 2px dashed #999;
-                min-height: 48px; /* fallback height so you can see the drop spot */
-            }
-
-    /* Apply to the list no matter what */
-    .panel-left-scroll ul.slides-ul {
-        list-style: none;
-        padding-left: 0;
-        margin: 0;
-    }
-
-        .panel-left-scroll ul.slides-ul > li {
-            cursor: grab; /* remove if you set inline cursor in JS */
-        }
-
-            .panel-left-scroll ul.slides-ul > li.dragging {
-                opacity: 0.5;
-            }
-
-            /* renamed to avoid Bootstrap's .placeholder */
-            .panel-left-scroll ul.slides-ul > li.dnd-placeholder {
-                outline: 2px dashed #999;
-                min-height: 48px;
-            }
-
-</style> *@
 
 
-<script>
+@* <script>
     (function () {
       // ensure the UL has the class so your CSS applies
       const ul = document.querySelector('.panel-left-scroll ul');
@@ -104,14 +48,19 @@
       // hand control to the global Sortable binder
       if (window.initSlidesDnD) window.initSlidesDnD();
     })();
-</script>
+</script> *@
 
 
 
 
 <div class="panel-left-scroll">
     <button onclick="tranTogglePopup(); transitionSelected(this);" class="sd-btn-right mb-3"> <img src="~/images/icon-01.png" alt="Banner" style="width: 19px;">Transition</button>
-
+    <input type="hidden" id="hdnSlideSequence1" value=1 />
+    <input type="hidden" id="hdnSlideSequence2" value=2 />
+    <input type="hidden" id="hdnSlideSequence3" value=3 />
+    <input type="hidden" id="hdnSlideName1" value="Slide-1" />
+    <input type="hidden" id="hdnSlideName2" value="Slide-2" />
+    <input type="hidden" id="hdnSlideName3" value="Slide-3" />
     @if (mode == "Vertical")
     {
         <ul class="slides-ul">

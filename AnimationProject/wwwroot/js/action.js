@@ -69,9 +69,9 @@ function SaveDesignBoard() {
 
                 // Prepare slide data for each slide
                 var slides = [
-                    { slideSeq: 1, json: verticalSlide1, hdnField: "#hdnDesignBoardDetailsIdSlide1", slideName: 'Slide-1', effect: "#hdnEffectSlide1", direction: "#hdnDirectiontSlide1", outEffect: "#hdnOutEffectSlide1", outDirection: "#hdnOutDirectiontSlide1", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath1", animationImagePath: "#hdnDesignBoardDetailsIdSlideImageFilePath1" },
-                    { slideSeq: 2, json: verticalSlide2, hdnField: "#hdnDesignBoardDetailsIdSlide2", slideName: 'Slide-2', effect: "#hdnEffectSlide2", direction: "#hdnDirectiontSlide2", outEffect: "#hdnOutEffectSlide2", outDirection: "#hdnOutDirectiontSlide2", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath2", animationImagePath: "#hdnDesignBoardDetailsIdSlideImageFilePath2" },
-                    { slideSeq: 3, json: verticalSlide3, hdnField: "#hdnDesignBoardDetailsIdSlide3", slideName: 'Slide-3', effect: "#hdnEffectSlide3", direction: "#hdnDirectiontSlide3", outEffect: "#hdnOutEffectSlide3", outDirection: "#hdnOutDirectiontSlide3", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath3", animationImagePath: "#hdnDesignBoardDetailsIdSlideImageFilePath3" }
+                    { slideSeq: "#hdnSlideSequence1", json: verticalSlide1, hdnField: "#hdnDesignBoardDetailsIdSlide1", slideName: "#hdnSlideName1", effect: "#hdnEffectSlide1", direction: "#hdnDirectiontSlide1", outEffect: "#hdnOutEffectSlide1", outDirection: "#hdnOutDirectiontSlide1", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath1", animationImagePath: "#hdnDesignBoardDetailsIdSlideImageFilePath1" },
+                    { slideSeq: "#hdnSlideSequence2", json: verticalSlide2, hdnField: "#hdnDesignBoardDetailsIdSlide2", slideName: "#hdnSlideName2", effect: "#hdnEffectSlide2", direction: "#hdnDirectiontSlide2", outEffect: "#hdnOutEffectSlide2", outDirection: "#hdnOutDirectiontSlide2", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath2", animationImagePath: "#hdnDesignBoardDetailsIdSlideImageFilePath2" },
+                    { slideSeq: "#hdnSlideSequence3", json: verticalSlide3, hdnField: "#hdnDesignBoardDetailsIdSlide3", slideName: "#hdnSlideName3", effect: "#hdnEffectSlide3", direction: "#hdnDirectiontSlide3", outEffect: "#hdnOutEffectSlide3", outDirection: "#hdnOutDirectiontSlide3", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath3", animationImagePath: "#hdnDesignBoardDetailsIdSlideImageFilePath3" }
                 ];
 
                 // Function to save/update one slide
@@ -87,6 +87,9 @@ function SaveDesignBoard() {
                     var currentAnimationVideoPath = $(slide.animationVideoPath).val() || defaultAnimationVideoPath;
                     var currentAnimationImagePath = $(slide.animationImagePath).val() || defaultAnimationImagePath;
 
+                    var currentslideSeq = $(slide.slideSeq).val() ;
+                    var currentslideName = $(slide.slideName).val();
+
                     const els = [
                         document.getElementById('hdnTransition1'),
                         document.getElementById('hdnTransition2'),
@@ -101,9 +104,9 @@ function SaveDesignBoard() {
                     var dataSlide = {
                         DesignBoardDetailsId: currentDetailId,  // if new, this is default, if update, this is the actual id
                         DesignBoardId: $("#hdnDesignBoardId").val(),
-                        SlideSequence: slide.slideSeq,
+                        SlideSequence: currentslideSeq,
                         JsonFile: slide.json,
-                        SlideName: slide.slideName,
+                        SlideName: currentslideName,
                         Effect: currentEffect,
                         Direction: currentDirection,
                         OutEffect: currentOutEffect,
@@ -631,6 +634,30 @@ function GetDesignBoardById(id,type='') {
                     setHiddenFieldeffect(0, '#hdnEffectSlide1');
                     setHiddenFieldeffect(1, '#hdnEffectSlide2');
                     setHiddenFieldeffect(2, '#hdnEffectSlide3');
+
+                    // Update hidden fields with safety checks
+                    const setHiddenFieldSlideSequence = (index, selector) => {
+                        const value = result.designBoardDetailsList[index]?.slideSequence || '';
+                        $(selector).val(value);
+
+                    };
+
+                    setHiddenFieldSlideSequence(0, '#hdnSlideSequence1');
+                    setHiddenFieldSlideSequence(1, '#hdnSlideSequence2');
+                    setHiddenFieldSlideSequence(2, '#hdnSlideSequence3');
+
+                    // Update hidden fields with safety checks
+                    const setHiddenFieldSlideName = (index, selector) => {
+                        const value = result.designBoardDetailsList[index]?.slideName || '';
+                        $(selector).val(value);
+
+                    };
+
+                    setHiddenFieldSlideName(0, '#hdnSlideName1');
+                    setHiddenFieldSlideName(1, '#hdnSlideName2');
+                    setHiddenFieldSlideName(2, '#hdnSlideName3');
+
+
 
                     // Update hidden fields with safety checks
                     const setHiddenFielddirection = (index, selector) => {

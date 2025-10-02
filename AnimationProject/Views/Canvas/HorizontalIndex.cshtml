@@ -23,7 +23,236 @@
     <link href="~/css/style.css?v=@Configuration["AppSettings:FilesVersion"]" rel="stylesheet">
 
 }
+<script>
+    (function () {
+      // ----- helpers (yours) -----
+      function modeFromUl(ul) {
+        const img = ul.querySelector('li img');
+        if (!img) return 'Vertical';
+        return img.id.toLowerCase().includes('horizontal') ? 'Horizontal' : 'Vertical';
+      }
+      function idPrefix(ul) {
+        return modeFromUl(ul) === 'Horizontal' ? 'imageHorizontal' : 'imageVertical';
+      }
+                        function renumberSlides(ul) {
+      const prefix = idPrefix(ul);
+      const lis = Array.from(ul.children).filter(el => el.tagName === 'LI');
 
+      lis.forEach((li, idx) => {
+        const seq  = idx + 1;                        // new visible position
+        const slot = Number(li.dataset.slot || seq); // stable identity
+
+        const label = li.querySelector('.d-flex span');
+        if (label) label.textContent = 'Slide-' + seq;
+
+        const img = li.querySelector('img');
+        if (img) {
+          img.id = prefix + seq;
+
+          const src  = img.getAttribute('onclick') || '';
+          const next = /SaveDesignBoardSlide\(\s*\d+\s*\)/.test(src)
+            ? src.replace(/SaveDesignBoardSlide\(\s*\d+\s*\)/, 'SaveDesignBoardSlide(' + slot + ')')
+            : 'SaveDesignBoardSlide(' + slot + '); ' + src;
+
+          img.setAttribute('onclick', next);
+          try { img.onclick = new Function('event', next); } catch {}
+        }
+      });
+    }
+
+
+
+
+
+            // put this helper once (you can reuse it elsewhere)
+           // writes both property and attribute so DevTools and any listeners see the change
+    function setHidden(el, v) {
+      if (!el) return;
+      const s = v ? String(v) : '';
+      el.value = s;
+      el.setAttribute('value', s);
+      el.dispatchEvent(new Event('input',  { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+
+    // REPLACE your writeOrderHidden with this:
+                function writeOrderHidden(ul) {
+      const lis = Array.from(ul.querySelectorAll(':scope > li'));
+      const order = lis                  // slot identities in current order
+        .map(li => Number(li.dataset.slot))
+        .filter(n => Number.isFinite(n) && n > 0);
+
+      const N = order.length;
+      for (let slot = 1; slot <= N; slot++) {
+        const pos = order.indexOf(slot);          // position of this slot in DOM
+        const seq = pos >= 0 ? (pos + 1) : '';
+
+        const seqEl  = document.getElementById('hdnSlideSequence' + slot);
+        const nameEl = document.getElementById('hdnSlideName' + slot);
+
+        setHidden(seqEl,  seq);
+        setHidden(nameEl, seq ? ('Slide-' + seq) : '');
+      }
+
+      if (console.debug) console.debug('order (slot array):', order);
+    }
+
+
+
+
+      // keep a stable slot once
+            function ensureSlots() {
+      document.querySelectorAll('.panel-left-scroll ul').forEach(ul => {
+        Array.from(ul.children).forEach((li, i) => {
+          if (!li.dataset.slot) li.dataset.slot = String(i + 1); // set once
+        });
+      });
+    }
+
+
+      // public (debug)
+      window.getCurrentSlideOrder = function () {
+        const ul = document.querySelector('.panel-left-scroll ul');
+        if (!ul) return [];
+        return Array.from(ul.querySelectorAll(':scope > li')).map((li, i) => ({
+          sequence: i + 1,
+          slot: Number(li.dataset.slot || i + 1),
+          designBoardDetailsId: li.dataset.designId || null
+        }));
+      };
+
+      // === NEW: run updates on the next frame to read the final DOM ===
+      function scheduleUpdate(targetUl) {
+        const ul = targetUl;
+        if (!ul) return;
+        if (ul.__updateScheduled) return;
+        ul.__updateScheduled = true;
+
+        const run = () => {
+          try {
+            renumberSlides(ul);
+            writeOrderHidden(ul);
+            // optional: debug last order
+            window.__lastSlideOrder = window.getCurrentSlideOrder();
+          } finally {
+            ul.__updateScheduled = false;
+          }
+        };
+
+        if (window.requestAnimationFrame) {
+          requestAnimationFrame(() => setTimeout(run, 0));
+        } else {
+          setTimeout(run, 0);
+        }
+      }
+
+      // bind Sortable (idempotent)
+          function bindUl(ul) {
+      if (!ul || ul.__sortableBound) return; // guard once at entry
+
+      // prevent the "click after drag" from firing the inline onclick
+      ul.__suppressClicks = false;
+      ul.addEventListener('click', function (e) {
+        if (ul.__suppressClicks) {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+        }
+      }, true); // capture phase eats inline onclick
+
+      // NOTE: do NOT set __sortableBound here; set it at the end
+
+      ul.classList.add('slides-ul');
+      ul.querySelectorAll(':scope > li img').forEach(img => img.setAttribute('draggable', 'false'));
+
+      if (!window.Sortable) {
+        console.warn('SortableJS not found; skipping drag init.');
+        return;
+      }
+
+      Sortable.create(ul, {
+        animation: 150,
+        direction: 'vertical',
+        swapThreshold: 0.5,
+        invertSwap: true,
+        fallbackOnBody: true,
+
+        filter: '.slide-icon, .fa-trash-can, .fa-clone',
+        preventOnFilter: true,
+
+        onStart: (evt) => {
+          const li = evt.item;
+          li.__slotBeforeDrag = Number(li.dataset.slot || 0);
+          ul.__suppressClicks = true; // stop the inevitable click after drop
+        },
+
+        onUpdate: (evt) => scheduleUpdate(evt && evt.to ? evt.to : ul),
+        onSort:   (evt) => scheduleUpdate(evt && evt.to ? evt.to : ul),
+
+        onEnd: (evt) => {
+          const li = evt.item;
+          const targetUl = (evt && evt.to) ? evt.to : ul;
+          const oldSlot = li.__slotBeforeDrag || Number(li.dataset.slot || 0);
+
+          if (oldSlot) {
+            try {
+              SaveDesignBoardSlide(oldSlot); // show dropped slide by stable id
+              if (typeof window.activeSlide !== 'undefined') window.activeSlide = oldSlot;
+            } catch (e) { console.warn(e); }
+          }
+
+          scheduleUpdate(targetUl); // renumber labels/ids & write hidden fields
+
+          try {
+            targetUl.querySelectorAll('li img').forEach(img => img.classList.remove('active_border'));
+            const img = li.querySelector('img');
+            if (img) img.classList.add('active_border');
+          } catch {}
+
+          setTimeout(() => { ul.__suppressClicks = false; }, 0);
+          li.__slotBeforeDrag = null;
+        }
+      });
+
+      // initial sync
+      scheduleUpdate(ul);
+
+      // mark as bound *after* successful setup
+      ul.__sortableBound = true;
+    }
+
+
+      // init any current list(s)
+      function initSlidesDnD() {
+        ensureSlots();
+        document.querySelectorAll('.panel-left-scroll ul').forEach(bindUl);
+      }
+      window.initSlidesDnD = initSlidesDnD;
+
+      // run when DOM is ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSlidesDnD, { once: true });
+      } else {
+        initSlidesDnD();
+      }
+
+      // re-bind automatically whenever the partial updates
+      (function watchSlidesArea() {
+        function startObserver() {
+          var root = document.querySelector('.panel-left-scroll') || document.body || document.documentElement;
+          if (!root) return;
+          if (window.__slidesObs) return;
+          window.__slidesObs = new MutationObserver(function () { initSlidesDnD(); });
+          window.__slidesObs.observe(root, { childList: true, subtree: true });
+        }
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', startObserver, { once: true });
+        } else {
+          startObserver();
+        }
+      })();
+    })();
+</script>
 <script>
       $(document).ready(function(){
       (async () => {
@@ -33,7 +262,8 @@
         if (savedHtml) {
           document.getElementById("divpanelleftH").innerHTML = savedHtml;
           sessionStorage.removeItem("leftPanelHtml"); // optional cleanup
-          leftPanelPromise = Promise.resolve(); // no async work needed
+          // leftPanelPromise = Promise.resolve(); // no async work needed
+           leftPanelPromise = CreateLeftSectionHorizontalhtml();
         } else {
           // Make sure CreateLeftSectionhtml returns a Promise
           leftPanelPromise = CreateLeftSectionHorizontalhtml();
