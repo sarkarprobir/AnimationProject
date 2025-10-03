@@ -73,9 +73,29 @@ function SaveDesignBoard() {
                     { slideSeq: "#hdnSlideSequence2", json: verticalSlide2, hdnField: "#hdnDesignBoardDetailsIdSlide2", slideName: "#hdnSlideName2", effect: "#hdnEffectSlide2", direction: "#hdnDirectiontSlide2", outEffect: "#hdnOutEffectSlide2", outDirection: "#hdnOutDirectiontSlide2", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath2", animationImagePath: "#hdnDesignBoardDetailsIdSlideImageFilePath2" },
                     { slideSeq: "#hdnSlideSequence3", json: verticalSlide3, hdnField: "#hdnDesignBoardDetailsIdSlide3", slideName: "#hdnSlideName3", effect: "#hdnEffectSlide3", direction: "#hdnDirectiontSlide3", outEffect: "#hdnOutEffectSlide3", outDirection: "#hdnOutDirectiontSlide3", animationVideoPath: "#hdnDesignBoardDetailsIdSlideFilePath3", animationImagePath: "#hdnDesignBoardDetailsIdSlideImageFilePath3" }
                 ];
+                // --- add these small helpers somewhere above saveSlide() ---
+                // returns trimmed string, or '' if null/undefined
+                function __valStr($el) {
+                    const v = $el?.val?.();
+                    return (v == null) ? '' : String(v).trim();
+                }
+                // if blank → fallback
+                function __blankOr(v, fallback) {
+                    return (v === '' || v == null) ? fallback : v;
+                }
+                // derive slide number (1/2/3) from a selector like "#hdnSlideSequence2"
+                function __slideNumFromSelector(sel) {
+                    const m = String(sel || '').match(/(\d+)\s*$/);
+                    return m ? Number(m[1]) : 1;
+                }
 
                 // Function to save/update one slide
                 function saveSlide(slide) {
+                    // figure out which slide (1/2/3) this is, based on the selector text
+                    const slideNum = __slideNumFromSelector(slide.slideSeq);          // NEW
+                    const defaultSeqStr = String(slideNum);                           // NEW
+                    const defaultNameStr = `Slide-${slideNum}`;                       // NEW
+
                     // Get current slide detail id from the hidden field
                     var currentDetailId = $(slide.hdnField).val() || defaultId;
                     var currentEffect = $(slide.effect).val() || defaultEffect;
@@ -87,8 +107,11 @@ function SaveDesignBoard() {
                     var currentAnimationVideoPath = $(slide.animationVideoPath).val() || defaultAnimationVideoPath;
                     var currentAnimationImagePath = $(slide.animationImagePath).val() || defaultAnimationImagePath;
 
-                    var currentslideSeq = $(slide.slideSeq).val() ;
-                    var currentslideName = $(slide.slideName).val();
+                    //var currentslideSeq = $(slide.slideSeq).val() ;
+                    //var currentslideName = $(slide.slideName).val();
+
+                    var currentslideSeq = __blankOr(__valStr($(slide.slideSeq)), defaultSeqStr);   // NEW: defaults 1/2/3
+                    var currentslideName = __blankOr(__valStr($(slide.slideName)), defaultNameStr);  // NEW: defaults Slide-1/2/3
 
                     const els = [
                         document.getElementById('hdnTransition1'),
