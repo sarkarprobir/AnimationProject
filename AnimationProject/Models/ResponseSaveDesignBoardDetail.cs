@@ -104,5 +104,10 @@ namespace AnimationProject.Models
         public int PageNo { get; set; }
         public int PageSize { get; set; }
     }
+    public class ResponseSaveElementDetails
+    {
+        public string Response { get; set; }
+        public int Result { get; set; }
+    }
 
 }

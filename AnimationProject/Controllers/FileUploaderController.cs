@@ -7,6 +7,11 @@ using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Formats.Webp;
 using System.Text.RegularExpressions;
 using SixLabors.ImageSharp.Formats.Gif;
+using AnimationProject.Models;
+using Newtonsoft.Json;
+using System.Text;
+using AnimationProject.Helpers;
+using Microsoft.Extensions.Options;
 
 
 
@@ -17,10 +22,13 @@ namespace AnimationProject.Controllers
     public class FileUploaderController : ControllerBase
     {
         private readonly IWebHostEnvironment _env;
-
-        public FileUploaderController(IWebHostEnvironment env)
+        private readonly AppSettings _appSettings;
+        private readonly IHttpClientFactory _httpFactory;
+        public FileUploaderController(IWebHostEnvironment env, IOptions<AppSettings> appSettings, IHttpClientFactory httpFactory)
         {
             _env = env;
+            _appSettings = appSettings.Value;
+            _httpFactory = httpFactory;
         }
 
         [HttpPost("UploadElementImage")]
@@ -65,6 +73,54 @@ namespace AnimationProject.Controllers
 
             var mainUrl = $"/dynamicimage/element/{mainName}";
             var thumbUrl = $"/dynamicimage/element/{thumbName}";
+
+            // ─────────────────────────────────────────────────────────────
+            // NEW: call your API to record the element metadata
+            // We send main file’s size/width/height + both names
+            var mainInfo = Image.Identify(mainPath); // fast metadata read
+            var mainW = mainInfo?.Width ?? img.Width;
+            var mainH = mainInfo?.Height ?? img.Height;
+            var mainBytes = (int)Math.Min(int.MaxValue, new FileInfo(mainPath).Length);
+
+            var request = new RequestElementDetails
+            {
+                CategoryId = 5,             // per your example
+                CompanyUniqueId = 4,        // per your example
+                ElementName = safeBase,     // readable name
+                ImageSize = mainBytes,      // bytes of MAIN image
+                ImageName = mainName,       // file name (e.g., "transition_1.png")
+                ImageNameThumb = thumbName, // thumb file name
+                ImageW = mainW,             // MAIN width
+                ImageH = mainH,             // MAIN height
+                Status = 1,
+                ImageTag = null
+            };
+
+            try
+            {
+                var apiBase = _appSettings.AnimationProjectAPI; // e.g., "https://api.yourhost/"
+                if (!string.IsNullOrWhiteSpace(apiBase))
+                {
+                    var apiUrl = $"{apiBase.TrimEnd('/')}/DesignBoard/ElementInsertFromFrontend";
+                    var client = _httpFactory.CreateClient();
+                    var json = JsonConvert.SerializeObject(request);
+                    var httpResp = await client.PostAsync(
+                        apiUrl,
+                        new StringContent(json, Encoding.UTF8, "application/json"));
+
+                    var body = await httpResp.Content.ReadAsStringAsync();
+                    // Optional: log/inspect `body` if needed
+                }
+                else
+                {
+                    // Optional: log missing config
+                }
+            }
+            catch (Exception ex)
+            {
+                // Optional: log ex.Message / ex.StackTrace — do not fail the upload because of bookkeeping
+            }
+            // ─────────────────────────────────────────────────────────────
 
             return Ok(new { ok = true, mainUrl, thumbUrl }); // CHANGED
         }

@@ -105,5 +105,18 @@
         public int recordPerPage { get; set; }
         public int CompanyUniqueId { get; set; }
     }
+    public class RequestElementDetails
+    {
+        public int CategoryId { get; set; }
+        public int CompanyUniqueId { get; set; }
+        public string ElementName { get; set; } = string.Empty;
+        public int ImageSize { get; set; }
+        public string ImageName { get; set; } = string.Empty;
+        public string ImageNameThumb { get; set; } = string.Empty;
+        public int ImageW { get; set; }
+        public int ImageH { get; set; }
+        public int Status { get; set; } = 1;
+        public string? ImageTag { get; set; }
+    }
 
 }

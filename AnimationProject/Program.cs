@@ -35,6 +35,7 @@ builder.Services.AddScoped<ICheckSession, CheckSession>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
 
+builder.Services.AddHttpClient();              // ✅ this wires up IHttpClientFactory
 // Create an unbounded channel for refresh events.
 var refreshChannel = Channel.CreateUnbounded<string>();
 // Register the channel writer with the RefreshNotifier.

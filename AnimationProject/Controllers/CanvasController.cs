@@ -623,6 +623,29 @@ namespace AnimationProject.Controllers
                 return Json("NO");
             }
         }
+        //[HttpPost]
+        //public async Task<IActionResult> ElementInsertFromFrontend(RequestElementDetails request)
+        //{
+        //    //if (!_checkSession.IsSession()) return Ok("login");
+        //    var response = new Response<ResponseSaveElementDetails>();
+        //    try
+        //    {
+
+        //        request.CategoryId = 5;
+        //        request.CompanyUniqueId = 4;
+        //        //ElementName,ImageSize,ImageName,ImageNameThumb,[ImageW],[ImageH]
+        //        request.Status = 1;
+        //        var saveElement = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/ElementInsertFromFrontend", JsonConvert.SerializeObject(request), user.token);
+        //        response = JsonConvert.DeserializeObject<Response<ResponseSaveElementDetails>>(saveElement);
+        //        return Json(response.Data);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        log.Info("***ElementInsertFromFrontend*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+        //        return Json("NO");
+        //    }
+
+        //}
         #endregion
     }
 }
