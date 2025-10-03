@@ -16811,4 +16811,134 @@ function __hitTopDrawable(mx, my) {
     }
     return null;
 }
+// helper: bounds-safe insert
+function __insertAt(arr, index, item) {
+    const i = Math.max(0, Math.min(index, arr.length));
+    arr.splice(i, 0, item);
+}
 
+// ensure a hidden input exists (reused)
+(function initUploadReplacementInput() {
+    if (!document.getElementById('uploadReplacementInput')) {
+        const inp = document.createElement('input');
+        inp.type = 'file';
+        inp.accept = 'image/*';
+        inp.id = 'uploadReplacementInput';
+        inp.style.display = 'none';
+        document.body.appendChild(inp);
+    }
+})();
+
+// Upload: ONLY delete after a file is chosen & loaded
+document.getElementById("uploadOption").addEventListener("click", function (e) {
+    e.preventDefault(); e.stopPropagation();
+
+    const target = contextTarget || selectedForContextMenu || activeBox;
+    if (!target) { if (contextMenu) contextMenu.style.display = "none"; return; }
+
+    // capture placement/props to reuse
+    const bbox = { x: target.x, y: target.y, width: target.width, height: target.height };
+    const preserved = {
+        rotation: (target.rotation ?? target.angle ?? 0),
+        z: (target.z ?? target.zIndex ?? null)
+    };
+
+    // remember where the target currently lives (for later deletion)
+    const wasImage = (typeof isImageItem === 'function') ? isImageItem(target) : (target?.type === 'image');
+    const sourceArr = wasImage ? (images || []) : (textObjects || []);
+    const originalIndex = sourceArr.indexOf(target); // may shift later; we’ll re-check
+
+    const input = document.getElementById('uploadReplacementInput');
+    input.value = '';
+
+    function onPick(ev) {
+        input.removeEventListener('change', onPick);
+
+        const file = ev.target.files && ev.target.files[0];
+        if (!file) {
+            // user cancelled → DO NOTHING (no deletion)
+            return;
+        }
+
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = function () {
+            // NOW delete old target (guaranteed we have a valid image)
+            const arrNow = wasImage ? (images || []) : (textObjects || []);
+            let idxNow = arrNow.indexOf(target);
+            if (idxNow > -1) arrNow.splice(idxNow, 1);
+
+            if (activeBox === target) activeBox = null;
+            if (activeText === target) activeText = null;
+            if (activeImage === target) activeImage = null;
+            if (target) target.selected = false;
+
+            // create replacement image with same box
+            const newBox = {
+                type: 'image',
+                img, src: url,
+                x: bbox.x, y: bbox.y,
+                width: bbox.width, height: bbox.height,
+                isBasic: false
+            };
+            if (preserved.rotation != null) { newBox.rotation = preserved.rotation; newBox.angle = preserved.rotation; }
+            if (preserved.z != null) { newBox.z = preserved.z; newBox.zIndex = preserved.z; }
+
+            // insert into images at roughly the same stacking position
+            if (Array.isArray(images)) {
+                if (wasImage && idxNow >= 0) {
+                    __insertAt(images, idxNow, newBox);
+                } else {
+                    // best effort: keep z-order if present
+                    if (typeof newBox.zIndex === 'number') {
+                        const insertAt = images.findIndex(it => (it?.z ?? it?.zIndex ?? 0) > newBox.zIndex);
+                        if (insertAt === -1) images.push(newBox); else __insertAt(images, insertAt, newBox);
+                    } else {
+                        images.push(newBox);
+                    }
+                }
+            }
+
+            activeImage = newBox;
+            activeBox = newBox;
+            drawText();
+
+            // 🔽 NEW: upload the original file to the server and swap src to server URL
+            (async () => {
+                try {
+                    const form = new FormData();
+                    form.append("file", file); // original File from the picker
+
+                    const resp = await fetch(baseURL + "fileUploader/UploadElementImage", {
+                        method: "POST",
+                        body: form
+                    });
+                    const res = await resp.json();
+
+                    if (res?.ok) {
+                        // use server URLs; keep a reference if needed
+                        newBox.serverSrc = res.mainUrl;
+                        newBox.thumbSrc = res.thumbUrl;
+                        newBox.src = res.mainUrl;
+
+                        // free the temporary object URL used during preview
+                        try { URL.revokeObjectURL(url); } catch { }
+
+                        drawText(); // redraw with server asset
+                    } else {
+                        console.warn("UploadElementImage failed:", res?.error || resp.statusText);
+                    }
+                } catch (err) {
+                    console.error("UploadElementImage error:", err);
+                }
+            })();
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); };
+        img.src = url;
+    }
+
+    input.addEventListener('change', onPick, { once: true });
+
+    if (contextMenu) contextMenu.style.display = "none"; // hide menu, but DON'T delete yet
+    input.click();
+});
