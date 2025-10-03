@@ -67,7 +67,7 @@
                                 </a>
                             </li>
                             <li class="w-100 acc_list">
-                                <a class="dropdown-item d-flex align-items-center text-white" href="/Canvas/Login">
+                                <a class="dropdown-item d-flex align-items-center text-white" href="/Canvas/Home">
                                     Sign Out
                                 </a>
                             </li>
@@ -149,8 +149,8 @@
                                     <div class="d-flex justify-content-center gap-2">
                                         <a class="board_button"
                                            onclick="RedirectToHorizontalPage('@item.DesignBoardId')"><i class="fa-regular fa-pen-to-square"></i>
-                                        </a>
-                                        <a class="board_button" href="#"><i class="fa-regular fa-clone"></i></a>
+                                            </a>
+                                            <a class="board_button" onclick="event.preventDefault(); event.stopPropagation(); DuplicateHorizontalBoard('@item.DesignBoardId');"><i class="fa-regular fa-clone"></i></a>
                                     </div>
                                     <div class="position-relative board_info_wrapper">
                                         <div class="board_info_dots d-flex justify-content-center">
@@ -164,7 +164,7 @@
                                             <!-- Close Button -->
                                             <button type="button" class="board_info_btn" aria-label="Close" onclick="closeBoardInfo(this)">x</button>
 
-                                            <div class="mb-4">
+                                            <div class="mb-1">
                                                 <div class="d-flex gap-4 mb-1">
                                                     <span><strong>File</strong> <span style="margin-left: 51px;">:</span> </span>
                                                         <span class="ms-2 fw-bold">@item.DesignBoardName</span>
@@ -194,21 +194,21 @@
                                                 <!-- Toggle for home -->
                                                 <div class="toggle-btn-home">
                                                     <div class="d-flex gap-4 align-items-center mb-1">
-                                                        <span><strong>Pin to Home</strong> <span style="margin-left: 85px;">:</span> </span>
+                                                        <span><strong>Featured</strong> <span style="margin-left: 18px;">:</span> </span>
                                                         <div class="form-check form-switch board_switch mb-0">
                                                             <input class="form-check-input board_sw_input" type="checkbox">
                                                         </div>
                                                     </div>
-                                                    <div class="d-flex gap-4 align-items-center mb-1">
-                                                        <span><strong>Set as Banner in Home</strong> <span style="margin-left: 18px;">:</span> </span>
+                                                   @*  <div class="d-flex gap-4 align-items-center mb-1" style="display:none;">
+                                                        <span><strong>Gallery</strong> <span style="margin-left: 28px;">:</span> </span>
                                                         <div class="form-check form-switch board_switch mb-0">
                                                             <input class="form-check-input board_sw_input" type="checkbox">
                                                         </div>
-                                                    </div>
+                                                    </div> *@
                                                 </div>
 
                                             <!-- Link Box -->
-                                            <div class="d-flex align-items-center">
+                                            <div class="d-flex align-items-center mt-4">
                                                 <span><strong>Link</strong></span>
                                                 <span style="margin-left: 51px;">:</span>
                                                 <div class="input-group link_board">
@@ -293,7 +293,7 @@
                                             onclick="RedirectToVerticalPage('@item.DesignBoardId')">
                                             <i class="fa-regular fa-pen-to-square"></i>
                                         </a>
-                                        <a class="board_button" href="#"><i class="fa-regular fa-clone"></i></a>
+                                            <a class="board_button" onclick="event.preventDefault(); event.stopPropagation(); DuplicateVerticalBoard('@item.DesignBoardId');"><i class="fa-regular fa-clone"></i></a>
                                     </div>
                                     <div class="position-relative board_info_wrapper">
                                         <div class="board_info_dots d-flex justify-content-center">
@@ -337,13 +337,13 @@
                                             <!-- Toggle for home -->
                                             <div class="toggle-btn-home">
                                                     <div class="d-flex gap-4 align-items-center mb-1">
-                                                        <span><strong>Pin to Home</strong> <span style="margin-left: 85px;">:</span> </span>
+                                                        <span><strong>Featured</strong> <span style="margin-left: 18px;">:</span> </span>
                                                         <div class="form-check form-switch board_switch mb-0">
                                                             <input class="form-check-input board_sw_input" type="checkbox">
                                                         </div>
                                                     </div>
                                                     <div class="d-flex gap-4 align-items-center mb-1">
-                                                        <span><strong>Set as Banner in Home</strong> <span style="margin-left: 18px;">:</span> </span>
+                                                        <span><strong>Gallery</strong> <span style="margin-left: 28px;">:</span> </span>
                                                         <div class="form-check form-switch board_switch mb-0">
                                                             <input class="form-check-input board_sw_input" type="checkbox">
                                                         </div>
@@ -411,10 +411,24 @@
             // Use encodeURIComponent for URL safety
             window.location = `${baseURL}Canvas/VerticalIndex?id=${encodeURIComponent(id)}`;
         }
+           async function DuplicateVerticalBoard(id) {
+                      const confirmDelete = await customConfirm("Do you want to duplicate this board?");
+                      if (!confirmDelete) return;
+                      window.location.href =
+                        `${String(baseURL).replace(/\/+$/, '')}/Canvas/VerticalIndex?id=${encodeURIComponent(id)}&type=duplicate`;
+                    }
+
           function RedirectToHorizontalPage(id) {
             // Use encodeURIComponent for URL safety
             window.location = `${baseURL}Canvas/HorizontalIndex?id=${encodeURIComponent(id)}`;
         }
+            async function DuplicateHorizontalBoard(id) {
+                 const confirmDelete = await customConfirm("Do you want to duplicate this board?");
+                      if (!confirmDelete) return;
+          window.location.href =
+                `${String(baseURL).replace(/\/+$/, '')}/Canvas/HorizontalIndex?id=${encodeURIComponent(id)}&type=duplicate`;
+        }
+
         let selectedOption = ""; // Variable to store the selected board type
 
         document.getElementById("horizontal-option").addEventListener("click", function () {

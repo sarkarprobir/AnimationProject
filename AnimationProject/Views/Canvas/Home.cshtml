@@ -10,6 +10,7 @@
 <!-- Font Awesome -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 rel="stylesheet" />
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 <!-- Google Font -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,9 +19,14 @@ rel="stylesheet" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
 <link href="~/css/otherPage.css" rel="stylesheet" />
-
-
-<!-- Navbar -->
+<script src="~/js/Home.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
+<script>
+    $(document).ready(function(){
+        LoadHomeTemplates();
+    });
+</script>
+ 
+ <!-- Navbar -->
 <nav class="navbar navbar-expand-lg bg-white">
     <div class="container-fluid d-flex justify-content-between align-items-center">
         <!-- Left: Logo + Links -->
@@ -28,7 +34,7 @@ rel="stylesheet" />
             <a class="navbar-brand" href="#">AniBoard</a>
             <ul class="navbar-nav flex-row ms-4">
                 <li class="nav-item dropdown">
-                    <a class="nav-link" id="hoverTarget">Templates  <i class="fa-solid fa-chevron-down"></i></a>
+                    <a class="nav-link" id="hoverTarget">Use Cases  <i class="fa-solid fa-chevron-down"></i></a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/Canvas/Pricing">Pricing</a>
@@ -112,7 +118,7 @@ rel="stylesheet" />
     </div>
 </div>
 
-<!-- Hero Section -->
+@* <!-- Hero Section -->
 <div class="container" id="main_hero">
     <section class="hero">
         <div class="hero-text">
@@ -128,27 +134,49 @@ rel="stylesheet" />
         </div>
     </section>
 </div>
+ *@
+ <!-- Hero Section -->
+<div class="container" id="main_hero">
+  <section class="hero">
+    <div class="hero-text">
+      <h1>Animation on Every Screen.</h1>
+      <p>
+        Easily create animations with a simple preset motion <br />
+        tool—no designer or animator needed. Do it all yourself!
+      </p>
+      <button class="create-new-btn" data-bs-toggle="modal" data-bs-target="#exampleModal">Create New</button>
+    </div>
 
-<div class="partner d-flex justify-content-center gap-5 align-items-center container ">
-    <img src="~/images/Layer 1.png" alt="" />
-    <img src="~/images/Layer 2.png" alt="" />
-    <img src="~/images/Layer 3.png" alt="" />
-    <img src="~/images/Layer 4.png" alt="" />
-    <img src="~/images/Layer 5.png" alt="" />
-    <img src="~/images/Layer 7.png" alt="" />
-    <img src="~/images/Layer 8.png" alt="" />
+    <!-- JS will swap this image with a video if LargeVideoPath is present -->
+    <div class="hero-image" id="divHomePromo">
+     @*  <img src="~/images/hero_sec_img.png" alt="Nike Promo Image" /> *@
+    </div>
+  </section>
 </div>
 
-<div class="container py-5">
-    <div class="text-center mb-3 py-5">
+
+<div class="container pb-5">
+    <div class="mb-3 pt-5 pb-4 d-flex justify-content-center gap-4">
         <h2 class="temp_client mb-3">Animation Templates</h2>
-        <p>No experinece? No problem. AniBoards empowers any <br /> designer to create sleek animations in minutes.</p>
+        <p class="align-self-end">No experinece? No problem. AniBoards empowers any <br /> designer to create sleek animations in minutes.</p>
     </div>
-    <div class="row column-gap-3 d-flex justify-content-center">
+    <div class="row column-gap-3 d-flex justify-content-center" id="divhomeTemplateRow">
+        <div class="col-auto p-0"></div> <!-- Horizontals (left half) -->
+        <div class="col-auto p-0"></div> <!-- Verticals (left half) -->
+        <div class="col-auto p-0"></div> <!-- Horizontals (right half) -->
+        <div class="col-auto p-0"></div> <!-- Verticals (right half) -->
+    </div>
+
+
+    @* <div class="row column-gap-3 d-flex justify-content-center" id="divhomeTemplateRow">
         <!-- Column 1: Horizontal Images -->
         <div class="col-auto p-0">
             <div class="img-box horizontal">
                 <img class="border3" src="~/images/iphone.png" alt="Image 1" />
+                <div class="img_hover_btn">
+                    <button title="View" type="button" class=""><i class="fa-solid fa-magnifying-glass"></i></button>
+                    <button title="Edit" type="button" class=""><i class="fa-solid fa-pen"></i></button>
+                </div>
             </div>
             <div class="img-box horizontal">
                 <img class="border3" src="~/images/discount.png" alt="Image 2" />
@@ -162,6 +190,10 @@ rel="stylesheet" />
         <div class="col-auto p-0">
             <div class="img-box vertical">
                 <img class="border3" src="~/images/watch.png" alt="Image 4" />
+                <div class="img_hover_btn">
+                    <button title="View" type="button" class=""><i class="fa-solid fa-magnifying-glass"></i></button>
+                    <button title="Edit" type="button" class=""><i class="fa-solid fa-pen"></i></button>
+                </div>
             </div>
             <div class="img-box vertical">
                 <img class="border3" src="~/images/lemontea.png" alt="Image 5" />
@@ -193,9 +225,21 @@ rel="stylesheet" />
                 <img class="border3" src="~/images/shoe.png" alt="Image 10" />
             </div>
         </div>
-    </div>
+    </div> *@
+</div>
+<div class="d-flex justify-content-center">
+    <a href="/Canvas/Templates" class="create-new-btn">More</a>
 </div>
 
+<div class="partner d-flex justify-content-center gap-5 align-items-center container ">
+    <img src="~/images/Layer 1.png" alt="" />
+    <img src="~/images/Layer 2.png" alt="" />
+    <img src="~/images/Layer 3.png" alt="" />
+    <img src="~/images/Layer 4.png" alt="" />
+    <img src="~/images/Layer 5.png" alt="" />
+    <img src="~/images/Layer 7.png" alt="" />
+    <img src="~/images/Layer 8.png" alt="" />
+</div>
 
 @* popular Aniboard *@
 <div class="my-5">
@@ -353,7 +397,7 @@ rel="stylesheet" />
         </div>
 
         <div class="modal-footer pt-0">
-            <button type="button" class="cancel-btn" data-bs-dismiss="modal">Cancel</button>
+            <a href="/Canvas/Boards" class="cancel-btn">Cancel</a>
             <button class="create-btn" id="create-button">Create</button>
         </div>
     </div>

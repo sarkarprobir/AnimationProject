@@ -27,6 +27,8 @@ a:hover {
 .nav-link {
     margin-right: 1.5rem;
     cursor: pointer;
+    color: #000 !important;
+    font-family: "Nunito Sans", sans-serif;
 }
 
 .create-new-btn {
@@ -89,10 +91,10 @@ a:hover {
 /* Hero Section */
 .hero {
     display: flex;
-    justify-content: space-between;
+    gap: 8rem;
     align-items: center;
-    padding: 0px 8.5rem;
-    gap: 2rem;
+    padding: 0px 7.5rem;
+    min-height: 65vh;
 }
 
 .hero-text {
@@ -101,7 +103,7 @@ a:hover {
 
     .hero-text h1 {
         font-family: "Inter", sans-serif;
-        font-size: 6.5rem;
+        font-size: 5.3rem;
         font-weight: 800;
         line-height: 1;
         margin-bottom: 1rem;
@@ -110,19 +112,24 @@ a:hover {
     .hero-text p {
         font-size: 0.95rem;
         margin-bottom: 1.5rem;
-        color: #333;
+        color: #000;
     }
 
 .hero-image {
-    flex: 1;
-    text-align: right;
+    width: 345px;
+    height: auto;
+    object-fit: contain;
 }
 
-    .hero-image img {
-        max-width: 100%;
-        width: 397px;
-        height: 706px;
+    .hero-image video {
+        width: 345px;
+        height: auto;
+        min-height: 595px;
         object-fit: contain;
+        border: 7px solid #000;
+        -webkit-box-shadow: 7px 7px 20px -4px rgba(0,0,0,0.61);
+        box-shadow: 7px 7px 20px -4px rgba(0,0,0,0.61);
+        background-color: #6214fe;
     }
 .category_head {
     font-family: "Inter", sans-serif;
@@ -310,7 +317,7 @@ footer {
 .temp_head {
     font-weight: 800;
     font-family: "Inter", sans-serif;
-    font-size: 6.5rem;
+    font-size: 5.3rem;
 }
 
 .pop_v {
@@ -555,6 +562,7 @@ footer {
     border: 2px solid #ccc;
     padding: 6px 32px;
     border-radius: 3px;
+    text-decoration: none;
 }
 
 .create-btn:hover {
@@ -563,6 +571,7 @@ footer {
 
 .cancel-btn:hover {
     background-color: #d1d1d1;
+    color: #000;
 }
 
 .vertical_option {
@@ -631,7 +640,7 @@ footer {
 }
 
 .contact-title {
-    font-size: 6.5rem;
+    font-size: 5.3rem;
     font-weight: 800;
     font-family: "Inter", sans-serif !important;
 }
@@ -800,7 +809,7 @@ plans {
     font-weight: 800;
     color: #000;
     font-family: "Inter", sans-serif !important;
-    font-size: 6.5rem;
+    font-size: 5.3rem;
 }
 .partner {
     margin-top: 100px;
@@ -844,7 +853,7 @@ plans {
 .about_title {
     font-family: "Inter", sans-serif;
     font-weight: 800;
-    font-size: 6.5rem;
+    font-size: 5.3rem;
     margin-bottom: 2.3rem;
 }
 .rignt-sec-about{
@@ -872,4 +881,97 @@ plans {
 
 #hoverTarget{
     color: #000 !important;
+}
+
+/*FAQ page CSS*/
+.accordion-button::after {
+    display: none !important; /* Hide Bootstrap default arrow */
+}
+
+.faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    /* transition: max-height 0.4s ease, opacity 0.4s ease; */
+    opacity: 0;
+}
+
+    .faq-answer.show {
+        max-height: 500px;
+        opacity: 1;
+        padding: 20px;
+    }
+
+.faq-toggle {
+    font-size: 20px;
+    cursor: pointer;
+    transition: transform 0.8s ease;
+}
+
+.faq_head {
+    font-weight: 700;
+    font-family: "Inter", sans-serif;
+    font-size: 1.2rem;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.06) 0px 1px 2px 0px;
+    padding: 20px;
+}
+
+.accordion-item {
+    border: none !important;
+}
+
+.accordion {
+    width: 60%;
+}
+
+.accordion-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.faq-answer p {
+    font-size: 1rem !important;
+}
+
+/*//hover*/
+.img-box {
+    position: relative;
+}
+.img-box img{
+    opacity: 1;
+    transition: .5s ease;
+    backface-visibility: hidden;
+}
+.img_hover_btn {
+    display: flex;
+    gap: 20px;
+    transition: .5s ease;
+    opacity: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    text-align: center;
+}
+.img-box:hover img {
+    filter: blur(3px);
+}
+.img-box:hover .img_hover_btn {
+    opacity: 1;
+    z-index: 999;
+}
+.img_hover_btn button {
+    border-radius: 50%;
+    color: #000;
+    background-color: #fff;
+    box-shadow: none;
+    width: 40px;
+    border: none;
+    height: 40px;
+}
+.img_hover_btn button:hover {
+    color: #fff;
+    background-color: #000;
 }

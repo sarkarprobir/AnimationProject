@@ -618,7 +618,7 @@ function saveCanvasData() {
     return JSON.stringify(data, null, 2);
 }
 
-function GetDesignBoardById(id) {
+function GetDesignBoardById(id, type = '') {
    
     try {
         var data = {
@@ -632,10 +632,18 @@ function GetDesignBoardById(id) {
             data: data,
             success: function (result) {
                 if (result) { 
-                    $("#hdnDesignBoardId").val(result.designBoardId);
-                    $("#txtSaveDesignBoardName").val(result.designBoardName);
-                    $('#designboardLink').text(result.designBoardURL);
-                    $('#designBoardName').text(result.designBoardName);
+                    if (type == 'duplicate') {
+                        $("#hdnDesignBoardId").val();
+                        $("#txtSaveDesignBoardName").val();
+                        $('#designboardLink').text();
+                        $('#designBoardName').text();
+                    }
+                    else {
+                        $("#hdnDesignBoardId").val(result.designBoardId);
+                        $("#txtSaveDesignBoardName").val(result.designBoardName);
+                        $('#designboardLink').text(result.designBoardURL);
+                        $('#designBoardName').text(result.designBoardName);
+                    }
                     
 
                 if ( Array.isArray(result.designBoardDetailsList) && result.designBoardDetailsList.length > 0) {
@@ -694,10 +702,11 @@ function GetDesignBoardById(id) {
                         const value = result.designBoardDetailsList[index]?.designBoardDetailsId || '';
                         $(selector).val(value);
                     };
-
-                    setHiddenField(0, '#hdnDesignBoardDetailsIdSlide1');
-                    setHiddenField(1, '#hdnDesignBoardDetailsIdSlide2');
-                    setHiddenField(2, '#hdnDesignBoardDetailsIdSlide3');
+                    if (type != 'duplicate') {
+                        setHiddenField(0, '#hdnDesignBoardDetailsIdSlide1');
+                        setHiddenField(1, '#hdnDesignBoardDetailsIdSlide2');
+                        setHiddenField(2, '#hdnDesignBoardDetailsIdSlide3');
+                    }
 
                     // Update hidden fields with safety checks
                     const setHiddenFieldeffect = (index, selector) => {
@@ -1641,7 +1650,7 @@ async function SaveDesignBoardInPublishTable() {
             type: "POST",
             dataType: "json",
             data: data,
-            success: function (result) {
+            success: async function (result) {
                 $("#hdnDesignBoardPublishId").val(result.result);
                 $("#hdnPublishBoardUniqueId").val(result.publishBoardUniqueId);
 
@@ -1655,6 +1664,24 @@ async function SaveDesignBoardInPublishTable() {
                 //window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
                 const url = `${baseURL.replace(/\/$/, '')}/s/v/${encodeURIComponent(companyId)}/${encodeURIComponent(projectId)}`;
                 window.open(url, "_blank");
+
+                // notify SSE hub (requires CORS on Server B and some auth strategy) 
+                try {
+                    const version = String(Date.now()); // or your own revision/hash
+                    await fetch('https://aniboard.com/s/api/publish', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            companyId: Number(companyId),
+                            projectId: Number(projectId),
+                            version
+                        })
+                    });
+                } catch (err) {
+                    console.error('publish notify failed', err);
+                }
+                clearleftDownloadPanel();
+                clearrightDownloadPanel();
                 hideDownloadPanel();
                 RedirectToHorizontalPageWithQueryString();
             },
@@ -1673,6 +1700,10 @@ async function SaveDesignBoardInPublishTable() {
            
 }
 async function GetDesignBoardByIdForDownload(condition) {
+    const confirmDelete = await customConfirm("Do you want to publish this board?");
+    if (!confirmDelete) return;
+    copyPanelleftToDownload();
+    copyPanelrightToDownload();
     publishDownloadcondition = condition;
     var id = $('#hdnDesignBoardId').val(); // get GUID value
     if (id !== '') {
@@ -8417,8 +8448,8 @@ function handleNavButtonClick(event) {
     event.currentTarget.classList.add('active_nav_button');
     LoadAllHorizontalTemplates();
     setTimeout(() => {
-        const items = document.querySelectorAll("#divTemplateList .v_temp");
-        const itemsPerPage = 8;
+        const items = document.querySelectorAll("#divTemplateList .h_temp");
+        const itemsPerPage = 12;
         let currentPage = 1;
         const totalPages = Math.ceil(items.length / itemsPerPage);
 
@@ -8666,7 +8697,7 @@ function LoadAllHorizontalTemplates() {
                         if (!imgPath) return;
 
                         const img = document.createElement('img');
-                        img.className = 'v_temp';
+                        img.className = 'h_temp';
                         img.loading = 'lazy';
                         img.decoding = 'async';
                         img.alt = (tpl?.designBoardName || 'Template') + ' preview';
@@ -8698,3 +8729,85 @@ function LoadAllHorizontalTemplates() {
         return String(a).replace(/\/+$/, '') + '/' + String(b).replace(/^\/+/, '');
     }
 }
+function copyPanelleftToDownload() {
+    const el = document.getElementById('canvasMainContainer');
+    if (!el) return;
+    el.style.setProperty('display', 'none', 'important');   // beats !important
+
+    const $src = $('#divpanelleftH');
+    const $dst = $('#divpanelleftHDownload').empty();
+    if ($src.length === 0 || $dst.length === 0) return;
+
+    const $clone = $src.clone(false);          // no events
+    $clone.removeAttr('id');
+    $clone.find('[id]').each(function () { this.id = this.id + '-dl'; });
+    $clone.find('img[data-src]').each(function () { this.src = this.dataset.src; this.removeAttribute('data-src'); });
+
+    // preserve form values
+    $src.find('input,textarea,select').each(function (i, el) {
+        const $c = $clone.find('input,textarea,select').eq(i);
+        if (!$c.length) return;
+        if (el.tagName === 'INPUT') {
+            const t = (el.type || '').toLowerCase();
+            if (t === 'checkbox' || t === 'radio') $c.prop('checked', el.checked);
+            else $c.val(el.value);
+        } else if (el.tagName === 'TEXTAREA') {
+            $c.val(el.value);
+        } else if (el.tagName === 'SELECT') {
+            $c.prop('selectedIndex', el.selectedIndex);
+            $(el.options).each(function (j, opt) {
+                $c[0].options[j].selected = opt.selected;
+            });
+        }
+    });
+
+    $dst.append($clone.contents());
+}
+
+function clearleftDownloadPanel() {
+    const el = document.getElementById('canvasMainContainer');
+    if (!el) return;
+    el.style.removeProperty('display'); // lets your Bootstrap d-flex apply again
+    $('#divpanelleftHDownload').empty();
+}
+function copyPanelrightToDownload() {
+    const $src = $('#divpanelrightH');
+    const $dst = $('#divpanelrightHDownload').empty();
+    if ($src.length === 0 || $dst.length === 0) return;
+
+    const $clone = $src.clone(false);          // no events
+    $clone.removeAttr('id');
+    $clone.find('[id]').each(function () { this.id = this.id + '-dl'; });
+    $clone.find('img[data-src]').each(function () { this.src = this.dataset.src; this.removeAttribute('data-src'); });
+
+    // preserve form values
+    $src.find('input,textarea,select').each(function (i, el) {
+        const $c = $clone.find('input,textarea,select').eq(i);
+        if (!$c.length) return;
+        if (el.tagName === 'INPUT') {
+            const t = (el.type || '').toLowerCase();
+            if (t === 'checkbox' || t === 'radio') $c.prop('checked', el.checked);
+            else $c.val(el.value);
+        } else if (el.tagName === 'TEXTAREA') {
+            $c.val(el.value);
+        } else if (el.tagName === 'SELECT') {
+            $c.prop('selectedIndex', el.selectedIndex);
+            $(el.options).each(function (j, opt) {
+                $c[0].options[j].selected = opt.selected;
+            });
+        }
+    });
+
+    $dst.append($clone.contents());
+
+    const popup = document.getElementById("background_popup");
+
+    if (!popup) return;
+    else
+    popup.style.display = "none";
+}
+
+function clearrightDownloadPanel() {
+    $('#divpanelrightHDownload').empty();
+}
+
