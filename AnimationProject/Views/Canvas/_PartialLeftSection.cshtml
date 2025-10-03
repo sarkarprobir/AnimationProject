@@ -9,8 +9,9 @@
     /* base card look */
     .panel-left-scroll ul.slides-ul > li {
         background: #fff;
-        border-radius: 12px;
+        border-radius: 3px;
         transition: box-shadow .15s ease, transform .15s ease;
+        width: fit-content;
     }
 
         /* picked-up / dragging element */
@@ -63,7 +64,7 @@
     <input type="hidden" id="hdnSlideName3" value="Slide-3" />
     @if (mode == "Vertical")
     {
-        <ul class="slides-ul">
+        <ul class="slides-ul d-flex flex-column align-items-center">
             <li class="dnd-placeholder">
                 <img src="~/images/Default_Slide_Image.jpeg" id="imageVertical1" class="menuboard-vertical-thum active_border" alt="Banner" onclick="SaveDesignBoardSlide(1); handleThumbClick(this);TabShowHide('In');updateEffectButtons('In');updateEffectButtons('Out');updateDirectionButtons('In');updateDirectionButtons('Out');">
                 <div class="d-flex justify-content-center align-items-center gap-2">
@@ -95,7 +96,7 @@
     }
     else if (mode == "Horizontal")
     {
-        <ul class="slides-ul">
+        <ul class="slides-ul d-flex flex-column align-items-center">
             <li class="dnd-placeholder">
                 <img src="~/images/Default_Slide_Image.jpeg" id="imageHorizontal1" class="menuboard-horizontal-thum active_border" alt="Banner" onclick="SaveDesignBoardSlide(1);handleVThumbClick(this);TabShowHide('In');updateEffectButtons('In');updateEffectButtons('Out');updateDirectionButtons('In');updateDirectionButtons('Out');">
                 <div class="d-flex justify-content-center align-items-center gap-2">
