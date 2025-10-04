@@ -1726,8 +1726,8 @@ async function SaveDesignBoardInPublishTable() {
            
 }
 async function GetDesignBoardByIdForDownload(condition) {
-    const confirmDelete = await customConfirm("Do you want to publish this board?");
-    if (!confirmDelete) return;
+    //const confirmDelete = await customConfirm("Do you want to publish this board?");
+    //if (!confirmDelete) return;
     copyPanelleftToDownload();
     copyPanelrightToDownload();
     publishDownloadcondition = condition;
