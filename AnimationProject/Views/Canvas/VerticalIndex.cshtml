@@ -588,138 +588,187 @@
                 timer = setTimeout(() => fn.apply(context, args), delay);
             };
         }
-                function switchTab(tabElement, tabName, pageNo) {
-          currentTabName = tabName;
-          const recordPerPage = 20;
+            function switchTab(tabElement, tabName, pageNo) {
+      currentTabName = tabName;
+      const recordPerPage = 20;
 
-          if (!pageNo) { elPage = 1; elWindowStart = 1; }
+      if (!pageNo) { elPage = 1; elWindowStart = 1; }
 
-          // Map tab -> CategoryId
-          let Categoryvalue = 0;
-          if (tabName === 'shapes')      Categoryvalue = 2;
-          else if (tabName === 'icons')  Categoryvalue = 3;
-          else if (tabName === 'photos') Categoryvalue = 1;
-          else if (tabName === 'my-images') Categoryvalue = 5;
-          else if (tabName === 'patterns')  Categoryvalue = 4;
+      // Map tab -> CategoryId
+      let Categoryvalue = 0;
+      if (tabName === 'shapes')      Categoryvalue = 2;
+      else if (tabName === 'icons')  Categoryvalue = 3;
+      else if (tabName === 'photos') Categoryvalue = 1;
+      else if (tabName === 'my-images') Categoryvalue = 5;
+      else if (tabName === 'patterns')  Categoryvalue = 4;
 
-          const dataSlide = {
-            CategoryId: Number(Categoryvalue) || 0,
-            searchKeyword: (Array.isArray($("#txtElementSearch").val())
-              ? $("#txtElementSearch").val().join(" ")
-              : String($("#txtElementSearch").val() ?? "")
-            ).trim(),
-            pageNo: pageNo || elPage || 1,
-            recordPerPage: recordPerPage
+      const dataSlide = {
+        CategoryId: Number(Categoryvalue) || 0,
+        searchKeyword: (Array.isArray($("#txtElementSearch").val())
+          ? $("#txtElementSearch").val().join(" ")
+          : String($("#txtElementSearch").val() ?? "")
+        ).trim(),
+        pageNo: pageNo || elPage || 1,
+        recordPerPage: recordPerPage
+      };
+
+      $.ajax({
+        url: baseURL + "Canvas/GetAllElementNew",
+        type: "POST",
+        dataType: "json",
+        data: dataSlide,
+        success: function (slideResult) {
+          // helper to read either camelCase or PascalCase
+          const pick = (o, keys) => {
+            for (const k of keys) if (o && o[k] !== undefined && o[k] !== null) return o[k];
+            return undefined;
           };
 
-          $.ajax({
-            url: baseURL + "Canvas/GetAllElementNew",
-            type: "POST",
-            dataType: "json",
-            data: dataSlide,
-            success: function (slideResult) {
-              // helper to read either camelCase or PascalCase
-              const pick = (o, keys) => {
-                for (const k of keys) if (o && o[k] !== undefined && o[k] !== null) return o[k];
-                return undefined;
-              };
+          // choose container
+          const targetIdMap = { 1: "#photoList", 2: "#shapesList", 3: "#iconList", 5: "#my-imagesList" };
+          const catNum = Number(Categoryvalue);
+          const $list = $(targetIdMap[catNum] || "#shapesList");
+          if ($list.length === 0) { console.warn("Target list not found"); return; }
 
-              // choose container
-              const targetIdMap = { 1: "#photoList", 2: "#shapesList", 3: "#iconList", 5: "#my-imagesList" };
-              const catNum = Number(Categoryvalue);
-              const $list = $(targetIdMap[catNum] || "#shapesList");
-              if ($list.length === 0) { console.warn("Target list not found"); return; }
-
-              // clear
-              $list.empty();
-
-              // normalize items (supports: array | {items|Items|list|data|elementList})
-              let items = Array.isArray(slideResult)
-                ? slideResult
-                : (pick(slideResult, ["items","Items","list","data","elementList"]) || []);
-
-              // --- render thumbnails ---
-              const joinURL = (...parts) => parts
-                .filter(Boolean)
-                .map((p, i) => i === 0 ? String(p).replace(/\/+$/,'') : String(p).replace(/^\/+|\/+$/g,''))
-                .join('/');
-
-              const frag = document.createDocumentFragment();
-              let appended = 0;
-
-              (items || []).forEach(it => {
-                const fileThumb = it.imageNameThumb || it.ImageNameThumb || "";
-                const fileFull  = it.imageName || it.ImageName || fileThumb;
-                if (!fileThumb) return;
-
-                const srcThumb = joinURL(baseURL, elementPath, encodeURIComponent(fileThumb));
-                const srcFull  = joinURL(baseURL, elementPath, encodeURIComponent(fileFull));
-
-                const img = new Image();
-                img.src = srcThumb;
-                img.alt = it.elementName || it.ElementName || "";
-                img.loading = "lazy";
-                img.className = "shape-thumb";
-                img.dataset.elementId = it.elementId ?? it.ElementId;
-                img.dataset.categoryId = it.categoryId ?? it.CategoryId;
-                img.dataset.full = srcFull;
-
-                const w = Number(it.imageW ?? it.ImageW);
-                const h = Number(it.imageH ?? it.ImageH);
-                if (w > 0) img.width  = w;
-                if (h > 0) img.height = h;
-
-                frag.appendChild(img);
-                appended++;
-              });
-
-              if (appended === 0) {
-                $list.append('<div class="text-muted p-2">No elements found.</div>');
-              } else {
-                $list[0].appendChild(frag);
+          // NEW: inject hover CSS (once) for my-images delete icon
+          if (catNum === 5 && !document.getElementById('myImagesHoverCSS')) { // NEW
+            const style = document.createElement('style');                    // NEW
+            style.id = 'myImagesHoverCSS';                                    // NEW
+            style.textContent = `                                             /* NEW */
+              .myimg-wrap{position:relative;display:inline-block;margin:4px;}
+              .myimg-wrap .del-icon{
+                position:absolute;top:6px;right:6px;display:none;
+                width:26px;height:26px;border-radius:50%;
+                align-items:center;justify-content:center;
+                background:rgba(0,0,0,0.65);color:#fff;cursor:pointer;
+                box-shadow:0 1px 3px rgba(0,0,0,0.25); font-size:14px;
               }
+              .myimg-wrap:hover .del-icon{display:flex;}
+              .myimg-wrap img.shape-thumb{display:block;}
+            `;                                                                // NEW
+            document.head.appendChild(style);                                 // NEW
+          }                                                                   // NEW
 
-              // --- totals / paging fields (supports camelCase or PascalCase) ---
-              const respTotalPages = Number(pick(slideResult, ["totalPages","TotalPages"]));
-              const respTotalCount = Number(pick(slideResult, ["totalCount","TotalCount"]));
-              const respPageNo     = Number(pick(slideResult, ["pageNo","PageNo"]));
-              const respPageSize   = Number(pick(slideResult, ["pageSize","PageSize"]));
+          // clear
+          $list.empty();
 
-              if (respTotalPages > 0) {
-                elTotalPages = respTotalPages;
-              } else if (!isNaN(respTotalCount)) {
-                const size = respPageSize > 0 ? respPageSize : recordPerPage;
-                elTotalPages = Math.max(1, Math.ceil(respTotalCount / size));
-              } else {
-                // fallback if API doesn't send totals
-                elTotalPages = Math.max(elPage, (items && items.length === recordPerPage) ? elPage + 1 : elPage);
-              }
+          // normalize items (supports: array | {items|Items|list|data|elementList})
+          let items = Array.isArray(slideResult)
+            ? slideResult
+            : (pick(slideResult, ["items","Items","list","data","elementList"]) || []);
 
-              // keep selected page (prefer server echo if present)
-              elPage = respPageNo > 0 ? respPageNo : dataSlide.pageNo;
+          // --- render thumbnails ---
+          const joinURL = (...parts) => parts
+            .filter(Boolean)
+            .map((p, i) => i === 0 ? String(p).replace(/\/+$/,'') : String(p).replace(/^\/+|\/+$/g,''))
+            .join('/');
 
-              // make sure current page is visible and re-render pager
-              ensurePageVisible(elPage);
-              renderPagination();
+          const frag = document.createDocumentFragment();
+          let appended = 0;
 
-              // tabs UI (unchanged)
-              const tabs = document.querySelectorAll(".tab");
-              const contents = document.querySelectorAll(".left_content");
-              tabs.forEach((tab) => tab.classList.remove("active"));
-              try { tabElement && tabElement.classList.add("active"); } catch (ex) {}
-              contents.forEach((content) => content.classList.remove("active"));
-              document.getElementById(tabName)?.classList.add("active");
-            },
-            error: function (data) {
-              console.log("error in saving slide " + (slide?.slideSeq), data);
-              HideLoader && HideLoader();
-            }
+          (items || []).forEach(it => {
+            const fileThumb = it.imageNameThumb || it.ImageNameThumb || "";
+            const fileFull  = it.imageName || it.ImageName || fileThumb;
+            if (!fileThumb) return;
+
+            const srcThumb = joinURL(baseURL, elementPath, encodeURIComponent(fileThumb));
+            const srcFull  = joinURL(baseURL, elementPath, encodeURIComponent(fileFull));
+
+            const img = new Image();
+            img.src = srcThumb;
+            img.alt = it.elementName || it.ElementName || "";
+            img.loading = "lazy";
+            img.className = "shape-thumb";
+            img.dataset.elementId = it.elementId ?? it.ElementId;
+            img.dataset.categoryId = it.categoryId ?? it.CategoryId;
+            img.dataset.full = srcFull;
+
+            const w = Number(it.imageW ?? it.ImageW);
+            const h = Number(it.imageH ?? it.ImageH);
+            if (w > 0) img.width  = w;
+            if (h > 0) img.height = h;
+
+            // original behavior: append the image
+            frag.appendChild(img);
+            appended++;
+
+            // NEW: For "my-images" ONLY, wrap with a hover delete button
+            if (catNum === 5) {
+              const wrap = document.createElement('div');     // NEW
+              wrap.className = 'myimg-wrap';                  // NEW
+
+              const del = document.createElement('div');      // NEW
+              del.className = 'del-icon';                     // NEW
+              // Use FA trash if available, else ×                 // NEW
+              del.innerHTML = '<i class="fa-solid fa-trash"></i>'; // NEW (fallback via CSS if FA missing)
+              del.title = 'Delete';                           // NEW
+
+              // Move the img inside the wrapper, then add delete icon // NEW
+              wrap.appendChild(img);                          // NEW (this moves img from frag into wrap)
+              wrap.appendChild(del);                          // NEW
+              frag.appendChild(wrap);                         // NEW
+
+              // Click handler to call your delete function with elementId // NEW
+              del.addEventListener('click', function(ev){     // NEW
+                ev.preventDefault();                          // NEW
+                ev.stopPropagation();                         // NEW
+                const elementId = img.dataset.elementId;      // NEW
+                if (typeof deleteMyImage === 'function') {    // NEW
+                  deleteMyImage(elementId);                   // NEW
+                } else if (typeof onDeleteMyImage === 'function') { // NEW (alt name)
+                  onDeleteMyImage(elementId);                 // NEW
+                } else {                                      // NEW
+                  console.warn('Define deleteMyImage(elementId) to handle deletion.', elementId); // NEW
+                }                                             // NEW
+              });                                             // NEW
+            }                                                 // NEW
           });
-        }
 
-                // ──────────────────────────────────────────────────────────
-        // Your existing switchTab, with a tiny addition to re-sync pager
-        // function switchTab(tabElement, tabName, pageNo) {
+          if (appended === 0) {
+            $list.append('<div class="text-muted p-2">No elements found.</div>');
+          } else {
+            $list[0].appendChild(frag);
+          }
+
+          // --- totals / paging fields (supports camelCase or PascalCase) ---
+          const respTotalPages = Number(pick(slideResult, ["totalPages","TotalPages"]));
+          const respTotalCount = Number(pick(slideResult, ["totalCount","TotalCount"]));
+          const respPageNo     = Number(pick(slideResult, ["pageNo","PageNo"]));
+          const respPageSize   = Number(pick(slideResult, ["pageSize","PageSize"]));
+
+          if (respTotalPages > 0) {
+            elTotalPages = respTotalPages;
+          } else if (!isNaN(respTotalCount)) {
+            const size = respPageSize > 0 ? respPageSize : recordPerPage;
+            elTotalPages = Math.max(1, Math.ceil(respTotalCount / size));
+          } else {
+            // fallback if API doesn't send totals
+            elTotalPages = Math.max(elPage, (items && items.length === recordPerPage) ? elPage + 1 : elPage);
+          }
+
+          // keep selected page (prefer server echo if present)
+          elPage = respPageNo > 0 ? respPageNo : dataSlide.pageNo;
+
+          // make sure current page is visible and re-render pager
+          ensurePageVisible(elPage);
+          renderPagination();
+
+          // tabs UI (unchanged)
+          const tabs = document.querySelectorAll(".tab");
+          const contents = document.querySelectorAll(".left_content");
+          tabs.forEach((tab) => tab.classList.remove("active"));
+          try { tabElement && tabElement.classList.add("active"); } catch (ex) {}
+          contents.forEach((content) => content.classList.remove("active"));
+          document.getElementById(tabName)?.classList.add("active");
+        },
+        error: function (data) {
+          console.log("error in saving slide " + (slide?.slideSeq), data);
+          HideLoader && HideLoader();
+        }
+      });
+    }
+
+        //         function switchTab(tabElement, tabName, pageNo) {
         //   currentTabName = tabName;
         //   const recordPerPage = 20;
 
@@ -749,70 +798,87 @@
         //     dataType: "json",
         //     data: dataSlide,
         //     success: function (slideResult) {
-        //                  // choose container
-        //           const targetIdMap = { 1: "#photoList", 2: "#shapesList", 3: "#iconList", 5: "#my-imagesList" };
-        //           const catNum = Number(Categoryvalue);
-        //           const $list = $(targetIdMap[catNum] || "#shapesList");
-        //           if ($list.length === 0) { console.warn("Target list not found"); return; }
+        //       // helper to read either camelCase or PascalCase
+        //       const pick = (o, keys) => {
+        //         for (const k of keys) if (o && o[k] !== undefined && o[k] !== null) return o[k];
+        //         return undefined;
+        //       };
 
-        //           // clear and render
-        //           $list.empty();
+        //       // choose container
+        //       const targetIdMap = { 1: "#photoList", 2: "#shapesList", 3: "#iconList", 5: "#my-imagesList" };
+        //       const catNum = Number(Categoryvalue);
+        //       const $list = $(targetIdMap[catNum] || "#shapesList");
+        //       if ($list.length === 0) { console.warn("Target list not found"); return; }
 
-        //           // items array normalize
-        //           const items = Array.isArray(slideResult)
-        //             ? slideResult
-        //             : (slideResult.list || slideResult.items || slideResult.data || slideResult.elementList || []);
+        //       // clear
+        //       $list.empty();
 
-        //           // --- render thumbnails (your existing logic) ---
-        //           const joinURL = (...parts) => parts
-        //             .filter(Boolean)
-        //             .map((p, i) => i === 0 ? String(p).replace(/\/+$/,'') : String(p).replace(/^\/+|\/+$/g,''))
-        //             .join('/');
+        //       // normalize items (supports: array | {items|Items|list|data|elementList})
+        //       let items = Array.isArray(slideResult)
+        //         ? slideResult
+        //         : (pick(slideResult, ["items","Items","list","data","elementList"]) || []);
 
-        //           const frag = document.createDocumentFragment();
-        //           let appended = 0;
+        //       // --- render thumbnails ---
+        //       const joinURL = (...parts) => parts
+        //         .filter(Boolean)
+        //         .map((p, i) => i === 0 ? String(p).replace(/\/+$/,'') : String(p).replace(/^\/+|\/+$/g,''))
+        //         .join('/');
 
-        //           (items || []).forEach(it => {
-        //             const fileThumb = it.imageNameThumb || "";
-        //             const fileFull  = it.imageNameThumb || fileThumb;
-        //             if (!fileThumb) return;
+        //       const frag = document.createDocumentFragment();
+        //       let appended = 0;
 
-        //             const srcThumb = joinURL(baseURL, elementPath, encodeURIComponent(fileThumb));
-        //             const srcFull  = joinURL(baseURL, elementPath, encodeURIComponent(fileFull));
+        //       (items || []).forEach(it => {
+        //         const fileThumb = it.imageNameThumb || it.ImageNameThumb || "";
+        //         const fileFull  = it.imageName || it.ImageName || fileThumb;
+        //         if (!fileThumb) return;
 
-        //             const img = new Image();
-        //             img.src = srcThumb;
-        //             img.alt = it.elementName || "";
-        //             img.loading = "lazy";
-        //             img.className = "shape-thumb";
-        //             img.dataset.elementId = it.elementId;
-        //             img.dataset.categoryId = it.categoryId;
-        //             img.dataset.full = srcFull;
+        //         const srcThumb = joinURL(baseURL, elementPath, encodeURIComponent(fileThumb));
+        //         const srcFull  = joinURL(baseURL, elementPath, encodeURIComponent(fileFull));
 
-        //             if (Number(it.imageW) > 0) img.width  = Number(it.imageW);
-        //             if (Number(it.imageH) > 0) img.height = Number(it.imageH);
+        //         const img = new Image();
+        //         img.src = srcThumb;
+        //         img.alt = it.elementName || it.ElementName || "";
+        //         img.loading = "lazy";
+        //         img.className = "shape-thumb";
+        //         img.dataset.elementId = it.elementId ?? it.ElementId;
+        //         img.dataset.categoryId = it.categoryId ?? it.CategoryId;
+        //         img.dataset.full = srcFull;
 
-        //             frag.appendChild(img);
-        //             appended++;
-        //           });
+        //         const w = Number(it.imageW ?? it.ImageW);
+        //         const h = Number(it.imageH ?? it.ImageH);
+        //         if (w > 0) img.width  = w;
+        //         if (h > 0) img.height = h;
 
-        //           if (appended === 0) {
-        //             $list.append('<div class="text-muted p-2">No elements found.</div>');
-        //           } else {
-        //             $list[0].appendChild(frag);
-        //           }
-                 
-        //       // total pages from server
-        //       if (slideResult && Number(slideResult.totalPages) > 0) {
-        //         elTotalPages = Number(slideResult.totalPages);
-        //       } else if (slideResult && Number(slideResult.totalCount) >= 0) {
-        //         elTotalPages = Math.max(1, Math.ceil(Number(slideResult.totalCount) / recordPerPage));
+        //         frag.appendChild(img);
+        //         appended++;
+        //       });
+
+        //       if (appended === 0) {
+        //         $list.append('<div class="text-muted p-2">No elements found.</div>');
         //       } else {
-        //         elTotalPages = Math.max(elPage, 1);
+        //         $list[0].appendChild(frag);
         //       }
 
-        //       // keep selected page and make sure it’s visible
-        //       elPage = dataSlide.pageNo;
+        //       // --- totals / paging fields (supports camelCase or PascalCase) ---
+        //       const respTotalPages = Number(pick(slideResult, ["totalPages","TotalPages"]));
+        //       const respTotalCount = Number(pick(slideResult, ["totalCount","TotalCount"]));
+        //       const respPageNo     = Number(pick(slideResult, ["pageNo","PageNo"]));
+        //       const respPageSize   = Number(pick(slideResult, ["pageSize","PageSize"]));
+
+        //       if (respTotalPages > 0) {
+        //         elTotalPages = respTotalPages;
+        //       } else if (!isNaN(respTotalCount)) {
+        //         const size = respPageSize > 0 ? respPageSize : recordPerPage;
+        //         elTotalPages = Math.max(1, Math.ceil(respTotalCount / size));
+        //       } else {
+        //         // fallback if API doesn't send totals
+        //         elTotalPages = Math.max(elPage, (items && items.length === recordPerPage) ? elPage + 1 : elPage);
+        //       }
+
+        //       // keep selected page (prefer server echo if present)
+        //       elPage = respPageNo > 0 ? respPageNo : dataSlide.pageNo;
+
+        //       // make sure current page is visible and re-render pager
         //       ensurePageVisible(elPage);
         //       renderPagination();
 
@@ -830,6 +896,8 @@
         //     }
         //   });
         // }
+
+           
       
         function updateFileName() {
             const fileInput = document.getElementById('fileUpload');

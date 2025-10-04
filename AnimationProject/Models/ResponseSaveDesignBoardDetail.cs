@@ -109,5 +109,9 @@ namespace AnimationProject.Models
         public string Response { get; set; }
         public int Result { get; set; }
     }
-
+    public class ResponseDeleteElement
+    {
+        public string Response { get; set; }
+        public int Result { get; set; }
+    }
 }

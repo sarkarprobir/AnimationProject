@@ -83,6 +83,12 @@
         public bool IsActive { get; set; }
         public Guid UpdatedBy { get; set; }
     }
+    public class RequestElementDetailForDelete
+    {
+        public int ElementId { get; set; }
+        public bool IsActive { get; set; }
+        public Guid UpdatedBy { get; set; }
+    }
     public class RequestDesignBoardSlideDetailForDuplicate
     {
         public Guid DesignBoardDetailsId { get; set; }

@@ -16364,7 +16364,31 @@ document.getElementById("uploadOption").addEventListener("click", function (e) {
     HideLoader(); // (unreachable)
 });
 
+async function deleteMyImage(id) {
+    const confirmDelete = await customConfirm("Do you want to delete this image?");
+    if (!confirmDelete) return;
+    try {
+        var data = {
+            ElementId: id
+        };
 
+        ShowLoader();
+        const result = await $.ajax({
+            url: baseURL + "Canvas/DeleteElementFromFrontEnd",
+            type: "POST",
+            dataType: "json",
+            data: data
+        });
+        if (result) {
+            switchTab(null, 'my-images', 1);
+            HideLoader();
+        }
+    }
+    catch (e) {
+        console.log("catch", e);
+        HideLoader();
+    }
+}
 
 
 
