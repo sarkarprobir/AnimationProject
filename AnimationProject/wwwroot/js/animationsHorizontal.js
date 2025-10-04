@@ -16817,6 +16817,9 @@ function __insertAt(arr, index, item) {
     arr.splice(i, 0, item);
 }
 
+// NEW: global set of pending uploads to await before saving
+window.__pendingUploads = window.__pendingUploads || new Set();
+
 // ensure a hidden input exists (reused)
 (function initUploadReplacementInput() {
     if (!document.getElementById('uploadReplacementInput')) {
@@ -16830,11 +16833,13 @@ function __insertAt(arr, index, item) {
 })();
 
 // Upload: ONLY delete after a file is chosen & loaded
+// Upload: ONLY delete after a file is chosen & loaded (using SERVER URL, no blob:)
 document.getElementById("uploadOption").addEventListener("click", function (e) {
     e.preventDefault(); e.stopPropagation();
+    ShowLoader(); // ← show immediately
 
     const target = contextTarget || selectedForContextMenu || activeBox;
-    if (!target) { if (contextMenu) contextMenu.style.display = "none"; return; }
+    if (!target) { if (contextMenu) contextMenu.style.display = "none"; HideLoader(); return; } // ← ensure hide on early return
 
     // capture placement/props to reuse
     const bbox = { x: target.x, y: target.y, width: target.width, height: target.height };
@@ -16846,26 +16851,59 @@ document.getElementById("uploadOption").addEventListener("click", function (e) {
     // remember where the target currently lives (for later deletion)
     const wasImage = (typeof isImageItem === 'function') ? isImageItem(target) : (target?.type === 'image');
     const sourceArr = wasImage ? (images || []) : (textObjects || []);
-    const originalIndex = sourceArr.indexOf(target); // may shift later; we’ll re-check
-
     const input = document.getElementById('uploadReplacementInput');
     input.value = '';
 
-    function onPick(ev) {
+    async function onPick(ev) {
         input.removeEventListener('change', onPick);
 
         const file = ev.target.files && ev.target.files[0];
-        if (!file) {
-            // user cancelled → DO NOTHING (no deletion)
+        if (!file) { HideLoader(); return; } // ← user cancelled
+
+        // 1) Upload FIRST to get the server URL (no blob preview)
+        let res;
+        try {
+            // allow loader to paint before heavy async
+            await new Promise(r => requestAnimationFrame(r)); // optional but helps
+
+            const form = new FormData();
+            form.append("file", file);
+
+            const resp = await fetch(baseURL + "fileUploader/UploadElementImage", { method: "POST", body: form });
+            if (!resp.ok) {
+                MessageShow('', resp.error, 'error');
+                console.warn("UploadElementImage HTTP error:", resp.status);
+                HideLoader(); // ← close on HTTP error
+                return false;
+            }
+            res = await resp.json();
+        } catch (err) {
+            HideLoader(); // ← close on fetch error
+            console.error("UploadElementImage error:", err);
             return;
         }
 
-        const url = URL.createObjectURL(file);
-        const img = new Image();
-        img.onload = function () {
-            // NOW delete old target (guaranteed we have a valid image)
+        if (!res?.ok || !res.mainUrl) {
+            MessageShow('', res.error, 'error');
+            HideLoader(); // ← close on API failure
+            console.warn("UploadElementImage failed:", res?.error);
+            return false;
+        }
+
+        // 2) Build absolute server URL; cache-bust for freshness
+        const serverSrcAbs = (() => {
+            try { return new URL(res.mainUrl, location.origin).href; } catch { return res.mainUrl; }
+        })();
+        const serverThumbAbs = res.thumbUrl ? (() => { try { return new URL(res.thumbUrl, location.origin).href; } catch { return res.thumbUrl; } })() : null;
+        const serverSrcForLoad = serverSrcAbs + (serverSrcAbs.includes('?') ? '&' : '?') + 'v=' + Date.now();
+
+        // 3) Load the server image; only then replace the old target
+        const img2 = new Image();
+        img2.crossOrigin = "anonymous";
+        img2.onload = () => {
+            // NOW delete old target (guaranteed we have a valid server image)
             const arrNow = wasImage ? (images || []) : (textObjects || []);
-            let idxNow = arrNow.indexOf(target);
+            const idxNow = arrNow.indexOf(target);
             if (idxNow > -1) arrNow.splice(idxNow, 1);
 
             if (activeBox === target) activeBox = null;
@@ -16873,10 +16911,13 @@ document.getElementById("uploadOption").addEventListener("click", function (e) {
             if (activeImage === target) activeImage = null;
             if (target) target.selected = false;
 
-            // create replacement image with same box
+            // create replacement image with SAME box (keep size/position)
             const newBox = {
                 type: 'image',
-                img, src: url,
+                img: img2,
+                src: serverSrcAbs,                 // <-- PERSIST THIS (server URL, not blob)
+                serverSrc: serverSrcAbs,
+                thumbSrc: serverThumbAbs || undefined,
                 x: bbox.x, y: bbox.y,
                 width: bbox.width, height: bbox.height,
                 isBasic: false
@@ -16884,12 +16925,22 @@ document.getElementById("uploadOption").addEventListener("click", function (e) {
             if (preserved.rotation != null) { newBox.rotation = preserved.rotation; newBox.angle = preserved.rotation; }
             if (preserved.z != null) { newBox.z = preserved.z; newBox.zIndex = preserved.z; }
 
+            // classify by filename (optional, mirrors your drop logic)
+            try {
+                const droppedFileName = file?.name || "";
+                let basicName = "";
+                try { basicName = new URL(serverSrcAbs).pathname.split('/').pop() || ""; }
+                catch { basicName = (droppedFileName || serverSrcAbs).split(/[?#]/)[0].split('/').pop() || ""; }
+                if (typeof __isBasicFromSource === 'function') newBox.isBasic = __isBasicFromSource(serverSrcAbs, droppedFileName);
+                if (typeof __isLINESvg === 'function') newBox.isLINESvg = __isLINESvg(basicName);
+                newBox.basicName = basicName;
+            } catch { }
+
             // insert into images at roughly the same stacking position
             if (Array.isArray(images)) {
                 if (wasImage && idxNow >= 0) {
                     __insertAt(images, idxNow, newBox);
                 } else {
-                    // best effort: keep z-order if present
                     if (typeof newBox.zIndex === 'number') {
                         const insertAt = images.findIndex(it => (it?.z ?? it?.zIndex ?? 0) > newBox.zIndex);
                         if (insertAt === -1) images.push(newBox); else __insertAt(images, insertAt, newBox);
@@ -16902,43 +16953,23 @@ document.getElementById("uploadOption").addEventListener("click", function (e) {
             activeImage = newBox;
             activeBox = newBox;
             drawText();
-
-            // 🔽 NEW: upload the original file to the server and swap src to server URL
-            (async () => {
-                try {
-                    const form = new FormData();
-                    form.append("file", file); // original File from the picker
-
-                    const resp = await fetch(baseURL + "fileUploader/UploadElementImage", {
-                        method: "POST",
-                        body: form
-                    });
-                    const res = await resp.json();
-
-                    if (res?.ok) {
-                        // use server URLs; keep a reference if needed
-                        newBox.serverSrc = res.mainUrl;
-                        newBox.thumbSrc = res.thumbUrl;
-                        newBox.src = res.mainUrl;
-
-                        // free the temporary object URL used during preview
-                        try { URL.revokeObjectURL(url); } catch { }
-
-                        drawText(); // redraw with server asset
-                    } else {
-                        console.warn("UploadElementImage failed:", res?.error || resp.statusText);
-                    }
-                } catch (err) {
-                    console.error("UploadElementImage error:", err);
-                }
-            })();
+            HideLoader(); // ← close on success
         };
-        img.onerror = function () { URL.revokeObjectURL(url); };
-        img.src = url;
+
+        img2.onerror = () => {
+            console.warn("Server image failed to load:", serverSrcAbs);
+            HideLoader(); // ← close on load error
+            // We didn't delete the old target yet, so nothing else to undo.
+        };
+
+        img2.src = serverSrcForLoad;
     }
 
     input.addEventListener('change', onPick, { once: true });
 
     if (contextMenu) contextMenu.style.display = "none"; // hide menu, but DON'T delete yet
     input.click();
+
+    return; // ← prevents the immediate HideLoader() below from canceling the visible loader
+    HideLoader(); // (kept per your request; unreachable due to return)
 });

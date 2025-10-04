@@ -30,6 +30,99 @@ namespace AnimationProject.Controllers
             _appSettings = appSettings.Value;
             _httpFactory = httpFactory;
         }
+        [HttpPost("UploadElementImageByControl")]
+        [RequestSizeLimit(20_000_000)]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UploadElementImageByControl([FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return Ok(new { ok = false, error = "No file" }); // CHANGED
+
+            // Accept only common raster formats (include .gif if you want)
+            var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                            { ".jpg", ".jpeg", ".png", ".webp", ".gif" }; // add/remove as you need
+
+            var ext = (Path.GetExtension(file.FileName) ?? "").ToLowerInvariant();
+            if (!allowed.Contains(ext))
+                return Ok(new { ok = false, error = "Unsupported format. Use JPG/PNG/WEBP" });
+
+            // Root/dir
+            var root = _env.WebRootPath ?? Path.Combine(AppContext.BaseDirectory, "wwwroot");
+            var dir = Path.Combine(root, "dynamicimage", "element");
+            Directory.CreateDirectory(dir);
+
+            // Use ORIGINAL file base name, sanitized
+            var originalBase = Path.GetFileNameWithoutExtension(file.FileName);
+            var safeBase = MakeSafeFileBase(originalBase);         // e.g., "transition_1"
+
+            // Ensure we don't overwrite: get unique names
+            var mainName = GetUniqueFileName(dir, safeBase, ext);     // "transition_1.png" or "transition_1_1.png"
+            var thumbName = Path.GetFileNameWithoutExtension(mainName) + "_thumb" + ext;
+
+            var mainPath = Path.Combine(dir, mainName);
+            var thumbPath = Path.Combine(dir, thumbName);
+
+            using var img = await Image.LoadAsync(file.OpenReadStream());
+
+            const long ONE_MB = 1_024 * 1_024;
+            await SaveImageWithByteCapAsync(img, mainPath, ext, ONE_MB);
+
+            const long TEN_KB = 10 * 1024;
+            await SaveImageWithByteCapAsync(img, thumbPath, ext, TEN_KB, preferSmallThumb: true);
+
+            var mainUrl = $"/dynamicimage/element/{mainName}";
+            var thumbUrl = $"/dynamicimage/element/{thumbName}";
+
+            // ─────────────────────────────────────────────────────────────
+            // NEW: call your API to record the element metadata
+            // We send main file’s size/width/height + both names
+            var mainInfo = Image.Identify(mainPath); // fast metadata read
+            var mainW = mainInfo?.Width ?? img.Width;
+            var mainH = mainInfo?.Height ?? img.Height;
+            var mainBytes = (int)Math.Min(int.MaxValue, new FileInfo(mainPath).Length);
+
+            var request = new RequestElementDetails
+            {
+                CategoryId = 5,             // per your example
+                CompanyUniqueId = 4,        // per your example
+                ElementName = safeBase,     // readable name
+                ImageSize = mainBytes,      // bytes of MAIN image
+                ImageName = mainName,       // file name (e.g., "transition_1.png")
+                ImageNameThumb = thumbName, // thumb file name
+                ImageW = mainW,             // MAIN width
+                ImageH = mainH,             // MAIN height
+                Status = 1,
+                ImageTag = null
+            };
+
+            try
+            {
+                var apiBase = _appSettings.AnimationProjectAPI; // e.g., "https://api.yourhost/"
+                if (!string.IsNullOrWhiteSpace(apiBase))
+                {
+                    var apiUrl = $"{apiBase.TrimEnd('/')}/DesignBoard/ElementInsertFromFrontend";
+                    var client = _httpFactory.CreateClient();
+                    var json = JsonConvert.SerializeObject(request);
+                    var httpResp = await client.PostAsync(
+                        apiUrl,
+                        new StringContent(json, Encoding.UTF8, "application/json"));
+
+                    var body = await httpResp.Content.ReadAsStringAsync();
+                    // Optional: log/inspect `body` if needed
+                }
+                else
+                {
+                    // Optional: log missing config
+                }
+            }
+            catch (Exception ex)
+            {
+                // Optional: log ex.Message / ex.StackTrace — do not fail the upload because of bookkeeping
+            }
+            // ─────────────────────────────────────────────────────────────
+
+            return Ok(new { ok = true, mainUrl, thumbUrl }); // CHANGED
+        }
 
         [HttpPost("UploadElementImage")]
         [RequestSizeLimit(20_000_000)]
