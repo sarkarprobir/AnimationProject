@@ -16836,10 +16836,10 @@ window.__pendingUploads = window.__pendingUploads || new Set();
 // Upload: ONLY delete after a file is chosen & loaded (using SERVER URL, no blob:)
 document.getElementById("uploadOption").addEventListener("click", function (e) {
     e.preventDefault(); e.stopPropagation();
-    ShowLoader(); // ← show immediately
+    ShowLoader(); // show immediately
 
     const target = contextTarget || selectedForContextMenu || activeBox;
-    if (!target) { if (contextMenu) contextMenu.style.display = "none"; HideLoader(); return; } // ← ensure hide on early return
+    if (!target) { if (contextMenu) contextMenu.style.display = "none"; HideLoader(); return; }
 
     // capture placement/props to reuse
     const bbox = { x: target.x, y: target.y, width: target.width, height: target.height };
@@ -16848,52 +16848,99 @@ document.getElementById("uploadOption").addEventListener("click", function (e) {
         z: (target.z ?? target.zIndex ?? null)
     };
 
-    // remember where the target currently lives (for later deletion)
     const wasImage = (typeof isImageItem === 'function') ? isImageItem(target) : (target?.type === 'image');
     const sourceArr = wasImage ? (images || []) : (textObjects || []);
     const input = document.getElementById('uploadReplacementInput');
     input.value = '';
 
+    // ───── CANCEL GUARD (robust) ─────
+    let changeFired = false;                // set true as soon as 'change' triggers
+    let guardActive = true;                 // guard is active until we pick a file
+    const openedAt = performance.now();
+    let guardTimer = null;
+
+    const detachCancelGuard = () => {
+        guardActive = false;
+        window.removeEventListener('focus', onWindowFocus, true);
+        document.removeEventListener('visibilitychange', onVisChange, true);
+        clearTimeout(guardTimer);
+    };
+
+    // Run a deferred check ONLY after a short grace period, and only if no file + no change
+    const scheduleCancelCheck = (delay = 700) => {
+        if (!guardActive) return;
+        clearTimeout(guardTimer);
+        guardTimer = setTimeout(() => {
+            if (!guardActive) return;                 // change already fired
+            // if a file is already present, do nothing (selection in progress)
+            if (input.files && input.files.length > 0) return;
+            // ensure enough time has passed since opening the picker
+            const elapsed = performance.now() - openedAt;
+            if (elapsed >= delay && (!input.files || input.files.length === 0)) {
+                HideLoader();                         // true cancel → hide
+                detachCancelGuard();
+            }
+        }, delay);
+    };
+
+    function onWindowFocus() { scheduleCancelCheck(700); }
+    function onVisChange() { if (document.visibilityState === 'visible') scheduleCancelCheck(700); }
+
+    window.addEventListener('focus', onWindowFocus, true);
+    document.addEventListener('visibilitychange', onVisChange, true);
+
+    // Optional hard fallback if the dialog stays open or focus events don’t fire
+    const fallbackTimeout = setTimeout(() => {
+        if (!changeFired && (!input.files || input.files.length === 0)) {
+            HideLoader();
+            detachCancelGuard();
+        }
+    }, 20000);
+    // ─────────────────────────────────
+
     async function onPick(ev) {
         input.removeEventListener('change', onPick);
 
+        changeFired = true;        // mark selection happened ASAP
+        detachCancelGuard();       // stop cancel guard from running
+        clearTimeout(fallbackTimeout);
+
         const file = ev.target.files && ev.target.files[0];
-        if (!file) { HideLoader(); return; } // ← user cancelled
+        if (!file) { HideLoader(); return; } // extremely rare: empty change
 
         // 1) Upload FIRST to get the server URL (no blob preview)
         let res;
         try {
-            // allow loader to paint before heavy async
-            await new Promise(r => requestAnimationFrame(r)); // optional but helps
+            // let the loader paint before async work
+            await new Promise(r => requestAnimationFrame(r));
 
             const form = new FormData();
             form.append("file", file);
 
             const resp = await fetch(baseURL + "fileUploader/UploadElementImage", { method: "POST", body: form });
             if (!resp.ok) {
-                MessageShow('', resp.error, 'error');
+                const _msg = (resp.error || resp.statusText || ("HTTP " + resp.status));
+                MessageShow('', _msg, 'error');
                 console.warn("UploadElementImage HTTP error:", resp.status);
-                HideLoader(); // ← close on HTTP error
+                HideLoader();
                 return false;
             }
             res = await resp.json();
         } catch (err) {
-            HideLoader(); // ← close on fetch error
+            HideLoader();
             console.error("UploadElementImage error:", err);
             return;
         }
 
         if (!res?.ok || !res.mainUrl) {
-            MessageShow('', res.error, 'error');
-            HideLoader(); // ← close on API failure
+            MessageShow('', res?.error || 'Upload failed', 'error');
+            HideLoader();
             console.warn("UploadElementImage failed:", res?.error);
             return false;
         }
 
         // 2) Build absolute server URL; cache-bust for freshness
-        const serverSrcAbs = (() => {
-            try { return new URL(res.mainUrl, location.origin).href; } catch { return res.mainUrl; }
-        })();
+        const serverSrcAbs = (() => { try { return new URL(res.mainUrl, location.origin).href; } catch { return res.mainUrl; } })();
         const serverThumbAbs = res.thumbUrl ? (() => { try { return new URL(res.thumbUrl, location.origin).href; } catch { return res.thumbUrl; } })() : null;
         const serverSrcForLoad = serverSrcAbs + (serverSrcAbs.includes('?') ? '&' : '?') + 'v=' + Date.now();
 
@@ -16901,7 +16948,6 @@ document.getElementById("uploadOption").addEventListener("click", function (e) {
         const img2 = new Image();
         img2.crossOrigin = "anonymous";
         img2.onload = () => {
-            // NOW delete old target (guaranteed we have a valid server image)
             const arrNow = wasImage ? (images || []) : (textObjects || []);
             const idxNow = arrNow.indexOf(target);
             if (idxNow > -1) arrNow.splice(idxNow, 1);
@@ -16911,11 +16957,10 @@ document.getElementById("uploadOption").addEventListener("click", function (e) {
             if (activeImage === target) activeImage = null;
             if (target) target.selected = false;
 
-            // create replacement image with SAME box (keep size/position)
             const newBox = {
                 type: 'image',
                 img: img2,
-                src: serverSrcAbs,                 // <-- PERSIST THIS (server URL, not blob)
+                src: serverSrcAbs,
                 serverSrc: serverSrcAbs,
                 thumbSrc: serverThumbAbs || undefined,
                 x: bbox.x, y: bbox.y,
@@ -16925,7 +16970,6 @@ document.getElementById("uploadOption").addEventListener("click", function (e) {
             if (preserved.rotation != null) { newBox.rotation = preserved.rotation; newBox.angle = preserved.rotation; }
             if (preserved.z != null) { newBox.z = preserved.z; newBox.zIndex = preserved.z; }
 
-            // classify by filename (optional, mirrors your drop logic)
             try {
                 const droppedFileName = file?.name || "";
                 let basicName = "";
@@ -16936,7 +16980,6 @@ document.getElementById("uploadOption").addEventListener("click", function (e) {
                 newBox.basicName = basicName;
             } catch { }
 
-            // insert into images at roughly the same stacking position
             if (Array.isArray(images)) {
                 if (wasImage && idxNow >= 0) {
                     __insertAt(images, idxNow, newBox);
@@ -16953,13 +16996,12 @@ document.getElementById("uploadOption").addEventListener("click", function (e) {
             activeImage = newBox;
             activeBox = newBox;
             drawText();
-            HideLoader(); // ← close on success
+            HideLoader(); // success
         };
 
         img2.onerror = () => {
             console.warn("Server image failed to load:", serverSrcAbs);
-            HideLoader(); // ← close on load error
-            // We didn't delete the old target yet, so nothing else to undo.
+            HideLoader(); // error
         };
 
         img2.src = serverSrcForLoad;
@@ -16967,9 +17009,9 @@ document.getElementById("uploadOption").addEventListener("click", function (e) {
 
     input.addEventListener('change', onPick, { once: true });
 
-    if (contextMenu) contextMenu.style.display = "none"; // hide menu, but DON'T delete yet
+    if (contextMenu) contextMenu.style.display = "none";
     input.click();
 
-    return; // ← prevents the immediate HideLoader() below from canceling the visible loader
-    HideLoader(); // (kept per your request; unreachable due to return)
+    return; // keep loader visible until one of the above paths hides it
+    HideLoader(); // (unreachable)
 });
