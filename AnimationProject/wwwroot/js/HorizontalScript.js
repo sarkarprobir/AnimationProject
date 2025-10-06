@@ -351,16 +351,16 @@ function opengl() {
             document.getElementById(tabName).classList.add("active");
         }
         // file upload js
-        function updateFileName() {
-            const fileInput = document.getElementById('fileUpload');
-            const fileName = document.getElementById('fileName');
+        //function updateFileName() {
+        //    const fileInput = document.getElementById('fileUpload');
+        //    const fileName = document.getElementById('fileName');
 
-            if (fileInput.files.length > 0) {
-                fileName.textContent = fileInput.files[0].name;
-            } else {
-                fileName.textContent = 'No File';
-            }
-        }
+        //    if (fileInput.files.length > 0) {
+        //        fileName.textContent = fileInput.files[0].name;
+        //    } else {
+        //        fileName.textContent = 'No File';
+        //    }
+        //}
 
         
         // show the popup when the pattern icon is clicked

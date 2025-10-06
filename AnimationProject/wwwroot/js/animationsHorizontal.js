@@ -17041,3 +17041,41 @@ async function deleteMyImage(id) {
         HideLoader();
     }
 }
+
+async function updateFileName() {
+    const input = document.getElementById('fileUpload');
+    const nameSpan = document.getElementById('fileName');
+
+    const file = input.files && input.files[0];
+    nameSpan.textContent = file ? file.name : 'No File';
+    if (!file) return;
+
+    try { if (typeof ShowLoader === 'function') ShowLoader(); } catch { }
+
+    try {
+        const form = new FormData();
+        form.append('file', file);
+
+        const resp = await fetch((typeof baseURL !== 'undefined' ? baseURL : '') + 'fileUploader/UploadElementImageByControl', {
+            method: 'POST',
+            body: form
+        });
+
+        const res = await resp.json().catch(() => null);
+
+        // Endpoint is expected to return: { ok: true, mainUrl, thumbUrl } or { ok:false, error }
+        if (res && res.ok) {
+            MessageShow('', 'Upload successfully!', 'success');
+            switchTab(null, 'my-images', 1);
+            console.log('Upload success:', res);
+            // nothing else to do per your requirement
+        } else {
+            MessageShow(null, 'Failed to upload.', 'error');
+            console.warn('Upload failed:', res?.error || resp.statusText);
+        }
+    } catch (err) {
+        console.error('Upload error:', err);
+    } finally {
+        try { if (typeof HideLoader === 'function') HideLoader(); } catch { }
+    }
+}
