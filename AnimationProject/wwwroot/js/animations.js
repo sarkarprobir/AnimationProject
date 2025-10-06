@@ -5513,7 +5513,7 @@ function setSelectionTarget(obj, { setActive = true, setContext = true } = {}) {
 canvas.addEventListener("click", function onCanvasClick(e) {
     // one-time init
     window.__marqueeCommittedAt ??= 0;
-
+    document.getElementById('spanName').textContent = '';
     // ignore shift-click additive selection here
     if (e.shiftKey) return;
 
@@ -5640,7 +5640,7 @@ canvas.addEventListener("click", function onCanvasClick(e) {
         if (ignoreClearOnce) return;
         clearSelection();
     }
-
+   
     // Apply selection + UI as in your original code
     if (txtHit) {
         txtHit.selected = true;
@@ -5666,7 +5666,8 @@ canvas.addEventListener("click", function onCanvasClick(e) {
         isMarquee = false;  
         selectGroup(imgHit.groupId);
         setGroupCheckbox(imgHit.groupId);
-
+        const fileName = new URL(imgHit.src, window.location.href).pathname.split('/').pop();
+        document.getElementById('spanName').textContent ='Image Name: '+ fileName || 'No File';
         $("#noAnimCheckbox").prop("checked", !!imgHit.noAnim);
         $("#fontstyle_popup").show();
         $(".right-sec-two").show();
