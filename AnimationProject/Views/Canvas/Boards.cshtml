@@ -102,7 +102,8 @@
                         int idhx = 100;
                         @foreach (var item in Model)
                         {
-                           
+                            var catList = item.GetAllBoardCategory ?? new List<GetAllBoardCategory>();
+                            var hasMatch = catList.Any(c => c.BoardCategoryId == item.BoardCategoryId);
                             if (item.SlideType == "Horizontal")
                             {
                                 <div class="col-md-6 horizontal-card">
@@ -206,30 +207,40 @@
                                                         </div>
                                                     </div> *@
                                                 </div>
-                                                <div class="d-flex align-items-center mt-4">
-                                                    <span><strong>Category</strong></span>
-                                                    <span class="ms-3 me-2">:</span>
+                                               <div class="d-flex align-items-center mt-4">
+                                                <span><strong>Category</strong></span>
+                                                <span class="ms-3 me-2">:</span>
 
-                                                    <div class="ms-2" style="min-width:220px;">
-                                                        <select id="ddlBoardCategory_@idhx"
-                                                                class="form-select form-select-sm"
-                                                                data-board-id="@item.DesignBoardId">
-                                                            <option value="">-- Select --</option>
+                                                <div class="ms-2" style="min-width:220px;">
+                                                    <select id="ddlBoardCategory_@idhx"
+                                                            class="form-select form-select-sm"
+                                                            data-board-id="@item.DesignBoardId">
+                                                        <!-- Select placeholder when item.BoardCategoryId == 0 -->
 
-                                                            @if (item.GetAllBoardCategory != null && item.GetAllBoardCategory.Count > 0)
+                                                            @if (item.BoardCategoryId == 0 || !hasMatch)
                                                             {
-                                                                foreach (var cat in item.GetAllBoardCategory)
+                                                                <option value="0" selected>-- Select --</option>
+                                                            }
+                                                            else
+                                                            {
+                                                                <option value="0">-- Select --</option>
+                                                            }
+
+                                                            @foreach (var cat in catList)
+                                                            {
+                                                                if (cat.BoardCategoryId == item.BoardCategoryId)
+                                                                {
+                                                                    <option value="@cat.BoardCategoryId" selected>@cat.BoardCategory</option>
+                                                                }
+                                                                else
                                                                 {
                                                                     <option value="@cat.BoardCategoryId">@cat.BoardCategory</option>
                                                                 }
                                                             }
-                                                            else
-                                                            {
-                                                                <option value="">(no categories)</option>
-                                                            }
-                                                        </select>
-                                                    </div>
+
+                                                    </select>
                                                 </div>
+                                            </div>
                                             <!-- Link Box -->
                                             <div class="d-flex align-items-center mt-4">
                                                 <span><strong>Link</strong></span>
@@ -268,6 +279,8 @@
 
                         @foreach (var item in Model)
                         {
+                            var catList = item.GetAllBoardCategory ?? new List<GetAllBoardCategory>();
+                            var hasMatch = catList.Any(c => c.BoardCategoryId == item.BoardCategoryId);
                             if (item.SlideType == "Vertical")
                             {
                                 <div class="col-md-4 vertical-card">
@@ -380,19 +393,28 @@
                                                         <select id="ddlBoardCategory_@idx"
                                                                 class="form-select form-select-sm"
                                                                 data-board-id="@item.DesignBoardId">
-                                                            <option value="">-- Select --</option>
-
-                                                            @if (item.GetAllBoardCategory != null && item.GetAllBoardCategory.Count > 0)
+                                                            <!-- Select placeholder when item.BoardCategoryId == 0 -->
+                                                            @if (item.BoardCategoryId == 0 || !hasMatch)
                                                             {
-                                                                foreach (var cat in item.GetAllBoardCategory)
+                                                                <option value="0" selected>-- Select --</option>
+                                                            }
+                                                            else
+                                                            {
+                                                                <option value="0">-- Select --</option>
+                                                            }
+
+                                                            @foreach (var cat in catList)
+                                                            {
+                                                                if (cat.BoardCategoryId == item.BoardCategoryId)
+                                                                {
+                                                                    <option value="@cat.BoardCategoryId" selected>@cat.BoardCategory</option>
+                                                                }
+                                                                else
                                                                 {
                                                                     <option value="@cat.BoardCategoryId">@cat.BoardCategory</option>
                                                                 }
                                                             }
-                                                            else
-                                                            {
-                                                                <option value="">(no categories)</option>
-                                                            }
+
                                                         </select>
                                                     </div>
                                                 </div>

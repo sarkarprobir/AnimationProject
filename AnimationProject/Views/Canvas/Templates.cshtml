@@ -21,7 +21,8 @@
 <script src="~/js/template.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
 <script>
     $(document).ready(function(){
-        LoadTemplates();
+        LoadTemplates(0);
+        LoadAllCategoryUseCase();
     });
 </script>
 <!-- Navbar -->
@@ -85,8 +86,8 @@
 <!-- Hover options Section -->
 <div class="option-box-outer" id="hoverBox" style="display:none;">
     <div class="option-box-inner">
-        <div class="row">
-            <div class="col-md-2 option-column">
+        <div class="row" id="PopulateAllCategory">
+            @* <div class="col-md-2 option-column">
                 <a class="templates_options" href="#">Latest</a>
             </div>
             <div class="col-md-2 option-column">
@@ -112,7 +113,7 @@
             </div>
             <div class="col-md-2 option-column">
                 <a class="templates_options" href="#">Sports</a>
-            </div>
+            </div> *@
         </div>
     </div>
 </div>

@@ -1,4 +1,4 @@
-﻿function LoadTemplates() {
+﻿function LoadTemplates(type) {
     const $row = $('#divTemplateRow'); // 4-column container
 
     if ($row.length === 0 ) {
@@ -17,11 +17,16 @@
     // Defaults for grid placeholders
     const DEFAULT_IMG_H = joinUrl(baseURL, 'images/default-horizontal.png');
     const DEFAULT_IMG_V = joinUrl(baseURL, 'images/default-vertical.png');
-
+    // ⬇️ ADD THIS: control whether to show placeholders when empty
+    const SHOW_DEFAULTS_WHEN_EMPTY = false;
+    var data = {
+        BoardCategoryId: type
+    };
     $.ajax({
         url: joinUrl(baseURL, 'Canvas/GetTemplatesForTemplatePage'),
         type: 'POST',
-        dataType: 'json'
+        dataType: 'json',
+        data: data
     })
         .done((res) => {
             const boards = Array.isArray(res) ? res : (res?.data || []);
@@ -58,7 +63,7 @@
         .fail((xhr) => {
             console.error('LoadHomeTemplates failed', xhr);
             // Keep grid layout non-empty with defaults (if row exists)
-            if ($row.length) {
+            if ($row.length && SHOW_DEFAULTS_WHEN_EMPTY) {
                 renderColumn($col1, [], 'horizontal', DEFAULT_IMG_H);
                 renderColumn($col3, [], 'horizontal', DEFAULT_IMG_H);
                 renderColumn($col2, [], 'vertical', DEFAULT_IMG_V);
@@ -98,6 +103,7 @@
         const frag = document.createDocumentFragment();
 
         if (!items || items.length === 0) {
+            if (!SHOW_DEFAULTS_WHEN_EMPTY) return;
             frag.appendChild(makeImgBox(orientation, defaultSrc, 'Default'));
         } else {
             for (const it of items) {
@@ -187,4 +193,58 @@
         if (!b) return a || '';
         return String(a).replace(/\/+$/, '') + '/' + String(b).replace(/^\/+/, '');
     }
+}
+
+
+function LoadCategoryTemplate(type) {
+    LoadTemplates(type);
+}
+async function LoadAllCategoryUseCase() {
+    try {
+
+        ShowLoader();
+        const result = await $.ajax({
+            url: baseURL + "Canvas/GetAllBoardCategory",
+            type: "POST",
+            dataType: "json"
+        });
+        if (result) {
+            renderCategoryGrid(result || []);
+            HideLoader();
+        }
+
+    } catch (e) {
+        console.log("catch", e);
+        HideLoader();
+    }
+}
+// ── helpers ───────────────────────────────────────────────
+function renderCategoryGrid(list) {
+    const $row = $("#PopulateAllCategory");
+    $row.empty();
+
+    // 1) First column: static "Latest" with id 0
+    const $firstCol = $('<div class="col-md-2 option-column"></div>')
+        .append(makeLink("Latest", 0));
+    $row.append($firstCol);
+
+    // 2) Remaining columns: group categories 4 per column
+    const cats = (list || []);
+    for (let i = 0; i < cats.length; i += 4) {
+        const $col = $('<div class="col-md-2 option-column"></div>');
+        cats.slice(i, i + 4).forEach(cat => {
+            // cat: { boardCategoryId, boardCategory }
+            $col.append(makeLink(cat.boardCategory, cat.boardCategoryId));
+        });
+        $row.append($col);
+    }
+
+    $("#hoverBox").show();
+}
+
+function makeLink(label, id) {
+    const $a = $('<a class="templates_options"></a>').text(label);
+    // pass numeric id to your function
+    $a.attr("onclick", `LoadCategoryTemplate(${Number(id)})`);
+    return $a;
 }

@@ -44,6 +44,7 @@ namespace AnimationProject.Models
         public string updatedAtStr { get; set; }
         public string expirationStr { get; set; }
         public string LargeVideoPath { get; set; }
+        public int BoardCategoryId { get; set; }
         public List<DesignBoardDetailsList> DesignBoardDetailsList { get; set; }
         public List<GetAllBoardCategory> GetAllBoardCategory { get; set; }
     }

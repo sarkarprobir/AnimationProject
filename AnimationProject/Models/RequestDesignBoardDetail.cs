@@ -52,6 +52,7 @@
     {
         public Guid CustomerId { get; set; }
         public Guid CompanyId { get; set; }
+        public int BoardCategoryId { get; set; }
 
     }
     public class RequestGetDesignBoardById

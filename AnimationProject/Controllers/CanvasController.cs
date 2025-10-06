@@ -574,10 +574,9 @@ namespace AnimationProject.Controllers
                 return Json("NO");
             }
         }
-        public async Task<IActionResult> GetTemplatesForHomePage()
+        public async Task<IActionResult> GetTemplatesForHomePage(RequestGetDesignBoard request)
         {
             var response = new Response<List<ResponseGetDesignBoardAll>>();
-            RequestGetDesignBoard request = new RequestGetDesignBoard();
             try
             {
                 request.CustomerId = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
@@ -592,10 +591,10 @@ namespace AnimationProject.Controllers
                 return Json("NO");
             }
         }
-        public async Task<IActionResult> GetTemplatesForTemplatePage()
+        public async Task<IActionResult> GetTemplatesForTemplatePage(RequestGetDesignBoard request)
         {
             var response = new Response<List<ResponseGetDesignBoardAll>>();
-            RequestGetDesignBoard request = new RequestGetDesignBoard();
+          
             try
             {
                 request.CustomerId = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
@@ -672,6 +671,23 @@ namespace AnimationProject.Controllers
                 return Json("NO");
             }
 
+        }
+        public async Task<IActionResult> GetAllBoardCategory()
+        {
+            var response = new Response<List<ResponseGetAllBoardCategory>>();
+            RequestAllBoardCategory request = new RequestAllBoardCategory();
+            try
+            {
+                request.SearchKeyword = "";
+                var saveDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetAllBoardCategory", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<List<ResponseGetAllBoardCategory>>>(saveDesignSlideBoard);
+                return Json(response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***GetAllBoardCategory*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return Json("NO");
+            }
         }
         #endregion
     }
