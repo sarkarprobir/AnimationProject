@@ -311,19 +311,6 @@ namespace AnimationProject.Controllers
        
         public async Task<IActionResult> Boards()
         {
-            ////if (!_checkSession.IsSession()) return Ok("login");
-            //var response = new Response<ResponseGetDesignBoardById>();
-            //try
-            //{
-            //    var getDesignBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetDesignBoardDetailsById", JsonConvert.SerializeObject(request), user.token);
-            //    response = JsonConvert.DeserializeObject<Response<ResponseGetDesignBoardById>>(getDesignBoard);
-            //    return Json(response.Data);
-            //}
-            //catch (Exception ex)
-            //{
-            //    log.Info("***GetDesignBoardDetailsById*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
-            //    return Json("NO");
-            //}
             var response = new Response<List<ResponseGetDesignBoardAll>>();
             RequestGetDesignBoard request = new RequestGetDesignBoard();
             try
@@ -662,6 +649,26 @@ namespace AnimationProject.Controllers
             catch (Exception ex)
             {
                 log.Info("***DeleteElementFromFrontEnd*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
+                return Json("NO");
+            }
+
+        }
+        [HttpPost]
+        public async Task<IActionResult> SetBoardCategory(RequestSetBoardCategory request)
+        {
+            //if (!_checkSession.IsSession()) return Ok("login");
+            var response = new Response<ResponseSetBoardCategory>();
+            try
+            {
+                //
+                request.UpdatedBy = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
+                var setBoardCategory = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/SetBoardCategory", JsonConvert.SerializeObject(request), user.token);
+                response = JsonConvert.DeserializeObject<Response<ResponseSetBoardCategory>>(setBoardCategory);
+                return Json(response.Data);
+            }
+            catch (Exception ex)
+            {
+                log.Info("***SetBoardCategory*** Date : " + DateTime.UtcNow + " Error " + ex.Message + "StackTrace " + ex.StackTrace.ToString());
                 return Json("NO");
             }
 

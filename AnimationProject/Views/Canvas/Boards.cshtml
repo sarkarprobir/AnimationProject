@@ -206,7 +206,30 @@
                                                         </div>
                                                     </div> *@
                                                 </div>
+                                                <div class="d-flex align-items-center mt-4">
+                                                    <span><strong>Category</strong></span>
+                                                    <span class="ms-3 me-2">:</span>
 
+                                                    <div class="ms-2" style="min-width:220px;">
+                                                        <select id="ddlBoardCategory_@idhx"
+                                                                class="form-select form-select-sm"
+                                                                data-board-id="@item.DesignBoardId">
+                                                            <option value="">-- Select --</option>
+
+                                                            @if (item.GetAllBoardCategory != null && item.GetAllBoardCategory.Count > 0)
+                                                            {
+                                                                foreach (var cat in item.GetAllBoardCategory)
+                                                                {
+                                                                    <option value="@cat.BoardCategoryId">@cat.BoardCategory</option>
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                <option value="">(no categories)</option>
+                                                            }
+                                                        </select>
+                                                    </div>
+                                                </div>
                                             <!-- Link Box -->
                                             <div class="d-flex align-items-center mt-4">
                                                 <span><strong>Link</strong></span>
@@ -349,6 +372,30 @@
                                                         </div>
                                                     </div>
                                             </div>
+                                                <div class="d-flex align-items-center mt-4">
+                                                    <span><strong>Category</strong></span>
+                                                    <span class="ms-3 me-2">:</span>
+
+                                                    <div class="ms-2" style="min-width:220px;">
+                                                        <select id="ddlBoardCategory_@idx"
+                                                                class="form-select form-select-sm"
+                                                                data-board-id="@item.DesignBoardId">
+                                                            <option value="">-- Select --</option>
+
+                                                            @if (item.GetAllBoardCategory != null && item.GetAllBoardCategory.Count > 0)
+                                                            {
+                                                                foreach (var cat in item.GetAllBoardCategory)
+                                                                {
+                                                                    <option value="@cat.BoardCategoryId">@cat.BoardCategory</option>
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                <option value="">(no categories)</option>
+                                                            }
+                                                        </select>
+                                                    </div>
+                                                </div>
                                             <!-- Link Box -->
                                             <div class="d-flex align-items-center mt-4">
                                                 <span><strong>Link</strong></span>

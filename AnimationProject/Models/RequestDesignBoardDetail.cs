@@ -124,5 +124,16 @@
         public int Status { get; set; } = 1;
         public string? ImageTag { get; set; }
     }
+    public class RequestAllBoardCategory
+    {
+        public string SearchKeyword { get; set; }
 
+    }
+    public class RequestSetBoardCategory
+    {
+        public Guid DesignBoardId { get; set; }
+        public int BoardCategoryId { get; set; }
+        public Guid UpdatedBy { get; set; }
+
+    }
 }

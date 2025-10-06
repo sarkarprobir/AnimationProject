@@ -45,6 +45,7 @@ namespace AnimationProject.Models
         public string expirationStr { get; set; }
         public string LargeVideoPath { get; set; }
         public List<DesignBoardDetailsList> DesignBoardDetailsList { get; set; }
+        public List<GetAllBoardCategory> GetAllBoardCategory { get; set; }
     }
     public class ResponseGetDesignBoardById
     {
@@ -110,6 +111,21 @@ namespace AnimationProject.Models
         public int Result { get; set; }
     }
     public class ResponseDeleteElement
+    {
+        public string Response { get; set; }
+        public int Result { get; set; }
+    }
+    public class ResponseGetAllBoardCategory
+    {
+        public int BoardCategoryId { get; set; }
+        public string BoardCategory { get; set; }
+    }
+    public class GetAllBoardCategory
+    {
+        public int BoardCategoryId { get; set; }
+        public string BoardCategory { get; set; }
+    }
+    public class ResponseSetBoardCategory
     {
         public string Response { get; set; }
         public int Result { get; set; }
