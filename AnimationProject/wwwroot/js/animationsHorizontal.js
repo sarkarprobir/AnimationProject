@@ -3480,7 +3480,8 @@ function cloneImageObject(srcObj) {
         strokeWidth: srcObj.isBasic,
         isBasic: srcObj.isBasic,
         isLINESvg: srcObj.isLine,
-        curvature: srcObj.curvature || 0
+        curvature: srcObj.curvature || 0,
+        basicName: srcObj.basicName || ''
         // Copy any other custom fields if needed...
     };
 }
@@ -3532,7 +3533,7 @@ function cloneTextObject(src) {
 function cloneImageObject(src) {
     const fields = [
         "type", "x", "y", "width", "height", "scaleX", "scaleY", "rotate", "opacity",
-        "zIndex", "groupId", "noAnim", "crop", "flipX", "flipY", "src", "isBasic", "isLINESvg" // keep a plain src string if you have it
+        "zIndex", "groupId", "noAnim", "crop", "flipX", "flipY", "src", "isBasic", "isLINESvg", "basicName" // keep a plain src string if you have it
     ];
     const o = {};
     fields.forEach(k => { if (k in src) o[k] = structuredClone(src[k]); });
@@ -5494,6 +5495,15 @@ function setSelectionTarget(obj, { setActive = true, setContext = true } = {}) {
         }
     }
 }
+function displayNameFromSrc(src) {
+    // get last path segment (filename)
+    const file = new URL(src, window.location.href).pathname.split('/').pop() || "";
+    // remove extension
+    const base = file.replace(/\.[^/.]+$/, "");
+    // take up to first underscore (or whole base if none)
+    const name = base.split('_')[0];
+    return decodeURIComponent(name);
+}
 canvas.addEventListener("click", function onCanvasClick(e) {
     // one-time init
     window.__marqueeCommittedAt ??= 0;
@@ -5649,8 +5659,8 @@ canvas.addEventListener("click", function onCanvasClick(e) {
         isMarquee = false;  
         selectGroup(imgHit.groupId);
         setGroupCheckbox(imgHit.groupId);
-        const fileName = new URL(imgHit.src, window.location.href).pathname.split('/').pop();
-        document.getElementById('spanName').textContent = 'Image Name: ' + fileName || 'No File';
+        const name = displayNameFromSrc(imgHit.src);
+        document.getElementById('spanName').textContent = name ? `${name}` : 'No File';
         $("#noAnimCheckbox").prop("checked", !!imgHit.noAnim);
         $("#fontstyle_popup").show();
         $(".right-sec-two").show();

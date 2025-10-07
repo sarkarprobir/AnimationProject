@@ -562,7 +562,8 @@ function saveCanvasData() {
                 isBasic: img.isBasic,
                 isLINESvg: img.isLINESvg,
                 __capsOrientation: img.__capsOrientation,
-                curvature: img.curvature
+                curvature: img.curvature,
+                basicName: img.basicName
             };
         })
     };
@@ -1264,7 +1265,8 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
             isBasic: im.isBasic ?? false,
             isLINESvg: im.isLINESvg ?? false,
             __capsOrientation: im.__capsOrientation ?? 'horizontal',
-            curvature: im.curvature||0
+            curvature: im.curvature || 0,
+            basicName: im.basicName??''
         };
 
         // ⛔️ NO clamp here — preserve exact saved layout (even if it overflows)
