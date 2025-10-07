@@ -292,6 +292,7 @@ footer {
     width: max-content;
     padding: 7px 12px;
     border-radius: 4px;
+    cursor: pointer;
 }
 
     .templates_options:hover {
@@ -310,8 +311,11 @@ footer {
     transform: translateY(-10px);
     transition: max-height 0.4s ease, opacity 0.4s ease, transform 0.4s ease;
     position: absolute;
+    z-index: 1;
     width: 100%;
     background-color: #fff;
+    display: flex;
+    justify-content: center;
 }
 
 .temp_head {
