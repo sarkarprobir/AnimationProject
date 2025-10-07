@@ -314,7 +314,7 @@ document.addEventListener('click', (e) => {
     }
 });
 
-function LoadCategoryTemplate(type) {
+function LoadCategoryTemplateForHome(type) {
     LoadHomeTemplates(type);
 }
 async function LoadAllCategoryUseCase() {
