@@ -5495,14 +5495,21 @@ function setSelectionTarget(obj, { setActive = true, setContext = true } = {}) {
         }
     }
 }
-function displayNameFromSrc(src) {
-    // get last path segment (filename)
-    const file = new URL(src, window.location.href).pathname.split('/').pop() || "";
-    // remove extension
-    const base = file.replace(/\.[^/.]+$/, "");
-    // take up to first underscore (or whole base if none)
-    const name = base.split('_')[0];
-    return decodeURIComponent(name);
+function displayNameFromSrc(src, basicName) {
+    if (!src) return '';
+    if (/^data:image\/svg\+xml/i.test(src)) {
+        const name = basicName;
+        return decodeURIComponent(name);
+    }
+    else {
+        // get last path segment (filename)
+        const file = new URL(src, window.location.href).pathname.split('/').pop() || "";
+        // remove extension
+        const base = file.replace(/\.[^/.]+$/, "");
+        // take up to first underscore (or whole base if none)
+        const name = base.split('_')[0];
+        return decodeURIComponent(name);
+    }
 }
 canvas.addEventListener("click", function onCanvasClick(e) {
     // one-time init
@@ -5659,7 +5666,7 @@ canvas.addEventListener("click", function onCanvasClick(e) {
         isMarquee = false;  
         selectGroup(imgHit.groupId);
         setGroupCheckbox(imgHit.groupId);
-        const name = displayNameFromSrc(imgHit.src);
+        const name = displayNameFromSrc(imgHit.src, imgHit.basicName);
         document.getElementById('spanName').textContent = name ? `${name}` : 'No File';
         $("#noAnimCheckbox").prop("checked", !!imgHit.noAnim);
         $("#fontstyle_popup").show();
