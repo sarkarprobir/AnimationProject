@@ -5497,18 +5497,32 @@ function setSelectionTarget(obj, { setActive = true, setContext = true } = {}) {
 }
 function displayNameFromSrc(src, basicName) {
     if (!src) return '';
+
+    // helper: strip query/hash, remove extension, take up to first underscore
+    const fromFile = (file) => {
+        if (!file) return '';
+        const noQuery = String(file).split(/[?#]/)[0];
+        const base = noQuery.replace(/\.[^/.]+$/, '');
+        return decodeURIComponent(base.split('_')[0]);
+    };
+
+    // 1) Inline SVG → use basicName (there's no real file name in data URI)
     if (/^data:image\/svg\+xml/i.test(src)) {
-        const name = basicName;
-        return decodeURIComponent(name);
+        return basicName ? fromFile(basicName) : 'SVG';
     }
-    else {
-        // get last path segment (filename)
-        const file = new URL(src, window.location.href).pathname.split('/').pop() || "";
-        // remove extension
-        const base = file.replace(/\.[^/.]+$/, "");
-        // take up to first underscore (or whole base if none)
-        const name = base.split('_')[0];
-        return decodeURIComponent(name);
+
+    // 2) Other non-file sources (data:, blob:) → also lean on basicName
+    if (/^(data:|blob:)/i.test(src)) {
+        return basicName ? fromFile(basicName) : '';
+    }
+
+    // 3) Normal URL or path
+    try {
+        const file = new URL(src, window.location.href).pathname.split('/').pop() || '';
+        return fromFile(file);
+    } catch {
+        // Fallback if URL parsing fails
+        return basicName ? fromFile(basicName) : '';
     }
 }
 canvas.addEventListener("click", function onCanvasClick(e) {
