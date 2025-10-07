@@ -314,7 +314,7 @@ document.addEventListener('click', (e) => {
     }
 });
 
-function LoadCategoryTemplate(type) {
+function LoadCategoryTemplateForHome(type) {
     LoadHomeTemplates(type);
 }
 async function LoadAllCategoryUseCase() {
@@ -360,9 +360,19 @@ function renderCategoryGrid(list) {
     $("#hoverBox").show();
 }
 
+//function makeLink(label, id) {
+//    const $a = $('<a class="templates_options"></a>').text(label);
+//    // pass numeric id to your function
+//    $a.attr("onclick", `LoadCategoryTemplate(${Number(id)})`);
+//    return $a;
+//}
 function makeLink(label, id) {
-    const $a = $('<a class="templates_options"></a>').text(label);
-    // pass numeric id to your function
-    $a.attr("onclick", `LoadCategoryTemplate(${Number(id)})`);
-    return $a;
+    // Build /Canvas/Templates?label=...&id=...
+    const url = new URL(baseURL + "Canvas/Templates", window.location.origin);
+    url.searchParams.set("label", label);
+    url.searchParams.set("id", Number(id));
+
+    return $('<a class="templates_options"></a>')
+        .text(label)
+        .attr("href", url.toString());
 }

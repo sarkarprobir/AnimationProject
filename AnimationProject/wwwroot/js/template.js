@@ -242,9 +242,43 @@ function renderCategoryGrid(list) {
     $("#hoverBox").show();
 }
 
+//function makeLink(label, id) {
+//    const $a = $('<a class="templates_options"></a>').text(label);
+//    // pass numeric id to your function
+//    $a.attr("onclick", `LoadCategoryTemplate(${Number(id)})`);
+//    return $a;
+//}
 function makeLink(label, id) {
-    const $a = $('<a class="templates_options"></a>').text(label);
-    // pass numeric id to your function
-    $a.attr("onclick", `LoadCategoryTemplate(${Number(id)})`);
+    // Clean URL for the address bar
+    const cleanUrl = (baseURL || window.location.origin + "/") + "Canvas/Templates";
+
+    const $a = $('<a class="templates_options" href="' + cleanUrl + '"></a>').text(label);
+
+    $a.on("click", function (e) {
+        e.preventDefault(); // no full navigation
+        // push clean URL (no params), but keep state so Back/Forward works
+        history.pushState({ label, id: Number(id) }, "", cleanUrl);
+
+        // update header
+        const headerEl = document.getElementById("templateHeader");
+        if (headerEl) headerEl.textContent = label;
+
+        // load the chosen category
+        LoadCategoryTemplate(Number(id));
+    });
+
     return $a;
 }
+window.addEventListener("popstate", (ev) => {
+    const st = ev.state;
+    if (st && Number.isFinite(st.id)) {
+        const headerEl = document.getElementById("templateHeader");
+        if (headerEl) headerEl.textContent = st.label || "Templates";
+        LoadCategoryTemplate(Number(st.id));
+    } else {
+        // No state → fallback to default behavior
+        const headerEl = document.getElementById("templateHeader");
+        if (headerEl) headerEl.textContent = "Templates";
+        LoadTemplates(0);
+    }
+});

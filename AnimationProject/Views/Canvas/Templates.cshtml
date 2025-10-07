@@ -21,10 +21,39 @@
 <script src="~/js/template.js?v=@Configuration["AppSettings:FilesVersion"]"></script>
 <script src="~/js/Home.js"></script>
 <script>
-    $(document).ready(function(){
+    // $(document).ready(function(){
+    //     LoadTemplates(0);
+    //     LoadAllCategoryUseCase();
+    // });
+         $(document).ready(function () {
+      const params = new URLSearchParams(window.location.search);
+      const label = params.get("label");
+      const idStr = params.get("id");
+      const id = idStr && /^\d+$/.test(idStr) ? Number(idStr) : null;
+
+      const cleanUrl = (baseURL || window.location.origin + "/") + "Canvas/Templates";
+
+      if (label && id !== null) {
+        // Use the params once, then replace the URL with clean form + state
+        history.replaceState({ label, id }, "", cleanUrl);
+
+        const headerEl = document.getElementById("templateHeader");
+        if (headerEl) headerEl.textContent = label;
+        LoadCategoryTemplate(id);
+      } else if (history.state && Number.isFinite(history.state.id)) {
+        const st = history.state;
+        const headerEl = document.getElementById("templateHeader");
+        if (headerEl) headerEl.textContent = st.label || "Templates";
+        LoadCategoryTemplate(Number(st.id));
+      } else {
+        // default
         LoadTemplates(0);
-        LoadAllCategoryUseCase();
+      }
+
+      // Always render the side/category grid
+      LoadAllCategoryUseCase();
     });
+
 </script>
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg bg-white">
@@ -121,7 +150,7 @@
 
 <div class="container py-4">
     <div class="text-center mb-5">
-        <h2 class="temp_head">Templates</h2>
+        <h2 id="templateHeader" class="temp_head">Templates</h2>
     </div>
     <div class="row column-gap-3 d-flex justify-content-center" id="divTemplateRow">
         <div class="col-auto p-0"></div> <!-- Horizontals (left half) -->
