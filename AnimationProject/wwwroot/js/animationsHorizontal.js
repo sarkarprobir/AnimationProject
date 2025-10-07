@@ -17070,6 +17070,7 @@ async function updateFileName() {
             switchTab(null, 'my-images', 1);
             console.log('Upload success:', res);
             // nothing else to do per your requirement
+            nameSpan.textContent = 'No File';
         } else {
             MessageShow(null, 'Failed to upload.', 'error');
             console.warn('Upload failed:', res?.error || resp.statusText);
