@@ -292,6 +292,7 @@ footer {
     width: max-content;
     padding: 7px 12px;
     border-radius: 4px;
+    cursor: pointer;
 }
 
     .templates_options:hover {
