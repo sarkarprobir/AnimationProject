@@ -3495,7 +3495,8 @@ function cloneImageObject(srcObj) {
         strokeWidth: srcObj.strokeWidth || 0.1,
         isBasic: srcObj.isBasic,
         isLINESvg: srcObj.isLine,
-        curvature: srcObj.curvature||0
+        curvature: srcObj.curvature || 0,
+        basicName: srcObj.basicName || ''
         // Copy any other custom fields if needed...
     };
 }
@@ -3547,7 +3548,7 @@ function cloneTextObject(src) {
 function cloneImageObject(src) {
     const fields = [
         "type", "x", "y", "width", "height", "scaleX", "scaleY", "rotate", "opacity",
-        "zIndex", "groupId", "noAnim", "crop", "flipX", "flipY", "src", "isBasic", "isLINESvg" // keep a plain src string if you have it
+        "zIndex", "groupId", "noAnim", "crop", "flipX", "flipY", "src", "isBasic", "isLINESvg","basicName" // keep a plain src string if you have it
     ];
     const o = {};
     fields.forEach(k => { if (k in src) o[k] = structuredClone(src[k]); });
@@ -5510,6 +5511,37 @@ function setSelectionTarget(obj, { setActive = true, setContext = true } = {}) {
         }
     }
 }
+function displayNameFromSrc(src, basicName) {
+    if (!src) return '';
+
+    // helper: strip query/hash, remove extension, take up to first underscore
+    const fromFile = (file) => {
+        if (!file) return '';
+        const noQuery = String(file).split(/[?#]/)[0];
+        const base = noQuery.replace(/\.[^/.]+$/, '');
+        return decodeURIComponent(base.split('_')[0]);
+    };
+
+    // 1) Inline SVG → use basicName (there's no real file name in data URI)
+    if (/^data:image\/svg\+xml/i.test(src)) {
+        return basicName ? fromFile(basicName) : 'SVG';
+    }
+
+    // 2) Other non-file sources (data:, blob:) → also lean on basicName
+    if (/^(data:|blob:)/i.test(src)) {
+        return basicName ? fromFile(basicName) : '';
+    }
+
+    // 3) Normal URL or path
+    try {
+        const file = new URL(src, window.location.href).pathname.split('/').pop() || '';
+        return fromFile(file);
+    } catch {
+        // Fallback if URL parsing fails
+        return basicName ? fromFile(basicName) : '';
+    }
+}
+
 canvas.addEventListener("click", function onCanvasClick(e) {
     // one-time init
     window.__marqueeCommittedAt ??= 0;
@@ -5666,8 +5698,8 @@ canvas.addEventListener("click", function onCanvasClick(e) {
         isMarquee = false;  
         selectGroup(imgHit.groupId);
         setGroupCheckbox(imgHit.groupId);
-        const fileName = new URL(imgHit.src, window.location.href).pathname.split('/').pop();
-        document.getElementById('spanName').textContent ='Image Name: '+ fileName || 'No File';
+        const name = displayNameFromSrc(imgHit.src, imgHit.basicName);
+        document.getElementById('spanName').textContent = name ? `${name}` : 'No File';
         $("#noAnimCheckbox").prop("checked", !!imgHit.noAnim);
         $("#fontstyle_popup").show();
         $(".right-sec-two").show();
