@@ -115,8 +115,8 @@
 <h1 class="heading mb-4">Plans</h1>
 <div class="d-flex gap-3 justify-content-center mt-2 mb-5">
     <div class="pricing_toggle-container">
-        <button class="pricing_toggle-btn active">Monthly</button>
-        <button class="pricing_toggle-btn d-flex gap-2">Annually <span class="pricing_span">Save 15%</span></button>
+        <button class="pricing_toggle-btn active" id="monthlyBtn">Monthly</button>
+        <button class="pricing_toggle-btn d-flex gap-2" id="annuallyBtn">Annually <span class="pricing_span">Save 15%</span></button>
     </div>
 </div>
 
@@ -142,8 +142,8 @@
     <div class="plan">
         <h2>Pro</h2>
         <p class="align-center">Unlock premium features <br /> for your business needs.</p>
-        <div class="price"><span class="dollor">$</span>29</div>
-        <p class="align-center">Per Screen/Month</p>
+        <div class="price"><span class="dollor">$</span><span id="priceValue">29</span></div>
+        <p class="align-center" id="priceDuration">Per Screen/Month</p>
         <p class="align-center">
             <button class="create-new-btn">Subscribe</button>
         </p>
@@ -354,4 +354,22 @@
       });
     });
 
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const priceValue = document.getElementById("priceValue");
+      const priceDuration = document.getElementById("priceDuration");
+      const monthlyBtn = document.getElementById("monthlyBtn");
+      const annuallyBtn = document.getElementById("annuallyBtn");
+
+      monthlyBtn.addEventListener("click", () => {
+        priceValue.textContent = "29";
+        priceDuration.textContent = "Per Screen/Month";
+      });
+
+      annuallyBtn.addEventListener("click", () => {
+        priceValue.textContent = "70";
+        priceDuration.textContent = "Per Screen/Year";
+      });
+    });
 </script>
