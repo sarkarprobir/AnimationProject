@@ -238,7 +238,7 @@ function LoadHomeTemplates(type) {
         hover.className = 'img_hover_btn';
         hover.innerHTML = `
       <button title="View" type="button" class="">
-        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <i class="fa-solid fa-eye" aria-hidden="true"></i>
         <span class="visually-hidden">View</span>
       </button>
       <button title="Edit" type="button" class="">
