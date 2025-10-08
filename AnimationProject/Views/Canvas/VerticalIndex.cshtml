@@ -1370,8 +1370,72 @@
 
        
    </script>
-
     <script>
+        (function(){
+          const canvas    = document.getElementById('myCanvas');
+          const container = document.getElementById('canvasContainer');
+          const ctx       = canvas.getContext('2d');
+          const dpr       = window.devicePixelRatio || 1;
+
+          //──────────────────────────────────────────────────────────
+          // STATE: these will be set dynamically on first resize
+          let DESIGN_W, DESIGN_H;
+          let scaleX = 1, scaleY = 1;
+          let firstRun = true;
+          //──────────────────────────────────────────────────────────
+
+          function resizeCanvas() {
+             // console.log("resizeCanvas");
+            // 1) Figure out how big the canvas *looks* on the page (CSS px)
+            const containerW = container.clientWidth;
+            const cssW       = containerW * 0.34;          // e.g. 32% of container
+            const cssH       = cssW * (16/9);              // your chosen aspect
+
+            canvas.style.width  = cssW + 'px';
+            canvas.style.height = cssH + 'px';
+
+            // 2) Resize the internal buffer for HiDPI
+            const bufW = Math.round(cssW * dpr);
+            const bufH = Math.round(cssH * dpr);
+            if (canvas.width !== bufW || canvas.height !== bufH) {
+              canvas.width  = bufW;
+              canvas.height = bufH;
+            }
+
+            // 3) Compute the *actual* drawing‐space size in CSS pixels
+            const screenW = canvas.width  / dpr;
+            const screenH = canvas.height / dpr;
+
+            // 4) On very first run, “lock in” your design resolution
+            if (firstRun) {
+              DESIGN_W  = screenW;
+              DESIGN_H  = screenH;
+              firstRun  = false;
+              console.log(`Captured design size: ${DESIGN_W}×${DESIGN_H}`);
+            }
+
+            // 5) Now compute how much to scale your design → screen
+            scaleX = screenW / DESIGN_W;
+            scaleY = screenH / DESIGN_H;
+
+            // 6) Reset any old transforms, then apply:
+            //   a) dpr for HiDPI (1 unit → 1 CSS px)
+            //   b) design→screen scale
+            ctx.resetTransform();
+            ctx.scale(dpr, dpr);
+            ctx.scale(scaleX, scaleY);
+            drawText?.()
+          }
+
+          // expose & hook up
+          window.resizeCanvas = resizeCanvas;
+          window.addEventListener('resize',  resizeCanvas);
+          window.addEventListener('DOMContentLoaded', resizeCanvas);
+        })();
+    </script>
+
+
+   @*  <script>
             (function(){
           const canvas    = document.getElementById('myCanvas');
           const container = document.getElementById('canvasContainer');
@@ -1432,7 +1496,7 @@
           window.addEventListener('resize',  resizeCanvas);
           window.addEventListener('DOMContentLoaded', resizeCanvas);
         })();
-    </script>
+    </script> *@
     <script>
                 (function () {
           const canvas_d    = document.getElementById('myCanvasElementDownload');
@@ -1479,10 +1543,10 @@
           // 🔸 expose helpers so other code can use the same transform
           window.downloadCanvas = {
             resize: resizeCanvas_d,
-            applyTransform(ctx) {
-              ctx.resetTransform();
-              ctx.scale(dpr_d, dpr_d);
-              ctx.scale(scaleX_d, scaleY_d);
+            applyTransform(ctx_d) {
+              ctx_d.resetTransform();
+              ctx_d.scale(dpr_d, dpr_d);
+              ctx_d.scale(scaleX_d, scaleY_d);
             },
             designSize() {
               return { w: DESIGN_W_d, h: DESIGN_H_d };
