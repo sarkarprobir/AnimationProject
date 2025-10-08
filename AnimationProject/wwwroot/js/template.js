@@ -239,7 +239,7 @@ function renderCategoryGrid(list) {
         $row.append($col);
     }
 
-    $("#hoverBox").show();
+  //  $("#hoverBox").show();
 }
 
 //function makeLink(label, id) {
