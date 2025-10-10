@@ -821,7 +821,7 @@ function moveCaretToEnd(el) {
                     </div>
                     <h2>Effects</h2>
                     <ul class="right-listone d-flex flex-wrap gap-3 mb-4" id="ulEffects">
-                        <li style="display:none;">
+                        @* <li style="display:none;">
                             <a  id="alinear" href="javascript:void(0)" onclick="textAnimationClick(this, 'linear','In')" title="Linear">Linear2</a>
                             <div class="clear"></div>
                         </li>
@@ -829,13 +829,13 @@ function moveCaretToEnd(el) {
                         <li style="display:none;">
                             <a id="abounce" href="javascript:void(0)" onclick="textAnimationClick(this, 'bounce','In')" title="Bounce">Bounce</a>
                             <div class="clear"></div>
-                        </li>
+                        </li> *@
                         <li>
-                            <a class="effectIn_btn active_effect" id="adelaylinear" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear','In')" title="linear">Slide</a>
+                            <a class="effectIn_btn active_effect" id="adelaylinear" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear','In');" title="Slide">Slide</a>
                             <div class="clear"></div>
                         </li>
                          <li>
-                            <a class="effectIn_btn" id="adelaylinear2" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear2','In')" title="linear">Linear</a>
+                            <a class="effectIn_btn" id="adelaylinear2" href="javascript:void(0)" onclick="textAnimationClick(this, 'delaylinear2','In');" title="linear">Linear</a>
                             <div class="clear"></div>
                         </li>
                         <li>
@@ -895,7 +895,7 @@ function moveCaretToEnd(el) {
                     <input type="hidden" id="hdnOutDirectiontSlide2" />
                     <input type="hidden" id="hdnOutDirectiontSlide3" />
                     <h2>In</h2>
-                    <ul class="right-listone d-flex justify-content-between align-items-center" id="uldirection">
+                    <ul class="right-listone d-flex justify-content-between align-items-center gap-3 flex-wrap" id="uldirection">
                         <li>
                             <div class="btn-canvas-container" style="width: 40px; height: 40px;">
                                 <!-- hide the <a> by default -->
@@ -959,6 +959,17 @@ function moveCaretToEnd(el) {
                                         id="miniCanvas_atop" class="miniCanvas"
                                         width="50" height="50"
                                         style="display: block;"></canvas> *@
+                            </div>
+                            <div class="clear"></div>
+                        </li>
+                        <li>
+                            <div class="btn-canvas-container" id="right-left-both" style="width: 40px; height: 40px;">
+                                <!-- hide the <a> by default -->
+                                <a class="direction_link" href="javascript:void(0)" onclick="toggleDirectionActive(this);"
+                                   style=" width:100%; height:100%;">
+                                    <img src="/images/icons/left-and-right-arrows.png" alt="left-right-both">
+                                </a>
+                                
                             </div>
                             <div class="clear"></div>
                         </li>
@@ -1077,7 +1088,7 @@ function moveCaretToEnd(el) {
 
                 <h2>Out</h2>
 
-                <ul class="right-listone d-flex justify-content-between">
+                <ul class="right-listone d-flex justify-content-between gap-3 flex-wrap">
                     @* <li>
                         <a href="javascript:void(0)"> <img src="~/images/icons/icon-lr.png" onclick="setCoordinate(this,'left',100,20,50,50);" alt="pattren"></a>
 
@@ -1140,6 +1151,16 @@ function moveCaretToEnd(el) {
                                style=" width:100%; height:100%;">
                                 <img src="/images/icons/right arrow.svg" alt="Center to Top"
                                      style=" transform: rotate(90deg);">
+                            </a>
+                        </div>
+                        <div class="clear"></div>
+                    </li>
+                    <li>
+                        <div class="btn-canvas-container" style="width: 40px; height: 40px;">
+                            <!-- hide the <a> by default -->
+                            <a class="direction_link out_link"  href="javascript:void(0)" onclick="toggleDirectionOutActive(this);"
+                               style=" width:100%; height:100%;">
+                                <img src="/images/icons/left-and-right-arrows.png" alt="left-right-both">
                             </a>
                         </div>
                         <div class="clear"></div>
