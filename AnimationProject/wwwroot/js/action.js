@@ -33,8 +33,8 @@ function SaveDesignBoard() {
         textObjects.forEach(o => o.selected = false);
         images.forEach(img => img.selected = false);
 
-    // Save the current slide before proceeding (if you have an active slide mechanism)
-    saveCurrentSlide();
+        // Save the current slide before proceeding (if you have an active slide mechanism)
+        saveCurrentSlide();
 
         var boardName = $("#txtSaveDesignBoardName").val().trim();
         if (!boardName) {
@@ -50,7 +50,7 @@ function SaveDesignBoard() {
             SlideType: 'Vertical'
         };
 
-       
+
         $.ajax({
             url: baseURL + "Canvas/SaveUpdateDesignBoard",
             type: "POST",
@@ -150,12 +150,12 @@ function SaveDesignBoard() {
                             $(slide.hdnField).val(slideResult.result);
 
 
-                            if (slideResult.result !== '' && $(`#hdnDesignBoardDetailsIdSlide${activeSlide}`).val() === slideResult.result) { 
-                            const canvas = document.getElementById('myCanvas'); // Your canvas element
-                            const ctx = canvas.getContext('2d');
+                            if (slideResult.result !== '' && $(`#hdnDesignBoardDetailsIdSlide${activeSlide}`).val() === slideResult.result) {
+                                const canvas = document.getElementById('myCanvas'); // Your canvas element
+                                const ctx = canvas.getContext('2d');
 
-                            // Ensure all images & SVGs are fully loaded before capturing
-                          //  const images = document.querySelectorAll("img, svg");
+                                // Ensure all images & SVGs are fully loaded before capturing
+                                //  const images = document.querySelectorAll("img, svg");
                                 let loadedCount = 0;
 
                                 // count only entries that actually have an <img> we can wait on
@@ -191,9 +191,9 @@ function SaveDesignBoard() {
                                 }
 
 
-                               // if (loadedCount === images.length) captureSlide(activeSlide, slideResult); // If all images are already loaded
+                                // if (loadedCount === images.length) captureSlide(activeSlide, slideResult); // If all images are already loaded
 
-                        }
+                            }
                         },
                         error: function (data) {
                             console.log("error in saving slide " + slide.slideSeq, data);
@@ -214,7 +214,7 @@ function SaveDesignBoard() {
                 // Optionally, reset the main design board hidden field here or later, based on your flow.
                 // $("#hdnDesignBoardId").val(defaultId);
 
-               // HideLoader();
+                // HideLoader();
 
                 // Check for login response or success message as needed.
                 if (result === "login") {
@@ -222,12 +222,12 @@ function SaveDesignBoard() {
                     return false;
                 }
                 if (result !== null) {
-                   
 
-                   // MessageShow('RedirectToVerticalPageWithQueryString()', 'Design Board saved successfully!', 'success');
-                   // $("#hdnBackgroundSpecificColor").val("rgba(255, 255, 255, 0.95)");
+
+                    // MessageShow('RedirectToVerticalPageWithQueryString()', 'Design Board saved successfully!', 'success');
+                    // $("#hdnBackgroundSpecificColor").val("rgba(255, 255, 255, 0.95)");
                 }
-               // HideLoader();
+                // HideLoader();
             },
             error: function (data) {
                 console.log("error", data);
@@ -333,7 +333,7 @@ async function captureSlide(activeSlide, slideResult) {
                 },
                 success: function (response) {
                     sessionStorage.setItem("leftPanelHtml", document.getElementById("divpanelleft").innerHTML);
-                    MessageShow('RedirectToVerticalPageWithQueryString()', 'Design Board saved successfully!', 'success');          
+                    MessageShow('RedirectToVerticalPageWithQueryString()', 'Design Board saved successfully!', 'success');
                 },
                 error: function (xhr, status, error) {
                     HideLoader();
@@ -391,8 +391,8 @@ function SaveDesignBoardSlide(newSlideNumber) {
     // Save the current slide state (if it's not blank).
     saveCurrentSlide();
 
-   
-   
+
+
 
     // Create a helper to get a deep copy of a JSON string.
     function getDeepCopy(jsonStr) {
@@ -404,7 +404,7 @@ function SaveDesignBoardSlide(newSlideNumber) {
         }
     }
     // Update the active slide number.
-     activeSlide = newSlideNumber;
+    activeSlide = newSlideNumber;
     // Load the saved state for the new active slide using your loadCanvasFromJson function.
     if (activeSlide === 1 && verticalSlide1) {
         // Pass a deep copy so the original remains intact.
@@ -471,7 +471,7 @@ function SelectionOfEffectandDirection(activeSlide) {
             document.getElementById("a" + $("#hdnOutDirectiontSlide3").val() + "").classList.add("active_effect");
         }
     }
-   // resizeCanvas();
+    // resizeCanvas();
 }
 function unitToPx(v, screen) {
     if (v == null) return null;
@@ -515,7 +515,9 @@ function saveCanvasData() {
         canvasBgImage: canvas._bgImg ? canvas._bgImg.src : "",
         slideEffect: $("#hdnTextAnimationType").val(),
         slideDedirection: $("#hdnslideDedirection").val(),
-
+        inTime: parseInt(document.getElementById('lblSpeed').textContent), 
+        stayTime: parseInt(document.getElementById('lblSeconds').textContent),
+        outTime: parseInt(document.getElementById('lblOutSpeed').textContent),
         // TEXT → always save % (idempotent)
         text: (textObjects || []).map(o => ({
             type: o.type || "text",
@@ -571,8 +573,8 @@ function saveCanvasData() {
     return JSON.stringify(data, null, 2);
 }
 
-function GetDesignBoardById(id,type='') {
-   
+function GetDesignBoardById(id, type = '') {
+
     try {
         var data = {
             DesignBoardId: id
@@ -584,7 +586,7 @@ function GetDesignBoardById(id,type='') {
             dataType: "json",
             data: data,
             success: function (result) {
-                if (result) { 
+                if (result) {
                     if (type == 'duplicate') {
                         $("#hdnDesignBoardId").val();
                         $("#txtSaveDesignBoardName").val();
@@ -597,184 +599,184 @@ function GetDesignBoardById(id,type='') {
                         $('#designboardLink').text(result.designBoardURL);
                         $('#designBoardName').text(result.designBoardName);
                     }
-                    
 
-                if ( Array.isArray(result.designBoardDetailsList) && result.designBoardDetailsList.length > 0) {
-                    // Reset global variables first to avoid stale data
-                    $("#hdntransition").val(result.designBoardDetailsList[0].transitionType);
 
-                    // read the current transition type
-                    const t = $('#hdntransition').val();
+                    if (Array.isArray(result.designBoardDetailsList) && result.designBoardDetailsList.length > 0) {
+                        // Reset global variables first to avoid stale data
+                        $("#hdntransition").val(result.designBoardDetailsList[0].transitionType);
 
-                    // clear any previously active transition buttons
-                    $('.tran_button').removeClass('active');
+                        // read the current transition type
+                        const t = $('#hdntransition').val();
 
-                    // if it’s slideLeft, add `.active` to the #TslideLeft button
-                    if (t === 'slideLeft') {
-                        $('#TslideLeft').addClass('active');
-                    }
-                    // (repeat for other types if you want)
-                    else if (t === 'slideRight') {
-                        $('#TslideRight').addClass('active');
-                    }
-                    else {
+                        // clear any previously active transition buttons
                         $('.tran_button').removeClass('active');
-                    }
 
-
-                    const [beforeTilde, afterTilde] = result.designBoardDetailsList[0].transitionColor.split('~');
-
-
-                    $('#hdnTransition1').val(beforeTilde);
-                    $('#hdnTransition2').val(afterTilde);
-                    document.getElementById('targetDiv1').style.backgroundColor = beforeTilde;
-                    document.getElementById('targetDiv2').style.backgroundColor = afterTilde;
-
-                    $("#tranColor1").val(beforeTilde);
-                    $("#tranColor2").val(afterTilde);
-
-                    // Destructure first 3 elements with null coalescing
-                    [verticalSlide1, verticalSlide2, verticalSlide3] = result.designBoardDetailsList
-                        .slice(0, 3)
-                        .map(item => item?.jsonFile || null);
-                    // Update hidden fields with safety checks
-                    const setHiddenField = (index, selector) => {
-                        const value = result.designBoardDetailsList[index]?.designBoardDetailsId || '';
-                        $(selector).val(value);
-                    };
-                    if (type != 'duplicate') {
-                        setHiddenField(0, '#hdnDesignBoardDetailsIdSlide1');
-                        setHiddenField(1, '#hdnDesignBoardDetailsIdSlide2');
-                        setHiddenField(2, '#hdnDesignBoardDetailsIdSlide3');
-                    }
-
-                    // Update hidden fields with safety checks
-                    const setHiddenFieldeffect = (index, selector) => {
-                        const value = result.designBoardDetailsList[index]?.effect || '';
-                        $(selector).val(value);
-                       
-                    };
-
-                    setHiddenFieldeffect(0, '#hdnEffectSlide1');
-                    setHiddenFieldeffect(1, '#hdnEffectSlide2');
-                    setHiddenFieldeffect(2, '#hdnEffectSlide3');
-
-                    // Update hidden fields with safety checks
-                    const setHiddenFieldSlideSequence = (index, selector) => {
-                        const value = result.designBoardDetailsList[index]?.slideSequence || '';
-                        $(selector).val(value);
-
-                    };
-
-                    setHiddenFieldSlideSequence(0, '#hdnSlideSequence1');
-                    setHiddenFieldSlideSequence(1, '#hdnSlideSequence2');
-                    setHiddenFieldSlideSequence(2, '#hdnSlideSequence3');
-
-                    // Update hidden fields with safety checks
-                    const setHiddenFieldSlideName = (index, selector) => {
-                        const value = result.designBoardDetailsList[index]?.slideName || '';
-                        $(selector).val(value);
-
-                    };
-
-                    setHiddenFieldSlideName(0, '#hdnSlideName1');
-                    setHiddenFieldSlideName(1, '#hdnSlideName2');
-                    setHiddenFieldSlideName(2, '#hdnSlideName3');
-
-
-
-                    // Update hidden fields with safety checks
-                    const setHiddenFielddirection = (index, selector) => {
-                        const value = result.designBoardDetailsList[index]?.direction || '';
-                        $(selector).val(value);
-                    };
-
-                    setHiddenFielddirection(0, '#hdnDirectiontSlide1');
-                    setHiddenFielddirection(1, '#hdnDirectiontSlide2');
-                    setHiddenFielddirection(2, '#hdnDirectiontSlide3');
-
-
-                    // Update hidden fields with safety checks
-                    const setHiddenFieldOuteffect = (index, selector) => {
-                        const value = result.designBoardDetailsList[index]?.outEffect || '';
-                        $(selector).val(value);
-
-                    };
-
-                    setHiddenFieldOuteffect(0, '#hdnOutEffectSlide1');
-                    setHiddenFieldOuteffect(1, '#hdnOutEffectSlide2');
-                    setHiddenFieldOuteffect(2, '#hdnOutEffectSlide3');
-
-                    // Update hidden fields with safety checks
-                    const setHiddenFieldOutdirection = (index, selector) => {
-                        const value = result.designBoardDetailsList[index]?.outDirection || '';
-                        $(selector).val(value);
-                    };
-
-                    setHiddenFieldOutdirection(0, '#hdnOutDirectiontSlide1');
-                    setHiddenFieldOutdirection(1, '#hdnOutDirectiontSlide2');
-                    setHiddenFieldOutdirection(2, '#hdnOutDirectiontSlide3');
-
-
-
-
-
-                    // Update hidden fields with safety checks hdnDesignBoardDetailsIdSlideFilePath1
-                    const setHiddenSlideFilePath = (index, selector, videoSelector) => {
-                        if (!result || !result.designBoardDetailsList || !Array.isArray(result.designBoardDetailsList)) {
-                            console.error("Invalid result object");
-                            return;
+                        // if it’s slideLeft, add `.active` to the #TslideLeft button
+                        if (t === 'slideLeft') {
+                            $('#TslideLeft').addClass('active');
+                        }
+                        // (repeat for other types if you want)
+                        else if (t === 'slideRight') {
+                            $('#TslideRight').addClass('active');
+                        }
+                        else {
+                            $('.tran_button').removeClass('active');
                         }
 
-                        const value = result.designBoardDetailsList[index]?.animationVideoPath || '';
-                        $(selector).val(value);
-                    };
-                    setHiddenSlideFilePath(0, '#hdnDesignBoardDetailsIdSlideFilePath1');
-                    setHiddenSlideFilePath(1, '#hdnDesignBoardDetailsIdSlideFilePath2');
-                    setHiddenSlideFilePath(2, '#hdnDesignBoardDetailsIdSlideFilePath3');
 
-                    // Update hidden fields with safety checks hdnDesignBoardDetailsIdSlideFilePath1
-                    const setHiddenSlideImageFilePath = (index, selector, videoSelector) => {
-                        if (!result || !result.designBoardDetailsList || !Array.isArray(result.designBoardDetailsList)) {
-                            console.error("Invalid result object");
-                            return;
+                        const [beforeTilde, afterTilde] = result.designBoardDetailsList[0].transitionColor.split('~');
+
+
+                        $('#hdnTransition1').val(beforeTilde);
+                        $('#hdnTransition2').val(afterTilde);
+                        document.getElementById('targetDiv1').style.backgroundColor = beforeTilde;
+                        document.getElementById('targetDiv2').style.backgroundColor = afterTilde;
+
+                        $("#tranColor1").val(beforeTilde);
+                        $("#tranColor2").val(afterTilde);
+
+                        // Destructure first 3 elements with null coalescing
+                        [verticalSlide1, verticalSlide2, verticalSlide3] = result.designBoardDetailsList
+                            .slice(0, 3)
+                            .map(item => item?.jsonFile || null);
+                        // Update hidden fields with safety checks
+                        const setHiddenField = (index, selector) => {
+                            const value = result.designBoardDetailsList[index]?.designBoardDetailsId || '';
+                            $(selector).val(value);
+                        };
+                        if (type != 'duplicate') {
+                            setHiddenField(0, '#hdnDesignBoardDetailsIdSlide1');
+                            setHiddenField(1, '#hdnDesignBoardDetailsIdSlide2');
+                            setHiddenField(2, '#hdnDesignBoardDetailsIdSlide3');
                         }
 
-                        const value = result.designBoardDetailsList[index]?.animationImagePath || '';
-                        $(selector).val(value);
-                        if (value !='')
-                            $(`#imageVertical${index + 1}`).attr('src', `${value}`);
-                        console.log(`${value}`);
-                    };
-                    setHiddenSlideImageFilePath(0, '#hdnDesignBoardDetailsIdSlideImageFilePath1');
-                    setHiddenSlideImageFilePath(1, '#hdnDesignBoardDetailsIdSlideImageFilePath2');
-                    setHiddenSlideImageFilePath(2, '#hdnDesignBoardDetailsIdSlideImageFilePath3');
+                        // Update hidden fields with safety checks
+                        const setHiddenFieldeffect = (index, selector) => {
+                            const value = result.designBoardDetailsList[index]?.effect || '';
+                            $(selector).val(value);
 
-                 
-                    
-                    // Optionally, load one of the slides into the canvas
-                    // For example, load slide 1's JSON data if available:
-                    // Load first slide if available
-                    if (verticalSlide1) {
-                        // wait for fonts to finish loading before we draw:
-                        document.fonts.ready
-                            .then(() => {
-                                loadCanvasFromJson(verticalSlide1, 'Common');
-                            })
-                            .catch((err) => {
-                                console.warn("Fonts failed to load, drawing anyway:", err);
-                                loadCanvasFromJson(verticalSlide1, 'Common');
-                            });
+                        };
+
+                        setHiddenFieldeffect(0, '#hdnEffectSlide1');
+                        setHiddenFieldeffect(1, '#hdnEffectSlide2');
+                        setHiddenFieldeffect(2, '#hdnEffectSlide3');
+
+                        // Update hidden fields with safety checks
+                        const setHiddenFieldSlideSequence = (index, selector) => {
+                            const value = result.designBoardDetailsList[index]?.slideSequence || '';
+                            $(selector).val(value);
+
+                        };
+
+                        setHiddenFieldSlideSequence(0, '#hdnSlideSequence1');
+                        setHiddenFieldSlideSequence(1, '#hdnSlideSequence2');
+                        setHiddenFieldSlideSequence(2, '#hdnSlideSequence3');
+
+                        // Update hidden fields with safety checks
+                        const setHiddenFieldSlideName = (index, selector) => {
+                            const value = result.designBoardDetailsList[index]?.slideName || '';
+                            $(selector).val(value);
+
+                        };
+
+                        setHiddenFieldSlideName(0, '#hdnSlideName1');
+                        setHiddenFieldSlideName(1, '#hdnSlideName2');
+                        setHiddenFieldSlideName(2, '#hdnSlideName3');
+
+
+
+                        // Update hidden fields with safety checks
+                        const setHiddenFielddirection = (index, selector) => {
+                            const value = result.designBoardDetailsList[index]?.direction || '';
+                            $(selector).val(value);
+                        };
+
+                        setHiddenFielddirection(0, '#hdnDirectiontSlide1');
+                        setHiddenFielddirection(1, '#hdnDirectiontSlide2');
+                        setHiddenFielddirection(2, '#hdnDirectiontSlide3');
+
+
+                        // Update hidden fields with safety checks
+                        const setHiddenFieldOuteffect = (index, selector) => {
+                            const value = result.designBoardDetailsList[index]?.outEffect || '';
+                            $(selector).val(value);
+
+                        };
+
+                        setHiddenFieldOuteffect(0, '#hdnOutEffectSlide1');
+                        setHiddenFieldOuteffect(1, '#hdnOutEffectSlide2');
+                        setHiddenFieldOuteffect(2, '#hdnOutEffectSlide3');
+
+                        // Update hidden fields with safety checks
+                        const setHiddenFieldOutdirection = (index, selector) => {
+                            const value = result.designBoardDetailsList[index]?.outDirection || '';
+                            $(selector).val(value);
+                        };
+
+                        setHiddenFieldOutdirection(0, '#hdnOutDirectiontSlide1');
+                        setHiddenFieldOutdirection(1, '#hdnOutDirectiontSlide2');
+                        setHiddenFieldOutdirection(2, '#hdnOutDirectiontSlide3');
+
+
+
+
+
+                        // Update hidden fields with safety checks hdnDesignBoardDetailsIdSlideFilePath1
+                        const setHiddenSlideFilePath = (index, selector, videoSelector) => {
+                            if (!result || !result.designBoardDetailsList || !Array.isArray(result.designBoardDetailsList)) {
+                                console.error("Invalid result object");
+                                return;
+                            }
+
+                            const value = result.designBoardDetailsList[index]?.animationVideoPath || '';
+                            $(selector).val(value);
+                        };
+                        setHiddenSlideFilePath(0, '#hdnDesignBoardDetailsIdSlideFilePath1');
+                        setHiddenSlideFilePath(1, '#hdnDesignBoardDetailsIdSlideFilePath2');
+                        setHiddenSlideFilePath(2, '#hdnDesignBoardDetailsIdSlideFilePath3');
+
+                        // Update hidden fields with safety checks hdnDesignBoardDetailsIdSlideFilePath1
+                        const setHiddenSlideImageFilePath = (index, selector, videoSelector) => {
+                            if (!result || !result.designBoardDetailsList || !Array.isArray(result.designBoardDetailsList)) {
+                                console.error("Invalid result object");
+                                return;
+                            }
+
+                            const value = result.designBoardDetailsList[index]?.animationImagePath || '';
+                            $(selector).val(value);
+                            if (value != '')
+                                $(`#imageVertical${index + 1}`).attr('src', `${value}`);
+                            console.log(`${value}`);
+                        };
+                        setHiddenSlideImageFilePath(0, '#hdnDesignBoardDetailsIdSlideImageFilePath1');
+                        setHiddenSlideImageFilePath(1, '#hdnDesignBoardDetailsIdSlideImageFilePath2');
+                        setHiddenSlideImageFilePath(2, '#hdnDesignBoardDetailsIdSlideImageFilePath3');
+
+
+
+                        // Optionally, load one of the slides into the canvas
+                        // For example, load slide 1's JSON data if available:
+                        // Load first slide if available
+                        if (verticalSlide1) {
+                            // wait for fonts to finish loading before we draw:
+                            document.fonts.ready
+                                .then(() => {
+                                    loadCanvasFromJson(verticalSlide1, 'Common');
+                                })
+                                .catch((err) => {
+                                    console.warn("Fonts failed to load, drawing anyway:", err);
+                                    loadCanvasFromJson(verticalSlide1, 'Common');
+                                });
+                        }
+
+                        updateEffectButtons('In');
+                        updateEffectButtons('Out');
+                        updateDirectionButtons('In');
+                        updateDirectionButtons('Out');
+                        transitionSelected(this);
                     }
 
-                    updateEffectButtons('In');
-                    updateEffectButtons('Out');
-                    updateDirectionButtons('In');
-                    updateDirectionButtons('Out');
-                    transitionSelected(this);
-                    }
-                   
-            }
+                }
                 HideLoader();
             },
             error: function (data) {
@@ -806,7 +808,7 @@ function ensureFontsInitialized() {
             'Arial Regular', 'Anton', 'Bebas Neue', 'monstro', 'Montserrat', 'neto', 'Pacifico', 'Roboto', 'Helvetica', 'Georgia Regular',
         ];
         window.__fontFamilyPromises = families.map(fam => {
-           // console.log(`vertical Preloading font family: ${fam}`);
+            // console.log(`vertical Preloading font family: ${fam}`);
             return document.fonts.load(`1em ${fam}`);
         });
         window.__allFontsReady = Promise.all(window.__fontFamilyPromises)
@@ -824,7 +826,7 @@ async function loadCanvasFromJsonOLD(jsonData, condition = 'Common') {
     // Clear existing canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     currentCondition = condition;
-    
+
     // If no JSON data, wait for fonts then draw default
     if (!jsonData) {
         document.fonts.ready.then(() => drawCanvas(condition));
@@ -866,7 +868,7 @@ async function loadCanvasFromJsonOLD(jsonData, condition = 'Common') {
     //    })
     //    .catch(err => {
     //        console.warn('Font failed to load:', err);
-           
+
     //    });
 
     // Compute actual display size of the canvas
@@ -899,7 +901,7 @@ async function loadCanvasFromJsonOLD(jsonData, condition = 'Common') {
         if (ty + finalHeight + padding > screenH) {
             ty = screenH - finalHeight - padding;
         }
-        
+
 
         return {
             text: obj.text,
@@ -949,7 +951,7 @@ async function loadCanvasFromJsonOLD(jsonData, condition = 'Common') {
         o.rotation = imgObj.rotation;
         o.type = imgObj.type || 'image';
         o.zIndex = imgObj.zIndex || getNextZIndex();
-        o.fillNoColorStatus = imgObj.fillNoColorStatus ||false;
+        o.fillNoColorStatus = imgObj.fillNoColorStatus || false;
         o.strokeNoColorStatus = imgObj.strokeNoColorStatus || false;
         o.fillNoColor = imgObj.fillNoColor || "#FFFFFF";
         o.strokeNoColor = imgObj.strokeNoColor || "#FFFFFF";
@@ -974,7 +976,7 @@ async function loadCanvasFromJsonOLD(jsonData, condition = 'Common') {
         console.log('drawCanvas calling after Promise');
         // drawCanvas(condition);
         drawTextForDownload();
-       // resizeCanvas();
+        // resizeCanvas();
     });
 }
 
@@ -1124,8 +1126,8 @@ async function loadCanvasFromJsonOLD(jsonData, condition = 'Common') {
     drawTextForDownload();
 }
 async function loadCanvasFromJson(jsonData, condition = 'Common') {
-        await ensureFontsInitialized?.();
- 
+    await ensureFontsInitialized?.();
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     currentCondition = condition;
 
@@ -1266,7 +1268,7 @@ async function loadCanvasFromJson(jsonData, condition = 'Common') {
             isLINESvg: im.isLINESvg ?? false,
             __capsOrientation: im.__capsOrientation ?? 'horizontal',
             curvature: im.curvature || 0,
-            basicName: im.basicName??''
+            basicName: im.basicName ?? ''
         };
 
         // ⛔️ NO clamp here — preserve exact saved layout (even if it overflows)
@@ -1401,7 +1403,7 @@ async function loadCanvasFromJson_06_09(jsonData, condition = 'Common') {
             fillNoColor: im.fillNoColor || "#FFFFFF",
             strokeNoColor: im.strokeNoColor || "#FFFFFF",
             strokeWidth: im.strokeWidth || 3,
-            isBasic: im.isBasic??false
+            isBasic: im.isBasic ?? false
         };
     });
 
@@ -1415,7 +1417,7 @@ async function loadCanvasFromJson_06_09(jsonData, condition = 'Common') {
     } catch (e) {
 
     }
-   
+
 
     drawText();
 }
@@ -1568,8 +1570,8 @@ async function GetDesignBoardByIdForPublish() {
                 console.log("jsonArray:", jsonArray);
                 loadJsonFile();
             }
-            setTimeout(() => { GetDesignBoardByIdForDownload('');}, 25000);
-           // HideLoader();
+            setTimeout(() => { GetDesignBoardByIdForDownload(''); }, 25000);
+            // HideLoader();
         } catch (e) {
             console.log("catch", e);
             HideLoader();
@@ -1584,7 +1586,7 @@ function hideDownloadPanel() {
     const container = document.getElementById('canvasContainerDownload');
     main.classList.add('d-none');
     container.classList.add('d-none');
-   
+
 }
 
 function showDownloadPanel() {
@@ -1605,66 +1607,66 @@ async function SaveDesignBoardInPublishTable() {
         var designBoardId = $('#hdnDesignBoardId').val(); // get GUID value
         if (designBoardId !== '') {
 
-        var data = {
-            DesignBoardId: designBoardId,
-            DesignBoardPublishId: designBoardPublishId
-        };
-          
-        const result = await $.ajax({
-            url: baseURL + "Canvas/PublishDesignSlideBoard",
-            type: "POST",
-            dataType: "json",
-            data: data,
-            success: async function (result) {
-                $("#hdnDesignBoardPublishId").val(result.result);
-                $("#hdnPublishBoardUniqueId").val(result.publishBoardUniqueId);
+            var data = {
+                DesignBoardId: designBoardId,
+                DesignBoardPublishId: designBoardPublishId
+            };
+
+            const result = await $.ajax({
+                url: baseURL + "Canvas/PublishDesignSlideBoard",
+                type: "POST",
+                dataType: "json",
+                data: data,
+                success: async function (result) {
+                    $("#hdnDesignBoardPublishId").val(result.result);
+                    $("#hdnPublishBoardUniqueId").val(result.publishBoardUniqueId);
 
 
-                //const companyUniqueId = getCompanyIdFromUrl();
-                //const projectId = $("#hdnPublishBoardUniqueId").val();
-                //window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
+                    //const companyUniqueId = getCompanyIdFromUrl();
+                    //const projectId = $("#hdnPublishBoardUniqueId").val();
+                    //window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
 
-                const companyId = getCompanyIdFromUrl();
-                const projectId = $("#hdnPublishBoardUniqueId").val();
-                //window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
-                const url = `${baseURL.replace(/\/$/, '')}/s/v/${encodeURIComponent(companyId)}/${encodeURIComponent(projectId)}`;
-                window.open(url, "_blank");
+                    const companyId = getCompanyIdFromUrl();
+                    const projectId = $("#hdnPublishBoardUniqueId").val();
+                    //window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
+                    const url = `${baseURL.replace(/\/$/, '')}/s/v/${encodeURIComponent(companyId)}/${encodeURIComponent(projectId)}`;
+                    window.open(url, "_blank");
 
-                // notify SSE hub (requires CORS on Server B and some auth strategy) 
-                try {
-                    const version = String(Date.now()); // or your own revision/hash
-                    await fetch('https://aniboard.com/s/api/publish', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            companyId: Number(companyId),
-                            projectId: Number(projectId),
-                            version
-                        })
-                    });
-                } catch (err) {
-                    console.error('publish notify failed', err);
+                    // notify SSE hub (requires CORS on Server B and some auth strategy) 
+                    try {
+                        const version = String(Date.now()); // or your own revision/hash
+                        await fetch('https://aniboard.com/s/api/publish', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                companyId: Number(companyId),
+                                projectId: Number(projectId),
+                                version
+                            })
+                        });
+                    } catch (err) {
+                        console.error('publish notify failed', err);
+                    }
+
+                    clearleftDownloadPanel();
+                    clearrightDownloadPanel();
+                    hideDownloadPanel();
+                    RedirectToVerticalPageWithQueryString();
+
+                },
+                error: function (data) {
+                    HideLoaderTransferFile();
+                    console.log("error");
+                    console.log(data);
                 }
-
-                clearleftDownloadPanel();
-                clearrightDownloadPanel();
-                hideDownloadPanel();
-               RedirectToVerticalPageWithQueryString();
-
-            },
-            error: function (data) {
-                HideLoaderTransferFile();
-                console.log("error");
-                console.log(data);
-            }
-        });
-    }
+            });
+        }
     }
 
- catch (e) {
-    console.log("catch", e);
-}
-           
+    catch (e) {
+        console.log("catch", e);
+    }
+
 }
 async function GetDesignBoardByIdForDownload(condition) {
     //const confirmDelete = await customConfirm("Do you want to publish this board?");
@@ -1678,7 +1680,7 @@ async function GetDesignBoardByIdForDownload(condition) {
             var data = {
                 DesignBoardId: id
             };
-           
+
             ShowLoader();
             showDownloadPanel();
             //ShowLoader();
@@ -1710,6 +1712,10 @@ async function GetDesignBoardByIdForDownload(condition) {
                     jsonObj.direction = item.direction || "left";
                     jsonObj.outEffect = item.outEffect || "delaylinear";
                     jsonObj.outDirection = item.outDirection || "left";
+                    jsonObj.inTime = jsonObj.inTime || 4;
+                    jsonObj.stayTime = jsonObj.stayTime || 3;
+                    jsonObj.outTime = jsonObj.outTime || 4;
+                    
                     return jsonObj;
                 });
                 console.log("jsonArray:", jsonArray);
@@ -1747,12 +1753,12 @@ function loadNextJson() {
         const state = jsonArray[currentIndex];
 
         // Draw the current state into the fixed canvas.
-         loadCanvasFromJsonForPublish(state, 'Common');
+        loadCanvasFromJsonForPublish(state, 'Common');
         //loadCanvasFromJson(state, 'Common');
 
         // Now trigger the animation using the state's direction and effect.
         // You can modify applyAnimations to also use the effect if needed.
-        applyAnimationsforPublish(state.effect,state.direction, 'applyAnimations');
+        applyAnimationsforPublish(state.effect, state.direction, 'applyAnimations');
         currentIndex++; // Move to the next JSON object
 
         // Load next JSON after a delay (adjust the delay as needed)
@@ -1766,7 +1772,7 @@ async function loadNextJsonForDownloadOLd() {
         const state = jsonArray[currentIndexForDownload];
 
         // Draw the current state into the fixed canvas.
-         loadCanvasFromJsonForDownload(state, 'Common');
+        loadCanvasFromJsonForDownload(state, 'Common');
         //loadCanvasFromJson(state, 'Common');
         console.log("Canvas State Loaded:", state);
 
@@ -1780,9 +1786,9 @@ async function loadNextJsonForDownloadOLd() {
         const inTime = parseFloat(selectedInSpeed) || 4;
         const stayTime = parseFloat(selectedStaySpeed) || 3;
         const outTime = parseFloat(selectedStaySpeed) || 4;
-        const slideExecutionTime = inTime + stayTime+3 + outTime;//stayTime +
+        const slideExecutionTime = inTime + stayTime + 3 + outTime;//stayTime +
 
-        setTimeout(loadNextJsonForDownload, slideExecutionTime*1000 || 7000);
+        setTimeout(loadNextJsonForDownload, slideExecutionTime * 1000 || 7000);
     } else {
         console.log("All JSON objects loaded.");
         recorderForDownload.stop(); //HideLoader();
@@ -1795,7 +1801,7 @@ async function loadNextJsonForDownload_OLD_12() {
         const inTime = parseFloat(selectedInSpeed) || 4;
         const stayTime = parseFloat(selectedStaySpeed) || 3;
         const outTime = parseFloat(selectedOutSpeed) || 4;
-        const slideExecutionTime = inTime + stayTime+2 + outTime;
+        const slideExecutionTime = inTime + stayTime + 2 + outTime;
 
         // 1) Draw & run the animation (this promise resolves when GSAP’s onComplete fires)
         loadCanvasFromJsonForDownload(state, 'Common');
@@ -1817,11 +1823,13 @@ async function loadNextJsonForDownload_OLD_12() {
 }
 // 2) Use it inside your loader loop
 async function showSlide(index) {
+  
     const state = jsonArray[index];
-    const inTime = parseFloat(selectedInSpeed) || 4;
-    const stayTime = parseFloat(selectedStaySpeed) || 3;
-    const outTime = parseFloat(selectedOutSpeed) || 4;
-    const slideExecutionTime = inTime + outTime;/*inTime + stayTime + outTime;*/
+    //var selectedStaySpeed = state.stayTime || parseInt(document.getElementById('lblSeconds').textContent);
+    const inTime = parseFloat(state.inTime) || 4;
+    const stayTime = parseFloat(state.stayTime) || 3;
+    const outTime = parseFloat(state.outTime) || 4;
+    const slideExecutionTime = inTime + (stayTime - 2) + outTime;/*inTime + stayTime + outTime;*/
 
     // 1) draw & animate this slide’s in→stay→out
     loadCanvasFromJsonForDownload(state, 'Common');
@@ -1835,7 +1843,169 @@ async function showSlide(index) {
     // 2) wait out its full duration (no stripe here yet)
     await new Promise(r => setTimeout(r, slideExecutionTime * 1000));
 }
+// ------------------------------------------------------
 async function loadNextJsonForDownload() {
+    const transitionType = $("#hdntransition").val() || 'slideLeft';
+    const stripeDuration = 2; // seconds
+    let overlapColor = transitionType === 'slideRight' ? 1050 : 1250;
+    const stayTime = parseInt(document.getElementById('lblSeconds').textContent) || 3;
+    if (!jsonArray.length) return;
+
+
+    // 0) play the first slide fully
+    await showSlide(0);
+
+    // 1) loop hops 0->1, 1->2, ...
+    for (let i = 0; i < jsonArray.length - 1; i++) {
+        const nextIdx = i + 1;
+        const { canvasBgColor: nextBgColor, canvasBgImage: nextBgImage } = jsonArray[nextIdx];
+
+        // kick off the stripe (non-blocking)
+        const stripePromise = runStripeTransition(transitionType, stripeDuration);
+
+        // mid-stripe, swap background (image or color)
+        setTimeout(() => {
+
+            if (nextBgImage) {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    canvas._bgImg = img;
+                    drawTextForDownload(); // draws BG only (guard=true)
+                };
+                img.onerror = () => {
+                    canvas._bgImg = null;
+                    $("#hdnBackgroundSpecificColorDownload").val(nextBgColor);
+                    drawTextForDownload(); // BG only
+                };
+                img.src = nextBgImage;
+            } else {
+                canvas._bgImg = null;
+                $("#hdnBackgroundSpecificColorDownload").val(nextBgColor);
+                drawTextForDownload(); // BG only
+            }
+        }, overlapColor);//overlapColor
+
+        // wait for stripe to finish
+        await stripePromise;
+
+        // load the next slide JSON (this sets up the new foreground)
+        await loadCanvasFromJsonForDownload(jsonArray[nextIdx], 'Common');
+
+        // redraw (in case loader didn’t auto-draw)
+        if (nextBgImage) {
+            drawTextForDownload();
+        } else {
+            canvas._bgImg = null;
+            $("#hdnBackgroundSpecificColorDownload").val(nextBgColor);
+            drawTextForDownload();
+        }
+
+        // finally run IN→STAY→OUT for that slide
+        await showSlide(nextIdx);
+    }
+
+    recorderForDownload.stop();
+}
+
+
+
+
+async function loadNextJsonForDownload_10_10_2() {
+    const transitionType = $("#hdntransition").val() || 'slideLeft';
+    const stripeDuration = 2; // seconds
+
+    // when (ms) into the stripe to swap bg (relative to stripe start)
+    const overlapColor = transitionType === 'slideRight' ? 1050 : 1250;
+
+    if (!jsonArray.length) return;
+
+    // helper: compute the current slide's total duration (ms) from UI
+    function getSlideDurationMs() {
+        const inTime = parseFloat(window.selectedInSpeed) || 4; // seconds
+        const stayTime = parseFloat(
+            parseInt(document.getElementById('ddlSecondsControl').textContent)
+        ) || 3; // seconds
+        const outTime = parseFloat(window.selectedOutSpeed) || 4; // seconds
+        return (inTime + stayTime + outTime) * 1000; // ms
+    }
+
+    const STRIPE_LEAD_MS = 1000; // start stripe 2s before current slide ends
+
+    // Start the very first slide but DON'T await it, so we can schedule the stripe before it ends
+    let currentIdx = 0;
+    let currentPlay = showSlide(currentIdx); // promise that resolves when slide 0 finishes
+    let currentDurMs = getSlideDurationMs();  // dynamic (reads current UI)
+
+    // Loop through each “next” slide (0->1, 1->2, ...)
+    for (let i = 0; i < jsonArray.length - 1; i++) {
+        const nextIdx = i + 1;
+        const { canvasBgColor: nextBgColor, canvasBgImage: nextBgImage } = jsonArray[nextIdx];
+
+        // Build a promise that will start the stripe at: (slideExecutionTime - 2s)
+        const delayToStripeStart = Math.max(0, currentDurMs - STRIPE_LEAD_MS);
+
+        const stripePromise = new Promise((resolve, reject) => {
+            setTimeout(() => {
+                // 1) kick off the stripe (non-blocking) exactly 2s before slide ends
+                const p = runStripeTransition(transitionType, stripeDuration);
+
+                // 2) mid-stripe, swap background (relative to stripe start)
+                setTimeout(() => {
+                    if (nextBgImage) {
+                        const img = new Image();
+                        img.crossOrigin = 'anonymous';
+                        img.onload = () => { canvas._bgImg = img; drawTextForDownload(); };
+                        img.onerror = () => {
+                            canvas._bgImg = null;
+                            $("#hdnBackgroundSpecificColorDownload").val(nextBgColor);
+                            drawTextForDownload();
+                        };
+                        img.src = nextBgImage;
+                    } else {
+                        canvas._bgImg = null;
+                        $("#hdnBackgroundSpecificColorDownload").val(nextBgColor);
+                        drawTextForDownload();
+                    }
+                }, overlapColor);
+
+                p.then(resolve).catch(reject);
+            }, delayToStripeStart);
+        });
+
+        // 3) wait for the current slide to fully finish its IN→STAY→OUT
+        await currentPlay;
+
+        // 4) wait for stripe to finish (reveal complete)
+        await stripePromise;
+
+        // 5) load the next slide content immediately
+        await loadCanvasFromJsonForDownload(jsonArray[nextIdx], 'Common');
+
+        // 6) redraw (safety)
+        if (nextBgImage) {
+            drawTextForDownload();
+        } else {
+            canvas._bgImg = null;
+            $("#hdnBackgroundSpecificColorDownload").val(nextBgColor);
+            drawTextForDownload();
+        }
+
+        // 7) start the next slide (again, don't await so we can schedule its stripe dynamically)
+        currentIdx = nextIdx;
+        currentPlay = showSlide(currentIdx);
+        currentDurMs = getSlideDurationMs(); // re-read UI to be fully dynamic per slide
+    }
+
+    // ensure the final slide completes
+    await currentPlay;
+
+    // All done
+    recorderForDownload.stop();
+}
+
+
+async function loadNextJsonForDownload_10_10() {
     const transitionType = $("#hdntransition").val() || 'slideLeft';
     const stripeDuration = 2;     // total stripe time in seconds
 
@@ -1973,7 +2143,7 @@ async function loadNextJsonForDownload_14_6() {
     else if (transitionType == 'slideLeft') {
         overlapColor = 1250;//1250 ms into stripe when we change the background color
     }
-   
+
 
     if (!jsonArray.length) return;
 
@@ -2014,7 +2184,7 @@ async function runStripeTransitionOLD(type = 'slideLeft', duration = 2) {
     const els = [
         document.getElementById('transition1'),
         document.getElementById('transition2'),
-/*        document.getElementById('transition3'),*/
+        /*        document.getElementById('transition3'),*/
     ];
     // build stripes
     const stripes = await Promise.all(
@@ -2041,21 +2211,21 @@ async function runStripeTransitionOLD(type = 'slideLeft', duration = 2) {
         currentX += s.width;
         return t;
     });
-   
+
     // push into your `images` array, render once, then animate
     temps.forEach(t => images.push(t));
     drawCanvasForDownload('Common');  // force initial paint
-   
+
     // stagger them
     await Promise.all(
-        temps.map((t, i) => animateCanvasImage(t, type, duration, i * 0.1))        
+        temps.map((t, i) => animateCanvasImage(t, type, duration, i * 0.1))
     );
-   
+
     // cleanup
     temps.forEach(() => images.pop());
 }
 async function runStripeTransition(type = 'slideLeft', duration = 2) {
-    
+
     //$('#hdnTransition1').val('#b42ce7');
     //$('#hdnTransition2').val('#611d7a');
     // grab your dynamic colors
@@ -2152,8 +2322,8 @@ async function loadNextJsonForDownloadNewOld() {
         // 3) advance and recurse *with await*
         currentIndexForDownload++;
         await loadNextJsonForDownload();
-      
-       
+
+
     } else {
         console.log("All JSON objects loaded.");
         recorderForDownload.stop(); //HideLoader();
@@ -2162,14 +2332,14 @@ async function loadNextJsonForDownloadNewOld() {
 
 function applyAnimationsforPublish(animationType, direction, conditionValue) {
     // Start recording before starting your GSAP animation
-   /* recorder.start();*/
+    /* recorder.start();*/
     // Redraw the static parts.
     drawCanvasPublish(conditionValue);
 
     // Now, call animateText (or your own animation logic)
     // This function should update positions of text/images inside the canvas.
     animateTextForPublish(animationType, direction, conditionValue, parseInt($("#hdnlLoopControl").val()) || 1);
-     // Later, when you want to stop recording (e.g., after the animation completes)
+    // Later, when you want to stop recording (e.g., after the animation completes)
     //setTimeout(() => {
     //    recorder.stop();
     //}, 5000);
@@ -2186,12 +2356,12 @@ recorder.onstop = () => {
 
 
     // Call the upload function with the blob and folder ID (if any)
-    uploadVideo(blob, existingFolderId,  currentIndex);
+    uploadVideo(blob, existingFolderId, currentIndex);
 };
 async function applyAnimationsforDownload(animationType, direction, conditionValue, state) {
     await drawTextForDownload();
     await animateTextForDownload(animationType, direction, conditionValue, parseInt($("#hdnlLoopControl").val()) || 1, state);
-   
+
 }
 recorderForDownload.ondataavailable = (e) => chunksForDownload.push(e.data);
 // Example usage inside your MediaRecorder's onstop callback
@@ -2216,7 +2386,7 @@ recorderForDownload.onstop = () => {
 };
 function startVideoCapture() {
     //const canvas = document.getElementById("myCanvasElementDownload");
-   // const ctxElement = canvasElement.getContext("2d");
+    // const ctxElement = canvasElement.getContext("2d");
     // Ensure your canvas is set to 1920 x 1080 if you need HD quality.
     canvasForDownload.width = 1920;
     canvasForDownload.height = 1080;
@@ -2320,7 +2490,7 @@ async function uploadLargeVideo(blob, existingFolderId = 'new') {
     };
 
     try {
-      //  ShowLoader?.();
+        //  ShowLoader?.();
 
         // 1) Upload chunks
         for (let index = 0; index < total; index++) {
@@ -2358,8 +2528,8 @@ async function uploadLargeVideo(blob, existingFolderId = 'new') {
             data: dataVideoPath
         });
 
-       await SaveDesignBoardInPublishTable();
-       
+        await SaveDesignBoardInPublishTable();
+
 
         return data.filePath;
     } catch (error) {
@@ -2368,7 +2538,7 @@ async function uploadLargeVideo(blob, existingFolderId = 'new') {
         console.error('Error saving video (chunked):', error);
         throw error;
     } finally {
-      //  HideLoader?.();
+        //  HideLoader?.();
     }
 }
 
@@ -2386,34 +2556,34 @@ function uploadLargeVideoOLD(blob, existingFolderId = 'new', currentIndex = 1) {
         .then(response => response.json())
         .then(data => {
             console.log('large Video saved successfully:', data);
-                var dataVideoPath = {
-                    DesignBoardId: $(`#hdnDesignBoardId`).val(),
-                    VideoPath: data.filePath
-                };
+            var dataVideoPath = {
+                DesignBoardId: $(`#hdnDesignBoardId`).val(),
+                VideoPath: data.filePath
+            };
 
-                $.ajax({
-                    url: baseURL + "Canvas/UpdateDesignBoardLargeVideoPath",
-                    type: "POST",
-                    dataType: "json",
-                    data: dataVideoPath,
-                    success: function (slideResult) {
-                        SaveDesignBoardInPublishTable();
-                        hideDownloadPanel();
-                        
-                        //const companyUniqueId = getCompanyIdFromUrl();
-                        //const projectId = $("#hdnPublishBoardUniqueId").val();
-                        //window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
+            $.ajax({
+                url: baseURL + "Canvas/UpdateDesignBoardLargeVideoPath",
+                type: "POST",
+                dataType: "json",
+                data: dataVideoPath,
+                success: function (slideResult) {
+                    SaveDesignBoardInPublishTable();
+                    hideDownloadPanel();
 
-                        //RedirectToVerticalPageWithQueryString();
-                        //HideLoader();
-                    },
-                    error: function (data) {
-                        console.log("error in saving Image " + activeSlide);
-                        HideLoader();
-                    }
+                    //const companyUniqueId = getCompanyIdFromUrl();
+                    //const projectId = $("#hdnPublishBoardUniqueId").val();
+                    //window.open(`${window.location.origin}/S/${companyUniqueId}/${projectId}`, "_blank");
+
+                    //RedirectToVerticalPageWithQueryString();
+                    //HideLoader();
+                },
+                error: function (data) {
+                    console.log("error in saving Image " + activeSlide);
+                    HideLoader();
+                }
 
 
-                })
+            })
         })
         .catch(error => {
             console.error('Error saving video:', error);
@@ -2437,7 +2607,7 @@ function triggerAutorefresh() {
         }
     });
 }
-function uploadVideo(blob, existingFolderId = 'new', currentIndex =1) {
+function uploadVideo(blob, existingFolderId = 'new', currentIndex = 1) {
     const formData = new FormData();
     formData.append('video', blob, 'animation.mp4');
 
@@ -2453,28 +2623,28 @@ function uploadVideo(blob, existingFolderId = 'new', currentIndex =1) {
             $(`#hdnDesignBoardDetailsIdSlideFilePath${activeSlide}`).val('');
             $(`#hdnDesignBoardDetailsIdSlideFilePath${activeSlide}`).val(data.filePath);
             if (videoSaveForOnetime === 1) {
-            var dataVideoPath = {
-                DesignBoardDetailsId: $(`#hdnDesignBoardDetailsIdSlide1`).val(),
-                VideoPath: data.filePath
-            };
+                var dataVideoPath = {
+                    DesignBoardDetailsId: $(`#hdnDesignBoardDetailsIdSlide1`).val(),
+                    VideoPath: data.filePath
+                };
 
-            $.ajax({
-                url: baseURL + "Canvas/UpdateDesignDesignBoardDetailsVideoPath",
-                type: "POST",
-                dataType: "json",
-                data: dataVideoPath,
-                success: function (slideResult) {
-                    videoSaveForOnetime++;
-                    //startVideoCapture();
-                },
-                error: function (data) {
-                    console.log("error in saving Image " + activeSlide);
-                }
+                $.ajax({
+                    url: baseURL + "Canvas/UpdateDesignDesignBoardDetailsVideoPath",
+                    type: "POST",
+                    dataType: "json",
+                    data: dataVideoPath,
+                    success: function (slideResult) {
+                        videoSaveForOnetime++;
+                        //startVideoCapture();
+                    },
+                    error: function (data) {
+                        console.log("error in saving Image " + activeSlide);
+                    }
 
 
-            })
-        }
-            })
+                })
+            }
+        })
         .catch(error => {
             console.error('Error saving video:', error);
         });
@@ -2690,7 +2860,7 @@ function animateContainerAsync(type) {
 function animateCanvasImageElementForSingle(imgEl, type, duration = 3, opts = {}) {
     const { color, width } = opts;
     if (typeof imgEl === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(imgEl)) {
-       
+
         ctxElementForDownload.fillStyle = imgEl;
         ctxElementForDownload.fillRect(0, 0, canvasForDownload.width, canvasForDownload.height);
 
@@ -2717,8 +2887,8 @@ function animateCanvasImageElementForSingle(imgEl, type, duration = 3, opts = {}
             colorImage.src = canvasForDownload.toDataURL();
         });
     }
-   
-    
+
+
     if (imgEl instanceof HTMLImageElement) {
         const imgWidth = 50;
         const imgHeight = canvasForDownload.height;
@@ -3507,14 +3677,14 @@ async function drawTextForDownloadFake() {
 
 
 
- function loadCanvasFromJsonForDownload(jsonData, condition = 'Common') {
-     ensureFontsInitialized?.();
+function loadCanvasFromJsonForDownload(jsonData, condition = 'Common') {
+    ensureFontsInitialized?.();
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     currentCondition = condition;
 
     if (!jsonData) {
-         document.fonts.ready;
+        document.fonts.ready;
         drawTextForDownload();
         return;
     }
@@ -3640,10 +3810,10 @@ async function drawTextForDownloadFake() {
         return obj;
     });
 
-   
-     textObjects = textObjectsForDownload;
-     images = imagesForDownload;
-     try { allItems = [...textObjects, ...images]; } catch (_) { /* optional */ }
+
+    textObjects = textObjectsForDownload;
+    images = imagesForDownload;
+    try { allItems = [...textObjects, ...images]; } catch (_) { /* optional */ }
 
     // Load fonts, auto-fit (skip manual breaks), then draw
     const fontPromises = textObjectsForDownload.map(o =>
@@ -3654,7 +3824,7 @@ async function drawTextForDownloadFake() {
             //if (!obj._hasManualBreaks) {
             //    autoFitText(obj, padding);
             //}
-           // autoFitTextNewDownload(obj, padding);
+            // autoFitTextNewDownload(obj, padding);
             const fitResult = autoFitTextNewDownload(obj, padding);
             //obj.fontSize = fitResult.fontSize;
             obj._wrappedLines = fitResult.wrappedLines;
@@ -4078,7 +4248,7 @@ function drawCanvasForDownloadOld(condition) {
             const boxW = obj.boundingWidth;
             const boxH = obj.boundingHeight;
             const maxW = obj.boundingWidth - 2 * paddingPx;
-           
+
             let lines;
             if (obj.text.includes('\n')) {
                 lines = obj.text.split('\n');
@@ -4102,7 +4272,7 @@ function drawCanvasForDownloadOld(condition) {
             if (lines.length > 1) {
                 obj.boundingHeight = lines.length * lineH + 3 * padding;// this 80 is for round box make little expend as Line Spacing
             }
-            
+
 
             // 4) Now figure out how many of those lines actually fit (even though
             //    in multi-line we just resized to fit all, this keeps your clipping logic intact):
@@ -4123,7 +4293,7 @@ function drawCanvasForDownloadOld(condition) {
             });
 
 
-           
+
             ctxElementForDownload.restore();
         });
     }
@@ -5485,7 +5655,7 @@ async function drawTextForDownload_11_9(condition) {
 
 
 
-   
+
 
 
 //    function toPixelSpace(fn) {
@@ -6218,7 +6388,7 @@ function animateTextForPublish(animationType, direction, condition, loopCount) {
         }
     });
 
-    
+
     if (animationType === "linear" || animationType === "zoom" ||
         animationType === "bounce" || animationType === "blur") {
         // Keep the existing branches for images.
@@ -6423,7 +6593,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             case "top":
                 obj.exitX = obj.finalX;
                 obj.exitY = canvasForDownload.height + 5;
-               
+
                 break;
             case "bottom":
                 obj.exitX = obj.finalX;
@@ -6438,7 +6608,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 obj.exitX = -obj.boundingWidth - margin;
                 obj.exitY = obj.finalY;
                 break;
-            
+
             default:
                 // fallback: slide out to right
                 obj.exitX = canvasForDownload.width + 5;
@@ -6454,69 +6624,69 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             onUpdate: () => drawTextForDownload(),
             onComplete: resolve
         });
-   
 
-    // ----- IMAGE ANIMATION SECTION -----
-    images.forEach((imgObj) => {
-        imgObj.finalX = imgObj.x;
-        imgObj.finalY = imgObj.y;
 
-        // Take into account any scaling:
-        const dispWidth = imgObj.width * (imgObj.scaleX || 1);
-        const dispHeight = imgObj.height * (imgObj.scaleY || 1);
+        // ----- IMAGE ANIMATION SECTION -----
+        images.forEach((imgObj) => {
+            imgObj.finalX = imgObj.x;
+            imgObj.finalY = imgObj.y;
 
-        // 1) ENTRY (based on `direction`)
-        switch (direction) {
-            case "top":
-                imgObj.x = imgObj.finalX;
-                imgObj.y = -(dispHeight + 5);
-                break;
-            case "bottom":
-                imgObj.x = imgObj.finalX;
-                imgObj.y = canvasForDownload.height + 5;
-                break;
-            case "left":
-                //imgObj.x = -(dispWidth + 5);
-                //imgObj.y = imgObj.finalY;
-                imgObj.x = -canvasForDownload.width / 2;
-                imgObj.y = imgObj.finalY;
-                break;
-            case "right":
-                imgObj.x = canvasForDownload.width + 5;
-                imgObj.y = imgObj.finalY;
-                break;
-            default:
-                // fallback: slide in from right
-                imgObj.x = canvasForDownload.width + 5;
-                imgObj.y = imgObj.finalY;
-        }
+            // Take into account any scaling:
+            const dispWidth = imgObj.width * (imgObj.scaleX || 1);
+            const dispHeight = imgObj.height * (imgObj.scaleY || 1);
 
-        // 2) EXIT (based on `Outdirection`)
-        switch (Outdirection) {
-            case "top":
-                imgObj.exitX = imgObj.finalX;
-                imgObj.exitY = canvasForDownload.height + 5;
-              
-                break;
-            case "bottom":
-                imgObj.exitX = imgObj.finalX;
-                imgObj.exitY = -(dispHeight + 55);
-                break;
-            case "left":
-                imgObj.exitX = canvasForDownload.width ;
-                imgObj.exitY = imgObj.finalY;
-             
-                break;
-            case "right":
-                imgObj.exitX = -(dispWidth + 55);
-                imgObj.exitY = imgObj.finalY;
-                break;
-            default:
-                // fallback: slide out to right
-                imgObj.exitX = canvasForDownload.width + 5;
-                imgObj.exitY = imgObj.finalY;
-        }
-    });
+            // 1) ENTRY (based on `direction`)
+            switch (direction) {
+                case "top":
+                    imgObj.x = imgObj.finalX;
+                    imgObj.y = -(dispHeight + 5);
+                    break;
+                case "bottom":
+                    imgObj.x = imgObj.finalX;
+                    imgObj.y = canvasForDownload.height + 5;
+                    break;
+                case "left":
+                    //imgObj.x = -(dispWidth + 5);
+                    //imgObj.y = imgObj.finalY;
+                    imgObj.x = -canvasForDownload.width / 2;
+                    imgObj.y = imgObj.finalY;
+                    break;
+                case "right":
+                    imgObj.x = canvasForDownload.width + 5;
+                    imgObj.y = imgObj.finalY;
+                    break;
+                default:
+                    // fallback: slide in from right
+                    imgObj.x = canvasForDownload.width + 5;
+                    imgObj.y = imgObj.finalY;
+            }
+
+            // 2) EXIT (based on `Outdirection`)
+            switch (Outdirection) {
+                case "top":
+                    imgObj.exitX = imgObj.finalX;
+                    imgObj.exitY = canvasForDownload.height + 5;
+
+                    break;
+                case "bottom":
+                    imgObj.exitX = imgObj.finalX;
+                    imgObj.exitY = -(dispHeight + 55);
+                    break;
+                case "left":
+                    imgObj.exitX = canvasForDownload.width;
+                    imgObj.exitY = imgObj.finalY;
+
+                    break;
+                case "right":
+                    imgObj.exitX = -(dispWidth + 55);
+                    imgObj.exitY = imgObj.finalY;
+                    break;
+                default:
+                    // fallback: slide out to right
+                    imgObj.exitX = canvasForDownload.width + 5;
+                    imgObj.exitY = imgObj.finalY;
+            }
+        });
 
         if (animationType === "delaylinear") {
             // 1) Gather animatable items
@@ -6612,23 +6782,23 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                         duration: tweenOut,
                         ease: "power1.out",
                         onUpdate: () => drawTextForDownload()
-                    }, outStart *.7);
+                    }, outStart * .7);
                 });
             }
             else if (OutanimationType === "delaylinear2") {
-                
+
                 // 3) Timings
-               // const tweenIn = 0.15 * inTime;
+                // const tweenIn = 0.15 * inTime;
                 const tweenOut = 0.20 * outTime;
-               // const overlapIn = tweenIn / 6;   // each next In starts 50% in
+                // const overlapIn = tweenIn / 6;   // each next In starts 50% in
                 const overlapOut = tweenOut / 3;   // each next Out starts 50% in
 
-               
+
                 //// compute when the last IN actually ends:
                 //// starts at (units.length-1)*overlapIn, runs tweenIn
                 const inEndTime = (units.length - 1) * overlapOut + tweenOut;
 
-                
+
                 // ── OUT ──
                 tlText.to(units, {
                     x: (i, t) => t.exitX,
@@ -6640,7 +6810,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 }, inEndTime + stayTime);
 
 
-                
+
 
             }
             else if (OutanimationType === "roll") {
@@ -6851,9 +7021,9 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             // 2) OUT tweens
             const OutanimationTypeoutStart = delaylineartotalIn + stayTime;
             if (OutanimationType === "delaylinear") {
-               
 
-               const delaylineartweenOut = 0.15 * outTime;
+
+                const delaylineartweenOut = 0.15 * outTime;
                 units.forEach((unit, idx) => {
                     tlText.to(unit, {
                         x: (i, t) => t.exitX,
@@ -6862,7 +7032,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                         ease: "power1.out",
                         onUpdate: () => drawTextForDownload()
                         // }, OutanimationTypeoutStart + idx * delaylineartweenOut);
-                    }, (inTime + stayTime) *.7);
+                    }, (inTime + stayTime) * .7);
                 });
             }
             else if (OutanimationType === "delaylinear2") {
@@ -7004,7 +7174,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 const playbackRatio = actualDuration / slideExecutionTime;
                 tlText.timeScale(playbackRatio);
             }
-           
+
         }
         else if (animationType === "roll") {
             const animItems = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
@@ -7091,7 +7261,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
 
             // --- STAY: Pause ---
             tlText.to({}, { duration: stayTime }, lastInTime);
-           
+
 
             const delaylineartweenIn = 0.15 * inTime;
             const delaylineartotalIn = units.length * delaylineartweenIn;
@@ -7106,15 +7276,15 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                     tlText.to(unit, {
                         x: (i, t) => t.exitX,
                         y: (i, t) => t.exitY,
-                        duration: outTime*.6,
+                        duration: outTime * .6,
                         ease: "power1.out",
                         onUpdate: () => drawTextForDownload()
                         // }, OutanimationTypeoutStart + idx * delaylineartweenOut);
-                    }, OutanimationTypeoutStart );
+                    }, OutanimationTypeoutStart);
                 });
             }
             else if (OutanimationType === "delaylinear2") {
-                const overlapIn = tweenIn / 3; 
+                const overlapIn = tweenIn / 3;
                 const inEndTime = (units.length - 1) * overlapIn + tweenIn;
                 const overlapOut = tweenOut / 3;   // each next Out starts 50% in
                 // ── OUT ──
@@ -7471,7 +7641,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             //        onUpdate: () => drawCanvasForDownload(condition)
             //    }, idx * outStagger + tl.duration());
             //});
-          
+
 
         }
 
@@ -7523,18 +7693,18 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             tlText.to(animItems, {
                 scaleX: 1,
                 scaleY: 1,
-                duration: inTime/2,
+                duration: inTime / 2,
                 ease: "power2.out"
             }, 0);
 
             // STAY phase: hold the large size
             tlText.to({}, { duration: stayTime });
-             tlText.to(animItems, {
-                    scaleX: 0,
-                    scaleY: 0,
-                    duration: outTime/2,
-                    ease: "power2.in"
-                });
+            tlText.to(animItems, {
+                scaleX: 0,
+                scaleY: 0,
+                duration: outTime / 2,
+                ease: "power2.in"
+            });
 
             const delaylineartweenIn = 0.15 * inTime;
             const delaylineartotalIn = units.length * delaylineartweenIn;
@@ -7549,10 +7719,10 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                     tlText.to(unit, {
                         x: (i, t) => t.exitX,
                         y: (i, t) => t.exitY,
-                    //    duration: outTime*.7,
-                    //    ease: "power1.out",
-                    //    onUpdate: () => drawCanvasForDownload(condition)
-                    //    /*}, OutanimationTypeoutStart + idx * delaylineartweenOut);*/
+                        //    duration: outTime*.7,
+                        //    ease: "power1.out",
+                        //    onUpdate: () => drawCanvasForDownload(condition)
+                        //    /*}, OutanimationTypeoutStart + idx * delaylineartweenOut);*/
                         //}, inTime + stayTime);
                         duration: outTime * .6,
                         ease: "power1.out",
@@ -7670,7 +7840,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 tlText.to(animItems, {
                     scaleX: 0,
                     scaleY: 0,
-                    duration: outTime/2,
+                    duration: outTime / 2,
                     ease: "power2.in"
                 });
             }
@@ -7681,10 +7851,10 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             //    window.currentMaskTimeline.kill();
             //}
 
-           // const animItems = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
+            // const animItems = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
             const staticItems = [...images.filter(i => i.noAnim), ...textObjects.filter(t => t.noAnim)];
 
-           
+
 
             allItems.forEach(o => {
                 o.x = o.finalX;
@@ -7703,7 +7873,7 @@ async function animateTextForDownload(animationType, direction, condition, loopC
 
 
             const animItems = [...images.filter(i => !i.noAnim), ...textObjects.filter(t => !t.noAnim)];
-           
+
             const groupMap = new Map();
             const units = [];
             animItems.forEach(item => {
@@ -7893,17 +8063,17 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 }, OutanimationTypeoutStart + units.length * tweenOut);
             }
 
-            
+
 
         }
 
 
-      
-       
-        });
-    
 
-     
+
+    });
+
+
+
 }
 
 
@@ -8552,7 +8722,7 @@ function copyPanelrightToDownload() {
     else
         popup.style.display = "none";
 
-   
+
 }
 
 function clearrightDownloadPanel() {

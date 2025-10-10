@@ -589,6 +589,9 @@ function saveCanvasData() {
         canvasBgImage: canvas._bgImg ? canvas._bgImg.src : "",
         slideEffect: $("#hdnTextAnimationType").val(),
         slideDedirection: $("#hdnslideDedirection").val(),
+        inTime: parseInt(document.getElementById('lblSpeed').textContent),
+        stayTime: parseInt(document.getElementById('lblSeconds').textContent),
+        outTime: parseInt(document.getElementById('lblOutSpeed').textContent),
 
         // TEXT → always save % (idempotent)
         text: (textObjects || []).map(o => ({
@@ -1771,6 +1774,9 @@ async function GetDesignBoardByIdForDownload(condition) {
                     jsonObj.direction = item.direction || "left";
                     jsonObj.outEffect = item.outEffect || "delaylinear";
                     jsonObj.outDirection = item.outDirection || "left";
+                    jsonObj.inTime = jsonObj.inTime || 4;
+                    jsonObj.stayTime = jsonObj.stayTime || 3;
+                    jsonObj.outTime = jsonObj.outTime || 4;
                     return jsonObj;
                 });
                 console.log("jsonArray:", jsonArray);
@@ -1879,10 +1885,12 @@ async function loadNextJsonForDownload_OLD_12() {
 // 2) Use it inside your loader loop
 async function showSlide(index) {
     const state = jsonArray[index];
-    const inTime = parseFloat(selectedInSpeed) || 4;
-    const stayTime = parseFloat(selectedStaySpeed) || 3;
-    const outTime = parseFloat(selectedOutSpeed) || 4;
-    const slideExecutionTime = inTime + outTime;/*inTime + stayTime + outTime;*/
+    //var selectedStaySpeed = state.stayTime || parseInt(document.getElementById('lblSeconds').textContent);
+    const inTime = parseFloat(state.inTime) || 4;
+    const stayTime = parseFloat(state.stayTime) || 3;
+    const outTime = parseFloat(state.outTime) || 4;
+    const slideExecutionTime = inTime + (stayTime - 2) + outTime;/*inTime + stayTime + outTime;*/
+
 
     // 1) draw & animate this slide’s in→stay→out
     loadCanvasFromJsonForDownload(state, 'Common');
@@ -1896,55 +1904,56 @@ async function showSlide(index) {
     // 2) wait out its full duration (no stripe here yet)
     await new Promise(r => setTimeout(r, slideExecutionTime * 1000));
 }
+// ------------------------------------------------------
 async function loadNextJsonForDownload() {
     const transitionType = $("#hdntransition").val() || 'slideLeft';
-    const stripeDuration = 2;     // total stripe time in seconds
-
-    // decide when (ms) into the stripe to swap bg
-    const overlapColor = transitionType === 'slideRight' ? 1050 : 1250;
-
+    const stripeDuration = 2; // seconds
+    let overlapColor = transitionType === 'slideRight' ? 1050 : 1250;
+    const stayTime = parseInt(document.getElementById('lblSeconds').textContent) || 3;
     if (!jsonArray.length) return;
 
-    // Show the very first slide
+
+    // 0) play the first slide fully
     await showSlide(0);
 
-    // Loop through each “next” slide
+    // 1) loop hops 0->1, 1->2, ...
     for (let i = 0; i < jsonArray.length - 1; i++) {
         const nextIdx = i + 1;
         const { canvasBgColor: nextBgColor, canvasBgImage: nextBgImage } = jsonArray[nextIdx];
 
-        // 1) kick off the stripe (non‑blocking)
+        // kick off the stripe (non-blocking)
         const stripePromise = runStripeTransition(transitionType, stripeDuration);
 
-        // 2) mid‑stripe, swap background (image or color)
+        // mid-stripe, swap background (image or color)
         setTimeout(() => {
+
             if (nextBgImage) {
                 const img = new Image();
                 img.crossOrigin = 'anonymous';
                 img.onload = () => {
                     canvas._bgImg = img;
-                    drawTextForDownload();
+                    drawTextForDownload(); // draws BG only (guard=true)
                 };
                 img.onerror = () => {
                     canvas._bgImg = null;
                     $("#hdnBackgroundSpecificColorDownload").val(nextBgColor);
-                    drawTextForDownload();
+                    drawTextForDownload(); // BG only
                 };
                 img.src = nextBgImage;
             } else {
                 canvas._bgImg = null;
                 $("#hdnBackgroundSpecificColorDownload").val(nextBgColor);
-                drawTextForDownload();
+                drawTextForDownload(); // BG only
             }
-        }, overlapColor);
+        }, overlapColor);//overlapColor
 
-        // 3) wait for stripe to finish
+        // wait for stripe to finish
         await stripePromise;
 
-        // 4) now that stripe is done, load the next JSON fully
+        // load the next slide JSON (this sets up the new foreground)
         await loadCanvasFromJsonForDownload(jsonArray[nextIdx], 'Common');
 
-        // 5) redraw (in case loadCanvasFromJsonForDownload didn’t auto‑draw)
+        // redraw (in case loader didn’t auto-draw)
         if (nextBgImage) {
             drawTextForDownload();
         } else {
@@ -1953,11 +1962,10 @@ async function loadNextJsonForDownload() {
             drawTextForDownload();
         }
 
-        // 6) finally run the IN→STAY→OUT for that slide
+        // finally run IN→STAY→OUT for that slide
         await showSlide(nextIdx);
     }
 
-    // All done
     recorderForDownload.stop();
 }
 
