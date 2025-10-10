@@ -780,17 +780,25 @@ function moveCaretToEnd(el) {
     <div class="tabset">
         <input type="hidden" id="hdnTabType" />
         <!-- Tab 1 -->
-        <input type="radio" name="tabset" id="tab1" onclick="TabShowHide('In');updateEffectButtons('In');" aria-controls="marzen" checked>
+        <input type="radio" name="tabset" id="tab1" onclick="TabShowHide('In');updateEffectButtons('In');SetTime();" aria-controls="marzen" checked>
         <label style="margin-left:0px;" for="tab1">In</label>
         <!-- Tab 2 -->
-        <input type="radio" name="tabset" id="tab2" onclick="TabShowHide('Stay')" aria-controls="rauchbier">
+        <input type="radio" name="tabset" id="tab2" onclick="TabShowHide('Stay');SetTime();" aria-controls="rauchbier">
         <label for="tab2">Stay</label>
         <!-- Tab 3 -->
-        <input type="radio" name="tabset" id="tab3" onclick="TabShowHide('Out');updateEffectButtons('Out');" aria-controls="dunkles">
+        <input type="radio" name="tabset" id="tab3" onclick="TabShowHide('Out');updateEffectButtons('Out');SetTime();" aria-controls="dunkles">
         <label style="margin-right:0px;" for="tab3">Out</label>
 
         <div class="tab-panels">
-
+            <input type="hidden" id="hdnInSpeedforSlide1"/>
+            <input type="hidden" id="hdnOutSpeedforSlide1" />
+            <input type="hidden" id="hdnStaySpeedforSlide1" />
+            <input type="hidden" id="hdnInSpeedforSlide2" />
+            <input type="hidden" id="hdnOutSpeedforSlide2" />
+            <input type="hidden" id="hdnStaySpeedforSlide2" />
+            <input type="hidden" id="hdnInSpeedforSlide3" />
+            <input type="hidden" id="hdnOutSpeedforSlide3" />
+            <input type="hidden" id="hdnStaySpeedforSlide3" />
             <section id="marzen" class="tab-panel">
                 <div class="accordion" style=" position: relative;   left: 0px; top: 0; margin-bottom: 26px; width: 100%; ">
                     <div class="dropdown mb-4">

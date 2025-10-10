@@ -602,6 +602,22 @@ function GetDesignBoardById(id, type = '') {
 
 
                     if (Array.isArray(result.designBoardDetailsList) && result.designBoardDetailsList.length > 0) {
+                        
+                        jsonArray = result.designBoardDetailsList.map(item => {
+                            let jsonObj;
+                            try {
+                                jsonObj = JSON.parse(item.jsonFile);
+                            } catch (e) {
+                                console.error("Error parsing jsonFile:", item.jsonFile, e);
+                                jsonObj = {}; // fallback to an empty object if parsing fails
+                            }
+                           
+                            jsonObj.inTime = jsonObj.inTime || 4;
+                            jsonObj.stayTime = jsonObj.stayTime || 3;
+                            jsonObj.outTime = jsonObj.outTime || 4;
+
+                            return jsonObj;
+                        });
                         // Reset global variables first to avoid stale data
                         $("#hdntransition").val(result.designBoardDetailsList[0].transitionType);
 
@@ -752,7 +768,34 @@ function GetDesignBoardById(id, type = '') {
                         setHiddenSlideImageFilePath(1, '#hdnDesignBoardDetailsIdSlideImageFilePath2');
                         setHiddenSlideImageFilePath(2, '#hdnDesignBoardDetailsIdSlideImageFilePath3');
 
+                        const setHiddenSlideInTime = (index, selector) => {
+                            const list = result?.designBoardDetailsList;
+                            if (!Array.isArray(list)) return;
+                            const v = Number(jsonArray[index]?.inTime ?? list[index]?.inTime) || 4;
+                            $(selector).val(v);
+                        };
+                        setHiddenSlideInTime(0, '#hdnInSpeedforSlide1');
+                        setHiddenSlideInTime(1, '#hdnInSpeedforSlide2');
+                        setHiddenSlideInTime(2, '#hdnInSpeedforSlide3');
 
+                        const setHiddenSlideOutTime = (index, selector) => {
+                            const list = result?.designBoardDetailsList;
+                            if (!Array.isArray(list)) return;
+                            const v = Number(jsonArray[index]?.outTime ?? list[index]?.outTime) || 4;
+                            $(selector).val(v);
+                        };
+                        setHiddenSlideOutTime(0, '#hdnOutSpeedforSlide1');
+                        setHiddenSlideOutTime(1, '#hdnOutSpeedforSlide2');
+                        setHiddenSlideOutTime(2, '#hdnOutSpeedforSlide3');
+                        const setHiddenSlideStayTime = (index, selector) => {
+                            const list = result?.designBoardDetailsList;
+                            if (!Array.isArray(list)) return;
+                            const v = Number(jsonArray[index]?.stayTime ?? list[index]?.stayTime) || 3;
+                            $(selector).val(v);
+                        };
+                        setHiddenSlideStayTime(0, '#hdnStaySpeedforSlide1');
+                        setHiddenSlideStayTime(1, '#hdnStaySpeedforSlide2');
+                        setHiddenSlideStayTime(2, '#hdnStaySpeedforSlide3');
 
                         // Optionally, load one of the slides into the canvas
                         // For example, load slide 1's JSON data if available:
@@ -6547,9 +6590,12 @@ function animateTextForPublish(animationType, direction, condition, loopCount) {
 
 async function animateTextForDownload(animationType, direction, condition, loopCount, state) {
 
-    selectedInSpeed = parseInt(document.getElementById('lblSpeed').textContent);
-    selectedOutSpeed = parseInt(document.getElementById('lblOutSpeed').textContent);
-    selectedStaySpeed = parseInt(document.getElementById('lblSeconds').textContent);
+    //selectedInSpeed = parseInt(document.getElementById('lblSpeed').textContent);
+    //selectedOutSpeed = parseInt(document.getElementById('lblOutSpeed').textContent);
+    //selectedStaySpeed = parseInt(document.getElementById('lblSeconds').textContent);
+    selectedInSpeed = parseInt(state.inTime);
+    selectedOutSpeed = parseInt(state.outTime);
+    selectedStaySpeed = parseInt(state.stayTime);
     // Global timing settings (from your selected speeds).
     const inTime = parseFloat(selectedInSpeed) || 4; // seconds
     const outTime = parseFloat(selectedOutSpeed) || 4;
@@ -8729,3 +8775,23 @@ function clearrightDownloadPanel() {
     $('#divpanelrightDownload').empty();
 }
 
+function SetTime() {
+    if (activeSlide == 1) {
+        document.getElementById('lblSpeed').textContent = $('#hdnInSpeedforSlide1').val() ||"4 Sec";
+        document.getElementById('lblSeconds').textContent = $('#hdnStaySpeedforSlide1').val() || "3 Sec";
+        document.getElementById('lblOutSpeed').textContent = $('#hdnOutSpeedforSlide1').val() ||  "4 Sec";
+        
+    }
+    else if (activeSlide == 2) {
+        document.getElementById('lblSpeed').textContent = $('#hdnInSpeedforSlide2').val() || "4 Sec";
+        document.getElementById('lblSeconds').textContent = $('#hdnStaySpeedforSlide2').val() || "3 Sec";
+        document.getElementById('lblOutSpeed').textContent = $('#hdnOutSpeedforSlide2').val() || "4 Sec";
+
+    }
+    else if (activeSlide == 3) {
+        document.getElementById('lblSpeed').textContent = $('#hdnInSpeedforSlide3').val() || "4 Sec";
+        document.getElementById('lblSeconds').textContent = $('#hdnStaySpeedforSlide3').val() || "3 Sec";
+        document.getElementById('lblOutSpeed').textContent = $('#hdnOutSpeedforSlide3').val() || "4 Sec";
+
+    }
+}
