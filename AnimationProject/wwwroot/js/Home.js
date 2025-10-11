@@ -12,23 +12,38 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function validateCredentials() {
     // Static credentials (already in lowercase)
-    const staticEmail = "demo@aniboard.com";
-    const staticPassword = "123";
+    //const staticEmail = "demo@aniboard.com";
+    //const staticPassword = "123";
 
     // Get user input values and convert to lowercase
     const enteredEmail = document.getElementById('emailInput').value.toLowerCase().trim();
     const enteredPassword = document.getElementById('passwordInput').value.toLowerCase().trim();
 
-    // Validation check
-    if (enteredEmail === staticEmail && enteredPassword === staticPassword) {
-        // window.location.href = window.location.origin + '/Canvas/VerticalIndex';
-        window.location.href = window.location.origin + '/Canvas/VerticalIndex?openModal=true';
-        // You can redirect or perform other actions here
-    } else {
-        // alert("Invalid credentials!");
-        MessageShow('', 'Invalid credentials!', 'error');
-        // Clear password field for retry
+    //// Validation check
+    //if (enteredEmail === staticEmail && enteredPassword === staticPassword) {
+    //    // window.location.href = window.location.origin + '/Canvas/VerticalIndex';
+    //    window.location.href = window.location.origin + '/Canvas/VerticalIndex?openModal=true';
+    //    // You can redirect or perform other actions here
+    //} else {
+    //    // alert("Invalid credentials!");
+    //    MessageShow('', 'Invalid credentials!', 'error');
+    //    // Clear password field for retry
+    //    document.getElementById('passwordInput').value = '';
+    //}
+    var valid = false;
+    if (enteredEmail == '') {
+        MessageShow('', 'Invalid user credentials!', 'error');
+        document.getElementById('emailInput').value = '';
+    }
+    else if (enteredPassword == '') {
+        MessageShow('', 'Invalid password!', 'error');
         document.getElementById('passwordInput').value = '';
+    }
+
+    if (enteredEmail != '' && enteredPassword != '') {
+        return true;
+    } else {
+        return false;
     }
 }
 

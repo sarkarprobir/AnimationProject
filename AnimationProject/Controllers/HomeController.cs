@@ -128,7 +128,11 @@ public class HomeController : Controller
         }
         return Json(1);
     }
-
+    public IActionResult Logout()
+    {
+        _sessionService.RemoveAllSession();
+        return RedirectToAction("Login", "Home");
+    }
     #endregion
 
     #region UserAccount
