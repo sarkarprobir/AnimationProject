@@ -509,15 +509,32 @@ function saveCanvasData() {
     const rect = canvas.getBoundingClientRect();
     const screenW = rect.width || 1;
     const screenH = rect.height || 1;
-
+    var inTimeVar = 4;
+    var stayTimeVar = 3;
+    var outTimeVar = 4;
+    if (activeSlide === 1) {
+        inTimeVar = $('#hdnInSpeedforSlide1').val();
+        stayTimeVar = $('#hdnStaySpeedforSlide1').val();
+        outTimeVar = $('#hdnOutSpeedforSlide1').val();
+    }
+    else if (activeSlide === 2) {
+        inTimeVar = $('#hdnInSpeedforSlide2').val();
+        stayTimeVar = $('#hdnStaySpeedforSlide2').val();
+        outTimeVar = $('#hdnOutSpeedforSlide2').val();
+    }
+    else if (activeSlide === 3) {
+        inTimeVar = $('#hdnInSpeedforSlide3').val();
+        stayTimeVar = $('#hdnStaySpeedforSlide3').val();
+        outTimeVar = $('#hdnOutSpeedforSlide3').val();
+    }
     const data = {
         canvasBgColor: canvas.style.backgroundColor || "#ffffff",
         canvasBgImage: canvas._bgImg ? canvas._bgImg.src : "",
         slideEffect: $("#hdnTextAnimationType").val(),
         slideDedirection: $("#hdnslideDedirection").val(),
-        inTime: parseInt(document.getElementById('lblSpeed').textContent), 
-        stayTime: parseInt(document.getElementById('lblSeconds').textContent),
-        outTime: parseInt(document.getElementById('lblOutSpeed').textContent),
+        inTime: inTimeVar, 
+        stayTime: stayTimeVar,
+        outTime: outTimeVar,
         // TEXT → always save % (idempotent)
         text: (textObjects || []).map(o => ({
             type: o.type || "text",

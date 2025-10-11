@@ -9013,7 +9013,7 @@ function wireSpeedDropdown() {
         if (event.target.matches('a.dropdown-item')) {
             selectedInSpeed = event.target.getAttribute('value');
             document.getElementById('lblSpeed').textContent = event.target.textContent;
-
+            SetTimeWhileSelect();
         }
     });
 }
@@ -9028,10 +9028,13 @@ function wireSecondsDropdown() {
             selectedStaySpeed = event.target.getAttribute('value');
             document.getElementById('lblSeconds').textContent = event.target.textContent;
             // store val if you need it: selectedStaySpeed = val;
+            SetTimeWhileSelect();
         }
     });
+   
 }
 function wireOutSpeedDropdown() {
+  
     const ddlOut = document.getElementById('ddlOutSpeedControl');
     if (!ddlOut) {
         // console.warn("#ddlOutSpeedControl not found!");
@@ -9048,8 +9051,10 @@ function wireOutSpeedDropdown() {
         const lbl = document.getElementById('lblOutSpeed');
         if (lbl) {
             lbl.textContent = event.target.textContent;
+            SetTimeWhileSelect();
         }
     });
+  
 }
 function wireLoopDropdown() {
     const ddlLoop = document.getElementById('ddlLoopControl');
@@ -16462,3 +16467,22 @@ async function updateFileName() {
     }
 }
 
+function SetTimeWhileSelect() {
+    if (activeSlide == 1) {
+        $('#hdnInSpeedforSlide1').val(parseInt(document.getElementById('lblSpeed').textContent)) || 4;
+        $('#hdnStaySpeedforSlide1').val(parseInt(document.getElementById('lblSeconds').textContent)) || 3;
+        $('#hdnOutSpeedforSlide1').val(parseInt(document.getElementById('lblOutSpeed').textContent)) || 4;
+    }
+    else if (activeSlide == 2) {
+        $('#hdnInSpeedforSlide2').val(parseInt(document.getElementById('lblSpeed').textContent)) || 4;
+        $('#hdnStaySpeedforSlide2').val(parseInt(document.getElementById('lblSeconds').textContent)) || 3;
+        $('#hdnOutSpeedforSlide2').val(parseInt(document.getElementById('lblOutSpeed').textContent)) || 4;
+
+    }
+    else if (activeSlide == 3) {
+        $('#hdnInSpeedforSlide3').val(parseInt(document.getElementById('lblSpeed').textContent)) || 4;
+        $('#hdnStaySpeedforSlide3').val(parseInt(document.getElementById('lblSeconds').textContent)) || 3;
+        $('#hdnOutSpeedforSlide3').val(parseInt(document.getElementById('lblOutSpeed').textContent)) || 4;
+
+    }
+}
