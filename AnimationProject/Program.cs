@@ -27,10 +27,20 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Add session services
+builder.Services.AddDistributedMemoryCache(); // Required for session
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(60); // Set timeout
+    options.Cookie.HttpOnly = true;                 // Security
+    options.Cookie.IsEssential = true;              // Required for GDPR compliance
+});
 
 //  Add services to the container. 
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IServiceAPI, ServiceAPI>();
+builder.Services.AddScoped<IAPIService, APIService>();
+builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<ICheckSession, CheckSession>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
@@ -42,6 +52,9 @@ var refreshChannel = Channel.CreateUnbounded<string>();
 builder.Services.AddSingleton<IRefreshNotifier>(new RefreshNotifier(refreshChannel.Writer));
 
 var app = builder.Build();
+
+
+
 
 //  Configure the HTTP request pipeline. 
 if (!app.Environment.IsDevelopment())
@@ -57,6 +70,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseSession(); // <-- Must come before endpoints
 //  Enable CORS 
 app.UseCors("CorsPolicy");
 
@@ -65,7 +79,7 @@ app.UseAuthorization();
 //  MVC & SSE Endpoints 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Canvas}/{action=Login}/{id?}");
+    pattern: "{controller=Home}/{action=Login}/{id?}");
 // 1) Specific “screen” route:
 app.MapControllerRoute(
     name: "animationScreen",

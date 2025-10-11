@@ -40,7 +40,7 @@
                 <ul>
                     <li class="nav-item dropdown">
                         <a class="profile nav-link text-light d-flex justify-content-center align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            A
+                            @char.ToUpper(Model.FirstName[0])
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown" style="background-color: #6214fe; border: none; border-radius:0; max-width: 106px; box-shadow: none;">
                             <li class="w-100 acc_list">
@@ -82,7 +82,7 @@
 <div class="container pay_sub_cont">
     <div>
         <button class="btn btn-danger pay_button b_rad4" data-bs-toggle="modal" data-bs-target="#Acc_Modal">Pay to Renew</button>
-        <span class="sub_span ms-2 fs-8">Subscription ends in 6 days</span>
+        @* <span class="sub_span ms-2 fs-8">Subscription ends in 6 days</span> *@
     </div>
 </div>
 
@@ -99,16 +99,16 @@
 
     <div class="row mt-3 mb-3 mt-lg-4 mb-lg-4">
         <div class="col-md-4">
-            <h5 class="mt-4 fw-bold">Smith Tremblay</h5>
-            <p>sm@gmail.com</p>
-                <p>smthteam@gmail.com</p>
+                <h5 class="mt-4 fw-bold">@Model.FirstName @Model.LastName</h5>
+                <p>@Model.Email</p>
+                <p>@Model.Email_2</p>
                 <p>Another@gmail.com <a href="#" class="text-decoration-none"><i class="fa-regular fa-pen-to-square ms-1" style="color: dimgrey"></i></a></p>
-            <p class="fs-5">212-555-6789</p>
+                <p class="fs-5">@Model.PhoneNumber</p>
         </div>
 
         <div class="col-md-4">
                 <h5 class="mt-4 fw-bold">Address</h5>
-                <p>132 My street, Kingstone, New <br /> York 12404, US</p>
+                <p>@Model.Address @Model.City<br /> @Model.State @Model.ZipCode, @Model.Country</p>
         </div>
 
         <div class="col-md-4">         

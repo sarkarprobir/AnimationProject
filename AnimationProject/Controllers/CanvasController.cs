@@ -59,10 +59,7 @@ namespace AnimationProject.Controllers
             return View();
         }
         
-        public IActionResult Account()
-        {
-            return View();
-        }
+        
         public IActionResult Schedular()
         {
             return View();
@@ -71,10 +68,10 @@ namespace AnimationProject.Controllers
         {
             return View();
         }
-        public IActionResult Login()
-        {
-            return View();
-        }
+        //public IActionResult Login()
+        //{
+        //    return View();
+        //}
         public IActionResult Home()
         {
             return View();
