@@ -51,6 +51,8 @@ namespace AnimationProject.Models.Common
         public string? TimeZone { get; set; }
         public string? CustomerIP { get; set; }
         public int? isDelete { get; set; }
+        public long CompanyUniqueId { get; set; }
+        public string token { get; set; }
     }
 
 }

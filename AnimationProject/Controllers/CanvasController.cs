@@ -25,7 +25,7 @@ namespace AnimationProject.Controllers
         private readonly IServiceAPI _restAPI;
         private readonly ICheckSession _checkSession;
         private readonly IRefreshNotifier _refreshNotifier;
-
+        private readonly ISessionService _sessionService;
 
         private readonly AppSettings _appSettings;
 
@@ -38,13 +38,14 @@ namespace AnimationProject.Controllers
             ICheckSession checkSession,
             IHttpContextAccessor httpContextAccessor,
             IOptions<AppSettings> appSettings,
-            IRefreshNotifier refreshNotifier)
+            IRefreshNotifier refreshNotifier,ISessionService sessionService)
         {
             _restAPI = restAPI;
             _checkSession = checkSession;
             _httpContextAccessor = httpContextAccessor;
             _appSettings = appSettings.Value;
             _refreshNotifier = refreshNotifier;
+            _sessionService = sessionService;
         }
         public IActionResult Index()
         {
@@ -215,15 +216,20 @@ namespace AnimationProject.Controllers
         [HttpPost]
         public async Task<IActionResult> SaveUpdateDesignBoard(RequestDesignBoardDetail request)
         {
+            var user = _sessionService.GetUser();
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Home");
+            }
             //if (!_checkSession.IsSession()) return Ok("login");
             var response = new Response<ResponseSaveDesignBoardDetail>();
             try
             {
                 request.DesignBoardId = Guid.Parse(request.DesignBoardId.ToString()); //Guid.NewGuid();
-                request.CustomerId = Guid.Parse(request.CustomerId.ToString());
-                request.CompanyId = Guid.Parse(request.CompanyId.ToString());
+                request.CustomerId = Guid.Parse(user.CustomerId);
+                request.CompanyId = Guid.Parse(user.CompanyId);
                 request.IsActive = true;
-                request.CreatedBy = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
+                request.CreatedBy = Guid.Parse(user.CustomerId);
                 
                 var saveDesignBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/SaveUpdateDesignBoard", JsonConvert.SerializeObject(request), user.token);
                 response = JsonConvert.DeserializeObject<Response<ResponseSaveDesignBoardDetail>>(saveDesignBoard);
@@ -239,6 +245,11 @@ namespace AnimationProject.Controllers
         [HttpPost]
         public async Task<IActionResult> SaveUpdateDesignSlideBoard(RequestDesignBoardSlideDetail request)
         {
+            var user = _sessionService.GetUser();
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Home");
+            }
             //if (!_checkSession.IsSession()) return Ok("login");
             var response = new Response<ResponseSaveDesignBoardSlideDetail>();
             try
@@ -255,7 +266,7 @@ namespace AnimationProject.Controllers
                 request.DesignBoardDetailsId = Guid.Parse(request.DesignBoardDetailsId.ToString());
                 request.DesignBoardId = Guid.Parse(request.DesignBoardId.ToString()); 
                 request.IsActive = true;
-                request.CreatedBy = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
+                request.CreatedBy = Guid.Parse(user.CustomerId);
                 var saveDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/SaveUpdateDesignSlideBoard", JsonConvert.SerializeObject(request), user.token);
                 response = JsonConvert.DeserializeObject<Response<ResponseSaveDesignBoardSlideDetail>>(saveDesignSlideBoard);
                 return Json(response.Data);
@@ -308,12 +319,17 @@ namespace AnimationProject.Controllers
        
         public async Task<IActionResult> Boards()
         {
+            var user = _sessionService.GetUser();
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Home");
+            }
             var response = new Response<List<ResponseGetDesignBoardAll>>();
             RequestGetDesignBoard request = new RequestGetDesignBoard();
             try
             {
-                request.CustomerId = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
-                request.CompanyId = Guid.Parse("F174A15A-76B7-4E19-BE4B-4E240983DE55");
+                request.CustomerId = Guid.Parse(user.CustomerId);
+                request.CompanyId = Guid.Parse(user.CompanyId);
                 var saveDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetDesignBoardDetailsAll", JsonConvert.SerializeObject(request), user.token);
                 response = JsonConvert.DeserializeObject<Response<List<ResponseGetDesignBoardAll>>>(saveDesignSlideBoard);
                 return View("Boards", response.Data);
@@ -448,12 +464,17 @@ namespace AnimationProject.Controllers
         [HttpPost]
         public async Task<IActionResult> DeleteDesignSlideBoard(RequestDesignBoardSlideDetailForDelete request)
         {
+            var user = _sessionService.GetUser();
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Home");
+            }
             //if (!_checkSession.IsSession()) return Ok("login");
             var response = new Response<ResponseSaveDesignBoardSlideDetail>();
             try
             {
                 request.IsActive = false;
-                request.UpdatedBy = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
+                request.UpdatedBy = Guid.Parse(user.CustomerId);
                 var deleteDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/DeleteDesignSlideBoard", JsonConvert.SerializeObject(request), user.token);
                 response = JsonConvert.DeserializeObject<Response<ResponseSaveDesignBoardSlideDetail>>(deleteDesignSlideBoard);
                 return Json(response.Data);
@@ -468,11 +489,16 @@ namespace AnimationProject.Controllers
         [HttpPost]
         public async Task<IActionResult> DuplicateDesignSlideBoard(RequestDesignBoardSlideDetailForDuplicate request)
         {
+            var user = _sessionService.GetUser();
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Home");
+            }
             //if (!_checkSession.IsSession()) return Ok("login");
             var response = new Response<ResponseSaveDesignBoardSlideDetail>();
             try
             {
-                request.UpdatedBy = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
+                request.UpdatedBy = Guid.Parse(user.CustomerId);
                 var DuplicateDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/DuplicateDesignSlideBoard", JsonConvert.SerializeObject(request), user.token);
                 response = JsonConvert.DeserializeObject<Response<ResponseSaveDesignBoardSlideDetail>>(DuplicateDesignSlideBoard);
                 return Json(response.Data);
@@ -487,15 +513,20 @@ namespace AnimationProject.Controllers
         [HttpPost]
         public async Task<IActionResult> PublishDesignSlideBoard(RequestDesignBoardSlideDetailForPublish request)
         {
+            var user = _sessionService.GetUser();
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Home");
+            }
             //if (!_checkSession.IsSession()) return Ok("login");
             var response = new Response<ResponseSaveDesignBoardSlideDetailPublish>();
             try
             {
                 // request.DesignBoardId = Guid.Parse("3664686F-7007-401A-850C-24916D63BD7A");
-                request.CustomerId = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
-                request.CompanyId = Guid.Parse("F174A15A-76B7-4E19-BE4B-4E240983DE55");
-                request.CreatedBy = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
-                request.CompanyUniqueId = 1;
+                request.CustomerId = Guid.Parse(user.CustomerId);
+                request.CompanyId = Guid.Parse(user.CompanyId);
+                request.CreatedBy = Guid.Parse(user.CustomerId);
+                request.CompanyUniqueId = user.CompanyUniqueId;
                 var PublishDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/PublishDesignSlideBoard", JsonConvert.SerializeObject(request), user.token);
                 response = JsonConvert.DeserializeObject<Response<ResponseSaveDesignBoardSlideDetailPublish>>(PublishDesignSlideBoard);
                 return Json(response.Data);
@@ -534,10 +565,15 @@ namespace AnimationProject.Controllers
         public async Task<IActionResult> GetAllElementNew(RequestGetEliment request)
         {
             //if (!_checkSession.IsSession()) return Ok("login");
+            var user = _sessionService.GetUser();
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Home");
+            }
             var response = new Response<ElementListResult>();
             try
             {
-                request.CompanyUniqueId = 0;
+                request.CompanyUniqueId = Convert.ToInt32(user.CompanyUniqueId);
                 if (request.searchKeyword == null)
                 {
                     request.searchKeyword = "";
@@ -555,12 +591,17 @@ namespace AnimationProject.Controllers
         }
         public async Task<IActionResult> GetAllTemplates()
         {
+            var user = _sessionService.GetUser();
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Home");
+            }
             var response = new Response<List<ResponseGetDesignBoardAll>>();
             RequestGetDesignBoard request = new RequestGetDesignBoard();
             try
             {
-                request.CustomerId = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
-                request.CompanyId = Guid.Parse("F174A15A-76B7-4E19-BE4B-4E240983DE55");
+                request.CustomerId = Guid.Parse(user.CustomerId);
+                request.CompanyId = Guid.Parse(user.CompanyId);
                 var saveDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetAllTemplates", JsonConvert.SerializeObject(request), user.token);
                 response = JsonConvert.DeserializeObject<Response<List<ResponseGetDesignBoardAll>>>(saveDesignSlideBoard);
                 return Json(response.Data);
@@ -573,11 +614,16 @@ namespace AnimationProject.Controllers
         }
         public async Task<IActionResult> GetTemplatesForHomePage(RequestGetDesignBoard request)
         {
+            var user = _sessionService.GetUser();
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Home");
+            }
             var response = new Response<List<ResponseGetDesignBoardAll>>();
             try
             {
-                request.CustomerId = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
-                request.CompanyId = Guid.Parse("F174A15A-76B7-4E19-BE4B-4E240983DE55");
+                request.CustomerId = Guid.Parse(user.CustomerId);
+                request.CompanyId = Guid.Parse(user.CompanyId);
                 var saveDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/TemplatesForHomePage", JsonConvert.SerializeObject(request), user.token);
                 response = JsonConvert.DeserializeObject<Response<List<ResponseGetDesignBoardAll>>>(saveDesignSlideBoard);
                 return Json(response.Data);
@@ -590,12 +636,17 @@ namespace AnimationProject.Controllers
         }
         public async Task<IActionResult> GetTemplatesForTemplatePage(RequestGetDesignBoard request)
         {
+            var user = _sessionService.GetUser();
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Home");
+            }
             var response = new Response<List<ResponseGetDesignBoardAll>>();
           
             try
             {
-                request.CustomerId = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
-                request.CompanyId = Guid.Parse("F174A15A-76B7-4E19-BE4B-4E240983DE55");
+                request.CustomerId = Guid.Parse(user.CustomerId);
+                request.CompanyId = Guid.Parse(user.CompanyId);
                 var saveDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/TemplatesForTemplatePage", JsonConvert.SerializeObject(request), user.token);
                 response = JsonConvert.DeserializeObject<Response<List<ResponseGetDesignBoardAll>>>(saveDesignSlideBoard);
                 return Json(response.Data);
@@ -632,12 +683,17 @@ namespace AnimationProject.Controllers
         [HttpPost]
         public async Task<IActionResult> DeleteElementFromFrontEnd(RequestElementDetailForDelete request)
         {
+            var user = _sessionService.GetUser();
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Home");
+            }
             //if (!_checkSession.IsSession()) return Ok("login");
             var response = new Response<ResponseDeleteElement>();
             try
             {
                 request.IsActive = false;
-                request.UpdatedBy = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
+                request.UpdatedBy = Guid.Parse(user.CustomerId);
                 var deleteElementById = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/DeleteElementFromFrontEndById", JsonConvert.SerializeObject(request), user.token);
                 response = JsonConvert.DeserializeObject<Response<ResponseDeleteElement>>(deleteElementById);
                 return Json(response.Data);
@@ -652,12 +708,17 @@ namespace AnimationProject.Controllers
         [HttpPost]
         public async Task<IActionResult> SetBoardCategory(RequestSetBoardCategory request)
         {
+            var user = _sessionService.GetUser();
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Home");
+            }
             //if (!_checkSession.IsSession()) return Ok("login");
             var response = new Response<ResponseSetBoardCategory>();
             try
             {
                 //
-                request.UpdatedBy = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
+                request.UpdatedBy = Guid.Parse(user.CustomerId);
                 var setBoardCategory = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/SetBoardCategory", JsonConvert.SerializeObject(request), user.token);
                 response = JsonConvert.DeserializeObject<Response<ResponseSetBoardCategory>>(setBoardCategory);
                 return Json(response.Data);

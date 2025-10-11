@@ -13,7 +13,7 @@
         public string ElementPath { get; set; }
 
 
-        //public static string apiBaseurl = "https://localhost:44340/api/";
+        //public static string apiBaseurl = "https://localhost:7006/api/";
         public static string apiBaseurl = "https://aniboard.com/api/api/";
 
     }

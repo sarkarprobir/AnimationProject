@@ -104,7 +104,7 @@ public class HomeController : Controller
                     if (!string.IsNullOrEmpty(user.CustomerId))
                     {
                         _sessionService.SetUser(user);
-                        return RedirectToAction("Account", "Home");
+                        return Redirect("/Canvas/VerticalIndex?openModal=true");
                     }
                 }
                 else

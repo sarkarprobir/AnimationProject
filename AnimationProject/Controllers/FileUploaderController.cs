@@ -12,6 +12,7 @@ using Newtonsoft.Json;
 using System.Text;
 using AnimationProject.Helpers;
 using Microsoft.Extensions.Options;
+using AnimationProject.Services;
 
 
 
@@ -24,11 +25,13 @@ namespace AnimationProject.Controllers
         private readonly IWebHostEnvironment _env;
         private readonly AppSettings _appSettings;
         private readonly IHttpClientFactory _httpFactory;
-        public FileUploaderController(IWebHostEnvironment env, IOptions<AppSettings> appSettings, IHttpClientFactory httpFactory)
+        private readonly ISessionService _sessionService;
+        public FileUploaderController(IWebHostEnvironment env, IOptions<AppSettings> appSettings, IHttpClientFactory httpFactory, ISessionService sessionService)
         {
             _env = env;
             _appSettings = appSettings.Value;
             _httpFactory = httpFactory;
+            _sessionService = sessionService;
         }
         [HttpPost("UploadElementImageByControl")]
         [RequestSizeLimit(20_000_000)]
@@ -80,11 +83,15 @@ namespace AnimationProject.Controllers
             var mainW = mainInfo?.Width ?? img.Width;
             var mainH = mainInfo?.Height ?? img.Height;
             var mainBytes = (int)Math.Min(int.MaxValue, new FileInfo(mainPath).Length);
-
+            var user = _sessionService.GetUser();
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Home");
+            }
             var request = new RequestElementDetails
             {
                 CategoryId = 5,             // per your example
-                CompanyUniqueId = 4,        // per your example
+                CompanyUniqueId = Convert.ToInt32(user.CompanyUniqueId),       // per your example
                 ElementName = safeBase,     // readable name
                 ImageSize = mainBytes,      // bytes of MAIN image
                 ImageName = mainName,       // file name (e.g., "transition_1.png")
@@ -175,10 +182,16 @@ namespace AnimationProject.Controllers
             var mainH = mainInfo?.Height ?? img.Height;
             var mainBytes = (int)Math.Min(int.MaxValue, new FileInfo(mainPath).Length);
 
+            var user = _sessionService.GetUser();
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Home");
+            }
+
             var request = new RequestElementDetails
             {
                 CategoryId = 5,             // per your example
-                CompanyUniqueId = 4,        // per your example
+                CompanyUniqueId = Convert.ToInt32(user.CompanyUniqueId),        // per your example
                 ElementName = safeBase,     // readable name
                 ImageSize = mainBytes,      // bytes of MAIN image
                 ImageName = mainName,       // file name (e.g., "transition_1.png")

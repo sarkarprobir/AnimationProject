@@ -8958,9 +8958,9 @@ function CreateRightSectionhtml() {
 
                 // 2) Now it’s safe to wire up your controls
                 document.getElementById('lblSpeed').textContent = "4 Sec";
-                document.getElementById('lblSeconds').textContent = "3 Sec";
-                document.getElementById('lblOutSpeed').textContent = "4 Sec";
-                document.getElementById('lblLoop').textContent = "1 time";
+                //document.getElementById('lblSeconds').textContent = "3 Sec";
+                //document.getElementById('lblOutSpeed').textContent = "4 Sec";
+                //document.getElementById('lblLoop').textContent = "1 time";
 
                 // 3) Resolve so callers can chain .then()
                 resolve();

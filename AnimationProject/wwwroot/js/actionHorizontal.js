@@ -850,6 +850,29 @@ function GetDesignBoardById(id, type = '') {
                     setHiddenSlideImageFilePath(1, '#hdnDesignBoardDetailsIdSlideImageFilePath2');
                     setHiddenSlideImageFilePath(2, '#hdnDesignBoardDetailsIdSlideImageFilePath3');
 
+                      
+                    
+                    // Optionally, load one of the slides into the canvas
+                    // For example, load slide 1's JSON data if available:
+                    // Load first slide if available
+                    if (verticalSlide1) {
+                        // wait for fonts to finish loading before we draw:
+                        document.fonts.ready
+                            .then(() => {
+                                loadCanvasFromJson(verticalSlide1, 'Common');
+                            })
+                            .catch((err) => {
+                                console.warn("Fonts failed to load, drawing anyway:", err);
+                                loadCanvasFromJson(verticalSlide1, 'Common');
+                            });
+                    }
+
+                    updateEffectButtons('In');
+                    updateEffectButtons('Out');
+                    updateDirectionButtons('In');
+                    updateDirectionButtons('Out');
+                        transitionSelected(this);
+
                         const setHiddenSlideInTime = (index, selector) => {
                             const list = result?.designBoardDetailsList;
                             if (!Array.isArray(list)) return;
@@ -878,27 +901,6 @@ function GetDesignBoardById(id, type = '') {
                         setHiddenSlideStayTime(0, '#hdnStaySpeedforSlide1');
                         setHiddenSlideStayTime(1, '#hdnStaySpeedforSlide2');
                         setHiddenSlideStayTime(2, '#hdnStaySpeedforSlide3');
-                    
-                    // Optionally, load one of the slides into the canvas
-                    // For example, load slide 1's JSON data if available:
-                    // Load first slide if available
-                    if (verticalSlide1) {
-                        // wait for fonts to finish loading before we draw:
-                        document.fonts.ready
-                            .then(() => {
-                                loadCanvasFromJson(verticalSlide1, 'Common');
-                            })
-                            .catch((err) => {
-                                console.warn("Fonts failed to load, drawing anyway:", err);
-                                loadCanvasFromJson(verticalSlide1, 'Common');
-                            });
-                    }
-
-                    updateEffectButtons('In');
-                    updateEffectButtons('Out');
-                    updateDirectionButtons('In');
-                    updateDirectionButtons('Out');
-                    transitionSelected(this);
                     }
                    
             }
