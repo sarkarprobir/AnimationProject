@@ -602,6 +602,8 @@ namespace AnimationProject.Controllers
             {
                 request.CustomerId = Guid.Parse(user.CustomerId);
                 request.CompanyId = Guid.Parse(user.CompanyId);
+                request.CustomerId = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
+                request.CompanyId = Guid.Parse("F174A15A-76B7-4E19-BE4B-4E240983DE55");
                 var saveDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetAllTemplates", JsonConvert.SerializeObject(request), user.token);
                 response = JsonConvert.DeserializeObject<Response<List<ResponseGetDesignBoardAll>>>(saveDesignSlideBoard);
                 return Json(response.Data);
@@ -614,16 +616,18 @@ namespace AnimationProject.Controllers
         }
         public async Task<IActionResult> GetTemplatesForHomePage(RequestGetDesignBoard request)
         {
-            var user = _sessionService.GetUser();
-            if (user == null)
-            {
-                return RedirectToAction("Login", "Home");
-            }
+            //var user = _sessionService.GetUser();
+            //if (user == null)
+            //{
+            //    return RedirectToAction("Login", "Home");
+            //}
             var response = new Response<List<ResponseGetDesignBoardAll>>();
             try
             {
-                request.CustomerId = Guid.Parse(user.CustomerId);
-                request.CompanyId = Guid.Parse(user.CompanyId);
+                //request.CustomerId = Guid.Parse(user.CustomerId);
+                //request.CompanyId = Guid.Parse(user.CompanyId);
+                request.CustomerId = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
+                request.CompanyId = Guid.Parse("F174A15A-76B7-4E19-BE4B-4E240983DE55");
                 var saveDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/TemplatesForHomePage", JsonConvert.SerializeObject(request), user.token);
                 response = JsonConvert.DeserializeObject<Response<List<ResponseGetDesignBoardAll>>>(saveDesignSlideBoard);
                 return Json(response.Data);
@@ -636,17 +640,19 @@ namespace AnimationProject.Controllers
         }
         public async Task<IActionResult> GetTemplatesForTemplatePage(RequestGetDesignBoard request)
         {
-            var user = _sessionService.GetUser();
-            if (user == null)
-            {
-                return RedirectToAction("Login", "Home");
-            }
+            //var user = _sessionService.GetUser();
+            //if (user == null)
+            //{
+            //    return RedirectToAction("Login", "Home");
+            //}
             var response = new Response<List<ResponseGetDesignBoardAll>>();
           
             try
             {
-                request.CustomerId = Guid.Parse(user.CustomerId);
-                request.CompanyId = Guid.Parse(user.CompanyId);
+                //request.CustomerId = Guid.Parse(user.CustomerId);
+                //request.CompanyId = Guid.Parse(user.CompanyId);
+                request.CustomerId = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
+                request.CompanyId = Guid.Parse("F174A15A-76B7-4E19-BE4B-4E240983DE55");
                 var saveDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/TemplatesForTemplatePage", JsonConvert.SerializeObject(request), user.token);
                 response = JsonConvert.DeserializeObject<Response<List<ResponseGetDesignBoardAll>>>(saveDesignSlideBoard);
                 return Json(response.Data);
