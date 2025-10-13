@@ -1892,7 +1892,7 @@ async function showSlide(index) {
     const inTime = parseFloat(state.inTime) || 4;
     const stayTime = parseFloat(state.stayTime) || 3;
     const outTime = parseFloat(state.outTime) || 4;
-    const slideExecutionTime = inTime + (stayTime - 2) + outTime;/*inTime + stayTime + outTime;*/
+    const slideExecutionTime = inTime + stayTime;/*inTime + stayTime + outTime;*/
 
     // 1) draw & animate this slide’s in→stay→out
     loadCanvasFromJsonForDownload(state, 'Common');
@@ -2482,7 +2482,8 @@ function startVideoCapture() {
     }, 8000);
 }
 function getCompanyIdFromUrl() {
-    return 1;
+    var companyUniqueId = $("#hdnCompanyUniqueId").val();
+    return companyUniqueId;
     //const segments = window.location.pathname.split('/').filter(segment => segment !== '');
     //// Assuming the last segment is the company ID.
     //return segments.length ? segments[segments.length - 1] : null;
@@ -6755,12 +6756,18 @@ async function animateTextForDownload(animationType, direction, condition, loopC
         });
 
         if (animationType === "delaylinear") {
+            const staticItems = [...images.filter(i => i.noAnim), ...textObjects.filter(t => t.noAnim)];
             // 1) Gather animatable items
             const allItems = [
                 ...images.filter(i => !i.noAnim),
                 ...textObjects.filter(t => !t.noAnim)
             ];
-
+            staticItems.forEach(o => {
+                o.x = o.finalX;
+                o.y = o.finalY;
+                o.scaleX = 1;
+                o.scaleY = 1;
+            });
             // 2) Bucket into “units” by groupId
             const groupMap = new Map();
             const units = [];
@@ -7012,12 +7019,18 @@ async function animateTextForDownload(animationType, direction, condition, loopC
             // call your external runStripeTransition(...) after this timeline completes
         }
         else if (animationType === "delaylinear2") {
+            const staticItems = [...images.filter(i => i.noAnim), ...textObjects.filter(t => t.noAnim)];
             // 1) Gather animatable items
             const allItems = [
                 ...images.filter(i => !i.noAnim),
                 ...textObjects.filter(t => !t.noAnim)
             ];
-
+            staticItems.forEach(o => {
+                o.x = o.finalX;
+                o.y = o.finalY;
+                o.scaleX = 1;
+                o.scaleY = 1;
+            });
             // 2) Bucket into “units” by groupId
             const groupMap = new Map();
             const units = [];
@@ -7249,6 +7262,12 @@ async function animateTextForDownload(animationType, direction, condition, loopC
                 ...images.filter(i => !i.noAnim),
                 ...textObjects.filter(t => !t.noAnim)
             ];
+            staticItems.forEach(o => {
+                o.x = o.finalX;
+                o.y = o.finalY;
+                o.scaleX = 1;
+                o.scaleY = 1;
+            });
             // 2) Bucket into “units” by groupId
             const groupMap = new Map();
             const units = [];
