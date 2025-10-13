@@ -3529,7 +3529,21 @@ function cloneTextObject(src) {
     o.id = crypto.randomUUID ? crypto.randomUUID() : ("id_" + Math.random().toString(36).slice(2));
     return o;
 }
-
+// define once, early in app boot
+window.renderScene = function () {
+    // schedule on next frame to coalesce multiple calls
+    requestAnimationFrame(() => {
+        if (typeof drawText === "function") {
+            drawText();               // your existing full repaint
+        } else {
+            // optional: minimal safe fallback
+            const c = document.getElementById("myCanvas");
+            if (!c) return;
+            const ctx = c.getContext("2d");
+            ctx.clearRect(0, 0, c.width, c.height);
+        }
+    });
+};
 function cloneImageObject(src) {
     const fields = [
         "type", "x", "y", "width", "height", "scaleX", "scaleY", "rotate", "opacity",
