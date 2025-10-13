@@ -9885,18 +9885,25 @@ function cleanEditorHTMLPreserveCaret() {
             div.appendChild(node.cloneNode(true));
         }
 
-        // Ensure empty lines have a <br>
-        const isEmpty =
-            !div ||
-            div.innerText.trim() === "" ||
-            div.innerHTML.trim() === "" ||
-            div.innerHTML.includes("<br");
+        // ✅ guard: skip comment/other nodes
+        if (!div) return;
 
-        if (isEmpty) {
+        // (optional) merge adjacent text nodes inside the new line
+        div.normalize();
+
+        // Ensure empty lines have a <br> (but don't erase lines that end with <br>)
+        const textNoZW = (div.textContent || "").replace(/\u200B/g, ""); // drop zero-width
+        const onlyWhitespace = !/[^\s\u00A0]/.test(textNoZW);            // only spaces/newlines/NBSP
+        const hasBR = !!div.querySelector('br');                         // existing <br>
+        const hasElementChildren = div.children.length > 0;              // spans, etc.
+
+        // Truly empty iff no text AND no children AND no <br>
+        const isTrulyEmpty = onlyWhitespace && !hasElementChildren && !hasBR;
+        if (isTrulyEmpty) {
             div.innerHTML = "<br>";
         }
 
-        if (div) cleanedLines.push(div);
+        cleanedLines.push(div);
     });
 
     // Trim leading and trailing blank lines
@@ -10054,19 +10061,8 @@ function drawText() {
         ctx.clip();
     }
 
-    // ===== BASIC SHAPES: detect by filename (case-insensitive; works with URLs/data URIs) =====
-    // --- BASIC SHAPES detection (filename only) ---
-    // BASIC shape list + detector
-    // ---- BASIC shapes only -------------------------------------------------
-    // ---- BASIC SHAPES list
-    const __BASIC_SHAPES = new Set([
-        //'ico-shapes-circle.svg',
-        //'ico-shapes-heart.svg',
-        //'ico-shapes-hexagon.svg',
-        //'ico-shapes-line.svg',
-        'ico-shapes-rec.svg',
-        //'ico-shapes-triangle.svg'
-    ]);
+    // ===== BASIC SHAPES detection =====
+    const __BASIC_SHAPES = new Set(['ico-shapes-rec.svg']);
 
     function __isBasicShapeSvg(box) {
         if (!box || box.type !== 'image' || !box.src) return false;
@@ -10324,7 +10320,42 @@ function drawText() {
 
         ctx2.restore();
     }
+    // --- NEW: plain-text drawer that respects \n and blank lines (pre-wrap) ---
+    function drawTextPreWrap(ctx2, x, y, maxWidth, lineHeight, text, align /* 'left'|'center'|'right' */) {
+        const paragraphs = String(text ?? "").replace(/\r/g, "").split("\n");
+        const startX = (lineW) => {
+            if (align === "center") return x + Math.max(0, (maxWidth - lineW) / 2);
+            if (align === "right") return x + Math.max(0, (maxWidth - lineW));
+            return x;
+        };
 
+        for (let p = 0; p < paragraphs.length; p++) {
+            const raw = paragraphs[p];
+
+            // blank line → advance
+            if (raw === "") { y += lineHeight; continue; }
+
+            const tokens = raw.split(/(\s+)/); // keep spaces
+            let line = "";
+
+            for (let i = 0; i < tokens.length; i++) {
+                const test = line + tokens[i];
+                if (maxWidth && ctx2.measureText(test).width > maxWidth && line !== "") {
+                    ctx2.fillText(line, startX(ctx2.measureText(line).width), y);
+                    y += lineHeight;
+                    // avoid leading large spaces at start of wrapped line
+                    line = tokens[i].replace(/^\s+/, "");
+                } else {
+                    line = test;
+                }
+            }
+            if (line !== "") {
+                ctx2.fillText(line, startX(ctx2.measureText(line).width), y);
+                y += lineHeight;
+            }
+        }
+        return y; // final y baseline
+    }
     // z-ordered
     const all = [...(images || []), ...(textObjects || [])]
         .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
@@ -10552,7 +10583,7 @@ function drawText() {
 
 
 
-        //---- TEXT ---- (unchanged)
+        // ---------------- TEXT ----------------
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(angleRad);
@@ -10562,9 +10593,41 @@ function drawText() {
         if (box.__clipVal > 0 && box.__clipVal < 1) {
             __applyLocalRectMask(ctx, w, h, box.__clipVal, box.__effDir || "top");
         }
+        // PLAIN TEXT PATH (no tags): draw with pre-wrap semantics
+        const rawText = String(box.text || "");
+        const isPlain = rawText.indexOf('<') === -1 && rawText.indexOf('>') === -1;
 
+        const innerLeft = -w / 2 + 5;
+        const innerTop = -h / 2 + 5;
+        const innerWidth = Math.max(0, w - 10);
+
+        ctx.fillStyle = box.color || defaultColor;
+        ctx.font = `${defaultFontStyle} ${defaultFontWeight} ${defaultFontSize} ${defaultFontFamily}`;
+
+        const basePx = parseFloat(defaultFontSize) || 16;
+        const lineH = basePx * (box.lineSpacing || 1.2);
+
+        if (isPlain) {
+            // honor align
+            const align = (box.align || 'left');
+            // draw and get the final y to compute used height
+            const yEnd = drawTextPreWrap(ctx, innerLeft, innerTop, innerWidth, lineH, rawText, align);
+            const usedHeight = (yEnd - innerTop) + 5;
+            box.height = usedHeight;
+            syncTextDims(box);
+            ctx.restore();
+            if (box.selected && w > 0 && h > 0) {
+                drawRotatedSelection(ctx, { ...box, width: w * __sx, height: h * __sy });
+            }
+            continue; // skip rich HTML path
+        }
+
+        // ---- RICH HTML PATH (UNCHANGED from your code) ----
         const wrapper = document.createElement("div");
         wrapper.innerHTML = box.text || "";
+        __explodeNewlinesToBR(wrapper); // <-- ADD THIS
+
+
 
         const lines = [];
         wrapper.childNodes.forEach(n => {
@@ -10573,19 +10636,23 @@ function drawText() {
                 if (!hasContent) {
                     const blank = document.createElement("div");
                     blank.appendChild(document.createTextNode(" "));
+                    __stripTrailingBRs(blank);
                     lines.push(blank);
                 } else {
                     const ln = document.createElement("div");
                     ln.append(...n.cloneNode(true).childNodes);
+                    __stripTrailingBRs(ln);
                     lines.push(ln);
                 }
             } else if (n.nodeType === 1 && n.tagName === "BR") {
                 const brLine = document.createElement("div");
                 brLine.appendChild(document.createTextNode(" "));
+                __stripTrailingBRs(brLine);
                 lines.push(brLine);
             } else {
                 if (lines.length === 0) lines.push(document.createElement("div"));
                 lines[lines.length - 1].appendChild(n.cloneNode(true));
+                __stripTrailingBRs(lines[lines.length - 1]);
             }
         });
 
@@ -10610,15 +10677,15 @@ function drawText() {
                 ctx.textAlign = "left";
             }
 
-            const innerLeft = left + 5;
-            const innerRight = left + w - 5;
-            const innerWidth = Math.max(0, innerRight - innerLeft);
+            const innerLeft2 = left + 5;
+            const innerRight2 = left + w - 5;
+            const innerWidth2 = Math.max(0, innerRight2 - innerLeft2);
             const alignMode = box.align || "left";
             ctx.textAlign = "left";
 
             let segments = [];
             let maxFontPx = 0;
-
+            const __originalTextForLine = (lineNode.textContent || "");
             function measureWords(node, style) {
                 if (node.nodeType === 3) {
                     const tokens = (node.nodeValue.match(/(\s+|\S+)/g) || []);
@@ -10644,6 +10711,27 @@ function drawText() {
                     return;
                 } else if (node.nodeType === 1) {
                     if (node.tagName === "BR") {
+                        // ✅ ADD: skip trailing <br> that sits at the very end of a line/block
+                        // (the next <div> already creates the new line, so no extra hard break here)
+                        try {
+                            let trailing = true;
+                            for (let s = node.nextSibling; s; s = s.nextSibling) {
+                                if (s.nodeType === 3) {
+                                    // any non-whitespace text means <br> is not trailing
+                                    const val = (s.nodeValue || "").replace(/\r/g, "");
+                                    if (/\S/.test(val)) { trailing = false; break; }
+                                } else if (s.nodeType === 1) {
+                                    // another element that is not <br> OR a <br> followed by content → not trailing
+                                    if (s.tagName !== "BR") {
+                                        const txt = (s.textContent || "").replace(/\r/g, "");
+                                        if (/\S/.test(txt)) { trailing = false; break; }
+                                    }
+                                }
+                            }
+                            if (trailing) return; // ← important: do nothing for trailing <br>
+                        } catch (e) { /* ignore */ }
+
+
                         const fs = style.fontSize || defaultFontSize;
                         const ff = style.fontFamily || defaultFontFamily;
                         const fw = style.fontWeight || defaultFontWeight;
@@ -10656,6 +10744,8 @@ function drawText() {
                         if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
 
                         segments.push({ text: " ", width, style: { fs, ff, fw, fst, col }, isSpace: true });
+                        // ✅ ADD THIS: also emit a hard line break
+                        segments.push({ nl: true });
                         return;
                     }
                     const s = node.style || {};
@@ -10677,9 +10767,30 @@ function drawText() {
                 fontStyle: defaultFontStyle,
                 color: defaultColor
             });
+            const basePx2 = parseFloat(defaultFontSize) || 16;
+            const lineHeight = (maxFontPx > 0 ? maxFontPx : basePx2) * (box.lineSpacing || 1.2);
+            /* ✅ OPTIONAL ROBUSTNESS ADD — insert these lines */
+            const __hasRealContent = segments.some(seg =>
+                !seg?.nl && !seg?.isSpace && typeof seg.text === "string" && seg.text.trim() !== ""
+            );
+            // draw that text directly so it never disappears.
+            if (!__hasRealContent && __originalTextForLine.trim() !== "") {
+                const drawLeft = innerLeft2;   // you already computed innerLeft2/innerWidth2 above
+                ctx.textAlign = (alignMode === "center") ? "center" : (alignMode === "right" ? "right" : "left");
+                let startX;
+                if (alignMode === "center") startX = drawLeft + Math.max(0, innerWidth2 / 2);
+                else if (alignMode === "right") startX = innerRight2;
+                else startX = drawLeft;
 
-            const basePx = parseFloat(defaultFontSize) || 16;
-            const lineHeight = (maxFontPx > 0 ? maxFontPx : basePx) * (box.lineSpacing || 1.2);
+                // use default font/color for the fallback
+                ctx.font = `${defaultFontStyle} ${defaultFontWeight} ${defaultFontSize} ${defaultFontFamily}`;
+                ctx.fillStyle = defaultColor;
+                ctx.fillText(__originalTextForLine.trim(), startX, cursorY);
+
+                cursorY += lineHeight;
+                usedHeight = cursorY - top + 5;
+                return; // move to next line
+            }
 
             const isBlankLine = (segments.length === 0) ||
                 segments.every(seg => seg.isSpace || ((seg.text || '').trim() === ''));
@@ -10694,9 +10805,9 @@ function drawText() {
 
             if (__usePerRun) {
                 function startXForWidth(runWidth) {
-                    if (alignMode === "center") return innerLeft + Math.max(0, (innerWidth - runWidth) / 2);
-                    if (alignMode === "right") return innerRight - runWidth;
-                    return innerLeft;
+                    if (alignMode === "center") return innerLeft2 + Math.max(0, (innerWidth2 - runWidth) / 2);
+                    if (alignMode === "right") return innerRight2 - runWidth;
+                    return innerLeft2;
                 }
 
                 let runSegs = [];
@@ -10712,25 +10823,23 @@ function drawText() {
                         ctx.fillText(seg.text, x2, cursorY);
                         x2 += seg.width;
                     }
-
                     if (runWidth > __maxRunWidthObserved) __maxRunWidthObserved = runWidth;
-
-                    const lh = (runMaxPx || basePx) * (box.lineSpacing || 1.2);
+                    const lh = (runMaxPx || basePx2) * (box.lineSpacing || 1.2);
                     cursorY += lh;
                     usedHeight = cursorY - top + 5;
-
-                    runSegs = [];
-                    runWidth = 0;
-                    runMaxPx = 0;
+                    runSegs = []; runWidth = 0; runMaxPx = 0;
                 }
-
                 for (const seg of segments) {
-                    const segPx = parseFloat(seg.style.fs) || basePx;
+                    // handle hard line break tokens first
+                    if (seg.nl) {
+                        flushRun();
+                        continue;
+                    }
 
+                    const segPx = parseFloat(seg.style.fs) || basePx2;
                     if (seg.isSpace && runSegs.length === 0) continue;
 
-                    // wrap by tokens
-                    if (runWidth + seg.width > innerWidth && runSegs.length > 0) {
+                    if (runWidth + seg.width > innerWidth2 && runSegs.length > 0) {
                         flushRun();
                         if (seg.isSpace) continue;
                     }
@@ -10739,7 +10848,6 @@ function drawText() {
                     runWidth += seg.width;
                     if (segPx > runMaxPx) runMaxPx = segPx;
                 }
-
                 flushRun();
             } else {
                 let x = cursorX;
@@ -10776,720 +10884,43 @@ function drawText() {
     }
 }
 
-
-
-
-
-function drawTextOLD_3_9() {
-    const designW = canvas.width;
-    const designH = canvas.height;
-
-    // clear & bg
-    ctx.clearRect(0, 0, designW, designH);
-
-    const bgEl = document.getElementById('hdnBackgroundSpecificColor');
-    const bgColor = (bgEl?.value || canvas.style.backgroundColor || "").trim();
-    if (bgColor) {
-        ctx.save();
-        ctx.fillStyle = bgColor;
-        ctx.fillRect(0, 0, designW, designH);
-        ctx.restore();
+// Turn text nodes that contain \n (or \r\n) into text + <br> nodes
+function __explodeNewlinesToBR(root) {
+    if (!root) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const toReplace = [];
+    while (walker.nextNode()) {
+        const t = walker.currentNode;
+        if (t.nodeValue && /[\r\n]/.test(t.nodeValue)) toReplace.push(t);
     }
-
-    if (canvas._bgImg) {
-        if (canvas._bgImg.complete) {
-            ctx.drawImage(canvas._bgImg, 0, 0, designW, designH);
-        } else {
-            canvas._bgImg.onload = () => drawText();
-            canvas._bgImg.onerror = () => { };
-        }
-    }
-
-    // text defaults
-    ctx.textBaseline = "top";
-    const defaultStyle = window.getComputedStyle(textEditorNew);
-    const defaultFontSize = defaultStyle.fontSize || "16px";
-    const defaultFontFamily = defaultStyle.fontFamily || "Arial";
-    const defaultFontWeight = defaultStyle.fontWeight || "normal";
-    const defaultFontStyle = defaultStyle.fontStyle || "normal";
-    const defaultColor = defaultStyle.color || "#000";
-
-    // === local mask (unchanged) ===
-    function __applyLocalRectMask(ctx, w, h, clipVal, direction) {
-        if (!(clipVal > 0 && clipVal < 1)) return;
-        let vw = w, vh = h;
-        if (direction === "left" || direction === "right") vw = w * (1 - clipVal);
-        if (direction === "top" || direction === "bottom") vh = h * (1 - clipVal);
-        let rx = -w / 2, ry = -h / 2;
-        if (direction === "right") rx = (w / 2) - vw;
-        if (direction === "bottom") ry = (h / 2) - vh;
-        ctx.beginPath();
-        ctx.rect(rx, ry, vw, vh);
-        ctx.clip();
-    }
-
-    // === NEW: detect the 6 basic shape SVGs ===
-    const __SPECIAL_SVGS = new Set([
-        //'ico-shapes-circle.svg',
-        //'ico-shapes-heart.svg',
-        //'ico-shapes-hexagon.svg',
-        // 'ico-shapes-line.svg',
-        'ico-shapes-rec.svg',
-        // 'ico-shapes-triangle.svg'
-    ]);
-    function __isSpecialShapeSvg(box) {
-        if (!box || box.type !== 'image' || !box.src) return false;
-        let name = '';
-        try {
-            const u = new URL(String(box.src), window.location.href);
-            name = (u.pathname || '').split('/').pop() || '';
-        } catch {
-            name = String(box.src).split(/[?#]/)[0].split('/').pop() || '';
-        }
-        return __SPECIAL_SVGS.has(name.toLowerCase());
-    }
-
-    // === NEW: 9-slice helper (capsule-safe, no seams) ===
-    // === 9-slice (capsule-safe, constant curvature) ===
-    // curv: optional curvature; 0..0.5 => ratio of height, >1 => pixels
-    //function __drawImageNineSliceLocal(ctx2, img, w, h, curv) {
-    //    const sw = img.naturalWidth || img.width || 1;
-    //    const sh = img.naturalHeight || img.height || 1;
-
-    //    // ---- DESTINATION corner radius (keep constant while squishing) ----
-    //    // prefer explicit 'curv', else img.__curvatureRatio, else 0.5 (pill)
-    //    let k;
-    //    if (typeof curv === 'number' && isFinite(curv)) {
-    //        // <=1 => ratio; >1 => pixels converted to ratio by /h
-    //        k = (curv > 1) ? (curv / h) : curv;
-    //    } else if (typeof img.__curvatureRatio === 'number') {
-    //        k = img.__curvatureRatio;
-    //    } else {
-    //        k = 0.5; // default pill ends
-    //    }
-    //    // clamp to [0..0.5]
-    //    k = Math.max(0, Math.min(0.5, k));
-
-    //    // Fixed destination corner size from HEIGHT, not from current width
-    //    const capDstX = k * h;         // radius horizontally
-    //    const capDstY = k * h;         // radius vertically
-    //    const midDstX = Math.max(0, w - 2 * capDstX); // center can collapse to 0
-    //    const midDstY = Math.max(0, h - 2 * capDstY);
-
-    //    // ---- SOURCE cap size: same ratio of the source asset ----
-    //    let capSrc = Math.round(k * sh);
-    //    capSrc = Math.max(1, Math.min(capSrc, Math.floor(Math.min(sw, sh) / 2)));
-
-    //    // source middles (≥1px to avoid gaps)
-    //    let midSrcW = sw - capSrc * 2, midSrcX = capSrc;
-    //    if (midSrcW < 1) { midSrcW = 1; midSrcX = Math.min(Math.max(0, capSrc), Math.max(0, sw - 1)); }
-
-    //    let midSrcH = sh - capSrc * 2, midSrcY = capSrc;
-    //    if (midSrcH < 1) { midSrcH = 1; midSrcY = Math.min(Math.max(0, capSrc), Math.max(0, sh - 1)); }
-
-    //    const x0 = -w / 2, y0 = -h / 2;
-
-    //    // tiny overlaps to hide seams (DPI-aware)
-    //    const DPR = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
-    //    const OX = 1 / DPR, OY = 1 / DPR;
-
-    //    // Top row
-    //    ctx2.drawImage(img, 0, 0, capSrc, capSrc, x0, y0, capDstX + OX, capDstY + OY); // TL
-    //    if (midDstX > 0)
-    //        ctx2.drawImage(img, midSrcX, 0, midSrcW, capSrc,
-    //            x0 + capDstX - OX, y0, midDstX + 2 * OX, capDstY + OY);       // T
-    //    ctx2.drawImage(img, Math.max(0, sw - capSrc), 0, capSrc, capSrc,
-    //        x0 + capDstX + midDstX - OX, y0, capDstX + OX, capDstY + OY);   // TR
-
-    //    // Middle row
-    //    if (midDstY > 0) {
-    //        ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH,
-    //            x0, y0 + capDstY - OY, capDstX + OX, midDstY + 2 * OY);       // L
-    //        if (midDstX > 0)
-    //            ctx2.drawImage(img, midSrcX, midSrcY, midSrcW, midSrcH,
-    //                x0 + capDstX - OX, y0 + capDstY - OY,
-    //                midDstX + 2 * OX, midDstY + 2 * OY);                         // C
-    //        ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH,
-    //            x0 + capDstX + midDstX - OX, y0 + capDstY - OY,
-    //            capDstX + OX, midDstY + 2 * OY);                               // R
-    //    } else {
-    //        // no center height → stretch side strips to meet
-    //        ctx2.drawImage(img, 0, midSrcY, capSrc, midSrcH,
-    //            x0, y0 + capDstY - OY, capDstX + OX, midDstY + 2 * OY);
-    //        ctx2.drawImage(img, Math.max(0, sw - capSrc), midSrcY, capSrc, midSrcH,
-    //            x0 + capDstX + midDstX - OX, y0 + capDstY - OY,
-    //            capDstX + OX, midDstY + 2 * OY);
-    //    }
-
-    //    // Bottom row
-    //    ctx2.drawImage(img, 0, Math.max(0, sh - capSrc), capSrc, capSrc,
-    //        x0, y0 + capDstY + midDstY - OY, capDstX + OX, capDstY + OY);   // BL
-    //    if (midDstX > 0)
-    //        ctx2.drawImage(img, midSrcX, Math.max(0, sh - capSrc), midSrcW, capSrc,
-    //            x0 + capDstX - OX, y0 + capDstY + midDstY - OY,
-    //            midDstX + 2 * OX, capDstY + OY);                               // B
-    //    ctx2.drawImage(img, Math.max(0, sw - capSrc), Math.max(0, sh - capSrc), capSrc, capSrc,
-    //        x0 + capDstX + midDstX - OX, y0 + capDstY + midDstY - OY,
-    //        capDstX + OX, capDstY + OY);                                     // BR
-    //}
-
-
-    // z-ordered
-    const all = [...(images || []), ...(textObjects || [])]
-        .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
-
-    for (const box of all) {
-        if (box.width == null || Number.isNaN(box.width)) box.width = 50;
-        if (box.height == null || Number.isNaN(box.height)) box.height = 30;
-
-        const { w, h, cx, cy } = getBoxRect(box);
-        const angleRad = deg2rad(box.rotation || 0);
-
-        // clip normalization (unchanged)
-        if (typeof box.previousClip !== "number") {
-            box.previousClip = Number(box.clip) || 0;
-        }
-        const __clipVal = Math.max(0, Math.min(1, Number(box.clip) || 0));
-        const __isHiding = __clipVal > box.previousClip;
-        const __origDir = box.clipDirection || "top";
-        const __effDir = __isHiding ? invertDirection(__origDir) : __origDir;
-        box.previousClip = __clipVal;
-
-        if (__clipVal >= 1) continue;
-
-        box.__clipVal = __clipVal;
-        box.__effDir = __effDir;
-
-        if (typeof box.scaleX !== "number") box.scaleX = 1;
-        if (typeof box.scaleY !== "number") box.scaleY = 1;
-        const __sx = (Number(box.scaleX) || 0);
-        const __sy = (Number(box.scaleY) || 0);
-        if (__sx === 0 || __sy === 0) continue;
-
-        // sandbox world-space clip
-        ctx.save();
-        if (box.clip >= 1) { ctx.restore(); ctx.restore(); return; }
-
-        if (box.clip > 0 && box.clip < 1) {
-            const originalDir = box.clipDirection || "top";
-            const isHiding = box.clip > box.previousClip;
-            const effectiveDirection = isHiding ? invertDirection(originalDir) : originalDir;
-            box.previousClip = box.clip;
-
-            const isImage = box.type === 'image';
-            const width = isImage ? box.width : box.boundingWidth;
-            const height = isImage ? box.height : box.boundingHeight;
-            const x = box.x, y = box.y;
-
-            ctx.beginPath();
-            if (effectiveDirection === "top") {
-                const visibleHeight = height * (1 - box.clip);
-                ctx.rect(x, y, width, visibleHeight);
-            } else if (effectiveDirection === "bottom") {
-                const visibleHeight = height * (1 - box.clip);
-                ctx.rect(x, y + height - visibleHeight, width, visibleHeight);
-            } else if (effectiveDirection === "left") {
-                const visibleWidth = width * (1 - box.clip);
-                ctx.rect(x, y, visibleWidth, height);
-            } else if (effectiveDirection === "right") {
-                const visibleWidth = width * (1 - box.clip);
-                ctx.rect(x + width - visibleWidth, y, visibleWidth, height);
-            }
-            ctx.clip();
-        }
-        ctx.restore();
-
-        // ---- IMAGE ----
-        if (box.type === "image") {
-            const { w, h, cx, cy } = getBoxRect(box);
-            const angleRad = deg2rad(box.rotation || 0);
-
-            ctx.save();
-            ctx.translate(cx, cy);
-            ctx.rotate(angleRad);
-            ctx.scale(__sx, __sy);
-            ctx.globalAlpha = normAlpha(box.opacity);
-
-            if (box.__clipVal > 0 && box.__clipVal < 1) {
-                __applyLocalRectMask(ctx, w, h, box.__clipVal, box.__effDir || "top");
-            }
-
-            if (box.img) {
-                if (box.img.complete) {
-                    // >>> ONLY these 6 svg files use the capsule-safe 9-slice <<<
-                    const useSpecial = __isSpecialShapeSvg(box);
-
-                    if (useSpecial) {
-                        //    // optional: only when aspect changed; otherwise normal draw is fine
-                        //    const natW = box.img.naturalWidth || box.img.width || w;
-                        //    const natH = box.img.naturalHeight || box.img.height || h;
-                        //    const arImg = natW / Math.max(natH, 1e-6);
-                        //    const arBox = w / Math.max(h, 1e-6);
-                        //    const aspectChanged = Math.abs(arBox - arImg) > 1e-3;
-
-                        //    if (aspectChanged) {
-                        //        __drawImageNineSliceLocal(ctx, box.img, w, h);
-                        //    } else {
-                        //        ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
-                        //    }
-                        //} else {
-                        //    // old behavior for everything else
-                        //    ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
-                        //}
-                        const natW = box.img.naturalWidth || box.img.width || w;
-                        const natH = box.img.naturalHeight || box.img.height || h;
-                        const arImg = natW / Math.max(natH, 1e-6);
-                        const arBox = w / Math.max(h, 1e-6);
-
-                        const aspectChanged = Math.abs(arBox - arImg) > 1e-3;
-                        const preserveCaps = (box.preserveCaps === true) || aspectChanged;
-                        if (preserveCaps) {
-                            const k = (typeof box.curvatureRatio === 'number') ?
-                                Math.max(0, Math.min(1, box.curvatureRatio)) : 1; // default pill
-                            __drawImageNineSliceLocal(ctx, box.img, w, h, k /*ratio*/);
-                        } else {
-                            ctx.drawImage(box.img, -w / 2, -h / 2, w, h);
-                        }
-                    }
-
-                } else {
-                    const img = box.img;
-                    img.onload = () => { img.onload = null; drawText(); };
-                    img.onerror = () => { img.onerror = null; };
-                }
-            }
-
-            ctx.restore();
-
-            if (box.selected && w > 0 && h > 0) {
-                drawRotatedSelection(ctx, { ...box, width: w * __sx, height: h * __sy });
-            }
-            continue;
-        }
-
-        // ---- TEXT ---- (unchanged)
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(angleRad);
-        ctx.scale(__sx, __sy);
-        ctx.globalAlpha = normAlpha(box.opacity);
-
-        if (box.__clipVal > 0 && box.__clipVal < 1) {
-            __applyLocalRectMask(ctx, w, h, box.__clipVal, box.__effDir || "top");
-        }
-
-        const wrapper = document.createElement("div");
-        wrapper.innerHTML = box.text || "";
-
-        const lines = [];
-        wrapper.childNodes.forEach(n => {
-            if (n.nodeType === 1 && n.tagName === "DIV") {
-                const hasContent = n.textContent.trim().length > 0 || n.children.length > 0;
-                if (!hasContent) {
-                    const blank = document.createElement("div");
-                    blank.appendChild(document.createTextNode(" "));
-                    lines.push(blank);
-                } else {
-                    const ln = document.createElement("div");
-                    ln.append(...n.cloneNode(true).childNodes);
-                    lines.push(ln);
-                }
-            } else if (n.nodeType === 1 && n.tagName === "BR") {
-                const brLine = document.createElement("div");
-                brLine.appendChild(document.createTextNode(" "));
-                lines.push(brLine);
-            } else {
-                if (lines.length === 0) lines.push(document.createElement("div"));
-                lines[lines.length - 1].appendChild(n.cloneNode(true));
-            }
+    for (const t of toReplace) {
+        const parts = t.nodeValue.replace(/\r/g, "").split("\n");
+        const frag = document.createDocumentFragment();
+        parts.forEach((s, i) => {
+            if (s) frag.appendChild(document.createTextNode(s));
+            if (i < parts.length - 1) frag.appendChild(document.createElement("br"));
         });
-
-        const left = -w / 2;
-        const top = -h / 2;
-
-        let cursorY = top + 5;
-        let usedHeight = 0;
-
-        let __maxRunWidthObserved = 0;
-        let __maxTokenWidthObserved = 0;
-
-        lines.forEach(lineNode => {
-            let cursorX = left + 5;
-            if (box.align === "center") {
-                ctx.textAlign = "center";
-                cursorX = left + w / 2;
-            } else if (box.align === "right") {
-                ctx.textAlign = "right";
-                cursorX = left + w - 5;
-            } else {
-                ctx.textAlign = "left";
-            }
-
-            const innerLeft = left + 5;
-            const innerRight = left + w - 5;
-            const innerWidth = Math.max(0, innerRight - innerLeft);
-            const alignMode = box.align || "left";
-            ctx.textAlign = "left";
-
-            let segments = [];
-            let maxFontPx = 0;
-
-            function measureWords(node, style) {
-                if (node.nodeType === 3) {
-                    const tokens = (node.nodeValue.match(/(\s+|\S+)/g) || []);
-                    for (let tk of tokens) {
-                        const fs = style.fontSize || defaultFontSize;
-                        const ff = style.fontFamily || defaultFontFamily;
-                        const fw = style.fontWeight || defaultFontWeight;
-                        const fst = style.fontStyle || defaultFontStyle;
-                        const col = style.color || defaultColor;
-
-                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
-                        const width = ctx.measureText(tk).width;
-                        const px = parseFloat(fs);
-                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
-
-                        const isSpace = /^\s+$/.test(tk);
-                        segments.push({ text: tk, width, style: { fs, ff, fw, fst, col }, isSpace });
-
-                        if (!isSpace && width > __maxTokenWidthObserved) {
-                            __maxTokenWidthObserved = width;
-                        }
-                    }
-                    return;
-                } else if (node.nodeType === 1) {
-                    if (node.tagName === "BR") {
-                        const fs = style.fontSize || defaultFontSize;
-                        const ff = style.fontFamily || defaultFontFamily;
-                        const fw = style.fontWeight || defaultFontWeight;
-                        const fst = style.fontStyle || defaultFontStyle;
-                        const col = style.color || defaultColor;
-
-                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
-                        const width = ctx.measureText(" ").width;
-                        const px = parseFloat(fs);
-                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
-
-                        segments.push({ text: " ", width, style: { fs, ff, fw, fst, col }, isSpace: true });
-                        return;
-                    }
-                    const s = node.style || {};
-                    const nextStyle = {
-                        fontSize: s.fontSize || style.fontSize,
-                        fontFamily: s.fontFamily || style.fontFamily,
-                        fontWeight: s.fontWeight || style.fontWeight,
-                        fontStyle: s.fontStyle || style.fontStyle,
-                        color: s.color || style.color,
-                    };
-                    node.childNodes.forEach(child => measureWords(child, nextStyle));
-                }
-            }
-
-            measureWords(lineNode, {
-                fontSize: defaultFontSize,
-                fontFamily: defaultFontFamily,
-                fontWeight: defaultFontWeight,
-                fontStyle: defaultFontStyle,
-                color: defaultColor
-            });
-
-            const basePx = parseFloat(defaultFontSize) || 16;
-            const lineHeight = (maxFontPx > 0 ? maxFontPx : basePx) * (box.lineSpacing || 1.2);
-
-            const isBlankLine = (segments.length === 0) ||
-                segments.every(seg => seg.isSpace || ((seg.text || '').trim() === ''));
-
-            if (isBlankLine) {
-                cursorY += lineHeight;
-                usedHeight = cursorY - top + 5;
-                return;
-            }
-
-            const __usePerRun = true;
-
-            if (__usePerRun) {
-                function startXForWidth(runWidth) {
-                    if (box.align === "center") return innerLeft + Math.max(0, (innerWidth - runWidth) / 2);
-                    if (box.align === "right") return innerRight - runWidth;
-                    return innerLeft;
-                }
-
-                let runSegs = [];
-                let runWidth = 0;
-                let runMaxPx = 0;
-
-                function flushRun() {
-                    if (runSegs.length === 0) return;
-                    let x2 = startXForWidth(runWidth);
-                    for (const seg of runSegs) {
-                        ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
-                        ctx.fillStyle = seg.style.col;
-                        ctx.fillText(seg.text, x2, cursorY);
-                        x2 += seg.width;
-                    }
-                    if (runWidth > __maxRunWidthObserved) __maxRunWidthObserved = runWidth;
-
-                    const lh = (runMaxPx || basePx) * (box.lineSpacing || 1.2);
-                    cursorY += lh;
-                    usedHeight = cursorY - top + 5;
-
-                    runSegs = [];
-                    runWidth = 0;
-                    runMaxPx = 0;
-                }
-
-                for (const seg of segments) {
-                    const segPx = parseFloat(seg.style.fs) || basePx;
-                    if (seg.isSpace && runSegs.length === 0) continue;
-
-                    if (runWidth + seg.width > innerWidth && runSegs.length > 0) {
-                        flushRun();
-                        if (seg.isSpace) continue;
-                    }
-
-                    runSegs.push(seg);
-                    runWidth += seg.width;
-                    if (segPx > runMaxPx) runMaxPx = segPx;
-                }
-
-                flushRun();
-            } else {
-                let x = left + 5, drewSomething = false;
-                segments.forEach(seg => {
-                    if (x + seg.width > left + w - 0.01) {
-                        cursorY += lineHeight;
-                        x = left + 5;
-                    }
-                    ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
-                    ctx.fillStyle = seg.style.col;
-                    ctx.fillText(seg.text, x, cursorY);
-                    x += seg.width;
-                    drewSomething = true;
-                });
-                if (drewSomething) cursorY += lineHeight;
-                usedHeight = cursorY - top + 5;
-            }
-        });
-
-        const __minOuterWidthByWord = Math.ceil(__maxTokenWidthObserved + 10);
-        if (__minOuterWidthByWord > (box.width || 0)) {
-            box.width = __minOuterWidthByWord;
-        }
-
-        box.height = usedHeight;
-        syncTextDims(box);
-        ctx.restore();
-
-        if (box.selected && w > 0 && h > 0) {
-            drawRotatedSelection(ctx, { ...box, width: w * __sx, height: h * __sy });
-        }
+        t.parentNode.replaceChild(frag, t);
     }
 }
 
 
 
-
-
-
-
-function drawTextOLD() {
-    const designW = canvas.width;
-    const designH = canvas.height;
-
-    // clear & bg
-    ctx.clearRect(0, 0, designW, designH);
-
-    const bgEl = document.getElementById('hdnBackgroundSpecificColor');
-    const bgColor = (bgEl?.value || canvas.style.backgroundColor || "").trim();
-    if (bgColor) {
-        ctx.save();
-        ctx.fillStyle = bgColor;
-        ctx.fillRect(0, 0, designW, designH);
-        ctx.restore();
+function __stripTrailingBRs(div) {
+    if (!div) return;
+    // remove any <br> at the very end of the block
+    while (div.lastChild && div.lastChild.nodeType === 1 && div.lastChild.tagName === 'BR') {
+        div.removeChild(div.lastChild);
     }
-
-    if (canvas._bgImg) {
-        if (canvas._bgImg.complete) {
-            ctx.drawImage(canvas._bgImg, 0, 0, designW, designH);
-        } else {
-            canvas._bgImg.onload = () => drawText();
-            canvas._bgImg.onerror = () => { };
-        }
-    }
-
-    // defaults for text measuring
-    ctx.textBaseline = "top";
-    const defaultStyle = window.getComputedStyle(textEditorNew);
-    const defaultFontSize = defaultStyle.fontSize || "16px";
-    const defaultFontFamily = defaultStyle.fontFamily || "Arial";
-    const defaultFontWeight = defaultStyle.fontWeight || "normal";
-    const defaultFontStyle = defaultStyle.fontStyle || "normal";
-    const defaultColor = defaultStyle.color || "#000";
-
-    // z-ordered render of images + text (textObjects kept intact)
-    const all = [...(images || []), ...(textObjects || [])].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
-
-    for (const box of all) {
-        if (!box.width || isNaN(box.width)) box.width = 50;
-        if (!box.height || isNaN(box.height)) box.height = 30;
-
-        // ---- IMAGE ----
-        if (box.type === "image") {
-            ctx.save();
-            // (no rotation here since your old code didn't do rotated text; keeps selection aligned)
-
-            ctx.globalAlpha = normAlpha(box.opacity);
-            ctx.drawImage(box.img, box.x, box.y, box.width, box.height);
-            ctx.restore();
-
-            // same selection UI as old text (strokeRect + handle squares)
-            if (box.selected && box.width > 0 && box.height > 0) {
-                ctx.strokeStyle = "red";
-                ctx.lineWidth = 1;
-                ctx.strokeRect(box.x, box.y, box.width, box.height);
-                ctx.fillStyle = "blue";
-                for (let h of Object.values(getAllHandles(box))) {
-                    ctx.fillRect(h.x - 4, h.y - 4, 8, 8);
-                }
-                const rot = (box.rotation || 0) * Math.PI / 180;
-                ctx.rotate(rot);
-            }
-            continue;
-        }
-
-        // ---- TEXT (your old logic preserved) ----
-        ctx.save();
-        const rot = (box.rotation || 0) * Math.PI / 180;
-        ctx.rotate(rot);
-        ctx.globalAlpha = normAlpha(box.opacity);
-        const wrapper = document.createElement("div");
-        wrapper.innerHTML = box.text;
-
-        const lines = [];
-        wrapper.childNodes.forEach(n => {
-            if (n.nodeType === 1 && n.tagName === "DIV") {
-                const hasContent = n.textContent.trim().length > 0 || n.children.length > 0;
-                if (!hasContent) {
-                    const blankLine = document.createElement("div");
-                    blankLine.appendChild(document.createTextNode(" "));
-                    lines.push(blankLine);
-                } else {
-                    const newLine = document.createElement("div");
-                    newLine.append(...n.cloneNode(true).childNodes);
-                    lines.push(newLine);
-                }
-            } else if (n.nodeType === 1 && n.tagName === "BR") {
-                const brLine = document.createElement("div");
-                brLine.appendChild(document.createTextNode(" "));
-                lines.push(brLine);
-            } else {
-                if (lines.length === 0) lines.push(document.createElement("div"));
-                lines[lines.length - 1].appendChild(n.cloneNode(true));
-            }
-        });
-
-        let cursorY = box.y + 5;
-        let usedHeight = 0;
-
-        lines.forEach(lineNode => {
-            let cursorX = box.x + 5;
-            if (box.align === "center") {
-                ctx.textAlign = "center";
-                cursorX = box.x + box.width / 2;
-            } else if (box.align === "right") {
-                ctx.textAlign = "right";
-                cursorX = box.x + box.width - 5;
-            } else {
-                ctx.textAlign = "left";
-            }
-
-            let segments = [];
-            let maxFontPx = 0;
-
-            function measureWords(node, style) {
-                if (node.nodeType === 3) {
-                    const words = node.nodeValue.split("");
-                    for (let word of words) {
-                        const fs = style.fontSize || defaultFontSize;
-                        const ff = style.fontFamily || defaultFontFamily;
-                        const fw = style.fontWeight || defaultFontWeight;
-                        const fst = style.fontStyle || defaultFontStyle;
-                        const col = style.color || defaultColor;
-
-                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
-                        const width = ctx.measureText(word).width;
-                        const px = parseFloat(fs);
-                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
-
-                        segments.push({ text: word, width, style: { fs, ff, fw, fst, col } });
-                    }
-                } else if (node.nodeType === 1) {
-                    if (node.tagName === "BR") {
-                        const fs = style.fontSize || defaultFontSize;
-                        const ff = style.fontFamily || defaultFontFamily;
-                        const fw = style.fontWeight || defaultFontWeight;
-                        const fst = style.fontStyle || defaultFontStyle;
-                        const col = style.color || defaultColor;
-
-                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
-                        const width = ctx.measureText(" ").width;
-                        const px = parseFloat(fs);
-                        if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
-                        segments.push({ text: " ", width, style: { fs, ff, fw, fst, col } });
-                        return;
-                    }
-                    const s = node.style;
-                    const nextStyle = {
-                        fontSize: s.fontSize || style.fontSize,
-                        fontFamily: s.fontFamily || style.fontFamily,
-                        fontWeight: s.fontWeight || style.fontWeight,
-                        fontStyle: s.fontStyle || style.fontStyle,
-                        color: s.color || style.color,
-                    };
-                    node.childNodes.forEach(child => measureWords(child, nextStyle));
-                }
-            }
-
-            measureWords(lineNode, {
-                fontSize: defaultFontSize,
-                fontFamily: defaultFontFamily,
-                fontWeight: defaultFontWeight,
-                fontStyle: defaultFontStyle,
-                color: defaultColor
-            });
-
-            const lineHeight = maxFontPx * (box.lineSpacing || 1.2);
-            let x = cursorX;
-            segments.forEach(segment => {
-                if (x + segment.width > box.x + box.width - .01) {
-                    cursorY += lineHeight;
-                    x = cursorX;
-                }
-                ctx.font = `${segment.style.fst} ${segment.style.fw} ${segment.style.fs} ${segment.style.ff}`;
-                ctx.fillStyle = segment.style.col;
-                ctx.fillText(segment.text, x, cursorY);
-                x += segment.width;
-            });
-
-            cursorY += lineHeight;
-            usedHeight = cursorY - box.y + 5;
-        });
-
-        box.height = usedHeight;
-
-        if (box.selected && box.width > 0 && box.height > 0) {
-            ctx.strokeStyle = "red";
-            ctx.lineWidth = 1;
-            ctx.strokeRect(box.x, box.y, box.width, box.height);
-            ctx.fillStyle = "blue";
-            for (let h of Object.values(getAllHandles(box))) {
-                ctx.fillRect(h.x - 4, h.y - 4, 8, 8);
-            }
-        }
-
-        ctx.restore();
+    // remove trailing whitespace-only text nodes (incl. \r\n)
+    while (div.lastChild && div.lastChild.nodeType === 3) {
+        const t = div.lastChild.nodeValue || "";
+        if (t.replace(/\s|\r|\n/g, "") === "") div.removeChild(div.lastChild); else break;
     }
 }
+
+
+
 
 
 
@@ -14199,18 +13630,18 @@ textEditorNew.addEventListener("input", () => {
 
 textEditorNew.addEventListener("keydown", e => {
     if (e.key === "Enter") {
-        // ✅ Let line break happen first
+        // Let the browser finish its contenteditable mutation first.
         setTimeout(() => {
-            // Check if we're still editing and an activeBox exists
-            if (activeBox && isEditing) {
-                activeBox.text = textEditorNew.innerHTML;
-
-                drawText();
-            }
+            requestAnimationFrame(() => {
+                if (activeBox && isEditing) {
+                    // copy after DOM is fully updated, so the first <div> (Text <br>) is included
+                    activeBox.text = textEditorNew.innerHTML;
+                    drawText();
+                }
+            });
         }, 0);
     }
 });
-
 
 //boldBtn.addEventListener("click", e => {
 //    e.preventDefault();
@@ -15849,12 +15280,12 @@ function __normalizeEmptyLinesPreservingNBSP(root) {
     });
 }
 // ✅ ADD: keep cached caret in sync after any input so next paste lands at the right place
-textEditorNew.addEventListener('input', () => {
-    requestAnimationFrame(() => {
-        __normalizeEmptyLinesPreservingNBSP(textEditorNew);
-        __saveLiveCaretRange(textEditorNew);
-    });
-});
+//textEditorNew.addEventListener('input', () => {
+//    requestAnimationFrame(() => {
+//        __normalizeEmptyLinesPreservingNBSP(textEditorNew);
+//        __saveLiveCaretRange(textEditorNew);
+//    });
+//});
 
 // ✅ ADD: also track selection changes driven by mouse/keyboard
 document.addEventListener('selectionchange', () => {
