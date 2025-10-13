@@ -5682,6 +5682,7 @@ canvas.addEventListener("click", function onCanvasClick(e) {
     const clickedEmpty = !txtHit && !imgHit;
     const clickedUnselected = !!(topHit && !topHit.selected);
     if (clickedEmpty || clickedUnselected) {
+        contextMenu.style.display = 'none';
         // ✅ if this is the synthetic click right after marquee, ignore the clear ONCE
         if (ignoreClearOnce) return;
         clearSelection();
