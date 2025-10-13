@@ -8173,6 +8173,15 @@ canvas.addEventListener('drop', e => {
     activeBox = newImgObj;
     activeImage = newImgObj;
 
+    // 👇 ensure it renders on top
+    if (typeof bringToFront === 'function') {
+        bringToFront(newImgObj);
+    } else {
+        // fallback if helper doesn't exist
+        const all = [...images, ...textObjects].filter(Boolean);
+        const maxZ = all.length ? Math.max(...all.map(o => o.zIndex || 0)) : 0;
+        newImgObj.zIndex = maxZ + 1;
+    }
     // try { ChangeFillColor(); } catch (_) { }
 
     img.onload = () => {
