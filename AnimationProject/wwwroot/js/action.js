@@ -1892,7 +1892,7 @@ async function showSlide(index) {
     const inTime = parseFloat(state.inTime) || 4;
     const stayTime = parseFloat(state.stayTime) || 3;
     const outTime = parseFloat(state.outTime) || 4;
-    const slideExecutionTime = inTime + (stayTime - 2) + outTime;/*inTime + stayTime + outTime;*/
+    const slideExecutionTime = inTime + stayTime;/*inTime + stayTime + outTime;*/
 
     // 1) draw & animate this slide’s in→stay→out
     loadCanvasFromJsonForDownload(state, 'Common');
@@ -2482,7 +2482,8 @@ function startVideoCapture() {
     }, 8000);
 }
 function getCompanyIdFromUrl() {
-    return 1;
+    var companyUniqueId = $("#hdnCompanyUniqueId").val();
+    return companyUniqueId;
     //const segments = window.location.pathname.split('/').filter(segment => segment !== '');
     //// Assuming the last segment is the company ID.
     //return segments.length ? segments[segments.length - 1] : null;

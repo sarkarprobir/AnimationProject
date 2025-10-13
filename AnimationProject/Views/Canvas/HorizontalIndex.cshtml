@@ -1183,6 +1183,9 @@
           }
         });
 </script>
+@{
+    var mode = (long)(ViewBag.CompanyUniqueId);
+}
 
     
 
@@ -1219,6 +1222,7 @@
     <input type="hidden" id="hdnInSpeedforSlide3" />
     <input type="hidden" id="hdnOutSpeedforSlide3" />
     <input type="hidden" id="hdnStaySpeedforSlide3" />
+    <input type="hidden" id="hdnCompanyUniqueId" value="@mode" />
     <!-- Modal Structure -->
  @*    <div class="modal fade layout_modal" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" style="background-color: rgba(36, 7, 136, 0.49) !important;">
         

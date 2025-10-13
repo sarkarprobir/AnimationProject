@@ -53,10 +53,22 @@ namespace AnimationProject.Controllers
         }
         public IActionResult VerticalIndex()
         {
+            var user = _sessionService.GetUser();
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Home");
+            }
+            ViewBag.CompanyUniqueId = user.CompanyUniqueId;
             return View();
         }
         public IActionResult HorizontalIndex()
         {
+            var user = _sessionService.GetUser();
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Home");
+            }
+            ViewBag.CompanyUniqueId = user.CompanyUniqueId;
             return View();
         }
         

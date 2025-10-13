@@ -1639,7 +1639,9 @@
     </script>
 
 }
-
+@{
+    var mode = (long)(ViewBag.CompanyUniqueId);
+}
 
 <div class="text-center" style="position:relative">
     <nav class="navbar bg-dark-topnav navbar-expand-lg fixed-top">
@@ -1660,6 +1662,7 @@
                     <input type="hidden" id="hdnBackgroundSpecificColorDownload" />
                     <input type="hidden" id="hdnPublishBoardUniqueId" />
                     <input type="hidden" id="hdnDesignBoardPublishId" />
+                    <input type="hidden" id="hdnCompanyUniqueId" value="@mode" />
                     <div class="modal-body">
                         <canvas id="myCanvasElement"
                                 class="clsmyCanvas"
