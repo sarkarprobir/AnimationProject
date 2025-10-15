@@ -10488,7 +10488,11 @@ function drawText() {
         // ---- RICH HTML PATH (UNCHANGED from your code) ----
         const wrapper = document.createElement("div");
         wrapper.innerHTML = box.text || "";
-        __explodeNewlinesToBR(wrapper); // <-- ADD THIS
+        __normalizeToLineDivs(wrapper);
+        // __unwrapSpanBlocks(wrapper);     // handles <div><span>…block lines…</span></div>
+        __fixEmptyLineDivs(wrapper);     // ensures <div><br></div> for blank lines
+        __explodeNewlinesToBR(wrapper);
+
 
 
         const lines = [];
@@ -10550,6 +10554,7 @@ function drawText() {
             const __originalTextForLine = (lineNode.textContent || "");
             function measureWords(node, style) {
                 if (node.nodeType === 3) {
+                    // text node → split but keep whitespace tokens
                     const tokens = (node.nodeValue.match(/(\s+|\S+)/g) || []);
                     for (let tk of tokens) {
                         const fs = style.fontSize || defaultFontSize;
@@ -10571,45 +10576,58 @@ function drawText() {
                         }
                     }
                     return;
-                } else if (node.nodeType === 1) {
+                } 
+                if (node.nodeType === 1) {
+                    // <br> → hard newline (no space token)
                     if (node.tagName === "BR") {
-                        // ✅ ADD: skip trailing <br> that sits at the very end of a line/block
-                        // (the next <div> already creates the new line, so no extra hard break here)
-                        try {
-                            let trailing = true;
+                        // Find the nearest "line" container (DIV or P), climbing over SPAN wrappers, etc.
+                        let lineContainer = null;
+                        if (node.closest) lineContainer = node.closest('div, p');
+
+                        // Treat as a real blank line if the container has a BR somewhere and no visible text
+                        let onlyBRLine = false;
+                        if (lineContainer) {
+                            const textNoZW = (lineContainer.textContent || '').replace(/\u200B/g, '');
+                            const onlyWS = !/[^\s\u00A0]/.test(textNoZW);
+                            const hasBR = !!lineContainer.querySelector('br');
+                            if (hasBR && onlyWS) onlyBRLine = true;
+                        }
+
+                        // "Trailing BR" detection (nothing meaningful after it),
+                        // BUT do not treat as trailing if the next sibling is another <br>, or if it's an onlyBRLine.
+                        let trailing = true;
+                        if (!onlyBRLine) {
                             for (let s = node.nextSibling; s; s = s.nextSibling) {
                                 if (s.nodeType === 3) {
-                                    // any non-whitespace text means <br> is not trailing
                                     const val = (s.nodeValue || "").replace(/\r/g, "");
                                     if (/\S/.test(val)) { trailing = false; break; }
                                 } else if (s.nodeType === 1) {
-                                    // another element that is not <br> OR a <br> followed by content → not trailing
-                                    if (s.tagName !== "BR") {
-                                        const txt = (s.textContent || "").replace(/\r/g, "");
-                                        if (/\S/.test(txt)) { trailing = false; break; }
-                                    }
+                                    if (s.tagName === 'BR') { trailing = false; break; } // allow <br><br> chains
+                                    const txt = (s.textContent || "").replace(/\r/g, "");
+                                    if (/\S/.test(txt)) { trailing = false; break; }
                                 }
                             }
-                            if (trailing) return; // ← important: do nothing for trailing <br>
-                        } catch (e) { /* ignore */ }
+                        }
 
+                        // If it's an onlyBRLine (visual blank line), DO NOT skip it.
+                        // Otherwise, skip truly trailing BRs.
+                        if (!onlyBRLine && trailing) return;
+
+                        // Record font metrics so line-height stays correct
                         const fs = style.fontSize || defaultFontSize;
                         const ff = style.fontFamily || defaultFontFamily;
                         const fw = style.fontWeight || defaultFontWeight;
                         const fst = style.fontStyle || defaultFontStyle;
                         const col = style.color || defaultColor;
-
-                        ctx.font = `${fst} ${fw} ${fs} ${ff}`;
-                        const width = ctx.measureText(" ").width;
                         const px = parseFloat(fs);
                         if (!isNaN(px)) maxFontPx = Math.max(maxFontPx, px);
 
-                        segments.push({ text: " ", width, style: { fs, ff, fw, fst, col }, isSpace: true });
-
-                        // ✅ ADD THIS: also emit a hard line break
-                        segments.push({ nl: true });
+                        // Emit a hard newline marker (renderer should flush on seg.nl)
+                        segments.push({ nl: true, style: { fs, ff, fw, fst, col } });
                         return;
                     }
+
+                    // normal element: recurse with inherited inline styles
                     const s = node.style || {};
                     const nextStyle = {
                         fontSize: s.fontSize || style.fontSize,
@@ -10619,6 +10637,7 @@ function drawText() {
                         color: s.color || style.color,
                     };
                     node.childNodes.forEach(child => measureWords(child, nextStyle));
+                    return;
                 }
             }
 
@@ -10654,8 +10673,16 @@ function drawText() {
                 usedHeight = cursorY - top + 5;
                 return; // move to next line
             }
-            const isBlankLine = (segments.length === 0) ||
-                segments.every(seg => seg.isSpace || ((seg.text || '').trim() === ''));
+            //const isBlankLine = (segments.length === 0) ||
+            //    segments.every(seg => seg.isSpace || ((seg.text || '').trim() === ''));
+
+            const hasBROnly = (lineNode.children.length > 0) &&
+                Array.from(lineNode.childNodes).every(
+                    c => c.nodeType === 1 && c.tagName === 'BR'
+                );
+
+            const onlyWhitespace = !/\S/.test(lineNode.textContent || '');
+            const isBlankLine = hasBROnly || onlyWhitespace;
 
             if (isBlankLine) {
                 cursorY += lineHeight;
@@ -10676,41 +10703,55 @@ function drawText() {
                 let runWidth = 0;
                 let runMaxPx = 0;
 
-                function flushRun() {
-                    if (runSegs.length === 0) return;
-                    let x2 = startXForWidth(runWidth);
-                    for (const seg of runSegs) {
-                        ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
-                        ctx.fillStyle = seg.style.col;
-                        ctx.fillText(seg.text, x2, cursorY);
-                        x2 += seg.width;
+                function flushRun(forceLine, heightPx) {
+                    if (runSegs.length === 0 && !forceLine) return;
+
+                    // draw the buffered segments when present
+                    if (runSegs.length) {
+                        let x2 = startXForWidth(runWidth);
+                        for (const seg of runSegs) {
+                            ctx.font = `${seg.style.fst} ${seg.style.fw} ${seg.style.fs} ${seg.style.ff}`;
+                            ctx.fillStyle = seg.style.col;
+                            ctx.fillText(seg.text, x2, cursorY);
+                            x2 += seg.width;
+                        }
                     }
-                    if (runWidth > __maxRunWidthObserved) __maxRunWidthObserved = runWidth;
-                    const lh = (runMaxPx || basePx2) * (box.lineSpacing || 1.2);
+
+                    // decide line height
+                    const px = forceLine ? (heightPx || basePx2)
+                        : (runMaxPx || basePx2);
+                    const lh = px * (box.lineSpacing || 1.2);
+
                     cursorY += lh;
                     usedHeight = cursorY - top + 5;
-                    runSegs = []; runWidth = 0; runMaxPx = 0;
+
+                    // reset run
+                    runSegs = [];
+                    runWidth = 0;
+                    runMaxPx = 0;
                 }
+
                 for (const seg of segments) {
-                    // handle hard line break tokens first
+                    // ---- handle hard line break tokens first ----
                     if (seg.nl) {
-                        flushRun();
+                        const segPx = parseFloat(seg.style?.fs) || basePx2;
+                        flushRun(true, segPx);   // force a line advance even if run is empty
                         continue;
                     }
 
                     const segPx = parseFloat(seg.style.fs) || basePx2;
                     if (seg.isSpace && runSegs.length === 0) continue;
-
                     if (runWidth + seg.width > innerWidth2 && runSegs.length > 0) {
-                        flushRun();
+                        flushRun(false);
                         if (seg.isSpace) continue;
                     }
-
                     runSegs.push(seg);
                     runWidth += seg.width;
                     if (segPx > runMaxPx) runMaxPx = segPx;
                 }
-                flushRun();
+                flushRun(runSegs.length === 0 ? false : false); // keep as-is; last line flush
+
+
             } else {
                 let x = cursorX;
                 let drewSomething = false;
@@ -12897,8 +12938,8 @@ function addDefaultText(opts = {}) {
         height: minH,
         align: align,
         text: html,
-        lineSpacing: factor,   // your drawText() uses multiplier
-        fontScale: 1,          // for corner font-scaling path (if used)
+        lineSpacing: factor,
+        fontScale: 1,
         type: 'text',
         zIndex: (typeof getNextZIndex === 'function')
             ? getNextZIndex()
@@ -12918,15 +12959,22 @@ function addDefaultText(opts = {}) {
     newBox.height = Math.max(minH, Math.ceil(textH + padY));
 
     // --- push to boxes and set active ---
-    //  boxes.push(newBox);
+    if (Array.isArray(boxes)) boxes.push(newBox);
     activeBox = newBox;
+    // --- bring the new box to the very top (uses your existing function) ---
+    if (typeof bringToFront === 'function') {
+        bringToFront(newBox);
+    } else {
+        // fallback: bump zIndex
+        const maxZ = Math.max(0, ...(boxes.map(b => b.zIndex || 0)));
+        newBox.zIndex = maxZ + 1;
+    }
 
     // --- mirror into textObjects with your exact selection flow ---
     if (Array.isArray(textObjects)) {
-        // deselect all, select the new one, push
         textObjects.forEach(o => o.selected = false);
         const newObj = {
-            text: html,                   // plain text string (matches your addDefaultText)
+            text: html,
             x: newBox.x,
             y: newBox.y,
             selected: true,
@@ -12935,7 +12983,7 @@ function addDefaultText(opts = {}) {
             textColor: color,
             textAlign: align,
             fontSize: fs,
-            lineSpacing: factor,    // multiplier
+            lineSpacing: factor,
             boundingWidth: newBox.width,
             boundingHeight: newBox.height,
             noAnim: false,
@@ -12944,7 +12992,7 @@ function addDefaultText(opts = {}) {
             isBold: false,
             isItalic: false,
             type: 'text',
-            zIndex: (typeof getNextZIndex === 'function') ? getNextZIndex() : 0,
+            zIndex: newBox.zIndex,   // keep in sync with the box
             opacity: 100,
             width: newBox.width,
             height: newBox.height,
@@ -12961,6 +13009,7 @@ function addDefaultText(opts = {}) {
 
     // --- redraw with your renderer ---
     drawText();
+
     // ---- optional UI tidy (from addDefaultText) ----
     try {
         if (window.$) {
@@ -12969,10 +13018,9 @@ function addDefaultText(opts = {}) {
         }
     } catch (_) { /* noop */ }
 
-    // (optional) if you also need your other pipeline:
-    // if (typeof drawCanvas === 'function') drawCanvas('Common');
     console.log("Add", textObjects);
 }
+
 
 
 function generateJson() {
@@ -13470,7 +13518,7 @@ textEditorNew.addEventListener("input", () => {
 
     // ✅ add this line FIRST
     ensureEditorWrapping();
-    hoistNestedLines(textEditorNew);        // ✅ ADD this line
+    //hoistNestedLines(textEditorNew);        // ✅ ADD this line
 
     // ✅ Add this: keeps pasted copies as top-level lines
     hoistNestedLines(textEditorNew);
@@ -13513,6 +13561,7 @@ textEditorNew.addEventListener("input", () => {
 //});
 
 textEditorNew.addEventListener("keydown", e => {
+    if (e.isComposing) return;
     if (e.key === "Enter") {
         // Let the browser finish its contenteditable mutation first.
         setTimeout(() => {
@@ -16471,4 +16520,537 @@ function SetTimeWhileSelect() {
         $('#hdnOutSpeedforSlide3').val(parseInt(document.getElementById('lblOutSpeed').textContent)) || 4;
 
     }
+}
+// Normalize any pasted/editor HTML into "one line per <div>".
+// • <p>…</p>  → <div>…</div>
+// • <p><br></p> → <div><br></div>
+// • top-level text/BR → wrap into line <div>s
+function __normalizeToLineDivs(root) {
+    if (!root) return;
+
+    // ========= Helper: turn one <p> into a line <div>, preserving blank-line styles =========
+    function pToDiv(p) {
+        const d = document.createElement('div');
+        const textNoZW = (p.textContent || '').replace(/\u200B/g, '');
+        const onlyWS = !/[^\s\u00A0]/.test(textNoZW);
+        const hasDeepBR = !!p.querySelector('br');
+
+        if (onlyWS && hasDeepBR) {
+            // Keep one style span if present (handles <p><span style><span><br>…)
+            const styledSpan = p.querySelector('span[style]');
+            if (styledSpan) {
+                const wrap = document.createElement('span');
+                wrap.setAttribute('style', styledSpan.getAttribute('style') || '');
+                wrap.appendChild(document.createElement('br'));
+                d.appendChild(wrap);
+            } else {
+                d.appendChild(document.createElement('br'));
+            }
+            return d;
+        }
+
+        // Not a blank paragraph → move its children as-is
+        while (p.firstChild) d.appendChild(p.firstChild);
+        return d;
+    }
+
+    // ========= Case 1: root has top-level <p>/<br> (no top-level <div>) =========
+    (function maybeHoistTopLevelP() {
+        const hasTopDiv = Array.from(root.childNodes).some(n => n.nodeType === 1 && n.tagName === 'DIV');
+        const hasTopP = Array.from(root.childNodes).some(n => n.nodeType === 1 && n.tagName === 'P');
+        if (!hasTopDiv && hasTopP) {
+            const frag = document.createDocumentFragment();
+            Array.from(root.childNodes).forEach(n => {
+                if (n.nodeType === 1 && n.tagName === 'P') {
+                    frag.appendChild(pToDiv(n));
+                } else if (n.nodeType === 1 && n.tagName === 'BR') {
+                    const d = document.createElement('div');
+                    d.appendChild(document.createElement('br'));
+                    frag.appendChild(d);
+                } else if (n.nodeType === 3) {
+                    // split stray text into line <div>s, preserving empty lines
+                    String(n.nodeValue).replace(/\r/g, '').split('\n').forEach(chunk => {
+                        const d = document.createElement('div');
+                        if (chunk === '') d.appendChild(document.createElement('br'));
+                        else d.appendChild(document.createTextNode(chunk));
+                        frag.appendChild(d);
+                    });
+                } else if (n.nodeType === 1 && n.tagName === 'DIV') {
+                    frag.appendChild(n); // already a line
+                }
+            });
+            root.innerHTML = '';
+            root.appendChild(frag);
+        }
+    })();
+
+    // ========= Case 2A: spans that wrap ONLY block lines (DIV/P/BR) → unwrap to line DIVs, carry styles =========
+    (function unwrapBlockOnlySpans() {
+        // Query all spans; we’ll filter by contents so we catch nested cases too.
+        Array.from(root.querySelectorAll('span')).forEach(span => {
+            const kids = Array.from(span.childNodes);
+            if (kids.length === 0) return;
+
+            const hasInlineText = kids.some(n => n.nodeType === 3 && (n.nodeValue ?? '').trim().length);
+            const blockOnly = kids.every(n =>
+                (n.nodeType === 1 && /^(DIV|P|BR)$/i.test(n.tagName)) ||            // elements are DIV/P/BR
+                (n.nodeType === 3 && !/\S/.test(n.nodeValue || ''))                 // or whitespace text nodes
+            );
+            if (hasInlineText || !blockOnly) return;
+
+            const carryStyle = span.getAttribute('style') || '';
+            const frag = document.createDocumentFragment();
+
+            const lineFrom = (node) => {
+                const line = document.createElement('div');
+                if (node.tagName === 'BR') {
+                    line.appendChild(document.createElement('br'));
+                } else {
+                    // node is DIV or P → move inner children
+                    if (node.tagName === 'P') {
+                        // reuse pToDiv for <p> consistency (handles blank styled <p><span><br>)
+                        const divLine = pToDiv(node.cloneNode(true));
+                        // pToDiv returned a <div> already — lift its children into our 'line'
+                        while (divLine.firstChild) line.appendChild(divLine.firstChild);
+                    } else {
+                        while (node.firstChild) line.appendChild(node.firstChild);
+                    }
+                }
+                if (carryStyle) {
+                    const wrap = document.createElement('span');
+                    wrap.setAttribute('style', carryStyle);
+                    while (line.firstChild) wrap.appendChild(line.firstChild);
+                    line.appendChild(wrap);
+                }
+                return line;
+            };
+
+            kids.forEach(n => {
+                if (n.nodeType === 1 && /^(DIV|P|BR)$/i.test(n.tagName)) {
+                    frag.appendChild(lineFrom(n.cloneNode(true)));
+                }
+            });
+
+            // Replace the span, or its container DIV if it was the only child
+            const containerDiv = span.closest('div');
+            if (containerDiv && containerDiv.childNodes.length === 1 && containerDiv.firstChild === span) {
+                containerDiv.replaceWith(frag);
+            } else {
+                span.replaceWith(frag);
+            }
+        });
+    })();
+
+    // ========= Case 2B: a DIV whose children are only P/BR/whitespace → each becomes its own line DIV =========
+    (function hoistPInsideDivs() {
+        Array.from(root.querySelectorAll('div')).forEach(div => {
+            const onlyPBrOrWS = Array.from(div.childNodes).every(n =>
+                (n.nodeType === 1 && (n.tagName === 'P' || n.tagName === 'BR')) ||
+                (n.nodeType === 3 && !/\S/.test(n.nodeValue || ''))
+            );
+            if (!onlyPBrOrWS) return;
+
+            const frag = document.createDocumentFragment();
+            Array.from(div.childNodes).forEach(n => {
+                if (n.nodeType === 1 && n.tagName === 'P') {
+                    frag.appendChild(pToDiv(n));
+                } else if (n.nodeType === 1 && n.tagName === 'BR') {
+                    const d = document.createElement('div');
+                    d.appendChild(document.createElement('br'));
+                    frag.appendChild(d);
+                }
+                // ignore pure whitespace text nodes
+            });
+            div.replaceWith(frag);
+        });
+    })();
+
+    // ========= Final pass: wrap any top-level text/BR into line DIVs =========
+    (function wrapTopLevelStrays() {
+        const needsWrap = Array.from(root.childNodes).some(n =>
+            (n.nodeType === 3 && (n.nodeValue ?? '').length) ||
+            (n.nodeType === 1 && n.tagName === 'BR')
+        );
+        if (!needsWrap) return;
+
+        const frag = document.createDocumentFragment();
+        Array.from(root.childNodes).forEach(n => {
+            if (n.nodeType === 3) {
+                String(n.nodeValue).replace(/\r/g, '').split('\n').forEach(chunk => {
+                    const d = document.createElement('div');
+                    if (chunk === '') d.appendChild(document.createElement('br'));
+                    else d.appendChild(document.createTextNode(chunk));
+                    frag.appendChild(d);
+                });
+            } else if (n.nodeType === 1 && n.tagName === 'BR') {
+                const d = document.createElement('div');
+                d.appendChild(document.createElement('br'));
+                frag.appendChild(d);
+            } else {
+                frag.appendChild(n);
+            }
+        });
+        root.innerHTML = '';
+        root.appendChild(frag);
+    })();
+
+    // ========= Make sure every truly empty line is <div><br></div> (even if nested spans existed) =========
+    (function fixEmptyLineDivs() {
+        Array.from(root.querySelectorAll('div')).forEach(d => {
+            // If it already has a BR anywhere, it's a blank line already
+            if (d.querySelector('br')) return;
+
+            const textNoZW = (d.textContent || '').replace(/\u200B/g, '');
+            const onlyWS = !/[^\s\u00A0]/.test(textNoZW);
+
+            if (onlyWS) {
+                // Try to preserve a single style span if present
+                const styledSpan = d.querySelector('span[style]');
+                d.innerHTML = '';
+                if (styledSpan) {
+                    const wrap = document.createElement('span');
+                    wrap.setAttribute('style', styledSpan.getAttribute('style') || '');
+                    wrap.appendChild(document.createElement('br'));
+                    d.appendChild(wrap);
+                } else {
+                    d.appendChild(document.createElement('br'));
+                }
+            }
+        });
+    })();
+}
+
+// Put this helper above your TEXT section in drawText
+function __unwrapStylingSpans(root) {
+    // unwrap spans that only contain block-levels (DIV/P/BR) or whitespace
+    const spans = root.querySelectorAll('span');
+    spans.forEach(sp => {
+        const onlyBlocksOrSpace = Array.from(sp.childNodes).every(n => {
+            if (n.nodeType === 3) return (n.nodeValue || '').trim() === ''; // whitespace text
+            if (n.nodeType === 1) return /^(DIV|P|BR)$/i.test(n.tagName);
+            return true;
+        });
+        if (onlyBlocksOrSpace) {
+            while (sp.firstChild) sp.parentNode.insertBefore(sp.firstChild, sp);
+            sp.remove();
+        }
+    });
+}
+function __unwrapBlockWrappingSpans(root) {
+    if (!root) return;
+    const BLOCK = /^(DIV|P|H1|H2|H3|H4|H5|H6|UL|OL|LI|TABLE|THEAD|TBODY|TFOOT|TR|TD|TH|BR)$/i;
+
+    root.querySelectorAll('span').forEach(sp => {
+        // If span contains any block-level element (or BR), we should unwrap
+        const containsBlock = Array.from(sp.childNodes).some(n =>
+            (n.nodeType === 1 && (BLOCK.test(n.tagName)))
+        );
+        if (!containsBlock) return;
+
+        // Preserve the span's inline styles by pushing them onto block children
+        const spanStyle = sp.getAttribute('style');
+        if (spanStyle && sp.children.length) {
+            Array.from(sp.children).forEach(el => {
+                // Don't overwrite — append so existing child styles win
+                el.style.cssText = (el.style.cssText ? el.style.cssText + ';' : '') + spanStyle;
+            });
+        }
+
+        // Unwrap: move children out, then remove the span
+        while (sp.firstChild) sp.parentNode.insertBefore(sp.firstChild, sp);
+        sp.remove();
+    });
+}
+function __isBlockish(el) {
+    return el && el.nodeType === 1 && /^(DIV|P|BR)$/i.test(el.tagName);
+}
+
+// Make a <div> that represents one visual line; preserve a <br> as a blank line.
+function __makeLineDivFrom(node) {
+    const line = document.createElement('div');
+    if (node.nodeType === 1 && node.tagName === 'BR') {
+        line.appendChild(document.createElement('br'));
+    } else {
+        while (node.firstChild) line.appendChild(node.firstChild);
+    }
+    return line;
+}
+
+// Re-wrap line contents with a style-carrying <span> using the original span's inline style
+function __applyCarryStyle(line, carryStyleText) {
+    if (!carryStyleText) return;
+    const wrap = document.createElement('span');
+    wrap.setAttribute('style', carryStyleText);
+    while (line.firstChild) wrap.appendChild(line.firstChild);
+    line.appendChild(wrap);
+}
+
+// Unwrap ANY span that wraps block children (DIV/P/BR), preserving styles on each line
+function __unwrapSpansWrappingBlocks(root) {
+    Array.from(root.querySelectorAll('span')).forEach(span => {
+        const kids = Array.from(span.childNodes);
+        const hasBlockKids = kids.some(n => __isBlockish(n));
+        // if the span has inline text with non-whitespace, leave it alone
+        const hasInlineText = kids.some(n => n.nodeType === 3 && /\S/.test(n.nodeValue || ''));
+
+        if (!hasBlockKids || hasInlineText) return;
+
+        const carryStyleText = span.getAttribute('style') || '';
+        const frag = document.createDocumentFragment();
+
+        kids.forEach(n => {
+            if (__isBlockish(n)) {
+                const line = __makeLineDivFrom(n);
+                __applyCarryStyle(line, carryStyleText);
+                frag.appendChild(line);
+            }
+        });
+
+        // Replace the span; if its parent was a single-line holder div, replace that instead
+        const holderDiv = span.parentElement?.tagName === 'DIV'
+            && span.parentElement.childNodes.length === 1
+            ? span.parentElement
+            : null;
+
+        (holderDiv || span).replaceWith(frag);
+    });
+}
+
+// Clean up "empty" or whitespace-only line DIVs so they remain visible as blank lines
+
+
+function __pToDiv(p) {
+    const d = document.createElement('div');
+    if (
+        p.childNodes.length === 1 &&
+        p.firstChild.nodeType === 1 &&
+        p.firstChild.tagName === 'BR'
+    ) {
+        d.appendChild(document.createElement('br')); // blank line
+    } else {
+        while (p.firstChild) d.appendChild(p.firstChild);
+    }
+    return d;
+}
+
+// 1) Hoist paragraphs into line DIVs (works for your “From … <p><br></p> … $699 …” case)
+function __hoistParagraphsToTopDivs(root) {
+    if (!root) return;
+
+    // If a top-level DIV contains only P/BR, split them into sibling DIV lines
+    Array.from(root.querySelectorAll('div')).forEach(div => {
+        const onlyPOrBr = Array.from(div.childNodes).every(n =>
+            n.nodeType === 1 && (n.tagName === 'P' || n.tagName === 'BR')
+        );
+        if (!onlyPOrBr) return;
+
+        const frag = document.createDocumentFragment();
+        Array.from(div.childNodes).forEach(n => {
+            if (n.tagName === 'P') {
+                frag.appendChild(__pToDiv(n));
+            } else if (n.tagName === 'BR') {
+                const d = document.createElement('div');
+                d.appendChild(document.createElement('br'));
+                frag.appendChild(d);
+            }
+        });
+        div.replaceWith(frag);
+    });
+
+    // If root itself has top-level P/BR (no div lines yet), hoist them too
+    const hasTopDiv = Array.from(root.childNodes).some(n => n.nodeType === 1 && n.tagName === 'DIV');
+    const hasTopP = Array.from(root.childNodes).some(n => n.nodeType === 1 && n.tagName === 'P');
+    if (!hasTopDiv && hasTopP) {
+        const frag = document.createDocumentFragment();
+        Array.from(root.childNodes).forEach(n => {
+            if (n.nodeType === 1 && n.tagName === 'P') {
+                frag.appendChild(__pToDiv(n));
+            } else if (n.nodeType === 1 && n.tagName === 'BR') {
+                const d = document.createElement('div');
+                d.appendChild(document.createElement('br'));
+                frag.appendChild(d);
+            } else {
+                frag.appendChild(n);
+            }
+        });
+        root.innerHTML = '';
+        root.appendChild(frag);
+    }
+}
+
+// 2) Unwrap spans that wrap block children (DIV/P/BR), keeping inline styles on the line content
+// Unwrap ANY span that wraps block children (DIV/P/BR), keeping inline styles.
+// Deep + reverse so we process innermost spans first.
+// Unwrap spans that wrap block lines (DIV/P/BR), carrying inline styles down.
+// Works even when the SPAN is the only child of a line DIV, and recurses deep.
+function __unwrapSpansWrappingBlocksDeep(root) {
+    if (!root) return;
+
+    let changed = true;
+    while (changed) {
+        changed = false;
+
+        // Go inside-out so inner spans unwrap before outers
+        const spans = Array.from(root.querySelectorAll('span')).reverse();
+
+        for (const span of spans) {
+            // Skip if span is already detached
+            if (!span.parentNode) continue;
+
+            const kids = Array.from(span.childNodes);
+
+            // Does this span contain only block-ish nodes and/or whitespace text?
+            const onlyBlockishOrWS = kids.length > 0 && kids.every(n => {
+                if (n.nodeType === 3) return !/\S/.test(n.nodeValue || ""); // whitespace text
+                if (n.nodeType === 1) return (n.tagName === 'DIV' || n.tagName === 'P' || n.tagName === 'BR' || n.tagName === 'SPAN');
+                return false;
+            });
+
+            if (!onlyBlockishOrWS) continue;
+
+            // Gather inline styles to carry
+            const s = span.style || {};
+            const carry = {
+                fontSize: s.fontSize || '',
+                fontFamily: s.fontFamily || '',
+                fontWeight: s.fontWeight || '',
+                fontStyle: s.fontStyle || '',
+                color: s.color || ''
+            };
+            const hasCarry = !!(carry.fontSize || carry.fontFamily || carry.fontWeight || carry.fontStyle || carry.color);
+
+            // Build replacement fragment
+            const frag = document.createDocumentFragment();
+
+            const makeLineDiv = () => {
+                const d = document.createElement('div');
+                if (hasCarry) {
+                    const wrap = document.createElement('span');
+                    if (carry.fontSize) wrap.style.fontSize = carry.fontSize;
+                    if (carry.fontFamily) wrap.style.fontFamily = carry.fontFamily;
+                    if (carry.fontWeight) wrap.style.fontWeight = carry.fontWeight;
+                    if (carry.fontStyle) wrap.style.fontStyle = carry.fontStyle;
+                    if (carry.color) wrap.style.color = carry.color;
+                    d.appendChild(wrap);
+                    return { line: d, sink: wrap };
+                }
+                return { line: d, sink: d };
+            };
+
+            for (const n of kids) {
+                if (n.nodeType === 3) {
+                    // ignore pure whitespace between block children
+                    if (!/\S/.test(n.nodeValue || "")) continue;
+                    // if real text appears (rare in this case), keep it on its own styled line
+                    const { line, sink } = makeLineDiv();
+                    sink.appendChild(n.cloneNode(true));
+                    frag.appendChild(line);
+                    continue;
+                }
+
+                if (n.tagName === 'BR') {
+                    const { line, sink } = makeLineDiv();
+                    sink.appendChild(document.createElement('br'));
+                    frag.appendChild(line);
+                    continue;
+                }
+
+                if (n.tagName === 'P' || n.tagName === 'DIV') {
+                    const { line, sink } = makeLineDiv();
+                    // Move *contents* of the block into the styled sink
+                    const tmp = n.cloneNode(true);
+                    while (tmp.firstChild) sink.appendChild(tmp.firstChild);
+                    frag.appendChild(line);
+                    continue;
+                }
+
+                if (n.tagName === 'SPAN') {
+                    // Recurse into nested span by cloning, then its children will be handled next loop
+                    const tmp = n.cloneNode(true);
+                    const { line, sink } = makeLineDiv();
+                    while (tmp.firstChild) sink.appendChild(tmp.firstChild);
+                    frag.appendChild(line);
+                    continue;
+                }
+            }
+
+            // Replace span (or its parent div if span is the only child) with flattened lines
+            if (span.parentElement && span.parentElement.tagName === 'DIV' && span.parentElement.childNodes.length === 1) {
+                span.parentElement.replaceWith(frag);
+            } else {
+                span.replaceWith(frag);
+            }
+
+            changed = true;
+        }
+    }
+}
+
+
+
+// 3) Ensure truly-empty lines become <div><br></div> (so blank lines stay visible)
+function __fixEmptyLineDivs(root) {
+    Array.from(root.querySelectorAll('div')).forEach(d => {
+        // already has a BR somewhere inside → it's a blank line, leave it
+        if (d.querySelector('br')) return;
+
+        const text = (d.textContent || '').replace(/\u200B/g, '');
+        const onlyWS = !/[^\s\u00A0]/.test(text);
+
+        if (onlyWS) {
+            d.innerHTML = '';
+            d.appendChild(document.createElement('br'));
+        }
+    });
+}
+
+function __unwrapSpanBlocks(root) {
+    // Find spans that are *direct* children of a DIV and only contain block-ish nodes
+    Array.from(root.querySelectorAll('div > span')).forEach(span => {
+        const kids = Array.from(span.childNodes);
+        const onlyBlockish = kids.length &&
+            kids.every(n => n.nodeType === 1 && (n.tagName === 'DIV' || n.tagName === 'P' || n.tagName === 'BR'));
+
+        if (!onlyBlockish) return;
+
+        // carry inline text styles from span
+        const s = span.style || {};
+        const carry = {
+            fontSize: s.fontSize, fontFamily: s.fontFamily,
+            fontWeight: s.fontWeight, fontStyle: s.fontStyle, color: s.color
+        };
+
+        const frag = document.createDocumentFragment();
+
+        kids.forEach(n => {
+            // Normalize each child into a line <div>
+            let line;
+            if (n.tagName === 'BR') {
+                line = document.createElement('div');
+                line.appendChild(document.createElement('br'));       // <div><br></div>
+            } else if (n.tagName === 'P' || n.tagName === 'DIV') {
+                line = document.createElement('div');
+                while (n.firstChild) line.appendChild(n.firstChild);  // move contents out
+            } else {
+                return;
+            }
+
+            // if span had inline styles, wrap the line contents to preserve them
+            if (carry.fontSize || carry.fontFamily || carry.fontWeight || carry.fontStyle || carry.color) {
+                const wrap = document.createElement('span');
+                if (carry.fontSize) wrap.style.fontSize = carry.fontSize;
+                if (carry.fontFamily) wrap.style.fontFamily = carry.fontFamily;
+                if (carry.fontWeight) wrap.style.fontWeight = carry.fontWeight;
+                if (carry.fontStyle) wrap.style.fontStyle = carry.fontStyle;
+                if (carry.color) wrap.style.color = carry.color;
+                while (line.firstChild) wrap.appendChild(line.firstChild);
+                line.appendChild(wrap);
+            }
+
+            frag.appendChild(line);
+        });
+
+        // Replace the original <div><span>…</span></div> block
+        span.parentElement.replaceWith(frag);
+    });
 }
