@@ -11653,6 +11653,7 @@ function __applyBasicDimsConstantCaps(box, newX, newY, newW, newH) {
     box.__capsOrientation = 'neutral'; // ignore H/V split; we’re using constant px radius
 }
 canvas.addEventListener("mousemove", e => {
+    // const { x: gmx, y: gmy } = getCanvasMousePosition(e);
     const { x: mx, y: my } = getCanvasMousePosition(e);
 
     if (isDraggingMulti) { updateGroupDrag(mx, my); return; }
@@ -11660,7 +11661,6 @@ canvas.addEventListener("mousemove", e => {
 
     const dx = mx - prevMouseX;
     const dy = my - prevMouseY;
-
 
     // ✨ EARLY-RETURN MARQUEE (only when not acting on a single item)
     if (isMarquee && !isClickSingle) {
@@ -11682,6 +11682,26 @@ canvas.addEventListener("mousemove", e => {
         return { dxL: dxx * cc + dyy * ss, dyL: -dxx * ss + dyy * cc };
     }
 
+    // ──────────────────────────────────────────────────────────
+    // NEW: make sure we have a baked baseline for TEXT scaling
+    function __ensureBakedOrigText(box) {
+        if (!box || !box._orig || typeof box._orig.text !== 'string') return;
+        if (box._orig.__baked) return;
+
+        const t = box._orig.text;
+        const hasSpanFS = /<span[^>]*style\s*=\s*"[^"]*font-size\s*:/i.test(t);
+        // If font-size is only on <p> or not present on spans, bake per-line spans
+        if (!hasSpanFS) {
+            try {
+                box._orig.text = bakeInlineFontOnLinesHTML(box._orig.text, textEditorNew);
+            } catch { /* ignore but keep going */ }
+        }
+        // freeze the baseline we will always scale from
+        box._orig.textBaked = box._orig.text;
+        box._orig.__baked = true;
+    }
+
+    // ──────────────────────────────────────────────────────────
     // Generic anchored resize (images/svg): opposite edge/corner fixed (ADD)
     function __applyResizeGenericAnchRot(box, dir, dxL, dyL) {
         const o = box._orig || { x: box.x, y: box.y, width: box.width, height: box.height };
@@ -11787,7 +11807,6 @@ canvas.addEventListener("mousemove", e => {
         else if (!useX && useY) box.__capsOrientation = 'vertical';
     }
 
-
     // TEXT corner + side anchored with rotation (ADD)
     function __applyCornerTextAnchRot(box, dir, dxL, dyL) {
         const o = box._orig; if (!o) return;
@@ -11817,8 +11836,11 @@ canvas.addEventListener("mousemove", e => {
         box.y = cy - newH / 2;
         box.width = newW;
         box.height = newH;
+
         if (typeof box._orig.text === 'string') {
-            box.text = scaleTextHTML(box._orig.text, sU);
+            // CHANGED: always scale from baked baseline
+            const baseHTML = box._orig.textBaked || box._orig.text;
+            box.text = scaleTextHTML(baseHTML, sU);
         }
     }
     function __applySideTextAnchRot(box, side, deltaL) {
@@ -11916,6 +11938,9 @@ canvas.addEventListener("mousemove", e => {
     if (isResizingNew && activeBox && activeBox.type !== 'image' &&
         (resizeDirection === 'l' || resizeDirection === 'r')) {
 
+        // NEW: ensure baked baseline exists before any text scaling/width ops
+        __ensureBakedOrigText(activeBox);
+
         if ((activeBox.rotation || 0) % 360 !== 0) {
             const { dxL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, activeBox.rotation || 0);
             __applySideTextAnchRot(activeBox, resizeDirection, dxL);
@@ -11956,14 +11981,28 @@ canvas.addEventListener("mousemove", e => {
         return;
     }
 
+    // OLD guard kept; now complemented by __ensureBakedOrigText above
     if (activeBox && activeBox._orig && typeof activeBox._orig.text === 'string') {
         if (!/font-size\s*:/i.test(activeBox._orig.text)) {
             activeBox._orig.text = bakeInlineFontOnLinesHTML(activeBox._orig.text, textEditorNew);
         }
     }
+    // NEW: also bake if font-size appears only on <p> (nested color spans won't scale)
+    if (activeBox && activeBox._orig && typeof activeBox._orig.text === 'string' && !activeBox._orig.__baked) {
+        const t0 = activeBox._orig.text;
+        const hasSpanFS0 = /<span[^>]*style\s*=\s*"[^"]*font-size\s*:/i.test(t0);
+        if (!hasSpanFS0) {
+            try { activeBox._orig.text = bakeInlineFontOnLinesHTML(activeBox._orig.text, textEditorNew); } catch { }
+        }
+        activeBox._orig.textBaked = activeBox._orig.text;
+        activeBox._orig.__baked = true;
+    }
 
     // TEXT corner — rotation-aware first, then your original
     if (isCornerFontScale && activeBox && resizeDirectionNorm && CORNER_HANDLES.has(resizeDirectionNorm)) {
+        // NEW: ensure baked baseline exists
+        __ensureBakedOrigText(activeBox);
+
         if ((activeBox.rotation || 0) % 360 !== 0) {
             const { dxL, dyL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, activeBox.rotation || 0);
             __applyCornerTextAnchRot(activeBox, resizeDirectionNorm, dxL, dyL);
@@ -11994,7 +12033,11 @@ canvas.addEventListener("mousemove", e => {
             case 'br': activeBox.x = activeBox._orig.x; activeBox.y = activeBox._orig.y; break;
         }
         activeBox.width = newW; activeBox.height = newH;
-        activeBox.text = scaleTextHTML(activeBox._orig.text, sU);
+
+        // CHANGED: always scale from baked baseline
+        const baseHTML = activeBox._orig.textBaked || activeBox._orig.text;
+        activeBox.text = scaleTextHTML(baseHTML, sU);
+
         drawText();
         return;
     }
@@ -12291,7 +12334,7 @@ canvas.addEventListener("mousemove", e => {
                         snappedX = (side === 'l') ? activeBox.x : (activeBox.x + activeBox.width);
                     }
                 }
-                else if (!__isBasicImage(activeBox) && ((activeBox.rotation || 0) % 360 !== 0)) {
+                else if (!__isBasicImage(activeBox) && ((activeBox.rotation || 0) % 360) !== 0) {
                     // 🔧 ADD: rotation-aware LEFT/RIGHT for NORMAL image / normal SVG (non-BASIC, non-line)
                     const { dxL } = __toLocalDelta(mx, my, startMXCanvas, startMYCanvas, activeBox.rotation || 0);
                     __applyResizeGenericAnchRot(activeBox, side, dxL, 0);
@@ -12313,6 +12356,9 @@ canvas.addEventListener("mousemove", e => {
 
         } else {
             // TEXT (kept)
+            // NEW: bake once so side-resize + later corner-resize share the same baseline
+            __ensureBakedOrigText(activeBox);
+
             scaleTextBoxWithHandle(activeBox, (resizeDirectionRaw || resizeDirection), mx, my);
             prevMouseX = mx; prevMouseY = my;
             drawText();
@@ -12340,6 +12386,7 @@ canvas.addEventListener("mousemove", e => {
         // otherwise let normal hover logic run (if any)
     }
 });
+
 
 
 
