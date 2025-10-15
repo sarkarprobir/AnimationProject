@@ -12827,9 +12827,59 @@ function drawMarqueeOverlay(ctxIn) {
 //    if (activeBox) delete activeBox._orig;
 //});
 
+// ADD: helper to ensure Roboto (or any webfont) is ready before measuring
+
+async function __fontsReadyForEditor(editorEl) {
+    if (document.fonts && document.fonts.ready) {
+        try { await document.fonts.ready; } catch { }
+    }
+    // Preload common Roboto faces/sizes you use so metrics are stable on macOS
+    try {
+        await Promise.all([
+            document.fonts.load('400 14px "Roboto"'),
+            document.fonts.load('400 16px "Roboto"'),
+            document.fonts.load('400 24px "Roboto"'),
+            document.fonts.load('700 16px "Roboto"'),
+            document.fonts.load('700 24px "Roboto"')
+        ]);
+    } catch { }
+}
 
 
-canvas.addEventListener("dblclick", e => {
+function __resizeEditorToContentNow() {
+    if (!window.textEditorNew || !window.activeBox) return;
+
+    // lock the width we already have (we won't change width here)
+    const cs = getComputedStyle(textEditorNew);
+    const wCss = cs.width;                    // e.g., "200px"
+    textEditorNew.style.width = wCss;
+    textEditorNew.style.minWidth = wCss;
+    textEditorNew.style.boxSizing = 'border-box';
+
+    // measure height from content
+    const prevH = textEditorNew.style.height;
+    textEditorNew.style.height = 'auto';
+    const newHcss = Math.ceil(textEditorNew.scrollHeight);  // includes first \n case
+    textEditorNew.style.height = prevH;
+
+    // respect any min-height you already set
+    const minHcss = parseFloat(textEditorNew.style.minHeight) || 0;
+    const finalHcss = Math.max(newHcss, minHcss, 30);
+
+    // apply to editor (CSS px)
+    textEditorNew.style.height = finalHcss + 'px';
+
+    // and to canvas box (canvas px)
+    const canvasRect = canvas.getBoundingClientRect();
+    const scaleY = canvas.height / canvasRect.height;
+    activeBox.height = finalHcss * scaleY;
+
+    drawText();
+}
+
+
+// made async (ADD: async)
+canvas.addEventListener("dblclick", async e => {
     const { x: mx, y: my } = getCanvasMousePosition(e);
     const box = textObjects.find(b =>
         mx >= b.x && mx <= b.x + b.width &&
@@ -12841,22 +12891,17 @@ canvas.addEventListener("dblclick", e => {
     if (isEditing && activeBox !== box) {
         cleanEditorHTMLPreserveCaret();
         activeBox.text = textEditorNew.innerHTML;
-
     }
 
     activeBox = box;
-    // Now simply call our helper:
-    showEditorAtBox(box);
 
-    //if (box.textColor === "#000000") {
-    //    // mostly‑opaque white
-    //    textEditorNew.style.background = "rgba(255,255,255,0.95)";
-    //} else {
-    //    textEditorNew.style.background = "rgba(34, 34, 34, 1)";
-    //}
+    // CHANGED: await fonts before positioning/sizing
+    await showEditorAtBox(box);
+
     // And save the caret/selection if you need it:
     saveSelection();
 });
+
 
 
 
@@ -13606,23 +13651,141 @@ textEditorNew.addEventListener("input", () => {
 //    }
 //});
 
-textEditorNew.addEventListener("keydown", e => {
-    if (e.isComposing) return;
-    if (e.key === "Enter") {
-        // Let the browser finish its contenteditable mutation first.
-        setTimeout(() => {
-            requestAnimationFrame(() => {
-                if (activeBox && isEditing) {
-                    // copy after DOM is fully updated, so the first <div> (Text <br>) is included
-                    activeBox.text = textEditorNew.innerHTML;
-                    drawText();
-                }
-            });
-        }, 0);
+//textEditorNew.addEventListener("keydown", e => {
+//    if (e.isComposing) return;
+//    if (e.key === "Enter") {
+//        // Let the browser finish its contenteditable mutation first.
+//        setTimeout(() => {
+//            requestAnimationFrame(() => {
+//                if (activeBox && isEditing) {
+//                    // copy after DOM is fully updated, so the first <div> (Text <br>) is included
+//                    activeBox.text = textEditorNew.innerHTML;
+//                    drawText();
+//                }
+//            });
+//        }, 0);
+//    }
+//});
+
+// ADD near your other editor globals:
+let __enterShift = false;
+let __suppressBeforeInputOnce = false;
+function __emitSyntheticInputNextFrame(el) {
+    requestAnimationFrame(() => {
+        try {
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+        } catch {
+            const ev = document.createEvent('Event');
+            ev.initEvent('input', true, false);
+            el.dispatchEvent(ev);
+        }
+    });
+}
+// keep your existing listener if already present; otherwise:
+textEditorNew.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    __enterShift = !!e.shiftKey;
+
+    // Robust path for browsers that don't give a clean insertParagraph beforeinput
+    if (!__enterShift) {
+        e.preventDefault();                    // stop default split
+        __suppressBeforeInputOnce = true;      // don't also run in beforeinput
+        __insertEmptyLineBlock(textEditorNew); // split-at-caret
+
+        // 🔧 make your input-size logic run
+        __emitSyntheticInputNextFrame(textEditorNew);
+    }
+});
+
+// ADD: on 'insertParagraph' (normal Enter), insert <div><br></div> ourselves
+textEditorNew.addEventListener('beforeinput', (e) => {
+    if (e.inputType === 'insertParagraph') {
+        if (__suppressBeforeInputOnce) {
+            __suppressBeforeInputOnce = false;   // consume once
+            return;
+        }
+        if (__enterShift) { __enterShift = false; return; } // let Shift+Enter be a soft break
+        e.preventDefault();
+        __insertEmptyLineBlock(textEditorNew);  // split-at-caret
+
+        // 🔧 make your input-size logic run
+        __emitSyntheticInputNextFrame(textEditorNew);
     }
 });
 
 
+
+// ADD: helper – insert <div><br></div> AFTER the caret's top-level line block
+function __insertEmptyLineBlock(root) {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+
+    // Collapse selection (if user had a range, Enter should replace it with a newline)
+    const range = sel.getRangeAt(0);
+    if (!range.collapsed) {
+        range.deleteContents();
+    }
+    const caretRange = sel.getRangeAt(0).cloneRange();
+
+    // Find the current top-level line <div> (direct child of root).
+    // If content isn't normalized, wrap once so we always have line blocks.
+    let line = caretRange.startContainer;
+    while (line && line !== root && line.parentNode !== root) line = line.parentNode;
+
+    if (!line || line === root) {
+        // First-time normalize: wrap current root contents into a line div
+        const wrap = document.createElement('div');
+        wrap.setAttribute('style', 'line-height: 1.2; display: block; margin: 0px;');
+        while (root.firstChild) wrap.appendChild(root.firstChild);
+        root.appendChild(wrap);
+        line = wrap;
+    }
+
+    // Build helpers
+    const mkLine = () => {
+        const d = document.createElement('div');
+        d.setAttribute('style', 'line-height: 1.2; display: block; margin: 0px;');
+        return d;
+    };
+
+    // Split current line <div> at caret into left and right fragments
+    const rLeft = document.createRange();
+    rLeft.setStart(line, 0);
+    rLeft.setEnd(caretRange.startContainer, caretRange.startOffset);
+    const fragLeft = rLeft.cloneContents();
+
+    const rRight = document.createRange();
+    rRight.setStart(caretRange.startContainer, caretRange.startOffset);
+    rRight.setEnd(line, line.childNodes.length);
+    const fragRight = rRight.cloneContents();
+
+    const leftDiv = mkLine();
+    const emptyDiv = mkLine();
+    const rightDiv = mkLine();
+
+    // Ensure empty line has height
+    emptyDiv.innerHTML = '<br>';
+
+    // If a side is empty, keep it as <div><br></div> so your layout remains stable
+    if (fragLeft && fragLeft.childNodes.length) leftDiv.appendChild(fragLeft);
+    else leftDiv.innerHTML = '<br>';
+
+    if (fragRight && fragRight.childNodes.length) rightDiv.appendChild(fragRight);
+    else rightDiv.innerHTML = '<br>';
+
+    // Replace the original line with left + empty + right
+    root.insertBefore(leftDiv, line);
+    root.insertBefore(emptyDiv, line);
+    root.insertBefore(rightDiv, line);
+    root.removeChild(line);
+
+    // Place caret inside the empty line
+    const r2 = document.createRange();
+    r2.setStart(emptyDiv, 0);
+    r2.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(r2);
+}
 
 //boldBtn.addEventListener("click", e => {
 //    e.preventDefault();
@@ -13909,7 +14072,8 @@ function showEditorAtBoxOLD(box) {
     textEditorNew.focus();
     isEditing = true;
 }
-function showEditorAtBox(box) {
+// made async (ADD: async + one await)
+async function showEditorAtBox(box) {
     const canvasRect = canvas.getBoundingClientRect();
     const containerRect = document.getElementById("canvasContainer").getBoundingClientRect();
 
@@ -13926,38 +14090,34 @@ function showEditorAtBox(box) {
     hoistNestedLines(textEditorNew); // optional safety on open
     textEditorNew.style.textAlign = box.align || "left";
 
+    // **WAIT HERE** so macOS uses the correct font metrics
+    await __fontsReadyForEditor(textEditorNew); // ← ADD
+
     // position & size (your existing lines)
     textEditorNew.style.left = `${relativeX}px`;
     textEditorNew.style.top = `${relativeY}px`;
     textEditorNew.style.width = `${box.width / scaleX}px`;
-    textEditorNew.style.height = `${box.height / scaleY}px`; // ← keeps visual parity with canvas
+    textEditorNew.style.height = `${box.height / scaleY}px`; // keeps visual parity with canvas
 
-    // ──────────────── ADD BELOW (do not delete anything above) ────────────────
-    // Use the current visual size (after any resize/scale) so the editor matches the active box.
+    // ───────────── existing ADD block you had ─────────────
     (function syncEditorOuterBoxToSelection() {
         const snap = v => Math.round(v * window.devicePixelRatio) / window.devicePixelRatio;
 
-        // get the current on-canvas w/h that drawText() also uses
         const { w, h } = getBoxRect(box);   // canvas pixels
-
-        // convert to CSS pixels
         const outerWcss = w / scaleX;
         const outerHcss = h / scaleY;
 
-        // ensure width/height are OUTER sizes (include padding + border)
         textEditorNew.style.boxSizing = "border-box";
 
-        // reapply (override) with snapped values to avoid 1px drift after resizes
         textEditorNew.style.left = `${snap(relativeX)}px`;
         textEditorNew.style.top = `${snap(relativeY)}px`;
         textEditorNew.style.width = `${snap(outerWcss)}px`;
         textEditorNew.style.height = `${snap(outerHcss)}px`;
 
-        // optional: prevent layout from shrinking it by accident
         textEditorNew.style.minWidth = `${snap(outerWcss)}px`;
         textEditorNew.style.minHeight = `${snap(outerHcss)}px`;
     })();
-    // ─────────────────────────────────────────────────────────────────────────
+    // ──────────────────────────────────────────────────────
 
     // apply the box's spacing to the editor DOM
     syncEditorLineSpacingFromBox(box);
@@ -13977,6 +14137,7 @@ function showEditorAtBox(box) {
     textEditorNew.focus();
     isEditing = true;
 }
+
 
 function syncEditorLineSpacingFromBox(box) {
     const lh = String(box.lineSpacing || 1.2); // unitless multiplier
