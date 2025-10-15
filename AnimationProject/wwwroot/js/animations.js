@@ -13609,10 +13609,10 @@ textEditorNew.addEventListener("input", () => {
 
     // ✅ add this line FIRST
     ensureEditorWrapping();
-    //hoistNestedLines(textEditorNew);        // ✅ ADD this line
-
-    // ✅ Add this: keeps pasted copies as top-level lines
     hoistNestedLines(textEditorNew);
+
+    // NEW: remove a single leading LF that would render as an extra empty line
+    __stripLeadingLFOnTopLines(textEditorNew);
     const edStyle = window.getComputedStyle(textEditorNew);
     const lineSpacing = (typeof selectedLineSpacing === "number" ? selectedLineSpacing : 8);
 
@@ -13624,12 +13624,14 @@ textEditorNew.addEventListener("input", () => {
         fontFamily: edStyle.fontFamily,
         fontSize: edStyle.fontSize,
         lineHeight: `${parseFloat(edStyle.lineHeight) + lineSpacing}px`,
-        width: textEditorNew.style.width
+        width: textEditorNew.style.width,
+        boxSizing: "border-box"
     });
 
     meas.innerHTML = textEditorNew.innerHTML;
     document.body.appendChild(meas);
 
+    // count lines (your way)
     const lines = meas.querySelectorAll("div").length || 1;
     const neededH = meas.scrollHeight + lineSpacing * lines;
 
@@ -13766,12 +13768,21 @@ function __insertEmptyLineBlock(root) {
     // Ensure empty line has height
     emptyDiv.innerHTML = '<br>';
 
-    // If a side is empty, keep it as <div><br></div> so your layout remains stable
+    // Move fragments
     if (fragLeft && fragLeft.childNodes.length) leftDiv.appendChild(fragLeft);
     else leftDiv.innerHTML = '<br>';
 
     if (fragRight && fragRight.childNodes.length) rightDiv.appendChild(fragRight);
     else rightDiv.innerHTML = '<br>';
+
+    // 🔧 Trim exactly one newline at the split boundary to avoid a phantom blank line
+    __stripOneTrailingLF(leftDiv);   // remove trailing \n on the left piece
+    __stripOneLeadingLF(rightDiv);   // remove leading \n on the right piece
+
+    // keep visible height if either side became empty after trimming
+    if (!leftDiv.firstChild) leftDiv.innerHTML = '<br>';
+    if (!rightDiv.firstChild) rightDiv.innerHTML = '<br>';
+
 
     // Replace the original line with left + empty + right
     root.insertBefore(leftDiv, line);
@@ -17259,5 +17270,25 @@ function __unwrapSpanBlocks(root) {
 
         // Replace the original <div><span>…</span></div> block
         span.parentElement.replaceWith(frag);
+    });
+}
+function __stripOneLeadingLF(el) {
+    const n = el && el.firstChild;
+    if (n && n.nodeType === 3) {                 // text node
+        n.nodeValue = n.nodeValue.replace(/^\r?\n/, '');
+        if (n.nodeValue === '') el.removeChild(n); // clean empty node
+    }
+}
+function __stripOneTrailingLF(el) {
+    const n = el && el.lastChild;
+    if (n && n.nodeType === 3) {
+        n.nodeValue = n.nodeValue.replace(/\r?\n$/, '');
+        if (n.nodeValue === '') el.removeChild(n);
+    }
+}
+// optional: trim one leading LF on every top-level line div
+function __stripLeadingLFOnTopLines(root) {
+    Array.from(root.children).forEach(d => {
+        if (d.tagName === 'DIV') __stripOneLeadingLF(d);
     });
 }
