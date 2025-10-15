@@ -9,8 +9,7 @@
 <link href="~/css/bootstrap.min.css" rel="stylesheet" />
 <script src="~/js/bootstrap.bundle.min.js"></script>
 <!-- Font Awesome -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-      rel="stylesheet" />
+<link href="~/css/all.min.css" rel="stylesheet" />
 <!-- Google Font -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -97,7 +96,7 @@
 <div class="d-flex gap-3 justify-content-center mt-2 mb-5">
     <div class="pricing_toggle-container">
         <button class="pricing_toggle-btn active" id="monthlyBtn">Monthly</button>
-        <button class="pricing_toggle-btn d-flex gap-2" id="annuallyBtn">Annually <span class="pricing_span">Save 15%</span></button>
+        <button class="pricing_toggle-btn d-flex gap-2" id="annuallyBtn">Annually <span class="pricing_span">Save $ 8</span></button>
     </div>
 </div>
 
@@ -123,7 +122,7 @@
     <div class="plan">
         <h2>Pro</h2>
         <p class="align-center">Unlock premium features <br /> for your business needs.</p>
-        <div class="price"><span class="dollor">$</span><span id="priceValue">29</span></div>
+        <div class="price"><span class="dollor">$</span><span id="priceValue">8</span></div>
         <p class="align-center" id="priceDuration">Per Screen/Month</p>
         <p class="align-center">
             <button class="create-new-btn">Subscribe</button>
@@ -347,12 +346,12 @@
       const annuallyBtn = document.getElementById("annuallyBtn");
 
       monthlyBtn.addEventListener("click", () => {
-        priceValue.textContent = "29";
+        priceValue.textContent = "8";
         priceDuration.textContent = "Per Screen/Month";
       });
 
       annuallyBtn.addEventListener("click", () => {
-        priceValue.textContent = "70";
+        priceValue.textContent = "88";
         priceDuration.textContent = "Per Screen/Year";
       });
     });
