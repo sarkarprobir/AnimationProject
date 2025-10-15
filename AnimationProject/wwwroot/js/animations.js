@@ -13607,12 +13607,13 @@ function ensureEditorWrapping() {
 textEditorNew.addEventListener("input", () => {
     if (!activeBox || !isEditing) return;
 
-    // ✅ add this line FIRST
+    // 🎯 capture caret BEFORE any DOM changes
+    const __caretPOS = __getCaretLineOffset(textEditorNew);
+
+    // ✅ your existing prep
     ensureEditorWrapping();
     hoistNestedLines(textEditorNew);
 
-    // NEW: remove a single leading LF that would render as an extra empty line
-    __stripLeadingLFOnTopLines(textEditorNew);
     const edStyle = window.getComputedStyle(textEditorNew);
     const lineSpacing = (typeof selectedLineSpacing === "number" ? selectedLineSpacing : 8);
 
@@ -13631,7 +13632,6 @@ textEditorNew.addEventListener("input", () => {
     meas.innerHTML = textEditorNew.innerHTML;
     document.body.appendChild(meas);
 
-    // count lines (your way)
     const lines = meas.querySelectorAll("div").length || 1;
     const neededH = meas.scrollHeight + lineSpacing * lines;
 
@@ -13642,7 +13642,11 @@ textEditorNew.addEventListener("input", () => {
 
     activeBox.text = textEditorNew.innerHTML;
     drawText();
+
+    // 🔁 restore caret to where user was typing (prevents "WON" reversal)
+    if (__caretPOS) __setCaretLineOffset(textEditorNew, __caretPOS);
 });
+
 
 
 
@@ -17291,4 +17295,56 @@ function __stripLeadingLFOnTopLines(root) {
     Array.from(root.children).forEach(d => {
         if (d.tagName === 'DIV') __stripOneLeadingLF(d);
     });
+}
+function __getCaretLineOffset(root) {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return null;
+    const r = sel.getRangeAt(0);
+    // find top-level line div
+    let line = r.startContainer;
+    while (line && line !== root && line.parentNode !== root) line = line.parentNode;
+    if (!line || line === root) return { lineIndex: Math.max(0, root.children.length - 1), ch: 0 };
+
+    const lineIndex = Array.prototype.indexOf.call(root.children, line);
+
+    // accumulate character offset inside that line
+    const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
+    let ch = 0, n;
+    while ((n = walker.nextNode())) {
+        if (n === r.startContainer) { ch += r.startOffset; return { lineIndex, ch }; }
+        ch += n.nodeValue.length;
+    }
+    return { lineIndex, ch: 0 }; // e.g., caret before <br>
+}
+
+function __setCaretLineOffset(root, pos) {
+    const line = root.children[pos?.lineIndex] || root.lastElementChild || root;
+    if (!line) return;
+
+    const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
+    let remaining = pos.ch, n;
+    while ((n = walker.nextNode())) {
+        const len = n.nodeValue.length;
+        if (remaining <= len) {
+            const r = document.createRange();
+            r.setStart(n, Math.max(0, remaining));
+            r.collapse(true);
+            const sel = window.getSelection();
+            sel.removeAllRanges(); sel.addRange(r);
+            return;
+        }
+        remaining -= len;
+    }
+
+    // no text nodes → place before <br> or create one
+    const sel = window.getSelection();
+    const r = document.createRange();
+    if (line.firstChild) { r.setStart(line, 0); }
+    else {
+        const tn = document.createTextNode('');
+        line.appendChild(tn);
+        r.setStart(tn, 0);
+    }
+    r.collapse(true);
+    sel.removeAllRanges(); sel.addRange(r);
 }
