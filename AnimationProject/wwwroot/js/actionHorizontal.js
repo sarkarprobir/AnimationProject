@@ -8952,3 +8952,398 @@ function SetTime() {
 
     }
 }
+// ================= nearest text style (single, complete) ===================
+
+// 1) caret node inside root (textEditorNew by default)
+function __getCaretNode(root = textEditorNew) {
+    const sel = window.getSelection?.();
+    if (!sel || sel.rangeCount === 0) return null;
+    const r = sel.getRangeAt(0);
+    let n = r.startContainer || r.commonAncestorContainer;
+    if (n === root && root.firstChild) n = root.firstChild;
+    return n;
+}
+
+// 2) ensure an element (if caret is in a text node)
+function __toElement(node) {
+    if (!node) return null;
+    return node.nodeType === 1 ? node : node.parentElement;
+}
+
+// 3) semantic tags that imply style even without inline CSS
+function __applySemanticStyle(el, out) {
+    if (!el) return;
+    const tag = el.tagName;
+    if (tag === 'B' || tag === 'STRONG') out.fontWeight = 'bold';
+    if (tag === 'I' || tag === 'EM') out.fontStyle = 'italic';
+    if (tag === 'U') out.textDecoration = 'underline';
+}
+
+// 4) walk up to find the closest element that *sets* font-related style
+function __closestStyleElement(node, root) {
+    let el = __toElement(node);
+    let firstElement = el;
+    while (el && el !== root && el.nodeType === 1) {
+        const st = el.getAttribute && el.getAttribute('style');
+        const setsFont = st && /(font|text-decoration|font-weight|font-style|font-family)/i.test(st);
+        const isSemantic = /^(B|STRONG|I|EM|U|SPAN)$/i.test(el.tagName);
+        if (setsFont || isSemantic) return el;
+        el = el.parentElement;
+    }
+    return firstElement || root || null;
+}
+
+// 5) produce a concise style summary (computed + inline overrides + semantics)
+function __styleSummaryFor(el, root) {
+    if (!el) return null;
+
+    const inline = el.style || {};
+    const has = prop => inline && inline[prop] && inline[prop].trim().length;
+
+    const cs = window.getComputedStyle(el);
+
+    const summary = {
+        fontFamily: has('fontFamily') ? inline.fontFamily : cs.fontFamily,
+        fontWeight: has('fontWeight') ? inline.fontWeight : cs.fontWeight,
+        fontStyle: has('fontStyle') ? inline.fontStyle : cs.fontStyle,
+        fontSize: has('fontSize') ? inline.fontSize : cs.fontSize,
+        color: has('color') ? inline.color : cs.color,
+        textDecoration: has('textDecoration') ? inline.textDecoration : cs.textDecoration
+    };
+
+    __applySemanticStyle(el, summary);
+
+    // normalize numeric weights to normal/bold (optional)
+    const fw = String(summary.fontWeight || '');
+    if (/^\d+$/.test(fw)) summary.fontWeight = (parseInt(fw, 10) >= 600) ? 'bold' : 'normal';
+
+    // clean family to first name (optional)
+    if (summary.fontFamily) {
+        summary.fontFamily = summary.fontFamily.split(',')[0].trim().replace(/^["']|["']$/g, '');
+    }
+
+    return summary;
+}
+
+// 6) public function: call this whenever you need the current style
+function getNearestTextStyle(root = textEditorNew) {
+    const node = __getCaretNode(root);
+    if (!node) return null;
+    const el = __closestStyleElement(node, root);
+    return __styleSummaryFor(el, root);
+}
+
+// ================= wire it once (minimal) ==================================
+(function wireNearestStyle() {
+    const root = window.textEditorNew;
+    if (!root) return;
+
+    const report = () => {
+        const style = getNearestTextStyle(root);
+        if (!style) return;
+        // TODO: update your UI (replace console.log)
+        console.log('[nearest-style]', style);
+        // e.g., toolbar.setFontFamily(style.fontFamily); toolbar.setFontWeight(style.fontWeight);
+    };
+
+    const reportRAF = (() => { let id; return () => { cancelAnimationFrame(id); id = requestAnimationFrame(report); }; })();
+
+    root.addEventListener('mouseup', reportRAF);
+    root.addEventListener('keyup', (e) => {
+        if (
+            e.key.length === 1 ||
+            e.key.startsWith('Arrow') ||
+            e.key === 'Home' || e.key === 'End' ||
+            e.key === 'Enter' || e.key === 'Backspace' ||
+            e.key === 'Delete' || e.key === 'Tab'
+        ) reportRAF();
+    });
+    document.addEventListener('selectionchange', () => {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount && root.contains(sel.anchorNode)) reportRAF();
+    });
+    root.addEventListener('focusin', reportRAF);
+    root.addEventListener('paste', () => setTimeout(reportRAF, 0));
+    root.addEventListener('compositionend', reportRAF); // IME
+
+    // fire once if caret already inside
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount && root.contains(sel.anchorNode)) reportRAF();
+})();
+// ===== STYLE SYNC PACK =====================================================
+
+// -- tiny helpers
+const __rgbToHex = (rgb) => {
+    // rgb(a) → #RRGGBB
+    if (!rgb) return "#000000";
+    const m = rgb.replace(/\s+/g, '').match(/^rgba?\((\d+),(\d+),(\d+)/i);
+    if (!m) return rgb; // already hex or named
+    const toHex = x => ('0' + (parseInt(x, 10) & 255).toString(16)).slice(-2);
+    return `#${toHex(m[1])}${toHex(m[2])}${toHex(m[3])}`.toUpperCase();
+};
+
+const __closestOptionValue = (selectEl, pxStr) => {
+    if (!selectEl) return pxStr;
+    const want = Math.round(parseFloat(pxStr || 0));
+    let best = selectEl.options[0]?.value || (want + "px");
+    let bestDiff = Infinity;
+    for (const opt of selectEl.options) {
+        const v = Math.round(parseFloat(opt.value || 0));
+        const d = Math.abs(v - want);
+        if (d < bestDiff) { bestDiff = d; best = opt.value; }
+    }
+    return best;
+};
+
+const __toggleClass = (el, cls, on) => { if (el) el.classList.toggle(cls, !!on); };
+
+// -- style extraction
+function __getCaretNode(root) {
+    const sel = window.getSelection?.();
+    if (!sel || !sel.rangeCount) return null;
+    const r = sel.getRangeAt(0);
+    let n = r.startContainer || r.commonAncestorContainer;
+    if (n === root && root.firstChild) n = root.firstChild;
+    return n;
+}
+
+function __toElement(node) { return !node ? null : (node.nodeType === 1 ? node : node.parentElement); }
+function __applySemantic(el, sum) {
+    if (!el) return;
+    const t = el.tagName;
+    if (t === 'B' || t === 'STRONG') sum.fontWeight = 'bold';
+    if (t === 'I' || t === 'EM') sum.fontStyle = 'italic';
+    if (t === 'U') sum.textDecoration = 'underline';
+}
+
+function __closestStyleElement(node, root) {
+    let el = __toElement(node);
+    let first = el;
+    while (el && el !== root && el.nodeType === 1) {
+        const st = el.getAttribute && el.getAttribute('style');
+        const setsFont = st && /(font|text-decoration|font-weight|font-style|font-family)/i.test(st);
+        const semantic = /^(B|STRONG|I|EM|U|SPAN)$/i.test(el.tagName);
+        if (setsFont || semantic) return el;
+        el = el.parentElement;
+    }
+    return first || root || null;
+}
+
+function __nearestStyleSummary(root) {
+    const node = __getCaretNode(root);
+    if (!node) return null;
+    const el = __closestStyleElement(node, root);
+    if (!el) return null;
+
+    const inline = el.style || {};
+    const cs = getComputedStyle(el);
+
+    const pick = (prop) => (inline[prop] && inline[prop].trim()) ? inline[prop] : cs[prop];
+
+    const sum = {
+        fontFamily: pick('fontFamily'),
+        fontWeight: pick('fontWeight'),
+        fontStyle: pick('fontStyle'),
+        fontSize: pick('fontSize'),
+        color: pick('color'),
+        textDecoration: pick('textDecoration')
+    };
+    __applySemantic(el, sum);
+
+    // normalize weight
+    const fwNum = parseInt(sum.fontWeight, 10);
+    if (!isNaN(fwNum)) sum.fontWeight = (fwNum >= 600) ? 'bold' : 'normal';
+
+    // normalize family → first name
+    if (sum.fontFamily) {
+        sum.fontFamily = sum.fontFamily.split(',')[0].trim().replace(/^["']|["']$/g, '');
+    }
+    return sum;
+}
+
+// -- UI updater
+function __updateToolbarFromStyle(style) {
+    if (!style) return;
+
+    // 1) Font size select
+    const sizeSel = document.getElementById('fontSizeSelect');
+    if (sizeSel) {
+        const best = __closestOptionValue(sizeSel, style.fontSize);
+        if (sizeSel.value !== best) sizeSel.value = best;
+    }
+
+    // 2) Color input (#favcolor expects hex)
+    const colorInput = document.getElementById('favcolor');
+    if (colorInput) {
+        const hex = __rgbToHex(style.color || '#000');
+        if (colorInput.value.toUpperCase() !== hex) colorInput.value = hex;
+    }
+
+    // 3) Bold / Italic buttons
+    __toggleClass(document.getElementById('boldBtn'), 'active', style.fontWeight === 'bold');
+    __toggleClass(document.getElementById('italicBtn'), 'active', style.fontStyle === 'italic');
+
+    // 4) Font family list (your <ul class="TextStyle">)
+    //    We’ll mark the <a> whose text OR family name matches as active.
+    const list = document.querySelector('ul.TextStyle');
+    if (list) {
+        // clear previous
+        list.querySelectorAll('a').forEach(a => a.classList.remove('active'));
+        // find match
+        const want = (style.fontFamily || '').toLowerCase();
+        let match = null;
+
+        // (a) match by the onclick argument OnChangefontFamily('Name')
+        match = Array.from(list.querySelectorAll('a')).find(a => {
+            const oc = a.getAttribute('onclick') || '';
+            return oc.toLowerCase().includes("'" + want + "'") || oc.toLowerCase().includes('"' + want + '"');
+        });
+
+        // (b) fallback: match by visible text
+        if (!match) {
+            match = Array.from(list.querySelectorAll('a')).find(a => a.textContent.trim().toLowerCase() === want);
+        }
+
+        if (match) match.classList.add('active');
+    }
+}
+
+// -- wiring (one RAF-throttled reporter)
+(function wireStyleSync() {
+    const root = window.textEditorNew;
+    if (!root) return;
+
+    let rafId;
+    const report = () => {
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+            const style = __nearestStyleSummary(root);
+            __updateToolbarFromStyle(style);
+        });
+    };
+
+    // Mouse & keyboard move caret or change style
+    root.addEventListener('mouseup', report);
+    root.addEventListener('keyup', (e) => {
+        if (
+            e.key.length === 1 || e.key.startsWith('Arrow') ||
+            e.key === 'Enter' || e.key === 'Backspace' || e.key === 'Delete' ||
+            e.key === 'Home' || e.key === 'End' || e.key === 'Tab'
+        ) report();
+    });
+
+    // Selection changes (dragging, programmatic)
+    document.addEventListener('selectionchange', () => {
+        const sel = window.getSelection?.();
+        if (sel && sel.rangeCount && root.contains(sel.anchorNode)) report();
+    });
+
+    // After paste / focus
+    root.addEventListener('paste', () => setTimeout(report, 0));
+    root.addEventListener('focusin', report);
+
+    // initial
+    report();
+})();
+function __normalizeFamily(name) {
+    if (!name) return "";
+    let n = name.split(",")[0].trim().replace(/^["']|["']$/g, "");
+    n = n.replace(/\s+/g, " ").toLowerCase();
+    n = n.replace(/\s*regular\b/g, "");
+    return n;
+}
+
+function __toggleActiveClass(el, className, on) {
+    if (!el) return;
+    el.classList.toggle(className, !!on);
+}
+
+function __toggleBtnAndIcon(btn, className, on) {
+    if (!btn) return;
+    __toggleActiveClass(btn, className, on);
+    const icon = btn.querySelector("i");
+    if (icon) __toggleActiveClass(icon, className, on);
+}
+
+function __extractOnclickFamily(aEl) {
+    const oc = aEl.getAttribute("onclick") || "";
+    const m = oc.match(/OnChangefontFamily\(['"]([^'"]+)['"]\)/i);
+    return m ? m[1] : "";
+}
+
+function __updateToolbarFromStyle(style) {
+    if (!style) return;
+
+    // 1) Font size select (choose closest)
+    const sizeSel = document.getElementById("fontSizeSelect");
+    if (sizeSel) {
+        const want = Math.round(parseFloat(style.fontSize || 0));
+        let best = sizeSel.value, bestDiff = Infinity;
+        for (const opt of sizeSel.options) {
+            const v = Math.round(parseFloat(opt.value || 0));
+            const d = Math.abs(v - want);
+            if (d < bestDiff) { bestDiff = d; best = opt.value; }
+        }
+        if (sizeSel.value !== best) sizeSel.value = best;
+    }
+
+    // 2) Color input → hex
+    const colorInput = document.getElementById("favcolor");
+    if (colorInput) {
+        const toHex = (c) => {
+            const m = (c || "").replace(/\s+/g, '').match(/^rgba?\((\d+),(\d+),(\d+)/i);
+            if (!m) return (c || "#000000");
+            const h = x => ("0" + (parseInt(x, 10) & 255).toString(16)).slice(-2);
+            return ("#" + h(m[1]) + h(m[2]) + h(m[3])).toUpperCase();
+        };
+        const hex = toHex(style.color || "#000");
+        if (colorInput.value.toUpperCase() !== hex) colorInput.value = hex;
+    }
+
+    // 3) Bold / Italic with custom classes
+    const isBold = (String(style.fontWeight).toLowerCase() === "bold" || parseInt(style.fontWeight, 10) >= 600);
+    const isItalic = (String(style.fontStyle).toLowerCase() === "italic");
+
+    __toggleBtnAndIcon(document.getElementById("boldBtn"), "activeBold", isBold);
+    __toggleBtnAndIcon(document.getElementById("italicBtn"), "activeItalic", isItalic);
+
+    // 4) Font family list — robust matching with custom active class
+    const list = document.querySelector("ul.TextStyle");
+    if (list) {
+        // clear previous custom active
+        list.querySelectorAll("a").forEach(a => a.classList.remove("activeFontfamily"));
+
+        const want = __normalizeFamily(style.fontFamily);
+        let match = null;
+
+        // (a) match by onclick payload
+        match = Array.from(list.querySelectorAll("a")).find(a => {
+            const ocFam = __normalizeFamily(__extractOnclickFamily(a));
+            return ocFam === want;
+        });
+
+        // (b) match by visible text
+        if (!match) {
+            match = Array.from(list.querySelectorAll("a")).find(a =>
+                __normalizeFamily(a.textContent || "") === want
+            );
+        }
+
+        // (c) match by class name hint
+        if (!match) {
+            match = Array.from(list.querySelectorAll("a")).find(a =>
+                __normalizeFamily(a.className || "").includes(want)
+            );
+        }
+
+        // (d) starts-with fallback (e.g., "georgia" vs "georgia regular")
+        if (!match && want) {
+            match = Array.from(list.querySelectorAll("a")).find(a => {
+                const ocFam = __normalizeFamily(__extractOnclickFamily(a));
+                return ocFam.startsWith(want) || want.startsWith(ocFam);
+            });
+        }
+
+        if (match) match.classList.add("activeFontfamily");
+    }
+}
