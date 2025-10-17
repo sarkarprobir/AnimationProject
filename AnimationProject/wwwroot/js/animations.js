@@ -17826,8 +17826,8 @@ function __toggleActiveClass(el, className, on) {
 function __toggleBtnAndIcon(btn, className, on) {
     if (!btn) return;
     __toggleActiveClass(btn, className, on);
-    const icon = btn.querySelector("i");
-    if (icon) __toggleActiveClass(icon, className, on);
+    //const icon = btn.querySelector("i");
+    //if (icon) __toggleActiveClass(icon, className, on);
 }
 
 function __extractOnclickFamily(aEl) {
