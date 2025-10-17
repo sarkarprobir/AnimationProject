@@ -2254,3 +2254,16 @@ body {
 .form-control:focus{
     border-color: #000 !important;
 }
+.activeBold {
+    color: #6214fe;
+    background-color: #4e43e136;
+}
+.activeItalic {
+    color: #6214fe;
+    background-color: #4e43e136;
+}
+.activeFontfamily {
+    color: #fff;
+    background: #6214fe;
+    border-radius: 3px;
+}
