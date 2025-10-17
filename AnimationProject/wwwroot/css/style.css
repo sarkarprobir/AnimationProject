@@ -1474,10 +1474,10 @@ body {
     height: 35px;
     border-radius: 3px;
 }
-    .text_decoration:active, .text_decoration:focus {
+    /*.text_decoration:active, .text_decoration:focus {
         color: #6214fe;
         background-color: #4e43e136;
-    }
+    }*/
 .slider_label{
     font-size: var(--font-size14);
 }
@@ -2263,7 +2263,7 @@ body {
     background-color: #4e43e136;
 }
 .activeFontfamily {
-    color: #fff;
+    color: #fff !important;
     background: #6214fe;
     border-radius: 3px;
 }
