@@ -1888,7 +1888,7 @@ body {
     overflow-wrap: break-word; /* or: anywhere; */
     /* Typographic defaults to mirror canvas */
     font-family: Arial, sans-serif;
-    font-size: 16px;
+    font-size: 13px;
     line-height: 1.2;
     /* Let JS resize height; don't cap it here */
     height: auto;

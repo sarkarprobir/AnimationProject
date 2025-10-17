@@ -10086,7 +10086,7 @@ function drawText() {
     // text defaults
     ctx.textBaseline = "top";
     const defaultStyle = window.getComputedStyle(textEditorNew);
-    const defaultFontSize = defaultStyle.fontSize || "16px";
+    const defaultFontSize = defaultStyle.fontSize || "13px";
     const defaultFontFamily = defaultStyle.fontFamily || "Arial Regular";
     const defaultFontWeight = defaultStyle.fontWeight || "normal";
     const defaultFontStyle = defaultStyle.fontStyle || "normal";
@@ -10488,6 +10488,21 @@ function drawText() {
         // ---- RICH HTML PATH (UNCHANGED from your code) ----
         const wrapper = document.createElement("div");
         wrapper.innerHTML = box.text || "";
+        // 🚫 prune ghost placeholders BEFORE your normalizers run
+        (function pruneGhostPlaceholders(root) {
+            // 1) remove empty <p> without <br>
+            Array.from(root.querySelectorAll('p')).forEach(p => {
+                const hasBR = !!p.querySelector('br');
+                const txt = (p.textContent || '').replace(/[\u200B\u00A0\s]/g, ''); // strip ZWSP, NBSP, spaces
+                if (!hasBR && txt === '') p.remove();
+            });
+            // 2) remove now-empty <div>/<p> that contain no <br> and no real text
+            Array.from(root.querySelectorAll('div,p')).forEach(el => {
+                const hasBR = !!el.querySelector('br');
+                const txt = (el.textContent || '').replace(/[\u200B\u00A0\s]/g, '');
+                if (!hasBR && txt === '') el.remove();
+            });
+        })(wrapper);
         __normalizeToLineDivs(wrapper);
         // __unwrapSpanBlocks(wrapper);     // handles <div><span>…block lines…</span></div>
         __fixEmptyLineDivs(wrapper);     // ensures <div><br></div> for blank lines
@@ -10496,31 +10511,71 @@ function drawText() {
 
 
         const lines = [];
-        wrapper.childNodes.forEach(n => {
-            if (n.nodeType === 1 && n.tagName === "DIV") {
-                const hasContent = n.textContent.trim().length > 0 || n.children.length > 0;
-                if (!hasContent) {
-                    const blank = document.createElement("div");
-                    blank.appendChild(document.createTextNode(" "));
-                    __stripTrailingBRs(blank); 
-                    lines.push(blank);
-                } else {
-                    const ln = document.createElement("div");
-                    ln.append(...n.cloneNode(true).childNodes);
-                    __stripTrailingBRs(ln);  
-                    lines.push(ln);
-                }
-            } else if (n.nodeType === 1 && n.tagName === "BR") {
-                const brLine = document.createElement("div");
-                brLine.appendChild(document.createTextNode(" "));
-                __stripTrailingBRs(brLine);
-                lines.push(brLine);
+
+        // helpers
+        const hasExplicitBRDeep = (node) =>
+            !!(node.querySelector ? node.querySelector('br') : (node.tagName === 'BR'));
+
+        const hasRealContentDeep = (node) => {
+            // any non-whitespace text or a non-BR element counts as content
+            if (node.nodeType === 3) return /\S/.test(node.nodeValue || '');
+            if (node.nodeType !== 1) return false;
+            if (node.tagName === 'BR') return false;
+            for (const c of node.childNodes) if (hasRealContentDeep(c)) return true;
+            return false;
+        };
+
+        const pushBlank = () => {
+            const blank = document.createElement('div');
+            blank.appendChild(document.createElement('br'));
+            __stripTrailingBRs?.(blank);
+            lines.push(blank);
+        };
+
+        const pushFromChildren = (node) => {
+            const ln = document.createElement('div');
+            // unwrap a single child <p> so you don't get <div><p>…</p></div> artifacts
+            if (node.children && node.children.length === 1 && node.firstElementChild.tagName === 'P') {
+                ln.append(...node.firstElementChild.cloneNode(true).childNodes);
             } else {
-                if (lines.length === 0) lines.push(document.createElement("div"));
-                lines[lines.length - 1].appendChild(n.cloneNode(true));
-                __stripTrailingBRs(lines[lines.length - 1]); 
+                ln.append(...node.cloneNode(true).childNodes);
             }
+            __stripTrailingBRs?.(ln);
+            lines.push(ln);
+        };
+
+        // build lines
+        wrapper.childNodes.forEach((n) => {
+            if (n.nodeType === 1 && (n.tagName === 'DIV' || n.tagName === 'P')) {
+                const hasContent = hasRealContentDeep(n);
+                const hasBR = hasExplicitBRDeep(n);
+
+                if (!hasContent && !hasBR) {
+                    // EMPTY <div> / <p> with NO <br> → ignore (no newline on canvas)
+                    return;
+                }
+                if (!hasContent && hasBR) {
+                    // pure blank, but explicitly marked with <br> → count as one blank line
+                    pushBlank();
+                    return;
+                }
+                // has some real content → render the children as a normal line
+                pushFromChildren(n);
+                return;
+            }
+
+            if (n.nodeType === 1 && n.tagName === 'BR') {
+                // top-level <br> becomes one blank line
+                pushBlank();
+                return;
+            }
+
+            // top-level text/inline nodes → append to the current line
+            if (lines.length === 0) lines.push(document.createElement('div'));
+            lines[lines.length - 1].appendChild(n.cloneNode(true));
+            __stripTrailingBRs?.(lines[lines.length - 1]);
         });
+
 
         const left = -w / 2;
         const top = -h / 2;
@@ -13007,7 +13062,7 @@ function restoreSelection() {
 //}
 function addDefaultText(opts = {}) {
     // --- defaults (kept from your working function + addDefaultText) ---
-    const fs = opts.fontSize ?? 24;
+    const fs = opts.fontSize ?? 13;
     const text = opts.text ?? "Default Text";
     const factor = opts.lineSpacing ?? 1.2;           // multiplier
     const fontFam = opts.fontFamily ?? "Roboto";
@@ -13604,48 +13659,86 @@ function ensureEditorWrapping() {
     });
 }
 
+// once at startup
+let __fontsReadyOnce = false;
+
 textEditorNew.addEventListener("input", () => {
     if (!activeBox || !isEditing) return;
 
-    // 🎯 capture caret BEFORE any DOM changes
-    const __caretPOS = __getCaretLineOffset(textEditorNew);
-
-    // ✅ your existing prep
+    // normalize structure first
     ensureEditorWrapping();
     hoistNestedLines(textEditorNew);
 
-    const edStyle = window.getComputedStyle(textEditorNew);
-    const lineSpacing = (typeof selectedLineSpacing === "number" ? selectedLineSpacing : 8);
+    // let the browser finish the mutation & layout
+    requestAnimationFrame(async () => {
+        // wait for fonts only once (macOS flicker fix) — not on every keystroke
+        if (!__fontsReadyOnce && document.fonts?.ready) {
+            try { await document.fonts.ready; } catch { }
+            __fontsReadyOnce = true;
+        }
 
-    const meas = document.createElement("div");
-    Object.assign(meas.style, {
-        position: "absolute",
-        visibility: "hidden",
-        whiteSpace: "pre-wrap",
-        fontFamily: edStyle.fontFamily,
-        fontSize: edStyle.fontSize,
-        lineHeight: `${parseFloat(edStyle.lineHeight) + lineSpacing}px`,
-        width: textEditorNew.style.width,
-        boxSizing: "border-box"
+        const cs = getComputedStyle(textEditorNew);
+
+        // build a faithful measurer
+        const meas = document.createElement("div");
+        Object.assign(meas.style, {
+            position: "absolute",
+            visibility: "hidden",
+            left: "-99999px",
+            top: "0",
+            width: cs.width,                  // computed width, not style string
+            boxSizing: "border-box",
+            padding: cs.padding,
+            border: cs.border,
+            whiteSpace: cs.whiteSpace,        // mirror wrapping…
+            wordBreak: cs.wordBreak,
+            overflowWrap: cs.overflowWrap,
+            fontFamily: cs.fontFamily,        // mirror font exactly
+            fontSize: cs.fontSize,
+            fontWeight: cs.fontWeight,
+            fontStyle: cs.fontStyle,
+            lineHeight: cs.lineHeight,        // see note below re: “normal”
+            letterSpacing: cs.letterSpacing
+        });
+
+        // If Safari reports "normal", convert it once to pixels to match canvas
+        if (meas.style.lineHeight === "" || cs.lineHeight === "normal") {
+            const fs = parseFloat(cs.fontSize) || 16;
+            // keep this in sync with your canvas line-height rule!
+            const pxLH = Math.round(fs * (box?.lineSpacing || 1.2));
+            meas.style.lineHeight = `${pxLH}px`;
+        }
+
+        // (optional) prune like canvas so line counts match
+        const tmp = document.createElement("div");
+        tmp.innerHTML = textEditorNew.innerHTML;
+        (function pruneGhostPlaceholders(root) {
+            Array.from(root.querySelectorAll('p')).forEach(p => {
+                const hasBR = !!p.querySelector('br');
+                const txt = (p.textContent || '').replace(/[\u200B\u00A0\s]/g, '');
+                if (!hasBR && txt === '') p.remove();
+            });
+            Array.from(root.querySelectorAll('div,p')).forEach(el => {
+                const hasBR = !!el.querySelector('br');
+                const txt = (el.textContent || '').replace(/[\u200B\u00A0\s]/g, '');
+                if (!hasBR && txt === '') el.remove();
+            });
+        })(tmp);
+
+        meas.innerHTML = tmp.innerHTML;
+        document.body.appendChild(meas);
+
+        const neededH = meas.scrollHeight;  // trust scrollHeight; no manual +spacing
+        document.body.removeChild(meas);
+
+        activeBox.height = Math.max(neededH, 30);
+        textEditorNew.style.height = `${activeBox.height}px`;
+
+        activeBox.text = textEditorNew.innerHTML;
+        drawText();
     });
-
-    meas.innerHTML = textEditorNew.innerHTML;
-    document.body.appendChild(meas);
-
-    const lines = meas.querySelectorAll("div").length || 1;
-    const neededH = meas.scrollHeight + lineSpacing * lines;
-
-    document.body.removeChild(meas);
-
-    activeBox.height = Math.max(neededH, 30);
-    textEditorNew.style.height = activeBox.height + "px";
-
-    activeBox.text = textEditorNew.innerHTML;
-    drawText();
-
-    // 🔁 restore caret to where user was typing (prevents "WON" reversal)
-    if (__caretPOS) __setCaretLineOffset(textEditorNew, __caretPOS);
 });
+
 
 
 
@@ -13723,84 +13816,160 @@ textEditorNew.addEventListener('beforeinput', (e) => {
 
 // ADD: helper – insert <div><br></div> AFTER the caret's top-level line block
 function __insertEmptyLineBlock(root) {
-    const sel = window.getSelection();
-    if (!sel || !sel.rangeCount) return;
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
 
-    // Collapse selection (if user had a range, Enter should replace it with a newline)
-    const range = sel.getRangeAt(0);
-    if (!range.collapsed) {
-        range.deleteContents();
+  const range = sel.getRangeAt(0);
+  if (!range.collapsed) range.deleteContents();
+
+  // find current top-level line (DIV or P)
+  let line = range.startContainer;
+  while (line && line !== root && line.parentNode !== root) line = line.parentNode;
+
+  // if we don't have a line yet, wrap once (same as your current behavior)
+  if (!line || line === root) {
+    const wrap = document.createElement('div');
+    wrap.setAttribute('style','line-height:1.2;display:block;margin:0');
+    while (root.firstChild) wrap.appendChild(root.firstChild);
+    root.appendChild(wrap);
+    line = wrap;
+  }
+
+  const isLine = el => el && el.nodeType === 1 && (el.tagName === 'DIV' || el.tagName === 'P');
+
+  const isBlankLine = el => {
+    if (!isLine(el)) return false;
+    // visible blank if it has a <br> somewhere or only whitespace
+    const txt = (el.textContent || '').replace(/\u200B/g,''); // strip ZWSP
+    const onlyWS = !/[^\s\u00A0]/.test(txt);
+    const hasBR = !!el.querySelector && el.querySelector('br');
+    // also treat <div><p><br></p></div> as blank
+    const singlePWithBR = (el.tagName === 'DIV' &&
+                           el.children.length === 1 &&
+                           el.children[0].tagName === 'P' &&
+                           !!el.children[0].querySelector('br'));
+    return hasBR || singlePWithBR || onlyWS;
+  };
+
+  const mkParaBlank = () => {
+    const p = document.createElement('p');
+    p.setAttribute('style','margin:0;line-height:1.2;display:block;');
+    p.innerHTML = '<br>';
+    return p;
+  };
+
+  // build left/right fragments
+  const caretRange = sel.getRangeAt(0).cloneRange();
+
+  const rLeft = document.createRange();
+  rLeft.setStart(line, 0);
+  rLeft.setEnd(caretRange.startContainer, caretRange.startOffset);
+  const fragLeft = rLeft.cloneContents();
+
+  const rRight = document.createRange();
+  rRight.setStart(caretRange.startContainer, caretRange.startOffset);
+  rRight.setEnd(line, line.childNodes.length);
+  const fragRight = rRight.cloneContents();
+
+  const leftHasContent  = !!fragLeft && fragLeft.childNodes.length > 0;
+  const rightHasContent = !!fragRight && fragRight.childNodes.length > 0;
+
+  const prevLine = line.previousSibling;
+  const nextLine = line.nextSibling;
+
+  // CASE 1: caret at START (no left content)
+  if (!leftHasContent && rightHasContent) {
+    // If previous sibling is already a blank line, don't add—just move caret there.
+    if (isLine(prevLine) && isBlankLine(prevLine)) {
+      const r = document.createRange();
+      r.setStart(prevLine, 0);
+      r.collapse(true);
+      sel.removeAllRanges(); sel.addRange(r);
+      return;
     }
-    const caretRange = sel.getRangeAt(0).cloneRange();
+    // Insert exactly ONE blank before current line; do not touch right content or existing blanks.
+    const blank = mkParaBlank();
+    root.insertBefore(blank, line);
 
-    // Find the current top-level line <div> (direct child of root).
-    // If content isn't normalized, wrap once so we always have line blocks.
-    let line = caretRange.startContainer;
-    while (line && line !== root && line.parentNode !== root) line = line.parentNode;
+    // place caret into the new blank
+    const r = document.createRange();
+    r.setStart(blank, 0);
+    r.collapse(true);
+    sel.removeAllRanges(); sel.addRange(r);
+    return;
+  }
 
-    if (!line || line === root) {
-        // First-time normalize: wrap current root contents into a line div
-        const wrap = document.createElement('div');
-        wrap.setAttribute('style', 'line-height: 1.2; display: block; margin: 0px;');
-        while (root.firstChild) wrap.appendChild(root.firstChild);
-        root.appendChild(wrap);
-        line = wrap;
+  // CASE 2: caret at END (no right content)
+  if (leftHasContent && !rightHasContent) {
+    // If next sibling is already a blank line, don't add—just move caret there.
+    if (isLine(nextLine) && isBlankLine(nextLine)) {
+      const r = document.createRange();
+      r.setStart(nextLine, 0);
+      r.collapse(true);
+      sel.removeAllRanges(); sel.addRange(r);
+      return;
     }
+    // Insert exactly ONE blank after current line; keep left content as-is.
+    const blank = mkParaBlank();
+    if (line.nextSibling) root.insertBefore(blank, line.nextSibling);
+    else root.appendChild(blank);
 
-    // Build helpers
-    const mkLine = () => {
-        const d = document.createElement('div');
-        d.setAttribute('style', 'line-height: 1.2; display: block; margin: 0px;');
-        return d;
-    };
+    const r = document.createRange();
+    r.setStart(blank, 0);
+    r.collapse(true);
+    sel.removeAllRanges(); sel.addRange(r);
+    return;
+  }
 
-    // Split current line <div> at caret into left and right fragments
-    const rLeft = document.createRange();
-    rLeft.setStart(line, 0);
-    rLeft.setEnd(caretRange.startContainer, caretRange.startOffset);
-    const fragLeft = rLeft.cloneContents();
+  // CASE 3: caret in the MIDDLE (both sides have content)
+  if (leftHasContent && rightHasContent) {
+    // Replace current line with  [left-content line] [ONE blank] [right-content line]
+    const leftLine = document.createElement(line.tagName); // keep DIV/P
+    leftLine.setAttribute('style','line-height:1.2;display:block;margin:0');
+    leftLine.appendChild(fragLeft);
 
-    const rRight = document.createRange();
-    rRight.setStart(caretRange.startContainer, caretRange.startOffset);
-    rRight.setEnd(line, line.childNodes.length);
-    const fragRight = rRight.cloneContents();
+    const rightLine = document.createElement(line.tagName);
+    rightLine.setAttribute('style','line-height:1.2;display:block;margin:0');
+    rightLine.appendChild(fragRight);
 
-    const leftDiv = mkLine();
-    const emptyDiv = mkLine();
-    const rightDiv = mkLine();
+    const blank = mkParaBlank();
 
-    // Ensure empty line has height
-    emptyDiv.innerHTML = '<br>';
-
-    // Move fragments
-    if (fragLeft && fragLeft.childNodes.length) leftDiv.appendChild(fragLeft);
-    else leftDiv.innerHTML = '<br>';
-
-    if (fragRight && fragRight.childNodes.length) rightDiv.appendChild(fragRight);
-    else rightDiv.innerHTML = '<br>';
-
-    // 🔧 Trim exactly one newline at the split boundary to avoid a phantom blank line
-    __stripOneTrailingLF(leftDiv);   // remove trailing \n on the left piece
-    __stripOneLeadingLF(rightDiv);   // remove leading \n on the right piece
-
-    // keep visible height if either side became empty after trimming
-    if (!leftDiv.firstChild) leftDiv.innerHTML = '<br>';
-    if (!rightDiv.firstChild) rightDiv.innerHTML = '<br>';
-
-
-    // Replace the original line with left + empty + right
-    root.insertBefore(leftDiv, line);
-    root.insertBefore(emptyDiv, line);
-    root.insertBefore(rightDiv, line);
+    root.insertBefore(leftLine, line);
+    root.insertBefore(blank, line);
+    root.insertBefore(rightLine, line);
     root.removeChild(line);
 
-    // Place caret inside the empty line
-    const r2 = document.createRange();
-    r2.setStart(emptyDiv, 0);
-    r2.collapse(true);
-    sel.removeAllRanges();
-    sel.addRange(r2);
+    const r = document.createRange();
+    r.setStart(blank, 0);
+    r.collapse(true);
+    sel.removeAllRanges(); sel.addRange(r);
+    return;
+  }
+
+  // CASE 4: line has no real content (already blank)
+  // Don't change blank count; if neighbor already blank, just put caret there;
+  // otherwise insert exactly one new blank AFTER it (standard Enter behavior in blank line).
+  if (!leftHasContent && !rightHasContent) {
+    if (isLine(nextLine) && isBlankLine(nextLine)) {
+      const r = document.createRange();
+      r.setStart(nextLine, 0);
+      r.collapse(true);
+      sel.removeAllRanges(); sel.addRange(r);
+      return;
+    }
+    const blank = mkParaBlank();
+    if (line.nextSibling) root.insertBefore(blank, line.nextSibling);
+    else root.appendChild(blank);
+
+    const r = document.createRange();
+    r.setStart(blank, 0);
+    r.collapse(true);
+    sel.removeAllRanges(); sel.addRange(r);
+    return;
+  }
 }
+
+
 
 //boldBtn.addEventListener("click", e => {
 //    e.preventDefault();
