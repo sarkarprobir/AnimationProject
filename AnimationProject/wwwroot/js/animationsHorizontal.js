@@ -5679,7 +5679,7 @@ canvas.addEventListener("click", function onCanvasClick(e) {
         selectGroup(txtHit.groupId);
         setGroupCheckbox(txtHit.groupId);
 
-        $("#favcolor").val(txtHit.textColor);
+       // $("#favcolor").val(txtHit.textColor);
         $("#noAnimCheckbox").prop("checked", !!txtHit.noAnim);
         $("#fontstyle_popup").show();
         $(".right-sec-two").show();
@@ -5688,7 +5688,7 @@ canvas.addEventListener("click", function onCanvasClick(e) {
         isMarquee = false;
         setGraphicModeActive();
         setOpacityUI(normAlpha?.(txtHit.opacity));
-
+     
     } else if (imgHit) {
         imgHit.selected = true;
         activeImage = imgHit;
@@ -17177,7 +17177,7 @@ function getNearestTextStyle(root = textEditorNew) {
         const style = getNearestTextStyle(root);
         if (!style) return;
         // TODO: update your UI (replace console.log)
-        console.log('[nearest-style]', style);
+       // console.log('[nearest-style]', style);
         // e.g., toolbar.setFontFamily(style.fontFamily); toolbar.setFontWeight(style.fontWeight);
     };
 
@@ -17297,51 +17297,51 @@ function __nearestStyleSummary(root) {
 }
 
 // -- UI updater
-function __updateToolbarFromStyle(style) {
-    if (!style) return;
+//function __updateToolbarFromStyle(style) {
+//    if (!style) return;
 
-    // 1) Font size select
-    const sizeSel = document.getElementById('fontSizeSelect');
-    if (sizeSel) {
-        const best = __closestOptionValue(sizeSel, style.fontSize);
-        if (sizeSel.value !== best) sizeSel.value = best;
-    }
+//    // 1) Font size select
+//    const sizeSel = document.getElementById('fontSizeSelect');
+//    if (sizeSel) {
+//        const best = __closestOptionValue(sizeSel, style.fontSize);
+//        if (sizeSel.value !== best) sizeSel.value = best;
+//    }
 
-    // 2) Color input (#favcolor expects hex)
-    const colorInput = document.getElementById('favcolor');
-    if (colorInput) {
-        const hex = __rgbToHex(style.color || '#000');
-        if (colorInput.value.toUpperCase() !== hex) colorInput.value = hex;
-    }
+//    // 2) Color input (#favcolor expects hex)
+//    const colorInput = document.getElementById('favcolor');
+//    if (colorInput) {
+//        const hex = __rgbToHex(style.color || '#000');
+//        if (colorInput.value.toUpperCase() !== hex) colorInput.value = hex;
+//    }
 
-    // 3) Bold / Italic buttons
-    __toggleClass(document.getElementById('boldBtn'), 'active', style.fontWeight === 'bold');
-    __toggleClass(document.getElementById('italicBtn'), 'active', style.fontStyle === 'italic');
+//    // 3) Bold / Italic buttons
+//    __toggleClass(document.getElementById('boldBtn'), 'active', style.fontWeight === 'bold');
+//    __toggleClass(document.getElementById('italicBtn'), 'active', style.fontStyle === 'italic');
 
-    // 4) Font family list (your <ul class="TextStyle">)
-    //    We’ll mark the <a> whose text OR family name matches as active.
-    const list = document.querySelector('ul.TextStyle');
-    if (list) {
-        // clear previous
-        list.querySelectorAll('a').forEach(a => a.classList.remove('active'));
-        // find match
-        const want = (style.fontFamily || '').toLowerCase();
-        let match = null;
+//    // 4) Font family list (your <ul class="TextStyle">)
+//    //    We’ll mark the <a> whose text OR family name matches as active.
+//    const list = document.querySelector('ul.TextStyle');
+//    if (list) {
+//        // clear previous
+//        list.querySelectorAll('a').forEach(a => a.classList.remove('active'));
+//        // find match
+//        const want = (style.fontFamily || '').toLowerCase();
+//        let match = null;
 
-        // (a) match by the onclick argument OnChangefontFamily('Name')
-        match = Array.from(list.querySelectorAll('a')).find(a => {
-            const oc = a.getAttribute('onclick') || '';
-            return oc.toLowerCase().includes("'" + want + "'") || oc.toLowerCase().includes('"' + want + '"');
-        });
+//        // (a) match by the onclick argument OnChangefontFamily('Name')
+//        match = Array.from(list.querySelectorAll('a')).find(a => {
+//            const oc = a.getAttribute('onclick') || '';
+//            return oc.toLowerCase().includes("'" + want + "'") || oc.toLowerCase().includes('"' + want + '"');
+//        });
 
-        // (b) fallback: match by visible text
-        if (!match) {
-            match = Array.from(list.querySelectorAll('a')).find(a => a.textContent.trim().toLowerCase() === want);
-        }
+//        // (b) fallback: match by visible text
+//        if (!match) {
+//            match = Array.from(list.querySelectorAll('a')).find(a => a.textContent.trim().toLowerCase() === want);
+//        }
 
-        if (match) match.classList.add('active');
-    }
-}
+//        if (match) match.classList.add('active');
+//    }
+//}
 
 // -- wiring (one RAF-throttled reporter)
 (function wireStyleSync() {
@@ -17351,7 +17351,7 @@ function __updateToolbarFromStyle(style) {
     let rafId;
     const report = () => {
         cancelAnimationFrame(rafId);
-        rafId = requestAnimationFrame(() => {
+        rafId = requestAnimationFrame(() => {      
             const style = __nearestStyleSummary(root);
             __updateToolbarFromStyle(style);
         });
