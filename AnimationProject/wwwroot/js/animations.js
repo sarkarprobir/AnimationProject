@@ -6104,6 +6104,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("divStrockColor").style.display = 'none';
         document.getElementById("divFillColor").style.display = 'none';
         document.getElementById("divCurvature").style.display = 'none';
+        document.getElementById("divCopyPaste").style.display = 'none';
         HideLoader();
     }
     else if (selectedType == 'Text') {
@@ -6116,6 +6117,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("divStrockColor").style.display = 'none';
         document.getElementById("divFillColor").style.display = 'none';
         document.getElementById("divCurvature").style.display = 'none';
+        document.getElementById("divCopyPaste").style.display = 'block';
         HideLoader();
     }
     else if (selectedType == 'Shape') {
@@ -6129,6 +6131,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("divStrockColor").style.display = 'block';
         document.getElementById("divFillColor").style.display = 'block';
         document.getElementById("divCurvature").style.display = 'block';
+        document.getElementById("divCopyPaste").style.display = 'none';
         HideLoader();
     }
     else if (selectedType == 'Icon') {
@@ -6157,6 +6160,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("divStrockColor").style.display = 'none';
         document.getElementById("divFillColor").style.display = 'none';
         document.getElementById("divCurvature").style.display = 'none';
+        document.getElementById("divCopyPaste").style.display = 'none';
         HideLoader();
     }
 }
@@ -17913,3 +17917,223 @@ function __updateToolbarFromStyle(style) {
     }
 }
 
+// ========= STYLE CLIPBOARD =========
+let __styleClipboard = null;
+
+// normalize / sanitize bits for consistent paste
+function __normTextDecoration(value) {
+    if (!value) return 'none';
+    const v = String(value).toLowerCase();
+    return v.includes('underline') ? 'underline' : 'none';
+}
+function __normFontWeight(value) {
+    if (!value) return 'normal';
+    const v = String(value).toLowerCase();
+    if (v === 'bold') return 'bold';
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) ? (n >= 600 ? 'bold' : 'normal') : 'normal';
+}
+function __firstFamily(name) {
+    if (!name) return '';
+    return name.split(',')[0].trim().replace(/^["']|["']$/g, '');
+}
+
+// Convert the style summary → inline CSS object
+function __styleSummaryToInline(style) {
+    if (!style) return null;
+    return {
+        fontFamily: __firstFamily(style.fontFamily) || '',
+        fontSize: style.fontSize || '',
+        fontWeight: __normFontWeight(style.fontWeight),
+        fontStyle: (String(style.fontStyle || '').toLowerCase() === 'italic') ? 'italic' : 'normal',
+        color: style.color || '',
+        textDecoration: __normTextDecoration(style.textDecoration),
+    };
+}
+
+// Build a CSS text from the inline object
+function __inlineToCssText(inline) {
+    const parts = [];
+    if (inline.fontFamily) parts.push(`font-family:"${inline.fontFamily.replace(/"/g, '\\"')}"`);
+    if (inline.fontSize) parts.push(`font-size:${inline.fontSize}`);
+    if (inline.fontWeight) parts.push(`font-weight:${inline.fontWeight}`);
+    if (inline.fontStyle) parts.push(`font-style:${inline.fontStyle}`);
+    if (inline.color) parts.push(`color:${inline.color}`);
+    if (inline.textDecoration) parts.push(`text-decoration:${inline.textDecoration}`);
+    return parts.join(';');
+}
+
+// ========= COPY =========
+function copyTextStyle(root = window.textEditorNew) {
+    const style = getNearestTextStyle(root);
+    if (!style) return;
+    __styleClipboard = __styleSummaryToInline(style);
+    // enable paste button
+    const btn = document.getElementById('pasteStyleBtn');
+    if (btn) btn.disabled = false;
+}
+
+// ========= PASTE (apply to selection or caret) =========
+function pasteTextStyle(root = window.textEditorNew) {
+    if (!__styleClipboard || !root) return;
+
+    const sel = window.getSelection?.();
+    if (!sel || !sel.rangeCount) return;
+    const range = sel.getRangeAt(0);
+    // ensure selection is inside the editor
+    if (!root.contains(range.commonAncestorContainer)) return;
+
+    const cssText = __inlineToCssText(__styleClipboard);
+
+    if (range.collapsed) {
+        // collapsed: insert a styled span and keep caret inside
+        const span = document.createElement('span');
+        span.setAttribute('style', cssText);
+        // use a zero-width non-joiner to keep caret
+        span.textContent = '\u200C';
+        range.insertNode(span);
+
+        // move caret inside span, after the ZWNJ
+        sel.removeAllRanges();
+        const r = document.createRange();
+        r.setStart(span.firstChild, 1);
+        r.setEnd(span.firstChild, 1);
+        sel.addRange(r);
+        return;
+    }
+
+    // non-collapsed: try surroundContents; if it fails, use a text-wrapping fallback
+    try {
+        const wrapper = document.createElement('span');
+        wrapper.setAttribute('style', cssText);
+        range.surroundContents(wrapper);
+
+        // reselect the wrapped content (optional)
+        sel.removeAllRanges();
+        const r2 = document.createRange();
+        r2.selectNodeContents(wrapper);
+        sel.addRange(r2);
+    } catch (err) {
+        // Fallback: wrap each text node portion that intersects the range
+        __wrapIntersectionsWithStyle(range, cssText);
+
+        // set caret at end of the pasted region for a smooth UX
+        const endRange = document.createRange();
+        endRange.setStart(range.endContainer, Math.min(range.endOffset, (range.endContainer.nodeType === 3 ? range.endContainer.length : range.endContainer.childNodes.length)));
+        endRange.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(endRange);
+    }
+}
+
+// Walk text nodes intersecting the range and wrap selected portions
+function __wrapIntersectionsWithStyle(range, cssText) {
+    const root = range.commonAncestorContainer;
+    const tw = document.createTreeWalker(
+        root,
+        NodeFilter.SHOW_TEXT,
+        {
+            acceptNode(node) {
+                if (!node.nodeValue || !node.nodeValue.length) return NodeFilter.FILTER_REJECT;
+                try { return range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT; }
+                catch { return NodeFilter.FILTER_REJECT; }
+            }
+        }
+    );
+
+    const targets = [];
+    for (let n = tw.nextNode(); n; n = tw.nextNode()) targets.push(n);
+
+    targets.forEach(node => {
+        let start = 0, end = node.nodeValue.length;
+
+        if (node === range.startContainer) start = range.startOffset;
+        if (node === range.endContainer) end = range.endOffset;
+
+        if (start >= end) return;
+
+        // split end first to preserve offsets
+        if (end < node.length) node.splitText(end);
+        let mid = node;
+        if (start > 0) mid = node.splitText(start);
+
+        const span = document.createElement('span');
+        span.setAttribute('style', cssText);
+        mid.parentNode.insertBefore(span, mid);
+        span.appendChild(mid);
+    });
+}
+
+// ========= BUTTON WIRING =========
+// Robust wiring: works for late-rendered buttons too
+(function wireCopyPasteButtons() {
+    // 1) Delegate clicks anywhere in the document
+    document.addEventListener('click', function (e) {
+        const copyBtn = e.target.closest('#copyStyleBtn');
+        const pasteBtn = e.target.closest('#pasteStyleBtn');
+
+        if (copyBtn) {
+            e.preventDefault();
+            // textEditorNew must be globally accessible
+            copyTextStyle(window.textEditorNew);
+        }
+        if (pasteBtn) {
+            e.preventDefault();
+            pasteTextStyle(window.textEditorNew);
+        }
+    });
+
+    // 2) Optional: enable paste button after first copy via a simple event
+    //    (if you already enable it in copyTextStyle, you can skip this)
+    document.addEventListener('style:copied', () => {
+        const pb = document.getElementById('pasteStyleBtn');
+        if (pb) pb.disabled = false;
+    });
+
+    // 3) Safety: if buttons already exist at load, nothing else needed.
+    //    If your UI mounts after DOMContentLoaded, delegation still works.
+})();
+document.addEventListener('DOMContentLoaded', () => {
+    const copyBtn = document.getElementById('copyStyleBtn');
+    const pasteBtn = document.getElementById('pasteStyleBtn');
+    if (copyBtn) copyBtn.addEventListener('click', () => copyTextStyle(textEditorNew));
+    if (pasteBtn) pasteBtn.addEventListener('click', () => pasteTextStyle(textEditorNew));
+});
+
+///Style////////////////////////////////////
+
+// util: add a class for some ms, then auto-remove
+function flashClass(el, cls, ms = 1100) {
+    if (!el) return;
+    el.classList.add(cls);
+    setTimeout(() => el.classList.remove(cls), ms);
+}
+
+// Wire clicks (delegation safe)
+(function wireFancyButtons() {
+    document.addEventListener('click', function (e) {
+        const copyBtn = e.target.closest('#copyStyleBtn');
+        const pasteBtn = e.target.closest('#pasteStyleBtn');
+
+        if (copyBtn) {
+            e.preventDefault();
+            copyTextStyle(window.textEditorNew);
+            // visual: copied success
+            flashClass(copyBtn, 'is-copied', 950);
+
+            // enable + hint paste button
+            const pb = document.getElementById('pasteStyleBtn');
+            if (pb) {
+                pb.disabled = false;
+                flashClass(pb, 'is-ready', 1200);
+            }
+        }
+
+        if (pasteBtn) {
+            e.preventDefault();
+            pasteTextStyle(window.textEditorNew);
+            // visual: magic paste
+            flashClass(pasteBtn, 'is-magic', 1100);
+        }
+    });
+})();

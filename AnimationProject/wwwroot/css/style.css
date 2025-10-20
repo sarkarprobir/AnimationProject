@@ -2267,3 +2267,183 @@ body {
     background: #6214fe;
     border-radius: 3px;
 }
+
+
+
+
+
+
+
+
+/* Base button look */
+.fx-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .6rem .9rem;
+    border: 0;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #20232a, #14161a);
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: .2px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0,0,0,.25);
+    transform: translateZ(0);
+    transition: transform .08s ease, box-shadow .2s ease, opacity .2s ease;
+    user-select: none;
+}
+
+    .fx-btn:disabled {
+        opacity: .55;
+        cursor: not-allowed;
+    }
+
+    .fx-btn:active {
+        transform: translateY(1px);
+    }
+
+    /* Subtle hover lift */
+    .fx-btn:not(:disabled):hover {
+        box-shadow: 0 8px 22px rgba(0,0,0,.35);
+    }
+
+/* COPY SUCCESS: green pulse ring + checkmark tick */
+.fx-copy.is-copied {
+    background: linear-gradient(180deg, #1d3b22, #102214);
+    box-shadow: 0 0 0 0 rgba(66, 245, 144, .6);
+    animation: fx-pulse 900ms ease-out;
+}
+
+    .fx-copy.is-copied::after {
+        content: "✓";
+        position: absolute;
+        right: 10px;
+        font-weight: 700;
+        opacity: 0;
+        transform: scale(.6);
+        animation: fx-check 900ms ease forwards;
+        filter: drop-shadow(0 0 6px rgba(120,255,180,.9));
+    }
+
+@keyframes fx-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(66, 245, 144, .6);
+    }
+
+    100% {
+        box-shadow: 0 0 0 18px rgba(66, 245, 144, 0);
+    }
+}
+
+@keyframes fx-check {
+    20% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-8px) scale(.9);
+    }
+}
+
+/* PASTE MAGIC: rainbow sheen + sparkles burst */
+.fx-paste.is-magic {
+    background: linear-gradient(90deg, #7c3aed, #2563eb, #10b981, #f59e0b, #ef4444, #7c3aed);
+    background-size: 300% 100%;
+    animation: fx-sheen 1100ms ease forwards;
+}
+
+@keyframes fx-sheen {
+    0% {
+        background-position: 0% 50%;
+        box-shadow: 0 0 0 rgba(0,0,0,0);
+    }
+
+    50% {
+        background-position: 100% 50%;
+        box-shadow: 0 12px 30px rgba(0,0,0,.35);
+    }
+
+    100% {
+        background-position: 200% 50%;
+    }
+}
+
+/* Sparkles using pseudo particles */
+.fx-paste.is-magic::before,
+.fx-paste.is-magic::after {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: -6px;
+    background: radial-gradient(circle at 20% 80%, rgba(255,255,255,.9) 0 3px, transparent 4px), radial-gradient(circle at 60% 10%, rgba(255,255,255,.9) 0 2.5px, transparent 3.5px), radial-gradient(circle at 85% 60%, rgba(255,255,255,.9) 0 2.5px, transparent 3.5px), radial-gradient(circle at 30% 30%, rgba(255,255,255,.9) 0 2px, transparent 3px), radial-gradient(circle at 75% 35%, rgba(255,255,255,.9) 0 2px, transparent 3px);
+    opacity: 0;
+    transform: scale(.9) rotate(0deg);
+    animation: fx-spark 900ms ease-out forwards;
+    mix-blend-mode: screen;
+    filter: drop-shadow(0 0 6px rgba(255,255,255,.9));
+}
+
+@keyframes fx-spark {
+    10% {
+        opacity: 1;
+        transform: scale(1) rotate(10deg);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(1.15) rotate(30deg);
+    }
+}
+
+/* “Paste ready” gentle wiggle to hint the button is enabled */
+.fx-paste.is-ready:not(:disabled) {
+    animation: fx-ready 1200ms ease-in-out 200ms 2;
+}
+
+@keyframes fx-ready {
+    0%,100% {
+        transform: translateZ(0);
+    }
+
+    20% {
+        transform: translateY(-1px) rotate(-.4deg);
+    }
+
+    40% {
+        transform: translateY(0) rotate(.4deg);
+    }
+
+    60% {
+        transform: translateY(-1px) rotate(-.2deg);
+    }
+
+    80% {
+        transform: translateY(0) rotate(.2deg);
+    }
+}
+/* put the two buttons in a row with spacing */
+.fx-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* smaller, compact buttons with fixed width so text wraps to 2 lines */
+.fx-btn {
+    width: 118px; /* tweak to taste */
+    padding: .44rem .62rem; /* a bit tighter */
+    border-radius: 10px;
+}
+
+    /* keep two-line layout centered and neat */
+    .fx-btn .fx-label {
+        display: block;
+        text-align: center;
+        line-height: 1.15;
+        white-space: normal; /* allow wrapping (two lines) */
+        word-break: keep-all; /* avoid ugly mid-word breaks */
+    }
