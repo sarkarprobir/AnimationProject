@@ -17087,6 +17087,180 @@ function __insertEmptyLineBlock(root) {
         return;
     }
 }
+// ──────────────────────────────────────────────────────────────────────────────
+// TEXT-ONLY GATING for copy/paste PROPERTY (style) — additive, non-destructive
+// ─────────────────────────────────────────────────────────────────────────────-
+// ──────────────────────────────────────────────────────────────────────────────
+// STRICT GATING: Enable Copy/Paste Property ONLY when isEditing === true on TEXT
+// Non-destructive: wraps your existing copyTextStyle / pasteTextStyle
+// ─────────────────────────────────────────────────────────────────────────────-
+(function () {
+    // ── SAFETY SHIMS (define only if missing) ──────────────────────────────────
+    if (typeof window.__isTextBox !== 'function') {
+        window.__isTextBox = function (b) {
+            return !!b && (b.type === 'text' || (b && b.text != null && b.src == null));
+        };
+    }
+    if (typeof window.isTextBox !== 'function') {
+        window.isTextBox = window.__isTextBox;
+    }
+    if (typeof window.currentSelection !== 'function') {
+        window.currentSelection = function () {
+            try {
+                if (typeof window.resolveSelection === 'function') {
+                    const sel = window.resolveSelection() || [];
+                    return Array.isArray(sel) ? sel : [];
+                }
+            } catch { }
+            return [];
+        };
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    function isTextEditOpen() {
+       /* try {*/
+            const root = window.textEditorNew;
+
+            // 0) Trust your app state first: isEditing true with an active text box
+            const hasIsTextBox = (typeof window.isTextBox === 'function');
+            const activeIsText = hasIsTextBox ? !!(window.activeBox && isTextBox(window.activeBox))
+                : !!(window.activeBox && (window.activeBox.type === 'text' || (window.activeBox.text != null && window.activeBox.src == null)));
+
+            if (window.isEditing && activeIsText) return true;
+
+            // 1) Fallback: editor element present & contenteditable while isEditing is true
+        if (isEditing && root && root.isContentEditable) {
+                // More robust visibility check (don’t over-restrict)
+                let visible = true;
+                try {
+                    const r = root.getBoundingClientRect && root.getBoundingClientRect();
+                    visible = !!r && (r.width > 0 || r.height > 0);
+                } catch { /* ignore */ }
+
+                // Even if "visible" heuristic fails, if isEditing is true and editor exists, treat as open.
+                if (visible) return true;
+
+                // If caret is already inside, definitely open
+                const sel = (typeof window.getSelection === 'function') ? window.getSelection() : null;
+                if (sel && sel.rangeCount && root.contains(sel.anchorNode)) return true;
+
+                // As a pragmatic fallback, since your UI owns isEditing, consider editor open
+                return true;
+            }
+     /*   } catch { *//* swallow & fall through *//* }*/
+
+        return false;
+    }
+
+
+    function lastCopiedIsText() {
+        return (window.__lastCopiedPropertyType === 'text') ||
+            (window.NS && NS.__lastPropertyType === 'text');
+    }
+
+    // For <button> and also <a> or custom elements
+    function setDisabled(btn, disabled) {
+        if (!btn) return;
+        const on = !!disabled;
+        // reflect across common patterns
+        if ('disabled' in btn) btn.disabled = on;
+        btn.setAttribute('aria-disabled', on ? 'true' : 'false');
+        btn.classList.toggle('is-disabled', on);
+    }
+
+    function updateCopyPasteButtons() {
+        const copyBtn = document.getElementById('copyStyleBtn');
+        const pasteBtn = document.getElementById('pasteStyleBtn');
+
+        const copyEnabled = isTextEditOpen();                 // must be editing on a text box
+        const pasteEnabled = isTextEditOpen() && lastCopiedIsText();
+
+        setDisabled(copyBtn, !copyEnabled);
+        setDisabled(pasteBtn, !pasteEnabled);
+    }
+
+    const scheduleUpdate = (() => {
+        let raf = 0;
+        return () => {
+            if (raf) cancelAnimationFrame(raf);
+            raf = requestAnimationFrame(() => { raf = 0; updateCopyPasteButtons(); });
+        };
+    })();
+
+    // ── Wrap your existing COPY/PASTE to enforce runtime gating ────────────────
+    const _origCopyTextStyle = (typeof window.copyTextStyle === 'function') ? window.copyTextStyle : null;
+    const _origPasteTextStyle = (typeof window.pasteTextStyle === 'function') ? window.pasteTextStyle : null;
+
+    if (_origCopyTextStyle && !_origCopyTextStyle.__wrappedForEditing) {
+        const wrappedCopy = function (root = window.textEditorNew) {
+            if (!isTextEditOpen()) {
+                console.warn('Copy Style: open the text editor on a TEXT object first (isEditing must be true).');
+                scheduleUpdate();
+                return;
+            }
+            const ret = _origCopyTextStyle.call(this, root);
+
+            // Mark last-copied property type as TEXT (global + NS breadcrumb)
+            window.__lastCopiedPropertyType = 'text';
+            try { window.NS = window.NS || {}; NS.__lastPropertyType = 'text'; } catch { }
+
+            // Notify UI listeners and nudge paste button
+            try { document.dispatchEvent(new CustomEvent('property:copied', { detail: { type: 'text' } })); } catch { }
+            scheduleUpdate();
+            return ret;
+        };
+        wrappedCopy.__wrappedForEditing = true;
+        window.copyTextStyle = wrappedCopy;
+    }
+
+    if (_origPasteTextStyle && !_origPasteTextStyle.__wrappedForEditing) {
+        const wrappedPaste = function (root = window.textEditorNew) {
+            if (!isTextEditOpen()) {
+                console.warn('Paste Style: open the text editor on a TEXT object first (isEditing must be true).');
+                scheduleUpdate();
+                return;
+            }
+            if (!lastCopiedIsText()) {
+                console.warn('Paste Style: copy TEXT style first.');
+                scheduleUpdate();
+                return;
+            }
+            const ret = _origPasteTextStyle.call(this, root);
+            scheduleUpdate();
+            return ret;
+        };
+        wrappedPaste.__wrappedForEditing = true;
+        window.pasteTextStyle = wrappedPaste;
+    }
+
+    // ── Keep button state synced with UX events ────────────────────────────────
+    document.addEventListener('click', scheduleUpdate, true);
+    document.addEventListener('dblclick', scheduleUpdate, true);
+    document.addEventListener('selectionchange', scheduleUpdate);
+    window.addEventListener('resize', scheduleUpdate);
+
+    if (window.textEditorNew) {
+        textEditorNew.addEventListener('focusin', scheduleUpdate);
+        textEditorNew.addEventListener('focusout', scheduleUpdate);
+        textEditorNew.addEventListener('keyup', scheduleUpdate);
+        textEditorNew.addEventListener('mouseup', scheduleUpdate);
+        textEditorNew.addEventListener('input', scheduleUpdate);
+    }
+
+    // Custom hooks if your app fires them
+    document.addEventListener('editor:open', scheduleUpdate);
+    document.addEventListener('editor:close', scheduleUpdate);
+    document.addEventListener('selection:changed', scheduleUpdate);
+    document.addEventListener('property:copied', scheduleUpdate);
+    document.addEventListener('style:copied', scheduleUpdate);
+    document.addEventListener('isEditing:changed', scheduleUpdate);
+    document.addEventListener('box:selected', scheduleUpdate);
+
+    // Initial pass: start disabled unless already editing a text box
+    scheduleUpdate();
+})();
+
+
 // ================= nearest text style (single, complete) ===================
 
 // 1) caret node inside root (textEditorNew by default)
