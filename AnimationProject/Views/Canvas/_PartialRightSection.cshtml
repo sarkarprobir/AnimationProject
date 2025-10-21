@@ -1495,7 +1495,7 @@ function moveCaretToEnd(el) {
         </div>
 
     </div>
-     <div id="divCopyPasteScale" class="mb-3">
+     <div id="divCopyPasteScale" class="mb-3" style="display:none;">
         <div class="fx-toolbar">
             <button id="btnCopyScale" type="button" onclick="window.ScaleOps.copyScale()">
                 Copy Scale
@@ -1509,8 +1509,8 @@ function moveCaretToEnd(el) {
     </div>
      <div id="divCopyPastesvgproperty" class="mb-3">
         <div class="fx-toolbar">
-            <button id="copySvgBtn" disabled>Copy SVG Property</button>
-            <button id="pasteSvgBtn" disabled>Paste SVG Property</button>
+            <button id="copySvgBtn" class="fx-btn fx-copy" disabled>Copy SVG Property</button>
+            <button id="pasteSvgBtn" class="fx-btn fx-paste" disabled>Paste SVG Property</button>
 
         </div>
 

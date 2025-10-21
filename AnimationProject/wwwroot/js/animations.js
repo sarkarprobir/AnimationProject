@@ -6105,6 +6105,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("divFillColor").style.display = 'none';
         document.getElementById("divCurvature").style.display = 'none';
         document.getElementById("divCopyPaste").style.display = 'none';
+        document.getElementById("divCopyPastesvgproperty").style.display = 'none';
         HideLoader();
     }
     else if (selectedType == 'Text') {
@@ -6118,6 +6119,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("divFillColor").style.display = 'none';
         document.getElementById("divCurvature").style.display = 'none';
         document.getElementById("divCopyPaste").style.display = 'block';
+        document.getElementById("divCopyPastesvgproperty").style.display = 'none';
         HideLoader();
     }
     else if (selectedType == 'Shape') {
@@ -6132,6 +6134,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("divFillColor").style.display = 'block';
         document.getElementById("divCurvature").style.display = 'block';
         document.getElementById("divCopyPaste").style.display = 'none';
+        document.getElementById("divCopyPastesvgproperty").style.display = 'block';
         HideLoader();
     }
     else if (selectedType == 'Icon') {
@@ -6144,6 +6147,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("divStrockColor").style.display = 'block';
         document.getElementById("divFillColor").style.display = 'block';
         document.getElementById("divCurvature").style.display = 'none';
+        document.getElementById("divCopyPastesvgproperty").style.display = 'block';
         HideLoader();
     }
     else if (selectedType == null) {
@@ -18671,4 +18675,37 @@ function flashClass(el, cls, ms = 1100) {
 
     // Initial pass
     scheduleUpdateSvgButtons();
+})();
+// ──────────────────────────────────────────────────────────────
+// Bridge: call ScaleOps first, then your SVG property ops
+// (Non-destructive wrappers; avoid double-wrapping via flags.)
+// ──────────────────────────────────────────────────────────────
+(function () {
+    // COPY: Scale first → then SVG props
+    if (typeof window.copySvgProps === 'function' && !window.copySvgProps.__withScaleWrapped) {
+        const __origCopySvgProps = window.copySvgProps;
+        window.copySvgProps = function () {
+            try {
+                if (window.ScaleOps && typeof ScaleOps.copyScale === 'function') {
+                    ScaleOps.copyScale();           // ← call scale copy first
+                }
+            } catch (e) { console.warn('ScaleOps.copyScale() failed:', e); }
+            return __origCopySvgProps.apply(this, arguments);
+        };
+        window.copySvgProps.__withScaleWrapped = true;
+    }
+
+    // PASTE: Scale first → then SVG props
+    if (typeof window.pasteSvgProps === 'function' && !window.pasteSvgProps.__withScaleWrapped) {
+        const __origPasteSvgProps = window.pasteSvgProps;
+        window.pasteSvgProps = function () {
+            try {
+                if (window.ScaleOps && typeof ScaleOps.pasteScale === 'function') {
+                    ScaleOps.pasteScale();          // ← call scale paste first
+                }
+            } catch (e) { console.warn('ScaleOps.pasteScale() failed:', e); }
+            return __origPasteSvgProps.apply(this, arguments);
+        };
+        window.pasteSvgProps.__withScaleWrapped = true;
+    }
 })();
