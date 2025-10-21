@@ -18137,3 +18137,178 @@ function flashClass(el, cls, ms = 1100) {
         }
     });
 })();
+/* Copy/Paste Scale — window-scoped (uses textObjects/images/activeText/activeImage in THIS window) */
+
+(function () {
+    const NS = (window.ScaleOps ||= {});
+    NS.__lastScale ??= null;
+
+    // ---------------- selection (your model) ----------------
+    function resolveSelection() {
+        const out = [];
+        if (Array.isArray(textObjects)) {
+            for (const o of textObjects) if (o && o.selected && !o.locked) out.push(o);
+        }
+        if (Array.isArray(images)) {
+            for (const i of images) if (i && i.selected && !i.locked) out.push(i);
+        }
+        if (!out.length) {
+            if (activeText && !activeText.locked) out.push(activeText);
+            if (activeImage && !activeImage.locked) out.push(activeImage);
+        }
+        return out;
+    }
+    function primarySelection() {
+        const a = resolveSelection();
+        return a.length ? a[0] : null;
+    }
+
+    // ---------------- geometry helpers ----------------
+    function aabb(b) {
+        if (typeof b.w === 'number' && typeof b.h === 'number') {
+            return { w: Math.max(0, b.w), h: Math.max(0, b.h) };
+        }
+        const ww = Math.max(0, (b.width ?? 0));
+        const hh = Math.max(0, (b.height ?? 0));
+        return { w: ww, h: hh };
+    }
+    function centerOf(b) {
+        const left = (typeof b.left === "number") ? b.left : (b.x ?? 0);
+        const top = (typeof b.top === "number") ? b.top : (b.y ?? 0);
+        const w = (typeof b.w === "number") ? b.w : (b.width ?? 0);
+        const h = (typeof b.h === "number") ? b.h : (b.height ?? 0);
+        return { cx: left + w / 2, cy: top + h / 2, left, top, w, h };
+    }
+
+    // ---------------- key: write ALL size aliases your renderer might use ----------------
+    function applyDims(b, w, h) {
+        // canonical
+        b.w = w; b.h = h;
+
+        // common alternates your code uses across text/image/svg
+        b.width = w; b.height = h;
+        if ('boxW' in b || 'boxH' in b) { b.boxW = w; b.boxH = h; }
+        if ('boxWidth' in b || 'boxHeight' in b) { b.boxWidth = w; b.boxHeight = h; }
+        if (b.rect) { b.rect.width = w; b.rect.height = h; }
+        if (b.bounds) { b.bounds.width = w; b.bounds.height = h; }
+        if (b.size) { b.size.w = w; b.size.h = h; }
+        if (b.frame) { b.frame.w = w; b.frame.h = h; }
+
+        // text layout flags seen in your project from time to time
+        if ('autoWidth' in b) b.autoWidth = false;
+        if ('autoHeight' in b) b.autoHeight = false;
+        if ('needsLayout' in b) b.needsLayout = true;
+        if ('measureDirty' in b) b.measureDirty = true;
+    }
+
+    function setSizeKeepCenter(b, newW, newH) {
+        const { cx, cy } = centerOf(b);
+        const w = Math.max(0, newW), h = Math.max(0, newH);
+
+        // write dims first (covers all aliases)
+        applyDims(b, w, h);
+
+        // keep center fixed (support both left/top and x/y)
+        if (typeof b.left === "number" || typeof b.top === "number") {
+            b.left = cx - w / 2; b.top = cy - h / 2;
+        } else {
+            b.x = cx - w / 2; b.y = cy - h / 2;
+        }
+
+        // keep alias positions in sync
+        if (b.bounds) { b.bounds.left = (b.left ?? b.x); b.bounds.top = (b.top ?? b.y); }
+        if (b.rect) { b.rect.left = (b.left ?? b.x); b.rect.top = (b.top ?? b.y); }
+    }
+
+    function isLine(b) { return !!(b.isLine || b.type === 'line' || b.shape === 'line'); }
+    function scaleLine(b, newW, newH) {
+        if (['x1', 'y1', 'x2', 'y2'].every(k => typeof b[k] === 'number')) {
+            const cx = (b.x1 + b.x2) / 2, cy = (b.y1 + b.y2) / 2;
+            const cw = Math.abs(b.x2 - b.x1) || 1, ch = Math.abs(b.y2 - b.y1) || 1;
+            const sx = newW / cw, sy = newH / ch;
+            const dx1 = b.x1 - cx, dy1 = b.y1 - cy, dx2 = b.x2 - cx, dy2 = b.y2 - cy;
+            b.x1 = cx + dx1 * sx; b.y1 = cy + dy1 * sy;
+            b.x2 = cx + dx2 * sx; b.y2 = cy + dy2 * sy;
+            applyDims(b, newW, newH);
+        } else {
+            setSizeKeepCenter(b, newW, newH);
+        }
+    }
+
+    // ---------------- paste button state ----------------
+    function getPasteBtn() {
+        let el = document.getElementById('btnPasteScale');
+        if (el) return el;
+        return Array.from(document.querySelectorAll('button,.btn,[role="button"]'))
+            .find(n => /paste\s*scale/i.test(n.title || n.textContent || '')) || null;
+    }
+    function syncPasteBtn() {
+        const btn = getPasteBtn();
+        if (!btn) return;
+        const canPaste = !!NS.__lastScale;
+        btn.disabled = !canPaste;
+        if (canPaste) btn.classList.remove('disabled'); else btn.classList.add('disabled');
+        btn.title = canPaste ? `Paste Scale (${NS.__lastScale.w}×${NS.__lastScale.h})`
+            : 'Paste Scale (copy a size first)';
+    }
+    (new MutationObserver(syncPasteBtn))
+        .observe(document.documentElement, { childList: true, subtree: true });
+    if (document.readyState !== 'loading') syncPasteBtn();
+    else document.addEventListener('DOMContentLoaded', syncPasteBtn, { once: true });
+
+    // ---------------- public API ----------------
+    NS.copyScale = function () {
+        const src = primarySelection();
+        if (!src) { console.warn("Copy Scale: no selection."); return; }
+        const { w, h } = aabb(src);
+        if (!w || !h) { console.warn("Copy Scale: source has zero size."); return; }
+        NS.__lastScale = { w, h, fromId: src.id, ts: Date.now() };
+        try { if (window.ShowToast) ShowToast(`Copied scale: ${w.toFixed(1)}×${h.toFixed(1)}`); } catch { }
+        setTimeout(syncPasteBtn, 0);
+    };
+
+    NS.pasteScale = function () {
+        if (!NS.__lastScale) { console.warn("Paste Scale: nothing copied yet."); return; }
+        const targets = resolveSelection();
+        if (!targets.length) { console.warn("Paste Scale: no selection."); return; }
+        const { w: newW, h: newH } = NS.__lastScale;
+
+        // History only if it’s actually initialized and pushable
+        const canHistory = !!(window.History && History.enabled && typeof History.push === 'function');
+        const before = canHistory ? targets.map(b => ({
+            id: b.id, left: b.left ?? b.x, top: b.top ?? b.y, w: b.w, h: b.h,
+            x1: b.x1, y1: b.y1, x2: b.x2, y2: b.y2
+        })) : null;
+
+        for (const b of targets) {
+            if (isLine(b)) scaleLine(b, newW, newH);
+            else setSizeKeepCenter(b, newW, newH);
+        }
+
+        if (canHistory) {
+            const after = targets.map(b => ({
+                id: b.id, left: b.left ?? b.x, top: b.top ?? b.y, w: b.w, h: b.h,
+                x1: b.x1, y1: b.y1, x2: b.x2, y2: b.y2
+            }));
+            History.push({ type: 'paste-scale', items: targets.map(t => t.id), before, after });
+        }
+
+        // force a redraw using whatever your app exposes
+        if (typeof window.renderScene === 'function') renderScene();
+        else if (typeof drawText === 'function') drawText();
+        else if (typeof window.draw === 'function') draw();
+
+        try { if (window.ShowToast) ShowToast(`Pasted ${newW.toFixed(1)}×${newH.toFixed(1)} to ${targets.length} item(s)`); } catch { }
+        setTimeout(syncPasteBtn, 0);
+    };
+
+    // (optional) quick debug
+    NS.debugSelection = function () {
+        const arr = resolveSelection();
+        console.log('[ScaleOps] selection:', arr.map(b => ({
+            id: b.id, type: b.type, w: b.w, h: b.h, width: b.width, height: b.height,
+            left: b.left ?? b.x, top: b.top ?? b.y
+        })));
+        return arr;
+    };
+})();
