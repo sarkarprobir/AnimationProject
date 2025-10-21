@@ -6080,7 +6080,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("divFillColor").style.display = 'none';
         document.getElementById("divCurvature").style.display = 'none';
         document.getElementById("divCopyPaste").style.display = 'none';
-        document.getElementById("divCopyPastesvgproperty").style.display = 'none';
+        document.getElementById("divCopyPasteGraphicproperty").style.display = 'block';
         HideLoader();
     }
     else if (selectedType == 'Text') {
@@ -6094,7 +6094,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("divFillColor").style.display = 'none';
         document.getElementById("divCurvature").style.display = 'none';
         document.getElementById("divCopyPaste").style.display = 'block';
-        document.getElementById("divCopyPastesvgproperty").style.display = 'none';
+        document.getElementById("divCopyPasteGraphicproperty").style.display = 'none';
         HideLoader();
     }
     else if (selectedType == 'Shape') {
@@ -6109,7 +6109,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("divFillColor").style.display = 'block';
         document.getElementById("divCurvature").style.display = 'block';
         document.getElementById("divCopyPaste").style.display = 'none';
-        document.getElementById("divCopyPastesvgproperty").style.display = 'block';
+        document.getElementById("divCopyPasteGraphicproperty").style.display = 'block';
         HideLoader();
     }
     else if (selectedType == 'Icon') {
@@ -18281,3 +18281,337 @@ function flashClass(el, cls, ms = 1100) {
     }
 })();
 
+
+// ──────────────────────────────────────────────────────────────────────────────
+// IMAGE (bitmap) PROPERTY COPY/PASTE — opacity + rotation
+// Also calls ScaleOps.{copyScale,pasteScale} FIRST, just like your SVG flow.
+// UI: two buttons with IDs #copyImgBtn and #pasteImgBtn
+// ─────────────────────────────────────────────────────────────────────────────-
+(function () {
+    // Reuse/replicate your "shape" detector so we can select only *non-SVG* images
+    function isShapeImage(img) {
+        if (!img) return false;
+        if (img.isBasic || img.isLINESvg) return true;
+        // Your earlier code keyed off basicName for ".svg"
+        const name = img.img?.basicName || img.basicName || img.img?.src || img.src || "";
+        return (typeof name === "string") && name.toLowerCase().includes(".svg");
+    }
+
+    function isBitmapImage(img) {
+        return !!img && !isShapeImage(img); // everything that's not a shape/svg
+    }
+
+    function getSelectedBitmaps() {
+        try {
+            return (images || []).filter(i => i?.selected && isBitmapImage(i));
+        } catch { return []; }
+    }
+
+    // Clipboard for bitmap image props
+    window.__imgClipboard = null;
+
+    function snapshotImgProps(obj) {
+        return {
+            id: obj.id,
+            opacity: Number.isFinite(obj.opacity) ? Number(obj.opacity) : 1,
+            rotation: Number(obj.rotation || 0)
+        };
+    }
+
+    function applyImgProps(target, clip) {
+        if (!target || !clip) return;
+        target.opacity = Number.isFinite(clip.opacity) ? Number(clip.opacity) : 1;
+        target.rotation = Number(clip.rotation || 0);
+    }
+
+    // COPY (bitmap): Scale first → then copy opacity/rotation
+    window.copyImageProps = function () {
+        // Scale first
+        try { if (window.ScaleOps?.copyScale) ScaleOps.copyScale(); } catch (e) { console.warn('ScaleOps.copyScale() failed:', e); }
+
+        // Resolve a source: prefer activeImage if it's a bitmap, else first selected bitmap
+        const type = getSelectedType?.();
+        let source = null;
+
+        if (type === "Image" && isBitmapImage(activeImage)) {
+            source = activeImage;
+        } else {
+            const sel = getSelectedBitmaps();
+            source = sel[0] || null;
+        }
+
+        if (!source) {
+            console.warn("Copy Image Property: select a bitmap image first.");
+            return;
+        }
+
+        window.__imgClipboard = snapshotImgProps(source);
+        try { document.dispatchEvent(new CustomEvent('img:copied', { detail: { id: source.id } })); } catch { }
+        // enable paste button
+        const pb = document.getElementById('pasteImgBtn');
+        if (pb) pb.disabled = false;
+    };
+
+    // PASTE (bitmap): Scale first → then paste opacity/rotation to selection
+    window.pasteImageProps = function () {
+        if (!window.__imgClipboard) {
+            console.warn("Paste Image Property: copy from a bitmap image first.");
+            return;
+        }
+
+        // Scale first
+        try { if (window.ScaleOps?.pasteScale) ScaleOps.pasteScale(); } catch (e) { console.warn('ScaleOps.pasteScale() failed:', e); }
+
+        // Resolve targets: selected bitmaps; if none, try activeImage when it's a bitmap
+        let targets = getSelectedBitmaps();
+        if (!targets.length && isBitmapImage(activeImage)) targets = [activeImage];
+
+        if (!targets.length) {
+            console.warn("Paste Image Property: select a bitmap image to paste.");
+            return;
+        }
+
+        // History (optional)
+        let before = null;
+        if (window.History && History.enabled) {
+            before = targets.map(t => ({ id: t.id, props: snapshotImgProps(t) }));
+        }
+
+        // Apply
+        targets.forEach(t => applyImgProps(t, window.__imgClipboard));
+
+        // History (after)
+        if (window.History && History.enabled) {
+            const after = targets.map(t => ({ id: t.id, props: snapshotImgProps(t) }));
+            History.push({
+                type: 'paste-image-property',
+                items: targets.map(t => t.id),
+                before,
+                after
+            });
+        }
+
+        // Redraw scene so opacity/rotation changes take effect visually
+        try { drawText?.(); } catch { }
+    };
+
+    // ── Button wiring (delegation; supports late-mount) ────────────────────────
+    document.addEventListener('click', function (e) {
+        const copyBtn = e.target.closest('#copyImgBtn');
+        const pasteBtn = e.target.closest('#pasteImgBtn');
+        if (copyBtn) { e.preventDefault(); window.copyImageProps(); }
+        if (pasteBtn) { e.preventDefault(); window.pasteImageProps(); }
+    });
+
+    // ── Enable/disable buttons based on selection and clipboard ────────────────
+    function updateImgButtons() {
+        const copyBtn = document.getElementById('copyImgBtn');
+        const pasteBtn = document.getElementById('pasteImgBtn');
+
+        const type = getSelectedType?.();
+        const canCopy = (type === "Image" && isBitmapImage(activeImage)) || getSelectedBitmaps().length > 0;
+        const canPaste = !!window.__imgClipboard && getSelectedBitmaps().length > 0;
+
+        if (copyBtn) copyBtn.disabled = !canCopy;
+        if (pasteBtn) pasteBtn.disabled = !canPaste;
+    }
+
+    const scheduleUpdateImgButtons = (() => {
+        let raf = 0;
+        return () => {
+            if (raf) cancelAnimationFrame(raf);
+            raf = requestAnimationFrame(() => { raf = 0; updateImgButtons(); });
+        };
+    })();
+
+    // Keep state fresh with typical UX events
+    document.addEventListener('click', scheduleUpdateImgButtons, true);
+    document.addEventListener('selection:changed', scheduleUpdateImgButtons);
+    document.addEventListener('img:copied', scheduleUpdateImgButtons);
+    document.addEventListener('box:selected', scheduleUpdateImgButtons);
+
+    // Initial pass
+    scheduleUpdateImgButtons();
+})();
+
+/////////////////////////////KD//////////////////////
+// ──────────────────────────────────────────────────────────────────────────────
+// UNIFIED GRAPHIC COPY/PASTE — works for BOTH bitmap images and SVG/shapes
+// Calls ScaleOps.{copyScale,pasteScale} FIRST. Repaints shapes after paste.
+// Buttons: #copyGraphicBtn, #pasteGraphicBtn
+// ─────────────────────────────────────────────────────────────────────────────-
+(function () {
+    // --- helpers ---------------------------------------------------------------
+    function isShapeImage(img) {
+        if (!img) return false;
+        if (img.isBasic || img.isLINESvg) return true;
+        const name = img?.img?.basicName || img?.basicName || img?.img?.src || img?.src || "";
+        if (typeof name !== "string") return false;
+        const lo = name.toLowerCase();
+        return lo.includes(".svg") || lo.startsWith("data:image/svg+xml");
+    }
+    function isBitmapImage(img) { return !!img && !isShapeImage(img); }
+
+    function anyGraphicSelected() {
+        try { return (images || []).some(i => i && i.selected); } catch { return !!window.activeImage; }
+    }
+
+    function selectedGraphics() {
+        try {
+            const sel = (images || []).filter(i => i && i.selected);
+            return sel.length ? sel : (window.activeImage ? [window.activeImage] : []);
+        } catch { return (window.activeImage ? [window.activeImage] : []); }
+    }
+
+    // Clipboard holds kind + props
+    window.__graphicClipboard = null; // { kind: 'shape'|'image', props: {...}, id }
+
+    // snapshot from any source
+    function snapshotGraphicProps(obj) {
+        const common = {
+            opacity: Number.isFinite(obj.opacity) ? Number(obj.opacity) : 1,
+            rotation: Number(obj.rotation || 0)
+        };
+        if (isShapeImage(obj)) {
+            return {
+                kind: 'shape',
+                props: {
+                    ...common,
+                    fillNoColor: obj.fillNoColor,
+                    fillNoColorStatus: !!obj.fillNoColorStatus,
+                    strokeNoColor: obj.strokeNoColor,
+                    strokeNoColorStatus: !!obj.strokeNoColorStatus,
+                    strokeWidth: Number(obj.strokeWidth ?? 1),
+                    curvature: obj.curvature
+                }
+            };
+        }
+        return { kind: 'image', props: { ...common } };
+    }
+
+    // apply to a target (common + shape-only when target is shape & props exist)
+    function applyGraphicProps(target, clip) {
+        if (!target || !clip) return;
+
+        // common
+        target.opacity = Number.isFinite(clip.props.opacity) ? Number(clip.props.opacity) : (Number.isFinite(target.opacity) ? Number(target.opacity) : 1);
+        target.rotation = Number(clip.props.rotation || 0);
+
+        // shape-only
+        if (isShapeImage(target) && clip.kind === 'shape') {
+            target.fillNoColor = clip.props.fillNoColor;
+            target.fillNoColorStatus = !!clip.props.fillNoColorStatus;
+            target.strokeNoColor = clip.props.strokeNoColor;
+            target.strokeNoColorStatus = !!clip.props.strokeNoColorStatus;
+            target.strokeWidth = Number(clip.props.strokeWidth ?? 1);
+            if (typeof clip.props.curvature !== "undefined") target.curvature = clip.props.curvature;
+        }
+    }
+
+    function repaintShapeIfNeeded(target) {
+        if (!isShapeImage(target)) return;
+        const effFill = target.fillNoColorStatus ? 'none' : (target.fillNoColor ?? '#FFFFFF');
+        const effStroke = target.strokeNoColorStatus ? 'none' : (target.strokeNoColor ?? '#000000');
+        const effWidth = Number.isFinite(target.strokeWidth) ? target.strokeWidth : 1;
+        try { updateSelectedImageColors(target, effFill, effStroke, effWidth); } catch (e) {
+            console.warn('repaint failed for shape', target?.id, e);
+        }
+    }
+
+    function setDisabled(btn, off) {
+        if (!btn) return;
+        const dis = !!off;
+        if ('disabled' in btn) btn.disabled = dis;
+        btn.setAttribute('aria-disabled', dis ? 'true' : 'false');
+        btn.classList.toggle('disabled', dis);
+        btn.classList.toggle('is-disabled', dis);
+    }
+
+    // --- public: COPY (scale first) -------------------------------------------
+    window.copyGraphicProps = function () {
+        // Scale first
+        try { if (window.ScaleOps?.copyScale) ScaleOps.copyScale(); } catch (e) { console.warn('ScaleOps.copyScale() failed:', e); }
+
+        const src = (() => {
+            // Prefer the first selected; fall back to activeImage
+            const list = selectedGraphics();
+            return list[0] || null;
+        })();
+
+        if (!src) { console.warn('Copy Graphic Property: select an image/shape first.'); return; }
+
+        const snap = snapshotGraphicProps(src);
+        window.__graphicClipboard = { kind: snap.kind, props: snap.props, id: src.id };
+
+        try { document.dispatchEvent(new CustomEvent('graphic:copied', { detail: { id: src.id, kind: snap.kind } })); } catch { }
+
+        // enable paste button immediately
+        const pb = document.getElementById('pasteGraphicBtn');
+        if (pb) setDisabled(pb, false);
+    };
+
+    // --- public: PASTE (scale first) ------------------------------------------
+    window.pasteGraphicProps = function () {
+        const clip = window.__graphicClipboard;
+        if (!clip) { console.warn('Paste Graphic Property: copy first.'); return; }
+
+        // Scale first
+        try { if (window.ScaleOps?.pasteScale) ScaleOps.pasteScale(); } catch (e) { console.warn('ScaleOps.pasteScale() failed:', e); }
+
+        // Paste to ANY selected graphic (cross-kind allowed)
+        let targets = selectedGraphics();
+        if (!targets.length) { console.warn('Paste Graphic Property: select an image/shape to paste.'); return; }
+
+        const canHistory = !!(window.History && typeof History.push === 'function' && !!History.enabled);
+        const before = canHistory ? targets.map(t => ({ id: t.id, props: snapshotGraphicProps(t).props })) : null;
+
+        targets.forEach(t => { applyGraphicProps(t, clip); repaintShapeIfNeeded(t); });
+
+        if (canHistory) {
+            const after = targets.map(t => ({ id: t.id, props: snapshotGraphicProps(t).props }));
+            History.push({
+                type: `paste-graphic-property-${clip.kind}-any`,
+                items: targets.map(t => t.id),
+                before, after
+            });
+        }
+
+        try { drawText?.(); } catch { }
+        try { applyImagePaintToUI?.(window.activeImage); } catch { }
+    };
+
+    // --- wiring: clicks --------------------------------------------------------
+    document.addEventListener('click', function (e) {
+        const c = e.target.closest('#copyGraphicBtn');
+        const p = e.target.closest('#pasteGraphicBtn');
+        if (c) { e.preventDefault(); window.copyGraphicProps(); }
+        if (p) { e.preventDefault(); window.pasteGraphicProps(); }
+    });
+
+    // --- button state: enable when any graphic selected; paste needs clipboard --
+    function refreshGraphicButtons() {
+        const copyBtn = document.getElementById('copyGraphicBtn');
+        const pasteBtn = document.getElementById('pasteGraphicBtn');
+
+        const hasSel = anyGraphicSelected();
+        const hasClip = !!window.__graphicClipboard;
+
+        setDisabled(copyBtn, !hasSel);
+        setDisabled(pasteBtn, !(hasClip && hasSel));
+    }
+    const scheduleRefresh = (() => {
+        let raf = 0;
+        return () => {
+            if (raf) cancelAnimationFrame(raf);
+            raf = requestAnimationFrame(() => { raf = 0; refreshGraphicButtons(); });
+        };
+    })();
+
+    document.addEventListener('click', scheduleRefresh, true);
+    document.addEventListener('selection:changed', scheduleRefresh);
+    document.addEventListener('graphic:copied', scheduleRefresh);
+    document.addEventListener('box:selected', scheduleRefresh);
+
+    // First pass
+    scheduleRefresh();
+})();
