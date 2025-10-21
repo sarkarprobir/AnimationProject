@@ -18053,3 +18053,191 @@ function flashClass(el, cls, ms = 1100) {
     };
 })();
 
+
+(function () {
+    // Clipboard for SVG/shape properties
+    window.__svgClipboard = null;
+
+    // Heuristic: is this an SVG "shape" image?
+    function isShapeImage(img) {
+        if (!img) return false;
+        if (img.isBasic || img.isLINESvg) return true;
+        const src = img.img?.basicName || img.basicName || "";
+        return typeof src === "string" && src.toLowerCase().includes(".svg");
+    }
+
+    // Get selected shapes (SVGs) from your current state
+    function getSelectedShapes() {
+        try {
+            return (images || []).filter(i => i?.selected && isShapeImage(i));
+        } catch { return []; }
+    }
+
+    // Shallow pick of the properties we care about
+    function snapshotSvgProps(obj) {
+        return {
+            id: obj.id,
+            fillNoColor: obj.fillNoColor,
+            fillNoColorStatus: !!obj.fillNoColorStatus,
+            strokeNoColor: obj.strokeNoColor,
+            strokeNoColorStatus: !!obj.strokeNoColorStatus,
+            strokeWidth: Number(obj.strokeWidth ?? 1),
+            opacity: isFinite(obj.opacity) ? Number(obj.opacity) : 1,
+            rotation: Number(obj.rotation || 0),
+            curvature: obj.curvature
+        };
+    }
+
+    // Apply properties from clipboard to target shape
+    function applySvgProps(target, clip) {
+        if (!target || !clip) return;
+        target.fillNoColor = clip.fillNoColor;
+        target.fillNoColorStatus = !!clip.fillNoColorStatus;
+        target.strokeNoColor = clip.strokeNoColor;
+        target.strokeNoColorStatus = !!clip.strokeNoColorStatus;
+        target.strokeWidth = Number(clip.strokeWidth ?? 1);
+        target.opacity = isFinite(clip.opacity) ? Number(clip.opacity) : 1;
+        target.rotation = Number(clip.rotation || 0);
+        if (typeof clip.curvature !== "undefined") target.curvature = clip.curvature;
+    }
+
+    // COPY: take from activeImage if shape; otherwise first selected shape
+    window.copySvgProps = function () {
+        const type = getSelectedType?.();
+        let source = null;
+
+        if (type === "Shape" && isShapeImage(activeImage)) {
+            source = activeImage;
+        } else {
+            const sel = getSelectedShapes();
+            source = sel[0] || null;
+        }
+
+        if (!source) {
+            console.warn("Copy SVG Property: select a shape (SVG) first.");
+            return;
+        }
+
+        __svgClipboard = snapshotSvgProps(source);
+        // optional type breadcrumb like your text flow uses:
+        try { window.NS = window.NS || {}; NS.__lastPropertyTypeSVG = 'shape'; } catch { }
+        try { document.dispatchEvent(new CustomEvent('svg:copied', { detail: { id: source.id } })); } catch { }
+
+        // enable paste button now
+        const pb = document.getElementById('pasteSvgBtn');
+        if (pb) pb.disabled = false;
+    };
+
+    // PASTE: apply to all currently selected shapes (or to activeImage if it’s a shape)
+    window.pasteSvgProps = function () {
+        if (!__svgClipboard) {
+            console.warn("Paste SVG Property: copy from a shape first.");
+            return;
+        }
+
+        let targets = getSelectedShapes();
+        // If nothing is multi-selected but activeImage is a shape, paste to it
+        if (!targets.length && isShapeImage(activeImage)) targets = [activeImage];
+
+        if (!targets.length) {
+            console.warn("Paste SVG Property: select a shape (SVG) to paste.");
+            return;
+        }
+
+        // History (optional)
+        let before = null;
+        if (window.History && History.enabled) {
+            before = targets.map(t => ({
+                id: t.id,
+                props: snapshotSvgProps(t)
+            }));
+        }
+
+        // Apply
+        targets.forEach(t => applySvgProps(t, __svgClipboard));
+
+        // ★ ADD: Repaint each pasted target so visual matches the new properties
+        targets.forEach(t => {
+            const effFill = t.fillNoColorStatus ? 'none' : (t.fillNoColor ?? '#FFFFFF');   // ★ ADD
+            const effStroke = t.strokeNoColorStatus ? 'none' : (t.strokeNoColor ?? '#000000');   // ★ ADD
+            const effWidth = Number.isFinite(t.strokeWidth) ? t.strokeWidth : 1;                // ★ ADD
+            try {                                                                                 // ★ ADD
+                updateSelectedImageColors(t, effFill, effStroke, effWidth);                       // ★ ADD
+            } catch (e) {                                                                         // ★ ADD
+                console.warn('Paste SVG Property: repaint failed for', t?.id, e);                 // ★ ADD
+            }                                                                                     // ★ ADD
+
+            // ★ ADD (optional): keep hidden fields in sync for the active image
+            if (t === activeImage) {
+                try {
+                    if (typeof $ !== 'undefined') {
+                        if ($('#hdnfillColor').length) $('#hdnfillColor').val(t.fillNoColor ?? '#FFFFFF');
+                        if ($('#hdnfillNoColorStatus').length) $('#hdnfillNoColorStatus').val(!!t.fillNoColorStatus);
+                        if ($('#hdnStrockColor').length) $('#hdnStrockColor').val(t.strokeNoColor ?? '#000000');
+                        if ($('#hdnstrokeNoColorStatus').length) $('#hdnstrokeNoColorStatus').val(!!t.strokeNoColorStatus);
+                        if ($('#ddlStrokeWidth').length) $('#ddlStrokeWidth').val(String(effWidth));
+                        if ($('#hdnFillStrockColorFlag').length) $('#hdnFillStrockColorFlag').val('2');
+                    }
+                } catch { }
+            }
+        });
+        // ★ END ADD
+
+        // History (after)
+        if (window.History && History.enabled) {
+            const after = targets.map(t => ({
+                id: t.id,
+                props: snapshotSvgProps(t)
+            }));
+            History.push({
+                type: 'paste-svg-property',
+                items: targets.map(t => t.id),
+                before,
+                after
+            });
+        }
+
+        // Redraw + resync side panels
+        drawText?.();
+        try { applyImagePaintToUI?.(activeImage); } catch { }
+    };
+
+    // ── Button wiring (delegation; works even if buttons mount later) ───────────
+    document.addEventListener('click', function (e) {
+        const copyBtn = e.target.closest('#copySvgBtn');
+        const pasteBtn = e.target.closest('#pasteSvgBtn');
+        if (copyBtn) { e.preventDefault(); window.copySvgProps(); }
+        if (pasteBtn) { e.preventDefault(); window.pasteSvgProps(); }
+    });
+
+    // ── Enable/disable buttons based on selection and clipboard ────────────────
+    function updateSvgButtons() {
+        const copyBtn = document.getElementById('copySvgBtn');
+        const pasteBtn = document.getElementById('pasteSvgBtn');
+
+        const type = getSelectedType?.();
+        const canCopy = (type === "Shape" && isShapeImage(activeImage)) || getSelectedShapes().length > 0;
+        const canPaste = !!__svgClipboard && getSelectedShapes().length > 0;
+
+        if (copyBtn) copyBtn.disabled = !canCopy;
+        if (pasteBtn) pasteBtn.disabled = !canPaste;
+    }
+
+    const scheduleUpdateSvgButtons = (() => {
+        let raf = 0;
+        return () => {
+            if (raf) cancelAnimationFrame(raf);
+            raf = requestAnimationFrame(() => { raf = 0; updateSvgButtons(); });
+        };
+    })();
+
+    // Refresh button state on typical UX events
+    document.addEventListener('click', scheduleUpdateSvgButtons, true);
+    document.addEventListener('selection:changed', scheduleUpdateSvgButtons);
+    document.addEventListener('svg:copied', scheduleUpdateSvgButtons);
+    document.addEventListener('box:selected', scheduleUpdateSvgButtons);
+
+    // Initial pass
+    scheduleUpdateSvgButtons();
+})();
+
