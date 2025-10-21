@@ -1490,8 +1490,11 @@ function moveCaretToEnd(el) {
     </div>
     <div id="divCopyPaste" class="mb-3">
         <div class="fx-toolbar">
-            <button id="copyStyleBtn" type="button" class="fx-btn fx-copy"><span class="fx-label">Copy Property</span></button>
-            <button id="pasteStyleBtn" type="button" class="fx-btn fx-paste" disabled><span class="fx-label">Paste Property</span></button>
+            @* <button id="copyStyleBtn" type="button" class="fx-btn fx-copy"><span class="fx-label">Copy Property</span></button>
+            <button id="pasteStyleBtn" type="button" class="fx-btn fx-paste" disabled><span class="fx-label">Paste Property</span></button> *@
+            <button id="copyStyleBtn" type="button" class="fx-btn fx-copy"><span class="fx-label"><img src="~/images/icons/copy.png" alt="Alternate Text" width="25" /> Copy</span></button>
+            <button id="pasteStyleBtn" type="button" class="fx-btn fx-paste" disabled><span class="fx-label"><img src="~/images/icons/paste.png" alt="Alternate Text" width="25" /> Paste</span></button>
+
         </div>
 
     </div>
