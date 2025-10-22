@@ -8193,7 +8193,7 @@ canvas.addEventListener('drop', e => {
         zIndex: getNextZIndex(),
         fillNoColorStatus: false,
         strokeNoColorStatus: false,
-        fillNoColor: "#42b3f5",
+        fillNoColor: "#4E43E1",
         strokeNoColor: "#000000",
         strokeWidth: 0.1,
         isBasic: isBasic,
@@ -19042,4 +19042,242 @@ function flashClass(el, cls, ms = 1100) {
 
     // First pass
     scheduleRefresh();
+})();
+// ──────────────────────────────────────────────────────────────────────────────
+// UNIFORM (CORNER) SCALING PATCH for ScaleOps.pasteScale
+// - Preserves aspect ratio of each target (no stretching)
+// - Keeps center fixed (like corner-drag with constraint)
+// - Lines are scaled uniformly about their center
+// - Append-only; original kept as fallback
+// ─────────────────────────────────────────────────────────────────────────────-
+(function () {
+    if (!window.ScaleOps || window.ScaleOps.__uniformPatched) return;
+    const NS = window.ScaleOps;
+
+    // --- local selection resolver (mirrors your ScaleOps resolver) -------------
+    function __resolveSelection() {
+        const out = [];
+        try {
+            if (Array.isArray(textObjects)) {
+                for (const o of textObjects) if (o && o.selected && !o.locked) out.push(o);
+            }
+            if (Array.isArray(images)) {
+                for (const i of images) if (i && i.selected && !i.locked) out.push(i);
+            }
+            if (!out.length) {
+                if (activeText && !activeText.locked) out.push(activeText);
+                if (activeImage && !activeImage.locked) out.push(activeImage);
+            }
+        } catch { }
+        return out;
+    }
+
+    // --- box geometry helpers (duplicated so we don't touch your internals) ----
+    function __dims(b) {
+        const w = (typeof b.w === 'number') ? b.w : (typeof b.width === 'number' ? b.width : 0);
+        const h = (typeof b.h === 'number') ? b.h : (typeof b.height === 'number' ? b.height : 0);
+        return { w: Math.max(0, w), h: Math.max(0, h) };
+    }
+    function __center(b) {
+        const left = (typeof b.left === 'number') ? b.left : (typeof b.x === 'number' ? b.x : 0);
+        const top = (typeof b.top === 'number') ? b.top : (typeof b.y === 'number' ? b.y : 0);
+        const { w, h } = __dims(b);
+        return { cx: left + w / 2, cy: top + h / 2, w, h, left, top };
+    }
+    function __applyDimsAll(b, w, h) {
+        b.w = w; b.h = h;
+        b.width = w; b.height = h;
+        if ('boxW' in b || 'boxH' in b) { b.boxW = w; b.boxH = h; }
+        if ('boxWidth' in b || 'boxHeight' in b) { b.boxWidth = w; b.boxHeight = h; }
+        if (b.rect) { b.rect.width = w; b.rect.height = h; }
+        if (b.bounds) { b.bounds.width = w; b.bounds.height = h; }
+        if (b.size) { b.size.w = w; b.size.h = h; }
+        if (b.frame) { b.frame.w = w; b.frame.h = h; }
+        if ('autoWidth' in b) b.autoWidth = false;
+        if ('autoHeight' in b) b.autoHeight = false;
+        if ('needsLayout' in b) b.needsLayout = true;
+        if ('measureDirty' in b) b.measureDirty = true;
+    }
+    function __setSizeKeepCenter(b, newW, newH) {
+        const { cx, cy } = __center(b);
+        const w = Math.max(0, newW), h = Math.max(0, newH);
+        __applyDimsAll(b, w, h);
+        if (typeof b.left === 'number' || typeof b.top === 'number') {
+            b.left = cx - w / 2; b.top = cy - h / 2;
+        } else {
+            b.x = cx - w / 2; b.y = cy - h / 2;
+        }
+        if (b.bounds) { b.bounds.left = (b.left ?? b.x); b.bounds.top = (b.top ?? b.y); }
+        if (b.rect) { b.rect.left = (b.left ?? b.x); b.rect.top = (b.top ?? b.y); }
+    }
+    function __isLine(b) { return !!(b.isLine || b.type === 'line' || b.shape === 'line'); }
+    function __scaleLineUniform(b, boxW, boxH) {
+        if (['x1', 'y1', 'x2', 'y2'].every(k => typeof b[k] === 'number')) {
+            const cx = (b.x1 + b.x2) / 2, cy = (b.y1 + b.y2) / 2;
+            const cw = Math.abs(b.x2 - b.x1) || 1, ch = Math.abs(b.y2 - b.y1) || 1;
+            const s = Math.min(boxW / cw, boxH / ch); // uniform
+            const dx1 = b.x1 - cx, dy1 = b.y1 - cy, dx2 = b.x2 - cx, dy2 = b.y2 - cy;
+            b.x1 = cx + dx1 * s; b.y1 = cy + dy1 * s;
+            b.x2 = cx + dx2 * s; b.y2 = cy + dy2 * s;
+            __applyDimsAll(b, cw * s, ch * s);
+        } else {
+            __setSizeKeepCenter(b, boxW, boxH);
+        }
+    }
+
+    // Fit a target into the copied box *uniformly* (no stretch), keeping center
+    function __fitUniformKeepCenter(b, boxW, boxH) {
+        const { w: tw, h: th } = __dims(b);
+        if (tw <= 0 || th <= 0) { __setSizeKeepCenter(b, boxW, boxH); return; }
+        const arT = tw / th;
+        const arB = (boxW > 0 && boxH > 0) ? (boxW / boxH) : arT;
+
+        // fit inside the copied box while preserving the target aspect ratio
+        let w2 = boxW, h2 = boxW / arT;
+        if (h2 > boxH) { h2 = boxH; w2 = boxH * arT; }
+        __setSizeKeepCenter(b, w2, h2);
+    }
+
+    const __origPaste = NS.pasteScale;
+    NS.pasteScale = function () {
+        try {
+            if (!NS.__lastScale) { console.warn("Paste Scale: nothing copied yet."); return; }
+            const targets = __resolveSelection();
+            if (!targets.length) { console.warn("Paste Scale: no selection."); return; }
+            const { w: boxW, h: boxH } = NS.__lastScale;
+
+            const canHistory = !!(window.History && typeof History.push === 'function' && !!History.enabled);
+            const before = canHistory ? targets.map(b => ({
+                id: b.id, left: b.left ?? b.x, top: b.top ?? b.y, w: b.w, h: b.h,
+                x1: b.x1, y1: b.y1, x2: b.x2, y2: b.y2
+            })) : null;
+
+            for (const b of targets) {
+                if (__isLine(b)) __scaleLineUniform(b, boxW, boxH);
+                else __fitUniformKeepCenter(b, boxW, boxH);
+            }
+
+            if (canHistory) {
+                const after = targets.map(b => ({
+                    id: b.id, left: b.left ?? b.x, top: b.top ?? b.y, w: b.w, h: b.h,
+                    x1: b.x1, y1: b.y1, x2: b.x2, y2: b.y2
+                }));
+                History.push({ type: 'paste-scale-uniform', items: targets.map(t => t.id), before, after });
+            }
+
+            // redraw
+            if (typeof window.renderScene === 'function') renderScene();
+            else if (typeof drawText === 'function') drawText();
+            else if (typeof draw === 'function') draw();
+
+            try { if (window.ShowToast) ShowToast(`Pasted (uniform) into ${targets.length} item(s)`); } catch { }
+        } catch (e) {
+            console.warn('Uniform pasteScale failed, falling back to original:', e);
+            try { return __origPaste.apply(this, arguments); } catch { }
+        }
+    };
+
+    NS.__uniformPatched = true;
+})();
+
+// ──────────────────────────────────────────────────────────────
+// Console scale percentage after ScaleOps.pasteScale()
+// Non-destructive: wraps pasteScale, captures before/after, logs %
+// ──────────────────────────────────────────────────────────────
+(function () {
+    if (!window.ScaleOps || window.ScaleOps.__loggerWrapped) return;
+    const NS = window.ScaleOps;
+
+    // selection snapshot (local; don't modify your main one)
+    function _resolveSelection() {
+        const out = [];
+        try {
+            if (Array.isArray(textObjects)) {
+                for (const o of textObjects) if (o && o.selected && !o.locked) out.push(o);
+            }
+            if (Array.isArray(images)) {
+                for (const i of images) if (i && i.selected && !i.locked) out.push(i);
+            }
+            if (!out.length) {
+                if (activeText && !activeText.locked) out.push(activeText);
+                if (activeImage && !activeImage.locked) out.push(activeImage);
+            }
+        } catch { }
+        return out;
+    }
+
+    function _dims(b) {
+        const w = (typeof b.w === 'number') ? b.w : (typeof b.width === 'number' ? b.width : 0);
+        const h = (typeof b.h === 'number') ? b.h : (typeof b.height === 'number' ? b.height : 0);
+        return { w: Math.max(0, w), h: Math.max(0, h) };
+    }
+
+    function _lineLength(b) {
+        if (['x1', 'y1', 'x2', 'y2'].every(k => typeof b[k] === 'number')) {
+            const dx = b.x2 - b.x1, dy = b.y2 - b.y1;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+        const d = _dims(b);
+        return Math.sqrt(d.w * d.w + d.h * d.h); // fallback
+    }
+
+    const _origPaste = NS.pasteScale;
+    NS.pasteScale = function () {
+        // capture targets + BEFORE geometry
+        const targets = _resolveSelection();
+        const before = targets.map(t => {
+            const d = _dims(t);
+            return {
+                ref: t,
+                id: t.id,
+                isLine: !!(t.isLine || t.type === 'line' || t.shape === 'line'),
+                w: d.w, h: d.h, len: _lineLength(t)
+            };
+        });
+
+        // run the real pasteScale
+        const ret = _origPaste.apply(this, arguments);
+
+        // AFTER geometry and logging
+        before.forEach(b => {
+            const t = b.ref;
+            const d2 = _dims(t);
+            const len2 = _lineLength(t);
+
+            // avoid div-by-zero
+            const sx = (b.w > 0) ? (d2.w / b.w) : NaN;
+            const sy = (b.h > 0) ? (d2.h / b.h) : NaN;
+
+            // pick a representative percentage:
+            // - lines: use length ratio
+            // - boxes: if near-uniform, show one %, otherwise show Wx% / Hx%
+            if (b.isLine) {
+                const sLen = (b.len > 0) ? (len2 / b.len) : NaN;
+                const pct = Number.isFinite(sLen) ? (sLen * 100) : NaN;
+                console.log(
+                    `[ScaleOps] line ${b.id ?? ''} scaled ${Number.isFinite(pct) ? pct.toFixed(1) + '%' : '(n/a)'} ` +
+                    `(length ${b.len.toFixed(2)} → ${len2.toFixed(2)})`
+                );
+            } else {
+                const nearUniform = Number.isFinite(sx) && Number.isFinite(sy) && Math.abs(sx - sy) < 1e-4;
+                if (nearUniform && Number.isFinite(sx)) {
+                    console.log(
+                        `[ScaleOps] ${b.id ?? '(box)'} scaled ${(sx * 100).toFixed(1)}% ` +
+                        `(size ${b.w.toFixed(1)}×${b.h.toFixed(1)} → ${d2.w.toFixed(1)}×${d2.h.toFixed(1)})`
+                    );
+                } else {
+                    const sxPct = Number.isFinite(sx) ? (sx * 100).toFixed(1) + '%' : '(n/a)';
+                    const syPct = Number.isFinite(sy) ? (sy * 100).toFixed(1) + '%' : '(n/a)';
+                    console.log(
+                        `[ScaleOps] ${b.id ?? '(box)'} scaled WxH ${sxPct} × ${syPct} ` +
+                        `(size ${b.w.toFixed(1)}×${b.h.toFixed(1)} → ${d2.w.toFixed(1)}×${d2.h.toFixed(1)})`
+                    );
+                }
+            }
+        });
+
+        return ret;
+    };
+
+    NS.__loggerWrapped = true;
 })();
