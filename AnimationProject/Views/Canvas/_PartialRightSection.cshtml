@@ -1498,14 +1498,14 @@ function moveCaretToEnd(el) {
         </div>
 
     </div>
-     <div id="divCopyPasteScale" class="mb-3" style="display:none;">
+     <div id="divCopyPasteScale" class="mb-3" style="display:block;">
         <div class="fx-toolbar">
-            <button id="btnCopyScale" type="button" onclick="window.ScaleOps.copyScale()">
-                Copy Scale
+            <button id="btnCopyScale" type="button" class="fx-btn fx-copy" onclick="window.ScaleOps.copyScale()">
+                <span class="fx-label"><img src="~/images/icons/copy.png" alt="Alternate Text" width="25" /> Copy Scale</span>
             </button>
 
-            <button id="btnPasteScale" type="button" onclick="window.ScaleOps.pasteScale()" disabled>
-                Paste Scale
+            <button id="btnPasteScale" type="button" class="fx-btn fx-copy" onclick="window.ScaleOps.pasteScaleForText ()" disabled>
+               <span class="fx-label"><img src="~/images/icons/paste.png" alt="Alternate Text" width="25" /> Paste Scale</span> 
             </button>
         </div>
 
@@ -1527,8 +1527,12 @@ function moveCaretToEnd(el) {
     </div>
     <div id="divCopyPasteGraphicproperty" class="mb-3">
         <div class="fx-toolbar">
-            <button id="copyGraphicBtn" class="fx-btn fx-copy" type="button" disabled>Copy Property</button>
-            <button id="pasteGraphicBtn" class="fx-btn fx-copy" type="button" disabled>Paste Property</button>
+            <button id="copyGraphicBtn" class="fx-btn fx-copy" type="button" disabled>
+                <span class="fx-label"><img src="~/images/icons/copy.png" alt="Alternate Text" width="25" /> Copy Property</span>
+               </button>
+            <button id="pasteGraphicBtn" class="fx-btn fx-copy" type="button" disabled>
+                <span class="fx-label"><img src="~/images/icons/paste.png" alt="Alternate Text" width="25" />Paste Property</span> 
+               </button>
 
         </div>
 

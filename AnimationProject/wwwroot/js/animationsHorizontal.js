@@ -6081,6 +6081,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("divCurvature").style.display = 'none';
         document.getElementById("divCopyPaste").style.display = 'none';
         document.getElementById("divCopyPasteGraphicproperty").style.display = 'block';
+        document.getElementById("divCopyPasteScale").style.display = 'none';
         HideLoader();
     }
     else if (selectedType == 'Text') {
@@ -6095,6 +6096,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("divCurvature").style.display = 'none';
         document.getElementById("divCopyPaste").style.display = 'block';
         document.getElementById("divCopyPasteGraphicproperty").style.display = 'none';
+        document.getElementById("divCopyPasteScale").style.display = 'block';
         HideLoader();
     }
     else if (selectedType == 'Shape') {
@@ -6110,6 +6112,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("divCurvature").style.display = 'block';
         document.getElementById("divCopyPaste").style.display = 'none';
         document.getElementById("divCopyPasteGraphicproperty").style.display = 'block';
+        document.getElementById("divCopyPasteScale").style.display = 'none';
         HideLoader();
     }
     else if (selectedType == 'Icon') {
@@ -6123,6 +6126,7 @@ function HideShowRightPannel(selectedType) {
         document.getElementById("divFillColor").style.display = 'block';
         document.getElementById("divCurvature").style.display = 'none';
         document.getElementById("divCopyPastesvgproperty").style.display = 'block';
+        document.getElementById("divCopyPasteScale").style.display = 'none';
         HideLoader();
     }
     else if (selectedType == null) {
@@ -17885,54 +17889,76 @@ function flashClass(el, cls, ms = 1100) {
 })();
 
 /* Copy/Paste Scale — window-scoped (uses textObjects/images/activeText/activeImage in THIS window) */
-
+// ──────────────────────────────────────────────────────────────────────────────
+// Uniformly fit ALL selected items inside a target selection-box size (no stretch)
+// Call: ScaleOps.fitSelectionUniform(newW, newH)
+// Typical use: on selection-box resize commit (mouseup), pass the new box size.
+// ─────────────────────────────────────────────────────────────────────────────-
+// Append-only: real copy/paste scale if missing (uniform, keep center)
+// --- Ensure the API is on window (unconditional)
 (function () {
-    const NS = (window.ScaleOps ||= {});
-    NS.__lastScale ??= null;
+    const NS = (window.ScaleOps = window.ScaleOps || {});
+    // ADD: one tiny logger
+    function _logScaled(label, w0, h0, w1, h1, s) {
+        if (!isFinite(s)) s = (w0 && h0) ? Math.min(w1 / w0, h1 / h0) : 0;
+        console.log(
+            `[ScaleOps] (${label}) scaled ${(s * 100).toFixed(1)}% ` +
+            `(size ${w0.toFixed(1)}×${h0.toFixed(1)} → ${w1.toFixed(1)}×${h1.toFixed(1)})`
+        );
+    }
+    // ─────────────────────────────────────────────────────────
+    // UI: enable/disable Paste button based on NS.__lastScale
+    // ─────────────────────────────────────────────────────────
+    function _syncPasteBtn() {
+        const btn = document.getElementById('btnPasteScale');
+        if (!btn) return;
+        const can = !!NS.__lastScale;
+        btn.disabled = !can;
+        btn.classList.toggle('disabled', !can);
+        if (can) btn.title = `Paste Scale (${NS.__lastScale.w.toFixed(1)}×${NS.__lastScale.h.toFixed(1)})`;
+    }
 
-    // ---------------- selection (your model) ----------------
-    function resolveSelection() {
+    // ─────────────────────────────────────────────────────────
+    // Selection utilities (uses your globals: textObjects, images,
+    // activeText, activeImage)
+    // ─────────────────────────────────────────────────────────
+    function _sel() {
         const out = [];
-        if (Array.isArray(textObjects)) {
-            for (const o of textObjects) if (o && o.selected && !o.locked) out.push(o);
-        }
-        if (Array.isArray(images)) {
-            for (const i of images) if (i && i.selected && !i.locked) out.push(i);
-        }
-        if (!out.length) {
-            if (activeText && !activeText.locked) out.push(activeText);
-            if (activeImage && !activeImage.locked) out.push(activeImage);
-        }
+        try {
+            if (Array.isArray(textObjects)) {
+                for (const o of textObjects) if (o && o.selected && !o.locked) out.push(o);
+            }
+            if (Array.isArray(images)) {
+                for (const i of images) if (i && i.selected && !i.locked) out.push(i);
+            }
+            if (!out.length) {
+                if (activeText && !activeText.locked) out.push(activeText);
+                if (activeImage && !activeImage.locked) out.push(activeImage);
+            }
+        } catch { /* no-op */ }
         return out;
     }
-    function primarySelection() {
-        const a = resolveSelection();
-        return a.length ? a[0] : null;
+
+    // dims + center
+    function _dims(b) {
+        const w = (typeof b.w === 'number') ? b.w :
+            (typeof b.width === 'number') ? b.width : 0;
+        const h = (typeof b.h === 'number') ? b.h :
+            (typeof b.height === 'number') ? b.height : 0;
+        return { w: Math.max(0, w), h: Math.max(0, h) };
+    }
+    function _center(b) {
+        const left = (typeof b.left === 'number') ? b.left :
+            (typeof b.x === 'number') ? b.x : 0;
+        const top = (typeof b.top === 'number') ? b.top :
+            (typeof b.y === 'number') ? b.y : 0;
+        const { w, h } = _dims(b);
+        return { cx: left + w / 2, cy: top + h / 2, w, h, left, top };
     }
 
-    // ---------------- geometry helpers ----------------
-    function aabb(b) {
-        if (typeof b.w === 'number' && typeof b.h === 'number') {
-            return { w: Math.max(0, b.w), h: Math.max(0, b.h) };
-        }
-        const ww = Math.max(0, (b.width ?? 0));
-        const hh = Math.max(0, (b.height ?? 0));
-        return { w: ww, h: hh };
-    }
-    function centerOf(b) {
-        const left = (typeof b.left === "number") ? b.left : (b.x ?? 0);
-        const top = (typeof b.top === "number") ? b.top : (b.y ?? 0);
-        const w = (typeof b.w === "number") ? b.w : (b.width ?? 0);
-        const h = (typeof b.h === "number") ? b.h : (b.height ?? 0);
-        return { cx: left + w / 2, cy: top + h / 2, left, top, w, h };
-    }
-
-    // ---------------- key: write ALL size aliases your renderer might use ----------------
-    function applyDims(b, w, h) {
-        // canonical
+    // write width/height to all aliases your renderer cares about
+    function _applyDimsAll(b, w, h) {
         b.w = w; b.h = h;
-
-        // common alternates your code uses across text/image/svg
         b.width = w; b.height = h;
         if ('boxW' in b || 'boxH' in b) { b.boxW = w; b.boxH = h; }
         if ('boxWidth' in b || 'boxHeight' in b) { b.boxWidth = w; b.boxHeight = h; }
@@ -17940,125 +17966,575 @@ function flashClass(el, cls, ms = 1100) {
         if (b.bounds) { b.bounds.width = w; b.bounds.height = h; }
         if (b.size) { b.size.w = w; b.size.h = h; }
         if (b.frame) { b.frame.w = w; b.frame.h = h; }
-
-        // text layout flags seen in your project from time to time
         if ('autoWidth' in b) b.autoWidth = false;
         if ('autoHeight' in b) b.autoHeight = false;
         if ('needsLayout' in b) b.needsLayout = true;
         if ('measureDirty' in b) b.measureDirty = true;
     }
 
-    function setSizeKeepCenter(b, newW, newH) {
-        const { cx, cy } = centerOf(b);
+    function _setSizeKeepCenter(b, newW, newH) {
+        const { cx, cy } = _center(b);
         const w = Math.max(0, newW), h = Math.max(0, newH);
-
-        // write dims first (covers all aliases)
-        applyDims(b, w, h);
-
-        // keep center fixed (support both left/top and x/y)
-        if (typeof b.left === "number" || typeof b.top === "number") {
+        _applyDimsAll(b, w, h);
+        if (typeof b.left === 'number' || typeof b.top === 'number') {
             b.left = cx - w / 2; b.top = cy - h / 2;
         } else {
             b.x = cx - w / 2; b.y = cy - h / 2;
         }
-
-        // keep alias positions in sync
         if (b.bounds) { b.bounds.left = (b.left ?? b.x); b.bounds.top = (b.top ?? b.y); }
         if (b.rect) { b.rect.left = (b.left ?? b.x); b.rect.top = (b.top ?? b.y); }
     }
 
-    function isLine(b) { return !!(b.isLine || b.type === 'line' || b.shape === 'line'); }
-    function scaleLine(b, newW, newH) {
+    // classification
+    function _isLine(b) {
+        return !!(b && (b.isLine || b.type === 'line' || b.shape === 'line'));
+    }
+    function _isText(b) {
+        return !!b && (b.type === 'text' || (b.text != null && b.src == null));
+    }
+
+    // lines: uniform scale about center to fit inside boxW×boxH
+    function _scaleLineUniform(b, boxW, boxH) {
         if (['x1', 'y1', 'x2', 'y2'].every(k => typeof b[k] === 'number')) {
             const cx = (b.x1 + b.x2) / 2, cy = (b.y1 + b.y2) / 2;
             const cw = Math.abs(b.x2 - b.x1) || 1, ch = Math.abs(b.y2 - b.y1) || 1;
-            const sx = newW / cw, sy = newH / ch;
+            const s = Math.min(boxW / cw, boxH / ch);
             const dx1 = b.x1 - cx, dy1 = b.y1 - cy, dx2 = b.x2 - cx, dy2 = b.y2 - cy;
-            b.x1 = cx + dx1 * sx; b.y1 = cy + dy1 * sy;
-            b.x2 = cx + dx2 * sx; b.y2 = cy + dy2 * sy;
-            applyDims(b, newW, newH);
+            b.x1 = cx + dx1 * s; b.y1 = cy + dy1 * s;
+            b.x2 = cx + dx2 * s; b.y2 = cy + dy2 * s;
+            _applyDimsAll(b, cw * s, ch * s);
+            _logScaled('line', cw, ch, cw * s, ch * s, s);
         } else {
-            setSizeKeepCenter(b, newW, newH);
+            _setSizeKeepCenter(b, boxW, boxH);
         }
     }
 
-    // ---------------- paste button state ----------------
-    function getPasteBtn() {
-        let el = document.getElementById('btnPasteScale');
-        if (el) return el;
-        return Array.from(document.querySelectorAll('button,.btn,[role="button"]'))
-            .find(n => /paste\s*scale/i.test(n.title || n.textContent || '')) || null;
+    // images/SVG: uniform fit (no stretch), keep center
+    function _fitUniformKeepCenter(b, boxW, boxH) {
+        const { w: tw, h: th } = _dims(b);
+        if (!(tw > 0 && th > 0)) { _setSizeKeepCenter(b, boxW, boxH); return; }
+        const s = Math.min(boxW / tw, boxH / th);
+        _setSizeKeepCenter(b, tw * s, th * s);
+        _logScaled('box', tw, th, w1, h1, s);  
     }
-    function syncPasteBtn() {
-        const btn = getPasteBtn();
-        if (!btn) return;
-        const canPaste = !!NS.__lastScale;
-        btn.disabled = !canPaste;
-        if (canPaste) btn.classList.remove('disabled'); else btn.classList.add('disabled');
-        btn.title = canPaste ? `Paste Scale (${NS.__lastScale.w}×${NS.__lastScale.h})`
-            : 'Paste Scale (copy a size first)';
+
+    // TEXT scaling
+    function _ensureBakedHtml(b) {
+        // prefer original HTML if present
+        let html = (b._orig && typeof b._orig.text === 'string')
+            ? b._orig.text
+            : (typeof b.text === 'string' ? b.text : '');
+
+        // if no inline font-sizes, bake them from editor snapshot
+        if (typeof window.bakeInlineFontOnLinesHTML === 'function' && !/font-size\s*:/i.test(html)) {
+            try { html = bakeInlineFontOnLinesHTML(html, window.textEditorNew); } catch { /* ignore */ }
+        }
+
+        b.__textBaseSnap = b.__textBaseSnap || {};
+        b.__textBaseSnap.html = html;
+
+        if (typeof b.__textBaseSnap.fontSize !== 'number' && typeof b.fontSize === 'number') {
+            b.__textBaseSnap.fontSize = b.fontSize;
+        }
+        if (typeof b.__textBaseSnap.lineHeight !== 'number' && typeof b.lineHeight === 'number') {
+            b.__textBaseSnap.lineHeight = b.lineHeight;
+        }
+        if (typeof b.__textBaseSnap.letterSpacing !== 'number' && typeof b.letterSpacing === 'number') {
+            b.__textBaseSnap.letterSpacing = b.letterSpacing;
+        }
+        if (typeof b.__textBaseSnap.strokeWidth !== 'number' && typeof b.strokeWidth === 'number') {
+            b.__textBaseSnap.strokeWidth = b.strokeWidth;
+        }
+        if (typeof b.__textBaseSnap.wrapWidth !== 'number' && typeof b.wrapWidth === 'number') {
+            b.__textBaseSnap.wrapWidth = b.wrapWidth;
+        }
     }
-    (new MutationObserver(syncPasteBtn))
+
+    function _fitUniformTextKeepCenter(b, boxW, boxH) {
+        const { w: tw, h: th } = _dims(b);
+        if (!(tw > 0 && th > 0)) { _setSizeKeepCenter(b, boxW, boxH); return; }
+
+        const s = Math.min(boxW / tw, boxH / th);
+        const w1 = tw * s, h1 = th * s;
+        // 1) resize box uniformly
+        _setSizeKeepCenter(b, tw * s, th * s);
+
+        // 2) scale content
+        _ensureBakedHtml(b);
+
+        if (typeof window.scaleTextHTML === 'function' && b.__textBaseSnap.html) {
+            try { b.text = scaleTextHTML(b.__textBaseSnap.html, s); } catch { /* ignore */ }
+        }
+        if (typeof b.__textBaseSnap.fontSize === 'number') {
+            b.fontSize = Math.max(1, b.__textBaseSnap.fontSize * s);
+        }
+        if (typeof b.__textBaseSnap.lineHeight === 'number') {
+            b.lineHeight = Math.max(0.1, b.__textBaseSnap.lineHeight * s);
+        }
+        if (typeof b.__textBaseSnap.letterSpacing === 'number') {
+            b.letterSpacing = b.__textBaseSnap.letterSpacing * s;
+        }
+        if (typeof b.__textBaseSnap.strokeWidth === 'number') {
+            b.strokeWidth = Math.max(0, b.__textBaseSnap.strokeWidth * s);
+        }
+        if (typeof b.__textBaseSnap.wrapWidth === 'number') {
+            b.wrapWidth = b.width; // align wrap to new box
+        }
+
+        if ('needsLayout' in b) b.needsLayout = true;
+        if ('measureDirty' in b) b.measureDirty = true;
+        b.textScale = s; // optional
+        _logScaled('box', tw, th, w1, h1, s); 
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // Public API: COPY
+    // ─────────────────────────────────────────────────────────
+    NS.copyScale = function copyScale() {
+        console.log('[ScaleOps] copyScale() called');
+        try {
+            const src = _sel()[0];
+            if (!src) { console.warn('[ScaleOps] copyScale: no selection.'); return; }
+
+            const { w, h } = _dims(src);
+            if (!w || !h) { console.warn('[ScaleOps] copyScale: zero size.'); return; }
+
+            NS.__lastScale = { w, h, fromId: src.id, ts: Date.now() };
+            try { if (window.ShowToast) ShowToast(`Copied scale: ${w.toFixed(1)}×${h.toFixed(1)}`); } catch { }
+            _syncPasteBtn();
+        } catch (e) {
+            console.error('[ScaleOps] copyScale error:', e);
+        }
+    };
+
+    // ─────────────────────────────────────────────────────────
+    // Public API: PASTE under *new* name pasteScaleForText
+    // (so it won't collide with other pasteScale implementations)
+    // ─────────────────────────────────────────────────────────
+    NS.pasteScaleForText = function pasteScaleForText() {
+        console.log('[ScaleOps] pasteScaleForText() called');
+        try {
+            const memo = NS.__lastScale;
+            if (!memo) { console.warn('[ScaleOps] pasteScale: nothing copied yet.'); return; }
+
+            const targets = _sel();
+            if (!targets.length) { console.warn('[ScaleOps] pasteScale: no selection.'); return; }
+
+            const { w: boxW, h: boxH } = memo;
+
+            // history (if available)
+            const canHist = !!(window.History && typeof History.push === 'function' && !!History.enabled);
+            const before = canHist ? targets.map(b => ({
+                id: b.id,
+                left: b.left ?? b.x, top: b.top ?? b.y,
+                w: b.w, h: b.h,
+                x1: b.x1, y1: b.y1, x2: b.x2, y2: b.y2,
+                text: (typeof b.text === 'string') ? b.text : undefined,
+                fontSize: (typeof b.fontSize === 'number') ? b.fontSize : undefined
+            })) : null;
+
+            // apply
+            for (const b of targets) {
+                if (_isLine(b)) {
+                    _scaleLineUniform(b, boxW, boxH);
+                } else if (_isText(b)) {
+                    _fitUniformTextKeepCenter(b, boxW, boxH);
+                } else {
+                    _fitUniformKeepCenter(b, boxW, boxH);
+                }
+            }
+
+            if (canHist) {
+                const after = targets.map(b => ({
+                    id: b.id,
+                    left: b.left ?? b.x, top: b.top ?? b.y,
+                    w: b.w, h: b.h,
+                    x1: b.x1, y1: b.y1, x2: b.x2, y2: b.y2,
+                    text: (typeof b.text === 'string') ? b.text : undefined,
+                    fontSize: (typeof b.fontSize === 'number') ? b.fontSize : undefined
+                }));
+                History.push({ type: 'paste-scale-uniform', items: targets.map(t => t.id), before, after });
+            }
+
+            // redraw
+            if (typeof window.renderScene === 'function') renderScene();
+            else if (typeof drawText === 'function') drawText();
+            else if (typeof window.draw === 'function') draw();
+
+            try { if (window.ShowToast) ShowToast(`Pasted (uniform) into ${targets.length} item(s)`); } catch { }
+            _syncPasteBtn();
+        } catch (e) {
+            console.error('[ScaleOps] pasteScaleForText error:', e);
+        }
+    };
+
+    // ─────────────────────────────────────────────────────────
+    // Button wiring – supports both inline onclick and JS listeners
+    // ─────────────────────────────────────────────────────────
+    function bindScaleButtonsOnce() {
+        const copyBtn = document.getElementById('btnCopyScale');
+        const pasteBtn = document.getElementById('btnPasteScale');
+
+        if (copyBtn && !copyBtn.__scaleBound) {
+            copyBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.ScaleOps.copyScale();
+            });
+            copyBtn.__scaleBound = true;
+        }
+        if (pasteBtn && !pasteBtn.__scaleBound) {
+            pasteBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.ScaleOps.pasteScaleForText();
+            });
+            pasteBtn.__scaleBound = true;
+        }
+    }
+
+    if (document.readyState !== 'loading') bindScaleButtonsOnce();
+    else document.addEventListener('DOMContentLoaded', bindScaleButtonsOnce, { once: true });
+
+    new MutationObserver(bindScaleButtonsOnce)
         .observe(document.documentElement, { childList: true, subtree: true });
-    if (document.readyState !== 'loading') syncPasteBtn();
-    else document.addEventListener('DOMContentLoaded', syncPasteBtn, { once: true });
-
-    // ---------------- public API ----------------
-    NS.copyScale = function () {
-        const src = primarySelection();
-        if (!src) { console.warn("Copy Scale: no selection."); return; }
-        const { w, h } = aabb(src);
-        if (!w || !h) { console.warn("Copy Scale: source has zero size."); return; }
-        NS.__lastScale = { w, h, fromId: src.id, ts: Date.now() };
-        try { if (window.ShowToast) ShowToast(`Copied scale: ${w.toFixed(1)}×${h.toFixed(1)}`); } catch { }
-        setTimeout(syncPasteBtn, 0);
-    };
-
-    NS.pasteScale = function () {
-        if (!NS.__lastScale) { console.warn("Paste Scale: nothing copied yet."); return; }
-        const targets = resolveSelection();
-        if (!targets.length) { console.warn("Paste Scale: no selection."); return; }
-        const { w: newW, h: newH } = NS.__lastScale;
-
-        // History only if it’s actually initialized and pushable
-        const canHistory = !!(window.History && History.enabled && typeof History.push === 'function');
-        const before = canHistory ? targets.map(b => ({
-            id: b.id, left: b.left ?? b.x, top: b.top ?? b.y, w: b.w, h: b.h,
-            x1: b.x1, y1: b.y1, x2: b.x2, y2: b.y2
-        })) : null;
-
-        for (const b of targets) {
-            if (isLine(b)) scaleLine(b, newW, newH);
-            else setSizeKeepCenter(b, newW, newH);
-        }
-
-        if (canHistory) {
-            const after = targets.map(b => ({
-                id: b.id, left: b.left ?? b.x, top: b.top ?? b.y, w: b.w, h: b.h,
-                x1: b.x1, y1: b.y1, x2: b.x2, y2: b.y2
-            }));
-            History.push({ type: 'paste-scale', items: targets.map(t => t.id), before, after });
-        }
-
-        // force a redraw using whatever your app exposes
-        if (typeof window.renderScene === 'function') renderScene();
-        else if (typeof drawText === 'function') drawText();
-        else if (typeof window.draw === 'function') draw();
-
-        try { if (window.ShowToast) ShowToast(`Pasted ${newW.toFixed(1)}×${newH.toFixed(1)} to ${targets.length} item(s)`); } catch { }
-        setTimeout(syncPasteBtn, 0);
-    };
-
-    // (optional) quick debug
-    NS.debugSelection = function () {
-        const arr = resolveSelection();
-        console.log('[ScaleOps] selection:', arr.map(b => ({
-            id: b.id, type: b.type, w: b.w, h: b.h, width: b.width, height: b.height,
-            left: b.left ?? b.x, top: b.top ?? b.y
-        })));
-        return arr;
-    };
 })();
+
+
+////(function () {
+////    const NS = (window.ScaleOps = window.ScaleOps || {});
+
+////    // ─────────────────────────────────────────────────────────
+////    // UI: enable/disable Paste button based on NS.__lastScale
+////    // ─────────────────────────────────────────────────────────
+////    function _syncPasteBtn() {
+////        const btn = document.getElementById('btnPasteScale');
+////        if (!btn) return;
+////        const can = !!NS.__lastScale;
+////        btn.disabled = !can;
+////        btn.classList.toggle('disabled', !can);
+////        if (can) btn.title = `Paste Scale (${NS.__lastScale.w.toFixed(1)}×${NS.__lastScale.h.toFixed(1)})`;
+////    }
+
+////    // ─────────────────────────────────────────────────────────
+////    // Selection utilities (uses your globals: textObjects, images,
+////    // activeText, activeImage)
+////    // ─────────────────────────────────────────────────────────
+////    function _sel() {
+////        const out = [];
+////        try {
+////            if (Array.isArray(textObjects)) {
+////                for (const o of textObjects) if (o && o.selected && !o.locked) out.push(o);
+////            }
+////            if (Array.isArray(images)) {
+////                for (const i of images) if (i && i.selected && !i.locked) out.push(i);
+////            }
+////            if (!out.length) {
+////                if (activeText && !activeText.locked) out.push(activeText);
+////                if (activeImage && !activeImage.locked) out.push(activeImage);
+////            }
+////        } catch { /* no-op */ }
+////        return out;
+////    }
+
+////    // dims + center
+////    function _dims(b) {
+////        const w = (typeof b.w === 'number') ? b.w :
+////            (typeof b.width === 'number') ? b.width : 0;
+////        const h = (typeof b.h === 'number') ? b.h :
+////            (typeof b.height === 'number') ? b.height : 0;
+////        return { w: Math.max(0, w), h: Math.max(0, h) };
+////    }
+////    function _center(b) {
+////        const left = (typeof b.left === 'number') ? b.left :
+////            (typeof b.x === 'number') ? b.x : 0;
+////        const top = (typeof b.top === 'number') ? b.top :
+////            (typeof b.y === 'number') ? b.y : 0;
+////        const { w, h } = _dims(b);
+////        return { cx: left + w / 2, cy: top + h / 2, w, h, left, top };
+////    }
+
+////    // write width/height to all aliases your renderer cares about
+////    function _applyDimsAll(b, w, h) {
+////        b.w = w; b.h = h;
+////        b.width = w; b.height = h;
+////        if ('boxW' in b || 'boxH' in b) { b.boxW = w; b.boxH = h; }
+////        if ('boxWidth' in b || 'boxHeight' in b) { b.boxWidth = w; b.boxHeight = h; }
+////        if (b.rect) { b.rect.width = w; b.rect.height = h; }
+////        if (b.bounds) { b.bounds.width = w; b.bounds.height = h; }
+////        if (b.size) { b.size.w = w; b.size.h = h; }
+////        if (b.frame) { b.frame.w = w; b.frame.h = h; }
+////        if ('autoWidth' in b) b.autoWidth = false;
+////        if ('autoHeight' in b) b.autoHeight = false;
+////        if ('needsLayout' in b) b.needsLayout = true;
+////        if ('measureDirty' in b) b.measureDirty = true;
+////    }
+
+////    function _setSizeKeepCenter(b, newW, newH) {
+////        const { cx, cy } = _center(b);
+////        const w = Math.max(0, newW), h = Math.max(0, newH);
+////        _applyDimsAll(b, w, h);
+////        if (typeof b.left === 'number' || typeof b.top === 'number') {
+////            b.left = cx - w / 2; b.top = cy - h / 2;
+////        } else {
+////            b.x = cx - w / 2; b.y = cy - h / 2;
+////        }
+////        if (b.bounds) { b.bounds.left = (b.left ?? b.x); b.bounds.top = (b.top ?? b.y); }
+////        if (b.rect) { b.rect.left = (b.left ?? b.x); b.rect.top = (b.top ?? b.y); }
+////    }
+
+////    // classification
+////    function _isLine(b) {
+////        return !!(b && (b.isLine || b.type === 'line' || b.shape === 'line'));
+////    }
+////    function _isText(b) {
+////        return !!b && (b.type === 'text' || (b.text != null && b.src == null));
+////    }
+
+////    // lines: uniform scale about center to fit inside boxW×boxH
+////    function _scaleLineUniform(b, boxW, boxH) {
+////        if (['x1', 'y1', 'x2', 'y2'].every(k => typeof b[k] === 'number')) {
+////            const cx = (b.x1 + b.x2) / 2, cy = (b.y1 + b.y2) / 2;
+////            const cw = Math.abs(b.x2 - b.x1) || 1, ch = Math.abs(b.y2 - b.y1) || 1;
+////            const s = Math.min(boxW / cw, boxH / ch);
+////            const dx1 = b.x1 - cx, dy1 = b.y1 - cy, dx2 = b.x2 - cx, dy2 = b.y2 - cy;
+////            b.x1 = cx + dx1 * s; b.y1 = cy + dy1 * s;
+////            b.x2 = cx + dx2 * s; b.y2 = cy + dy2 * s;
+////            _applyDimsAll(b, cw * s, ch * s);
+////        } else {
+////            _setSizeKeepCenter(b, boxW, boxH);
+////        }
+////    }
+
+////    // images/SVG: uniform fit (no stretch), keep center
+////    function _fitUniformKeepCenter(b, boxW, boxH) {
+////        const { w: tw, h: th } = _dims(b);
+////        if (!(tw > 0 && th > 0)) { _setSizeKeepCenter(b, boxW, boxH); return; }
+////        const s = Math.min(boxW / tw, boxH / th);
+////        _setSizeKeepCenter(b, tw * s, th * s);
+////    }
+
+////    // TEXT scaling
+////    function _ensureBakedHtml(b) {
+////        // prefer original HTML if present
+////        let html = (b._orig && typeof b._orig.text === 'string')
+////            ? b._orig.text
+////            : (typeof b.text === 'string' ? b.text : '');
+
+////        // if no inline font-sizes, bake them from editor snapshot
+////        if (typeof window.bakeInlineFontOnLinesHTML === 'function' && !/font-size\s*:/i.test(html)) {
+////            try { html = bakeInlineFontOnLinesHTML(html, window.textEditorNew); } catch { /* ignore */ }
+////        }
+
+////        b.__textBaseSnap = b.__textBaseSnap || {};
+////        b.__textBaseSnap.html = html;
+
+////        if (typeof b.__textBaseSnap.fontSize !== 'number' && typeof b.fontSize === 'number') {
+////            b.__textBaseSnap.fontSize = b.fontSize;
+////        }
+////        if (typeof b.__textBaseSnap.lineHeight !== 'number' && typeof b.lineHeight === 'number') {
+////            b.__textBaseSnap.lineHeight = b.lineHeight;
+////        }
+////        if (typeof b.__textBaseSnap.letterSpacing !== 'number' && typeof b.letterSpacing === 'number') {
+////            b.__textBaseSnap.letterSpacing = b.letterSpacing;
+////        }
+////        if (typeof b.__textBaseSnap.strokeWidth !== 'number' && typeof b.strokeWidth === 'number') {
+////            b.__textBaseSnap.strokeWidth = b.strokeWidth;
+////        }
+////        if (typeof b.__textBaseSnap.wrapWidth !== 'number' && typeof b.wrapWidth === 'number') {
+////            b.__textBaseSnap.wrapWidth = b.wrapWidth;
+////        }
+////    }
+
+////    function _fitUniformTextKeepCenter(b, boxW, boxH) {
+////        const { w: tw, h: th } = _dims(b);
+////        if (!(tw > 0 && th > 0)) { _setSizeKeepCenter(b, boxW, boxH); return; }
+
+////        const s = Math.min(boxW / tw, boxH / th);
+
+////        // 1) resize box uniformly
+////        _setSizeKeepCenter(b, tw * s, th * s);
+
+////        // 2) scale content
+////        _ensureBakedHtml(b);
+
+////        if (typeof window.scaleTextHTML === 'function' && b.__textBaseSnap.html) {
+////            try { b.text = scaleTextHTML(b.__textBaseSnap.html, s); } catch { /* ignore */ }
+////        }
+////        if (typeof b.__textBaseSnap.fontSize === 'number') {
+////            b.fontSize = Math.max(1, b.__textBaseSnap.fontSize * s);
+////        }
+////        if (typeof b.__textBaseSnap.lineHeight === 'number') {
+////            b.lineHeight = Math.max(0.1, b.__textBaseSnap.lineHeight * s);
+////        }
+////        if (typeof b.__textBaseSnap.letterSpacing === 'number') {
+////            b.letterSpacing = b.__textBaseSnap.letterSpacing * s;
+////        }
+////        if (typeof b.__textBaseSnap.strokeWidth === 'number') {
+////            b.strokeWidth = Math.max(0, b.__textBaseSnap.strokeWidth * s);
+////        }
+////        if (typeof b.__textBaseSnap.wrapWidth === 'number') {
+////            b.wrapWidth = b.width; // align wrap to new box
+////        }
+
+////        if ('needsLayout' in b) b.needsLayout = true;
+////        if ('measureDirty' in b) b.measureDirty = true;
+////        b.textScale = s; // optional
+////    }
+
+////    // ─────────────────────────────────────────────────────────
+////    // Public API: COPY
+////    // ─────────────────────────────────────────────────────────
+////    NS.copyScale = function copyScale() {
+////        console.log('[ScaleOps] copyScale() called');
+////        try {
+////            const src = _sel()[0];
+////            if (!src) { console.warn('[ScaleOps] copyScale: no selection.'); return; }
+
+////            const { w, h } = _dims(src);
+////            if (!w || !h) { console.warn('[ScaleOps] copyScale: zero size.'); return; }
+
+////            NS.__lastScale = { w, h, fromId: src.id, ts: Date.now() };
+////            try { if (window.ShowToast) ShowToast(`Copied scale: ${w.toFixed(1)}×${h.toFixed(1)}`); } catch { }
+////            _syncPasteBtn();
+////        } catch (e) {
+////            console.error('[ScaleOps] copyScale error:', e);
+////        }
+////    };
+
+   
+////    NS.pasteScaleForText = function pasteScaleForText() {
+////        console.log('[ScaleOps] pasteScaleForText() called');
+////        try {
+////            const memo = NS.__lastScale;
+////            if (!memo) { console.warn('[ScaleOps] pasteScale: nothing copied yet.'); return; }
+
+////            const targets = _sel();
+////            if (!targets.length) { console.warn('[ScaleOps] pasteScale: no selection.'); return; }
+
+////            const { w: boxW, h: boxH } = memo;
+
+////            // history (if available)
+////            const canHist = !!(window.History && typeof History.push === 'function' && !!History.enabled);
+////            const before = canHist ? targets.map(b => ({
+////                id: b.id,
+////                left: b.left ?? b.x, top: b.top ?? b.y,
+////                w: b.w, h: b.h,
+////                x1: b.x1, y1: b.y1, x2: b.x2, y2: b.y2,
+////                text: (typeof b.text === 'string') ? b.text : undefined,
+////                fontSize: (typeof b.fontSize === 'number') ? b.fontSize : undefined,
+////                lineHeight: (typeof b.lineHeight === 'number') ? b.lineHeight : undefined,
+////                letterSpacing: (typeof b.letterSpacing === 'number') ? b.letterSpacing : undefined,
+////                strokeWidth: (typeof b.strokeWidth === 'number') ? b.strokeWidth : undefined
+////            })) : null;
+
+////            for (const b of targets) {
+////                if (_isLine(b)) {
+////                    // lines: keep your existing uniform line scaler
+////                    _scaleLineUniform(b, boxW, boxH);
+////                    continue;
+////                }
+
+////                if (_isText(b)) {
+////                    // ---- EXACT BOX for TEXT + UNIFORM CONTENT SCALE (no stretch) ----
+////                    const { w: tw, h: th } = _dims(b);
+////                    if (!(tw > 0 && th > 0)) {
+////                        _setSizeKeepCenter(b, boxW, boxH);
+////                        continue;
+////                    }
+
+////                    // set the BOX to the exact copied size, keeping center
+////                    _setSizeKeepCenter(b, boxW, boxH);
+
+////                    // scale text content uniformly so it "fits" inside new box
+////                    const sx = boxW / tw, sy = boxH / th;
+////                    const s = Math.min(sx, sy); // no-distortion factor
+
+////                    _ensureBakedHtml(b); // prepares b.__textBaseSnap with baked HTML & numeric bases
+
+////                    if (typeof window.scaleTextHTML === 'function' && b.__textBaseSnap?.html) {
+////                        try { b.text = scaleTextHTML(b.__textBaseSnap.html, s); } catch { /* ignore */ }
+////                    }
+////                    if (typeof b.__textBaseSnap?.fontSize === 'number') {
+////                        b.fontSize = Math.max(1, b.__textBaseSnap.fontSize * s);
+////                    }
+////                    if (typeof b.__textBaseSnap?.lineHeight === 'number') {
+////                        b.lineHeight = Math.max(0.1, b.__textBaseSnap.lineHeight * s);
+////                    }
+////                    if (typeof b.__textBaseSnap?.letterSpacing === 'number') {
+////                        b.letterSpacing = b.__textBaseSnap.letterSpacing * s;
+////                    }
+////                    if (typeof b.__textBaseSnap?.strokeWidth === 'number') {
+////                        b.strokeWidth = Math.max(0, b.__textBaseSnap.strokeWidth * s);
+////                    }
+////                    if (typeof b.__textBaseSnap?.wrapWidth === 'number') {
+////                        b.wrapWidth = b.width; // align wrap to new box width
+////                    }
+
+////                    if ('needsLayout' in b) b.needsLayout = true;
+////                    if ('measureDirty' in b) b.measureDirty = true;
+////                    b.textScale = s; // optional breadcrumb for your renderer
+////                    continue;
+////                }
+
+////                // images / svg: keep uniform fit (no stretch)
+////                _fitUniformKeepCenter(b, boxW, boxH);
+////            }
+
+////            if (canHist) {
+////                const after = targets.map(b => ({
+////                    id: b.id,
+////                    left: b.left ?? b.x, top: b.top ?? b.y,
+////                    w: b.w, h: b.h,
+////                    x1: b.x1, y1: b.y1, x2: b.x2, y2: b.y2,
+////                    text: (typeof b.text === 'string') ? b.text : undefined,
+////                    fontSize: (typeof b.fontSize === 'number') ? b.fontSize : undefined,
+////                    lineHeight: (typeof b.lineHeight === 'number') ? b.lineHeight : undefined,
+////                    letterSpacing: (typeof b.letterSpacing === 'number') ? b.letterSpacing : undefined,
+////                    strokeWidth: (typeof b.strokeWidth === 'number') ? b.strokeWidth : undefined
+////                }));
+////                History.push({ type: 'paste-scale-text-exact', items: targets.map(t => t.id), before, after });
+////            }
+
+////            // redraw
+////            if (typeof window.renderScene === 'function') renderScene();
+////            else if (typeof drawText === 'function') drawText();
+////            else if (typeof window.draw === 'function') draw();
+
+////            try { if (window.ShowToast) ShowToast(`Pasted scale into ${targets.length} item(s)`); } catch { }
+////            _syncPasteBtn();
+////        } catch (e) {
+////            console.error('[ScaleOps] pasteScaleForText error:', e);
+////        }
+////    };
+
+////    // ─────────────────────────────────────────────────────────
+////    // Button wiring – supports both inline onclick and JS listeners
+////    // ─────────────────────────────────────────────────────────
+////    function bindScaleButtonsOnce() {
+////        const copyBtn = document.getElementById('btnCopyScale');
+////        const pasteBtn = document.getElementById('btnPasteScale');
+
+////        if (copyBtn && !copyBtn.__scaleBound) {
+////            copyBtn.addEventListener('click', (e) => {
+////                e.preventDefault();
+////                window.ScaleOps.copyScale();
+////            });
+////            copyBtn.__scaleBound = true;
+////        }
+////        if (pasteBtn && !pasteBtn.__scaleBound) {
+////            pasteBtn.addEventListener('click', (e) => {
+////                e.preventDefault();
+////                window.ScaleOps.pasteScaleForText();
+////            });
+////            pasteBtn.__scaleBound = true;
+////        }
+////    }
+
+////    if (document.readyState !== 'loading') bindScaleButtonsOnce();
+////    else document.addEventListener('DOMContentLoaded', bindScaleButtonsOnce, { once: true });
+
+////    new MutationObserver(bindScaleButtonsOnce)
+////        .observe(document.documentElement, { childList: true, subtree: true });
+////})();
 
 
 (function () {
