@@ -2436,7 +2436,7 @@ body {
 .fx-btn {
     width: 118px; /* tweak to taste */
     padding: .44rem .62rem; /* a bit tighter */
-    border-radius: 10px;
+    border-radius: 5px;
 }
 
     /* keep two-line layout centered and neat */
@@ -2446,4 +2446,5 @@ body {
         line-height: 1.15;
         white-space: normal; /* allow wrapping (two lines) */
         word-break: keep-all; /* avoid ugly mid-word breaks */
+        font-size: 14px;
     }
