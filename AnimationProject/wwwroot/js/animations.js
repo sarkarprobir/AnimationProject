@@ -18332,6 +18332,8 @@ function flashClass(el, cls, ms = 1100) {
     // ADD: one tiny logger
     function _logScaled(label, w0, h0, w1, h1, s) {
         if (!isFinite(s)) s = (w0 && h0) ? Math.min(w1 / w0, h1 / h0) : 0;
+        document.getElementById('spanScaleDetails').textContent = '';
+        document.getElementById('spanScaleDetails').textContent = ` scaled ${(s * 100).toFixed(1)}% `;
         console.log(
             `[ScaleOps] (${label}) scaled ${(s * 100).toFixed(1)}% ` +
             `(size ${w0.toFixed(1)}×${h0.toFixed(1)} → ${w1.toFixed(1)}×${h1.toFixed(1)})`
@@ -18523,6 +18525,7 @@ function flashClass(el, cls, ms = 1100) {
     // ─────────────────────────────────────────────────────────
     NS.copyScale = function copyScale() {
         console.log('[ScaleOps] copyScale() called');
+        document.getElementById('spanScaleDetails').textContent = '';
         try {
             const src = _sel()[0];
             if (!src) { console.warn('[ScaleOps] copyScale: no selection.'); return; }

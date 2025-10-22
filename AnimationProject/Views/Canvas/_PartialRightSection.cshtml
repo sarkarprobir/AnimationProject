@@ -1492,19 +1492,19 @@ function moveCaretToEnd(el) {
         <div class="fx-toolbar">
             @* <button id="copyStyleBtn" type="button" class="fx-btn fx-copy"><span class="fx-label">Copy Property</span></button>
             <button id="pasteStyleBtn" type="button" class="fx-btn fx-paste" disabled><span class="fx-label">Paste Property</span></button> *@
-            <button id="copyStyleBtn" type="button" class="fx-btn fx-copy"><span class="fx-label"><img src="~/images/icons/copy.png" alt="Alternate Text" width="25" /> Copy</span></button>
-            <button id="pasteStyleBtn" type="button" class="fx-btn fx-paste" disabled><span class="fx-label"><img src="~/images/icons/paste.png" alt="Alternate Text" width="25" /> Paste</span></button>
+            <button id="copyStyleBtn" type="button" class="fx-btn fx-copy"><span class="fx-label"><img src="~/images/icons/copy.png" alt="Alternate Text" width="25" /> Copy Property</span></button>
+            <button id="pasteStyleBtn" type="button" class="fx-btn fx-paste" disabled><span class="fx-label"><img src="~/images/icons/paste.png" alt="Alternate Text" width="25" /> Paste Property</span></button>
 
         </div>
 
     </div>
      <div id="divCopyPasteScale" class="mb-3" style="display:block;">
         <div class="fx-toolbar">
-            <button id="btnCopyScale" type="button" class="fx-btn fx-copy" onclick="window.ScaleOps.copyScale()">
+            <button id="btnCopyScale" type="button" class="fx-btn fx-copy">
                 <span class="fx-label"><img src="~/images/icons/copy.png" alt="Alternate Text" width="25" /> Copy Scale</span>
             </button>
 
-            <button id="btnPasteScale" type="button" class="fx-btn fx-copy" onclick="window.ScaleOps.pasteScaleForText ()" disabled>
+            <button id="btnPasteScale" type="button" class="fx-btn fx-copy"  disabled>
                <span class="fx-label"><img src="~/images/icons/paste.png" alt="Alternate Text" width="25" /> Paste Scale</span> 
             </button>
         </div>
@@ -1536,6 +1536,22 @@ function moveCaretToEnd(el) {
 
         </div>
 
+    </div>
+    <div id="divScaleDetails" class="mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <span id="spanScaleDetails"
+                  style="font-weight:400;
+                         font-size:13px;
+                         color:#000;
+                         padding: 2px 8px;
+                         border-radius: 3px;
+                         background:#fff;
+                         box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px;
+                         position: absolute;
+                         right: 17px;
+                         bottom: 17px;">
+            </span>
+        </div>
     </div>
     <div id="ImageName" class="mb-3">
         <div class="d-flex justify-content-between align-items-center">
