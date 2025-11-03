@@ -1,0 +1,393 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Canvas + Clean YouTube Overlay (no reload on drag/resize)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        :root {
+            --w: 960px;
+            --h: 540px;
+        }
+
+        body {
+            margin: 16px;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            background: #f6f8fb;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+            .row input[type="text"] {
+                flex: 1 1 420px;
+                height: 36px;
+                padding: 0 10px;
+                border: 1px solid #d1d5db;
+                border-radius: 8px;
+                background: #fff;
+            }
+
+            .row button {
+                height: 36px;
+                padding: 0 12px;
+                border: 0;
+                border-radius: 8px;
+                background: #111827;
+                color: #fff;
+                cursor: pointer;
+            }
+
+                .row button.secondary {
+                    background: #374151;
+                }
+
+        #stageWrap {
+            position: relative;
+            width: var(--w);
+            height: var(--h);
+            margin: auto;
+        }
+
+        #cv {
+            position: absolute;
+            inset: 0;
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 12px 34px rgba(0,0,0,.08);
+        }
+
+        #yt {
+            position: absolute;
+            border: 0;
+            display: none;
+            border-radius: 10px;
+            pointer-events: none;
+        }
+        /* no hover UI */
+        .hint {
+            color: #6b7280;
+            font-size: 12px;
+            margin: 8px auto;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="row">
+        <input id="ytUrl" type="text" placeholder="Paste any YouTube URL (watch or youtu.be)"
+               value="https://www.youtube.com/watch?v=ujEJ8pRm3fo" />
+        <button id="btnLoad">Load</button>
+        <button id="btnToggle" class="secondary">Show/Hide</button>
+        <button id="btnFit" class="secondary" title="Fit 16:9 inside canvas">Fit 16:9</button>
+    </div>
+
+    <div id="stageWrap">
+        <canvas id="cv" width="960" height="540"></canvas>
+        <iframe id="yt" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+    </div>
+
+    <div class="hint">
+        Drag the blue box to move. Resize with the 8 handles. Hold <b>Shift</b> to keep aspect ratio.
+    </div>
+
+    <script>
+        (function(){
+          // ---------- Elements ----------
+          const wrap = document.getElementById('stageWrap');
+          const canvas = document.getElementById('cv');
+          const ctx = canvas.getContext('2d');
+          const iframe = document.getElementById('yt');
+          const urlInput = document.getElementById('ytUrl');
+          const btnLoad = document.getElementById('btnLoad');
+          const btnToggle = document.getElementById('btnToggle');
+          const btnFit = document.getElementById('btnFit');
+
+          // ---------- Box state (canvas placeholder for the video) ----------
+          const box = { x: 200, y: 110, w: 560, h: 315, radius: 12, handleR: 7 };
+          let dragging = false, resizing = false, activeHandle = null;
+          let dx = 0, dy = 0;
+          let keepRatio = false; // Shift key
+          const MIN = 40;
+          let currentEmbed = null; // we only set iframe.src when this changes
+
+          function aspect() { return box.w / box.h; }
+
+          // ---------- Drawing ----------
+          function draw() {
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+
+            // subtle grid
+            ctx.save();
+            ctx.strokeStyle = '#eef2f7'; ctx.lineWidth = 1;
+            for (let x=0; x<=canvas.width; x+=40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke(); }
+            for (let y=0; y<=canvas.height; y+=40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke(); }
+            ctx.restore();
+
+            // placeholder rect
+            roundedRect(ctx, box.x, box.y, box.w, box.h, box.radius);
+            ctx.fillStyle = '#111827'; ctx.fill();
+            ctx.fillStyle = '#ffffff'; ctx.font = '16px system-ui'; ctx.fillText('YouTube Video', box.x + 14, box.y + 24);
+
+            // selection + handles
+            ctx.save();
+            ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 1.5; ctx.setLineDash([6,4]);
+            ctx.strokeRect(box.x, box.y, box.w, box.h);
+            ctx.restore();
+
+            ctx.fillStyle = '#2563eb';
+            for (const h of handles()) { ctx.beginPath(); ctx.arc(h.x, h.y, box.handleR, 0, Math.PI*2); ctx.fill(); }
+
+            requestAnimationFrame(draw);
+          }
+
+          function roundedRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y,     x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x,     y + h, r);
+            ctx.arcTo(x,     y + h, x,     y,     r);
+            ctx.arcTo(x,     y,     x + w, y,     r);
+            ctx.closePath();
+          }
+
+          function handles() {
+            const cx = box.x + box.w / 2;
+            const cy = box.y + box.h / 2;
+            return [
+              { name: 'tl', x: box.x,       y: box.y       },
+              { name: 'tc', x: cx,          y: box.y       },
+              { name: 'tr', x: box.x+box.w, y: box.y       },
+              { name: 'ml', x: box.x,       y: cy          },
+              { name: 'mr', x: box.x+box.w, y: cy          },
+              { name: 'bl', x: box.x,       y: box.y+box.h },
+              { name: 'bc', x: cx,          y: box.y+box.h },
+              { name: 'br', x: box.x+box.w, y: box.y+box.h },
+            ];
+          }
+
+          function hitHandle(mx, my) {
+            for (const h of handles()) {
+              const dx = mx - h.x, dy = my - h.y;
+              if (dx*dx + dy*dy <= (box.handleR*box.handleR*1.8)) return h.name;
+            }
+            return null;
+          }
+
+          function inside(mx, my) { return mx >= box.x && mx <= box.x + box.w && my >= box.y && my <= box.y + box.h; }
+
+          // ---------- Mouse events ----------
+          canvas.addEventListener('mousedown', (e) => {
+            const {mx, my} = mousePos(e);
+            const hit = hitHandle(mx, my);
+            keepRatio = e.shiftKey;
+
+            if (hit) { resizing = true; activeHandle = hit; document.body.style.cursor = cursorForHandle(hit); return; }
+            if (inside(mx, my)) { dragging = true; dx = mx - box.x; dy = my - box.y; document.body.style.cursor = 'move'; return; }
+          });
+
+          window.addEventListener('mousemove', (e) => {
+            const {mx, my} = mousePos(e);
+
+            if (!dragging && !resizing) {
+              const hit = hitHandle(mx, my);
+              canvas.style.cursor = hit ? cursorForHandle(hit) : (inside(mx,my) ? 'move' : 'default');
+              return;
+            }
+
+            if (dragging) {
+              box.x = mx - dx; box.y = my - dy;
+              clampBox();
+              syncIframe();             // <-- only reposition/resize
+              return;
+            }
+
+            if (resizing) {
+              resizeByHandle(activeHandle, mx, my, keepRatio);
+              clampBox();
+              syncIframe();             // <-- only reposition/resize
+              return;
+            }
+          });
+
+          window.addEventListener('mouseup', () => {
+            dragging = false; resizing = false; activeHandle = null;
+            document.body.style.cursor = 'default';
+          });
+
+          window.addEventListener('keydown', (e) => { if (resizing) keepRatio = e.shiftKey; });
+          window.addEventListener('keyup',   (e) => { if (!e.shiftKey) keepRatio = false; });
+
+          function resizeByHandle(h, mx, my, lockRatio) {
+            let x = box.x, y = box.y, w = box.w, hgt = box.h;
+            const target = aspect() || (16/9);
+
+            const keep = (side) => {
+              if (!lockRatio) return;
+              if (side === 'corner') {
+                // adjust the dimension that changed more
+                if (Math.abs(mx - x) > Math.abs(my - y)) hgt = Math.max(MIN, w / target);
+                else w = Math.max(MIN, hgt * target);
+              } else if (side === 'horiz') {
+                hgt = Math.max(MIN, w / target);
+              } else if (side === 'vert') {
+                w = Math.max(MIN, hgt * target);
+              }
+            };
+
+            switch (h) {
+              case 'tl':
+                w = Math.max(MIN, (box.x + box.w) - mx);
+                hgt = Math.max(MIN, (box.y + box.h) - my);
+                x = box.x + box.w - w; y = box.y + box.h - hgt;
+                keep('corner'); break;
+              case 'tr':
+                w = Math.max(MIN, mx - box.x);
+                hgt = Math.max(MIN, (box.y + box.h) - my);
+                y = box.y + box.h - hgt;
+                keep('corner'); break;
+              case 'bl':
+                w = Math.max(MIN, (box.x + box.w) - mx);
+                hgt = Math.max(MIN, my - box.y);
+                x = box.x + box.w - w;
+                keep('corner'); break;
+              case 'br':
+                w = Math.max(MIN, mx - box.x);
+                hgt = Math.max(MIN, my - box.y);
+                keep('corner'); break;
+              case 'ml':
+                w = Math.max(MIN, (box.x + box.w) - mx);
+                x = box.x + box.w - w;
+                keep('horiz'); break;
+              case 'mr':
+                w = Math.max(MIN, mx - box.x);
+                keep('horiz'); break;
+              case 'tc':
+                hgt = Math.max(MIN, (box.y + box.h) - my);
+                y = box.y + box.h - hgt;
+                keep('vert'); break;
+              case 'bc':
+                hgt = Math.max(MIN, my - box.y);
+                keep('vert'); break;
+            }
+
+            box.x = x; box.y = y; box.w = w; box.h = hgt;
+          }
+
+          function clampBox() {
+            if (box.x < 0) box.x = 0;
+            if (box.y < 0) box.y = 0;
+            if (box.x + box.w > canvas.width)  box.x = canvas.width - box.w;
+            if (box.y + box.h > canvas.height) box.y = canvas.height - box.h;
+          }
+
+          function cursorForHandle(name) {
+            switch (name) {
+              case 'tl': case 'br': return 'nwse-resize';
+              case 'tr': case 'bl': return 'nesw-resize';
+              case 'ml': case 'mr': return 'ew-resize';
+              case 'tc': case 'bc': return 'ns-resize';
+              default: return 'default';
+            }
+          }
+
+          function mousePos(e) {
+            const r = canvas.getBoundingClientRect();
+            return { mx: e.clientX - r.left, my: e.clientY - r.top };
+            // Because #yt is a child of #stageWrap (position:relative),
+            // syncIframe uses wrapper-local coords (no page offsets).
+          }
+
+          // ---------- Iframe sync (no page offsets!) ----------
+          function syncIframe() {
+            // If canvas CSS size equals its internal size:
+            iframe.style.left   = box.x + 'px';
+            iframe.style.top    = box.y + 'px';
+            iframe.style.width  = box.w + 'px';
+            iframe.style.height = box.h + 'px';
+            iframe.style.borderRadius = box.radius + 'px';
+
+            // If you ever scale the canvas via CSS (not here), use scale factors:
+            // const scaleX = canvas.clientWidth / canvas.width;
+            // const scaleY = canvas.clientHeight / canvas.height;
+            // iframe.style.left   = (box.x * scaleX) + 'px';
+            // iframe.style.top    = (box.y * scaleY) + 'px';
+            // iframe.style.width  = (box.w * scaleX) + 'px';
+            // iframe.style.height = (box.h * scaleY) + 'px';
+          }
+
+          window.addEventListener('resize', syncIframe);
+          window.addEventListener('scroll', syncIframe, { passive: true });
+
+          // ---------- URL handling ----------
+          function toYouTubeCleanEmbed(url) {
+            let id = null;
+            try {
+              const u = new URL(url);
+              if (u.hostname === 'youtu.be') id = u.pathname.slice(1);
+              else if (u.hostname.includes('youtube.com')) id = u.searchParams.get('v');
+            } catch(e) {}
+            if (!id) return null;
+
+            const params = new URLSearchParams({
+              autoplay: '1',
+              mute: '1',
+              playsinline: '1',
+              loop: '1',
+              playlist: id,       // required for loop
+              controls: '0',
+              rel: '0',
+              modestbranding: '1',
+              iv_load_policy: '3',
+              fs: '0',
+              disablekb: '1'
+            });
+            return `https://www.youtube.com/embed/${id}?${params.toString()}`;
+          }
+
+          function loadVideoFromInput() {
+            const embed = toYouTubeCleanEmbed(urlInput.value.trim());
+            if (!embed) { alert('Please paste a valid YouTube URL'); return; }
+            if (embed !== currentEmbed) {
+              currentEmbed = embed;
+              iframe.src = embed;            // set **once** when URL changes
+              iframe.style.display = 'block';
+            }
+            syncIframe();                    // always keep it aligned
+          }
+
+          // ---------- Buttons ----------
+          btnLoad.addEventListener('click', loadVideoFromInput);
+
+          btnToggle.addEventListener('click', () => {
+            iframe.style.display = (iframe.style.display === 'none' ? 'block' : 'none');
+            syncIframe();
+          });
+
+          btnFit.addEventListener('click', () => {
+            // Fit a 16:9 box nicely inside the canvas
+            const target = 16/9;
+            let w = Math.min(canvas.width - 80, 800);
+            let h = w / target;
+            if (h > canvas.height - 80) { h = canvas.height - 80; w = h * target; }
+            box.w = Math.max(MIN, w);
+            box.h = Math.max(MIN, h);
+            box.x = (canvas.width - box.w) / 2;
+            box.y = (canvas.height - box.h) / 2;
+            syncIframe();
+          });
+
+          // ---------- Boot ----------
+          draw();
+          // initial load
+          loadVideoFromInput();
+        })();
+    </script>
+</body>
+</html>
