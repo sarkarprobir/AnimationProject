@@ -53,6 +53,9 @@
         public Guid CustomerId { get; set; }
         public Guid CompanyId { get; set; }
         public int BoardCategoryId { get; set; }
+        public int pageNo { get; set; }
+        public int recordPerPage { get; set; }
+        public string SlideType { get; set; }
 
     }
     public class RequestGetDesignBoardById

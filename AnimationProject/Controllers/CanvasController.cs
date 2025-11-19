@@ -614,6 +614,9 @@ namespace AnimationProject.Controllers
             {
                 request.CustomerId = Guid.Parse(user.CustomerId);
                 request.CompanyId = Guid.Parse(user.CompanyId);
+                request.SlideType = "";
+                request.pageNo = 1;
+                request.recordPerPage = 20;
                 //request.CustomerId = Guid.Parse("4DB56C68-0291-497B-BBCF-955609284A70");
                 //request.CompanyId = Guid.Parse("F174A15A-76B7-4E19-BE4B-4E240983DE55");
                 var saveDesignSlideBoard = await _restAPI.ProcessPostRequest($"{_appSettings.AnimationProjectAPI}DesignBoard/GetAllTemplates", JsonConvert.SerializeObject(request), user.token);
