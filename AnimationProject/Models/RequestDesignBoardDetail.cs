@@ -53,9 +53,14 @@
         public Guid CustomerId { get; set; }
         public Guid CompanyId { get; set; }
         public int BoardCategoryId { get; set; }
-        public int pageNo { get; set; }
-        public int recordPerPage { get; set; }
-        public string SlideType { get; set; }
+        // 👇 default to page 1
+        public int pageNo { get; set; } = 1;
+
+        // 👇 default to 20 records per page
+        public int recordPerPage { get; set; } = 200;
+
+        // 👇 default empty = no SlideType filter
+        public string SlideType { get; set; } = "";
 
     }
     public class RequestGetDesignBoardById
